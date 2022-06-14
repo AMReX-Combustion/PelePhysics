@@ -2,8 +2,14 @@
 #define _MANIFOLD_H_
 
 #include <memory>
+
+#ifdef USE_MANIFOLD_TABLE
 #include "Table.H"
+#endif
+
+#ifdef USE_MANIFOLD_NN
 #include "NeuralNet.H"
+#endif
 
 namespace pele {
 namespace physics {
@@ -165,12 +171,15 @@ struct Manifold
   void RTY2WDOT(const amrex::Real /*R*/, const amrex::Real /*T*/, const amrex::Real Y[], amrex::Real WDOT[])
   {
     // Look up species sources in table if they exist, otherwise they are 0
-    for (int is = 0; is < NUM_SPECIES-1; is++){
-      if (eosparm->idx_Wdot[is] >= 0) {
-	manfunc->get_value(eosparm->idx_Wdot[is], Y, WDOT[is]);
+    for(int is = 0; is < NUM_SPECIES-1; is++)
+    {
+      if(eosparm->idx_Wdot[is] >= 0) 
+      {
+	      manfunc->get_value(eosparm->idx_Wdot[is], Y, WDOT[is]);
       }
-      else {
-	WDOT[is] = 0.0;
+      else
+      {
+        manfunc->calculate_Wdot(is, Y, WDOT[is]);
       }
     }
 

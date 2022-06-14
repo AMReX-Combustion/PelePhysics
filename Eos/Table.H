@@ -227,6 +227,14 @@ namespace pele{
         // finite differences from table
         amrex::Real out = differentiate(indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing], derivs);
       }
+      
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
+      {
+        out = 0.0;
+      }
+      
       /*
       int idx_density;
       int idx_T;

@@ -62,10 +62,11 @@ public:
     std::string str;
     
     int str_size = m_h_nnf_data.len_str*sizeof(char);
+    int str_len = m_h_nnf_data.len_str;
     
     if(!fi.is_open())
     {
-        amrex::Abort("Unable to open supplementary info file for neural net manifold EOS.");
+      amrex::Abort("Unable to open supplementary info file for neural net manifold EOS.");
     }
     
     fi.seekg(0, std::ios::end);
@@ -78,57 +79,57 @@ public:
     
     while(!is.eof())
     {        
-        if(is.peek() == '\n')
-        {
-            if(state == LINE_BREAK)
-            {
-                state = READING_VAL;
-            }
-            else
-            {
-                state = READING_VAR;
-            }
-        }
-        
-        is >> str;
-        
-        if(str == "#")
-        {
-            state = READING_COMMENT;
-            continue;
-        }
-        
-        if(state == READING_COMMENT)
-        {
-            continue;
-        }
-        
-        if(str == "=")
+      if(is.peek() == '\n')
+      {
+        if(state == LINE_BREAK)
         {
             state = READING_VAL;
-            continue;
         }
-        
-        if(str == "\\")
+        else
         {
-            state = LINE_BREAK;
-            continue;
+            state = READING_VAR;
         }
-        
-        if(state == READING_VAR)
+      }
+      
+      is >> str;
+      
+      if(str == "#")
+      {
+        state = READING_COMMENT;
+        continue;
+      }
+      
+      if(state == READING_COMMENT)
+      {
+        continue;
+      }
+      
+      if(str == "=")
+      {
+        state = READING_VAL;
+        continue;
+      }
+      
+      if(str == "\\")
+      {
+        state = LINE_BREAK;
+        continue;
+      }
+      
+      if(state == READING_VAR)
+      {
+        for(int i = 0; i < str.length(); i++)
         {
-            for(int i = 0; i < str.length(); i++)
-            {
-                str[i] = std::tolower(str[i]);
-            }
-            cur_var = str;
-            umap[cur_var] = std::vector<std::string>();
+          str[i] = std::tolower(str[i]);
         }
-        
-        if(state == READING_VAL)
-        {
-            umap[cur_var].push_back(str);
-        }
+        cur_var = str;
+        umap[cur_var] = std::vector<std::string>();
+      }
+      
+      if(state == READING_VAL)
+      {
+        umap[cur_var].push_back(str);
+      }
     }
     
     AMREX_ALWAYS_ASSERT(umap["model_name"].size() == 1);
@@ -137,7 +138,7 @@ public:
     AMREX_ALWAYS_ASSERT(umap["nmanpar"].size() == 1);
     
     strncpy(m_h_nnf_data.model_name, umap["model_name"][0].c_str(), str_size);
-    m_h_nnf_data.model_name[m_h_nnf_data.len_str] = '\0';
+    m_h_nnf_data.model_name[str_len] = '\0';
     
     m_h_nnf_data.Ndim = stoi(umap["ndim"][0]);
     m_h_nnf_data.Nvar = stoi(umap["nvar"][0]);
@@ -150,16 +151,40 @@ public:
     std::vector<std::string>& dimnames = umap["dimnames"];
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
-        std::string& sd = dimnames[i];
-        strncpy(&m_h_nnf_data.dimnames[i*str_size], sd.c_str(), (sd.length()+1)*sizeof(char));
+      // Pad string with whitespace as is done for the tabular data
+      std::string sd = dimnames[i] + std::string(str_len - dimnames[i].length(), ' ');
+      strncpy(&m_h_nnf_data.dimnames[i*str_len], sd.c_str(), str_size);
     }
     
     m_h_nnf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Nvar*str_size));
     std::vector<std::string>& varnames = umap["varnames"];
     for(int i = 0; i < m_h_nnf_data.Nvar; i++)
     {
-        std::string& sv = varnames[i];
-        strncpy(&m_h_nnf_data.varnames[i*str_size], sv.c_str(), (sv.length()+1)*sizeof(char));
+      // Pad string with whitespace as is done for the tabular data
+      std::string sv = varnames[i] + std::string(str_len - varnames[i].length(), ' ');
+      strncpy(&m_h_nnf_data.varnames[i*str_len], sv.c_str(), str_size);
+    }
+    
+    m_h_nnf_data.Ncomb = umap["def_" + amrex::trim(dimnames[0])].size();
+    m_h_nnf_data.comb_coeff = static_cast<amrex::Real*>(
+        amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(amrex::Real)));
+    m_h_nnf_data.comb_src_idx = static_cast<int*>(
+        amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(int)));
+    for(int i = 0; i < m_h_nnf_data.Ndim; i++)
+    {
+      std::string dn = "def_" + dimnames[i];
+      std::vector<std::string>& defn = umap[dn];
+      AMREX_ALWAYS_ASSERT(defn.size() == m_h_nnf_data.Ncomb);
+      for(int j = 0; j < defn.size(); j++)
+      {
+        auto start = 0u;
+        auto end = defn[j].find("*");
+        std::string coeff = defn[j].substr(start, end);
+        std::string var = "SRC_" + defn[j].substr(end+1, std::string::npos);
+        int idx = get_var_index(var.c_str(), &m_h_nnf_data);
+        m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j] = (amrex::Real)std::stod(coeff);
+        m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = idx;
+      }
     }
   }
   
@@ -177,18 +202,34 @@ public:
     amrex::Print() << "Dimnames: Index | Variable Name" << std::endl;
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
-        std::string dimname(&m_h_nnf_data.dimnames[i*m_h_nnf_data.len_str]);
-        amrex::Print() << i << " | " << dimname << std::endl;
+      std::string dimname(&m_h_nnf_data.dimnames[i*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+      amrex::Print() << i << " | " << amrex::trim(dimname) << std::endl;
     }
     amrex::Print() << std::endl;
     
     amrex::Print() << "Varnames: Index | Variable Name" << std::endl;
     for(int i = 0; i < m_h_nnf_data.Nvar; i++)
     {
-        std::string varname(&m_h_nnf_data.varnames[i*m_h_nnf_data.len_str]);
-        amrex::Print() << i << " | " << varname << std::endl;
+      std::string varname(&m_h_nnf_data.varnames[i*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+      amrex::Print() << i << " | " << amrex::trim(varname) << std::endl;
     }
     amrex::Print() << std::endl;
+    
+    amrex::Print() << "Ncomb: " << std::endl;
+    
+    for(int i = 0; i < m_h_nnf_data.Ndim; i++)
+    {
+      std::string dimname(&m_h_nnf_data.dimnames[i*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+      amrex::Print() << "Defn. SRC_" + amrex::trim(dimname) + ": Source Term | Coeff." << std::endl;
+      for(int j = 0; j < m_h_nnf_data.Ncomb; j++)
+      {
+        const int& idx = m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j];
+        const amrex::Real& coeff = m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j];
+        std::string varname(&m_h_nnf_data.varnames[idx*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+        amrex::Print() << amrex::trim(varname) << " | " << coeff << std::endl;
+      }
+      amrex::Print() << std::endl;
+    }
   }
 
   virtual void allocate()
@@ -205,6 +246,8 @@ public:
   {
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.varnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.dimnames);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_coeff);
     
     if(m_device_allocated)
     {
@@ -227,7 +270,10 @@ public:
   
   struct NNFuncData: ManFuncParams::ManFuncData
   {
-    char nn_filename[len_str+1];
+    char nn_filename[len_str+1]; // Path to neural network file
+    int Ncomb; // Number of variables that the manifold params are linear combinations of
+    amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
+    int* comb_src_idx; // Index of source term for variable corresponding to each comb_coeff
   };
   
   virtual ManFuncData& host_manfunc_data()
@@ -314,6 +360,16 @@ public:
     std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
     get_derivs(ivar, intensor, derivs);
   }
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
+  {
+    // Ostensibly cannot use from_blob because the indata array is const
+    torch::Tensor intensor = torch::empty({nnf_data->Ndim}, tensoropt);
+    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
+    calculate_Wdot(paramidx, intensor, out);
+  }
 
 private:
   
@@ -374,6 +430,25 @@ private:
     {
       derivs[i] = acc[i];
     }
+  }
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void calculate_Wdot(const int paramidx, const torch::Tensor& indata, amrex::Real& out)
+  {
+    torch::Tensor predvars = eval_model(indata);
+    auto acc = predvars.accessor<amrex::Real,1>();
+    
+    amrex::Real rr = 0.0;
+    
+    for(int j = 0; j < nnf_data->Ncomb; j++)
+    {
+      const int& idx = nnf_data->comb_src_idx[paramidx*nnf_data->Ncomb + j];
+      const amrex::Real& coeff = nnf_data->comb_coeff[paramidx*nnf_data->Ncomb + j];
+      rr += coeff*acc[idx];
+    }
+    
+    out = rr;
   }
 
 }; // class NNFunc

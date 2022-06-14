@@ -36,7 +36,7 @@ int get_var_index(const char* varname, const ManFuncParams::ManFuncData* manf_da
   std::string var(varname);
   int ii;
   for (ii = 0; ii < manf_data->Nvar; ii++) {
-    std::string vartest = std::string(&(manf_data->varnames)[ii*manf_data->len_str]);
+    std::string vartest = std::string(&(manf_data->varnames)[ii*manf_data->len_str], manf_data->len_str);
     if (amrex::trim(var) == amrex::trim(vartest)) break;
   }
   if (ii == manf_data->Nvar && require) {
@@ -57,6 +57,9 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[]) = 0;
+  
+  AMREX_GPU_HOST_DEVICE
+  virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out) = 0;
   
   virtual ~ManifoldFunc() {};
 
