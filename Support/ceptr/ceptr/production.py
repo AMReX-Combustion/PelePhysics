@@ -963,55 +963,43 @@ def production_rate(
                                 species_info.ordered_idx_map[symbol]
                             ] += (coefficient * qdot_smp)
 
-            # evaluate the derivatives and increment the jacobian
-            qdot_free_symb = qdot_smp.free_symbols
-            # create dict of sc_terms as function of sc_qss terms
-            sc_terms = {}
-            for sc_symb in qdot_free_symb:
-                if "sc_qss" in str(sc_symb):
-                    scqssnum = syms.syms_to_specnum(sc_symb)
-                    for name in species_info.dict_qssdepend_sc[
-                        species_info.qssa_species_list[scqssnum]
-                    ]:
-                        if name in sc_terms:
-                            sc_terms[name].append(sc_symb)
-                        else:
-                            sc_terms[name] = [sc_symb]
-
-            print(sc_terms)
-
-            for sc_symb in qdot_free_symb:
-                if "sc[" in str(sc_symb):
-                    m = syms.syms_to_specnum(sc_symb)
-                    print(f"Computing dqdot[{symbol}]/dsc[{m}]...")
-                    dqdotdsc = smp.diff(qdot_smp, sc_symb)
-
-                    # Check if a sc_qss term that is a function of sc_symb
-                    if sc_symb in sc_terms:
-                        for name in sc_terms[sc_symb]:
-                            dqdotdsc += smp.diff(qdot_smp, name) * smp.diff(
-                                name, sc_symb
-                            )
-
-                    print(f"Incrementing Jac...")
-                    syms.jac_smp[
-                        species_info.ordered_idx_map[symbol] * (n_species + 1)
-                        + m
-                    ] += (coefficient * dqdotdsc)
-
+            ######### Jacobian stuff here ############
+            # # evaluate the derivatives and increment the jacobian
+            # qdot_free_symb = qdot_smp.free_symbols
+            # # create dict of sc_terms as function of sc_qss terms
+            # sc_terms = {}
             # for sc_symb in qdot_free_symb:
             #     if "sc_qss" in str(sc_symb):
-            #         print("there is a qss dependence here!")
-            #         exit()
-            #     elif "sc" in str(sc_symb):
+            #         scqssnum = syms.syms_to_specnum(sc_symb)
+            #         for name in species_info.dict_qssdepend_sc[
+            #             species_info.qssa_species_list[scqssnum]
+            #         ]:
+            #             if name in sc_terms:
+            #                 sc_terms[name].append(sc_symb)
+            #             else:
+            #                 sc_terms[name] = [sc_symb]
+
+            # print(sc_terms)
+
+            # for sc_symb in qdot_free_symb:
+            #     if "sc[" in str(sc_symb):
             #         m = syms.syms_to_specnum(sc_symb)
             #         print(f"Computing dqdot[{symbol}]/dsc[{m}]...")
-            #         dqdotdsc = smp.diff(coefficient * qdot_smp, sc_symb)
+            #         dqdotdsc = smp.diff(qdot_smp, sc_symb)
+
+            #         # Check if a sc_qss term that is a function of sc_symb
+            #         if sc_symb in sc_terms:
+            #             for name in sc_terms[sc_symb]:
+            #                 dqdotdsc += smp.diff(qdot_smp, name) * smp.diff(
+            #                     name, sc_symb
+            #                 )
+
             #         print(f"Incrementing Jac...")
             #         syms.jac_smp[
             #             species_info.ordered_idx_map[symbol] * (n_species + 1)
             #             + m
-            #         ] += dqdotdsc
+            #         ] += (coefficient * dqdotdsc)
+            ####################
 
             cw.writer(fstream, "}")
             cw.writer(fstream)
