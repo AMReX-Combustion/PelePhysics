@@ -233,6 +233,7 @@ struct Manifold
   AMREX_GPU_HOST_DEVICE
   Manifold(const EosParm<Manifold>* eparm)
   {
+    eosparm = eparm;
 #ifdef USE_MANIFOLD_TABLE
     TabFuncParams::TabFuncData* tf_data =
         static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
@@ -244,7 +245,6 @@ struct Manifold
 #else
     amrex::Error("Invalid option for manifold model.");
 #endif
-    eosparm = eparm;
   }
 
   template <class... Args>
