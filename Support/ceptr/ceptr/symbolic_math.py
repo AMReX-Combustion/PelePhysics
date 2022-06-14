@@ -1,8 +1,11 @@
 """Symbolic math for symbolic differentiation."""
+import re
+import time
 from collections import OrderedDict
 
+import numpy as np
 import sympy as smp
-import time
+
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
@@ -33,6 +36,11 @@ class SymbolicMath:
         ]
         self.wdot_smp = [
             smp.symbols("wdot[" + str(i) + "]") for i in range(n_species)
+        ]
+        self.jac_smp = [
+            smp.symbols(f"J[{str(i)}][{str(j)}]")
+            for i in range(n_species)
+            for j in range(n_species + 1)
         ]
 
         # mixture (useful for third body reactions)
@@ -83,8 +91,8 @@ class SymbolicMath:
 
     def write_array_to_cpp(self, list_smp, array_str, cw, fstream):
         """Convert sympy array to C code compatible string."""
-        n = len(list_smp)   
- 
+        n = len(list_smp)
+
         # Write common expressions
         times = time.time()
         array_cse = smp.cse(list_smp)
@@ -95,16 +103,13 @@ class SymbolicMath:
                 fstream,
                 "const amrex::Real %s = %s;"
                 % (
-                     left_cse,
-                     right_cse,
+                    left_cse,
+                    right_cse,
                 ),
             )
         timee = time.time()
-        
-        print(
-                "Made common expr (time = %.3g s)"
-                % (timee - times)
-            )
+
+        print("Made common expr (time = %.3g s)" % (timee - times))
 
         # Write all the entries
         for i in range(n):
@@ -113,14 +118,13 @@ class SymbolicMath:
             cpp_str = self.convert_to_cpp(array_cse[1][i])
             timee = time.time()
             print(
-                "Made expr for entry %d (time = %.3g s)"
-                % (i, timee - times)
+                "Made expr for entry %d (time = %.3g s)" % (i, timee - times)
             )
             times = time.time()
             cw.writer(
                 fstream,
                 "%s[%s] = %s;"
-                % (  
+                % (
                     array_str,
                     str(i),
                     cpp_str,
@@ -131,3 +135,8 @@ class SymbolicMath:
                 "Printed expr for entry %d (time = %.3g s)"
                 % (i, timee - times)
             )
+
+    def syms_to_specnum(self, smp):
+        """Extracts number from syms string"""
+        num = re.findall(r"\[(.*?)\]", str(smp))
+        return int(num[0])

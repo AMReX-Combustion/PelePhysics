@@ -107,3 +107,81 @@ class SpeciesInfo:
             self.dict_qssdepend_gRT[symbol] = gRT_symb
             self.dict_qssdepend_kf[symbol] = kf_symb
             self.dict_qssdepend_kr[symbol] = kr_symb
+
+    def identify_nonqss_dependencies(self, syms):
+        """Identify nonQSS species dependencies from syms object."""
+        self.dict_nonqssdepend_scqss = {}
+        self.dict_nonqssdepend_sc = {}
+        self.dict_nonqssdepend_gRTqss = {}
+        self.dict_nonqssdepend_gRT = {}
+        self.dict_nonqssdepend_kf = {}
+        self.dict_nonqssdepend_kr = {}
+        for symbol in self.dict_nonqss_species:
+            free_symb = syms.sc_smp[
+                self.dict_nonqss_species[symbol]
+            ].free_symbols
+            qss_symb = []
+            sc_symb = []
+            gRTqss_symb = []
+            gRT_symb = []
+            kf_symb = []
+            kr_symb = []
+            for ss in free_symb:
+                if "sc_qss" in str(ss):
+                    qss_symb.append(ss)
+                elif "sc" in str(ss):
+                    sc_symb.append(ss)
+                elif "g_RT_qss" in str(ss):
+                    gRTqss_symb.append(ss)
+                elif "g_RT" in str(ss):
+                    gRT_symb.append(ss)
+                elif "kf" in str(ss):
+                    kf_symb.append(ss)
+                elif "kr" in str(ss):
+                    kr_symb.append(ss)
+
+            self.dict_nonqssdepend_scqss[symbol] = qss_symb
+            self.dict_nonqssdepend_sc[symbol] = sc_symb
+            self.dict_nonqssdepend_gRTqss[symbol] = gRTqss_symb
+            self.dict_nonqssdepend_gRT[symbol] = gRT_symb
+            self.dict_nonqssdepend_kf[symbol] = kf_symb
+            self.dict_nonqssdepend_kr[symbol] = kr_symb
+
+    def identify_wdot_dependencies(self, syms):
+        """Identify wdot dependencies from syms object."""
+        self.dict_wdot_scqss = {}
+        self.dict_wdot_sc = {}
+        self.dict_wdot_gRTqss = {}
+        self.dict_wdot_gRT = {}
+        self.dict_wdot_kf = {}
+        self.dict_wdot_kr = {}
+        for symbol in self.dict_nonqss_species:
+            free_symb = syms.wdot_smp[
+                self.dict_nonqss_species[symbol]
+            ].free_symbols
+            qss_symb = []
+            sc_symb = []
+            gRTqss_symb = []
+            gRT_symb = []
+            kf_symb = []
+            kr_symb = []
+            for ss in free_symb:
+                if "sc_qss" in str(ss):
+                    qss_symb.append(ss)
+                elif "sc" in str(ss):
+                    sc_symb.append(ss)
+                elif "g_RT_qss" in str(ss):
+                    gRTqss_symb.append(ss)
+                elif "g_RT" in str(ss):
+                    gRT_symb.append(ss)
+                elif "kf" in str(ss):
+                    kf_symb.append(ss)
+                elif "kr" in str(ss):
+                    kr_symb.append(ss)
+
+            self.dict_wdot_scqss[symbol] = qss_symb
+            self.dict_wdot_sc[symbol] = sc_symb
+            self.dict_wdot_gRTqss[symbol] = gRTqss_symb
+            self.dict_wdot_gRT[symbol] = gRT_symb
+            self.dict_wdot_kf[symbol] = kf_symb
+            self.dict_wdot_kr[symbol] = kr_symb

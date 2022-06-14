@@ -3,6 +3,7 @@ import pathlib
 import re
 import shutil
 import subprocess as spr
+import time
 
 import numpy as np
 import sympy as smp
@@ -318,6 +319,13 @@ class Converter:
 
             self.species_info.create_dicts()
             self.species_info.identify_qss_dependencies(self.syms)
+            self.species_info.identify_nonqss_dependencies(self.syms)
+
+            # print(self.species_info.dict_qssdepend_scqss)
+            # print(self.species_info.dict_qssdepend_sc)
+            # print(self.species_info.dict_nonqssdepend_scqss)
+            # print(self.species_info.dict_nonqssdepend_sc)
+            # exit()
 
             # prod rate related
             cp.production_rate(
@@ -329,12 +337,57 @@ class Converter:
             )
             print("Symbolic wdot print for debug")
             cp.production_rate_debug(
-               hdr,
-               self.mechanism,
-               self.species_info,
-               self.reaction_info,
-               self.syms,
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                self.syms,
             )
+
+            # symbol = self.species_info.dict_nonqss_species[0]
+            # for symbol in self.species_info.dict_nonqss_species:
+            #     print(symbol)
+            #     exit()
+            # times = time.time()
+            # dwdot0dc0 = smp.diff(self.syms.wdot_smp[self.species_info.ordered_idx_map["NC12H26"]], "sc[0]")
+            # timee = time.time()
+            # print(f"time to evaluate dwdot0dc0 = {timee-times}")
+            # exit()
+
+            times = time.time()
+            self.species_info.identify_wdot_dependencies(self.syms)
+            timee = time.time()
+            print(f"Time to find wdot dependencies = {timee-times}")
+
+            print(len(self.syms.wdot_smp))
+            # exit()
+
+            # compute all derivatives in ss dependencies list
+            # for symbol in self.species_info.dict_nonqss_species:
+            #     print(symbol)
+            # #     print(self.species_info.dict_wdot_scqss[symbol])
+            # #     print(self.species_info.dict_wdot_sc[symbol])
+            # #     print(
+            # #         smp.diff(
+            # #             self.syms.wdot_smp[
+            # #                 self.species_info.ordered_idx_map[symbol]
+            # #             ],
+            # #             self.species_info.dict_wdot_sc[symbol][0],
+            # #         )
+            # #     )
+            #     dci = self.species_info.dict_wdot_sc[symbol][0]
+            #     times = time.time()
+            #     dwdotdci = smp.diff(self.syms.wdot_smp[self.species_info.ordered_idx_map[symbol]], dci)
+            #     timee = time.time()
+            #     print(f"Time to find dwdot[{symbol}]/d{dci} = {timee - times}")
+            # #     exit()
+            #     # print(self.syms.wdot_smp[self.species_info.ordered_idx_map[symbol]])
+            #     # dwdotdci = smp.diff(self.)
+            #     # print(self.species_info.dict_qssdepend_scqss[])
+
+            # # print(self.syms.wdot_smp)
+            # exit()
+
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
             cck.ckwxp(hdr, self.mechanism, self.species_info)

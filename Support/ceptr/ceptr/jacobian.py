@@ -399,7 +399,6 @@ def ajac_reaction_d(
             pro_dict[k] = (symbol, coefficient)
     # Build the dict with species and coefficients
     for k in range(n_species):
-        # for k in range(len(species_info.all_species_list)):
         if k in rea_dict and k in pro_dict:
             sr, nur = rea_dict[k]
             sp, nup = pro_dict[k]
@@ -423,10 +422,6 @@ def ajac_reaction_d(
         elif k in pro_dict:
             sp, nup = pro_dict[k]
             all_wqss_dict[k] = (sp, nup)
-
-    # print(f"rea_dict = {rea_dict}")
-    # print(f"pro_dict = {pro_dict}")
-    # print(f"all_dict = {all_dict}")
 
     sorted_reactants = sorted(rea_dict.values())
     sorted_products = sorted(pro_dict.values())
@@ -820,7 +815,6 @@ def ajac_reaction_d(
             cw.writer(fstream, "if (consP) {")
 
             for k in range(n_species):
-                # for k in range(len(species_info.all_species_list)):
                 dqdc_s = denhancement_d(
                     mechanism, species_info, reaction, k, True
                 )
@@ -851,11 +845,6 @@ def ajac_reaction_d(
                     syms,
                 )
                 if dqdc_s:
-                    # print(dqdc_s)
-                    # symb_k = species_info.nonqssa_species[k].name
-                    # print(k)
-                    # print(species_info.nonqssa_species[k])
-                    # print(species_info.all_species_list[k])
                     symb_k = species_info.all_species_list[k]
                     cw.writer(fstream, cw.comment("d()/d[%s]" % symb_k))
                     cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
@@ -943,10 +932,7 @@ def ajac_reaction_d(
 
     else:
 
-        # print(reaction)
-        # print(all_dict)
         for k in range(n_species):
-            # for k in range(len(species_info.all_species_list)):
             dqdc_s = dqdc_d(
                 fstream,
                 mechanism,
@@ -963,10 +949,6 @@ def ajac_reaction_d(
             )
 
             if dqdc_s:
-                # print(all_wqss_dict[k][0])
-                # print(f"dqdc_s = {dqdc_s}")
-                # cw.writer(fstream, cw.comment("d()/d[%s]" % all_dict[k][0]))
-                # if all_wqss_dict[k][0] not in species_info.qssa_species_list:
                 cw.writer(
                     fstream, cw.comment("d()/d[%s]" % all_wqss_dict[k][0])
                 )
@@ -989,11 +971,6 @@ def ajac_reaction_d(
                                 )
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
-                # else:
-                #     print(f"QSSA species identified in reaction: {all_wqss_dict[k][0]}")
-                #     print(species_info.dict_qssdepend_sc[all_wqss_dict[k][0]])
-                #     print(species_info.dict_qssdepend_scqss[all_wqss_dict[k][0]])
-                #     print(syms.sc_qss_smp[species_info.dict_qss_species[all_wqss_dict[k][0]]])
         cw.writer(fstream, cw.comment("d()/dT"))
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
@@ -1025,13 +1002,9 @@ def dqdc_d(
     syms,
 ):
     """Write dqdc."""
-    # print(reaction)
-    # print(rea_dict)
-    # print(k)
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
-        # print(k)
         dps = dphase_space(
             mechanism,
             species_info,
@@ -1039,7 +1012,6 @@ def dqdc_d(
             rea_dict[k][0],
             syms,
         )
-        # print(dps)
         if dps == "1.0":
             dps_s = ""
         else:
