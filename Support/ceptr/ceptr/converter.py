@@ -287,29 +287,29 @@ class Converter:
                     helper_names_to_print,
                     intermediate_names_to_print,
                 )
-                print("Symbolic kf QSS print for debug")
-                cqc.qssa_kf_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                )
-                print("Symbolic thermo QSS print for debug")
-                cth.gibbsQSS_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                )
-                cth.speciesEnthalpyQSS_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                )
+                #print("Symbolic kf QSS print for debug")
+                #cqc.qssa_kf_debug(
+                #    hdr,
+                #    self.mechanism,
+                #    self.species_info,
+                #    self.reaction_info,
+                #    self.syms,
+                #)
+                #print("Symbolic thermo QSS print for debug")
+                #cth.gibbsQSS_debug(
+                #    hdr,
+                #    self.mechanism,
+                #    self.species_info,
+                #    self.reaction_info,
+                #    self.syms,
+                #)
+                #cth.speciesEnthalpyQSS_debug(
+                #    hdr,
+                #    self.mechanism,
+                #    self.species_info,
+                #    self.reaction_info,
+                #    self.syms,
+                #)
             #    print("Symbolic Sc qss print for debug")
             #    cqc.qssa_sc_qss_debug(
             #        hdr,
@@ -338,25 +338,21 @@ class Converter:
             #    )
 
 
-            print("Symbolic thermo print for debug")
-            cth.gibbs_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
-            cth.speciesEnthalpy_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
-
-            # print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
-            # print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
-            # stop
+            #print("Symbolic thermo print for debug")
+            #cth.gibbs_debug(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            #)
+            #cth.speciesEnthalpy_debug(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            #)
 
             self.species_info.create_dicts()
             self.species_info.identify_qss_dependencies(self.syms)
