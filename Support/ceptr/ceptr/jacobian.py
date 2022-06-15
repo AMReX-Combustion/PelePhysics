@@ -1220,6 +1220,11 @@ def ajac_term_debug(
     )
     cw.writer(fstream, "{")
 
+    # Initialize the big Jacobian array
+    cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
+    cw.writer(fstream, "J[i] = 0.0;")
+    cw.writer(fstream, "}")
+   
     cw.writer(fstream, cw.comment(f"J corresponds to index: {index}"))
     cw.writer(
         fstream,
@@ -1293,6 +1298,39 @@ def ajac_term_debug(
             syms.write_array_to_cpp([dwdotdc], f"J", cw, fstream)
 
             cw.writer(fstream)
+
+
+    # dwdotdT
+    cw.writer(
+        fstream,
+        "amrex::Real T_pert1, T_pert2, pertT;"
+    )
+    cw.writer(
+        fstream,
+        "amrex::Real wdot_pert1[%d], wdot_pert2[%d];"
+        % (
+            n_species,
+            n_species,
+        ),
+    )
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
+    cw.writer(fstream,"pertT = 1e-1;") 
+    cw.writer(fstream,"T_pert1 = T + pertT;")
+    cw.writer(fstream,"T_pert2 = T - pertT;")
+    cw.writer(fstream)
+    cw.writer(fstream,"productionRate(wdot_pert1, sc, T_pert1);")
+    cw.writer(fstream,"productionRate(wdot_pert2, sc, T_pert2);")
+    cw.writer(fstream)
+    cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
+    cw.writer(
+        fstream, 
+        "J[%d + k] = (wdot_pert1[k] - wdot_pert2[k])/(2.0*pertT);" 
+        % (
+            n_species*(n_species + 1),
+        )  
+    )
+    cw.writer(fstream, "}")
 
     cw.writer(fstream)
 

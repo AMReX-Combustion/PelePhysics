@@ -367,14 +367,14 @@ class Converter:
                 self.reaction_info,
                 self.syms,
             )
-            print("Symbolic wdot print for debug")
-            cp.production_rate_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
+            #print("Symbolic wdot print for debug")
+            #cp.production_rate_debug(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            #)
 
             # for symbol in self.species_info.dict_nonqss_species:
             #     print(symbol)
