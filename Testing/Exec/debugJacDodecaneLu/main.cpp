@@ -83,7 +83,7 @@ main(int argc, char* argv[])
     int index_wdot;
     int index_J;
     const int consP = 1;
-    const int noconsP = 1;
+    const int noconsP = 0;
 
     // SET SC 
     srand (time(NULL));

@@ -2652,16 +2652,16 @@ def qssa_component_functions(
             syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = (
                 -numerator_smp / denominator_smp
             )
-            print(f"Starting simplification of fraction for {symbol}...")
-            times = time.time()
-            syms.sc_qss_smp[
-                species_info.qssa_species_list.index(symbol)
-            ] = smp.cancel(
-                syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)]
-            )
-            timee = time.time()
-            print(f"Time to simplify = {timee-times}")
-            exit()
+            #print(f"Starting simplification of fraction for {symbol}...")
+            #times = time.time()
+            #syms.sc_qss_smp[
+            #    species_info.qssa_species_list.index(symbol)
+            #] = smp.cancel(
+            #    syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)]
+            #)
+            #timee = time.time()
+            #print(f"Time to simplify = {timee-times}")
+            #exit()
             cw.writer(fstream)
         # This case happens for dodecane_lu_qss
         if symbol in list(species_info.qssa_info.group.keys()):
