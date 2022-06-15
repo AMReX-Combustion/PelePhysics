@@ -1945,6 +1945,7 @@ def qssa_coeff_functions(
 
     return
 
+
 def qssa_kf_debug(
     fstream,
     mechanism,
@@ -1969,7 +1970,7 @@ def qssa_kf_debug(
     )
 
     for ireac in range(reaction_info.n_qssa_reactions):
-        
+
         cpp_str = syms.convert_to_cpp(syms.kf_qss_smp_tmp[ireac])
         cw.writer(
             fstream,
@@ -1981,6 +1982,7 @@ def qssa_kf_debug(
         )
 
     cw.writer(fstream, "}")
+
 
 def qssa_terms_debug(
     fstream,
@@ -2688,16 +2690,16 @@ def qssa_component_functions(
             syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = (
                 -numerator_smp / denominator_smp
             )
-            #print(f"Starting simplification of fraction for {symbol}...")
-            #times = time.time()
-            #syms.sc_qss_smp[
+            # print(f"Starting simplification of fraction for {symbol}...")
+            # times = time.time()
+            # syms.sc_qss_smp[
             #    species_info.qssa_species_list.index(symbol)
-            #] = smp.cancel(
+            # ] = smp.cancel(
             #    syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)]
-            #)
-            #timee = time.time()
-            #print(f"Time to simplify = {timee-times}")
-            #exit()
+            # )
+            # timee = time.time()
+            # print(f"Time to simplify = {timee-times}")
+            # exit()
             cw.writer(fstream)
         # This case happens for dodecane_lu_qss
         if symbol in list(species_info.qssa_info.group.keys()):

@@ -6,8 +6,8 @@ import subprocess as spr
 import time
 
 import numpy as np
-import sympy as smp
 import symengine as sme
+import sympy as smp
 
 import ceptr.ck as cck
 import ceptr.gjs as cgjs
@@ -70,7 +70,9 @@ class Converter:
                 self.mechanism, self.species_info, self.reaction_info
             )
         # Initialize symbolic variables
-        self.syms = csm.SymbolicMath(self.species_info, self.reaction_info, self.mechanism)
+        self.syms = csm.SymbolicMath(
+            self.species_info, self.reaction_info, self.mechanism
+        )
 
     def set_species(self):
         """Set the species."""
@@ -287,29 +289,29 @@ class Converter:
                     helper_names_to_print,
                     intermediate_names_to_print,
                 )
-                #print("Symbolic kf QSS print for debug")
-                #cqc.qssa_kf_debug(
+                # print("Symbolic kf QSS print for debug")
+                # cqc.qssa_kf_debug(
                 #    hdr,
                 #    self.mechanism,
                 #    self.species_info,
                 #    self.reaction_info,
                 #    self.syms,
-                #)
-                #print("Symbolic thermo QSS print for debug")
-                #cth.gibbsQSS_debug(
+                # )
+                # print("Symbolic thermo QSS print for debug")
+                # cth.gibbsQSS_debug(
                 #    hdr,
                 #    self.mechanism,
                 #    self.species_info,
                 #    self.reaction_info,
                 #    self.syms,
-                #)
-                #cth.speciesEnthalpyQSS_debug(
+                # )
+                # cth.speciesEnthalpyQSS_debug(
                 #    hdr,
                 #    self.mechanism,
                 #    self.species_info,
                 #    self.reaction_info,
                 #    self.syms,
-                #)
+                # )
             #    print("Symbolic Sc qss print for debug")
             #    cqc.qssa_sc_qss_debug(
             #        hdr,
@@ -337,22 +339,21 @@ class Converter:
             #        intermediate_names_to_print,
             #    )
 
-
-            #print("Symbolic thermo print for debug")
-            #cth.gibbs_debug(
+            # print("Symbolic thermo print for debug")
+            # cth.gibbs_debug(
             #    hdr,
             #    self.mechanism,
             #    self.species_info,
             #    self.reaction_info,
             #    self.syms,
-            #)
-            #cth.speciesEnthalpy_debug(
+            # )
+            # cth.speciesEnthalpy_debug(
             #    hdr,
             #    self.mechanism,
             #    self.species_info,
             #    self.reaction_info,
             #    self.syms,
-            #)
+            # )
 
             self.species_info.create_dicts()
             self.species_info.identify_qss_dependencies(self.syms)
@@ -394,22 +395,22 @@ class Converter:
             timee = time.time()
             print(f"time to evaluate dwdot0dc0 = {timee-times}")
 
-            #print("Evaluating a dscqss_dsc component")
-            #times = time.time()
-            #dscqss5dsc0 = self.syms.compute_dscqss_dsc(5, 0, self.species_info)
-            #print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
+            # print("Evaluating a dscqss_dsc component")
+            # times = time.time()
+            # dscqss5dsc0 = self.syms.compute_dscqss_dsc(5, 0, self.species_info)
+            # print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
             #
-            #print("Evaluating a single jacobian component")
-            #times = time.time()
-            #dwdot0dc0 = self.syms.chain_diff(
+            # print("Evaluating a single jacobian component")
+            # times = time.time()
+            # dwdot0dc0 = self.syms.chain_diff(
             #    self.species_info,
             #    self.syms.wdot_smp[
             #        self.species_info.ordered_idx_map["NC12H26"]
             #    ],
             #    smp.symbols("sc[0]"),
-            #)
-            #timee = time.time()
-            #print(f"time to evaluate dwdot0dc0 = {timee-times}")
+            # )
+            # timee = time.time()
+            # print(f"time to evaluate dwdot0dc0 = {timee-times}")
 
             # times = time.time()
             # self.species_info.identify_wdot_dependencies(self.syms)
