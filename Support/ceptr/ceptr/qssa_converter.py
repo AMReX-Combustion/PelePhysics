@@ -1945,6 +1945,42 @@ def qssa_coeff_functions(
 
     return
 
+def qssa_kf_debug(
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms,
+):
+    """Temporary QSSA kf debuging function."""
+    n_species = species_info.n_species
+    n_qssa_reactions = species_info.n_species
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss_debug"
+        + "(const amrex::Real * tc, amrex::Real invT, amrex::Real * kf_qss)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(
+        fstream,
+        "const amrex::Real T = tc[1];",
+    )
+
+    for ireac in range(reaction_info.n_qssa_reactions):
+        
+        cpp_str = syms.convert_to_cpp(syms.kf_qss_smp_tmp[ireac])
+        cw.writer(
+            fstream,
+            "kf_qss[%s] = %s;"
+            % (
+                str(ireac),
+                cpp_str,
+            ),
+        )
+
+    cw.writer(fstream, "}")
 
 def qssa_terms_debug(
     fstream,
@@ -2505,7 +2541,7 @@ def qssa_component_functions(
                 sys.exit(1)
 
         cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
-        syms.kf_qss_smp[index] = pef.m
+        syms.kf_qss_smp_tmp[index] = pef.m
 
         if (beta == 0) and (ae == 0):
             cw.writer(fstream, "           ;")
@@ -2514,7 +2550,7 @@ def qssa_component_functions(
                 cw.writer(
                     fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                 )
-                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0])
+                syms.kf_qss_smp_tmp[index] *= smp.exp(beta * syms.tc_smp[0])
             elif beta == 0:
                 cw.writer(
                     fstream,
@@ -2522,7 +2558,7 @@ def qssa_component_functions(
                     % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp[index] *= smp.exp(-coeff * syms.invT_smp)
+                syms.kf_qss_smp_tmp[index] *= smp.exp(-coeff * syms.invT_smp)
 
             else:
                 cw.writer(
@@ -2531,7 +2567,7 @@ def qssa_component_functions(
                     % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp[index] *= smp.exp(
+                syms.kf_qss_smp_tmp[index] *= smp.exp(
                     beta * syms.tc_smp[0] - coeff * syms.invT_smp
                 )
 
