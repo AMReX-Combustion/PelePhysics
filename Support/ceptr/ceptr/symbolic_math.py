@@ -7,11 +7,12 @@ import numpy as np
 import symengine as sme
 import sympy as smp
 
+import ceptr.thermo as cth
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
-    def __init__(self, species_info, reaction_info):
+    def __init__(self, species_info, reaction_info, mechanism):
 
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
@@ -25,6 +26,7 @@ class SymbolicMath:
             self.T_smp**4,
         ]
         self.invT_smp = 1.0 / self.tc_smp[1]
+        self.invT2_smp = self.invT_smp*self.invT_smp
 
         self.sc_smp = [
             smp.symbols("sc[" + str(i) + "]") for i in range(n_species)
@@ -43,6 +45,35 @@ class SymbolicMath:
             for i in range(n_species)
             for j in range(n_species + 1)
         ]
+
+        # temporary symbols that contain temperature dependence
+
+        species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+        low_temp, high_temp, midpoints =  species_coeffs
+        self.midpointsList = []
+        for mid_temp, species_list in list(midpoints.items()):
+            self.midpointsList.append(mid_temp)
+        self.midpointsList_sorted = sorted(self.midpointsList)
+   
+        self.g_RT_smp_tmp = {}
+        self.h_RT_smp_tmp = {}
+        
+        for mid_temp in self.midpointsList_sorted:
+            self.g_RT_smp_tmp[mid_temp] = {}
+            self.h_RT_smp_tmp[mid_temp] = {}
+            self.g_RT_smp_tmp[mid_temp]['m'] = [
+                smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
+            ]
+            self.g_RT_smp_tmp[mid_temp]['p'] = [
+                smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
+            ]
+            self.h_RT_smp_tmp[mid_temp]['m'] = [
+                smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
+            ]
+            self.h_RT_smp_tmp[mid_temp]['p'] = [
+                smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
+            ]
+
 
         # mixture (useful for third body reactions)
         self.mixture_smp = 0.0
@@ -80,6 +111,38 @@ class SymbolicMath:
             self.h_RT_qss_smp = [
                 smp.symbols("h_RT_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
+            ]
+
+            # temporary symbols that contain temperature dependence
+            qss_species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 1)
+            low_temp, high_temp, midpoints =  qss_species_coeffs
+            self.midpointsQSSList = []
+            for mid_temp, species_list in list(midpoints.items()):
+                self.midpointsQSSList.append(mid_temp)
+            self.midpointsQSSList_sorted = sorted(self.midpointsQSSList)
+
+            self.g_RT_qss_smp_tmp = {}
+            self.h_RT_qss_smp_tmp = {}
+            
+            for mid_temp in self.midpointsQSSList_sorted:
+                self.g_RT_qss_smp_tmp[mid_temp] = {}
+                self.h_RT_qss_smp_tmp[mid_temp] = {}
+                self.g_RT_qss_smp_tmp[mid_temp]['m'] = [
+                    smp.symbols("g_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
+                ]
+                self.g_RT_qss_smp_tmp[mid_temp]['p'] = [
+                    smp.symbols("g_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
+                ]
+                self.h_RT_qss_smp_tmp[mid_temp]['m'] = [
+                    smp.symbols("h_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
+                ]
+                self.h_RT_qss_smp_tmp[mid_temp]['p'] = [
+                    smp.symbols("h_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
+                ]
+            
+            self.kf_qss_smp_tmp = [
+                smp.symbols("kf_qss[" + str(i) + "]")
+                for i in range(n_qssa_reactions)
             ]
 
             # Create dict to hold end of chain rule dscqssdsc terms
