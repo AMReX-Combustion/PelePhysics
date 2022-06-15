@@ -964,6 +964,13 @@ def production_rate(
                             ] += (coefficient * qdot_smp)
 
             ######### Jacobian stuff here ############
+            # times = time.time()
+            # print(f"Taking CSE of qdot[{symbol}]...")
+            # qdot_cse = smp.cse(qdot_smp)
+            # print(f"Time to cse = {time.time()-times}.")
+            # print(qdot_cse)
+            # print(smp.diff(qdot_cse, smp.symbols("sc[0]")))
+
             # # evaluate the derivatives and increment the jacobian
             # qdot_free_symb = qdot_smp.free_symbols
             # # create dict of sc_terms as function of sc_qss terms
@@ -984,8 +991,11 @@ def production_rate(
             # for sc_symb in qdot_free_symb:
             #     if "sc[" in str(sc_symb):
             #         m = syms.syms_to_specnum(sc_symb)
+
             #         print(f"Computing dqdot[{symbol}]/dsc[{m}]...")
+            #         times = time.time()
             #         dqdotdsc = smp.diff(qdot_smp, sc_symb)
+            #         print(f"Time to compute dqdot = {time.time()-times}")
 
             #         # Check if a sc_qss term that is a function of sc_symb
             #         if sc_symb in sc_terms:
@@ -995,10 +1005,12 @@ def production_rate(
             #                 )
 
             #         print(f"Incrementing Jac...")
+            #         times = time.time()
             #         syms.jac_smp[
             #             species_info.ordered_idx_map[symbol] * (n_species + 1)
             #             + m
             #         ] += (coefficient * dqdotdsc)
+            #         print(f"Time to increment jac = {time.time()-times}")
             ####################
 
             cw.writer(fstream, "}")

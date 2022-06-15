@@ -77,6 +77,7 @@ class SpeciesInfo:
         self.dict_qssdepend_gRT = {}
         self.dict_qssdepend_kf = {}
         self.dict_qssdepend_kr = {}
+        self.sc_qss_chain_stop = []
         for symbol in self.dict_qss_species:
             free_symb = syms.sc_qss_smp[
                 self.dict_qss_species[symbol]
@@ -107,6 +108,9 @@ class SpeciesInfo:
             self.dict_qssdepend_gRT[symbol] = gRT_symb
             self.dict_qssdepend_kf[symbol] = kf_symb
             self.dict_qssdepend_kr[symbol] = kr_symb
+
+            if not self.dict_qssdepend_scqss[symbol]:
+                self.sc_qss_chain_stop.append(symbol)
 
     def identify_nonqss_dependencies(self, syms):
         """Identify nonQSS species dependencies from syms object."""

@@ -321,12 +321,6 @@ class Converter:
             self.species_info.identify_qss_dependencies(self.syms)
             self.species_info.identify_nonqss_dependencies(self.syms)
 
-            # print(self.species_info.dict_qssdepend_scqss)
-            # print(self.species_info.dict_qssdepend_sc)
-            # print(self.species_info.dict_nonqssdepend_scqss)
-            # print(self.species_info.dict_nonqssdepend_sc)
-            # exit()
-
             # prod rate related
             cp.production_rate(
                 hdr,
@@ -344,9 +338,34 @@ class Converter:
                 self.syms,
             )
 
+            # for symbol in self.species_info.dict_nonqss_species:
+            #     print(symbol)
+            #     print(self.syms.wdot_smp[self.species_info.ordered_idx_map[symbol]].free_symbols)
+            # # print(self.syms.wdot_smp[
+            # #         self.species_info.ordered_idx_map["NC12H26"]
+            # #     ].free_symbols)
+            # exit()
+
+            # print("Evaluating a single jacobian component")
+            # times = time.time()
+            # dwdot0dc0 = smp.diff(
+            #     self.syms.wdot_smp[
+            #         self.species_info.ordered_idx_map["NC12H26"]
+            #     ],
+            #     smp.symbols("sc[0]"),
+            # )
+            # timee = time.time()
+            # print(f"time to evaluate dwdot0dc0 = {timee-times}")
+
+            print("Evaluating a dscqss_dsc component")
+            times = time.time()
+            dscqss5dsc0 = self.syms.compute_dscqss_dsc(5, 0, self.species_info)
+            print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
+
             print("Evaluating a single jacobian component")
             times = time.time()
-            dwdot0dc0 = smp.diff(
+            dwdot0dc0 = self.syms.chain_diff(
+                self.species_info,
                 self.syms.wdot_smp[
                     self.species_info.ordered_idx_map["NC12H26"]
                 ],
@@ -359,16 +378,6 @@ class Converter:
             # self.species_info.identify_wdot_dependencies(self.syms)
             # timee = time.time()
             # print(f"Time to find wdot dependencies = {timee-times}")
-
-            # # compute all derivatives in ss dependencies list
-            # for symbol in self.species_info.dict_nonqss_species:
-            #     print(symbol)
-            #     dci = self.species_info.dict_wdot_sc[symbol][0]
-            #     times = time.time()
-            #     dwdotdci = smp.diff(self.syms.wdot_smp[self.species_info.ordered_idx_map[symbol]], dci)
-            #     timee = time.time()
-            #     print(f"Time to find dwdot[{symbol}]/d{dci} = {timee - times}")
-            # exit()
 
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)

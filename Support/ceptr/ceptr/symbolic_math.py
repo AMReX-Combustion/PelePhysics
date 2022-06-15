@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 
 import numpy as np
+import symengine as sme
 import sympy as smp
 
 
@@ -81,6 +82,9 @@ class SymbolicMath:
                 for i in range(n_qssa_species)
             ]
 
+            # Create dict to hold end of chain rule dscqssdsc terms
+            self.dscqssdsc_stop = {"info": ""}
+
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
         # Convert to ccode (to fix pow) and then string
@@ -136,7 +140,106 @@ class SymbolicMath:
                 % (i, timee - times)
             )
 
-    def syms_to_specnum(self, smp):
+    def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
-        num = re.findall(r"\[(.*?)\]", str(smp))
+        num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
+
+    def chain_diff(self, species_info, sym_smp, ref_var):
+        """Chain rule diff that replacing sc_qss with dependents."""
+
+        free_symb = sym_smp.free_symbols
+        # create dict of sc_terms as function of sc_qss terms
+        sc_terms = {}
+        for sc_symb in free_symb:
+            if "sc_qss" in str(sc_symb):
+                scqssnum = self.syms_to_specnum(sc_symb)
+                for name in species_info.dict_qssdepend_sc[
+                    species_info.qssa_species_list[scqssnum]
+                ]:
+                    if name in sc_terms:
+                        sc_terms[name].append(sc_symb)
+                    else:
+                        sc_terms[name] = [sc_symb]
+
+        # # Let's try subs
+        # print(f"Substituting sc_qss terms...")
+        # if ref_var in sc_terms:
+        #     for scqss in sc_terms[ref_var]:
+        #         print(scqss)
+        #         scqssnum = self.syms_to_specnum(scqss)
+        #         sym_smp = sym_smp.subs(self.sc_qss_smp[scqssnum], scqss)
+
+        # print(sym_smp.free_symbols)
+        # exit()
+
+        print(f"Computing dsym/d{ref_var}...")
+        dsym_dref = sme.diff(sym_smp, ref_var)
+
+        # check for sc_qss terms
+        if ref_var in sc_terms:
+            print(f"There are sc_qss terms in {ref_var}...")
+            print(sc_terms[ref_var])
+
+            for scqss in sc_terms[ref_var]:
+                print(scqss)
+                term1 = sme.diff(sym_smp, scqss)
+                scqssnum = self.syms_to_specnum(scqss)
+                term2 = self.chain_diff(
+                    species_info, self.sc_qss_smp[scqssnum], ref_var
+                )
+
+                dsym_dref += term1 * term2
+
+                # print(species_info.dict_qssdepend_sc[species_info.qssa_species_list[scqssnum]])
+                # print(species_info.dict_qssdepend_scqss[species_info.qssa_species_list[scqssnum]])
+                # exit()
+                # term2 = sme.diff(name, ref_var)
+                # print(term2)
+                # dsym_dref += sme.diff(sym_smp, name) * sme.diff(name, ref_var)
+
+        return dsym_dref
+
+    def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
+
+        # Compute end of chain rule sc_qss derivatives
+        self.compute_scqss_stopping(sc_idx, species_info)
+
+        # print(self.dscqssdsc_stop)
+        # print(len(self.dscqssdsc_stop))
+
+        # exit()
+        dscqss_dsc = 0
+        return dscqss_dsc
+
+    def compute_scqss_stopping(self, sc_idx, species_info):
+        """Routine that computes the end terms in the sc_qss chain rule."""
+
+        # Fill dscqssdsc_stop if not filled for sc yet
+        if not self.dscqssdsc_stop["info"] == f"sc[{sc_idx}]":
+            for stp in species_info.sc_qss_chain_stop:
+                print(stp)
+                print(species_info.dict_qss_species[stp])
+                # if there is no dependence, then the derivative is zero
+                if not species_info.dict_qssdepend_sc[stp]:
+                    print(f"no dependence of {stp} on sc[{sc_idx}]")
+                    tmp_diff = 0
+                else:
+
+                    times = time.time()
+                    tmp_diff = sme.diff(
+                        self.sc_qss_smp[species_info.dict_qss_species[stp]],
+                        # smp.symbols(f"sc[{sc_idx}]"),
+                        self.sc_smp[sc_idx],
+                    )
+                    print(
+                        f"Time to do derivative for {stp} = {time.time()-times}"
+                    )
+                self.dscqssdsc_stop[
+                    f"sc_qss[{species_info.dict_qss_species[stp]}]"
+                ] = tmp_diff
+
+            self.dscqssdsc_stop["info"] = f"sc[{sc_idx}]"
+        else:
+            # already filled for sc_idx...do nothing...
+            print(f"dscqssdsc_stop already filled for {sc_idx}.")

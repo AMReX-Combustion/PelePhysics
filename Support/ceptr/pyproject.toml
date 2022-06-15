@@ -14,6 +14,7 @@ matplotlib = "^3.5.2"
 scipy = "^1.8.0"
 numpy = "^1.22.3"
 sympy = "^1.10"
+symengine = "^0.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
