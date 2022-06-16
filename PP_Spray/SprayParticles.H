@@ -77,8 +77,8 @@ public:
     int& particle_verbose,
     amrex::Real& particle_cfl,
     amrex::Real& wall_temp,
-    int& mass_trans,
-    int& mom_trans,
+    bool& mass_trans,
+    bool& mom_trans,
     int& write_spray_ascii_files,
     int& plot_spray_src,
     int& init_function,
@@ -182,15 +182,14 @@ public:
     const int depos_width = 1)
   {
     int ghost_state = interp_width + int(std::round(cfl));
-    if (level == 0) {
-      return ghost_state;
-    } else {
+    if (level > 0) {
       // If ghost particles are present, we need to accommodate those
       const int ghost_part_cells =
         getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
       int ghost_part_state = interp_width + ghost_part_cells;
-      return amrex::max(ghost_part_state, ghost_state);
+      ghost_state = amrex::max(ghost_part_state, ghost_state);
     }
+    return ghost_state;
   }
 
   // This returns the number of ghost cells needed for a MultiFab
@@ -203,14 +202,13 @@ public:
     const int depos_width = 1)
   {
     int ghost_source = depos_width + int(std::round(cfl));
-    if (level == 0) {
-      return ghost_source;
-    } else {
+    if (level > 0) {
       // If ghost particles are present, we need to accommodate those
       const int ghost_part_cells =
         getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
-      return amrex::max(ghost_part_cells, ghost_source);
+      ghost_source = amrex::max(ghost_part_cells, ghost_source);
     }
+    return ghost_source;
   }
 
   ///

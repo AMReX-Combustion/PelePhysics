@@ -89,10 +89,11 @@ check_bounds(
       if (bflag != 0) { // Not periodic
         amrex::Real diff = fact * (pos[dir] - dom_loc);
         if (diff < 0.) {
-          if (bflag == 1)
+          if (bflag == 1) {
             dflags[dir] = -int(fact);
-          else
+          } else {
             return true;
+          }
           // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
           dflags[dir] = -2 * int(fact);

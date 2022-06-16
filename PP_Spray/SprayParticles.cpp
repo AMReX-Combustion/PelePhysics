@@ -54,8 +54,8 @@ SprayParticleContainer::readSprayParams(
   int& particle_verbose,
   Real& particle_cfl,
   Real& wall_temp,
-  int& mass_trans,
-  int& mom_trans,
+  bool& mass_trans,
+  bool& mom_trans,
   int& write_spray_ascii_files,
   int& plot_spray_src,
   int& init_function,
@@ -70,8 +70,15 @@ SprayParticleContainer::readSprayParams(
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
 
-  pp.get("mass_transfer", mass_trans);
-  pp.get("mom_transfer", mom_trans);
+  int inmt = 1;
+  pp.get("mass_transfer", inmt);
+  if (inmt != 0) {
+    mass_trans = true;
+  }
+  pp.get("mom_transfer", inmt);
+  if (inmt != 0) {
+    mom_trans = true;
+  }
   pp.query("cfl", particle_cfl);
   if (particle_cfl > max_cfl) {
     std::string errorstr =
@@ -167,7 +174,7 @@ SprayParticleContainer::readSprayParams(
   sprayData.sigma = spray_sigma;
 
   // List of known derived spray quantities
-  std::vector<std::string> derive_name = {
+  std::vector<std::string> derive_names = {
     "spray_mass",      // Total liquid mass in a cell
     "spray_num",       // Number of spray droplets in a cell
     "spray_vol",       // Total liquid volume in a cell
@@ -183,18 +190,16 @@ SprayParticleContainer::readSprayParams(
   pp.query("derive_plot_species", derive_plot_species);
   // If derive_spray_vars if present, add above spray quantities in the same
   // order
-  if (derive_plot_vars) {
-    for (int ivar = 0; ivar < derive_name.size(); ++ivar) {
-      derivePlotVars.push_back(derive_name[ivar]);
-    }
+  for (const auto& derive_name : derive_names) {
+    derivePlotVars.push_back(derive_name);
   }
-  if (derive_plot_species && SPRAY_FUEL_NUM > 1) {
+  if (derive_plot_species == 1 && SPRAY_FUEL_NUM > 1) {
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       derivePlotVars.push_back("spray_mass_" + sprayFuelNames[spf]);
     }
   }
 
-  if (particle_verbose && ParallelDescriptor::IOProcessor()) {
+  if (particle_verbose >= 1 && ParallelDescriptor::IOProcessor()) {
     amrex::Print() << "Spray fuel species " << sprayFuelNames[0];
     for (int i = 1; i < SPRAY_FUEL_NUM; ++i) {
       amrex::Print() << ", " << sprayFuelNames[i];
@@ -279,7 +284,7 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   BL_PROFILE("ParticleContainer::estTimestep()");
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-  if (level >= this->GetParticles().size() || m_sprayIndx.mom_tran == 0) {
+  if (level >= this->GetParticles().size() || m_sprayIndx.mom_trans) {
     return -1.;
   }
 
@@ -359,7 +364,6 @@ SprayParticleContainer::updateParticles(
     dynamic_cast<EBFArrayBoxFactory const&>(state.Factory());
   const auto* cellcent = &(factory.getCentroid());
   const auto* bndrycent = &(factory.getBndryCent());
-  const auto* bndryarea = &(factory.getBndryArea());
   const auto* bndrynorm = &(factory.getBndryNormal());
   const auto* volfrac = &(factory.getVolFrac());
 #endif
@@ -390,9 +394,7 @@ SprayParticleContainer::updateParticles(
   Real sub_cfl = 0.5; // CFL for each subcycle
   Real sub_dt = flow_dt;
   int num_iter = 1;
-  bool do_sub = false;
   if (do_move && spray_cfl_lev > sub_cfl) {
-    do_sub = true;
     num_iter = int(std::ceil(spray_cfl_lev / sub_cfl));
     sub_dt = flow_dt / Real(num_iter);
   }
@@ -425,7 +427,6 @@ SprayParticleContainer::updateParticles(
     Array4<const Real> ccent_fab;
     Array4<const Real> bcent_fab;
     Array4<const Real> bnorm_fab;
-    Array4<const Real> barea_fab;
     Array4<const Real> volfrac_fab;
     const auto& flags_array = flags.array();
     if (flags.getType(state_box) == FabType::regular) {
@@ -435,8 +436,6 @@ SprayParticleContainer::updateParticles(
       ccent_fab = cellcent->array(pti);
       // Centroid of EB
       bcent_fab = bndrycent->array(pti);
-      // Area of EB face
-      barea_fab = bndryarea->array(pti);
       // Normal of EB
       bnorm_fab = bndrynorm->array(pti);
       volfrac_fab = volfrac->array(pti);
@@ -449,15 +448,14 @@ SprayParticleContainer::updateParticles(
     //       u_mac[2].array(pti))};
     // #endif
     amrex::ParallelFor(
-      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
-           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
-           fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
-           wallT, isGhost, isVirt, src_box, state_box, do_sub, sub_cfl,
-           num_iter, sub_dt, spray_cfl_lev
+      Np,
+      [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
+       momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
+       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, wallT, isGhost,
+       isVirt, src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev
 #ifdef AMREX_USE_EB
-           ,
-           flags_array, ccent_fab, bcent_fab, bnorm_fab, barea_fab, volfrac_fab,
-           eb_in_box
+       ,
+       flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, eb_in_box
 #endif
     ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
@@ -518,7 +516,7 @@ SprayParticleContainer::updateParticles(
             gpv.define();
             calculateSpraySource(cur_dt, gpv, SPI, *fdat, p, ltransparm);
             // Modify particle position by whole time step
-            if (do_move && SPI.mom_tran) {
+            if (do_move && SPI.mom_trans) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
@@ -535,21 +533,21 @@ SprayParticleContainer::updateParticles(
               Real cur_coef =
                 -weights[aindx] * fdat->num_ppp * cvol * cur_dt / flow_dt;
               if (!src_box.contains(cur_indx)) {
-                if (isGhost) {
-                  continue;
-                } else {
+                if (!isGhost) {
                   Abort("SprayParticleContainer::updateParticles() -- source "
                         "box too small");
+                } else {
+                  continue;
                 }
               }
-              if (SPI.mom_tran) {
+              if (SPI.mom_trans) {
                 for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                   Gpu::Atomic::Add(
                     &momSrcarr(cur_indx, dir),
                     cur_coef * gpv.fluid_mom_src[dir]);
                 }
               }
-              if (SPI.mass_tran) {
+              if (SPI.mass_trans) {
                 Gpu::Atomic::Add(
                   &rhoSrcarr(cur_indx), cur_coef * gpv.fluid_mass_src);
                 for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

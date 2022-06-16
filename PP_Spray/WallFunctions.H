@@ -20,18 +20,18 @@ tile_at_bndry(
   if (domain.contains(testBox)) {
     return false;
   }
+  bool at_bndry = false;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     amrex::Box boxlo(in_box);
     boxlo.growLo(dir, 1);
     amrex::Box boxhi(in_box);
     boxhi.growHi(dir, 1);
-    if (!domain.contains(boxlo) && bndry_lo[dir] != 0) {
-      return true;
-    } else if (!domain.contains(boxhi) && bndry_hi[dir] != 0) {
-      return true;
+    if ((!domain.contains(boxlo) && bndry_lo[dir] != 0) ||
+        (!domain.contains(boxhi) && bndry_hi[dir] != 0)) {
+      at_bndry = true;
     }
   }
-  return false;
+  return at_bndry;
 }
 
 /****************************************************************
@@ -197,6 +197,7 @@ splash_type
 splash_criteria(
   const amrex::Real Kv, const amrex::Real Tstar, const amrex::Real alpha)
 {
+  splash_type crit = splash_type::thermal_breakup;
   amrex::Real Kcrit = 20. + 2. * alpha / M_PI * 20.;
   if (Tstar < 1.1) {
     Kcrit = 130.;
@@ -204,15 +205,15 @@ splash_criteria(
       Kcrit = 54. + 76. * std::exp(13. * (Tstar - 1.));
     }
     if (Kv < Kcrit) {
-      return splash_type::deposit;
+      crit = splash_type::deposit;
     } else {
-      return splash_type::splash;
+      crit = splash_type::splash;
     }
   }
   if (Kv < Kcrit) {
-    return splash_type::rebound;
+    crit = splash_type::rebound;
   }
-  return splash_type::thermal_breakup;
+  return crit;
 }
 
 // Find tangents along surface

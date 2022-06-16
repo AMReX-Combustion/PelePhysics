@@ -9,8 +9,8 @@
 // Spray flags and indices
 struct SprayComps
 {
-  int mass_tran;
-  int mom_tran;
+  bool mass_trans;
+  bool mom_trans;
   int pstateVel = 0; // Particle indices
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
