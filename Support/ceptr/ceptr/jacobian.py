@@ -1216,7 +1216,7 @@ def ajac_term_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " ajac_term_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T)",
+        " ajac_term_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
 
@@ -1268,6 +1268,15 @@ def ajac_term_debug(
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
         cw.writer(fstream)
+        cw.writer(fstream, cw.comment("compute the species enthalpy"))
+        cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+        cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+            )
+            cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
         if species_info.n_qssa_species > 0:
             cw.writer(
@@ -1303,11 +1312,11 @@ def ajac_term_debug(
     # dwdotdT
     cw.writer(
         fstream,
-        "amrex::Real T_pert1, T_pert2, pertT;"
+        "amrex::Real T_pert1, pertT;"
     )
     cw.writer(
         fstream,
-        "amrex::Real wdot_pert1[%d], wdot_pert2[%d];"
+        "amrex::Real wdot_pert1[%d], wdot[%d];"
         % (
             n_species,
             n_species,
@@ -1315,17 +1324,16 @@ def ajac_term_debug(
     )
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
-    cw.writer(fstream,"pertT = 1e-1;") 
+    cw.writer(fstream,"pertT = 1e-2;") 
     cw.writer(fstream,"T_pert1 = T + pertT;")
-    cw.writer(fstream,"T_pert2 = T - pertT;")
     cw.writer(fstream)
     cw.writer(fstream,"productionRate(wdot_pert1, sc, T_pert1);")
-    cw.writer(fstream,"productionRate(wdot_pert2, sc, T_pert2);")
+    cw.writer(fstream,"productionRate(wdot, sc, T);")
     cw.writer(fstream)
     cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
     cw.writer(
         fstream, 
-        "J[%d + k] = (wdot_pert1[k] - wdot_pert2[k])/(2.0*pertT);" 
+        "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);" 
         % (
             n_species*(n_species + 1),
         )  
@@ -1333,6 +1341,79 @@ def ajac_term_debug(
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
+
+    # depends on dwdotdT and dwdotdsc
+    cw.writer(
+        fstream,
+        "amrex::Real c_R[%d], dcRdT[%d], e_RT[%d];"
+        % (n_species, n_species, n_species),
+    )
+    cw.writer(fstream, "amrex::Real * eh_RT;")
+    #if precond:
+    #    cw.writer(fstream, "if (HP) {")
+    #else:
+    #    cw.writer(fstream, "if (consP) {")
+
+    cw.writer(fstream, "if (consP) {")
+
+    cw.writer(fstream, "cp_R(c_R, tc);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+    cw.writer(fstream, "eh_RT = &h_RT[0];")
+
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "else {")
+
+    cw.writer(fstream, "cv_R(c_R, tc);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+    cw.writer(fstream, "speciesInternalEnergy(e_RT, tc);")
+    cw.writer(fstream, "eh_RT = &e_RT[0];")
+
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+
+    cw.writer(
+        fstream,
+        "amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;",
+    )
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "cmix += c_R[k]*sc[k];")
+    cw.writer(fstream, "dcmixdT += dcRdT[k]*sc[k];")
+    cw.writer(fstream, "ehmix += eh_RT[k]*wdot[k];")
+    cw.writer(
+        fstream,
+        "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
+        % (n_species * (n_species + 1)),
+    )
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+    cw.writer(fstream, "amrex::Real cmixinv = 1.0/cmix;")
+    cw.writer(fstream, "amrex::Real tmp1 = ehmix*cmixinv;")
+    cw.writer(fstream, "amrex::Real tmp3 = cmixinv*T;")
+    cw.writer(fstream, "amrex::Real tmp2 = tmp1*tmp3;")
+    cw.writer(fstream, "amrex::Real dehmixdc;")
+
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "dehmixdc = 0.0;")
+    cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
+    cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+    cw.writer(fstream, "}")
+    cw.writer(
+        fstream,
+        "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
+        % (n_species + 1, n_species),
+    )
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream, cw.comment("dTdot/dT"))
+    cw.writer(
+        fstream,
+        "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
+        % (n_species * (n_species + 1) + n_species),
+    )
+
 
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
