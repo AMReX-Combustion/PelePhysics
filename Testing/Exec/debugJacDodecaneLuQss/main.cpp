@@ -100,7 +100,7 @@ main(int argc, char* argv[])
     }
 
     // Compute analytically
-    ajac_term_debug(J_sympy, sc, T);
+    ajac_term_debug(J_sympy, sc, T, consP);
     aJacobian(J_fuego_consP, sc, T, consP);
     aJacobian(J_fuego_noconsP, sc, T, noconsP);
 
