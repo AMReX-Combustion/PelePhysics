@@ -405,6 +405,16 @@ class Converter:
             cck.ckwxr(hdr, self.mechanism, self.species_info)
             cth.dthermodtemp(hdr, self.mechanism, self.species_info)
 
+            print("Symbolic dscqss_dsc term print for debug")
+            cj.dscqss_dsc_debug(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                self.syms,
+                [dscqss5dsc0],
+                [(self.species_info.n_species) * 0 + 5],
+            )
             print("Symbolic jac term print for debug")
             cj.ajac_term_debug(
                 hdr,
@@ -412,11 +422,8 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 self.syms,
-                dwdot0dc0,
-                # dscqss5dsc0,
-                self.species_info.ordered_idx_map["NC12H26"]
-                * (self.species_info.n_species + 1)
-                + 0,
+                #[dscqss5dsc0],
+                #[0], 
             )
 
             # Approx analytical jacobian

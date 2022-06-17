@@ -162,7 +162,7 @@ class SymbolicMath:
 
         return cpp_str
 
-    def write_array_to_cpp(self, list_smp, array_str, cw, fstream):
+    def write_array_to_cpp(self, list_smp, array_str, cw, fstream, indexList=None):
         """Convert sympy array to C code compatible string."""
         n = len(list_smp)
 
@@ -199,16 +199,26 @@ class SymbolicMath:
             print(
                 "Made expr for entry %d (time = %.3g s)" % (i, timee - times)
             )
-            times = time.time()
-            cw.writer(
-                fstream,
-                "%s[%s] = %s;"
-                % (
-                    array_str,
-                    str(i),
-                    cpp_str,
-                ),
-            )
+            if indexList is None:
+                cw.writer(
+                    fstream,
+                    "%s[%s] = %s;"
+                    % (
+                        array_str,
+                        str(i),
+                        cpp_str,
+                    ),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "%s[%s] = %s;"
+                    % (
+                        array_str,
+                        str(indexList[i]),
+                        cpp_str,
+                    ),
+                )
             timee = time.time()
             print(
                 "Printed expr for entry %d (time = %.3g s)"
