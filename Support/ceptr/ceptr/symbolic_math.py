@@ -157,7 +157,7 @@ class SymbolicMath:
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
         # Convert to ccode (to fix pow) and then string
-        cppcode = smp.ccode(sym_smp)
+        cppcode = sme.ccode(sym_smp)
         cpp_str = str(cppcode)
 
         return cpp_str
@@ -168,7 +168,7 @@ class SymbolicMath:
 
         # Write common expressions
         times = time.time()
-        array_cse = smp.cse(list_smp)
+        array_cse = sme.cse(list_smp)
         for cse_idx in range(len(array_cse[0])):
             left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
             right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
