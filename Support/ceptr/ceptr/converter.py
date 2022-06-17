@@ -391,10 +391,12 @@ class Converter:
             )
             print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
 
-            # print("Evaluating a Jacobian component")
-            # times = time.time()
-            # dwdot0dc0 = self.syms.compute_dwdot_dsc(wdot_idx=0, sc_idx=0, species_info=self.species_info)
-            # print(f"Time to evaluate dwdot0dc0 = {time.time()-times}")
+            print("Evaluating a Jacobian component")
+            times = time.time()
+            dwdot0dc0 = self.syms.compute_dwdot_dsc(
+                wdot_idx=0, sc_idx=0, species_info=self.species_info
+            )
+            print(f"Time to evaluate dwdot0dc0 = {time.time()-times}")
 
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
@@ -410,8 +412,8 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 self.syms,
-                # dwdot0dc0,
-                dscqss5dsc0,
+                dwdot0dc0,
+                # dscqss5dsc0,
                 self.species_info.ordered_idx_map["NC12H26"]
                 * (self.species_info.n_species + 1)
                 + 0,
