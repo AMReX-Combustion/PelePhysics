@@ -1224,7 +1224,7 @@ def ajac_term_debug(
     cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
     cw.writer(fstream, "J[i] = 0.0;")
     cw.writer(fstream, "}")
-   
+
     cw.writer(fstream, cw.comment(f"J corresponds to index: {index}"))
     cw.writer(
         fstream,
@@ -1308,12 +1308,8 @@ def ajac_term_debug(
 
             cw.writer(fstream)
 
-
     # dwdotdT
-    cw.writer(
-        fstream,
-        "amrex::Real T_pert1, pertT;"
-    )
+    cw.writer(fstream, "amrex::Real T_pert1, pertT;")
     cw.writer(
         fstream,
         "amrex::Real wdot_pert1[%d], wdot[%d];"
@@ -1324,19 +1320,17 @@ def ajac_term_debug(
     )
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
-    cw.writer(fstream,"pertT = 1e-2;") 
-    cw.writer(fstream,"T_pert1 = T + pertT;")
+    cw.writer(fstream, "pertT = 1e-2;")
+    cw.writer(fstream, "T_pert1 = T + pertT;")
     cw.writer(fstream)
-    cw.writer(fstream,"productionRate(wdot_pert1, sc, T_pert1);")
-    cw.writer(fstream,"productionRate(wdot, sc, T);")
+    cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
+    cw.writer(fstream, "productionRate(wdot, sc, T);")
     cw.writer(fstream)
     cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
     cw.writer(
-        fstream, 
-        "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);" 
-        % (
-            n_species*(n_species + 1),
-        )  
+        fstream,
+        "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);"
+        % (n_species * (n_species + 1),),
     )
     cw.writer(fstream, "}")
 
@@ -1349,9 +1343,9 @@ def ajac_term_debug(
         % (n_species, n_species, n_species),
     )
     cw.writer(fstream, "amrex::Real * eh_RT;")
-    #if precond:
+    # if precond:
     #    cw.writer(fstream, "if (HP) {")
-    #else:
+    # else:
     #    cw.writer(fstream, "if (consP) {")
 
     cw.writer(fstream, "if (consP) {")
@@ -1413,7 +1407,6 @@ def ajac_term_debug(
         "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
         % (n_species * (n_species + 1) + n_species),
     )
-
 
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")

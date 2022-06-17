@@ -214,72 +214,87 @@ class SymbolicMath:
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
 
-    def chain_diff(self, species_info, sym_smp, ref_var):
-        """Chain rule diff that replacing sc_qss with dependents."""
-
-        free_symb = sym_smp.free_symbols
-        # create dict of sc_terms as function of sc_qss terms
-        sc_terms = {}
-        for sc_symb in free_symb:
-            if "sc_qss" in str(sc_symb):
-                scqssnum = self.syms_to_specnum(sc_symb)
-                for name in species_info.dict_qssdepend_sc[
-                    species_info.qssa_species_list[scqssnum]
-                ]:
-                    if name in sc_terms:
-                        sc_terms[name].append(sc_symb)
-                    else:
-                        sc_terms[name] = [sc_symb]
-
-        # # Let's try subs
-        # print(f"Substituting sc_qss terms...")
-        # if ref_var in sc_terms:
-        #     for scqss in sc_terms[ref_var]:
-        #         print(scqss)
-        #         scqssnum = self.syms_to_specnum(scqss)
-        #         sym_smp = sym_smp.subs(self.sc_qss_smp[scqssnum], scqss)
-
-        # print(sym_smp.free_symbols)
-        # exit()
-
-        print(f"Computing dsym/d{ref_var}...")
-        dsym_dref = sme.diff(sym_smp, ref_var)
-
-        # check for sc_qss terms
-        if ref_var in sc_terms:
-            print(f"There are sc_qss terms in {ref_var}...")
-            print(sc_terms[ref_var])
-
-            for scqss in sc_terms[ref_var]:
-                print(scqss)
-                term1 = sme.diff(sym_smp, scqss)
-                scqssnum = self.syms_to_specnum(scqss)
-                term2 = self.chain_diff(
-                    species_info, self.sc_qss_smp[scqssnum], ref_var
-                )
-
-                dsym_dref += term1 * term2
-
-                # print(species_info.dict_qssdepend_sc[species_info.qssa_species_list[scqssnum]])
-                # print(species_info.dict_qssdepend_scqss[species_info.qssa_species_list[scqssnum]])
-                # exit()
-                # term2 = sme.diff(name, ref_var)
-                # print(term2)
-                # dsym_dref += sme.diff(sym_smp, name) * sme.diff(name, ref_var)
-
-        return dsym_dref
-
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
 
         # Compute end of chain rule sc_qss derivatives
         self.compute_scqss_stopping(sc_idx, species_info)
 
-        # print(self.dscqssdsc_stop)
-        # print(len(self.dscqssdsc_stop))
+        print(scqss_idx)
+        debug_chain = f"dsc_qss[{scqss_idx}]/dsc[{sc_idx}] = "
+        dscqss_dsc, debug_chain_out = self.chain_scqss(
+            scqss_idx, sc_idx, species_info
+        )
 
-        # exit()
-        dscqss_dsc = 0
+        debug_chain += debug_chain_out
+
+        # print(dscqss_dsc)
+        # print(debug_chain)
+        # print(dscqss_dsc.free_symbols)
+
         return dscqss_dsc
+
+    def chain_scqss(self, scqss_idx, sc_idx, species_info):
+
+        # Find the length of the sc_qss dependency list
+        deplen = len(
+            species_info.dict_qssdepend_scqss[
+                species_info.qssa_species_list[scqss_idx]
+            ]
+        )
+        # Initialize vectors to store the recursive expressions
+        chain_vec = [None] * deplen
+        chain_vec_debug = [None] * deplen
+
+        # Loop over the qss dependencies on scqss for the given scqss_idx
+        for loop_idx, scqss_depend in enumerate(
+            species_info.dict_qssdepend_scqss[
+                species_info.qssa_species_list[scqss_idx]
+            ]
+        ):
+            # Get the number of the scqss number from the syms obj
+            scqssnum = self.syms_to_specnum(scqss_depend)
+            # Make the debug string to ensure terms are properly computed
+            chain_vec_debug[
+                loop_idx
+            ] = f"dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]"
+            # Compute the dsc_qss[scqss_idx]/dsc_qss[scqssnum] derivative
+            print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
+            chain_vec[loop_idx] = sme.diff(
+                self.sc_qss_smp[scqss_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+            )
+            chain_vec_idx, chain_vec_debug_idx = self.chain_scqss(
+                scqssnum, sc_idx, species_info
+            )
+            # Multiply the result of the returned vectors by the current index
+            chain_vec[loop_idx] *= chain_vec_idx
+            chain_vec_debug[
+                loop_idx
+            ] = f" {chain_vec_debug[loop_idx]} * ({chain_vec_debug_idx}) "
+
+        if deplen == 0:
+            # If there are no dependencies, just return the end derivative
+            if not self.dscqssdsc_stop["info"] == f"sc[{sc_idx}]":
+                print(
+                    f"dscqssdsc_stop should already be stored for {sc_idx}...!!!"
+                )
+                exit()
+            else:
+                print(
+                    f"Returning pre-computed dscqssdsc_stop for sc_qss[{scqss_idx}]"
+                )
+                chain_vec_out = self.dscqssdsc_stop[f"sc_qss[{scqss_idx}]"]
+                chain_vec_debug_out = f"dsc_qss[{scqss_idx}]/dsc[{sc_idx}]"
+        else:
+            # sum up all terms for chain_vec
+            chain_vec_out = 0
+            for expr in chain_vec:
+                chain_vec_out += expr
+            # sum up all terms for chain_vec_debug string
+            chain_vec_debug_out = ""
+            for item in chain_vec_debug:
+                chain_vec_debug_out += f" + {item} "
+        # Return both the computed sympy expressions and the debug string
+        return chain_vec_out, chain_vec_debug_out
 
     def compute_scqss_stopping(self, sc_idx, species_info):
         """Routine that computes the end terms in the sc_qss chain rule."""
@@ -287,8 +302,6 @@ class SymbolicMath:
         # Fill dscqssdsc_stop if not filled for sc yet
         if not self.dscqssdsc_stop["info"] == f"sc[{sc_idx}]":
             for stp in species_info.sc_qss_chain_stop:
-                print(stp)
-                print(species_info.dict_qss_species[stp])
                 # if there is no dependence, then the derivative is zero
                 if not species_info.dict_qssdepend_sc[stp]:
                     print(f"no dependence of {stp} on sc[{sc_idx}]")
@@ -298,8 +311,8 @@ class SymbolicMath:
                     times = time.time()
                     tmp_diff = sme.diff(
                         self.sc_qss_smp[species_info.dict_qss_species[stp]],
-                        # smp.symbols(f"sc[{sc_idx}]"),
-                        self.sc_smp[sc_idx],
+                        smp.symbols(f"sc[{sc_idx}]"),
+                        # self.sc_smp[sc_idx],
                     )
                     print(
                         f"Time to do derivative for {stp} = {time.time()-times}"
@@ -311,4 +324,5 @@ class SymbolicMath:
             self.dscqssdsc_stop["info"] = f"sc[{sc_idx}]"
         else:
             # already filled for sc_idx...do nothing...
-            print(f"dscqssdsc_stop already filled for {sc_idx}.")
+            # print(f"dscqssdsc_stop already filled for {sc_idx}.")
+            pass
