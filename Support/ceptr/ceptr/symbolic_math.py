@@ -180,6 +180,12 @@ class SymbolicMath:
                     right_cse,
                 ),
             )
+            # Debugging prints in mechanism.H...
+            # cw.writer(
+            #     fstream,
+            #     """std::cout << "%s = " << %s << std::endl;""" % (left_cse, left_cse),
+            # )
+
         timee = time.time()
 
         print("Made common expr (time = %.3g s)" % (timee - times))
@@ -214,9 +220,47 @@ class SymbolicMath:
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
 
-    def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
+    def compute_dwdot_dsc(self, wdot_idx, sc_idx, species_info):
+        """Routine to compute dwdot[x]/dsc[y]."""
 
-        # Compute end of chain rule sc_qss derivatives
+        free_symb = self.wdot_smp[wdot_idx].free_symbols
+
+        if not f"sc[{sc_idx}]" in free_symb:
+            # There is no sc dependence in wdot term
+            dwdotdsc = 0
+        else:
+            # First compute the derivative of wdot_idx w.r.t. sc[sc_idx]
+            dwdotdsc = sme.diff(self.wdot_smp[wdot_idx], f"sc[{sc_idx}]")
+
+            # Find all the sc_qss terms that are in wdot
+            scqss_depend = []
+            scqss_depend_scidx = []
+            for ss in free_symb:
+                if "sc_qss" in str(ss):
+                    scqss_depend.append(ss)
+                    scqssnum = self.syms_to_specnum(ss)
+                    if (
+                        f"sc[{sc_idx}]"
+                        in species_info.dict_qssdepend_sc[
+                            species_info.qssa_species_list[scqssnum]
+                        ]
+                    ):
+                        # sc_qss term depends upon sc[sc_idx] and we need to chain rule
+                        scqss_depend_scidx.append(ss)
+
+            print(scqss_depend_scidx)
+            exit()
+
+            # for scqss in scqss_depend:
+            # scqssnum = self.syms_to_specnum(ss)
+
+            # dwdotdsc += sme.diff(wdot_idx, )
+
+        return dwdotdsc
+
+    def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
+        """Routine to compute dsc_qss[x]/dsc[y]."""
+
         self.compute_scqss_stopping(sc_idx, species_info)
 
         print(scqss_idx)
@@ -225,15 +269,17 @@ class SymbolicMath:
             scqss_idx, sc_idx, species_info
         )
 
-        debug_chain += debug_chain_out
+        dscqss_dsc += sme.diff(
+            self.sc_qss_smp[scqss_idx], sme.symbols(f"sc[{sc_idx}]")
+        )
 
-        # print(dscqss_dsc)
-        # print(debug_chain)
-        # print(dscqss_dsc.free_symbols)
+        #  Add in the symbolic derivative w.r.t. the initial sc term
+        debug_chain += f"{debug_chain_out} + dsc_qss[{scqss_idx}]/sc[{sc_idx}]"
 
         return dscqss_dsc
 
     def chain_scqss(self, scqss_idx, sc_idx, species_info):
+        """Routine to compute chain rule scqss dependence recurssively."""
 
         # Find the length of the sc_qss dependency list
         deplen = len(
@@ -260,7 +306,7 @@ class SymbolicMath:
             # Compute the dsc_qss[scqss_idx]/dsc_qss[scqssnum] derivative
             print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
             chain_vec[loop_idx] = sme.diff(
-                self.sc_qss_smp[scqss_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+                self.sc_qss_smp[scqss_idx], sme.symbols(f"sc_qss[{scqssnum}]")
             )
             chain_vec_idx, chain_vec_debug_idx = self.chain_scqss(
                 scqssnum, sc_idx, species_info
@@ -307,12 +353,10 @@ class SymbolicMath:
                     print(f"no dependence of {stp} on sc[{sc_idx}]")
                     tmp_diff = 0
                 else:
-
                     times = time.time()
                     tmp_diff = sme.diff(
                         self.sc_qss_smp[species_info.dict_qss_species[stp]],
-                        smp.symbols(f"sc[{sc_idx}]"),
-                        # self.sc_smp[sc_idx],
+                        sme.symbols(f"sc[{sc_idx}]"),
                     )
                     print(
                         f"Time to do derivative for {stp} = {time.time()-times}"

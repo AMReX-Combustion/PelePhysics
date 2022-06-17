@@ -379,48 +379,22 @@ class Converter:
             # for symbol in self.species_info.dict_nonqss_species:
             #     print(symbol)
             #     print(self.syms.wdot_smp[self.species_info.ordered_idx_map[symbol]].free_symbols)
-            # # print(self.syms.wdot_smp[
-            # #         self.species_info.ordered_idx_map["NC12H26"]
-            # #     ].free_symbols)
+            # print(self.syms.wdot_smp[
+            #         self.species_info.ordered_idx_map["NC12H26"]
+            #     ].free_symbols)
             # exit()
 
             print("Evaluating a dscqss_dsc component")
             times = time.time()
-            dscqss5dsc0 = self.syms.compute_dscqss_dsc(5, 0, self.species_info)
+            dscqss5dsc0 = self.syms.compute_dscqss_dsc(
+                scqss_idx=5, sc_idx=0, species_info=self.species_info
+            )
             print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
 
-            # print("Evaluating a single jacobian component")
+            # print("Evaluating a Jacobian component")
             # times = time.time()
-            # dwdot0dc0 = smp.diff(
-            #     self.syms.wdot_smp[
-            #         self.species_info.ordered_idx_map["NC12H26"]
-            #     ],
-            #     smp.symbols("sc[0]"),
-            # )
-            # timee = time.time()
-            # print(f"time to evaluate dwdot0dc0 = {timee-times}")
-
-            # print("Evaluating a dscqss_dsc component")
-            # times = time.time()
-            # dscqss5dsc0 = self.syms.compute_dscqss_dsc(5, 0, self.species_info)
-            # print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
-            #
-            # print("Evaluating a single jacobian component")
-            # times = time.time()
-            # dwdot0dc0 = self.syms.chain_diff(
-            #    self.species_info,
-            #    self.syms.wdot_smp[
-            #        self.species_info.ordered_idx_map["NC12H26"]
-            #    ],
-            #    smp.symbols("sc[0]"),
-            # )
-            # timee = time.time()
-            # print(f"time to evaluate dwdot0dc0 = {timee-times}")
-
-            # times = time.time()
-            # self.species_info.identify_wdot_dependencies(self.syms)
-            # timee = time.time()
-            # print(f"Time to find wdot dependencies = {timee-times}")
+            # dwdot0dc0 = self.syms.compute_dwdot_dsc(wdot_idx=0, sc_idx=0, species_info=self.species_info)
+            # print(f"Time to evaluate dwdot0dc0 = {time.time()-times}")
 
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
