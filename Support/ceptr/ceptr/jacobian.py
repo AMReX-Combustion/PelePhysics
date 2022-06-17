@@ -1203,8 +1203,8 @@ def ajac_term_debug(
     species_info,
     reaction_info,
     syms=None,
-    dwdotdc=None,
-    index=0,
+    jacList=[],
+    indexList=None,
 ):
     """Temporary Write jacobian term for debugging."""
     n_species = species_info.n_species
@@ -1225,7 +1225,6 @@ def ajac_term_debug(
     cw.writer(fstream, "J[i] = 0.0;")
     cw.writer(fstream, "}")
 
-    cw.writer(fstream, cw.comment(f"J corresponds to index: {index}"))
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
@@ -1304,7 +1303,7 @@ def ajac_term_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            syms.write_array_to_cpp([dwdotdc], f"J", cw, fstream)
+            syms.write_array_to_cpp(jacList, f"J", cw, fstream, indexList)
 
             cw.writer(fstream)
 
@@ -1407,6 +1406,123 @@ def ajac_term_debug(
         "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
         % (n_species * (n_species + 1) + n_species),
     )
+
+    cw.writer(fstream, "return;")
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+
+def dscqss_dsc_debug(
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms=None,
+    dscqss_dscList=[],
+    indexList=None,
+):
+    """Temporary Write dscqss_dsc for debugging."""
+    n_species = species_info.n_species
+    n_qssa_species = species_info.n_qssa_species
+    n_reactions = mechanism.n_reactions
+
+    cw.writer(fstream)
+
+    # main
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
+        " dscqss_dsc_debug(amrex::Real * dscqss_dsc, amrex::Real * sc, amrex::Real T)",
+    )
+    cw.writer(fstream, "{")
+
+    # Initialize the big Jacobian array
+    cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species))
+    cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
+    cw.writer(fstream, "}")
+
+    cw.writer(
+        fstream,
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
+    )
+    cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream)
+
+    if n_reactions == 0:
+        cw.writer(fstream)
+    else:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "reference concentration: P_atm / (RT) in inverse mol/m^3"
+            ),
+        )
+        cw.writer(
+            fstream,
+            "const amrex::Real refC = %g / %g * invT;"
+            % (
+                cc.Patm_pa,
+                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
+            ),
+        )
+        cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
+
+    if n_reactions > 0:
+        # nclassd = n_reactions - nspecial
+        # nCorr   = n3body + ntroe + nsri + nlindemann
+
+        # Kc stuff
+        cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
+        cw.writer(fstream, "gibbs(g_RT, tc);")
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+            )
+            cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment("compute the species enthalpy"))
+        cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+        cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+            )
+            cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real sc_qss[%d];"
+                % (max(1, species_info.n_qssa_species)),
+            )
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                ),
+            )
+            cw.writer(fstream, cw.comment("Fill sc_qss here"))
+            cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+            # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
+            cw.writer(
+                fstream,
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                " g_RT_qss);",
+            )
+            cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
+            cw.writer(fstream)
+
+            syms.write_array_to_cpp(dscqss_dscList, f"dscqss_dsc", cw, fstream,indexList)
+
+            cw.writer(fstream)
+
 
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")

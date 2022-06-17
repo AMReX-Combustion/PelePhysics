@@ -102,9 +102,10 @@ main(int argc, char* argv[])
     1e-3, 1e-4, 1e-5, 1e-6, 1e-7};//pert
     amrex::Real * error = new amrex::Real [NUM_PERT];
     amrex::Real * gradient_approx = new amrex::Real [NUM_PERT];
-    amrex::Real * gradient_sympy = new amrex::Real [NUM_JAC_ENTRIES];
+    amrex::Real * gradient_sympy = new amrex::Real [NUM_QSS_SPECIES*NUM_SPECIES];
     int index_sc;
     int index_sc_qss;
+    int index_gradient;
     int consP, noconsP;
     consP = 1; 
     noconsP = 0;
@@ -116,18 +117,20 @@ main(int argc, char* argv[])
         sc[i] = ((double) rand() / (RAND_MAX)) + 1e-3;//(i+1)*0.02;
     }
 
-    // Compute dscqss5dsc0
-    ajac_term_debug(gradient_sympy, sc, T, consP);
-    // Compute scqss by finite diff
+    // Compute dscqss/dsc with sympy
+    dscqss_dsc_debug(gradient_sympy, sc, T);
+
+    // Compute dscqss/dsc by finite diff
     gibbs(g_RT, tc);
     gibbs_qss(g_RT_qss, tc);
     speciesEnthalpy(h_RT, tc);
     speciesEnthalpy_qss(h_RT_qss, tc);
     comp_k_f_qss(tc, invT, kf_qss);
 
-    // Perturb
+    // indices
     index_sc_qss = 5;
     index_sc = 0;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -135,14 +138,14 @@ main(int argc, char* argv[])
         comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
         comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
         comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
-        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(2.0*pertMag[i]);
-        error[i] = std::abs(gradient_approx[i]-gradient_sympy[0])/std::abs(gradient_approx[i]);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
     } 
 
     std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
     print<double>(error,NUM_PERT,"Relative error");
     print<double>(gradient_approx,NUM_PERT,"gradient_approx");
-    std::cout << "gradient_sympy = " << gradient_sympy[0] << "\n";
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
      
 
   return 0;
