@@ -153,6 +153,9 @@ class SymbolicMath:
 
             # Create dict to hold end of chain rule dscqssdsc terms
             self.dscqssdsc_stop = {"info": ""}
+            # Create dict to hold intermediate chain rule dscqssdsc terms
+            self.dscqssdsc_interm = {}
+
 
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
@@ -318,10 +321,17 @@ class SymbolicMath:
                 loop_idx
             ] = f"dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]"
             # Compute the dsc_qss[scqss_idx]/dsc_qss[scqssnum] derivative
-            print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
-            chain_vec[loop_idx] = sme.diff(
-                self.sc_qss_smp[scqss_idx], sme.symbols(f"sc_qss[{scqssnum}]")
-            )
+            
+            if (scqss_idx,scqssnum) in self.dscqssdsc_interm:
+                # We have computed that chain rule term before
+                print(f"Returning dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}] from memory...")
+                chain_vec[loop_idx] = self.dscqssdsc_interm[(scqss_idx,scqssnum)]
+            else:
+                print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
+                chain_vec[loop_idx] = sme.diff(
+                    self.sc_qss_smp[scqss_idx], sme.symbols(f"sc_qss[{scqssnum}]")
+                )
+                self.dscqssdsc_interm[(scqss_idx,scqssnum)] = chain_vec[loop_idx]
             chain_vec_idx, chain_vec_debug_idx = self.chain_scqss(
                 scqssnum, sc_idx, species_info
             )
