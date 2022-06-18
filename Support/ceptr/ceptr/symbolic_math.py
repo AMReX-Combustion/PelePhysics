@@ -162,7 +162,9 @@ class SymbolicMath:
 
         return cpp_str
 
-    def write_array_to_cpp(self, list_smp, array_str, cw, fstream, indexList=None):
+    def write_array_to_cpp(
+        self, list_smp, array_str, cw, fstream, indexList=None
+    ):
         """Convert sympy array to C code compatible string."""
         n = len(list_smp)
 
@@ -279,12 +281,14 @@ class SymbolicMath:
             scqss_idx, sc_idx, species_info
         )
 
-        dscqss_dsc += sme.diff(
-            self.sc_qss_smp[scqss_idx], sme.symbols(f"sc[{sc_idx}]")
-        )
-
         #  Add in the symbolic derivative w.r.t. the initial sc term
-        debug_chain += f"{debug_chain_out} + dsc_qss[{scqss_idx}]/sc[{sc_idx}]"
+        if not f"sc_qss[{scqss_idx}]" in self.compute_scqss_stopping:
+            dscqss_dsc += sme.diff(
+                self.sc_qss_smp[scqss_idx], sme.symbols(f"sc[{sc_idx}]")
+            )
+            debug_chain += (
+                f"{debug_chain_out} + dsc_qss[{scqss_idx}]/sc[{sc_idx}]"
+            )
 
         return dscqss_dsc
 

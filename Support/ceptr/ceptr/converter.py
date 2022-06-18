@@ -422,8 +422,8 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 self.syms,
-                #[dscqss5dsc0],
-                #[0], 
+                [dscqss5dsc0],
+                [0],
             )
 
             # Approx analytical jacobian

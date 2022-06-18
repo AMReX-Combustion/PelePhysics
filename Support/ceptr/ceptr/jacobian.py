@@ -1412,6 +1412,7 @@ def ajac_term_debug(
 
     cw.writer(fstream)
 
+
 def dscqss_dsc_debug(
     fstream,
     mechanism,
@@ -1437,7 +1438,9 @@ def dscqss_dsc_debug(
     cw.writer(fstream, "{")
 
     # Initialize the big Jacobian array
-    cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species))
+    cw.writer(
+        fstream, "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species)
+    )
     cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
     cw.writer(fstream, "}")
 
@@ -1519,10 +1522,11 @@ def dscqss_dsc_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            syms.write_array_to_cpp(dscqss_dscList, f"dscqss_dsc", cw, fstream,indexList)
+            syms.write_array_to_cpp(
+                dscqss_dscList, f"dscqss_dsc", cw, fstream, indexList
+            )
 
             cw.writer(fstream)
-
 
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
