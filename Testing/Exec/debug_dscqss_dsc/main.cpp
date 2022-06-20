@@ -111,7 +111,7 @@ main(int argc, char* argv[])
     noconsP = 0;
 
     // SET SC 
-    srand (time(NULL));
+    // srand (time(NULL));
     for (int i = 0; i < NUM_SPECIES; ++i) {
         // dummy numbers
         sc[i] = ((double) rand() / (RAND_MAX)) + 1e-3;//(i+1)*0.02;
@@ -129,6 +129,110 @@ main(int argc, char* argv[])
 
     // indices
     index_sc_qss = 5;
+    index_sc = 0;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        comp_qss_coeff(kf_qss, qf_qss_pert1, qr_qss_pert1, sc_pert1, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
+        comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
+    } 
+
+    std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(gradient_approx,NUM_PERT,"gradient_approx");
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
+
+
+    // indices
+    index_sc_qss = 5;
+    index_sc = 2;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        comp_qss_coeff(kf_qss, qf_qss_pert1, qr_qss_pert1, sc_pert1, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
+        comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
+    } 
+
+    std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(gradient_approx,NUM_PERT,"gradient_approx");
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
+
+
+    // indices
+    index_sc_qss = 0;
+    index_sc = 0;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        comp_qss_coeff(kf_qss, qf_qss_pert1, qr_qss_pert1, sc_pert1, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
+        comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
+    } 
+
+    std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(gradient_approx,NUM_PERT,"gradient_approx");
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
+
+
+    // indices
+    index_sc_qss = 5;
+    index_sc = 5;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        comp_qss_coeff(kf_qss, qf_qss_pert1, qr_qss_pert1, sc_pert1, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
+        comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
+    } 
+
+    std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(gradient_approx,NUM_PERT,"gradient_approx");
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
+
+    // indices
+    index_sc_qss = 5;
+    index_sc = 10;
+    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        comp_qss_coeff(kf_qss, qf_qss_pert1, qr_qss_pert1, sc_pert1, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert1, qf_qss_pert1, qr_qss_pert1);
+        comp_qss_coeff(kf_qss, qf_qss_pert2, qr_qss_pert2, sc_pert2, tc, g_RT, g_RT_qss);
+        comp_sc_qss(sc_qss_pert2, qf_qss_pert2, qr_qss_pert2);
+        gradient_approx[i] = (sc_qss_pert1[index_sc_qss] - sc_qss_pert2[index_sc_qss])/(sc_pert1[index_sc] - sc_pert2[index_sc]);
+        error[i] = std::abs(gradient_approx[i]-gradient_sympy[index_gradient])/std::abs(gradient_approx[i]);
+    } 
+
+    std::cout << "Computing dscqss" << index_sc_qss << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(gradient_approx,NUM_PERT,"gradient_approx");
+    std::cout << "gradient_sympy = " << gradient_sympy[index_gradient] << "\n";
+
+
+    // indices
+    index_sc_qss = 9;
     index_sc = 0;
     index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
 

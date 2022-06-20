@@ -156,7 +156,6 @@ class SymbolicMath:
             # Create dict to hold intermediate chain rule dscqssdsc terms
             self.dscqssdsc_interm = {}
 
-
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
         # Convert to ccode (to fix pow) and then string
@@ -276,6 +275,9 @@ class SymbolicMath:
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute dsc_qss[x]/dsc[y]."""
 
+        print(
+            f"Compute stopping chain terms for scqss[{scqss_idx}]/sc[{sc_idx}]..."
+        )
         self.compute_scqss_stopping(sc_idx, species_info)
 
         print(scqss_idx)
@@ -284,14 +286,9 @@ class SymbolicMath:
             scqss_idx, sc_idx, species_info
         )
 
-        #  Add in the symbolic derivative w.r.t. the initial sc term
-        if not f"sc_qss[{scqss_idx}]" in self.compute_scqss_stopping:
-            dscqss_dsc += sme.diff(
-                self.sc_qss_smp[scqss_idx], sme.symbols(f"sc[{sc_idx}]")
-            )
-            debug_chain += (
-                f"{debug_chain_out} + dsc_qss[{scqss_idx}]/sc[{sc_idx}]"
-            )
+        debug_chain += debug_chain_out
+
+        print(debug_chain)
 
         return dscqss_dsc
 
@@ -304,6 +301,7 @@ class SymbolicMath:
                 species_info.qssa_species_list[scqss_idx]
             ]
         )
+        print(f"deplen = {deplen}")
         # Initialize vectors to store the recursive expressions
         chain_vec = [None] * deplen
         chain_vec_debug = [None] * deplen
@@ -321,17 +319,25 @@ class SymbolicMath:
                 loop_idx
             ] = f"dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]"
             # Compute the dsc_qss[scqss_idx]/dsc_qss[scqssnum] derivative
-            
-            if (scqss_idx,scqssnum) in self.dscqssdsc_interm:
+
+            if (scqss_idx, scqssnum) in self.dscqssdsc_interm:
                 # We have computed that chain rule term before
-                print(f"Returning dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}] from memory...")
-                chain_vec[loop_idx] = self.dscqssdsc_interm[(scqss_idx,scqssnum)]
+                print(
+                    f"Returning dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}] from memory..."
+                )
+                chain_vec[loop_idx] = self.dscqssdsc_interm[
+                    (scqss_idx, scqssnum)
+                ]
             else:
                 print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
                 chain_vec[loop_idx] = sme.diff(
-                    self.sc_qss_smp[scqss_idx], sme.symbols(f"sc_qss[{scqssnum}]")
+                    self.sc_qss_smp[scqss_idx],
+                    smp.symbols(f"sc_qss[{scqssnum}]"),
                 )
-                self.dscqssdsc_interm[(scqss_idx,scqssnum)] = chain_vec[loop_idx]
+                self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
+                    loop_idx
+                ]
+
             chain_vec_idx, chain_vec_debug_idx = self.chain_scqss(
                 scqssnum, sc_idx, species_info
             )
@@ -350,7 +356,7 @@ class SymbolicMath:
                 exit()
             else:
                 print(
-                    f"Returning pre-computed dscqssdsc_stop for sc_qss[{scqss_idx}]"
+                    f"Returning pre-computed dscqssdsc_stop for sc_qss[{scqss_idx}]/sc[{sc_idx}]..."
                 )
                 chain_vec_out = self.dscqssdsc_stop[f"sc_qss[{scqss_idx}]"]
                 chain_vec_debug_out = f"dsc_qss[{scqss_idx}]/dsc[{sc_idx}]"
@@ -359,10 +365,16 @@ class SymbolicMath:
             chain_vec_out = 0
             for expr in chain_vec:
                 chain_vec_out += expr
+            #  Add in the symbolic derivative w.r.t. the initial sc term
+            chain_vec_out += sme.diff(
+                self.sc_qss_smp[scqss_idx], smp.symbols(f"sc[{sc_idx}]")
+            )
             # sum up all terms for chain_vec_debug string
             chain_vec_debug_out = ""
             for item in chain_vec_debug:
                 chain_vec_debug_out += f" + {item} "
+            #  Add in the symbolic derivative w.r.t. the initial sc term
+            chain_vec_debug_out += f" + dsc_qss[{scqss_idx}]/sc[{sc_idx}]"
         # Return both the computed sympy expressions and the debug string
         return chain_vec_out, chain_vec_debug_out
 
@@ -380,10 +392,10 @@ class SymbolicMath:
                     times = time.time()
                     tmp_diff = sme.diff(
                         self.sc_qss_smp[species_info.dict_qss_species[stp]],
-                        sme.symbols(f"sc[{sc_idx}]"),
+                        smp.symbols(f"sc[{sc_idx}]"),
                     )
                     print(
-                        f"Time to do derivative for {stp} = {time.time()-times}"
+                        f"Time to do derivative for scqss[{species_info.dict_qss_species[stp]}]/dsc[{sc_idx}] = {time.time()-times}"
                     )
                 self.dscqssdsc_stop[
                     f"sc_qss[{species_info.dict_qss_species[stp]}]"
