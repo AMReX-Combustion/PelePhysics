@@ -237,7 +237,7 @@ public:
         {
           src_var = "SRC_" + var;
         }
-        int idx = get_var_index(var.c_str(), &m_h_nnf_data);
+        int idx = get_var_index(var.c_str(), &m_h_nnf_data, false);
         int src_idx = get_var_index(src_var.c_str(), &m_h_nnf_data, false);
         m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j] = (amrex::Real)std::stod(coeff);
         m_h_nnf_data.comb_idx[i*m_h_nnf_data.Ncomb + j] = idx;
