@@ -72,12 +72,12 @@ SprayParticleContainer::readSprayParams(
 
   int inmt = 1;
   pp.get("mass_transfer", inmt);
-  if (inmt != 0) {
-    mass_trans = true;
+  if (inmt == 0) {
+    mass_trans = false;
   }
   pp.get("mom_transfer", inmt);
-  if (inmt != 0) {
-    mom_trans = true;
+  if (inmt == 0) {
+    mom_trans = false;
   }
   pp.query("cfl", particle_cfl);
   if (particle_cfl > max_cfl) {
