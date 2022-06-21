@@ -238,7 +238,7 @@ public:
           src_var = "SRC_" + var;
         }
         int idx = get_var_index(var.c_str(), &m_h_nnf_data);
-        int src_idx = get_var_index(src_var.c_str(), &m_h_nnf_data);
+        int src_idx = get_var_index(src_var.c_str(), &m_h_nnf_data, false);
         m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j] = (amrex::Real)std::stod(coeff);
         m_h_nnf_data.comb_idx[i*m_h_nnf_data.Ncomb + j] = idx;
         m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = src_idx;
@@ -273,7 +273,7 @@ public:
     }
     amrex::Print() << std::endl;
     
-    amrex::Print() << "Ncomb: " << std::endl;
+    amrex::Print() << "Ncomb: " << m_h_nnf_data.Ncomb << std::endl;
     
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
@@ -285,7 +285,16 @@ public:
         const int& src_idx = m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j];
         const amrex::Real& coeff = m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j];
         std::string varname(&m_h_nnf_data.varnames[idx*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
-        std::string src_varname(&m_h_nnf_data.varnames[src_idx*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+        std::string src_varname;
+        if(src_idx >= 0)
+        {
+          src_varname = std::string(&m_h_nnf_data.varnames[src_idx*m_h_nnf_data.len_str],
+              m_h_nnf_data.len_str);  
+        }
+        else
+        {
+          src_varname = "None";
+        }
         amrex::Print() << amrex::trim(varname) << " | " << amrex::trim(src_varname) << " | " << coeff << std::endl;
       }
       amrex::Print() << std::endl;
@@ -478,7 +487,8 @@ private:
     {
       const int& idx = nnf_data->comb_src_idx[paramidx*nnf_data->Ncomb + j];
       const amrex::Real& coeff = nnf_data->comb_coeff[paramidx*nnf_data->Ncomb + j];
-      rr += coeff*acc[idx];
+      const amrex::Real src_term = (idx < 0) ? 0.0 : acc[idx];
+      rr += coeff*src_term;
     }
     
     out = rr;
