@@ -71,11 +71,11 @@ SprayParticleContainer::readSprayParams(
   pp.query("v", particle_verbose);
 
   int inmt = 1;
-  pp.get("mass_transfer", inmt);
+  pp.query("mass_transfer", inmt);
   if (inmt == 0) {
     mass_trans = false;
   }
-  pp.get("mom_transfer", inmt);
+  pp.query("mom_transfer", inmt);
   if (inmt == 0) {
     mom_trans = false;
   }
