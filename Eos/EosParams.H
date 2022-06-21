@@ -84,11 +84,20 @@ struct InitEosParm<Manifold>
       for (int idim = 0; idim < manf_data_in->Ndim; idim++)
       {
         std::string dimname = std::string(&manf_data_in->dimnames[idim*manf_data_in->len_str], manf_data_in->len_str);
-        eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), manf_data_in, false);
+        std::string dim_src;
+        if(dimname.rfind("Y-") == 0)
+        {
+          dim_src = "SRC_" + amrex::trim(dimname).substr(2u, std::string::npos);
+        }
+        else
+        {
+          dim_src = "SRC_" + amrex::trim(dimname);
+        }
+        eosparm->idx_Wdot[idim] = get_var_index(dim_src.c_str(), manf_data_in, false);
         if( eosparm->idx_Wdot[idim] < 0)
         {
-        	amrex::Print() << "Warning: No source term found for manifold parameter " << manf_data_in->dimnames[idim]
-        		       << ", assuming SRC_" << manf_data_in->dimnames[idim] << " = 0";
+        	amrex::Print() << "Warning: No source term found for manifold parameter " << amrex::trim(dimname)
+        		       << ", assuming SRC_" << amrex::trim(dimname) << " = 0" << std::endl;
         }
       }
     }

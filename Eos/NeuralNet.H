@@ -228,7 +228,15 @@ public:
         auto end = defn[j].find("*");
         std::string coeff = defn[j].substr(start, end);
         std::string var = defn[j].substr(end+1, std::string::npos);
-        std::string src_var = "SRC_" + var;
+        std::string src_var;
+        if(var.rfind("Y-") == 0)
+        {
+          src_var = "SRC_" + var.substr(2u, std::string::npos);
+        }
+        else
+        {
+          src_var = "SRC_" + var;
+        }
         int idx = get_var_index(var.c_str(), &m_h_nnf_data);
         int src_idx = get_var_index(src_var.c_str(), &m_h_nnf_data);
         m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j] = (amrex::Real)std::stod(coeff);

@@ -34,7 +34,7 @@ public:
   virtual ManFuncData& host_manfunc_data() = 0;
   virtual ManFuncData* device_manfunc_data() = 0;
   
-  virtual ~ManFuncParams() {};
+  virtual ~ManFuncParams() {}
 
 }; // class ManFuncParams
 
@@ -73,7 +73,7 @@ public:
   AMREX_GPU_HOST_DEVICE
   virtual ManifoldModel model() = 0;
   
-  virtual ~ManifoldFunc() {};
+  virtual ~ManifoldFunc() {}
   
 }; // class ManifoldFunc
 }  // namespace physics

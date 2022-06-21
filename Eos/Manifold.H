@@ -236,10 +236,6 @@ struct Manifold
     {
       TabFuncParams::TabFuncData* tf_data =
           static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
-      if(tf_data == nullptr)
-      {
-        amrex::Error("Selected manifold model was Table, but data struct is not of type TabFuncData.");
-      }
       manfunc.reset(new pele::physics::TabFunc(tf_data));
     }
     else
@@ -247,10 +243,6 @@ struct Manifold
 #ifdef USE_LIBTORCH
       NNFuncParams::NNFuncData* nnf_data =
           static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
-      if(nnf_data == nullptr)
-      {
-        amrex::Error("Selected manifold model was NeuralNet, but data struct is not of type NNFuncData.");
-      }
       manfunc.reset(new pele::physics::NNFunc(nnf_data));
 #else
       amrex::Error("Must set USE_LIBTORCH = TRUE to run with neural net manifold model.");

@@ -94,7 +94,7 @@ namespace pele{
         amrex::Print() << "Nxi : ";
         for (int ii = 0; ii< m_h_tf_data.Ndim; ii++) {
           std::string dimname(&m_h_tf_data.dimnames[ii*m_h_tf_data.len_str], m_h_tf_data.len_str);
-          amrex::Print() << dimname << " " << m_h_tf_data.dimLengths[ii] << " | " ;
+          amrex::Print() << amrex::trim(dimname) << " " << m_h_tf_data.dimLengths[ii] << " | " ;
         }
         amrex::Print() << std::endl;
         amrex::Print() << "Nv: " << m_h_tf_data.Nvar << std::endl;
@@ -114,7 +114,8 @@ namespace pele{
           amrex::Real *dat_end = &m_h_tf_data.values[(ii+1)*m_h_tf_data.varSpacing];
           amrex::Real *min_entry =  std::min_element(dat_beg, dat_end) ;
           amrex::Real *max_entry =  std::max_element(dat_beg, dat_end) ;
-          amrex::Print() << ii << " | " << varname << " | " << *min_entry  << " | " << *max_entry <<  std::endl;
+          amrex::Print() << ii << " | " << amrex::trim(varname) << " | " << *min_entry  << " | " <<
+              *max_entry <<  std::endl;
         }
       }
 
@@ -232,7 +233,8 @@ namespace pele{
       
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
+      virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[],
+          amrex::Real& out)
       {
         out = 0.0;
       }
