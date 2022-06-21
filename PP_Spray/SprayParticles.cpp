@@ -70,15 +70,8 @@ SprayParticleContainer::readSprayParams(
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
 
-  int inmt = 1;
-  pp.query("mass_transfer", inmt);
-  if (inmt == 0) {
-    mass_trans = false;
-  }
-  pp.query("mom_transfer", inmt);
-  if (inmt == 0) {
-    mom_trans = false;
-  }
+  pp.query("mass_transfer", mass_trans);
+  pp.query("mom_transfer", mom_trans);
   pp.query("cfl", particle_cfl);
   if (particle_cfl > max_cfl) {
     std::string errorstr =
@@ -284,7 +277,7 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   BL_PROFILE("ParticleContainer::estTimestep()");
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-  if (level >= this->GetParticles().size() || m_sprayIndx.mom_trans) {
+  if (level >= this->GetParticles().size() || !m_sprayIndx.mom_trans) {
     return -1.;
   }
 
