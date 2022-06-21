@@ -45,11 +45,9 @@ SprayParticleContainer::computeDerivedVars(
     const SprayData* fdat = d_sprayData;
     FArrayBox& varfab = mf_var[pti];
     Array4<Real> const& vararr = mf_var.array(pti, start_indx);
-    // , mass_indx, num_indx,
-    //     vol_indx, surf_indx, volf_indx, d10_indx, d32_indx, temp_indx,
-    //     vel_indx, total_spec_indx]
     amrex::ParallelFor(
-                       Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol, total_spec_indx] AMREX_GPU_DEVICE(int pid) noexcept {
+      Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol,
+           total_spec_indx] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           RealVect lxc = (p.pos() - plo) * dxi;
