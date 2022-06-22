@@ -9,6 +9,7 @@ import sympy as smp
 
 import ceptr.thermo as cth
 
+
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
@@ -157,7 +158,7 @@ class SymbolicMath:
             # Create dict to hold scqss_sc terms
             self.dscqssdsc = {}
 
-    #@profile
+    # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
         # Convert to ccode (to fix pow) and then string
@@ -166,7 +167,7 @@ class SymbolicMath:
 
         return cpp_str
 
-    #@profile
+    # @profile
     def write_array_to_cpp(
         self, list_smp, array_str, cw, fstream, indexList=None
     ):
@@ -232,7 +233,7 @@ class SymbolicMath:
                 % (i, timee - times)
             )
 
-    #@profile
+    # @profile
     def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
@@ -254,7 +255,7 @@ class SymbolicMath:
 
         return sc_depend, scqss_depend
 
-    #@profile
+    # @profile
     def compute_dwdot_dsc(self, wdot_idx, sc_idx, species_info):
         """Routine to compute dwdot[x]/dsc[y]."""
 
@@ -284,7 +285,7 @@ class SymbolicMath:
 
         return dwdotdsc
 
-    #@profile
+    # @profile
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute dsc_qss[x]/dsc[y]."""
 
@@ -318,7 +319,7 @@ class SymbolicMath:
 
         return dscqss_dsc
 
-    #@profile
+    # @profile
     def chain_scqss_sc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute chain rule scqss dependence recursively."""
 
@@ -409,7 +410,7 @@ class SymbolicMath:
         # Return both the computed sympy expressions and the debug string
         return chain_vec_out, chain_vec_debug_out
 
-    #@profile
+    # @profile
     def compute_scqss_stopping(self, sc_idx, species_info):
         """Routine that computes the end terms in the sc_qss chain rule."""
 
