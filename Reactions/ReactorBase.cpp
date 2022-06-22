@@ -34,7 +34,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
   int omp_thread = 0;
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 

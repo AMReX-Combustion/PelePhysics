@@ -12952,17 +12952,17 @@ comp_qfqr(double* qf, double* qr, double* sc, double* tc, double invT)
 
 #ifndef AMREX_USE_CUDA
 static double T_save = -1;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp threadprivate(T_save)
 #endif
 
 static double k_f_save[167];
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp threadprivate(k_f_save)
 #endif
 
 static double Kc_save[167];
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp threadprivate(Kc_save)
 #endif
 
