@@ -1,5 +1,5 @@
-#ifndef PMF_DATA_H_
-#define PMF_DATA_H_
+#ifndef PMF_DATA_H
+#define PMF_DATA_H
 
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>

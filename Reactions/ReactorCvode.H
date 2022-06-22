@@ -1,5 +1,5 @@
-#ifndef _REACTORCVODE_H_
-#define _REACTORCVODE_H_
+#ifndef REACTORCVODE_H
+#define REACTORCVODE_H
 
 #include "AMReX_Sundials.H"
 #include "ReactorBase.H"
@@ -100,7 +100,7 @@ public:
   cF_RHS(amrex::Real t, N_Vector y_in, N_Vector ydot, void* user_data);
 
   void flatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
@@ -113,12 +113,13 @@ public:
     amrex::Real* src_vect_energy) override
   {
     flatten_ops.flatten(
-      box, ncells, m_reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
-      y_vect, src_vect, vect_energy, src_vect_energy);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, frcExt,
+      temperature, rhoE, frcEExt, y_vect, src_vect, vect_energy,
+      src_vect_energy);
   }
 
   void unflatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
@@ -131,8 +132,8 @@ public:
     amrex::Real dt) override
   {
     flatten_ops.unflatten(
-      box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
-      y_vect, vect_energy, FCunt, dt);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, temperature,
+      rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt, dt);
   }
 
 private:
@@ -159,6 +160,7 @@ private:
 #endif
   int max_nls_iters{3};
   int max_fp_accel{2};
+  bool m_clean_init_massfrac{false};
 
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;

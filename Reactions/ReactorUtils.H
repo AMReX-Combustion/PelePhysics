@@ -1,5 +1,5 @@
-#ifndef _REACTORUTILS_H_
-#define _REACTORUTILS_H_
+#ifndef REACTORUTILS_H
+#define REACTORUTILS_H
 
 #include <utility>
 #include <AMReX_Gpu.H>
@@ -82,6 +82,7 @@ box_flatten(
   const int k,
   const int ncells,
   const int reactor_type,
+  const bool clean_init_massfrac,
   amrex::Array4<const amrex::Real> const& rhoY,
   amrex::Array4<const amrex::Real> const& frcExt,
   amrex::Array4<const amrex::Real> const& temperature,
@@ -94,10 +95,20 @@ box_flatten(
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
+  amrex::Real rho_old = 0.0;
+  if (clean_init_massfrac) {
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rho_old += rhoY(i, j, k, n);
+    }
+  }
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
-    const amrex::Real rhoYn = rhoY(i, j, k, n);
+    const amrex::Real rhoYn =
+      (clean_init_massfrac)
+        ? amrex::min<amrex::Real>(
+            amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), rho_old)
+        : rhoY(i, j, k, n);
     y_vect[idx] = rhoYn;
     src_vect[idx2] = frcExt(i, j, k, n);
     rho += rhoYn;
@@ -133,6 +144,7 @@ box_unflatten(
   const int k,
   const int ncells,
   const int reactor_type,
+  const bool clean_init_massfrac,
   amrex::Array4<amrex::Real> const& rhoY,
   amrex::Array4<amrex::Real> const& temperature,
   amrex::Array4<amrex::Real> const& rhoE,
@@ -143,10 +155,32 @@ box_unflatten(
   long int const& FCunt,
   amrex::Real dt)
 {
+  // Get the old Ys & rho as well as the clipped version
+  // that went into CVODE
+  amrex::Real rhoY_oldclipped[NUM_SPECIES];
+  amrex::Real rho_old = 0.0;
+  amrex::Real rho_oldclipped = 0.0;
+  if (clean_init_massfrac) {
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rho_old += rhoY(i, j, k, n);
+    }
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rhoY_oldclipped[n] = amrex::min<amrex::Real>(
+        amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), rho_old);
+      rho_oldclipped += rhoY_oldclipped[n];
+    }
+  }
+
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real rhoYn = y_vect[vec_index<OrderType>(n, icell, ncells)];
+    // With clean_init_massfrac, new rhoY equal old one + CVODE increment
+    const amrex::Real rhoYn =
+      (clean_init_massfrac)
+        ? rhoY(i, j, k, n) + (y_vect[vec_index<OrderType>(n, icell, ncells)] -
+                              rhoY_oldclipped[n]) *
+                               rho_old / rho_oldclipped
+        : y_vect[vec_index<OrderType>(n, icell, ncells)];
     rhoY(i, j, k, n) = rhoYn;
     rho += rhoYn;
     mass_frac[n] = rhoYn;
@@ -181,9 +215,10 @@ public:
     "FlattenOps must have ordering type as its template argument");
 
   void flatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     const int reactor_type,
+    const bool clean_init_massfrac,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
     amrex::Array4<const amrex::Real> const& temperature,
@@ -201,15 +236,17 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_flatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, rhoY, frcExt, temperature, rhoE,
-        frcEExt, y_vect, src_vect, vect_energy, src_vect_energy);
+        icell, i, j, k, ncells, reactor_type, clean_init_massfrac, rhoY, frcExt,
+        temperature, rhoE, frcEExt, y_vect, src_vect, vect_energy,
+        src_vect_energy);
     });
   }
 
   void unflatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     const int reactor_type,
+    const bool clean_init_massfrac,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
     amrex::Array4<amrex::Real> const& rhoE,
@@ -227,8 +264,9 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_unflatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, rhoY, temperature, rhoE, frcEExt,
-        FC_in, y_vect, vect_energy, FCunt[icell], dt);
+        icell, i, j, k, ncells, reactor_type, clean_init_massfrac, rhoY,
+        temperature, rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt[icell],
+        dt);
     });
   }
 };

@@ -1,5 +1,5 @@
-#ifndef _TRANSPORTTYPES_H_
-#define _TRANSPORTTYPES_H_
+#ifndef TRANSPORTTYPES_H
+#define TRANSPORTTYPES_H
 
 namespace pele {
 namespace physics {

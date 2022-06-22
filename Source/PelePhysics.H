@@ -1,5 +1,5 @@
-#ifndef _PELEPHYSICS_H_
-#define _PELEPHYSICS_H_
+#ifndef PELEPHYSICS_H
+#define PELEPHYSICS_H
 
 #include <type_traits>
 #include <iostream>

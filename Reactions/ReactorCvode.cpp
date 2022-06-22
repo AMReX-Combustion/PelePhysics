@@ -19,6 +19,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   pp.query("atomic_reductions", atomic_reductions);
   pp.query("max_nls_iters", max_nls_iters);
   pp.query("max_fp_accel", max_fp_accel);
+  pp.query("clean_init_massfrac", m_clean_init_massfrac);
   checkCvodeOptions();
 
   amrex::Print() << "Initializing CVODE:\n";
@@ -37,20 +38,20 @@ ReactorCvode::init(int reactor_type, int ncells)
   // Solution vector
   int neq_tot = (NUM_SPECIES + 1) * ncells;
   y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
+  if (utils::check_flag(static_cast<void*>(y), "N_VNew_Serial", 0) != 0) {
     return (1);
   }
 
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
   cvode_mem = CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0) != 0) {
+  if (utils::check_flag(static_cast<void*>(cvode_mem), "CVodeCreate", 0) != 0) {
     return (1);
   }
 
   udata_g = new CVODEUserData{};
   allocUserData(udata_g, ncells);
-  if (utils::check_flag((void*)udata_g, "allocUserData", 2) != 0) {
+  if (utils::check_flag(static_cast<void*>(udata_g), "allocUserData", 2) != 0) {
     return (1);
   }
 
@@ -93,13 +94,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create dense SUNMatrix for use in linear solves
     A = SUNDenseMatrix(
       neq_tot, neq_tot, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0) != 0) {
+    if (utils::check_flag(static_cast<void*>(A), "SUNDenseMatrix", 0) != 0) {
       return (1);
     }
 
     // Create dense SUNLinearSolver object for use by CVode
     LS = SUNLinSol_Dense(y, A, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_Dense", 0) != 0) {
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_Dense", 0) != 0) {
       return (1);
     }
 
@@ -115,12 +116,12 @@ ReactorCvode::init(int reactor_type, int ncells)
     A = SUNSparseMatrix(
       neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSC_MAT,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)A, "SUNSparseMatrix", 0))
+    if (utils::check_flag(static_cast<void*>(A), "SUNSparseMatrix", 0))
       return (1);
 
     // Create KLU solver object for use by CVode
     LS = SUNLinSol_KLU(y, A, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_KLU", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_KLU", 0))
       return (1);
 
     // Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode
@@ -136,7 +137,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     A = SUNSparseMatrix(
       neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0) != 0) {
+    if (utils::check_flag(static_cast<void*>(A), "SUNDenseMatrix", 0) != 0) {
       return (1);
     }
 
@@ -144,7 +145,9 @@ ReactorCvode::init(int reactor_type, int ncells)
     LS = cvode::SUNLinSol_sparse_custom(
       y, A, reactor_type, udata_g->ncells, (NUM_SPECIES + 1), udata_g->NNZ,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_sparse_custom", 0) != 0) {
+    if (
+      utils::check_flag(static_cast<void*>(LS), "SUNLinSol_sparse_custom", 0) !=
+      0) {
       return (1);
     }
 
@@ -158,7 +161,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0) != 0) {
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0) != 0) {
       return (1);
     }
 
@@ -172,7 +175,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0) != 0) {
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0) != 0) {
       return (1);
     }
 
@@ -588,8 +591,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    int* rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
-    int* colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
+    auto* rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    auto* colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_CSR(colIdx, rowCount, &HP, 1, 0);
     amrex::Print()
       << "\n\n *** Treating CHEM Jac (CSR symbolic analysis)*** \n\n";
@@ -628,8 +631,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
-    colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
+    rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_SYST_CSR(colIdx, rowCount, &HP, 1, 1);
     amrex::Print()
       << "\n\n *** Treating SYST Jac (CSR symbolic analysis)*** \n\n";
@@ -668,8 +671,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
-    colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
+    rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(colIdx, rowCount, &HP, 1);
     amrex::Print() << "\n\n *** Treating simplified SYST Jac (CSR symbolic "
                       "analysis)*** \n\n";
@@ -816,16 +819,18 @@ ReactorCvode::allocUserData(
 #endif
 
   // Alloc internal udata solution/forcing containers
-  udata->rYsrc_ext =
-    (amrex::Real*)amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real));
-  udata->rhoe_init =
-    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
-  udata->rhoesrc_ext =
-    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
-  udata->mask = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
+  udata->rYsrc_ext = static_cast<amrex::Real*>(
+    amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real)));
+  udata->rhoe_init = static_cast<amrex::Real*>(
+    amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
+  udata->rhoesrc_ext = static_cast<amrex::Real*>(
+    amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
+  udata->mask =
+    static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
 
 #ifndef AMREX_USE_GPU
-  udata->FCunt = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
+  udata->FCunt =
+    static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
   udata->FirstTimePrecond = true;
 #endif
 
@@ -834,10 +839,10 @@ ReactorCvode::allocUserData(
   if (udata->solve_type == cvode::sparseDirect) {
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
-    udata->csr_row_count_h =
-      (int*)amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
-    udata->csr_col_index_h =
-      (int*)amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int));
+    udata->csr_row_count_h = static_cast<int*>(
+      amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int)));
+    udata->csr_col_index_h = static_cast<int*>(
+      amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int)));
 
     cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
     cusolver_status = cusolverSpCreate(&(udata->cusolverHandle));
@@ -929,8 +934,10 @@ ReactorCvode::allocUserData(
       (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
       udata->NNZ * udata->ncells, CSC_MAT,
       *amrex::sundials::The_Sundials_Context());
-    udata->colPtrs[0] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[0]);
-    udata->rowVals[0] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[0]);
+    udata->colPtrs[0] =
+      static_cast<int*>(SUNSparseMatrix_IndexPointers((udata->PS)[0]));
+    udata->rowVals[0] =
+      static_cast<int*>(SUNSparseMatrix_IndexValues((udata->PS)[0]));
     udata->Jdata[0] = SUNSparseMatrix_Data((udata->PS)[0]);
     SPARSITY_PREPROC_CSC(
       udata->rowVals[0], udata->colPtrs[0], &HP, udata->ncells);
@@ -943,8 +950,10 @@ ReactorCvode::allocUserData(
       (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
       udata->NNZ * udata->ncells, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    udata->rowPtrs_c = (int*)SUNSparseMatrix_IndexPointers(udata->PSc);
-    udata->colVals_c = (int*)SUNSparseMatrix_IndexValues(udata->PSc);
+    udata->rowPtrs_c =
+      static_cast<int*>(SUNSparseMatrix_IndexPointers(udata->PSc));
+    udata->colVals_c =
+      static_cast<int*>(SUNSparseMatrix_IndexValues(udata->PSc));
     SPARSITY_PREPROC_SYST_CSR(
       udata->colVals_c, udata->rowPtrs_c, &HP, udata->ncells, 0);
   }
@@ -1109,8 +1118,10 @@ ReactorCvode::allocUserData(
       (udata->PS)[i] = SUNSparseMatrix(
         NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSR_MAT,
         *amrex::sundials::The_Sundials_Context());
-      udata->rowPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
-      udata->colVals[i] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[i]);
+      udata->rowPtrs[i] =
+        static_cast<int*>(SUNSparseMatrix_IndexPointers((udata->PS)[i]));
+      udata->colVals[i] =
+        static_cast<int*>(SUNSparseMatrix_IndexValues((udata->PS)[i]));
       udata->Jdata[i] = SUNSparseMatrix_Data((udata->PS)[i]);
       SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
         udata->colVals[i], udata->rowPtrs[i], &HP, 0);
@@ -1372,6 +1383,7 @@ ReactorCvode::react(
   const int icell = 0;
   const int ncells = 1;
   const auto captured_reactor_type = m_reactor_type;
+  const auto captured_clean_init_massfrac = m_clean_init_massfrac;
   ParallelFor(
     box, [=, &CvodeActual_time_final] AMREX_GPU_DEVICE(
            int i, int j, int k) noexcept {
@@ -1379,9 +1391,10 @@ ReactorCvode::react(
 
         amrex::Real* yvec_d = N_VGetArrayPointer(y);
         utils::box_flatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, rYsrc_in, T_in,
-          rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
-          udata_g->rhoe_init, udata_g->rhoesrc_ext);
+          icell, i, j, k, ncells, captured_reactor_type,
+          captured_clean_init_massfrac, rY_in, rYsrc_in, T_in, rEner_in,
+          rEner_src_in, yvec_d, udata_g->rYsrc_ext, udata_g->rhoe_init,
+          udata_g->rhoesrc_ext);
 
         // ReInit CVODE is faster
         CVodeReInit(cvode_mem, time_start, y);
@@ -1390,6 +1403,7 @@ ReactorCvode::react(
         CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
+        // cppcheck-suppress knownConditionTrueFalse
         if ((udata_g->verbose > 1) && (omp_thread == 0)) {
           amrex::Print() << "Additional verbose info --\n";
           print_final_stats(cvode_mem, LS != nullptr);
@@ -1406,9 +1420,11 @@ ReactorCvode::react(
         const long int nfe_tot = nfe + nfeLS;
 
         utils::box_unflatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in, rEner_in,
-          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
+          icell, i, j, k, ncells, captured_reactor_type,
+          captured_clean_init_massfrac, rY_in, T_in, rEner_in, rEner_src_in,
+          FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
 
+        // cppcheck-suppress knownConditionTrueFalse
         if ((udata_g->verbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final
                          << " and actual dt_react is " << actual_dt << "\n";
@@ -1715,6 +1731,7 @@ ReactorCvode::react(
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
 
+  // cppcheck-suppress knownConditionTrueFalse
   if ((udata_g->verbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
     print_final_stats(cvode_mem, LS != nullptr);
@@ -1723,7 +1740,7 @@ ReactorCvode::react(
 
   // Get estimate of how hard the integration process was
   long int nfe, nfeLS;
-  flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+  CVodeGetNumRhsEvals(cvode_mem, &nfe);
   flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
   nfe += nfeLS;
 #endif

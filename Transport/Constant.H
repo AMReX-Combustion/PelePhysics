@@ -1,5 +1,5 @@
-#ifndef _CONSTTRANSPORT_H_
-#define _CONSTTRANSPORT_H_
+#ifndef CONSTTRANSPORT_H
+#define CONSTTRANSPORT_H
 
 #include "TransportParams.H"
 
@@ -91,7 +91,7 @@ struct ConstTransport
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE ConstTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit ConstTransport(Args... /*unused*/)
   {
   }
 };

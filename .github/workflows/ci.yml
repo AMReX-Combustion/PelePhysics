@@ -1,4 +1,5 @@
-name: PelePhysics
+name: PelePhysics-CI
+
 on:
    push:
      branches: [development]
@@ -9,15 +10,17 @@ jobs:
   Formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: DoozyX/clang-format-lint-action@v0.13
+      - name: Clone
+        uses: actions/checkout@v3
+      - name: Check formatting
+        uses: DoozyX/clang-format-lint-action@v0.13
         with:
-          source: './Eos ./Transport ./Reactions ./Source ./Utility ./Testing ./Support/Fuego/Mechanism/Models'
+          source: './Eos ./Transport ./Reactions ./Source ./Utility ./Testing ./Support/Mechanism/Models'
           exclude: '.'
           extensions: 'H,h,cpp'
           clangFormatVersion: 13
 
-  Pythia:
+  CEPTR:
     needs: Formatting
     runs-on: ubuntu-latest
     strategy:
@@ -27,7 +30,7 @@ jobs:
         poetry-version: [1.1.7]
     defaults:
       run:
-        working-directory: ${{github.workspace}}/Support/Fuego/Pythia
+        working-directory: ${{github.workspace}}/Support/ceptr
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -43,8 +46,14 @@ jobs:
         run: poetry run black --check .
       - name: Sort imports with isort
         run: poetry run isort --check-only --diff .
+      - name: Lint with flake8
+        run: poetry run flake8 .
       - name: Run tests
-        run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
+        run: poetry run pytest
+      - name: Convert air mechanism
+        run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/air/mechanism.yaml
+      - name: Convert LiDryer mechanism
+        run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
     needs: Formatting
@@ -73,12 +82,12 @@ jobs:
         uses: styfle/cancel-workflow-action@0.6.0
         with:
           access_token: ${{github.token}}
-      - name: Checkout PelePhysics
-        uses: actions/checkout@v2
+      - name: Clone PelePhysics
+        uses: actions/checkout@v3
         with:
           path: PelePhysics-${{matrix.comp}}
-      - name: Checkout AMReX
-        uses: actions/checkout@v2
+      - name: Clone AMReX
+        uses: actions/checkout@v3
         with:
           repository: AMReX-Codes/amrex
           path: AMReX-${{matrix.comp}}

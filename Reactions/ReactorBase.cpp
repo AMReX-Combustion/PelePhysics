@@ -34,7 +34,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
   int omp_thread = 0;
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
@@ -42,6 +42,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     m_typ_vals[i] = ExtTypVals[i];
   }
 
+  // cppcheck-suppress knownConditionTrueFalse
   if ((omp_thread == 0) && (verbose > 0)) {
     amrex::Print() << "Set the typical values for PelePhysics ODE integration:"
                    << std::endl;
@@ -54,12 +55,13 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 
 void
 ReactorBase::set_sundials_solver_tols(
+  // cppcheck-suppress constParameter
   sundials::Context& sunctx,
   void* sundials_mem,
   const int ncells,
   const amrex::Real relTol,
   const amrex::Real absTol,
-  const std::string solvername)
+  const std::string& solvername)
 {
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
@@ -90,6 +92,7 @@ ReactorBase::set_sundials_solver_tols(
 #endif
 
   if (m_typ_vals[0] > 0.0) {
+    // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting " << solvername
                      << " tolerances with TypVals rtol = " << relTol
@@ -102,6 +105,7 @@ ReactorBase::set_sundials_solver_tols(
       }
     }
   } else {
+    // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting " << solvername
                      << " tolerances rtol = " << relTol << " atol = " << absTol

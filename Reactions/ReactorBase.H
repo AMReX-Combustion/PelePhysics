@@ -1,5 +1,5 @@
-#ifndef _REACTORBASE_H_
-#define _REACTORBASE_H_
+#ifndef REACTORBASE_H
+#define REACTORBASE_H
 
 #include <AMReX_ParmParse.H>
 #include <sundials/sundials_context.h>
@@ -55,7 +55,7 @@ public:
     ) = 0;
 
   virtual void flatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
@@ -68,7 +68,7 @@ public:
     amrex::Real* src_vect_energy) = 0;
 
   virtual void unflatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
@@ -88,7 +88,7 @@ public:
     const int ncells,
     const amrex::Real relTol,
     const amrex::Real absTol,
-    const std::string solvername);
+    const std::string& solvername);
 
   ~ReactorBase() override = default;
 

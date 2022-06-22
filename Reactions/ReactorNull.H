@@ -1,5 +1,5 @@
-#ifndef _REACTORNULL_H_
-#define _REACTORNULL_H_
+#ifndef REACTORNULL_H
+#define REACTORNULL_H
 
 #include "ReactorBase.H"
 
@@ -52,7 +52,7 @@ public:
     ) override;
 
   void flatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
@@ -65,12 +65,13 @@ public:
     amrex::Real* src_vect_energy) override
   {
     flatten_ops.flatten(
-      box, ncells, m_reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
-      y_vect, src_vect, vect_energy, src_vect_energy);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, frcExt,
+      temperature, rhoE, frcEExt, y_vect, src_vect, vect_energy,
+      src_vect_energy);
   }
 
   void unflatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
@@ -83,13 +84,14 @@ public:
     amrex::Real dt) override
   {
     flatten_ops.unflatten(
-      box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
-      y_vect, vect_energy, FCunt, dt);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, temperature,
+      rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt, dt);
   }
 
 private:
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+  bool m_clean_init_massfrac{false};
 };
 } // namespace reactions
 } // namespace physics

@@ -18,6 +18,7 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   pp.query("atomic_reductions", atomic_reductions);
   pp.query("rk_method", rk_method);
   pp.query("rk_controller", rk_controller);
+  pp.query("clean_init_massfrac", m_clean_init_massfrac);
   std::string method_string = "ARKODE_ZONNEVELD_5_3_4";
   std::string controller_string = "PID";
 
@@ -166,7 +167,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
+  if (utils::check_flag(static_cast<void*>(y), "N_VNew_Serial", 0) != 0) {
     return (1);
   }
   realtype* yvec_d = N_VGetArrayPointer(y);
@@ -289,7 +290,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
+  if (utils::check_flag(static_cast<void*>(y), "N_VNew_Serial", 0) != 0) {
     return (1);
   }
   realtype* yvec_d = N_VGetArrayPointer(y);
@@ -385,7 +386,7 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
-  amrex::The_Arena()->free(user_data);
+  delete user_data;
 
   return static_cast<int>(nfe);
 }

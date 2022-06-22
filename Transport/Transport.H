@@ -1,5 +1,5 @@
-#ifndef _TRANSPORT_H_
-#define _TRANSPORT_H_
+#ifndef TRANSPORT_H
+#define TRANSPORT_H
 
 #include <cmath>
 

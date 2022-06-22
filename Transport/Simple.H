@@ -1,5 +1,5 @@
-#ifndef _SIMPLETRANSPORT_H_
-#define _SIMPLETRANSPORT_H_
+#ifndef SIMPLETRANSPORT_H
+#define SIMPLETRANSPORT_H
 
 #include "TransportParams.H"
 #include "PhysicsConstants.H"
@@ -28,7 +28,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real Temp,
     const amrex::Real* Xloc,
     const amrex::Real rholoc,
-    amrex::Real& wbar,
+    const amrex::Real wbar,
     amrex::Real& mu,
     amrex::Real& lam,
     TransParm<eos::SRK, SimpleTransport> const* trans_parm)
@@ -82,46 +82,52 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real DP_red_4 =
       297.2069113e6 * DP_m_4 / (Vcm * Vcm * Tcm * Tcm);
     const amrex::Real y = Vcm * rholoc / (6.0 * wbar);
-    amrex::Real A[10];
-    for (int i = 0; i < 10; ++i) {
-      A[i] = trans_parm->Afac[4 * i] + trans_parm->Afac[4 * i + 1] * Omega_M +
-             trans_parm->Afac[4 * i + 2] * DP_red_4 +
-             trans_parm->Afac[4 * i + 3] * KappaM;
-    }
     const amrex::Real G1 =
       (1.0 - 0.5 * y) / ((1.0 - y) * (1.0 - y) * (1.0 - y));
-    const amrex::Real G2 = (A[0] * (1.0 - std::exp(-A[3] * y)) / y +
-                            A[1] * G1 * std::exp(A[4] * y) + A[2] * G1) /
-                           (A[0] * A[3] + A[1] + A[2]);
-    const amrex::Real eta_P =
-      (36.344e-6 * std::sqrt(MW_m * Tcm) / std::pow(Vcm, 2.0 / 3.0)) * A[6] *
-      y * y * G2 * exp(A[7] + A[8] / Tstar + A[9] / (Tstar * Tstar));
 
     // Set nonideal viscosity
     if (wtr_get_mu) {
-      mu = mu * (1.0 / G2 + A[5] * y) + eta_P;
+      amrex::Real A[10];
+      for (int i = 0; i < 10; ++i) {
+        A[i] = trans_parm->Afac[4 * i] + trans_parm->Afac[4 * i + 1] * Omega_M +
+               trans_parm->Afac[4 * i + 2] * DP_red_4 +
+               trans_parm->Afac[4 * i + 3] * KappaM;
+      }
+      const amrex::Real G2 = (A[0] * (1.0 - std::exp(-A[3] * y)) / y +
+                              A[1] * G1 * std::exp(A[4] * y) + A[2] * G1) /
+                             (A[0] * A[3] + A[1] + A[2]);
+      const amrex::Real eta_P =
+        (36.344e-6 * std::sqrt(MW_m * Tcm) / std::pow(Vcm, 2.0 / 3.0)) * A[6] *
+        y * y * G2 * std::exp(A[7] + A[8] / Tstar + A[9] / (Tstar * Tstar));
+
+      const amrex::Real updated_mu = mu * (1.0 / G2 + A[5] * y) + eta_P;
+      if (updated_mu > 0) {
+        mu = updated_mu;
+      }
     }
-
-    amrex::Real B[7];
-    for (int i = 0; i < 7; ++i) {
-      B[i] = trans_parm->Bfac[i * 4] + trans_parm->Bfac[i * 4 + 1] * Omega_M +
-             trans_parm->Bfac[i * 4 + 2] * DP_red_4 +
-             trans_parm->Bfac[i * 4 + 3] * KappaM;
-    }
-    amrex::Real H2 = (B[0] * (1.0 - std::exp(-B[3] * y)) / y +
-                      B[1] * G1 * std::exp(B[4] * y) + B[2] * G1) /
-                     (B[0] * B[3] + B[1] + B[2]);
-
-    amrex::Real lambda_p = 3.039e-4 * std::sqrt(Tcm / MW_m) /
-                           std::pow(Vcm, 2.0 / 3.0) * B[6] * y * y * H2 *
-                           std::sqrt(Tstar);
-
-    lambda_p *= 4.184e+7; // erg/(cm s K)
-    const amrex::Real beta = 1.0 / H2 + B[5] * y;
 
     // Set nonideal conductivity
     if (wtr_get_lam) {
-      lam = lam * beta + lambda_p;
+      amrex::Real B[7];
+      for (int i = 0; i < 7; ++i) {
+        B[i] = trans_parm->Bfac[i * 4] + trans_parm->Bfac[i * 4 + 1] * Omega_M +
+               trans_parm->Bfac[i * 4 + 2] * DP_red_4 +
+               trans_parm->Bfac[i * 4 + 3] * KappaM;
+      }
+      amrex::Real H2 = (B[0] * (1.0 - std::exp(-B[3] * y)) / y +
+                        B[1] * G1 * std::exp(B[4] * y) + B[2] * G1) /
+                       (B[0] * B[3] + B[1] + B[2]);
+      amrex::Real lambda_p = 3.039e-4 * std::sqrt(Tcm / MW_m) /
+                             std::pow(Vcm, 2.0 / 3.0) * B[6] * y * y * H2 *
+                             std::sqrt(Tstar);
+
+      lambda_p *= 4.184e+7; // erg/(cm s K)
+      const amrex::Real beta = 1.0 / H2 + B[5] * y;
+
+      const amrex::Real updated_lam = lam * beta + lambda_p;
+      if (updated_lam > 0) {
+        lam = updated_lam;
+      }
     }
   }
 };
@@ -145,6 +151,7 @@ struct BinaryDiff
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
           const amrex::Real dbintemp =
@@ -179,6 +186,7 @@ struct BinaryDiff<eos::SRK>
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
@@ -215,12 +223,11 @@ struct SimpleTransport
     amrex::Real* xiloc,
     TransParm<EosType, transport_type> const* tparm)
   {
-    amrex::Real cvk[NUM_SPECIES];
-    amrex::Real cvkint[NUM_SPECIES];
-    amrex::Real cvkrot[NUM_SPECIES];
-    amrex::Real FofT[NUM_SPECIES];
-    amrex::Real Fnorm[NUM_SPECIES];
-    amrex::Real epskoverT, epskoverTstd;
+    amrex::Real cvk[NUM_SPECIES] = {0.0};
+    amrex::Real cvkint[NUM_SPECIES] = {0.0};
+    amrex::Real cvkrot[NUM_SPECIES] = {0.0};
+    amrex::Real FofT[NUM_SPECIES] = {0.0};
+    amrex::Real Fnorm[NUM_SPECIES] = {0.0};
     amrex::Real pi3_2 = std::pow(M_PI, 1.5);
 
     CKCVMS(&Tloc, cvk);
@@ -239,8 +246,8 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      epskoverTstd = tparm->eps[i] / 298.0;
-      epskoverT = tparm->eps[i] / Tloc;
+      amrex::Real epskoverTstd = tparm->eps[i] / 298.0;
+      amrex::Real epskoverT = tparm->eps[i] / Tloc;
       Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                  (2.0 + .50 * M_PI * M_PI) * epskoverTstd +
                  pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -281,17 +288,16 @@ struct SimpleTransport
     TransParm<EosType, transport_type> const* tparm)
   {
     amrex::Real trace = 1.e-15;
-    amrex::Real Xloc[NUM_SPECIES];
-    amrex::Real muloc[NUM_SPECIES];
-    amrex::Real xiloc[NUM_SPECIES];
-    amrex::Real lamloc[NUM_SPECIES];
-    amrex::Real logT[NUM_FIT - 1];
+    amrex::Real Xloc[NUM_SPECIES] = {0.0};
+    amrex::Real muloc[NUM_SPECIES] = {0.0};
+    amrex::Real xiloc[NUM_SPECIES] = {0.0};
+    amrex::Real logT[NUM_FIT - 1] = {0.0};
 
     logT[0] = std::log(Tloc);
     logT[1] = logT[0] * logT[0];
     logT[2] = logT[0] * logT[1];
 
-    amrex::Real sum = 0.;
+    amrex::Real sum = 0.0;
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       sum += Yloc[i];
@@ -301,7 +307,7 @@ struct SimpleTransport
       Yloc[i] += trace * (sum / NUM_SPECIES - Yloc[i]);
     }
 
-    amrex::Real wbar = 0.;
+    amrex::Real wbar = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       wbar += Yloc[i] * tparm->iwt[i];
     }
@@ -342,6 +348,7 @@ struct SimpleTransport
     }
 
     if (wtr_get_lam) {
+      amrex::Real lamloc[NUM_SPECIES] = {0.0};
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lamloc[i] = tparm->fitlam[4 * i] + tparm->fitlam[1 + 4 * i] * logT[0] +
                     tparm->fitlam[2 + 4 * i] * logT[1] +
@@ -349,7 +356,7 @@ struct SimpleTransport
         lamloc[i] = std::exp(lamloc[i]);
       }
 
-      lam = 0.;
+      lam = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lam += Xloc[i] * std::sqrt(std::sqrt(
                            lamloc[i])); // lam = sum[Xloc_i * (lamloc_i)^(1/4)]
@@ -415,7 +422,7 @@ struct SimpleTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SimpleTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SimpleTransport(Args... /*unused*/)
   {
   }
 };

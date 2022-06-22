@@ -62,7 +62,7 @@ main(int argc, char* argv[])
 
     const auto geomdata = geom.data();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
@@ -89,7 +89,7 @@ main(int argc, char* argv[])
     // Get the transport data pointer
     auto const* ltransparm = trans_parms.device_trans_parm();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();

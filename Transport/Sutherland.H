@@ -1,5 +1,5 @@
-#ifndef _SUTHERLANDTRANSPORT_H_
-#define _SUTHERLANDTRANSPORT_H_
+#ifndef SUTHERLANDTRANSPORT_H
+#define SUTHERLANDTRANSPORT_H
 
 #include "TransportParams.H"
 
@@ -106,7 +106,7 @@ struct SutherlandTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SutherlandTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SutherlandTransport(Args... /*unused*/)
   {
   }
 };
