@@ -7,7 +7,7 @@ length=${#fileArray[@]}
 for (( i=0; i<${length}; i++ ));
 do
     file="${fileArray[$i]}"
-    sed -i.bu 's/#@profile/@profile/g' $file
+    sed -i.bu 's/# @profile/@profile/g' $file
     rm $file.bu
 done
 

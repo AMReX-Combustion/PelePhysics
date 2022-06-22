@@ -378,25 +378,13 @@ class Converter:
 
             print("Evaluating a dscqss_dsc component")
             times = time.time()
-            dscqss5dsc0 = self.syms.compute_dscqss_dsc(
-                scqss_idx=5, sc_idx=0, species_info=self.species_info
+            dscqss0dsc0 = self.syms.compute_dscqss_dsc(
+                scqss_idx=0, sc_idx=0, species_info=self.species_info
             )
-            # dscqss0dsc0 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=0, sc_idx=0, species_info=self.species_info
-            # )
-            # dscqss5dsc2 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=2, species_info=self.species_info
-            # )
-            # dscqss5dsc5 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=5, species_info=self.species_info
-            # )
-            # dscqss5dsc10 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=10, species_info=self.species_info
-            # )
-            # dscqss9dsc0 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=9, sc_idx=0, species_info=self.species_info
-            # )
-            print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
+            dscqss2dsc2 = self.syms.compute_dscqss_dsc(
+                scqss_idx=2, sc_idx=2, species_info=self.species_info
+            )
+            print(f"Time to evaluate dscqssdsc0 = {time.time()-times}")
 
             print("Evaluating a Jacobian component")
             times = time.time()
@@ -430,22 +418,21 @@ class Converter:
                 self.reaction_info,
                 self.syms,
                 [
-                    dscqss5dsc0,
-                    # dscqss5dsc2,
-                    # dscqss0dsc0,
-                    # dscqss5dsc5,
-                    # dscqss5dsc10,
-                    # dscqss9dsc0,
+                    dscqss0dsc0,
+                    dscqss2dsc2,
                 ],
                 [
-                    (self.species_info.n_species) * 0 + 5,
-                    # (self.species_info.n_species) * 2 + 5,
-                    # (self.species_info.n_species) * 0 + 0,
-                    # (self.species_info.n_species) * 5 + 5,
-                    # (self.species_info.n_species) * 10 + 5,
-                    # (self.species_info.n_species) * 0 + 9,
+                    (self.species_info.n_species) * 0 + 0,
+                    (self.species_info.n_species) * 2 + 2,
                 ],
             )
+            #cj.dscqss_dsc_all(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            #)
             print("Symbolic jac term print for debug")
             cj.ajac_term_debug(
                 hdr,
