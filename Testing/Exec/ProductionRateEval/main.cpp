@@ -113,7 +113,7 @@ main(int argc, char* argv[])
     amrex::MultiFab temperature(ba, dm, 1, num_grow);
     amrex::MultiFab density(ba, dm, 1, num_grow);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
@@ -133,7 +133,7 @@ main(int argc, char* argv[])
     bool write_output = pp.countval("plot_file") > 0;
     amrex::MultiFab wdots(ba, dm, num_spec, num_grow);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
