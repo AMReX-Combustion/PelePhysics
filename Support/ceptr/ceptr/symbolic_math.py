@@ -362,22 +362,22 @@ class SymbolicMath:
                     self.sc_qss_smp[scqss_idx],
                     smp.symbols(f"sc_qss[{scqssnum}]"),
                 )
-                # self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
-                #     loop_idx
-                # ]
-
-                chain_vec_idx, chain_vec_debug_idx = self.chain_scqss_sc(
-                    scqssnum, sc_idx, species_info
-                )
-                # Multiply the result of the returned vectors by the current index
-                chain_vec[loop_idx] *= chain_vec_idx
-                chain_vec_debug[
-                    loop_idx
-                ] = f" {chain_vec_debug[loop_idx]} * ({chain_vec_debug_idx}) "
-
                 self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
                     loop_idx
                 ]
+
+            chain_vec_idx, chain_vec_debug_idx = self.chain_scqss_sc(
+                scqssnum, sc_idx, species_info
+            )
+            # Multiply the result of the returned vectors by the current index
+            chain_vec[loop_idx] *= chain_vec_idx
+            chain_vec_debug[
+                loop_idx
+            ] = f" {chain_vec_debug[loop_idx]} * ({chain_vec_debug_idx}) "
+
+            # self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
+            #     loop_idx
+            # ]
 
         if deplen == 0:
             # If there are no dependencies, just return the end derivative
