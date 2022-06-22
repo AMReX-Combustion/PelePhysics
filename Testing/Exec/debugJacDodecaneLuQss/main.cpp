@@ -118,12 +118,30 @@ main(int argc, char* argv[])
         J_approx[i] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMag[i]);
         error[i] = std::abs(J_approx[i]-J_sympy[index_J])/std::abs(J_approx[i]);
     } 
+    // for (int i=0; i < NUM_PERT; ++i){
+    //     perturb_T(&T_pert1, &T_pert2, T, pertMagT[i]);
+    //     productionRate(wdot_pert1, sc, T_pert1);
+    //     productionRate(wdot_pert2, sc, T_pert2);
+    //     J_approxT[i] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMagT[i]);
+    //     errorT[i] = std::abs(J_approxT[i]-J_sympy[index_J_T])/std::abs(J_approxT[i]);
+    // }
+
+    std::cout << "Computing dwdot" << index_wdot << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(J_approx,NUM_PERT,"J_approx");
+    std::cout << "J_sympy = " << J_sympy[index_J] << "\n";
+    std::cout << "J_fuego_consP = " << J_fuego_consP[index_J] << "\n";
+    std::cout << "J_fuego_noconsP = " << J_fuego_noconsP[index_J] << "\n";
+
+    index_sc = 0;
+    index_wdot = 10;
+    index_J = index_sc * (NUM_SPECIES+1) + index_wdot;
     for (int i=0; i < NUM_PERT; ++i){
-        perturb_T(&T_pert1, &T_pert2, T, pertMagT[i]);
-        productionRate(wdot_pert1, sc, T_pert1);
-        productionRate(wdot_pert2, sc, T_pert2);
-        J_approxT[i] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMagT[i]);
-        errorT[i] = std::abs(J_approxT[i]-J_sympy[index_J_T])/std::abs(J_approxT[i]);
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        productionRate(wdot_pert1, sc_pert1, T);
+        productionRate(wdot_pert2, sc_pert2, T);
+        J_approx[i] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMag[i]);
+        error[i] = std::abs(J_approx[i]-J_sympy[index_J])/std::abs(J_approx[i]);
     } 
 
     std::cout << "Computing dwdot" << index_wdot << "/dsc"<< index_sc << "\n";
@@ -132,13 +150,28 @@ main(int argc, char* argv[])
     std::cout << "J_sympy = " << J_sympy[index_J] << "\n";
     std::cout << "J_fuego_consP = " << J_fuego_consP[index_J] << "\n";
     std::cout << "J_fuego_noconsP = " << J_fuego_noconsP[index_J] << "\n";
+
+
+    index_sc = 21;
+    index_wdot = 10;
+    index_J = index_sc * (NUM_SPECIES+1) + index_wdot;
+    // index_J = 745;
+    for (int i=0; i < NUM_PERT; ++i){
+        perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
+        productionRate(wdot_pert1, sc_pert1, T);
+        productionRate(wdot_pert2, sc_pert2, T);
+        J_approx[i] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMag[i]);
+        error[i] = std::abs(J_approx[i]-J_sympy[index_J])/std::abs(J_approx[i]);
+    } 
+
+    std::cout << "index_J = " << index_J << std::endl;
+    std::cout << "Computing dwdot" << index_wdot << "/dsc"<< index_sc << "\n";
+    print<double>(error,NUM_PERT,"Relative error");
+    print<double>(J_approx,NUM_PERT,"J_approx");
+    std::cout << "J_sympy = " << J_sympy[index_J] << "\n";
+    std::cout << "J_fuego_consP = " << J_fuego_consP[index_J] << "\n";
+    std::cout << "J_fuego_noconsP = " << J_fuego_noconsP[index_J] << "\n";
     
-    std::cout << "Computing dwdot" << index_wdot << "/dT" << "\n";
-    print<double>(errorT,NUM_PERT,"Relative error T");
-    print<double>(J_approxT,NUM_PERT,"J_approxT");
-    std::cout << "J_sympy_T = " << J_sympy[index_J_T] << "\n";
-    std::cout << "J_fuego_consP_T = " << J_fuego_consP[index_J_T] << "\n";
-    std::cout << "J_fuego_noconsP_T = " << J_fuego_noconsP[index_J_T] << "\n";
      
 
   return 0;

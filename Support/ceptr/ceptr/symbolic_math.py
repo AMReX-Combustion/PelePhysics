@@ -155,6 +155,8 @@ class SymbolicMath:
             self.dscqssdsc_stop = {"info": ""}
             # Create dict to hold intermediate chain rule dscqssdsc terms
             self.dscqssdsc_interm = {}
+            # Create dict to hold scqss_sc terms
+            self.dscqssdsc = {}
 
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
@@ -234,66 +236,86 @@ class SymbolicMath:
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
 
+    def compute_spec_dependencies(self, sym_smp):
+        """Routine to compute the sc and sc_qss dependencies."""
+
+        free_symb = sym_smp.free_symbols
+        sc_depend = []
+        scqss_depend = []
+        for symbol in free_symb:
+            if "sc_qss" in str(symbol):
+                scqss_depend.append(symbol)
+            elif "sc" in str(symbol):
+                sc_depend.append(symbol)
+            else:
+                pass
+
+        return sc_depend, scqss_depend
+
     def compute_dwdot_dsc(self, wdot_idx, sc_idx, species_info):
         """Routine to compute dwdot[x]/dsc[y]."""
 
-        free_symb = self.wdot_smp[wdot_idx].free_symbols
+        # First compute the dependencies of wdot
+        print(f"Computing dependecies for wdot[{wdot_idx}]...")
+        sc_depend, scqss_depend = self.compute_spec_dependencies(
+            self.wdot_smp[wdot_idx]
+        )
 
-        if not f"sc[{sc_idx}]" in free_symb:
-            # There is no sc dependence in wdot term
-            dwdotdsc = 0
-        else:
-            # First compute the derivative of wdot_idx w.r.t. sc[sc_idx]
-            dwdotdsc = sme.diff(self.wdot_smp[wdot_idx], f"sc[{sc_idx}]")
+        # First compute dwdot/dsc[sc_idx]
+        print(f"Computing dwdot[{wdot_idx}]/dsc[{sc_idx}]...")
+        dwdotdsc = sme.diff(
+            self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+        )
 
-            # Find all the sc_qss terms that are in wdot
-            scqss_depend = []
-            scqss_depend_scidx = []
-            for ss in free_symb:
-                if "sc_qss" in str(ss):
-                    scqss_depend.append(ss)
-                    scqssnum = self.syms_to_specnum(ss)
-                    if (
-                        f"sc[{sc_idx}]"
-                        in species_info.dict_qssdepend_sc[
-                            species_info.qssa_species_list[scqssnum]
-                        ]
-                    ):
-                        # sc_qss term depends upon sc[sc_idx] and we need to chain rule
-                        scqss_depend_scidx.append(ss)
-
-            print(scqss_depend_scidx)
-            exit()
-
-            # for scqss in scqss_depend:
-            # scqssnum = self.syms_to_specnum(ss)
-
-            # dwdotdsc += sme.diff(wdot_idx, )
+        # Now compute dwdot/dscqss and the chain
+        for scqss in scqss_depend:
+            scqssnum = self.syms_to_specnum(scqss)
+            print(f"Computing dwdot[{wdot_idx}]/dsc_qss[{scqssnum}]...")
+            dwdotdscqss = sme.diff(
+                self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+            )
+            dscqss_dsc = self.compute_dscqss_dsc(
+                scqssnum, sc_idx, species_info
+            )
+            dwdotdsc += dwdotdscqss * dscqss_dsc
 
         return dwdotdsc
 
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute dsc_qss[x]/dsc[y]."""
 
-        print(
-            f"Compute stopping chain terms for scqss[{scqss_idx}]/sc[{sc_idx}]..."
-        )
-        self.compute_scqss_stopping(sc_idx, species_info)
+        if (scqss_idx, sc_idx) in self.dscqssdsc:
+            # We have computed dscqssdsc before
+            print(
+                f"Returning dsc_qss[{scqss_idx}]/dsc[{sc_idx}] from memory..."
+            )
+            dscqss_dsc = self.dscqssdsc[(scqss_idx, sc_idx)]
+        else:
+            print(
+                f"Compute stopping chain terms for scqss[{scqss_idx}]/sc[{sc_idx}]..."
+            )
+            self.compute_scqss_stopping(sc_idx, species_info)
 
-        print(scqss_idx)
-        debug_chain = f"dsc_qss[{scqss_idx}]/dsc[{sc_idx}] = "
-        dscqss_dsc, debug_chain_out = self.chain_scqss(
-            scqss_idx, sc_idx, species_info
-        )
+            print(scqss_idx)
+            debug_chain = f"dsc_qss[{scqss_idx}]/dsc[{sc_idx}] = "
+            dscqss_dsc, debug_chain_out = self.chain_scqss_sc(
+                scqss_idx, sc_idx, species_info
+            )
 
-        debug_chain += debug_chain_out
+            debug_chain += debug_chain_out
 
-        print(debug_chain)
+            # Store dscqss_dsc for later use...
+            print(
+                f"Storing dsc_qss[{scqss_idx}]/dsc[{sc_idx}] for later use..."
+            )
+            self.dscqssdsc[(scqss_idx, sc_idx)] = dscqss_dsc
+
+            # print(debug_chain)
 
         return dscqss_dsc
 
-    def chain_scqss(self, scqss_idx, sc_idx, species_info):
-        """Routine to compute chain rule scqss dependence recurssively."""
+    def chain_scqss_sc(self, scqss_idx, sc_idx, species_info):
+        """Routine to compute chain rule scqss dependence recursively."""
 
         # Find the length of the sc_qss dependency list
         deplen = len(
@@ -334,18 +356,22 @@ class SymbolicMath:
                     self.sc_qss_smp[scqss_idx],
                     smp.symbols(f"sc_qss[{scqssnum}]"),
                 )
+                # self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
+                #     loop_idx
+                # ]
+
+                chain_vec_idx, chain_vec_debug_idx = self.chain_scqss_sc(
+                    scqssnum, sc_idx, species_info
+                )
+                # Multiply the result of the returned vectors by the current index
+                chain_vec[loop_idx] *= chain_vec_idx
+                chain_vec_debug[
+                    loop_idx
+                ] = f" {chain_vec_debug[loop_idx]} * ({chain_vec_debug_idx}) "
+
                 self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
                     loop_idx
                 ]
-
-            chain_vec_idx, chain_vec_debug_idx = self.chain_scqss(
-                scqssnum, sc_idx, species_info
-            )
-            # Multiply the result of the returned vectors by the current index
-            chain_vec[loop_idx] *= chain_vec_idx
-            chain_vec_debug[
-                loop_idx
-            ] = f" {chain_vec_debug[loop_idx]} * ({chain_vec_debug_idx}) "
 
         if deplen == 0:
             # If there are no dependencies, just return the end derivative
@@ -404,5 +430,5 @@ class SymbolicMath:
             self.dscqssdsc_stop["info"] = f"sc[{sc_idx}]"
         else:
             # already filled for sc_idx...do nothing...
-            # print(f"dscqssdsc_stop already filled for {sc_idx}.")
+            print(f"dscqssdsc_stop already filled for {sc_idx}.")
             pass
