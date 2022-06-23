@@ -79,7 +79,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (udata_g->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -868,7 +868,7 @@ ReactorCvode::allocUserData(
     SPARSITY_PREPROC_SYST_CSR(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
     int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
-      a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
+      a_A, nullptr, udata->csr_row_count_h, udata->csr_col_index_h);
     if (sunMatFlag != SUNMAT_SUCCESS) {
       amrex::Print()
         << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
@@ -911,7 +911,7 @@ ReactorCvode::allocUserData(
 #ifdef PELE_USE_MAGMA
     a_A = SUNMatrix_MagmaDenseBlock(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), SUNMEMTYPE_DEVICE,
-      *amrex::sundials::The_SUNMemory_Helper(), NULL,
+      *amrex::sundials::The_SUNMemory_Helper(), nullptr,
       *amrex::sundials::The_Sundials_Context());
 #else
     amrex::Abort("Solver_type magma_direct reauires PELE_USE_MAGMA = TRUE");
@@ -1180,7 +1180,7 @@ ReactorCvode::react(
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
 
   amrex::Gpu::streamSynchronize();
-  SUNMatrix A = NULL;
+  SUNMatrix A = nullptr;
   CVODEUserData* user_data = new CVODEUserData{};
   allocUserData(user_data, ncells, A, stream);
 
@@ -1196,7 +1196,7 @@ ReactorCvode::react(
   // Setup Cvode object
   void* cvode_mem =
     CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
+  if (utils::check_flag(cvode_mem, "CVodeCreate", 0))
     return (1);
   int flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
@@ -1213,12 +1213,12 @@ ReactorCvode::react(
     relTol, absTol, "cvode");
 
   // Solver data
-  SUNNonlinearSolver NLS = NULL;
-  SUNLinearSolver LS = NULL;
+  SUNNonlinearSolver NLS = nullptr;
+  SUNLinearSolver LS = nullptr;
   if (user_data->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -1231,7 +1231,7 @@ ReactorCvode::react(
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1244,7 +1244,7 @@ ReactorCvode::react(
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(
       y, A, stream, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_dense_custom", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_dense_custom", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1259,7 +1259,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
     LS = SUNLinSol_MagmaDense(y, A, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_MagmaDense", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_MagmaDense", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1272,23 +1272,23 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0))
       return (1);
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-    flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0))
       return (1);
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-    flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
   }
@@ -1416,7 +1416,9 @@ ReactorCvode::react(
         long int nfe = 0;
         long int nfeLS = 0;
         CVodeGetNumRhsEvals(cvode_mem, &nfe);
-        CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+        if (LS != nullptr) {
+          CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+        }
         const long int nfe_tot = nfe + nfeLS;
 
         utils::box_unflatten<Ordering>(
@@ -1483,10 +1485,10 @@ ReactorCvode::react(
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
   int neq_tot = (NUM_SPECIES + 1) * ncells;
-  SUNNonlinearSolver NLS = NULL;
-  SUNLinearSolver LS = NULL;
-  SUNMatrix A = NULL;
-  void* cvode_mem = NULL;
+  SUNNonlinearSolver NLS = nullptr;
+  SUNLinearSolver LS = nullptr;
+  SUNMatrix A = nullptr;
+  void* cvode_mem = nullptr;
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
@@ -1516,7 +1518,7 @@ ReactorCvode::react(
 
   // Initialize integrator
   cvode_mem = CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
+  if (utils::check_flag(cvode_mem, "CVodeCreate", 0))
     return (1);
   int flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
@@ -1536,7 +1538,7 @@ ReactorCvode::react(
   if (user_data->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -1549,7 +1551,7 @@ ReactorCvode::react(
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1563,7 +1565,7 @@ ReactorCvode::react(
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(
       y, A, stream, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_dense_custom", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_dense_custom", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1579,7 +1581,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
     LS = SUNLinSol_MagmaDense(y, A, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_MagmaDense", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_MagmaDense", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1592,23 +1594,23 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0))
       return (1);
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-    flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
+    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0))
       return (1);
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-    flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
   }
@@ -1675,7 +1677,9 @@ ReactorCvode::react(
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
 
-  SUNLinSolFree(LS);
+  if (LS != nullptr) {
+    SUNLinSolFree(LS);
+  }
   if (A != nullptr) {
     SUNMatDestroy(A);
   }
@@ -1739,9 +1743,12 @@ ReactorCvode::react(
   }
 
   // Get estimate of how hard the integration process was
-  long int nfe, nfeLS;
+  long int nfe = 0;
+  long int nfeLS = 0;
   CVodeGetNumRhsEvals(cvode_mem, &nfe);
-  flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  if (LS != nullptr) {
+    flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  }
   nfe += nfeLS;
 #endif
 
@@ -1896,8 +1903,12 @@ ReactorCvode::close()
 {
 #ifndef AMREX_USE_GPU
   CVodeFree(&cvode_mem);
-  SUNLinSolFree(LS);
-  SUNNonlinSolFree(NLS);
+  if (LS != nullptr) {
+    SUNLinSolFree(LS);
+  }
+  if (NLS != nullptr) {
+    SUNNonlinSolFree(NLS);
+  }
 
   if (udata_g->solve_type == cvode::denseDirect) {
     SUNMatDestroy(A);
@@ -1961,14 +1972,16 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
   amrex::Print() << "  nnLinIt      = " << nni << "\n";
   amrex::Print() << "  nConvfail    = " << ncfn << "\n";
   // LS stats
-  amrex::Print() << "  nLinsetups   = " << nsetups << "\n";
-  amrex::Print() << "  nJeval       = " << nje << "\n";
-  amrex::Print() << "  nLinIt       = " << nli << "\n";
-  amrex::Print() << "  nLinConvfail = " << ncfl << "\n";
-  amrex::Print() << "  nLinRHSeval  = " << nfeLS << "\n";
-  // Prec
-  amrex::Print() << "  nPreceval    = " << npe << "\n";
-  amrex::Print() << "  nPrecsolve   = " << nps << "\n";
+  if (print_ls_stats) {
+    amrex::Print() << "  nLinsetups   = " << nsetups << "\n";
+    amrex::Print() << "  nJeval       = " << nje << "\n";
+    amrex::Print() << "  nLinIt       = " << nli << "\n";
+    amrex::Print() << "  nLinConvfail = " << ncfl << "\n";
+    amrex::Print() << "  nLinRHSeval  = " << nfeLS << "\n";
+    // Prec
+    amrex::Print() << "  nPreceval    = " << npe << "\n";
+    amrex::Print() << "  nPrecsolve   = " << nps << "\n";
+  }
 }
 
 } // namespace reactions
