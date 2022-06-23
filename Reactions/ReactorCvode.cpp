@@ -281,9 +281,11 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1) != 0) {
     return (1);
   }
-  flag = CVodeSetJacEvalFrequency(cvode_mem, 100); // Max Jac age
-  if (utils::check_flag(&flag, "CVodeSetJacEvalFrequency", 1) != 0) {
-    return (1);
+  if (LS != nullptr) {
+    flag = CVodeSetJacEvalFrequency(cvode_mem, 100); // Max Jac age
+    if (utils::check_flag(&flag, "CVodeSetJacEvalFrequency", 1) != 0) {
+      return (1);
+    }
   }
 
   // End of CPU section
