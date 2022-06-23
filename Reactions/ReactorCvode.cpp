@@ -79,7 +79,8 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (udata_g->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(
+          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -1218,7 +1219,8 @@ ReactorCvode::react(
   if (user_data->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(
+          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -1231,7 +1233,8 @@ ReactorCvode::react(
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
+    if (utils::check_flag(
+          static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1538,7 +1541,8 @@ ReactorCvode::react(
   if (user_data->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
+    if (utils::check_flag(
+          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
 
@@ -1551,7 +1555,8 @@ ReactorCvode::react(
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
+    if (utils::check_flag(
+          static_cast<void*>(LS), "SUNLinSol_cuSolverSp_batchQR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
