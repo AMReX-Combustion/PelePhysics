@@ -1,9 +1,13 @@
 """Symbolic math for symbolic differentiation."""
+import concurrent.futures
+import copy
 import re
 import time
 from collections import OrderedDict
+from multiprocessing import Manager
 
 import numpy as np
+import pandas as pd
 import symengine as sme
 import sympy as smp
 
@@ -155,8 +159,13 @@ class SymbolicMath:
             self.dscqssdsc_stop = {"info": ""}
             # Create dict to hold intermediate chain rule dscqssdsc terms
             self.dscqssdsc_interm = {}
-            # Create dict to hold scqss_sc terms
+            # Create dict to hold dscqss_dsc terms
             self.dscqssdsc = {}
+            # Create dict to hold dscqss_dscqss terms
+            self.dscqssdscqss = {}
+
+            self.dscqssdscqss_slow = {}
+            self.dscqssdsc_slow = {}
 
     # @profile
     def convert_to_cpp(self, sym_smp):
@@ -234,6 +243,102 @@ class SymbolicMath:
             )
 
     # @profile
+    def write_dscqss_to_cpp(self, syms, species_info, cw, fstream):
+        """Write dscqss terms as functions of common subexpressions."""
+
+        n_dscqssdscqss = len(syms.dscqssdscqss)
+        n_dscqssdsc = len(syms.dscqssdsc)
+
+        list_smp = list(syms.dscqssdscqss.values()) + list(
+            syms.dscqssdsc.values()
+        )
+        n_total = len(list_smp)
+
+        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
+        tuple_list = dscqssdscqss_tuples + dscqssdsc_tuples
+
+        # Write common expressions
+        times = time.time()
+        array_cse = sme.cse(list_smp)
+        for cse_idx in range(len(array_cse[0])):
+            left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
+            right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+            cw.writer(
+                fstream,
+                "const amrex::Real %s = %s;"
+                % (
+                    left_cse,
+                    right_cse,
+                ),
+            )
+        timee = time.time()
+
+        print("Made common expr (time = %.3g s)" % (timee - times))
+
+        cw.writer(fstream, cw.comment("Write dscqss terms..."))
+
+        times = time.time()
+        # Write all the entries
+        for i in range(n_total):
+            # The full expression is stored in array_cse index 1
+            cpp_str = self.convert_to_cpp(array_cse[1][i])
+
+            if i < n_dscqssdscqss:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        f"dscqss{syms.syms_to_specnum(tuple_list[i][0])}dscqss{syms.syms_to_specnum(tuple_list[i][1])}",
+                        cpp_str,
+                    ),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        f"dscqss{syms.syms_to_specnum(tuple_list[i][0])}dsc{syms.syms_to_specnum(tuple_list[i][1])}",
+                        cpp_str,
+                    ),
+                )
+
+            timee = time.time()
+        print(
+            "Printed exprs for scqss (time = %.3g s)" % (time.time() - times)
+        )
+
+        cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
+
+        # Now write the chain rule terms
+        for idx, item in species_info.scqss_df.iterrows():
+            for scnum in range(species_info.n_species):
+                # for scnum in range(1):
+                start_string = f"""dscqss{item["number"]}dsc{scnum}"""
+                chain_string = []
+                for scqss_dep in item["scqss_dep"]:
+                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    chain_string.append(
+                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scnum + scqssdepnum}]"""
+                    )
+
+                if chain_string:
+                    final_string = f"{start_string} + {chain_string[0]}"
+                    for ics in range(len(chain_string) - 1):
+                        final_string += f" + {chain_string[ics+1]}"
+                else:
+                    final_string = start_string
+
+                cw.writer(
+                    fstream,
+                    "dscqss_dsc[%s] = %s;"
+                    % (
+                        f"""{species_info.n_species*scnum + item["number"]}""",
+                        final_string,
+                    ),
+                )
+
+    # @profile
     def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
@@ -289,12 +394,12 @@ class SymbolicMath:
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute dsc_qss[x]/dsc[y]."""
 
-        if (scqss_idx, sc_idx) in self.dscqssdsc:
+        if (scqss_idx, sc_idx) in self.dscqssdsc_slow:
             # We have computed dscqssdsc before
             print(
                 f"Returning dsc_qss[{scqss_idx}]/dsc[{sc_idx}] from memory..."
             )
-            dscqss_dsc = self.dscqssdsc[(scqss_idx, sc_idx)]
+            dscqss_dsc = self.dscqssdsc_slow[(scqss_idx, sc_idx)]
         else:
             print(
                 f"Compute stopping chain terms for scqss[{scqss_idx}]/sc[{sc_idx}]..."
@@ -313,9 +418,9 @@ class SymbolicMath:
             print(
                 f"Storing dsc_qss[{scqss_idx}]/dsc[{sc_idx}] for later use..."
             )
-            self.dscqssdsc[(scqss_idx, sc_idx)] = dscqss_dsc
+            self.dscqssdsc_slow[(scqss_idx, sc_idx)] = dscqss_dsc
 
-            # print(debug_chain)
+            print(debug_chain)
 
         return dscqss_dsc
 
@@ -439,3 +544,79 @@ class SymbolicMath:
             # already filled for sc_idx...do nothing...
             print(f"dscqssdsc_stop already filled for {sc_idx}.")
             pass
+
+    def compute_dscqss_dscqss(self, species_info):
+
+        # Loop over the species info dataframe and compute dependencies
+        for idx, item in species_info.scqss_df.iterrows():
+
+            # Loop over the dependencies of scqss
+            for scqss in item["scqss_dep"]:
+                scqssnum = self.syms_to_specnum(scqss)
+                # times = time.time()
+                self.dscqssdscqss[(item["name"], str(scqss))] = sme.diff(
+                    self.sc_qss_smp[item["number"]],
+                    smp.symbols(f"sc_qss[{scqssnum}]"),
+                )
+
+    def compute_dscqss_dsc_fast(self, species_info):
+
+        # Loop over the species info dataframe and compute all dsc derivatives
+        for idx, item in species_info.scqss_df.iterrows():
+
+            # Loop over all sc terms
+            for scnum in range(species_info.n_species):
+                # for scnum in range(1):
+                # Only do the derivative if there is an sc dependence explicitly included
+                if f"sc[{scnum}]" in str(item["sc_dep"]):
+                    times = time.time()
+                    self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(
+                        self.sc_qss_smp[item["number"]],
+                        smp.symbols(f"sc[{scnum}]"),
+                    )
+                    print(
+                        f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
+                    )
+                else:
+                    self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
+
+    def compute_dscqss_dsc_parallel(self, species_info):
+
+        manager = Manager()
+        shared_dict = manager.dict()
+
+        # Loop over the species info dataframe and compute all dsc derivatives
+        for idx, item in species_info.scqss_df.iterrows():
+
+            # Loop over all sc terms (in parallel)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # for scnum in range(species_info.n_species):
+                for scnum in range(2):
+                    # Only do the derivative if there is an sc dependence explicitly included
+                    if f"sc[{scnum}]" in str(item["sc_dep"]):
+                        # times = time.time()
+                        results = executor.submit(
+                            my_diff,
+                            self.sc_qss_smp[item["number"]],
+                            smp.symbols(f"sc[{scnum}]"),
+                            shared_dict,
+                            item["number"],
+                            scnum,
+                        )
+                        # shared_dict[(item["name"], f"sc[{scnum}]")] = executor.submit(my_diff, self.sc_qss_smp[item["number"]], smp.symbols(f"sc[{scnum}]"), shared_dict)
+                        # self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(self.sc_qss_smp[item["number"]], smp.symbols(f"sc[{scnum}]"))
+                        # print(f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}""")
+
+            print(results)
+            print(shared_dict)
+            exit()
+
+        # Deep copy the dict
+        self.dscqssdsc = copy.deepcopy(shared_dict)
+
+
+def my_diff(num, den, shared_dict, nnum, nden):
+
+    print(f"Doing derivative dsc_qss[{nnum}]/dsc[{nden}]... ")
+    shared_dict[(f"sc_qss[{nnum}]", f"sc[{nden}]")] = sme.diff(num, den)
+    print(f"Done with derivative dsc_qss[{nnum}]/dsc[{nden}]... ")

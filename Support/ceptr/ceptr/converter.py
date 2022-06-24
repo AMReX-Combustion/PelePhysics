@@ -358,6 +358,12 @@ class Converter:
             self.species_info.create_dicts()
             self.species_info.identify_qss_dependencies(self.syms)
             self.species_info.identify_nonqss_dependencies(self.syms)
+            self.species_info.make_scqss_dataframe()
+
+            print(self.species_info.scqss_df)
+            # print(self.species_info.scqss_df.loc[17, "sc_dep"])
+            # print(self.species_info.scqss_df.loc[17])
+            # exit()
 
             # prod rate related
             cp.production_rate(
@@ -376,44 +382,88 @@ class Converter:
             #    self.syms,
             # )
 
-            print("Evaluating a dscqss_dsc component")
+            # Evaluate the dscqss_dscqss values for later
             times = time.time()
-            dscqss5dsc0 = self.syms.compute_dscqss_dsc(
-                scqss_idx=5, sc_idx=0, species_info=self.species_info
-            )
+            self.syms.compute_dscqss_dscqss(species_info=self.species_info)
+            print(f"Time to do all dscqss_dscqss = {time.time()-times}")
+
+            # Evaluate the dscqss_dsc values for later
+            times = time.time()
+            self.syms.compute_dscqss_dsc_fast(species_info=self.species_info)
+            print(f"Time to do all the dscqss_dsc = {time.time()-times}")
+
+            # # print("Evaluating a dscqss_dsc component")
+            # times = time.time()
+            # dscqss2dsc0 = self.syms.compute_dscqss_dsc(
+            #     scqss_idx=2, sc_idx=0, species_info=self.species_info
+            # )
+            # dscqss1dsc0 = self.syms.compute_dscqss_dsc(
+            #     scqss_idx=1, sc_idx=0, species_info=self.species_info
+            # )
             # dscqss0dsc0 = self.syms.compute_dscqss_dsc(
             #     scqss_idx=0, sc_idx=0, species_info=self.species_info
             # )
-            # dscqss5dsc2 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=2, species_info=self.species_info
+            # # dscqss2dsc1 = self.syms.compute_dscqss_dsc(
+            # #     scqss_idx=2, sc_idx=1, species_info=self.species_info
+            # # )
+            # # dscqss2dsc2 = self.syms.compute_dscqss_dsc(
+            # #     scqss_idx=2, sc_idx=2, species_info=self.species_info
+            # # )
+            # # dscqss2dsc3 = self.syms.compute_dscqss_dsc(
+            # #     scqss_idx=2, sc_idx=3, species_info=self.species_info
+            # # )
+            # # dscqss2dsc4 = self.syms.compute_dscqss_dsc(
+            # #     scqss_idx=2, sc_idx=4, species_info=self.species_info
+            # # )
+            # # dscqss2dsc5 = self.syms.compute_dscqss_dsc(
+            # #     scqss_idx=2, sc_idx=5, species_info=self.species_info
+            # # )
+            # # # dscqss5dsc0 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=5, sc_idx=0, species_info=self.species_info
+            # # # )
+            # # # dscqss0dsc0 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=0, sc_idx=0, species_info=self.species_info
+            # # # )
+            # # # dscqss5dsc2 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=5, sc_idx=2, species_info=self.species_info
+            # # # )
+            # # # dscqss5dsc5 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=5, sc_idx=5, species_info=self.species_info
+            # # # )
+            # # # dscqss5dsc10 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=5, sc_idx=10, species_info=self.species_info
+            # # # )
+            # # # dscqss9dsc0 = self.syms.compute_dscqss_dsc(
+            # # #     scqss_idx=9, sc_idx=0, species_info=self.species_info
+            # # # )
+            # dscqss10dsc0 = self.syms.compute_dscqss_dsc(
+            #     scqss_idx=10, sc_idx=0, species_info=self.species_info
             # )
-            # dscqss5dsc5 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=5, species_info=self.species_info
-            # )
-            # dscqss5dsc10 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=5, sc_idx=10, species_info=self.species_info
-            # )
-            # dscqss9dsc0 = self.syms.compute_dscqss_dsc(
-            #     scqss_idx=9, sc_idx=0, species_info=self.species_info
-            # )
-            print(f"Time to evaluate dscqss5dsc0 = {time.time()-times}")
+            # print(f"Time to evaluate dscqss10dsc0 = {time.time()-times}")
 
-            print("Evaluating a Jacobian component")
-            times = time.time()
-            dwdot0dc0 = self.syms.compute_dwdot_dsc(
-                wdot_idx=0, sc_idx=0, species_info=self.species_info
-            )
-            print(f"Time to evaluate dwdot0dc0 = {time.time()-times}")
-            times = time.time()
-            dwdot10dc0 = self.syms.compute_dwdot_dsc(
-                wdot_idx=10, sc_idx=0, species_info=self.species_info
-            )
-            print(f"Time to evaluate dwdot10dc0 = {time.time()-times}")
-            times = time.time()
-            dwdot10dc21 = self.syms.compute_dwdot_dsc(
-                wdot_idx=10, sc_idx=21, species_info=self.species_info
-            )
-            print(f"Time to evaluate dwdot10dc21 = {time.time()-times}")
+            # print(f"Evaluating a dscqss_dsc component...")
+            # times = time.time()
+            # dscqss2dsc3fast = self.syms.compute_dscqss_dsc_fast(
+            #     scqss_idx=2, sc_idx=3, species_info=self.species_info
+            # )
+            # print(f"Time to evaluate dscqss2dsc3 the fast way = {time.time()-times}...")
+
+            # print("Evaluating a Jacobian component")
+            # times = time.time()
+            # dwdot0dc0 = self.syms.compute_dwdot_dsc(
+            #     wdot_idx=0, sc_idx=0, species_info=self.species_info
+            # )
+            # print(f"Time to evaluate dwdot0dc0 = {time.time()-times}")
+            # times = time.time()
+            # dwdot10dc0 = self.syms.compute_dwdot_dsc(
+            #     wdot_idx=10, sc_idx=0, species_info=self.species_info
+            # )
+            # print(f"Time to evaluate dwdot10dc0 = {time.time()-times}")
+            # times = time.time()
+            # dwdot10dc21 = self.syms.compute_dwdot_dsc(
+            #     wdot_idx=10, sc_idx=21, species_info=self.species_info
+            # )
+            # print(f"Time to evaluate dwdot10dc21 = {time.time()-times}")
 
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
@@ -422,48 +472,78 @@ class Converter:
             cck.ckwxr(hdr, self.mechanism, self.species_info)
             cth.dthermodtemp(hdr, self.mechanism, self.species_info)
 
+            # print("Symbolic dscqss_dsc term print for debug")
+            # cj.dscqss_dsc_debug(
+            #     hdr,
+            #     self.mechanism,
+            #     self.species_info,
+            #     self.reaction_info,
+            #     self.syms,
+            #     [
+            #         dscqss0dsc0,
+            #         dscqss1dsc0,
+            #         dscqss2dsc0,
+            #         # dscqss2dsc1,
+            #         # dscqss2dsc2,
+            #         # dscqss2dsc3,
+            #         # dscqss2dsc4,
+            #         # dscqss2dsc5,
+            #         # dscqss5dsc0,
+            #         # dscqss5dsc2,
+            #         # dscqss0dsc0,
+            #         # dscqss5dsc5,
+            #         # dscqss5dsc10,
+            #         # dscqss9dsc0,
+            #         # dscqss10dsc0,
+            #         # dscqss0dsc0,
+            #     ],
+            #     [
+            #         (self.species_info.n_species) * 0 + 0,
+            #         (self.species_info.n_species) * 0 + 1,
+            #         (self.species_info.n_species) * 0 + 2,
+            #         # (self.species_info.n_species) * 1 + 2,
+            #         # (self.species_info.n_species) * 2 + 2,
+            #         # (self.species_info.n_species) * 3 + 2,
+            #         # (self.species_info.n_species) * 4 + 2,
+            #         # (self.species_info.n_species) * 5 + 2,
+            #         # (self.species_info.n_species+1) * 0 + 5,
+            #         # (self.species_info.n_species) * 2 + 5,
+            #         # (self.species_info.n_species) * 0 + 0,
+            #         # (self.species_info.n_species) * 5 + 5,
+            #         # (self.species_info.n_species) * 10 + 5,
+            #         # (self.species_info.n_species) * 0 + 9,
+            #         # (self.species_info.n_species) * 0 + 10,
+
+            #     ],
+            # )
+
             print("Symbolic dscqss_dsc term print for debug")
-            cj.dscqss_dsc_debug(
+            cj.dscqss_dsc_fast_debug(
                 hdr,
                 self.mechanism,
                 self.species_info,
                 self.reaction_info,
                 self.syms,
-                [
-                    dscqss5dsc0,
-                    # dscqss5dsc2,
-                    # dscqss0dsc0,
-                    # dscqss5dsc5,
-                    # dscqss5dsc10,
-                    # dscqss9dsc0,
-                ],
-                [
-                    (self.species_info.n_species) * 0 + 5,
-                    # (self.species_info.n_species) * 2 + 5,
-                    # (self.species_info.n_species) * 0 + 0,
-                    # (self.species_info.n_species) * 5 + 5,
-                    # (self.species_info.n_species) * 10 + 5,
-                    # (self.species_info.n_species) * 0 + 9,
-                ],
             )
-            print("Symbolic jac term print for debug")
-            cj.ajac_term_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-                [
-                    dwdot0dc0,
-                    dwdot10dc0,
-                    dwdot10dc21,
-                ],
-                [
-                    (self.species_info.n_species + 1) * 0 + 0,
-                    (self.species_info.n_species + 1) * 0 + 10,
-                    (self.species_info.n_species + 1) * 21 + 10,
-                ],
-            )
+
+            # print("Symbolic jac term print for debug")
+            # cj.ajac_term_debug(
+            #     hdr,
+            #     self.mechanism,
+            #     self.species_info,
+            #     self.reaction_info,
+            #     self.syms,
+            #     [
+            #         dwdot0dc0,
+            #         dwdot10dc0,
+            #         dwdot10dc21,
+            #     ],
+            #     [
+            #         (self.species_info.n_species + 1) * 0 + 0,
+            #         (self.species_info.n_species + 1) * 0 + 10,
+            #         (self.species_info.n_species + 1) * 21 + 10,
+            #     ],
+            # )
 
             # Approx analytical jacobian
             cj.ajac(

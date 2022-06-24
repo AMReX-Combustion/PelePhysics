@@ -1,6 +1,8 @@
 """Species information."""
 from collections import OrderedDict
 
+import pandas as pd
+
 import ceptr.qssa_info as cqi
 
 
@@ -189,3 +191,88 @@ class SpeciesInfo:
             self.dict_wdot_gRT[symbol] = gRT_symb
             self.dict_wdot_kf[symbol] = kf_symb
             self.dict_wdot_kr[symbol] = kr_symb
+
+    def make_scqss_dataframe(self):
+
+        # Create lists for names, levels, and plus, mult
+        name_list = []
+        numb_list = []
+        symb_list = []
+        lev_list = []
+
+        # Loop over stopping terms first
+        for stp in self.sc_qss_chain_stop:
+            scqssnum = self.dict_qss_species[stp]
+            name_list.append(f"sc_qss[{scqssnum}]")
+            numb_list.append(scqssnum)
+            symb_list.append(stp)
+            lev_list.append(0)
+
+        # Initialize the dataframe
+        scqss_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+                "level": lev_list,
+            }
+        )
+
+        # Find the list of qss terms that have been filled
+        qss_filled = scqss_df["name"].unique()
+
+        # Loop until all qss terms have been filled
+        level = 1
+        while len(qss_filled) < len(self.qssa_species_list):
+
+            # Find the sc_qss that only depend upon filled terms
+            for symb in self.qssa_species_list:
+                scqssnum = self.dict_qss_species[symb]
+                if f"sc_qss[{scqssnum}]" in qss_filled:
+                    continue
+                else:
+                    qss_depend = self.dict_qssdepend_scqss[symb]
+
+                    # Determine if the qss species have been previously filled
+                    f_vec = []
+                    for qss_depend in self.dict_qssdepend_scqss[symb]:
+                        f_vec.append(str(qss_depend) in qss_filled)
+
+                    # Only depends upon previously filled entries
+                    if all(f_vec):
+                        name_list.append(f"sc_qss[{scqssnum}]")
+                        numb_list.append(scqssnum)
+                        symb_list.append(symb)
+                        lev_list.append(level)
+
+            scqss_df = pd.DataFrame(
+                {
+                    "name": name_list,
+                    "number": numb_list,
+                    "symbol": symb_list,
+                    "level": lev_list,
+                }
+            )
+            qss_filled = scqss_df["name"].unique()
+
+            level += 1
+
+        scqss_df["sc_dep"] = ""
+        scqss_df["scqss_dep"] = ""
+        # scqss_df["chain string"] = ""
+        # Add in a few more attributes for easy of use
+        for idx, item in scqss_df.iterrows():
+
+            scqss_df.at[idx, "sc_dep"] = self.dict_qssdepend_sc[item["symbol"]]
+            scqss_df.at[idx, "scqss_dep"] = self.dict_qssdepend_scqss[
+                item["symbol"]
+            ]
+
+            # chain_string = []
+            # for scqss_dep in self.dict_qssdepend_scqss[item["symbol"]]:
+            #     scqssdepnum = int(re.findall(r"\[(.*?)\]", str(scqss_dep)))
+            #     chain_string.append(f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss{scqssdepnum}dsc{}""")
+            # scqss_df.at[idx, "chain string"] =
+
+        # Return a deepcopy to self
+        self.scqss_df = scqss_df.copy(deep=True)
