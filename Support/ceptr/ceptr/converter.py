@@ -525,6 +525,31 @@ class Converter:
                 self.reaction_info,
                 self.syms,
             )
+            #cj.dscqss_dsc_all(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            #)
+            # print("Symbolic jac term print for debug")
+            # cj.ajac_term_debug(
+            #     hdr,
+            #     self.mechanism,
+            #     self.species_info,
+            #     self.reaction_info,
+            #     self.syms,
+            #     [
+            #         dwdot0dc0,
+            #         dwdot10dc0,
+            #         dwdot10dc21,
+            #     ],
+            #     [
+            #         (self.species_info.n_species + 1) * 0 + 0,
+            #         (self.species_info.n_species + 1) * 0 + 10,
+            #         (self.species_info.n_species + 1) * 21 + 10,
+            #     ],
+            # )
 
             # print("Symbolic jac term print for debug")
             # cj.ajac_term_debug(

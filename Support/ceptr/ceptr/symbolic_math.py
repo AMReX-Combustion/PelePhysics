@@ -338,6 +338,44 @@ class SymbolicMath:
                     ),
                 )
 
+    def write_array_to_cpp_no_cse(
+        self, list_smp, array_str, cw, fstream, indexList=None
+    ):
+        """Convert sympy array to C code compatible string."""
+        n = len(list_smp)
+
+        # Write all the entries
+        for i in range(n):
+            # The full expression is stored in array_cse index 1
+            try:
+                cpp_str = self.convert_to_cpp(list_smp[i])
+            except RecursionError:
+                if indexList is None:
+                    print("Recursion error for index = ", i)
+                else:
+                    print("Recursion error for index = ", indexList[i])
+                cpp_str = "0"
+            if indexList is None:
+                cw.writer(
+                    fstream,
+                    "%s[%s] = %s;"
+                    % (
+                        array_str,
+                        str(i),
+                        cpp_str,
+                    ),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "%s[%s] = %s;"
+                    % (
+                        array_str,
+                        str(indexList[i]),
+                        cpp_str,
+                    ),
+                )
+
     # @profile
     def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
