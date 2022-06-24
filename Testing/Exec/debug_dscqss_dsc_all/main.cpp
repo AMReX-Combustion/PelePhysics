@@ -101,14 +101,14 @@ main(int argc, char* argv[])
 
     // SET SC 
     srand (time(NULL));
-    //srand (42);
+    srand (42);
     for (int i = 0; i < NUM_SPECIES; ++i) {
         // dummy numbers
         sc[i] = ((double) rand() / (RAND_MAX)) + 1e-3;//(i+1)*0.02;
     }
 
     // Compute dscqss/dsc with sympy
-    dscqss_dsc_all(gradient_sympy, sc, T);
+    dscqss_dsc_fast_debug(gradient_sympy, sc, T);
 
     // Set up thermo and coeffs
     gibbs(g_RT, tc);
@@ -140,7 +140,7 @@ main(int argc, char* argv[])
                 index_sc_qss = i;
                 index_sc = j;
                 index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
-                if (error[index_gradient] > 1e-7 and error[index_gradient]< 0.99){
+                if (error[index_gradient] > 1e-5 and (std::abs(gradient_sympy[index_gradient])>1e-15 or std::abs(gradient_sympy[index_gradient])>1e-15) and error[index_gradient]< 0.99){
                     std::cout << "\t scqss " << index_sc_qss << "\t sc " << index_sc  << " : " <<  error[index_gradient] << "\n";
                     std::cout << "\t \t FD : " << gradient_FD[index_gradient] << "\n";
                     std::cout << "\t \t SYMPY : " <<  gradient_sympy[index_gradient]  << "\n";
