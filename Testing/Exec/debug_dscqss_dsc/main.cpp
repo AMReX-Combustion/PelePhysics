@@ -130,7 +130,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 5;
     index_sc = 0;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -151,7 +151,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 5;
     index_sc = 2;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -172,7 +172,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 0;
     index_sc = 0;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -193,7 +193,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 5;
     index_sc = 5;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -213,7 +213,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 5;
     index_sc = 10;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
@@ -234,7 +234,7 @@ main(int argc, char* argv[])
     // indices
     index_sc_qss = 9;
     index_sc = 0;
-    index_gradient = index_sc_qss + index_sc * NUM_SPECIES;
+    index_gradient = index_sc + index_sc_qss * NUM_SPECIES;
 
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);

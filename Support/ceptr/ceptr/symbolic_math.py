@@ -313,13 +313,12 @@ class SymbolicMath:
         # Now write the chain rule terms
         for idx, item in species_info.scqss_df.iterrows():
             for scnum in range(species_info.n_species):
-                # for scnum in range(1):
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
                     scqssdepnum = syms.syms_to_specnum(scqss_dep)
                     chain_string.append(
-                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scnum + scqssdepnum}]"""
+                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
 
                 if chain_string:
@@ -333,7 +332,7 @@ class SymbolicMath:
                     fstream,
                     "dscqss_dsc[%s] = %s;"
                     % (
-                        f"""{species_info.n_species*scnum + item["number"]}""",
+                        f"""{species_info.n_species*item["number"] + scnum}""",
                         final_string,
                     ),
                 )
@@ -604,7 +603,6 @@ class SymbolicMath:
 
             # Loop over all sc terms
             for scnum in range(species_info.n_species):
-                # for scnum in range(1):
                 # Only do the derivative if there is an sc dependence explicitly included
                 if f"sc[{scnum}]" in str(item["sc_dep"]):
                     times = time.time()
