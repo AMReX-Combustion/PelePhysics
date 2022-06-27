@@ -23,9 +23,6 @@ namespace pele{
         amrex::ParmParse pp("manifold");
         std::string tablefile;
         pp.get("filename", tablefile);
-        if (m_h_tf_data.Ndim > MAXD_TABLE) {
-          amrex::Abort("Requesting too many table dimensions, need to increase MAXD_TABLE");
-        }
         pp.query("v",m_verbose);
         read_table(tablefile);
         if (m_verbose >= 1) {

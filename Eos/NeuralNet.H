@@ -244,6 +244,15 @@ public:
         m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = src_idx;
       }
     }
+    
+    m_h_nnf_data.man_bias = static_cast<amrex::Real*>(
+        amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*sizeof(amrex::Real)));
+    std::vector<std::string>& man_bias = umap["manibiases"];
+    AMREX_ALWAYS_ASSERT(man_bias.size() == m_h_nnf_data.Ndim);
+    for(int i = 0; i < m_h_nnf_data.Ndim; i++)
+    {
+      m_h_nnf_data.man_bias[i] = (amrex::Real)std::stod(man_bias[i]);
+    }
   }
   
   void print()
@@ -297,6 +306,9 @@ public:
         }
         amrex::Print() << amrex::trim(varname) << " | " << amrex::trim(src_varname) << " | " << coeff << std::endl;
       }
+      
+      amrex::Print() 
+      
       amrex::Print() << std::endl;
     }
   }
@@ -318,6 +330,7 @@ public:
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_idx);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_coeff);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.man_bias);
     
     // if(m_device_allocated)
     // {
@@ -346,6 +359,7 @@ public:
     amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
     int* comb_idx; // Index of variable corresponding to each comb_coeff
     int* comb_src_idx; // Index of source term for variable corresponding to each comb_coeff
+    amrex::Real* man_bias; // Offsets to add when calculating manifold parameters
   };
   
   virtual ManFuncData& host_manfunc_data()
