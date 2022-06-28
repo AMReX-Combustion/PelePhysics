@@ -8,15 +8,12 @@
 #include "ReactorCvodeJacobian.H"
 #include "ReactorCvodeCustomLinSolver.H"
 #include <cvode/cvode.h>
-#include <cvode/cvode_direct.h>
-#include <cvode/cvode_spils.h>
 #include <nvector/nvector_serial.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 #include <sunlinsol/sunlinsol_dense.h>
 #include <sunlinsol/sunlinsol_spgmr.h>
-#include <sundials/sundials_types.h>
-#include <sundials/sundials_math.h>
-#include <sunmatrix/sunmatrix_sparse.h>
+#include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
@@ -62,7 +59,11 @@ public:
 
   void close() override;
 
-  void print_final_stats(void* cvodemem) override;
+  void print_final_stats(void* cvodemem, bool print_ls_stats);
+  void print_final_stats(void* cvodemem) override
+  {
+    print_final_stats(cvodemem, true);
+  }
 
   int react(
     const amrex::Box& box,
@@ -157,11 +158,14 @@ private:
 #else
   int atomic_reductions{1};
 #endif
+  int max_nls_iters{3};
+  int max_fp_accel{2};
   bool m_clean_init_massfrac{false};
 
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;
   SUNLinearSolver LS = nullptr;
+  SUNNonlinearSolver NLS = nullptr;
   SUNMatrix A = nullptr;
   void* cvode_mem = nullptr;
   CVODEUserData* udata_g = nullptr;
