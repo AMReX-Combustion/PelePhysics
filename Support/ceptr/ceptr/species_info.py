@@ -157,40 +157,40 @@ class SpeciesInfo:
         """Identify wdot dependencies from syms object."""
         self.dict_wdot_scqss = {}
         self.dict_wdot_sc = {}
-        self.dict_wdot_gRTqss = {}
-        self.dict_wdot_gRT = {}
-        self.dict_wdot_kf = {}
-        self.dict_wdot_kr = {}
+        # self.dict_wdot_gRTqss = {}
+        # self.dict_wdot_gRT = {}
+        # self.dict_wdot_kf = {}
+        # self.dict_wdot_kr = {}
         for symbol in self.dict_nonqss_species:
             free_symb = syms.wdot_smp[
                 self.dict_nonqss_species[symbol]
             ].free_symbols
             qss_symb = []
             sc_symb = []
-            gRTqss_symb = []
-            gRT_symb = []
-            kf_symb = []
-            kr_symb = []
+            # gRTqss_symb = []
+            # gRT_symb = []
+            # kf_symb = []
+            # kr_symb = []
             for ss in free_symb:
                 if "sc_qss" in str(ss):
                     qss_symb.append(ss)
                 elif "sc" in str(ss):
                     sc_symb.append(ss)
-                elif "g_RT_qss" in str(ss):
-                    gRTqss_symb.append(ss)
-                elif "g_RT" in str(ss):
-                    gRT_symb.append(ss)
-                elif "kf" in str(ss):
-                    kf_symb.append(ss)
-                elif "kr" in str(ss):
-                    kr_symb.append(ss)
+                # elif "g_RT_qss" in str(ss):
+                #     gRTqss_symb.append(ss)
+                # elif "g_RT" in str(ss):
+                #     gRT_symb.append(ss)
+                # elif "kf" in str(ss):
+                #     kf_symb.append(ss)
+                # elif "kr" in str(ss):
+                #     kr_symb.append(ss)
 
             self.dict_wdot_scqss[symbol] = qss_symb
             self.dict_wdot_sc[symbol] = sc_symb
-            self.dict_wdot_gRTqss[symbol] = gRTqss_symb
-            self.dict_wdot_gRT[symbol] = gRT_symb
-            self.dict_wdot_kf[symbol] = kf_symb
-            self.dict_wdot_kr[symbol] = kr_symb
+            # self.dict_wdot_gRTqss[symbol] = gRTqss_symb
+            # self.dict_wdot_gRT[symbol] = gRT_symb
+            # self.dict_wdot_kf[symbol] = kf_symb
+            # self.dict_wdot_kr[symbol] = kr_symb
 
     def make_scqss_dataframe(self):
 
@@ -259,7 +259,6 @@ class SpeciesInfo:
 
         scqss_df["sc_dep"] = ""
         scqss_df["scqss_dep"] = ""
-        # scqss_df["chain string"] = ""
         # Add in a few more attributes for easy of use
         for idx, item in scqss_df.iterrows():
 
@@ -268,11 +267,72 @@ class SpeciesInfo:
                 item["symbol"]
             ]
 
-            # chain_string = []
-            # for scqss_dep in self.dict_qssdepend_scqss[item["symbol"]]:
-            #     scqssdepnum = int(re.findall(r"\[(.*?)\]", str(scqss_dep)))
-            #     chain_string.append(f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss{scqssdepnum}dsc{}""")
-            # scqss_df.at[idx, "chain string"] =
-
         # Return a deepcopy to self
         self.scqss_df = scqss_df.copy(deep=True)
+
+    def make_sc_dataframe(self):
+
+        name_list = []
+        numb_list = []
+        symb_list = []
+
+        for idx in range(self.n_species):
+            name_list.append(f"sc[{idx}]")
+            numb_list.append(idx)
+            symb_list.append(self.nonqssa_species_list[idx])
+
+        # Initialize the dataframe
+        sc_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+            }
+        )
+
+        sc_df["scqss_rely"] = ""
+        # Loop over the scqss_df and add in scqss dependence upon sc terms
+        for sc_idx, sc in sc_df.iterrows():
+            scqss_list = []
+            for scqss_idx, scqss in self.scqss_df.iterrows():
+                if sc["name"] in str(scqss["sc_dep"]):
+                    scqss_list.append(scqss["name"])
+
+            sc_df.at[sc_idx, "scqss_rely"] = scqss_list
+
+        # Return a deepcopy to self
+        self.sc_df = sc_df.copy(deep=True)
+
+    def make_wdot_dataframe(self):
+
+        # Create lists for names, levels, and plus, mult
+        name_list = []
+        numb_list = []
+        symb_list = []
+
+        for idx in range(self.n_species):
+            name_list.append(f"wdot[{idx}]")
+            numb_list.append(idx)
+            symb_list.append(self.nonqssa_species_list[idx])
+
+        # Initialize the dataframe
+        wdot_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+            }
+        )
+
+        # wdot_df["sc_dep"] = ""
+        # wdot_df["scqss_dep"] = ""
+        # # Add in a few more attributes for easy of use
+        # for idx, item in wdot_df.iterrows():
+
+        #     wdot_df.at[idx, "sc_dep"] = self.dict_wdot_sc[item["symbol"]]
+        #     wdot_df.at[idx, "scqss_dep"] = self.dict_wdot_scqss[
+        #         item["symbol"]
+        #     ]
+
+        # Return a deepcopy to self
+        self.wdot_df = wdot_df.copy(deep=True)

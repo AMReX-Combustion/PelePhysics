@@ -163,6 +163,12 @@ class SymbolicMath:
             self.dscqssdsc = {}
             # Create dict to hold dscqss_dscqss terms
             self.dscqssdscqss = {}
+            # Create dict to hold dwdot_dsc terms
+            self.dwdotdsc = {}
+            # Create dict to hold dwdot_dscqss terms
+            self.dwdotdscqss = {}
+            # Create dict to hold jacobian terms
+            self.jacobian = {}
 
             self.dscqssdscqss_slow = {}
             self.dscqssdsc_slow = {}
@@ -284,12 +290,15 @@ class SymbolicMath:
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(array_cse[1][i])
 
+            num_idx = tuple_list[i][0]
+            den_idx = tuple_list[i][1]
+
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
                     "const amrex::Real %s = %s;"
                     % (
-                        f"dscqss{syms.syms_to_specnum(tuple_list[i][0])}dscqss{syms.syms_to_specnum(tuple_list[i][1])}",
+                        f"dscqss{num_idx}dscqss{den_idx}",
                         cpp_str,
                     ),
                 )
@@ -298,7 +307,7 @@ class SymbolicMath:
                     fstream,
                     "const amrex::Real %s = %s;"
                     % (
-                        f"dscqss{syms.syms_to_specnum(tuple_list[i][0])}dsc{syms.syms_to_specnum(tuple_list[i][1])}",
+                        f"dscqss{num_idx}dsc{den_idx}",
                         cpp_str,
                     ),
                 )
@@ -313,6 +322,7 @@ class SymbolicMath:
         # Now write the chain rule terms
         for idx, item in species_info.scqss_df.iterrows():
             for scnum in range(species_info.n_species):
+                # for scnum in [0]:
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
@@ -336,6 +346,161 @@ class SymbolicMath:
                         final_string,
                     ),
                 )
+
+    # @profile
+    def write_jacobian_to_cpp(self, syms, species_info, cw, fstream):
+        """Write species jacobian terms as functions of common subexpressions."""
+
+        n_dscqssdscqss = len(syms.dscqssdscqss)
+        n_dscqssdsc = len(syms.dscqssdsc)
+        n_dwdotdscqss = len(syms.dwdotdscqss)
+        n_dwdotdsc = len(syms.dwdotdsc)
+
+        list_smp = (
+            list(syms.dscqssdscqss.values())
+            + list(syms.dscqssdsc.values())
+            + list(syms.dwdotdscqss.values())
+            + list(syms.dwdotdsc.values())
+        )
+        n_total = len(list_smp)
+
+        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
+        dwdotdscqss_tuples = list(syms.dwdotdscqss.keys())
+        dwdotdsc_tuples = list(syms.dwdotdsc.keys())
+        tuple_list = (
+            dscqssdscqss_tuples
+            + dscqssdsc_tuples
+            + dwdotdscqss_tuples
+            + dwdotdsc_tuples
+        )
+
+        # Write common expressions
+        times = time.time()
+        array_cse = sme.cse(list_smp)
+        for cse_idx in range(len(array_cse[0])):
+            left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
+            right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+            cw.writer(
+                fstream,
+                "const amrex::Real %s = %s;"
+                % (
+                    left_cse,
+                    right_cse,
+                ),
+            )
+        timee = time.time()
+
+        print("Made common expr (time = %.3g s)" % (timee - times))
+
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Write base terms for dscqssdscqss, dscqssdsc, dwdotdscqss, and dwdotdsc..."
+            ),
+        )
+
+        times = time.time()
+        # Write all the entries
+        for i in range(n_total):
+            # The full expression is stored in array_cse index 1
+            cpp_str = self.convert_to_cpp(array_cse[1][i])
+
+            num_idx = tuple_list[i][0]
+            den_idx = tuple_list[i][1]
+
+            if i < n_dscqssdscqss:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        f"dscqss{num_idx}dscqss{den_idx}",
+                        cpp_str,
+                    ),
+                )
+            elif i < n_dscqssdscqss + n_dscqssdsc:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        f"dscqss{num_idx}dsc{den_idx}",
+                        cpp_str,
+                    ),
+                )
+            elif i < n_dscqssdscqss + n_dscqssdsc + n_dwdotdscqss:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (f"dwdot{num_idx}dscqss{den_idx}", cpp_str),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (f"dwdot{num_idx}dsc{den_idx}", cpp_str),
+                )
+
+            timee = time.time()
+        print(
+            "Printed exprs for scqss (time = %.3g s)" % (time.time() - times)
+        )
+
+        cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
+
+        # Now write the chain rule terms
+        for idx, item in species_info.scqss_df.iterrows():
+            for scnum in range(species_info.n_species):
+                # for scnum in [0]:
+                start_string = f"""dscqss{item["number"]}dsc{scnum}"""
+                chain_string = []
+                for scqss_dep in item["scqss_dep"]:
+                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    chain_string.append(
+                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
+                    )
+
+                if chain_string:
+                    final_string = f"{start_string} + {chain_string[0]}"
+                    for ics in range(len(chain_string) - 1):
+                        final_string += f" + {chain_string[ics+1]}"
+                else:
+                    final_string = start_string
+
+                cw.writer(
+                    fstream,
+                    "dscqss_dsc[%s] = %s;"
+                    % (
+                        f"""{species_info.n_species*item["number"] + scnum}""",
+                        final_string,
+                    ),
+                )
+
+        # Now write the full jacobian expression
+        cw.writer(fstream, cw.comment("Write the full Jacobian expression..."))
+
+        for idx, item in species_info.wdot_df.iterrows():
+            for scnum in range(species_info.n_species):
+                # for scnum in [0]:
+                start_string = f"""dwdot{idx}dsc{scnum}"""
+                chain_string = []
+                for scqssnum in species_info.scqss_df["number"]:
+                    chain_string.append(
+                        f"""dwdot{idx}dscqss{scqssnum} * dscqss_dsc[{species_info.n_species*scqssnum + scnum}]"""
+                    )
+
+                final_string = f"{start_string} + {chain_string[0]}"
+                for ics in range(len(chain_string) - 1):
+                    final_string += f" + {chain_string[ics+1]}"
+
+                cw.writer(
+                    fstream,
+                    "J[%s] = %s;"
+                    % (
+                        f"""{(species_info.n_species+1)*scnum + item["number"]}""",
+                        final_string,
+                    ),
+                )
+            # break
 
     def write_array_to_cpp_no_cse(
         self, list_smp, array_str, cw, fstream, indexList=None
@@ -591,10 +756,19 @@ class SymbolicMath:
             for scqss in item["scqss_dep"]:
                 scqssnum = self.syms_to_specnum(scqss)
                 # times = time.time()
-                self.dscqssdscqss[(item["name"], str(scqss))] = sme.diff(
+                self.dscqssdscqss[(item["number"], scqssnum)] = sme.diff(
                     self.sc_qss_smp[item["number"]],
                     smp.symbols(f"sc_qss[{scqssnum}]"),
                 )
+
+            # # Loop over the dependencies of scqss
+            # for scqssnum in species_info.scqss_df["number"]:
+            #     # scqssnum = self.syms_to_specnum(scqss)
+            #     # times = time.time()
+            #     self.dscqssdscqss[(item["number"], scqssnum)] = sme.diff(
+            #         self.sc_qss_smp[item["number"]],
+            #         smp.symbols(f"sc_qss[{scqssnum}]"),
+            #     )
 
     def compute_dscqss_dsc_fast(self, species_info):
 
@@ -603,18 +777,152 @@ class SymbolicMath:
 
             # Loop over all sc terms
             for scnum in range(species_info.n_species):
+                # for scnum in [0]:
+
+                times = time.time()
+                self.dscqssdsc[(item["number"], scnum)] = sme.diff(
+                    self.sc_qss_smp[item["number"]],
+                    smp.symbols(f"sc[{scnum}]"),
+                )
+                print(
+                    f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
+                )
                 # Only do the derivative if there is an sc dependence explicitly included
-                if f"sc[{scnum}]" in str(item["sc_dep"]):
-                    times = time.time()
-                    self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(
-                        self.sc_qss_smp[item["number"]],
-                        smp.symbols(f"sc[{scnum}]"),
+                # if f"sc[{scnum}]" in str(item["sc_dep"]):
+                #     times = time.time()
+                #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(
+                #         self.sc_qss_smp[item["number"]],
+                #         smp.symbols(f"sc[{scnum}]"),
+                #     )
+                #     print(
+                #         f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
+                #     )
+                # else:
+                #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
+
+    def compute_dwdot_dsc_fast(self, species_info):
+
+        # Loop over all wdots and sc terms
+        for wdot_idx, item in species_info.wdot_df.iterrows():
+
+            # Loop over all sc terms
+            times_outer = time.time()
+            for sc_idx in range(species_info.n_species):
+                # for sc_idx in [0]:
+
+                times = time.time()
+                self.dwdotdsc[(wdot_idx, sc_idx)] = sme.diff(
+                    self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+                )
+                print(
+                    f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}"
+                )
+            # break
+
+    def compute_dwdot_dscqss_fast(self, species_info):
+
+        # Loop over all wdots and sc terms
+        for wdot_idx, item in species_info.wdot_df.iterrows():
+
+            times_outer = time.time()
+            # Loop over all scqss terms
+            for scqss in species_info.scqss_df["name"]:
+                scqssnum = self.syms_to_specnum(scqss)
+                times = time.time()
+                self.dwdotdscqss[(wdot_idx, scqssnum)] = sme.diff(
+                    self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+                )
+                print(
+                    f"Time to do dwdot[{wdot_idx}]/dscqss[{scqssnum}] = {time.time()-times}"
+                )
+
+            print(
+                f"Time to do full dwdot[{wdot_idx}] derivatives = {time.time()-times_outer}"
+            )
+            # break
+
+    def compute_jacobian(self, species_info):
+
+        # Loop over all wdots and sc terms
+        for wdot_idx, item in species_info.wdot_df.iterrows():
+
+            # Loop over all sc terms
+            times_outer = time.time()
+            # for sc_idx in range(species_info.n_species):
+            for sc_idx in [0]:
+
+                times = time.time()
+                dwdotdsc = sme.diff(
+                    self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+                )
+                print(
+                    f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}"
+                )
+
+                times = time.time()
+                self.jacobian[(wdot_idx, sc_idx)] = dwdotdsc
+                # Loop over all scqss terms
+                for scqss in species_info.scqss_df["name"]:
+                    scqssnum = self.syms_to_specnum(scqss)
+                    # if not (wdot_idx, scqssnum) in self.dwdotdscqss:
+                    #     print("there is missing index in self.dwdotdscqss")
+
+                    # if not (scqssnum, sc_idx) in self.dscqssdsc:
+                    #     print("there is missing index in self.dscqssdsc")
+
+                    self.jacobian[(wdot_idx, sc_idx)] += (
+                        self.dwdotdscqss[(wdot_idx, scqssnum)]
+                        * self.dscqssdsc[(scqssnum, sc_idx)]
                     )
-                    print(
-                        f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
-                    )
-                else:
-                    self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
+                print(
+                    f"Time to fill jacobian[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}"
+                )
+
+            print(
+                f"Time to do full dwdot[{wdot_idx}] derivatives = {time.time()-times_outer}"
+            )
+            # break
+
+    def compute_dwdot_dsc_cse(self, species_info):
+
+        # Loop over all wdots and sc terms
+        for wdot_idx, item in species_info.wdot_df.iterrows():
+
+            # Compute the CSE for the wdots
+            times = time.time()
+            com_sub_expr = sme.cse([self.wdot_smp[wdot_idx]])
+            print(f"Time to do CSE for wdot[{wdot_idx}] = {time.time()-times}")
+
+        exit()
+
+        #     # Loop over all sc terms
+        #     times_outer = time.time()
+        #     for sc_idx in range(species_info.n_species):
+
+        #         times = time.time()
+        #         # decompose and do the diff over each argument
+        #         tmp_diff = 0
+        #         for term in self.wdot_smp[wdot_idx].args:
+        #             time_in = time.time()
+        #             tmp_diff += sme.diff(term, smp.symbols(f"sc[{sc_idx}]"))
+        #             print(f"Time to do inner term = {time.time()-time_in}")
+
+        #         self.dwdotdsc[(wdot_idx, sc_idx)] = tmp_diff
+        #         # self.dwdotdsc[(wdot_idx, sc_idx)] = sme.diff(
+        #         #         self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+        #         #     )
+        #         print(f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}")
+
+        #     # Loop over all scqss terms
+        #     for scqss in species_info.sc_df["name"]:
+        #         scqssnum = self.syms_to_specnum(scqss)
+        #         times = time.time()
+        #         self.dwdotdscqss[(wdot_idx, scqssnum)] = sme.diff(
+        #             self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+        #         )
+        #         print(f"Time to do dwdot[{wdot_idx}]/dscqss[{scqssnum}] = {time.time()-times}")
+
+        #     print(f"Time to do full dwdot[{wdot_idx}] derivatives = {time.time()-times_outer}")
 
     def compute_dscqss_dsc_parallel(self, species_info):
 
