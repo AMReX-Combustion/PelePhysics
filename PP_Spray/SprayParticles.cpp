@@ -533,12 +533,9 @@ SprayParticleContainer::updateParticles(
                   continue;
                 }
               }
-              if (SPI.mom_trans) {
-                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                  Gpu::Atomic::Add(
-                    &momSrcarr(cur_indx, dir),
-                    cur_coef * gpv.fluid_mom_src[dir]);
-                }
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                Gpu::Atomic::Add(
+                  &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
               }
               if (SPI.mass_trans) {
                 Gpu::Atomic::Add(

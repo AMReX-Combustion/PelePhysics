@@ -127,6 +127,8 @@ struct SprayData
   amrex::Real num_ppp; // Parcel size
   amrex::Real ref_T;
   amrex::Real sigma; // Surface tension
+  // If particle is updated half dt or whole dt
+  amrex::Real dtmod = 0.5;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
@@ -161,6 +163,7 @@ struct SprayData
       }
       indx[spf] = fdat.indx[spf];
     }
+    dtmod = fdat.dtmod;
   }
 };
 
