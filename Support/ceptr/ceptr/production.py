@@ -3,8 +3,8 @@ import re
 import sys
 import time
 
-import sympy as smp
 import symengine as sme
+import sympy as smp
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
