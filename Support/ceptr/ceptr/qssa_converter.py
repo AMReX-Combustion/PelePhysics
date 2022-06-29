@@ -6,8 +6,8 @@ import time
 from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
-import symengine as sme
 import sympy as smp
+import symengine as sme
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
