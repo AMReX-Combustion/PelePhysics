@@ -307,7 +307,7 @@ public:
         amrex::Print() << amrex::trim(varname) << " | " << amrex::trim(src_varname) << " | " << coeff << std::endl;
       }
       
-      amrex::Print() 
+      amrex::Print();
       
       amrex::Print() << std::endl;
     }
@@ -480,11 +480,11 @@ private:
     out_tensor.backward();
 
     auto grad = indata.grad();
-    auto acc = grad.accessor<amrex::Real,1>();
+    auto acc = grad.accessor<amrex::Real,2>();
 
     for(int i = 0; i < acc.size(0); i++)
     {
-      derivs[i] = acc[i];
+      derivs[i] = acc[0][i];
     }
   }
   
