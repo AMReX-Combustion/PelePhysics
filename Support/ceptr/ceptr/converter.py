@@ -396,25 +396,21 @@ class Converter:
             times = time.time()
             self.syms.compute_dscqss_dscqss(species_info=self.species_info)
             print(f"Time to do all dscqss_dscqss = {time.time()-times}")
-            # ~26 seconds
 
             # Evaluate the dscqss_dsc values for later
             times = time.time()
             self.syms.compute_dscqss_dsc_fast(species_info=self.species_info)
             print(f"Time to do all the dscqss_dsc = {time.time()-times}")
-            # ~22.5 minutes
 
             # # Evaluate the dwdot_dscqss values for later
             times = time.time()
             self.syms.compute_dwdot_dscqss_fast(species_info=self.species_info)
             print(f"Time to do all the dwdot_dscqss = {time.time()-times}")
-            # ~7.4 hours
 
             # # Evaluate the dwdot_dsc values for later
             times = time.time()
             self.syms.compute_dwdot_dsc_fast(species_info=self.species_info)
             print(f"Time to do all the dwdot_dsc = {time.time()-times}")
-            # ~13.7 hours
 
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
@@ -442,14 +438,14 @@ class Converter:
             #     ],
             # )
 
-            print("Symbolic dscqss_dsc term print for debug")
-            cj.dscqss_dsc_fast_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
+            # print("Symbolic dscqss_dsc term print for debug")
+            # cj.dscqss_dsc_fast_debug(
+            #     hdr,
+            #     self.mechanism,
+            #     self.species_info,
+            #     self.reaction_info,
+            #     self.syms,
+            # )
 
             cj.ajac_term_fast_debug(
                 hdr,
