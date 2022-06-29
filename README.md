@@ -36,6 +36,7 @@ I tried to not modify functions that did not need be modified but we should prob
   - Test Execution in PeleLM
   - Test Compilation with CUDA and HIP
     - Keep track of when things are just too expensive for HIP and we can ask for HIP people input.
+  - Add option to compute Jacobian via FD
 
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
