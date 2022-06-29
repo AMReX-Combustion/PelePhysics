@@ -4,7 +4,6 @@ import sys
 import time
 
 import symengine as sme
-import sympy as smp
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
