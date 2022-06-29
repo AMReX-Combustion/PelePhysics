@@ -119,8 +119,8 @@ public:
     fi.seekg(0, std::ios::beg);
 
     std::vector<char> buffer(length);
-    fi.read(buffer.data(), length);
-    std::istringstream is(buffer.data(), length);
+    fi.read(buffer.data(), length); 
+    std::istringstream is(std::string(buffer.data(), length));
     
     while(!is.eof())
     {        
