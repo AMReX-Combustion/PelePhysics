@@ -7,19 +7,22 @@ I tried to not modify functions that did not need be modified but we should prob
 4. ~~Verify that `sc_qss` is consistent with `comp_sc_qss`~~ See `debugDodecaneLuQss`
 5. ~~Make sure that the expressions printed are compact~~
 6. ~~Make sure code is correctly formatted~~
-7. Verify that `dsc_qss/dsc` is correct compared to finite difference
-8. Modify `aJacobian` to include the dependence of `sc_qss` with `sc` and `T`.
+7. ~~Verify that `dsc_qss/dsc` is correct compared to finite difference~~
+8. Modify `aJacobian` to include the dependence of `sc_qss` with `sc` and `T`
   - ~~Symbolic encoding of `wdot`~~
   - ~~Verify that `wdot` values obtained with `sympy`~~
-  - Chain rule to get `dscqss_dsc` -> Ongoing
-  - Verify `dscqss_dsc` -> Ongoing (some `dscqss_dsc` are correct but others arent)
-  - Chain rule to get `dwdot_dsc`
+  - ~~Chain rule to get `dscqss_dsc`~~
+  - ~~Verify `dscqss_dsc`~~
+  - ~~Chain rule to get `dwdot_dsc`~~
   - ~~Finite difference to get `dwdot_dT`~~
+  - Decide if we keep finite difference for last row of jacobian
+  - Some dwdotdsc are off (C2H3CHO and C12H25O2).
   - Verify `dTdot` terms -> Ongoing
 9. Ensure computational efficiency
   - ~~Use `symEngine` when computing `diff`~~
-  - Make sure we do not recompute twice the same `sme.diff` -> Ongoing
-10. Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix
+  - ~~Make sure we do not recompute twice the same `sme.diff`~~
+  - Make sure that the `aJacobian` generated can work on GPU
+10. ~~Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix~~
 
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
