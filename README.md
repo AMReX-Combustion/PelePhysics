@@ -21,8 +21,21 @@ I tried to not modify functions that did not need be modified but we should prob
 9. Ensure computational efficiency
   - ~~Use `symEngine` when computing `diff`~~
   - ~~Make sure we do not recompute twice the same `sme.diff`~~
-  - Make sure that the `aJacobian` generated can work on GPU
 10. ~~Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix~~
+11. Make sure that the `aJacobian` generated can work on GPU
+  - Reduce memory footprint of common expressions (Malik)
+    - Change `1.0 * xxx` into `xxx`
+    - Change `pow(xxx,n)` into `xxx * xxx * ... * xxx`. Dont do it is `n` is negative (or leave it as option)
+    - Remove `xxx = yyy` and only use `yyy`
+    - Remove `xxx = yyy-zzz` and only use `yyy-zzz`
+    - Remove `xxx = 0` and replace it with `0` in the expressions
+  - Reduce number of intermediate values (Nick)
+    - Eliminate the allocation of array `dscqssdsc`
+    - Eliminate intermediate `dscqssdscxxx` reals
+    - Write the Jacobian values as a sequence of `+=` (Bottom up approach)
+  - Test Execution in PeleLM
+  - Test Compilation with CUDA and HIP
+    - Keep track of when things are just too expensive for HIP and we can ask for HIP people input.
 
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
