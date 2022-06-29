@@ -15,7 +15,7 @@ I tried to not modify functions that did not need be modified but we should prob
   - ~~Verify `dscqss_dsc`~~
   - ~~Chain rule to get `dwdot_dsc`~~
   - ~~Finite difference to get `dwdot_dT`~~
-  - Decide if we keep finite difference for last row of jacobian
+  - ~~Decide if we keep finite difference for last row of jacobian~~
   - Some dwdotdsc are off (C2H3CHO and C12H25O2).
   - Verify `dTdot` terms -> Ongoing
 9. Ensure computational efficiency
