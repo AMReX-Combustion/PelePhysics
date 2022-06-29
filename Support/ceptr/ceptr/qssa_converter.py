@@ -7,6 +7,7 @@ from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
 import sympy as smp
+import symengine as sme
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -1753,7 +1754,7 @@ def qssa_coeff_functions(
                 % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m),
             )
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
-            redp_smp *= smp.exp(
+            redp_smp *= sme.exp(
                 low_beta * syms.tc_smp[0] - coeff * syms.invT_smp
             )
             if is_troe:
@@ -1762,7 +1763,7 @@ def qssa_coeff_functions(
                 )
                 f_smp = redp_smp / (1.0 + redp_smp)
                 cw.writer(fstream, "const amrex::Real logPred = log10(redP);")
-                log_pred_smp = smp.log(redp_smp, 10)
+                log_pred_smp = sme.log(redp_smp, 10)
                 cw.writer(fstream, "const amrex::Real logFcent = log10(")
                 int_smp = 0
                 if abs(troe[1]) > 1.0e-100:
@@ -1775,7 +1776,7 @@ def qssa_coeff_functions(
                                 (1 / troe[1]),
                             ),
                         )
-                        int_smp += (1.0 - troe[0]) * smp.exp(
+                        int_smp += (1.0 - troe[0]) * sme.exp(
                             -syms.tc_smp[1] * (1 / troe[1])
                         )
                 else:
@@ -1791,7 +1792,7 @@ def qssa_coeff_functions(
                                 (1 / troe[2]),
                             ),
                         )
-                        int_smp += (troe[0]) * smp.exp(
+                        int_smp += (troe[0]) * sme.exp(
                             -syms.tc_smp[1] * (1 / troe[2])
                         )
                 else:
@@ -1803,17 +1804,17 @@ def qssa_coeff_functions(
                             fstream,
                             "    + exp(%.15g * invT));" % -troe[3],
                         )
-                        int_smp += smp.exp(-troe[3] * syms.invT_smp)
+                        int_smp += sme.exp(-troe[3] * syms.invT_smp)
                     else:
                         cw.writer(
                             fstream,
                             "    + exp(-%.15g * invT));" % troe[3],
                         )
-                        int_smp += smp.exp(-troe[3] * syms.invT_smp)
+                        int_smp += sme.exp(-troe[3] * syms.invT_smp)
                 else:
                     cw.writer(fstream, "    + 0.0);")
                     int_smp += 0.0
-                log_fcent_smp = smp.log(int_smp, 10)
+                log_fcent_smp = sme.log(int_smp, 10)
 
                 cw.writer(
                     fstream,
@@ -1895,7 +1896,7 @@ def qssa_coeff_functions(
                 )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
-                    * smp.exp(-kc_exp_arg_smp)
+                    * sme.exp(-kc_exp_arg_smp)
                     * kc_conv_inv_smp
                     * reverse_sc_smp
                 )
@@ -1908,7 +1909,7 @@ def qssa_coeff_functions(
                 syms.qr_qss_smp[idx] = (
                     corr_smp
                     * syms.kf_qss_smp[idx]
-                    * smp.exp(-kc_exp_arg_smp)
+                    * sme.exp(-kc_exp_arg_smp)
                     * kc_conv_inv_smp
                     * reverse_sc_smp
                 )
@@ -1921,7 +1922,7 @@ def qssa_coeff_functions(
                 )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
-                    * smp.exp(-kc_exp_arg_smp)
+                    * sme.exp(-kc_exp_arg_smp)
                     * reverse_sc_smp
                 )
             else:
@@ -1933,7 +1934,7 @@ def qssa_coeff_functions(
                 syms.qr_qss_smp[idx] = (
                     corr_smp
                     * syms.kf_qss_smp[idx]
-                    * smp.exp(-kc_exp_arg_smp)
+                    * sme.exp(-kc_exp_arg_smp)
                     * reverse_sc_smp
                 )
 
@@ -2552,7 +2553,7 @@ def qssa_component_functions(
                 cw.writer(
                     fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                 )
-                syms.kf_qss_smp_tmp[index] *= smp.exp(beta * syms.tc_smp[0])
+                syms.kf_qss_smp_tmp[index] *= sme.exp(beta * syms.tc_smp[0])
             elif beta == 0:
                 cw.writer(
                     fstream,
@@ -2560,7 +2561,7 @@ def qssa_component_functions(
                     % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp_tmp[index] *= smp.exp(-coeff * syms.invT_smp)
+                syms.kf_qss_smp_tmp[index] *= sme.exp(-coeff * syms.invT_smp)
 
             else:
                 cw.writer(
@@ -2569,7 +2570,7 @@ def qssa_component_functions(
                     % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp_tmp[index] *= smp.exp(
+                syms.kf_qss_smp_tmp[index] *= sme.exp(
                     beta * syms.tc_smp[0] - coeff * syms.invT_smp
                 )
 
@@ -2931,7 +2932,7 @@ def qssa_component_functions(
                             # REMOVE IF NO DEBUG
                             # coeff_submatrix_smp[index][
                             #    j
-                            # ] = smp.symbols(
+                            # ] = sme.symbols(
                             #    str(species).replace("*", "D")
                             #    + "_"
                             #    + str(gr_species[j]).replace("*", "D")
@@ -2939,7 +2940,7 @@ def qssa_component_functions(
 
                 # REMOVE IF NO DEBUG
                 # for key in list(syms.intermediate_terms_smp.keys()):
-                #    syms.intermediate_terms_smp[key] = smp.symbols(key)
+                #    syms.intermediate_terms_smp[key] = sme.symbols(key)
 
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
@@ -2947,7 +2948,7 @@ def qssa_component_functions(
                     str(species.replace("*", "D")) + "_rhs"
                 ]
                 # REMOVE IF NO DEBUG
-                # rhs_submatrix_smp[index] = smp.symbols(
+                # rhs_submatrix_smp[index] = sme.symbols(
                 #    str(specie/s.replace("*", "D")) + "_rhs"
                 # )
 
@@ -3184,7 +3185,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        # helper_smp = smp.symbols(helper_name)
+                        # helper_smp = sme.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
@@ -3201,7 +3202,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = 1 / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        # helper_smp = smp.symbols(helper_name)
+                        # helper_smp = sme.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
@@ -3219,7 +3220,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        # helper_smp = smp.symbols(helper_name)
+                        # helper_smp = sme.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
@@ -3391,7 +3392,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         + "]"
                     )
                     sumprod_smp += (
-                        +a_smp[n - i][n - j]
+                        a_smp[n - i][n - j]
                         * syms.sc_qss_smp[
                             species_info.qssa_species_list.index(
                                 species[n - j]

@@ -22,9 +22,9 @@ class SymbolicMath:
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
 
-        self.T_smp = smp.symbols("T")
+        self.T_smp = sme.symbols("T")
         self.tc_smp = [
-            smp.log(self.T_smp),
+            sme.log(self.T_smp),
             self.T_smp,
             self.T_smp**2,
             self.T_smp**3,
@@ -34,19 +34,19 @@ class SymbolicMath:
         self.invT2_smp = self.invT_smp * self.invT_smp
 
         self.sc_smp = [
-            smp.symbols("sc[" + str(i) + "]") for i in range(n_species)
+            sme.symbols("sc[" + str(i) + "]") for i in range(n_species)
         ]
         self.g_RT_smp = [
-            smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
+            sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
         ]
         self.h_RT_smp = [
-            smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
+            sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
         ]
         self.wdot_smp = [
-            smp.symbols("wdot[" + str(i) + "]") for i in range(n_species)
+            sme.symbols("wdot[" + str(i) + "]") for i in range(n_species)
         ]
         self.jac_smp = [
-            smp.symbols(f"J[{str(i)}][{str(j)}]")
+            sme.symbols(f"J[{str(i)}][{str(j)}]")
             for i in range(n_species)
             for j in range(n_species + 1)
         ]
@@ -67,16 +67,16 @@ class SymbolicMath:
             self.g_RT_smp_tmp[mid_temp] = {}
             self.h_RT_smp_tmp[mid_temp] = {}
             self.g_RT_smp_tmp[mid_temp]["m"] = [
-                smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
+                sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
             ]
             self.g_RT_smp_tmp[mid_temp]["p"] = [
-                smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
+                sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
             ]
             self.h_RT_smp_tmp[mid_temp]["m"] = [
-                smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
+                sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
             ]
             self.h_RT_smp_tmp[mid_temp]["p"] = [
-                smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
+                sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
             ]
 
         # mixture (useful for third body reactions)
@@ -93,27 +93,27 @@ class SymbolicMath:
             n_qssa_reactions = reaction_info.n_qssa_reactions
 
             self.sc_qss_smp = [
-                smp.symbols("sc_qss[" + str(i) + "]")
+                sme.symbols("sc_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
             self.kf_qss_smp = [
-                smp.symbols("kf_qss[" + str(i) + "]")
+                sme.symbols("kf_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.qf_qss_smp = [
-                smp.symbols("qf_qss[" + str(i) + "]")
+                sme.symbols("qf_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.qr_qss_smp = [
-                smp.symbols("qr_qss[" + str(i) + "]")
+                sme.symbols("qr_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.g_RT_qss_smp = [
-                smp.symbols("g_RT_qss[" + str(i) + "]")
+                sme.symbols("g_RT_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
             self.h_RT_qss_smp = [
-                smp.symbols("h_RT_qss[" + str(i) + "]")
+                sme.symbols("h_RT_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
 
@@ -134,24 +134,24 @@ class SymbolicMath:
                 self.g_RT_qss_smp_tmp[mid_temp] = {}
                 self.h_RT_qss_smp_tmp[mid_temp] = {}
                 self.g_RT_qss_smp_tmp[mid_temp]["m"] = [
-                    smp.symbols("g_RT_qss[" + str(i) + "]")
+                    sme.symbols("g_RT_qss[" + str(i) + "]")
                     for i in range(n_qssa_species)
                 ]
                 self.g_RT_qss_smp_tmp[mid_temp]["p"] = [
-                    smp.symbols("g_RT_qss[" + str(i) + "]")
+                    sme.symbols("g_RT_qss[" + str(i) + "]")
                     for i in range(n_qssa_species)
                 ]
                 self.h_RT_qss_smp_tmp[mid_temp]["m"] = [
-                    smp.symbols("h_RT_qss[" + str(i) + "]")
+                    sme.symbols("h_RT_qss[" + str(i) + "]")
                     for i in range(n_qssa_species)
                 ]
                 self.h_RT_qss_smp_tmp[mid_temp]["p"] = [
-                    smp.symbols("h_RT_qss[" + str(i) + "]")
+                    sme.symbols("h_RT_qss[" + str(i) + "]")
                     for i in range(n_qssa_species)
                 ]
 
             self.kf_qss_smp_tmp = [
-                smp.symbols("kf_qss[" + str(i) + "]")
+                sme.symbols("kf_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
 
@@ -575,7 +575,7 @@ class SymbolicMath:
         # First compute dwdot/dsc[sc_idx]
         print(f"Computing dwdot[{wdot_idx}]/dsc[{sc_idx}]...")
         dwdotdsc = sme.diff(
-            self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+            self.wdot_smp[wdot_idx], sme.symbols(f"sc[{sc_idx}]")
         )
 
         # Now compute dwdot/dscqss and the chain
@@ -583,7 +583,7 @@ class SymbolicMath:
             scqssnum = self.syms_to_specnum(scqss)
             print(f"Computing dwdot[{wdot_idx}]/dsc_qss[{scqssnum}]...")
             dwdotdscqss = sme.diff(
-                self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+                self.wdot_smp[wdot_idx], sme.symbols(f"sc_qss[{scqssnum}]")
             )
             dscqss_dsc = self.compute_dscqss_dsc(
                 scqssnum, sc_idx, species_info
@@ -667,7 +667,7 @@ class SymbolicMath:
                 print(f"Computing dsc_qss[{scqss_idx}]/dsc_qss[{scqssnum}]...")
                 chain_vec[loop_idx] = sme.diff(
                     self.sc_qss_smp[scqss_idx],
-                    smp.symbols(f"sc_qss[{scqssnum}]"),
+                    sme.symbols(f"sc_qss[{scqssnum}]"),
                 )
                 self.dscqssdsc_interm[(scqss_idx, scqssnum)] = chain_vec[
                     loop_idx
@@ -706,7 +706,7 @@ class SymbolicMath:
                 chain_vec_out += expr
             #  Add in the symbolic derivative w.r.t. the initial sc term
             chain_vec_out += sme.diff(
-                self.sc_qss_smp[scqss_idx], smp.symbols(f"sc[{sc_idx}]")
+                self.sc_qss_smp[scqss_idx], sme.symbols(f"sc[{sc_idx}]")
             )
             # sum up all terms for chain_vec_debug string
             chain_vec_debug_out = ""
@@ -732,7 +732,7 @@ class SymbolicMath:
                     times = time.time()
                     tmp_diff = sme.diff(
                         self.sc_qss_smp[species_info.dict_qss_species[stp]],
-                        smp.symbols(f"sc[{sc_idx}]"),
+                        sme.symbols(f"sc[{sc_idx}]"),
                     )
                     print(
                         f"Time to do derivative for scqss[{species_info.dict_qss_species[stp]}]/dsc[{sc_idx}] = {time.time()-times}"
@@ -758,7 +758,7 @@ class SymbolicMath:
                 # times = time.time()
                 self.dscqssdscqss[(item["number"], scqssnum)] = sme.diff(
                     self.sc_qss_smp[item["number"]],
-                    smp.symbols(f"sc_qss[{scqssnum}]"),
+                    sme.symbols(f"sc_qss[{scqssnum}]"),
                 )
 
             # # Loop over the dependencies of scqss
@@ -767,7 +767,7 @@ class SymbolicMath:
             #     # times = time.time()
             #     self.dscqssdscqss[(item["number"], scqssnum)] = sme.diff(
             #         self.sc_qss_smp[item["number"]],
-            #         smp.symbols(f"sc_qss[{scqssnum}]"),
+            #         sme.symbols(f"sc_qss[{scqssnum}]"),
             #     )
 
     def compute_dscqss_dsc_fast(self, species_info):
@@ -782,7 +782,7 @@ class SymbolicMath:
                 times = time.time()
                 self.dscqssdsc[(item["number"], scnum)] = sme.diff(
                     self.sc_qss_smp[item["number"]],
-                    smp.symbols(f"sc[{scnum}]"),
+                    sme.symbols(f"sc[{scnum}]"),
                 )
                 print(
                     f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
@@ -792,7 +792,7 @@ class SymbolicMath:
                 #     times = time.time()
                 #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(
                 #         self.sc_qss_smp[item["number"]],
-                #         smp.symbols(f"sc[{scnum}]"),
+                #         sme.symbols(f"sc[{scnum}]"),
                 #     )
                 #     print(
                 #         f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
@@ -812,7 +812,7 @@ class SymbolicMath:
 
                 times = time.time()
                 self.dwdotdsc[(wdot_idx, sc_idx)] = sme.diff(
-                    self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+                    self.wdot_smp[wdot_idx], sme.symbols(f"sc[{sc_idx}]")
                 )
                 print(
                     f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}"
@@ -830,7 +830,7 @@ class SymbolicMath:
                 scqssnum = self.syms_to_specnum(scqss)
                 times = time.time()
                 self.dwdotdscqss[(wdot_idx, scqssnum)] = sme.diff(
-                    self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+                    self.wdot_smp[wdot_idx], sme.symbols(f"sc_qss[{scqssnum}]")
                 )
                 print(
                     f"Time to do dwdot[{wdot_idx}]/dscqss[{scqssnum}] = {time.time()-times}"
@@ -853,7 +853,7 @@ class SymbolicMath:
 
                 times = time.time()
                 dwdotdsc = sme.diff(
-                    self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+                    self.wdot_smp[wdot_idx], sme.symbols(f"sc[{sc_idx}]")
                 )
                 print(
                     f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}"
@@ -904,12 +904,12 @@ class SymbolicMath:
         #         tmp_diff = 0
         #         for term in self.wdot_smp[wdot_idx].args:
         #             time_in = time.time()
-        #             tmp_diff += sme.diff(term, smp.symbols(f"sc[{sc_idx}]"))
+        #             tmp_diff += sme.diff(term, sme.symbols(f"sc[{sc_idx}]"))
         #             print(f"Time to do inner term = {time.time()-time_in}")
 
         #         self.dwdotdsc[(wdot_idx, sc_idx)] = tmp_diff
         #         # self.dwdotdsc[(wdot_idx, sc_idx)] = sme.diff(
-        #         #         self.wdot_smp[wdot_idx], smp.symbols(f"sc[{sc_idx}]")
+        #         #         self.wdot_smp[wdot_idx], sme.symbols(f"sc[{sc_idx}]")
         #         #     )
         #         print(f"Time to do dwdot[{wdot_idx}]/dsc[{sc_idx}] = {time.time()-times}")
 
@@ -918,7 +918,7 @@ class SymbolicMath:
         #         scqssnum = self.syms_to_specnum(scqss)
         #         times = time.time()
         #         self.dwdotdscqss[(wdot_idx, scqssnum)] = sme.diff(
-        #             self.wdot_smp[wdot_idx], smp.symbols(f"sc_qss[{scqssnum}]")
+        #             self.wdot_smp[wdot_idx], sme.symbols(f"sc_qss[{scqssnum}]")
         #         )
         #         print(f"Time to do dwdot[{wdot_idx}]/dscqss[{scqssnum}] = {time.time()-times}")
 
@@ -942,13 +942,13 @@ class SymbolicMath:
                         results = executor.submit(
                             my_diff,
                             self.sc_qss_smp[item["number"]],
-                            smp.symbols(f"sc[{scnum}]"),
+                            sme.symbols(f"sc[{scnum}]"),
                             shared_dict,
                             item["number"],
                             scnum,
                         )
-                        # shared_dict[(item["name"], f"sc[{scnum}]")] = executor.submit(my_diff, self.sc_qss_smp[item["number"]], smp.symbols(f"sc[{scnum}]"), shared_dict)
-                        # self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(self.sc_qss_smp[item["number"]], smp.symbols(f"sc[{scnum}]"))
+                        # shared_dict[(item["name"], f"sc[{scnum}]")] = executor.submit(my_diff, self.sc_qss_smp[item["number"]], sme.symbols(f"sc[{scnum}]"), shared_dict)
+                        # self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(self.sc_qss_smp[item["number"]], sme.symbols(f"sc[{scnum}]"))
                         # print(f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}""")
 
             print(results)

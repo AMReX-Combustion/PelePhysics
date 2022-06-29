@@ -4,6 +4,7 @@ import sys
 import time
 
 import sympy as smp
+import symengine as sme
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -624,7 +625,7 @@ def production_rate(
                     cw.writer(
                         fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                     )
-                    k_f_smp *= smp.exp(beta * syms.tc_smp[0])
+                    k_f_smp *= sme.exp(beta * syms.tc_smp[0])
                 elif beta == 0:
                     cw.writer(
                         fstream,
@@ -632,7 +633,7 @@ def production_rate(
                         % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
                     coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                    k_f_smp *= smp.exp(-coeff * syms.invT_smp)
+                    k_f_smp *= sme.exp(-coeff * syms.invT_smp)
                 else:
                     cw.writer(
                         fstream,
@@ -640,7 +641,7 @@ def production_rate(
                         % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
                     )
                     coeff = ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae
-                    k_f_smp *= smp.exp(
+                    k_f_smp *= sme.exp(
                         beta * syms.tc_smp[0] - coeff * syms.invT_smp
                     )
 
@@ -690,7 +691,7 @@ def production_rate(
                     % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
                 )
                 coeff = (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).magnitude
-                redP_smp *= smp.exp(
+                redP_smp *= sme.exp(
                     low_beta * syms.tc_smp[0] - coeff * syms.invT_smp
                 )
                 if is_troe:
@@ -701,7 +702,7 @@ def production_rate(
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
-                    logPred_smp = smp.log(redP_smp, 10)
+                    logPred_smp = sme.log(redP_smp, 10)
                     cw.writer(fstream, "const amrex::Real logFcent = log10(")
                     intLog_smp = 0.0
                     if abs(troe[1]) > 1.0e-100:
@@ -711,7 +712,7 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
-                            intLog_smp += (1.0 - troe[0]) * smp.exp(
+                            intLog_smp += (1.0 - troe[0]) * sme.exp(
                                 -syms.tc_smp[1] * (1 / troe[1])
                             )
                     else:
@@ -723,7 +724,7 @@ def production_rate(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
                                 % (troe[0], (1 / troe[2])),
                             )
-                            intLog_smp += troe[0] * smp.exp(
+                            intLog_smp += troe[0] * sme.exp(
                                 -syms.tc_smp[1] * (1 / troe[2])
                             )
                     else:
@@ -733,15 +734,15 @@ def production_rate(
                             cw.writer(
                                 fstream, "    + exp(%.15g * invT));" % -troe[3]
                             )
-                            intLog_smp += smp.exp(-troe[3] * syms.invT_smp)
+                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
                         else:
                             cw.writer(
                                 fstream, "    + exp(-%.15g * invT));" % troe[3]
                             )
-                            intLog_smp += smp.exp(-troe[3] * syms.invT_smp)
+                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
-                    logFcent_smp = smp.log(intLog_smp, 10)
+                    logFcent_smp = sme.log(intLog_smp, 10)
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
@@ -784,7 +785,7 @@ def production_rate(
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
-                    logPred_smp = smp.log(redP_smp, 10)
+                    logPred_smp = sme.log(redP_smp, 10)
                     cw.writer(fstream, "X = 1.0 / (1.0 + logPred*logPred);")
                     X_smp = 1.0 / (1.0 + logPred_smp * logPred_smp)
                     if sri[1] < 0:
@@ -844,7 +845,7 @@ def production_rate(
                     )
                     qr_smp = (
                         k_f_smp
-                        * smp.exp(-(kc_exp_arg_smp))
+                        * sme.exp(-(kc_exp_arg_smp))
                         * (kc_conv_inv_smp)
                         * (reverse_sc_smp)
                     )
@@ -858,7 +859,7 @@ def production_rate(
                     qr_smp = (
                         Corr_smp
                         * k_f_smp
-                        * smp.exp(-kc_exp_arg_smp)
+                        * sme.exp(-kc_exp_arg_smp)
                         * (kc_conv_inv_smp)
                         * (reverse_sc_smp)
                     )
@@ -870,7 +871,7 @@ def production_rate(
                         % (kc_exp_arg, reverse_sc),
                     )
                     qr_smp = (
-                        k_f_smp * smp.exp(-(kc_exp_arg_smp)) * reverse_sc_smp
+                        k_f_smp * sme.exp(-(kc_exp_arg_smp)) * reverse_sc_smp
                     )
                 else:
                     cw.writer(
@@ -881,7 +882,7 @@ def production_rate(
                     qr_smp = (
                         Corr_smp
                         * k_f_smp
-                        * smp.exp(-(kc_exp_arg_smp))
+                        * sme.exp(-(kc_exp_arg_smp))
                         * reverse_sc_smp
                     )
 
