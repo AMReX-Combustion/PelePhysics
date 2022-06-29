@@ -6,7 +6,6 @@ import time
 from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
-import sympy as smp
 import symengine as sme
 
 import ceptr.constants as cc
@@ -2079,7 +2078,7 @@ def qssa_terms_debug(
             "amrex::Real %s = %s;"
             % (
                 name,
-                smp.ccode(syms.intermediate_helpers_smp[name]),
+                sme.ccode(syms.intermediate_helpers_smp[name]),
             ),
         )
     for name in intermediate_names_to_print:
@@ -2088,7 +2087,7 @@ def qssa_terms_debug(
             "amrex::Real %s = %s;"
             % (
                 name,
-                smp.ccode(syms.intermediate_terms_smp[name]),
+                sme.ccode(syms.intermediate_terms_smp[name]),
             ),
         )
     for name in helper_names_to_print:
@@ -2306,7 +2305,7 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
     for ispec in list_spec:
         times = time.time()
         # Compute the common subexpressions using sympy
-        sc_qss_cse = smp.cse(syms.sc_qss_smp[ispec])
+        sc_qss_cse = sme.cse([syms.sc_qss_smp[ispec]])
 
         # Write the reduced common expressions
         # The subexpressions are stored in cse index 0

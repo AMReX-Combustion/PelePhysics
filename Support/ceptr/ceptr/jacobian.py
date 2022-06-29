@@ -31,7 +31,7 @@ def ajac(
     else:
         cw.writer(
             fstream,
-            "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+            "void aJacobian_old(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
             " const int consP)",
         )
     cw.writer(fstream, "{")
@@ -1672,7 +1672,7 @@ def ajac_term_fast_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " ajac_term_fast_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        " aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
 
