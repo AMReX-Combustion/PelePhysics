@@ -10,8 +10,8 @@ ode.ode_ncells = 1
 ode.reactor_type  = 2 # 1=full e, 2=full h
 ode.verbose = 0
 ode.use_typ_vals = 0
-ode.rtol = 1e-10
-ode.atol = 1e-10
+ode.rtol = 1e-12
+ode.atol = 1e-12
 
 # Select Linear solver for CVODE Newton direction
 # Options are [CPU] dense_direct / denseAJ_direct / sparse_direct / custom_direct / GMRES / precGMRES
