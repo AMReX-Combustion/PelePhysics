@@ -1681,14 +1681,17 @@ def ajac_term_fast_debug(
     cw.writer(fstream, "J[i] = 0.0;")
     cw.writer(fstream, "}")
 
-    cw.writer(
-        fstream, "amrex::Real dscqss_dsc[%d];" % (n_species * n_qssa_species)
-    )
-    cw.writer(
-        fstream, "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species)
-    )
-    cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
-    cw.writer(fstream, "}")
+    if syms.hformat == "readable":
+        cw.writer(
+            fstream,
+            "amrex::Real dscqss_dsc[%d];" % (n_species * n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species),
+        )
+        cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
+        cw.writer(fstream, "}")
 
     cw.writer(
         fstream,
@@ -1770,7 +1773,12 @@ def ajac_term_fast_debug(
 
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
-            syms.write_jacobian_to_cpp(syms, species_info, cw, fstream)
+            if syms.hformat == "readable":
+                syms.write_symjac_readable_to_cpp(
+                    syms, species_info, cw, fstream
+                )
+            else:
+                syms.write_symjac_to_cpp(syms, species_info, cw, fstream)
 
             cw.writer(fstream)
 

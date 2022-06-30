@@ -26,8 +26,9 @@ import ceptr.writer as cw
 class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
-    def __init__(self, mechanism):
+    def __init__(self, mechanism, hformat):
         self.mechanism = mechanism
+        self.hformat = hformat
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -71,7 +72,10 @@ class Converter:
             )
         # Initialize symbolic variables
         self.syms = csm.SymbolicMath(
-            self.species_info, self.reaction_info, self.mechanism
+            self.species_info,
+            self.reaction_info,
+            self.mechanism,
+            self.hformat,
         )
 
     def set_species(self):
@@ -385,7 +389,7 @@ class Converter:
             # )
 
             times = time.time()
-            # self.species_info.identify_wdot_dependencies(self.syms)
+            self.species_info.identify_wdot_dependencies(self.syms)
             self.species_info.make_wdot_dataframe()
             print(
                 f"Time to identify wdot dependencies and make dataframe = {time.time()-times}"

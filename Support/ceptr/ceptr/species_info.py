@@ -324,15 +324,13 @@ class SpeciesInfo:
             }
         )
 
-        # wdot_df["sc_dep"] = ""
-        # wdot_df["scqss_dep"] = ""
-        # # Add in a few more attributes for easy of use
-        # for idx, item in wdot_df.iterrows():
+        wdot_df["sc_dep"] = ""
+        wdot_df["scqss_dep"] = ""
+        # Add in a few more attributes for easy of use
+        for idx, item in wdot_df.iterrows():
 
-        #     wdot_df.at[idx, "sc_dep"] = self.dict_wdot_sc[item["symbol"]]
-        #     wdot_df.at[idx, "scqss_dep"] = self.dict_wdot_scqss[
-        #         item["symbol"]
-        #     ]
+            wdot_df.at[idx, "sc_dep"] = self.dict_wdot_sc[item["symbol"]]
+            wdot_df.at[idx, "scqss_dep"] = self.dict_wdot_scqss[item["symbol"]]
 
         # Return a deepcopy to self
         self.wdot_df = wdot_df.copy(deep=True)
