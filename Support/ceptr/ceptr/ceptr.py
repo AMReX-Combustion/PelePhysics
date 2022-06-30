@@ -40,7 +40,7 @@ def main():
         help="sytle format for .H file output",
         type=str,
         choices=["readable", "gpu"],
-        default="readable",
+        default="gpu",
         required=False,
     )
 
