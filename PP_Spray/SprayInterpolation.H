@@ -119,6 +119,8 @@ InterpolateGasPhase(
 {
 #ifndef PELELM_USE_SPRAY
   auto eos = pele::physics::PhysicsType::eos();
+#else
+  amrex::ignore_unused(engarr);
 #endif
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
   for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
