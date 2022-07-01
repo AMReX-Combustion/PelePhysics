@@ -128,6 +128,7 @@ SprayParticleContainer::readSprayParams(
   pp.query("parcel_size", parcel_size);
   pp.query("use_splash_model", splash_model);
   if (splash_model) {
+    Abort("Splash model is not fully implemented");
     if (!pp.contains("fuel_sigma") || !pp.contains("wall_temp")) {
       Print() << "fuel_sigma and wall_temp must be set for splash model. "
               << "Set use_splash_model = false to turn off splash model"

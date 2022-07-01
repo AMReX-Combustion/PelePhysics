@@ -73,6 +73,23 @@ public:
     amrex::The_Arena()->free(d_sprayData);
   }
 
+  template <class Dist>
+  void sprayInjection(
+    Dist& dist_type,
+    const amrex::RealVect jet_cent,
+    const amrex::Real jet_dia,
+    const amrex::Real part_temp,
+    const amrex::Real mass_flow,
+    const amrex::Real jet_vel,
+    const amrex::Real spread_angle,
+    const amrex::Real dt,
+    const amrex::Real* Y_jet,
+    const int level,
+    const amrex::Real jet_angle = 0.,
+    const amrex::Real azi_lo = 0.,
+    const amrex::Real azi_hi = 360.,
+    const int lowD = AMREX_SPACEDIM - 1);
+
   static void readSprayParams(
     int& particle_verbose,
     amrex::Real& particle_cfl,

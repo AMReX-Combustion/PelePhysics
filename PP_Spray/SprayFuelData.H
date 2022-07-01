@@ -165,6 +165,115 @@ struct SprayData
     }
     dtmod = fdat.dtmod;
   }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  amrex::Real rhoL(const amrex::Real& T, const int spf) const
+  {
+    amrex::Real rhoL = rho[spf];
+    if (rho_coef[4 * spf] != 0.) {
+      amrex::Real a = rho_coef[4 * spf];
+      amrex::Real b = rho_coef[4 * spf + 1];
+      amrex::Real c = rho_coef[4 * spf + 2];
+      amrex::Real d = rho_coef[4 * spf + 3];
+      rhoL = a + T * (b + T * (c + T * d));
+    }
+    return rhoL;
+  }
+
+  // Estimate the boil temperature
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
+  {
+    SprayUnits SPU;
+    amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
+    amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      const int fspec = indx[spf];
+      const amrex::Real mw_fuel = gpv.mw_fluid[fspec];
+      // Since we only know the latent heat at the reference temperature,
+      // modify Watsons power law to find latent heat at boiling conditions
+      amrex::Real Hboil_ref =
+        ref_latent[spf] *
+        std::pow((critT[spf] - ref_T) / (critT[spf] - boilT[spf]), -0.38);
+      // Estimate the boiling temperature at the gas phase pressure using
+      // Clasius-Clapeyron relation
+      cBoilT[spf] =
+        1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
+              1. / boilT[spf]);
+      cBoilT[spf] = amrex::min(critT[spf], cBoilT[spf]);
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  amrex::Real psat(const amrex::Real& T, const int spf) const
+  {
+    amrex::Real a = psat_coef[4 * spf];
+    amrex::Real b = psat_coef[4 * spf + 1];
+    amrex::Real c = psat_coef[4 * spf + 2];
+    amrex::Real d = psat_coef[4 * spf + 3];
+    return d * std::pow(10., a - b / (T + c));
+  }
+};
+
+// Here are different typical jet droplet diameter distributions
+
+// Normal or Gaussian distribution
+class NormDist
+{
+  amrex::Real mean_dia;
+  amrex::Real std_dia;
+
+public:
+  explicit NormDist(amrex::Real a_mean, amrex::Real a_std)
+    : mean_dia(a_mean), std_dia(a_std)
+  {
+  }
+  amrex::Real get_dia() { return amrex::RandomNormal(mean_dia, std_dia); }
+};
+
+// Log-normal distribution
+class LogNormDist
+{
+  amrex::Real log_mean;
+  amrex::Real log_std;
+
+public:
+  ~LogNormDist() = default;
+  explicit LogNormDist(amrex::Real a_mean, amrex::Real a_std)
+  {
+    amrex::Real stdsq = a_std * a_std;
+    amrex::Real meansq = a_mean * a_mean;
+    log_mean = 2. * std::log(a_mean) - 0.5 * std::log(stdsq + meansq);
+    log_std = std::sqrt(
+      amrex::max(-2. * std::log(a_mean) + std::log(stdsq + meansq), 0.));
+  }
+  amrex::Real get_dia()
+  {
+    return std::exp(amrex::RandomNormal(log_mean, log_std));
+  }
+};
+
+// Weibull or Rosin-Rammler distribution
+class WeibullDist
+{
+  amrex::Real mean_dia;
+  amrex::Real k;
+
+public:
+  ~WeibullDist() = default;
+  explicit WeibullDist(amrex::Real a_mean, amrex::Real a_k)
+    : mean_dia(a_mean), k(a_k)
+  {
+  }
+  amrex::Real get_dia()
+  {
+    amrex::Real fact =
+      -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));
+    return mean_dia * std::pow(fact, 1. / k);
+  }
 };
 
 #endif

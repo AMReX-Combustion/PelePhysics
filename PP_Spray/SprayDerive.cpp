@@ -56,7 +56,7 @@ SprayParticleContainer::computeDerivedVars(
           Real dia_part = p.rdata(SPI.pstateDia);
           Real rho_part = 0.;
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            rho_part += p.rdata(SPI.pstateY + spf) / rhoL(*fdat, T_part, spf);
+            rho_part += p.rdata(SPI.pstateY + spf) / fdat->rhoL(T_part, spf);
           }
           rho_part = 1. / rho_part;
           Real surf = M_PI * dia_part * dia_part;

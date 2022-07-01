@@ -54,34 +54,6 @@ calcHeatCoeff(
   return Nu_num * logB / B_T;
 }
 
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-amrex::Real
-rhoL(const SprayData& fdat, const amrex::Real& T, const int spf)
-{
-  amrex::Real rhoL = fdat.rho[spf];
-  if (fdat.rho_coef[4 * spf] != 0.) {
-    amrex::Real a = fdat.rho_coef[4 * spf];
-    amrex::Real b = fdat.rho_coef[4 * spf + 1];
-    amrex::Real c = fdat.rho_coef[4 * spf + 2];
-    amrex::Real d = fdat.rho_coef[4 * spf + 3];
-    rhoL = a + T * (b + T * (c + T * d));
-  }
-  return rhoL;
-}
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-amrex::Real
-psat(const SprayData& fdat, const amrex::Real& T, const int spf)
-{
-  amrex::Real a = fdat.psat_coef[4 * spf];
-  amrex::Real b = fdat.psat_coef[4 * spf + 1];
-  amrex::Real c = fdat.psat_coef[4 * spf + 2];
-  amrex::Real d = fdat.psat_coef[4 * spf + 3];
-  return d * std::pow(10., a - b / (T + c));
-}
-
 // Compute the flash boiling coefficient
 // From Adachi 1997
 AMREX_GPU_DEVICE
@@ -124,34 +96,6 @@ calcFlashVaporRate(
     error = std::abs(Grat - Gold) / Gold;
   }
   return G;
-}
-
-// Estimate the boil temperature
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-void
-calcBoilT(const SprayData& fdat, const GasPhaseVals& gpv, amrex::Real* cBoilT)
-{
-  SprayUnits SPU;
-  amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-  amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int fspec = fdat.indx[spf];
-    const amrex::Real critT = fdat.critT[spf];
-    const amrex::Real boilT_ref = fdat.boilT[spf];
-    const amrex::Real mw_fuel = gpv.mw_fluid[fspec];
-    // Since we only know the latent heat at the reference temperature,
-    // modify Watsons power law to find latent heat at boiling conditions
-    amrex::Real Hboil_ref =
-      fdat.ref_latent[spf] *
-      std::pow((critT - fdat.ref_T) / (critT - boilT_ref), -0.38);
-    // Estimate the boiling temperature at the gas phase pressure using
-    // Clasius-Clapeyron relation
-    cBoilT[spf] =
-      1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
-            1. / boilT_ref);
-    cBoilT[spf] = amrex::min(critT, cBoilT[spf]);
-  }
 }
 
 // Compute the state in the vapor and skin phase
@@ -206,7 +150,7 @@ calcVaporState(
         std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
       // Using the Antoine equation
     } else {
-      pres_sat = psat(fdat, T_part, spf);
+      pres_sat = fdat.psat(T_part, spf);
     }
     Psat[spf] = pres_sat;
     sum1 += Y_l[spf] * pres_sat / mw_fuel;
@@ -285,12 +229,12 @@ calculateSpraySource(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
   amrex::Real T_part = p.rdata(SPI.pstateT);
-  calcBoilT(fdat, gpv, cBoilT.data());
+  fdat.calcBoilT(gpv, cBoilT.data());
   amrex::Real dia_part = p.rdata(SPI.pstateDia);
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SPI.pstateY + spf);
-    rho_part += Y_part[spf] / rhoL(fdat, amrex::min(T_part, cBoilT[spf]), spf);
+    rho_part += Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
   }
   rho_part = 1. / rho_part;
   amrex::Real dt = flow_dt;
@@ -499,11 +443,11 @@ calculateSpraySource(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             Y_part[spf] /= sumY;
             rho_part +=
-              Y_part[spf] / rhoL(fdat, amrex::min(T_part, cBoilT[spf]), spf);
+              Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
           }
           rho_part = 1. / rho_part;
         } else {
-          rho_part = rhoL(fdat, amrex::min(T_part, cBoilT[0]), 0);
+          rho_part = fdat.rhoL(amrex::min(T_part, cBoilT[0]), 0);
         }
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
