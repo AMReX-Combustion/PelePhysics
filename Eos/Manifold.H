@@ -167,15 +167,10 @@ struct Manifold
   AMREX_FORCE_INLINE
   void RTY2WDOT(const amrex::Real /*R*/, const amrex::Real /*T*/, const amrex::Real Y[], amrex::Real WDOT[])
   {
-    // Look up species sources in table if they exist, otherwise they are 0
-    for(int is = 0; is < NUM_SPECIES-1; is++)
-    {
-      if(eosparm->idx_Wdot[is] >= 0) 
-      {
-	      manfunc->get_value(eosparm->idx_Wdot[is], Y, WDOT[is]);
-      }
-      else
-      {
+    if (eosparm->has_mani_src) {
+      manfunc->get_values(NUM_SPECIES-1, eosparm->idx_Wdot, Y, WDOT);
+    } else {
+      for(int is = 0; is < NUM_SPECIES-1; is++) {
         manfunc->calculate_Wdot(is, Y, WDOT[is]);
       }
     }
@@ -231,7 +226,7 @@ struct Manifold
   Manifold(const EosParm<Manifold>* eparm)
   {
     eosparm = eparm;
-    
+
     if(eosparm->manf_data->manmodel == ManifoldModel::TABLE)
     {
       TabFuncParams::TabFuncData* tf_data =

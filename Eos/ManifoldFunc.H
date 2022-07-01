@@ -3,7 +3,7 @@
 
 namespace pele {
 namespace physics {
-  
+
 enum class ManifoldModel
 {
   TABLE = 0,
@@ -18,7 +18,7 @@ public:
   virtual void allocate() = 0;
   virtual void deallocate() = 0;
   virtual void sync_to_device() = 0;
-  
+
   struct ManFuncData
   {
     ManifoldModel manmodel;
@@ -30,10 +30,10 @@ public:
     char* dimnames; // Names of the manifold parameters (including the passed variables)
     char* varnames; // Names of the output variables
   };
-  
+
   virtual ManFuncData& host_manfunc_data() = 0;
   virtual ManFuncData* device_manfunc_data() = 0;
-  
+
   virtual ~ManFuncParams() {}
 
 }; // class ManFuncParams
@@ -41,7 +41,7 @@ public:
 AMREX_FORCE_INLINE
 int get_var_index(const char* varname, const ManFuncParams::ManFuncData* manf_data,
     const bool require = true)
-{      
+{
   std::string var(varname);
   int ii;
   for (ii = 0; ii < manf_data->Nvar; ii++) {
@@ -65,16 +65,19 @@ public:
   virtual void get_value(const int ivar, const amrex::Real indata[], amrex::Real& out) = 0;
 
   AMREX_GPU_HOST_DEVICE
+  virtual void get_values(const int nvar, const int ivar[], const amrex::Real indata[], amrex::Real out[]) = 0;
+
+  AMREX_GPU_HOST_DEVICE
   virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[]) = 0;
-  
+
   AMREX_GPU_HOST_DEVICE
   virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out) = 0;
-  
+
   AMREX_GPU_HOST_DEVICE
   virtual ManifoldModel model() = 0;
-  
+
   virtual ~ManifoldFunc() {}
-  
+
 }; // class ManifoldFunc
 }  // namespace physics
 }  // namespace pele

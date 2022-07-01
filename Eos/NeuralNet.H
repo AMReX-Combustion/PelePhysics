@@ -11,7 +11,7 @@
 
 namespace pele {
 namespace physics {
-  
+
 namespace TensorParams
 {
   // Whether we are on a GPU or not
@@ -35,25 +35,25 @@ namespace TensorParams
 class NNFuncParams: public ManFuncParams
 {
 public:
-  
+
   NNFuncParams()
   {
 #ifdef AMREX_USE_GPU
     amrex::Abort("Neural network derived manifolds do not support GPUs at this time.");
 #endif
   }
-  
+
   ~NNFuncParams() {}
 
   virtual void initialize()
   {
     m_h_nnf_data.manmodel = ManifoldModel::NEURAL_NET;
-    
+
     amrex::ParmParse pp("manifold");
-    
+
     std::string nn_filename;
     pp.get("filename", nn_filename);
-    
+
     torch::jit::script::Module nnmodel;
     try
     {
@@ -70,60 +70,60 @@ public:
     {
       amrex::Error("Unable to load neural network model for manifold EOS.");
     }
-    
+
     // The nnmodel should be freed up automatically once it goes out of scope
     // The code below clears the Torch GPU cache
     // c10::cuda::CUDACachingAllocator::empty_cache();
-    
+
     std::string info_filename;
     pp.get("info_filename", info_filename);
-    
+
     strncpy(m_h_nnf_data.nn_filename, nn_filename.c_str(), m_h_nnf_data.len_str*sizeof(char));
     m_h_nnf_data.nn_filename[m_h_nnf_data.len_str] = '\0';
-    
+
     m_h_nnf_data.nnmodel = nnmodel;
-    
+
     read_metadata(info_filename);
-    
+
     pp.query("v", m_verbose);
     if(m_verbose >= 1) print();
-    
+
     allocate();
   }
-  
+
   void read_metadata(std::string& info_filename)
   {
     std::ifstream fi(info_filename, std::ios::in);
-    
+
     constexpr int READING_VAR = 0;
     constexpr int READING_VAL = 1;
     constexpr int READING_COMMENT = 2;
     constexpr int LINE_BREAK = 3;
-    
+
     int state = READING_VAR;
-    
+
     std::unordered_map<std::string, std::vector<std::string> > umap;
     std::string cur_var;
     std::string str;
-    
+
     int str_size = m_h_nnf_data.len_str*sizeof(char);
     int str_len = m_h_nnf_data.len_str;
-    
+
     if(!fi.is_open())
     {
       amrex::Abort("Unable to open supplementary info file for neural net manifold EOS.");
     }
-    
+
     fi.seekg(0, std::ios::end);
     std::streampos length = fi.tellg();
     fi.seekg(0, std::ios::beg);
 
     std::vector<char> buffer(length);
-    fi.read(buffer.data(), length); 
+    fi.read(buffer.data(), length);
     std::istringstream is(std::string(buffer.data(), length));
-    
+
     while(!is.eof())
-    {        
+    {
       if(is.peek() == '\n')
       {
         if(state == LINE_BREAK)
@@ -135,32 +135,32 @@ public:
             state = READING_VAR;
         }
       }
-      
+
       is >> str;
-      
+
       if(str == "#")
       {
         state = READING_COMMENT;
         continue;
       }
-      
+
       if(state == READING_COMMENT)
       {
         continue;
       }
-      
+
       if(str == "=")
       {
         state = READING_VAL;
         continue;
       }
-      
+
       if(str == "\\")
       {
         state = LINE_BREAK;
         continue;
       }
-      
+
       if(state == READING_VAR)
       {
         for(int i = 0; i < str.length(); i++)
@@ -170,28 +170,28 @@ public:
         cur_var = str;
         umap[cur_var] = std::vector<std::string>();
       }
-      
+
       if(state == READING_VAL)
       {
         umap[cur_var].push_back(str);
       }
     }
-    
+
     AMREX_ALWAYS_ASSERT(umap["model_name"].size() == 1);
     AMREX_ALWAYS_ASSERT(umap["ndim"].size() == 1);
     AMREX_ALWAYS_ASSERT(umap["nvar"].size() == 1);
     AMREX_ALWAYS_ASSERT(umap["nmanpar"].size() == 1);
-    
+
     strncpy(m_h_nnf_data.model_name, umap["model_name"][0].c_str(), str_size);
     m_h_nnf_data.model_name[str_len] = '\0';
-    
+
     m_h_nnf_data.Ndim = stoi(umap["ndim"][0]);
     m_h_nnf_data.Nvar = stoi(umap["nvar"][0]);
     m_h_nnf_data.Nmanpar = stoi(umap["nmanpar"][0]);
-    
+
     AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
     AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);
-    
+
     m_h_nnf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*str_size));
     std::vector<std::string>& dimnames = umap["dimnames"];
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
@@ -200,7 +200,7 @@ public:
       std::string sd = dimnames[i] + std::string(str_len - dimnames[i].length(), ' ');
       strncpy(&m_h_nnf_data.dimnames[i*str_len], sd.c_str(), str_size);
     }
-    
+
     m_h_nnf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Nvar*str_size));
     std::vector<std::string>& varnames = umap["varnames"];
     for(int i = 0; i < m_h_nnf_data.Nvar; i++)
@@ -209,7 +209,7 @@ public:
       std::string sv = varnames[i] + std::string(str_len - varnames[i].length(), ' ');
       strncpy(&m_h_nnf_data.varnames[i*str_len], sv.c_str(), str_size);
     }
-    
+
     m_h_nnf_data.Ncomb = umap["def_" + amrex::trim(dimnames[0])].size();
     m_h_nnf_data.comb_coeff = static_cast<amrex::Real*>(
         amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(amrex::Real)));
@@ -244,7 +244,7 @@ public:
         m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = src_idx;
       }
     }
-    
+
     m_h_nnf_data.man_bias = static_cast<amrex::Real*>(
         amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*sizeof(amrex::Real)));
     std::vector<std::string>& man_bias = umap["manibiases"];
@@ -254,7 +254,7 @@ public:
       m_h_nnf_data.man_bias[i] = (amrex::Real)std::stod(man_bias[i]);
     }
   }
-  
+
   void print()
   {
     amrex::Print() << std::endl;
@@ -265,7 +265,7 @@ public:
     amrex::Print() << "Nvar: " << m_h_nnf_data.Nvar << std::endl;
     amrex::Print() << "Nmanpar: " << m_h_nnf_data.Nmanpar << std::endl;
     amrex::Print() << std::endl;
-    
+
     amrex::Print() << "Dimnames: Index | Variable Name" << std::endl;
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
@@ -273,7 +273,7 @@ public:
       amrex::Print() << i << " | " << amrex::trim(dimname) << std::endl;
     }
     amrex::Print() << std::endl;
-    
+
     amrex::Print() << "Varnames: Index | Variable Name" << std::endl;
     for(int i = 0; i < m_h_nnf_data.Nvar; i++)
     {
@@ -281,9 +281,9 @@ public:
       amrex::Print() << i << " | " << amrex::trim(varname) << std::endl;
     }
     amrex::Print() << std::endl;
-    
+
     amrex::Print() << "Ncomb: " << m_h_nnf_data.Ncomb << std::endl;
-    
+
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
       std::string dimname(&m_h_nnf_data.dimnames[i*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
@@ -298,7 +298,7 @@ public:
         if(src_idx >= 0)
         {
           src_varname = std::string(&m_h_nnf_data.varnames[src_idx*m_h_nnf_data.len_str],
-              m_h_nnf_data.len_str);  
+              m_h_nnf_data.len_str);
         }
         else
         {
@@ -306,9 +306,9 @@ public:
         }
         amrex::Print() << amrex::trim(varname) << " | " << amrex::trim(src_varname) << " | " << coeff << std::endl;
       }
-      
+
       amrex::Print();
-      
+
       amrex::Print() << std::endl;
     }
   }
@@ -331,7 +331,7 @@ public:
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_idx);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_coeff);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.man_bias);
-    
+
     // if(m_device_allocated)
     // {
     //   amrex::The_Device_Arena()->free(m_d_nnf_data);
@@ -350,7 +350,7 @@ public:
     //                    m_d_nnf_data);
     // }
   }
-  
+
   struct NNFuncData: ManFuncParams::ManFuncData
   {
     char nn_filename[len_str+1]; // Path to neural network file
@@ -361,12 +361,12 @@ public:
     int* comb_src_idx; // Index of source term for variable corresponding to each comb_coeff
     amrex::Real* man_bias; // Offsets to add when calculating manifold parameters
   };
-  
+
   virtual ManFuncData& host_manfunc_data()
   {
     return m_h_nnf_data;
   }
-  
+
   virtual ManFuncData* device_manfunc_data()
   {
     return &m_h_nnf_data;
@@ -385,12 +385,12 @@ public:
   }
 
 private:
-  
+
   int m_verbose = 0;
   NNFuncData m_h_nnf_data;
   NNFuncData* m_d_nnf_data;
   bool m_device_allocated{false};
-  
+
 };
 
 class NNFunc: public ManifoldFunc
@@ -420,6 +420,16 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  virtual void get_values(const int nvar, const int ivar[], const amrex::Real indata[], amrex::Real out[])
+  {
+    // Ostensibly cannot use from_blob because the indata array is const
+    torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt);
+    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
+    get_values(nvar, ivar, intensor, out);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[])
   {
     // Ostensibly cannot use from_blob because the indata array is const
@@ -427,7 +437,7 @@ public:
     std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
     get_derivs(ivar, intensor, derivs);
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
@@ -437,7 +447,7 @@ public:
     std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
     calculate_Wdot(paramidx, intensor, out);
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual ManifoldModel model()
@@ -446,7 +456,7 @@ public:
   }
 
 private:
-  
+
   // Variables
   NNFuncParams::NNFuncData* nnf_data;
 
@@ -474,6 +484,18 @@ private:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void get_values(const int nvar, const int ivar[], const torch::Tensor& indata, amrex::Real out[])
+  {
+    torch::Tensor predvars = eval_model(indata);
+    auto acc = predvars.accessor<amrex::Real,1>();
+
+    for (int i = 0; i < nvar; i++) {
+      out[i] = (ivar[i] > 0) ? acc[ivar[i]] : 0.0;
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void get_derivs(const int ivar, torch::Tensor& indata, amrex::Real derivs[])
   {
     torch::Tensor out_tensor = eval_model(ivar, indata);
@@ -487,16 +509,16 @@ private:
       derivs[i] = acc[0][i];
     }
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void calculate_Wdot(const int paramidx, const torch::Tensor& indata, amrex::Real& out)
   {
     torch::Tensor predvars = eval_model(indata);
     auto acc = predvars.accessor<amrex::Real,1>();
-    
+
     amrex::Real rr = 0.0;
-    
+
     for(int j = 0; j < nnf_data->Ncomb; j++)
     {
       const int& idx = nnf_data->comb_src_idx[paramidx*nnf_data->Ncomb + j];
@@ -504,7 +526,7 @@ private:
       const amrex::Real src_term = (idx < 0) ? 0.0 : acc[idx];
       rr += coeff*src_term;
     }
-    
+
     out = rr;
   }
 

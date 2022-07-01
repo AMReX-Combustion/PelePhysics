@@ -11,7 +11,7 @@
 namespace pele {
 namespace physics {
 namespace eos {
-  
+
 struct GammaLaw;
 struct Fuego;
 struct SRK;
@@ -54,6 +54,7 @@ struct EosParm<Manifold>
   int idx_density{0};
   int idx_T{0};
   int idx_Wdot[NUM_SPECIES - 1] = {0};
+  bool has_mani_src = false;
 };
 
 template <>
@@ -72,6 +73,7 @@ struct InitEosParm<Manifold>
 
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);
+    pp.query("has_mani_src", eosparm->has_mani_src);
 
     // Get important indices
     eosparm->idx_density = get_var_index("RHO", manf_data_in);
@@ -79,7 +81,7 @@ struct InitEosParm<Manifold>
 
     // For manifold table parameter source terms, assume if index not found, source term is 0
     // For neural net, require a definition to be supplied for each manifold parameter
-    if(manf_data_in->manmodel == ManifoldModel::TABLE)
+    if(eosparm->has_mani_src)
     {
       for (int idim = 0; idim < manf_data_in->Ndim; idim++)
       {
@@ -107,7 +109,7 @@ struct InitEosParm<Manifold>
       {
         // The info file / metadata loader will ensure we have a definition for each
         eosparm->idx_Wdot[idim] = -1;
-      }  
+      }
     }
   }
 };

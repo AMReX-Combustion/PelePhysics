@@ -15,11 +15,11 @@ namespace pele{
 
       TabFuncParams() {}
       virtual ~TabFuncParams() {}
-      
+
       virtual void initialize()
       {
         m_h_tf_data.manmodel = ManifoldModel::TABLE;
-        
+
         amrex::ParmParse pp("manifold");
         std::string tablefile;
         pp.get("filename", tablefile);
@@ -145,7 +145,7 @@ namespace pele{
         if (m_device_allocated)
           amrex::The_Device_Arena()->free(m_d_tf_data);
       }
-      
+
       virtual void sync_to_device()
       {
         if (!m_device_allocated) {
@@ -155,12 +155,12 @@ namespace pele{
                            m_d_tf_data);
         }
       }
-      
+
       virtual ManFuncData& host_manfunc_data()
       {
         return m_h_tf_data;
       }
-      
+
       virtual ManFuncData* device_manfunc_data()
       {
         return m_d_tf_data;
@@ -212,6 +212,24 @@ namespace pele{
         out = interpolate(indices, alphas, &tf_data->values[ivar * tf_data->varSpacing]);
       }
 
+      // Lookup a few variables directly if you already know indices
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      virtual void
+      get_values(const int nvar, const int ivar[], const amrex::Real interpdata[], amrex::Real out[])
+      {
+        // Get alphas and indices
+        int indices[MAXD_TABLE];
+        amrex::Real alphas[MAXD_TABLE];
+        amrex::Real dxinv[MAXD_TABLE];
+        get_indices_alphas_dxinv(interpdata, indices, alphas, dxinv);
+
+        // interpolate down
+        for (int i = 0; i < nvar; ++i) {
+          out[i] = (ivar[i] > 0) ? interpolate(indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing]) : 0.0;
+        }
+      }
+
       // Get derivatives of indexed variable with respect to table dimensions using finite difference
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
@@ -227,7 +245,7 @@ namespace pele{
         // finite differences from table
         amrex::Real out = differentiate(indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing], derivs);
       }
-      
+
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[],
@@ -235,12 +253,12 @@ namespace pele{
       {
         out = 0.0;
       }
-      
+
       virtual ManifoldModel model()
       {
         return tf_data->manmodel;
       }
-      
+
       /*
       int idx_density;
       int idx_T;
