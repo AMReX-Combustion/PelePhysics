@@ -218,7 +218,7 @@ class SymbolicMath:
                     "Pow": [
                         (
                             lambda b, e: e.is_Integer and e == 2,
-                            lambda b, e: "(" + "*".join([b] * int(e)) + ")",
+                            lambda b, e: "(" + "*".join(["("+b+")"] * int(e)) + ")",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
                     ]
@@ -521,6 +521,14 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
+                #cw.writer(
+                #    fstream,
+                #    'std::cout << "%s = " << %s << "\\n";'
+                #    % (
+                #        left_cse,
+                #        left_cse
+                #    ),
+                #)
         else:
             times = time.time()
             for cse_idx in range(len(array_cse[0])):
