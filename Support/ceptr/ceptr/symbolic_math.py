@@ -255,19 +255,19 @@ class SymbolicMath:
             )
 
     # @profile
-    def write_dscqss_to_cpp(self, syms, species_info, cw, fstream):
+    def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
 
-        list_smp = list(syms.dscqssdscqss.values()) + list(
-            syms.dscqssdsc.values()
+        list_smp = list(self.dscqssdscqss.values()) + list(
+            self.dscqssdsc.values()
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
         tuple_list = dscqssdscqss_tuples + dscqssdsc_tuples
 
         # Write common expressions
@@ -331,7 +331,7 @@ class SymbolicMath:
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
-                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
                         f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
@@ -353,26 +353,26 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_readable_to_cpp(self, syms, species_info, cw, fstream):
+    def write_symjac_readable_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
-        n_dwdotdscqss = len(syms.dwdotdscqss)
-        n_dwdotdsc = len(syms.dwdotdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
+        n_dwdotdscqss = len(self.dwdotdscqss)
+        n_dwdotdsc = len(self.dwdotdsc)
 
         list_smp = (
-            list(syms.dscqssdscqss.values())
-            + list(syms.dscqssdsc.values())
-            + list(syms.dwdotdscqss.values())
-            + list(syms.dwdotdsc.values())
+            list(self.dscqssdscqss.values())
+            + list(self.dscqssdsc.values())
+            + list(self.dwdotdscqss.values())
+            + list(self.dwdotdsc.values())
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
-        dwdotdscqss_tuples = list(syms.dwdotdscqss.keys())
-        dwdotdsc_tuples = list(syms.dwdotdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
+        dwdotdscqss_tuples = list(self.dwdotdscqss.keys())
+        dwdotdsc_tuples = list(self.dwdotdsc.keys())
         tuple_list = (
             dscqssdscqss_tuples
             + dscqssdsc_tuples
@@ -458,7 +458,7 @@ class SymbolicMath:
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
-                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
                         f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
@@ -505,26 +505,26 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_to_cpp(self, syms, species_info, cw, fstream):
+    def write_symjac_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
-        n_dwdotdscqss = len(syms.dwdotdscqss)
-        n_dwdotdsc = len(syms.dwdotdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
+        n_dwdotdscqss = len(self.dwdotdscqss)
+        n_dwdotdsc = len(self.dwdotdsc)
 
         list_smp = (
-            list(syms.dscqssdscqss.values())
-            + list(syms.dscqssdsc.values())
-            + list(syms.dwdotdscqss.values())
-            + list(syms.dwdotdsc.values())
+            list(self.dscqssdscqss.values())
+            + list(self.dscqssdsc.values())
+            + list(self.dwdotdscqss.values())
+            + list(self.dwdotdsc.values())
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
-        dwdotdscqss_tuples = list(syms.dwdotdscqss.keys())
-        dwdotdsc_tuples = list(syms.dwdotdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
+        dwdotdscqss_tuples = list(self.dwdotdscqss.keys())
+        dwdotdsc_tuples = list(self.dwdotdsc.keys())
         tuple_list = (
             dscqssdscqss_tuples
             + dscqssdsc_tuples
