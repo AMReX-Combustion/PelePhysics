@@ -703,7 +703,7 @@ def production_rate(
                     )
                     logPred_smp = sme.log(redP_smp, 10)
                     cw.writer(fstream, "const amrex::Real logFcent = log10(")
-                    intLog_smp = 0.0
+                    int_smp = 0.0
                     if abs(troe[1]) > 1.0e-100:
                         if 1.0 - troe[0] != 0:
                             cw.writer(
@@ -711,7 +711,7 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
-                            intLog_smp += (1.0 - troe[0]) * sme.exp(
+                            int_smp += (1.0 - troe[0]) * sme.exp(
                                 -syms.tc_smp[1] * (1 / troe[1])
                             )
                     else:
@@ -723,7 +723,7 @@ def production_rate(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
                                 % (troe[0], (1 / troe[2])),
                             )
-                            intLog_smp += troe[0] * sme.exp(
+                            int_smp += troe[0] * sme.exp(
                                 -syms.tc_smp[1] * (1 / troe[2])
                             )
                     else:
@@ -733,15 +733,15 @@ def production_rate(
                             cw.writer(
                                 fstream, "    + exp(%.15g * invT));" % -troe[3]
                             )
-                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            int_smp += sme.exp(-troe[3] * syms.invT_smp)
                         else:
                             cw.writer(
                                 fstream, "    + exp(-%.15g * invT));" % troe[3]
                             )
-                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            int_smp += sme.exp(-troe[3] * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
-                    logFcent_smp = sme.log(intLog_smp, 10)
+                    logFcent_smp = sme.log(int_smp, 10)
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
