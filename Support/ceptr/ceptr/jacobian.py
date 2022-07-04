@@ -31,7 +31,7 @@ def ajac(
     else:
         cw.writer(
             fstream,
-            "void aJacobian_old(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+            "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
             " const int consP)",
         )
     cw.writer(fstream, "{")
@@ -1643,7 +1643,7 @@ def dscqss_dsc_fast_debug(
             cw.writer(fstream)
 
             # Write the dscqss terms
-            syms.write_dscqss_to_cpp(syms, species_info, cw, fstream)
+            syms.write_dscqss_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
 
@@ -1774,11 +1774,9 @@ def ajac_term_fast_debug(
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
             if syms.hformat == "readable":
-                syms.write_symjac_readable_to_cpp(
-                    syms, species_info, cw, fstream
-                )
+                syms.write_symjac_readable_to_cpp(species_info, cw, fstream)
             else:
-                syms.write_symjac_to_cpp(syms, species_info, cw, fstream)
+                syms.write_symjac_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
 

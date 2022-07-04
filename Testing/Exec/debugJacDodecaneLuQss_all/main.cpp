@@ -95,10 +95,7 @@ main(int argc, char* argv[])
     }
 
     // Compute analytically
-    ajac_term_fast_debug(J_sympy, sc, T, consP);
-    aJacobian(J_fuego_consP, sc, T, consP);
-    aJacobian(J_fuego_noconsP, sc, T, noconsP);
-
+    aJacobian(J_sympy, sc, T, consP);
 
     // Compute dscqss/dsc by finite difference
     for (int i=0; i < NUM_SPECIES; ++i){
@@ -124,7 +121,7 @@ main(int argc, char* argv[])
             index_wdot = j;
             index_J = index_sc * (NUM_SPECIES+1) + index_wdot;
             //if (error[index_J] > 1e-5 and (std::abs(J_sympy[index_J])>1e-15 or std::abs(J_sympy[index_J])>1e-15) and error[index_J]< 0.99){
-            if (error[index_J] > 1e-5 and (std::abs(J_sympy[index_J])>1e-15 or std::abs(J_sympy[index_J])>1e-15) ){
+            if (error[index_J] > 1e-3 and (std::abs(J_sympy[index_J])>1e-15 or std::abs(J_sympy[index_J])>1e-15) ){
                 std::cout << "\t wdot " << index_wdot << "\t sc " << index_sc  << " : " <<  error[index_J] << "\n";
                 std::cout << "\t \t FD : " << J_FD[index_J] << "\n";
                 std::cout << "\t \t SYMPY : " <<  J_sympy[index_J]  << "\n";

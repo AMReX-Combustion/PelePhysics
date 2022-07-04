@@ -1117,8 +1117,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
+                        species_appearances = syms.convert_number_to_int(
+                            species_appearances
+                        )
                         rhs_hold_smp.append(
-                            float(species_appearances)
+                            species_appearances
                             * syms.qr_qss_smp[
                                 reaction_info.qfqr_co_idx_map.index(r)
                             ]
@@ -1144,8 +1147,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     rhs_hold_smp.append(
-                        float(species_appearances)
+                        species_appearances
                         * syms.qf_qss_smp[
                             reaction_info.qfqr_co_idx_map.index(r)
                         ]
@@ -1179,8 +1185,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     rhs_hold_smp.append(
-                        float(species_appearances)
+                        species_appearances
                         * syms.qr_qss_smp[
                             reaction_info.qfqr_co_idx_map.index(r)
                         ]
@@ -1281,8 +1290,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             )
                             if len(group_coeff_hold_smp[other_qssa]) == 0:
                                 group_coeff_hold_smp[other_qssa] = [0]
+                            species_appearances = syms.convert_number_to_int(
+                                species_appearances
+                            )
                             group_coeff_hold_smp[other_qssa][0] += (
-                                float(species_appearances)
+                                species_appearances
                                 * syms.qr_qss_smp[
                                     reaction_info.qfqr_co_idx_map.index(r)
                                 ]
@@ -1317,8 +1329,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     group_coeff_hold_smp[other_qssa][0] += (
-                        float(species_appearances)
+                        species_appearances
                         * syms.qf_qss_smp[
                             reaction_info.qfqr_co_idx_map.index(r)
                         ]
@@ -1565,9 +1580,9 @@ def qssa_coeff_functions(
         )
         coeff1 = cc.Patm_pa
         coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
-        syms.refC_smp = coeff1 / coeff2 * syms.invT_smp
+        # syms.refC_smp = coeff1 / coeff2 * syms.invT_smp
         cw.writer(fstream, "const amrex::Real refCinv = 1. / refC;")
-        syms.refCinv_smp = 1.0 / syms.refC_smp
+        # syms.refCinv_smp = 1.0 / syms.refC_smp
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")
@@ -1643,6 +1658,9 @@ def qssa_coeff_functions(
             else:
                 print(f"Unrecognized reaction rate type: {reaction.equation}")
                 sys.exit(1)
+
+        beta = syms.convert_number_to_int(beta)
+        low_beta = syms.convert_number_to_int(low_beta)
 
         cw.writer(fstream, "{")
         cw.writer(
@@ -1775,8 +1793,14 @@ def qssa_coeff_functions(
                                 (1 / troe[1]),
                             ),
                         )
-                        int_smp += (1.0 - troe[0]) * sme.exp(
-                            -syms.tc_smp[1] * (1 / troe[1])
+                        first_factor = syms.convert_number_to_int(
+                            1.0 - troe[0]
+                        )
+                        second_factor = syms.convert_number_to_int(
+                            -1 / troe[1]
+                        )
+                        int_smp += first_factor * sme.exp(
+                            syms.tc_smp[1] * second_factor
                         )
                 else:
                     cw.writer(fstream, "     0.0 ")
@@ -1791,8 +1815,12 @@ def qssa_coeff_functions(
                                 (1 / troe[2]),
                             ),
                         )
-                        int_smp += (troe[0]) * sme.exp(
-                            -syms.tc_smp[1] * (1 / troe[2])
+                        first_factor = syms.convert_number_to_int(troe[0])
+                        second_factor = syms.convert_number_to_int(
+                            -1 / troe[2]
+                        )
+                        int_smp += first_factor * sme.exp(
+                            syms.tc_smp[1] * second_factor
                         )
                 else:
                     cw.writer(fstream, "     0.0 ")
@@ -1803,13 +1831,15 @@ def qssa_coeff_functions(
                             fstream,
                             "    + exp(%.15g * invT));" % -troe[3],
                         )
-                        int_smp += sme.exp(-troe[3] * syms.invT_smp)
+                        first_factor = syms.convert_number_to_int(-troe[3])
+                        int_smp += sme.exp(first_factor * syms.invT_smp)
                     else:
                         cw.writer(
                             fstream,
                             "    + exp(-%.15g * invT));" % troe[3],
                         )
-                        int_smp += sme.exp(-troe[3] * syms.invT_smp)
+                        first_factor = syms.convert_number_to_int(-troe[3])
+                        int_smp += sme.exp(first_factor * syms.invT_smp)
                 else:
                     cw.writer(fstream, "    + 0.0);")
                     int_smp += 0.0
@@ -3481,10 +3511,17 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
             phi_smp += [conc_smp]
         if len(phi) < 1:
             phi = ["1.0"]
-            phi_smp = [1.0]
+            if syms.remove_1:
+                phi_smp = [1]
+            else:
+                phi_smp = [1.0]
 
-    qssa_coeff_smp = 1.0
+    if syms.remove_1:
+        qssa_coeff_smp = 1
+    else:
+        qssa_coeff_smp = 1.0
     for phival in phi_smp:
         qssa_coeff_smp *= phival
 
+    qssa_coeff_smp = syms.convert_symb_to_int(qssa_coeff_smp)
     return "*".join(phi), qssa_coeff_smp

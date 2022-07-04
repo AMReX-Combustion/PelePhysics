@@ -609,6 +609,9 @@ def production_rate(
                     )
                     sys.exit(1)
 
+            beta = syms.convert_number_to_int(beta)
+            low_beta = syms.convert_number_to_int(low_beta)
+
             cw.writer(
                 fstream,
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
@@ -703,7 +706,7 @@ def production_rate(
                     )
                     logPred_smp = sme.log(redP_smp, 10)
                     cw.writer(fstream, "const amrex::Real logFcent = log10(")
-                    intLog_smp = 0.0
+                    int_smp = 0.0
                     if abs(troe[1]) > 1.0e-100:
                         if 1.0 - troe[0] != 0:
                             cw.writer(
@@ -711,8 +714,14 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
-                            intLog_smp += (1.0 - troe[0]) * sme.exp(
-                                -syms.tc_smp[1] * (1 / troe[1])
+                            first_factor = syms.convert_number_to_int(
+                                1.0 - troe[0]
+                            )
+                            second_factor = syms.convert_number_to_int(
+                                -1 / troe[1]
+                            )
+                            int_smp += first_factor * sme.exp(
+                                syms.tc_smp[1] * second_factor
                             )
                     else:
                         cw.writer(fstream, "     0.0 ")
@@ -723,8 +732,12 @@ def production_rate(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
                                 % (troe[0], (1 / troe[2])),
                             )
-                            intLog_smp += troe[0] * sme.exp(
-                                -syms.tc_smp[1] * (1 / troe[2])
+                            first_factor = syms.convert_number_to_int(troe[0])
+                            second_factor = syms.convert_number_to_int(
+                                -1 / troe[2]
+                            )
+                            int_smp += first_factor * sme.exp(
+                                syms.tc_smp[1] * second_factor
                             )
                     else:
                         cw.writer(fstream, "    + 0.0 ")
@@ -733,15 +746,17 @@ def production_rate(
                             cw.writer(
                                 fstream, "    + exp(%.15g * invT));" % -troe[3]
                             )
-                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            first_factor = syms.convert_number_to_int(-troe[3])
+                            int_smp += sme.exp(first_factor * syms.invT_smp)
                         else:
                             cw.writer(
                                 fstream, "    + exp(-%.15g * invT));" % troe[3]
                             )
-                            intLog_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            first_factor = syms.convert_number_to_int(-troe[3])
+                            int_smp += sme.exp(first_factor * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
-                    logFcent_smp = sme.log(intLog_smp, 10)
+                    logFcent_smp = sme.log(int_smp, 10)
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
@@ -936,6 +951,9 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
+                            coefficient = syms.convert_number_to_int(
+                                coefficient
+                            )
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]
                             ] -= (coefficient * qdot_smp)
@@ -958,6 +976,9 @@ def production_rate(
                                     species_info.ordered_idx_map[symbol],
                                     coefficient,
                                 ),
+                            )
+                            coefficient = syms.convert_number_to_int(
+                                coefficient
                             )
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]

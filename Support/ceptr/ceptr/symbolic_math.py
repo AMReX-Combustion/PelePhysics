@@ -11,29 +11,62 @@ import pandas as pd
 import symengine as sme
 import sympy as smp
 
+import ceptr.constants as cc
 import ceptr.thermo as cth
+from ceptr.progressBar import printProgressBar
 
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
-    def __init__(self, species_info, reaction_info, mechanism, hformat):
+    def __init__(
+        self,
+        species_info,
+        reaction_info,
+        mechanism,
+        hformat,
+        remove_1,
+        remove_pow2,
+        min_op_count,
+    ):
 
+        # Formatting options
         self.hformat = hformat
+        self.remove_1 = remove_1
+        self.remove_pow2 = remove_pow2
+        self.min_op_count = min_op_count
 
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
 
         self.T_smp = sme.symbols("T")
-        self.tc_smp = [
-            sme.log(self.T_smp),
-            self.T_smp,
-            self.T_smp**2,
-            self.T_smp**3,
-            self.T_smp**4,
-        ]
-        self.invT_smp = 1.0 / self.tc_smp[1]
+        # self.tc_smp = [
+        #    sme.log(self.T_smp),
+        #    self.T_smp,
+        #    self.T_smp**2,
+        #    self.T_smp**3,
+        #    self.T_smp**4,
+        # ]
+        # Keep tc as symbols so we don't compute powers all the time
+        self.tc_smp = [sme.symbols("tc[" + str(i) + "]") for i in range(5)]
+        # self.invT_smp = 1.0 / self.tc_smp[1]
+        # Keep invT as symbol so we don't do division all the time
+        self.invT_smp = sme.symbols("invT")
         self.invT2_smp = self.invT_smp * self.invT_smp
+
+        # coeff1 = cc.Patm_pa
+        # coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
+        # if self.remove_1:
+        #    self.refC_smp = float(coeff1 / coeff2) * self.invT_smp
+        # else:
+        #    self.refC_smp = coeff1 / coeff2 * self.invT_smp
+        # if self.remove_1:
+        #    self.refCinv_smp = float(1.0) / self.refC_smp
+        # else:
+        #    self.refCinv_smp = 1.0 / self.refC_smp
+        # Keep refC and refCinv as symbols to avoid doing divisions all the time
+        self.refCinv_smp = sme.symbols("refCinv")
+        self.refC_smp = sme.symbols("refC")
 
         self.sc_smp = [
             sme.symbols("sc[" + str(i) + "]") for i in range(n_species)
@@ -178,11 +211,127 @@ class SymbolicMath:
     # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
-        # Convert to ccode (to fix pow) and then string
-        cppcode = sme.ccode(sym_smp)
+        if self.remove_pow2:
+            cppcode = smp.ccode(
+                sym_smp,
+                user_functions={
+                    "Pow": [
+                        (
+                            lambda b, e: e.is_Integer and e == 2,
+                            lambda b, e: "("
+                            + "*".join(["(" + b + ")"] * int(e))
+                            + ")",
+                        ),
+                        (lambda b, e: not e.is_Integer, "pow"),
+                    ]
+                },
+            )
+        else:
+            cppcode = sme.ccode(sym_smp)
+
         cpp_str = str(cppcode)
 
+        if self.remove_1:
+            cpp_str = cpp_str.replace("1.0*", "")
+
         return cpp_str
+
+    # @profile
+    def syms_to_specnum(self, sym_smp):
+        """Extracts number from syms string"""
+        num = re.findall(r"\[(.*?)\]", str(sym_smp))
+        return int(num[0])
+
+    # @profile
+    def convert_number_to_int(self, number):
+        """Convert number to int if possible"""
+        factor = float(number)
+        if (
+            self.remove_1
+            and abs(factor) < 1.1
+            and abs(factor - int(factor)) < 1e-16
+        ):
+            factor = int(factor)
+        return factor
+
+    # @profile
+    def convert_symb_to_int(self, symb):
+        """Convert symbol to int if possible"""
+        try:
+            number = float(symb)
+            number = self.convert_number_to_int(number)
+            return number
+        except RuntimeError:
+            return symb
+
+    # @profile
+    def reduce_expr(self, orig):
+        """
+        Loop over common and final expressions and remove the ones that have
+        a number of operation < self.min_op_count
+        """
+
+        # Make a dict
+        replacements = []
+        n_cse = len(orig[0])
+        n_exp = len(orig[1])
+
+        # Init
+        common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
+        common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr = [orig[1][i] for i in range(n_exp)]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+
+        # Replacement loop
+        printProgressBar(
+            0,
+            n_cse,
+            prefix="Expr = %d / %d " % (0, n_cse),
+            suffix="Complete",
+            length=20,
+        )
+        for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
+            op_count = sme.count_ops(rhs)
+            isFloat = True
+            try:
+                number = float(rhs)
+                rhs = number
+            except RuntimeError:
+                isFloat = False
+            if op_count < self.min_op_count or isFloat:
+                replacements.append(i)
+                ind = [
+                    j + i
+                    for j, s in enumerate(common_expr_symbols[i:])
+                    if lhs in s
+                ]
+                for j in ind:
+                    common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
+                    common_expr_symbols[j].remove(lhs)
+                ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
+                for j in ind:
+                    final_expr[j] = final_expr[j].subs(lhs, rhs)
+                    final_expr_symbols[j].remove(lhs)
+
+            printProgressBar(
+                i + 1,
+                n_cse,
+                prefix="Expr = %d / %d, removed expr = %d "
+                % (
+                    i + 1,
+                    n_cse,
+                    len(replacements),
+                ),
+                suffix="Complete",
+                length=20,
+            )
+        replacements.reverse()
+        for rep in replacements:
+            del common_expr_lhs[rep]
+            del common_expr_rhs[rep]
+
+        return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
     def write_array_to_cpp(
@@ -251,19 +400,19 @@ class SymbolicMath:
             )
 
     # @profile
-    def write_dscqss_to_cpp(self, syms, species_info, cw, fstream):
+    def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
 
-        list_smp = list(syms.dscqssdscqss.values()) + list(
-            syms.dscqssdsc.values()
+        list_smp = list(self.dscqssdscqss.values()) + list(
+            self.dscqssdsc.values()
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
         tuple_list = dscqssdscqss_tuples + dscqssdsc_tuples
 
         # Write common expressions
@@ -327,7 +476,7 @@ class SymbolicMath:
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
-                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
                         f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
@@ -349,26 +498,26 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_readable_to_cpp(self, syms, species_info, cw, fstream):
+    def write_symjac_readable_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
-        n_dwdotdscqss = len(syms.dwdotdscqss)
-        n_dwdotdsc = len(syms.dwdotdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
+        n_dwdotdscqss = len(self.dwdotdscqss)
+        n_dwdotdsc = len(self.dwdotdsc)
 
         list_smp = (
-            list(syms.dscqssdscqss.values())
-            + list(syms.dscqssdsc.values())
-            + list(syms.dwdotdscqss.values())
-            + list(syms.dwdotdsc.values())
+            list(self.dscqssdscqss.values())
+            + list(self.dscqssdsc.values())
+            + list(self.dwdotdscqss.values())
+            + list(self.dwdotdsc.values())
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
-        dwdotdscqss_tuples = list(syms.dwdotdscqss.keys())
-        dwdotdsc_tuples = list(syms.dwdotdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
+        dwdotdscqss_tuples = list(self.dwdotdscqss.keys())
+        dwdotdsc_tuples = list(self.dwdotdsc.keys())
         tuple_list = (
             dscqssdscqss_tuples
             + dscqssdsc_tuples
@@ -379,20 +528,52 @@ class SymbolicMath:
         # Write common expressions
         times = time.time()
         array_cse = sme.cse(list_smp)
-        for cse_idx in range(len(array_cse[0])):
-            left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
-            right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
-            cw.writer(
-                fstream,
-                "const amrex::Real %s = %s;"
-                % (
-                    left_cse,
-                    right_cse,
-                ),
-            )
-        timee = time.time()
+        print("Made common expr (time = %.3g s)" % (time.time() - times))
 
-        print("Made common expr (time = %.3g s)" % (timee - times))
+        if self.min_op_count > 0:
+            times = time.time()
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
+                array_cse
+            )
+            print(
+                "reduced expressions in (time = %.3g s)"
+                % (time.time() - times)
+            )
+            times = time.time()
+            for cse_idx in range(len(common_expr_lhs)):
+                left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        left_cse,
+                        right_cse,
+                    ),
+                )
+                # cw.writer(
+                #    fstream,
+                #    'std::cout << "%s = " << %s << "\\n";'
+                #    % (
+                #        left_cse,
+                #        left_cse
+                #    ),
+                # )
+        else:
+            times = time.time()
+            for cse_idx in range(len(array_cse[0])):
+                left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
+                right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        left_cse,
+                        right_cse,
+                    ),
+                )
+
+        print("Printed common expr (time = %.3g s)" % (time.time() - times))
 
         cw.writer(
             fstream,
@@ -405,7 +586,10 @@ class SymbolicMath:
         # Write all the entries in human readable format
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
-            cpp_str = self.convert_to_cpp(array_cse[1][i])
+            if self.min_op_count > 0:
+                cpp_str = self.convert_to_cpp(final_expr[i])
+            else:
+                cpp_str = self.convert_to_cpp(array_cse[1][i])
 
             num_idx = tuple_list[i][0]
             den_idx = tuple_list[i][1]
@@ -454,7 +638,7 @@ class SymbolicMath:
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
                 for scqss_dep in item["scqss_dep"]:
-                    scqssdepnum = syms.syms_to_specnum(scqss_dep)
+                    scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
                         f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
@@ -501,26 +685,26 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_to_cpp(self, syms, species_info, cw, fstream):
+    def write_symjac_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
-        n_dscqssdscqss = len(syms.dscqssdscqss)
-        n_dscqssdsc = len(syms.dscqssdsc)
-        n_dwdotdscqss = len(syms.dwdotdscqss)
-        n_dwdotdsc = len(syms.dwdotdsc)
+        n_dscqssdscqss = len(self.dscqssdscqss)
+        n_dscqssdsc = len(self.dscqssdsc)
+        n_dwdotdscqss = len(self.dwdotdscqss)
+        n_dwdotdsc = len(self.dwdotdsc)
 
         list_smp = (
-            list(syms.dscqssdscqss.values())
-            + list(syms.dscqssdsc.values())
-            + list(syms.dwdotdscqss.values())
-            + list(syms.dwdotdsc.values())
+            list(self.dscqssdscqss.values())
+            + list(self.dscqssdsc.values())
+            + list(self.dwdotdscqss.values())
+            + list(self.dwdotdsc.values())
         )
         n_total = len(list_smp)
 
-        dscqssdscqss_tuples = list(syms.dscqssdscqss.keys())
-        dscqssdsc_tuples = list(syms.dscqssdsc.keys())
-        dwdotdscqss_tuples = list(syms.dwdotdscqss.keys())
-        dwdotdsc_tuples = list(syms.dwdotdsc.keys())
+        dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
+        dscqssdsc_tuples = list(self.dscqssdsc.keys())
+        dwdotdscqss_tuples = list(self.dwdotdscqss.keys())
+        dwdotdsc_tuples = list(self.dwdotdsc.keys())
         tuple_list = (
             dscqssdscqss_tuples
             + dscqssdsc_tuples
