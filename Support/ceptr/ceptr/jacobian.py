@@ -1774,9 +1774,7 @@ def ajac_term_fast_debug(
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
             if syms.hformat == "readable":
-                syms.write_symjac_readable_to_cpp(
-                    species_info, cw, fstream
-                )
+                syms.write_symjac_readable_to_cpp(species_info, cw, fstream)
             else:
                 syms.write_symjac_to_cpp(species_info, cw, fstream)
 

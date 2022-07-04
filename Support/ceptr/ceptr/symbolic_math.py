@@ -11,14 +11,24 @@ import pandas as pd
 import symengine as sme
 import sympy as smp
 
-import ceptr.thermo as cth
 import ceptr.constants as cc
-from   ceptr.progressBar import printProgressBar
+import ceptr.thermo as cth
+from ceptr.progressBar import printProgressBar
+
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
-    def __init__(self, species_info, reaction_info, mechanism, hformat, remove_1, remove_pow2, min_op_count):
+    def __init__(
+        self,
+        species_info,
+        reaction_info,
+        mechanism,
+        hformat,
+        remove_1,
+        remove_pow2,
+        min_op_count,
+    ):
 
         # Formatting options
         self.hformat = hformat
@@ -220,16 +230,16 @@ class SymbolicMath:
         cpp_str = str(cppcode)
 
         if self.remove_1:
-            cpp_str = cpp_str.replace('1.0*', '')
+            cpp_str = cpp_str.replace("1.0*", "")
 
         return cpp_str
 
     # @profile
     def reduce_expr(self, orig):
-        ''' 
-            Loop over common and final expressions and remove the ones that have
-            a number of operation < self.min_op_count
-        '''
+        """
+        Loop over common and final expressions and remove the ones that have
+        a number of operation < self.min_op_count
+        """
 
         # Make a dict
         replacements = []
@@ -251,7 +261,7 @@ class SymbolicMath:
             suffix="Complete",
             length=20,
         )
-        for i, (lhs, rhs) in enumerate(zip(common_expr_lhs,common_expr_rhs)):
+        for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
             op_count = sme.count_ops(rhs)
             isFloat = True
             try:
@@ -260,36 +270,38 @@ class SymbolicMath:
             except RuntimeError:
                 isFloat = False
             if op_count < self.min_op_count or isFloat:
-               replacements.append(i)
-               ind = [j+i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
-               for j in ind:
-                   common_expr_rhs[j] = common_expr_rhs[j].subs(lhs,rhs)
-                   common_expr_symbols[j].remove(lhs)
-               ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
-               for j in ind:
-                   final_expr[j] = final_expr[j].subs(lhs,rhs)
-                   final_expr_symbols[j].remove(lhs)
-            
+                replacements.append(i)
+                ind = [
+                    j + i
+                    for j, s in enumerate(common_expr_symbols[i:])
+                    if lhs in s
+                ]
+                for j in ind:
+                    common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
+                    common_expr_symbols[j].remove(lhs)
+                ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
+                for j in ind:
+                    final_expr[j] = final_expr[j].subs(lhs, rhs)
+                    final_expr_symbols[j].remove(lhs)
+
             printProgressBar(
-                        i+1,
-                        n_cse,
-                        prefix="Expr = %d / %d, removed Exp = %d "
-                        % (
-                            i+1,
-                            n_cse,
-                            len(replacements),
-                        ),
-                        suffix="Complete",
-                        length=20,
-                    )
+                i + 1,
+                n_cse,
+                prefix="Expr = %d / %d, removed Exp = %d "
+                % (
+                    i + 1,
+                    n_cse,
+                    len(replacements),
+                ),
+                suffix="Complete",
+                length=20,
+            )
         replacements.reverse()
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
 
-
         return common_expr_lhs, common_expr_rhs, final_expr
-
 
     # @profile
     def write_array_to_cpp(
@@ -490,8 +502,13 @@ class SymbolicMath:
 
         if self.min_op_count > 0:
             times = time.time()
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(array_cse)
-            print("reduced expressions in (time = %.3g s)" % (time.time() - times))
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
+                array_cse
+            )
+            print(
+                "reduced expressions in (time = %.3g s)"
+                % (time.time() - times)
+            )
             times = time.time()
             for cse_idx in range(len(common_expr_lhs)):
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
@@ -535,7 +552,7 @@ class SymbolicMath:
                 cpp_str = self.convert_to_cpp(final_expr[i])
             else:
                 cpp_str = self.convert_to_cpp(array_cse[1][i])
-     
+
             num_idx = tuple_list[i][0]
             den_idx = tuple_list[i][1]
 

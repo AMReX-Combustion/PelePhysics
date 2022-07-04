@@ -10,7 +10,9 @@ import ceptr.converter as converter
 def convert(fname, hformat, remove_1, remove_pow2, min_op_count):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
-    conv = converter.Converter(mechanism, hformat, remove_1, remove_pow2, min_op_count)
+    conv = converter.Converter(
+        mechanism, hformat, remove_1, remove_pow2, min_op_count
+    )
     conv.writer()
     conv.formatter()
 
@@ -67,14 +69,25 @@ def main():
         help="Min number of operation count per expression",
         default=0,
     )
-    
 
     args = parser.parse_args()
 
     if args.fname:
-        convert(args.fname, args.hformat, args.remove_1, args.remove_pow2, args.min_op_count)
+        convert(
+            args.fname,
+            args.hformat,
+            args.remove_1,
+            args.remove_pow2,
+            args.min_op_count,
+        )
     elif args.lst:
-        convert_lst(args.lst, args.hformat, args.remove_1, args.remove_pow2, args.min_op_count)
+        convert_lst(
+            args.lst,
+            args.hformat,
+            args.remove_1,
+            args.remove_pow2,
+            args.min_op_count,
+        )
 
 
 if __name__ == "__main__":

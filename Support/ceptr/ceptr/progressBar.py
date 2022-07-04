@@ -1,5 +1,6 @@
 import sys
 
+
 # Print iterations progress
 def printProgressBar(
     iteration,

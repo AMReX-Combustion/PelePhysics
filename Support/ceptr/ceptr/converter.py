@@ -26,7 +26,9 @@ import ceptr.writer as cw
 class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
-    def __init__(self, mechanism, hformat, remove_1, remove_pow2, min_op_count):
+    def __init__(
+        self, mechanism, hformat, remove_1, remove_pow2, min_op_count
+    ):
         self.mechanism = mechanism
         self.hformat = hformat
         self.remove_1 = remove_1
