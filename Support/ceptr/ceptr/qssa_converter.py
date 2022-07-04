@@ -1565,9 +1565,9 @@ def qssa_coeff_functions(
         )
         coeff1 = cc.Patm_pa
         coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
-        syms.refC_smp = coeff1 / coeff2 * syms.invT_smp
+        #syms.refC_smp = coeff1 / coeff2 * syms.invT_smp
         cw.writer(fstream, "const amrex::Real refCinv = 1. / refC;")
-        syms.refCinv_smp = 1.0 / syms.refC_smp
+        #syms.refCinv_smp = 1.0 / syms.refC_smp
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")

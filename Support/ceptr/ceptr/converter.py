@@ -385,14 +385,14 @@ class Converter:
             )
             print(f"Time to do production_rate = {time.time()-times}")
 
-            print("Symbolic wdot print for debug")
-            cp.production_rate_debug(
-               hdr,
-               self.mechanism,
-               self.species_info,
-               self.reaction_info,
-               self.syms,
-            )
+            # print("Symbolic wdot print for debug")
+            # cp.production_rate_debug(
+            #    hdr,
+            #    self.mechanism,
+            #    self.species_info,
+            #    self.reaction_info,
+            #    self.syms,
+            # )
 
             times = time.time()
             self.species_info.identify_wdot_dependencies(self.syms)
