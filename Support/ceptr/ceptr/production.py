@@ -609,6 +609,9 @@ def production_rate(
                     )
                     sys.exit(1)
 
+            beta = syms.convert_number_to_int(beta)
+            low_beta = syms.convert_number_to_int(low_beta)
+
             cw.writer(
                 fstream,
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
@@ -942,6 +945,7 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
+                            coefficient = syms.convert_number_to_int(coefficient)
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]
                             ] -= (coefficient * qdot_smp)
@@ -965,6 +969,7 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
+                            coefficient = syms.convert_number_to_int(coefficient)
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]
                             ] += (coefficient * qdot_smp)

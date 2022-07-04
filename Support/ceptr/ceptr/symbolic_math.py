@@ -229,8 +229,8 @@ class SymbolicMath:
 
         cpp_str = str(cppcode)
 
-        #if self.remove_1:
-        #    cpp_str = cpp_str.replace("1.0*", "")
+        if self.remove_1:
+            cpp_str = cpp_str.replace("1.0*", "")
 
         return cpp_str
 
@@ -311,7 +311,7 @@ class SymbolicMath:
             printProgressBar(
                 i + 1,
                 n_cse,
-                prefix="Expr = %d / %d, removed Exp = %d "
+                prefix="Expr = %d / %d, removed expr = %d "
                 % (
                     i + 1,
                     n_cse,

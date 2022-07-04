@@ -1649,6 +1649,9 @@ def qssa_coeff_functions(
                 print(f"Unrecognized reaction rate type: {reaction.equation}")
                 sys.exit(1)
 
+        beta = syms.convert_number_to_int(beta)
+        low_beta = syms.convert_number_to_int(low_beta)
+ 
         cw.writer(fstream, "{")
         cw.writer(
             fstream,
@@ -3492,10 +3495,17 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
             phi_smp += [conc_smp]
         if len(phi) < 1:
             phi = ["1.0"]
-            phi_smp = [1.0]
+            if syms.remove_1:
+                phi_smp = [1]
+            else:
+                phi_smp = [1.0]
 
-    qssa_coeff_smp = 1.0
+    if syms.remove_1:
+        qssa_coeff_smp = 1
+    else:
+        qssa_coeff_smp = 1.0
     for phival in phi_smp:
         qssa_coeff_smp *= phival
 
+    qssa_coeff_smp = syms.convert_symb_to_int(qssa_coeff_smp)
     return "*".join(phi), qssa_coeff_smp
