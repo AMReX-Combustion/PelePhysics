@@ -24,11 +24,11 @@ I tried to not modify functions that did not need be modified but we should prob
 10. ~~Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix~~
 11. Make sure that the `aJacobian` generated can work on GPU
   - Reduce memory footprint of common expressions (Malik)
-    - Change `1.0 * xxx` into `xxx`
-    - Change `pow(xxx,n)` into `xxx * xxx * ... * xxx`. Dont do it is `n` is negative (or leave it as option)
-    - Remove `xxx = yyy` and only use `yyy`
-    - Remove `xxx = yyy-zzz` and only use `yyy-zzz`
-    - Remove `xxx = 0` and replace it with `0` in the expressions
+    - ~~Change `1.0 * xxx` into `xxx`~~
+    - ~~Change `pow(xxx,n)` into `xxx * xxx * ... * xxx`. Dont do it is `n` is negative (or leave it as option)~~
+    - ~~Remove `xxx = yyy` and only use `yyy`~~
+    - ~~Remove `xxx = yyy-zzz` and only use `yyy-zzz`~~
+    - ~~Remove `xxx = 0` and replace it with `0` in the expressions~~
   - Reduce number of intermediate values (Nick)
     - Eliminate the allocation of array `dscqssdsc`
     - Eliminate intermediate `dscqssdscxxx` reals
