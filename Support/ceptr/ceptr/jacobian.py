@@ -31,7 +31,7 @@ def ajac(
     else:
         cw.writer(
             fstream,
-            "void aJacobian_old(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+            "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
             " const int consP)",
         )
     cw.writer(fstream, "{")

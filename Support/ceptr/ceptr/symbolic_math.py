@@ -17,9 +17,13 @@ import ceptr.thermo as cth
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
-    def __init__(self, species_info, reaction_info, mechanism, hformat):
+    def __init__(self, species_info, reaction_info, mechanism, hformat, remove_1, remove_pow2, min_op_count):
 
+        # Formatting options
         self.hformat = hformat
+        self.remove_1 = remove_1
+        self.remove_pow2 = remove_pow2
+        self.min_op_count = min_op_count
 
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species

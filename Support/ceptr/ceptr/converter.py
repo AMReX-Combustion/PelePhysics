@@ -26,9 +26,12 @@ import ceptr.writer as cw
 class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
-    def __init__(self, mechanism, hformat):
+    def __init__(self, mechanism, hformat, remove_1, remove_pow2, min_op_count):
         self.mechanism = mechanism
         self.hformat = hformat
+        self.remove_1 = remove_1
+        self.remove_pow2 = remove_pow2
+        self.min_op_count = min_op_count
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -76,6 +79,9 @@ class Converter:
             self.reaction_info,
             self.mechanism,
             self.hformat,
+            self.remove_1,
+            self.remove_pow2,
+            self.min_op_count,
         )
 
     def set_species(self):
@@ -379,14 +385,14 @@ class Converter:
             )
             print(f"Time to do production_rate = {time.time()-times}")
 
-            # print("Symbolic wdot print for debug")
-            # cp.production_rate_debug(
-            #    hdr,
-            #    self.mechanism,
-            #    self.species_info,
-            #    self.reaction_info,
-            #    self.syms,
-            # )
+            print("Symbolic wdot print for debug")
+            cp.production_rate_debug(
+               hdr,
+               self.mechanism,
+               self.species_info,
+               self.reaction_info,
+               self.syms,
+            )
 
             times = time.time()
             self.species_info.identify_wdot_dependencies(self.syms)
@@ -476,13 +482,13 @@ class Converter:
                 precond=True,
             )
             # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
-            cj.ajac(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                syms=self.syms,
-            )
+            # cj.ajac(
+            #     hdr,
+            #     self.mechanism,
+            #     self.species_info,
+            #     self.reaction_info,
+            #     syms=self.syms,
+            # )
             cj.dproduction_rate(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
