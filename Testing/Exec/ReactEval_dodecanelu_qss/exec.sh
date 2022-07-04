@@ -11,23 +11,24 @@ fi
 if test -f "PPreaction_GMRES.txt"; then
     rm PPreaction_GMRES.txt
 fi
-if test -f "Pele3d.llvm.ex"; then
-    rm Pele3d.llvm.ex
-fi
-if test -f "log"; then
-    rm log
+if test -f "Pele*.ex"; then
+    rm Pele3d.*
 fi
 
 # Compile
 make COMP=llvm TPL
 make COMP=llvm -j 2
 
+
+# Find first executable name available
+execname=`find . -name "Pele*.ex" | head -1`
+
 # Execute 0D
-./Pele3d.llvm.ex inputs/inputs.0d_cvode
+$execname inputs/inputs.0d_cvode
 mv PPreaction.txt PPreaction_FDJ.txt 
-./Pele3d.llvm.ex inputs/inputs.0d_cvode_aJac
+$execname inputs/inputs.0d_cvode_aJac
 mv PPreaction.txt PPreaction_AJ.txt
-./Pele3d.llvm.ex inputs/inputs.0d_cvode_GMRES
+$execname inputs/inputs.0d_cvode_GMRES
 mv PPreaction.txt PPreaction_GMRES.txt
 
 python compareResults.py
