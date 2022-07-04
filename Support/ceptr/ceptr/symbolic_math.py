@@ -229,10 +229,34 @@ class SymbolicMath:
 
         cpp_str = str(cppcode)
 
-        if self.remove_1:
-            cpp_str = cpp_str.replace("1.0*", "")
+        #if self.remove_1:
+        #    cpp_str = cpp_str.replace("1.0*", "")
 
         return cpp_str
+
+    # @profile
+    def syms_to_specnum(self, sym_smp):
+        """Extracts number from syms string"""
+        num = re.findall(r"\[(.*?)\]", str(sym_smp))
+        return int(num[0])
+
+    # @profile
+    def convert_number_to_int(self, number):
+        """Convert number to int if possible"""
+        factor = float(number)
+        if self.remove_1 and abs(factor) < 1.1 and abs(factor - int(factor)) < 1e-16:
+            factor = int(factor)
+        return factor
+ 
+    # @profile
+    def convert_symb_to_int(self, symb):
+        """Convert symbol to int if possible"""
+        try:
+            number = float(symb)
+            number = self.convert_number_to_int(number)
+            return number
+        except RuntimeError:
+            return symb
 
     # @profile
     def reduce_expr(self, orig):

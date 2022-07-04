@@ -98,9 +98,13 @@ def qss_sorted_phase_space(
     if not record_symbolic_operations:
         return "*".join(phi)
     else:
-        out_smp = 1.0
+        if syms.remove_1:
+            out_smp = 1
+        else:
+            out_smp = 1.0
         for phi_val_smp in phi_smp:
             out_smp *= phi_val_smp
+        out_smp = syms.convert_symb_to_int(out_smp) 
         return "*".join(phi), out_smp
 
 
@@ -173,6 +177,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
                 conversion_smp *= syms.refC_smp**dim
 
     if record_symbolic_operations:
+        conversion_smp = syms.convert_symb_to_int(conversion_smp)
         return conversion, conversion_smp
     else:
         return conversion
@@ -250,11 +255,13 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
             i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
             if record_symbolic_operations:
+                factor_smp = syms.convert_symb_to_int(factor_smp)
                 terms_qss_smp[i] += factor_smp * syms.g_RT_qss_smp[i]
         else:
             i = species_info.ordered_idx_map[symbol]
             terms[i] += "%sg_RT[%d]" % (factor, i)
             if record_symbolic_operations:
+                factor_smp = syms.convert_symb_to_int(factor_smp)
                 terms_smp[i] += factor_smp * syms.g_RT_smp[i]
 
     for symbol, coefficient in reaction.products.items():
@@ -271,11 +278,13 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
             i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
             if record_symbolic_operations:
+                factor_smp = syms.convert_symb_to_int(factor_smp)
                 terms_qss_smp[i] += factor_smp * syms.g_RT_qss_smp[i]
         else:
             i = species_info.ordered_idx_map[symbol]
             terms[i] += "%sg_RT[%d]" % (factor, i)
             if record_symbolic_operations:
+                factor_smp = syms.convert_symb_to_int(factor_smp)
                 terms_smp[i] += factor_smp * syms.g_RT_smp[i]
 
     dg = ""
@@ -296,6 +305,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
         # print("p dg = ", dg)
         # print("p dg_smp = ", dg_smp)
         if record_symbolic_operations:
+            dg_smp = syms.convert_symb_to_int(dg_smp)
             return dg[3:], dg_smp
         else:
             return dg[3:]
@@ -303,6 +313,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
         # print("m dg = ", dg)
         # print("m dg_smp = ", dg_smp)
         if record_symbolic_operations:
+            dg_smp = syms.convert_symb_to_int(dg_smp)
             return "-" + dg[3:], dg_smp
         else:
             return "-" + dg[3:]
@@ -364,6 +375,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
                 else:
                     alpha.append("%s*%s" % (factor, conc))
                     if record_symbolic_operations:
+                        factor_smp = syms.convert_symb_to_int(factor_smp)
                         alpha_smp.append(factor_smp * conc_smp)
 
     if record_symbolic_operations:
@@ -372,6 +384,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
             enhancement_smp += alpha_val
 
     if record_symbolic_operations:
+        enhancement_smp = syms.convert_symb_to_int(enhancement_smp)
         return " + ".join(alpha).replace("+ -", "- "), enhancement_smp
     else:
         return " + ".join(alpha).replace("+ -", "- ")

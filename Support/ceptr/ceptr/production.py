@@ -711,8 +711,10 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
-                            int_smp += (1.0 - troe[0]) * sme.exp(
-                                -syms.tc_smp[1] * (1 / troe[1])
+                            first_factor = syms.convert_number_to_int(1.0 - troe[0])
+                            second_factor = syms.convert_number_to_int(-1 / troe[1])
+                            int_smp += first_factor * sme.exp(
+                                syms.tc_smp[1] * second_factor
                             )
                     else:
                         cw.writer(fstream, "     0.0 ")
@@ -723,8 +725,10 @@ def production_rate(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
                                 % (troe[0], (1 / troe[2])),
                             )
-                            int_smp += troe[0] * sme.exp(
-                                -syms.tc_smp[1] * (1 / troe[2])
+                            first_factor = syms.convert_number_to_int(troe[0])
+                            second_factor = syms.convert_number_to_int(-1 / troe[2])
+                            int_smp += first_factor * sme.exp(
+                                syms.tc_smp[1] * second_factor
                             )
                     else:
                         cw.writer(fstream, "    + 0.0 ")
@@ -733,12 +737,14 @@ def production_rate(
                             cw.writer(
                                 fstream, "    + exp(%.15g * invT));" % -troe[3]
                             )
-                            int_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            first_factor = syms.convert_number_to_int(-troe[3])
+                            int_smp += sme.exp(first_factor * syms.invT_smp)
                         else:
                             cw.writer(
                                 fstream, "    + exp(-%.15g * invT));" % troe[3]
                             )
-                            int_smp += sme.exp(-troe[3] * syms.invT_smp)
+                            first_factor = syms.convert_number_to_int(-troe[3])
+                            int_smp += sme.exp(first_factor * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
                     logFcent_smp = sme.log(int_smp, 10)
