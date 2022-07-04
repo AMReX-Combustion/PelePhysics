@@ -218,7 +218,9 @@ class SymbolicMath:
                     "Pow": [
                         (
                             lambda b, e: e.is_Integer and e == 2,
-                            lambda b, e: "(" + "*".join(["("+b+")"] * int(e)) + ")",
+                            lambda b, e: "("
+                            + "*".join(["(" + b + ")"] * int(e))
+                            + ")",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
                     ]
@@ -244,10 +246,14 @@ class SymbolicMath:
     def convert_number_to_int(self, number):
         """Convert number to int if possible"""
         factor = float(number)
-        if self.remove_1 and abs(factor) < 1.1 and abs(factor - int(factor)) < 1e-16:
+        if (
+            self.remove_1
+            and abs(factor) < 1.1
+            and abs(factor - int(factor)) < 1e-16
+        ):
             factor = int(factor)
         return factor
- 
+
     # @profile
     def convert_symb_to_int(self, symb):
         """Convert symbol to int if possible"""
@@ -545,14 +551,14 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-                #cw.writer(
+                # cw.writer(
                 #    fstream,
                 #    'std::cout << "%s = " << %s << "\\n";'
                 #    % (
                 #        left_cse,
                 #        left_cse
                 #    ),
-                #)
+                # )
         else:
             times = time.time()
             for cse_idx in range(len(array_cse[0])):

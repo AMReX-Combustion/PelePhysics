@@ -714,8 +714,12 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
-                            first_factor = syms.convert_number_to_int(1.0 - troe[0])
-                            second_factor = syms.convert_number_to_int(-1 / troe[1])
+                            first_factor = syms.convert_number_to_int(
+                                1.0 - troe[0]
+                            )
+                            second_factor = syms.convert_number_to_int(
+                                -1 / troe[1]
+                            )
                             int_smp += first_factor * sme.exp(
                                 syms.tc_smp[1] * second_factor
                             )
@@ -729,7 +733,9 @@ def production_rate(
                                 % (troe[0], (1 / troe[2])),
                             )
                             first_factor = syms.convert_number_to_int(troe[0])
-                            second_factor = syms.convert_number_to_int(-1 / troe[2])
+                            second_factor = syms.convert_number_to_int(
+                                -1 / troe[2]
+                            )
                             int_smp += first_factor * sme.exp(
                                 syms.tc_smp[1] * second_factor
                             )
@@ -945,7 +951,9 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
-                            coefficient = syms.convert_number_to_int(coefficient)
+                            coefficient = syms.convert_number_to_int(
+                                coefficient
+                            )
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]
                             ] -= (coefficient * qdot_smp)
@@ -969,7 +977,9 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
-                            coefficient = syms.convert_number_to_int(coefficient)
+                            coefficient = syms.convert_number_to_int(
+                                coefficient
+                            )
                             syms.wdot_smp[
                                 species_info.ordered_idx_map[symbol]
                             ] += (coefficient * qdot_smp)

@@ -1117,7 +1117,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
-                        species_appearances = syms.convert_number_to_int(species_appearances)
+                        species_appearances = syms.convert_number_to_int(
+                            species_appearances
+                        )
                         rhs_hold_smp.append(
                             species_appearances
                             * syms.qr_qss_smp[
@@ -1145,7 +1147,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
-                    species_appearances = syms.convert_number_to_int(species_appearances)
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     rhs_hold_smp.append(
                         species_appearances
                         * syms.qf_qss_smp[
@@ -1181,7 +1185,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
-                    species_appearances = syms.convert_number_to_int(species_appearances)
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     rhs_hold_smp.append(
                         species_appearances
                         * syms.qr_qss_smp[
@@ -1284,7 +1290,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             )
                             if len(group_coeff_hold_smp[other_qssa]) == 0:
                                 group_coeff_hold_smp[other_qssa] = [0]
-                            species_appearances = syms.convert_number_to_int(species_appearances)
+                            species_appearances = syms.convert_number_to_int(
+                                species_appearances
+                            )
                             group_coeff_hold_smp[other_qssa][0] += (
                                 species_appearances
                                 * syms.qr_qss_smp[
@@ -1321,7 +1329,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
-                    species_appearances = syms.convert_number_to_int(species_appearances)
+                    species_appearances = syms.convert_number_to_int(
+                        species_appearances
+                    )
                     group_coeff_hold_smp[other_qssa][0] += (
                         species_appearances
                         * syms.qf_qss_smp[
@@ -1651,7 +1661,7 @@ def qssa_coeff_functions(
 
         beta = syms.convert_number_to_int(beta)
         low_beta = syms.convert_number_to_int(low_beta)
- 
+
         cw.writer(fstream, "{")
         cw.writer(
             fstream,
@@ -1783,8 +1793,12 @@ def qssa_coeff_functions(
                                 (1 / troe[1]),
                             ),
                         )
-                        first_factor = syms.convert_number_to_int(1.0 - troe[0])
-                        second_factor = syms.convert_number_to_int(-1 / troe[1])
+                        first_factor = syms.convert_number_to_int(
+                            1.0 - troe[0]
+                        )
+                        second_factor = syms.convert_number_to_int(
+                            -1 / troe[1]
+                        )
                         int_smp += first_factor * sme.exp(
                             syms.tc_smp[1] * second_factor
                         )
@@ -1802,7 +1816,9 @@ def qssa_coeff_functions(
                             ),
                         )
                         first_factor = syms.convert_number_to_int(troe[0])
-                        second_factor = syms.convert_number_to_int(-1 / troe[2])
+                        second_factor = syms.convert_number_to_int(
+                            -1 / troe[2]
+                        )
                         int_smp += first_factor * sme.exp(
                             syms.tc_smp[1] * second_factor
                         )

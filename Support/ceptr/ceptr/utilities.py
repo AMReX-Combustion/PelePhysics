@@ -104,7 +104,7 @@ def qss_sorted_phase_space(
             out_smp = 1.0
         for phi_val_smp in phi_smp:
             out_smp *= phi_val_smp
-        out_smp = syms.convert_symb_to_int(out_smp) 
+        out_smp = syms.convert_symb_to_int(out_smp)
         return "*".join(phi), out_smp
 
 
@@ -151,7 +151,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
 
     conversion_smp = 1.0
     if record_symbolic_operations and syms.remove_1:
-        conversion_smp = 1 
+        conversion_smp = 1
     if dim == 0:
         conversion = ""
     elif dim > 0:
