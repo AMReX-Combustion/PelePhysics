@@ -504,7 +504,7 @@ private:
     auto grad = indata.grad();
     auto acc = grad.accessor<amrex::Real,2>();
 
-    for(int i = 0; i < acc.size(0); i++)
+    for(int i = 0; i < acc.size(1); i++)
     {
       derivs[i] = acc[0][i];
     }
