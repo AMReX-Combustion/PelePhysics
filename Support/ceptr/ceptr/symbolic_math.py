@@ -774,9 +774,17 @@ class SymbolicMath:
                         (scqss_item["number"], scqssdepnum),
                     )
                     # Append the dscqssdscqss CSE to chain list
-                    chain_string.append(
-                        f"""({array_cse[1][dscqssdscqss_cse_idx]}) * ({dscqss_dsc[species_info.n_species*scqssdepnum + sc_item["number"]]})"""
-                    )
+                    cse_string = array_cse[1][dscqssdscqss_cse_idx]
+                    dscqssdsc_string = dscqss_dsc[
+                        species_info.n_species * scqssdepnum
+                        + sc_item["number"]
+                    ]
+
+                    # only append the term if it is NOT multiplied by 0
+                    if not dscqssdsc_string == "0" and not cse_string == "0":
+                        chain_string.append(
+                            f"""({cse_string}) * ({dscqssdsc_string})"""
+                        )
 
                 if chain_string:
                     final_string = f"""{start_string} + {chain_string[0]}"""
@@ -816,9 +824,15 @@ class SymbolicMath:
                         jac_df, "dwdotdscqss", (wdot_item["number"], scqssnum)
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
-                    chain_string.append(
-                        f"""({array_cse[1][dwdotdscqss_cse_idx]}) * ({dscqss_dsc[species_info.n_species*scqssnum + sc_item["number"]]})"""
-                    )
+                    cse_string = array_cse[1][dwdotdscqss_cse_idx]
+                    dscqssdsc_string = dscqss_dsc[
+                        species_info.n_species * scqssnum + sc_item["number"]
+                    ]
+                    # only append the term if it is NOT multiplied by 0
+                    if not dscqssdsc_string == "0" and not cse_string == "0":
+                        chain_string.append(
+                            f"""({cse_string}) * ({dscqssdsc_string})"""
+                        )
 
                 if chain_string:
                     final_string = f"""{start_string} + {chain_string[0]} """
