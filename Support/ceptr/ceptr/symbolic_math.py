@@ -745,8 +745,8 @@ class SymbolicMath:
             species_info.n_species * species_info.n_qssa_species
         )
 
-        for scqss_idx, scqss_item in species_info.scqss_df.iterrows():
-            for sc_idx, sc_item in species_info.sc_df.iterrows():
+        for _, scqss_item in species_info.scqss_df.iterrows():
+            for _, sc_item in species_info.sc_df.iterrows():
                 dscqss_dsc_idx = (
                     species_info.n_species * scqss_item["number"]
                     + sc_item["number"]
@@ -754,7 +754,9 @@ class SymbolicMath:
 
                 # Identify the CSE index of dscqssdsc term
                 dscqssdsc_cse_idx = self.get_cse_idx(
-                    jac_df, "dscqssdsc", (scqss_idx, sc_idx)
+                    jac_df,
+                    "dscqssdsc",
+                    (scqss_item["number"], sc_item["number"]),
                 )
 
                 # Get the dscqssdsc CSE string to start
@@ -791,12 +793,14 @@ class SymbolicMath:
         cw.writer(fstream, cw.comment("Write the full Jacobian expression..."))
 
         times = time.time()
-        for wdot_idx, wdot_item in species_info.wdot_df.iterrows():
-            for sc_idx, sc_item in species_info.sc_df.iterrows():
+        for _, wdot_item in species_info.wdot_df.iterrows():
+            for _, sc_item in species_info.sc_df.iterrows():
 
                 # Find the CSE index for dwdotdsc
                 dwdotdsc_cse_idx = self.get_cse_idx(
-                    jac_df, "dwdotdsc", (wdot_idx, sc_idx)
+                    jac_df,
+                    "dwdotdsc",
+                    (wdot_item["number"], sc_item["number"]),
                 )
 
                 # Get the dwdotdsc CSE string to start
@@ -809,7 +813,7 @@ class SymbolicMath:
 
                     # Find the CSE index for dwdotdscqss
                     dwdotdscqss_cse_idx = self.get_cse_idx(
-                        jac_df, "dwdotdscqss", (wdot_idx, scqssnum)
+                        jac_df, "dwdotdscqss", (wdot_item["number"], scqssnum)
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
                     chain_string.append(
