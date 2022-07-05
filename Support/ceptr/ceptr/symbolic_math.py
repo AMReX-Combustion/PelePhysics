@@ -781,7 +781,10 @@ class SymbolicMath:
                     ]
 
                     # only append the term if it is NOT multiplied by 0
-                    if not dscqssdsc_string == "0" and not cse_string == "0":
+                    if (
+                        not dscqssdsc_string == "0"
+                        and not str(cse_string) == "0"
+                    ):
                         chain_string.append(
                             f"""({cse_string}) * ({dscqssdsc_string})"""
                         )
@@ -829,7 +832,10 @@ class SymbolicMath:
                         species_info.n_species * scqssnum + sc_item["number"]
                     ]
                     # only append the term if it is NOT multiplied by 0
-                    if not dscqssdsc_string == "0" and not cse_string == "0":
+                    if (
+                        not dscqssdsc_string == "0"
+                        and not str(cse_string) == "0"
+                    ):
                         chain_string.append(
                             f"""({cse_string}) * ({dscqssdsc_string})"""
                         )
