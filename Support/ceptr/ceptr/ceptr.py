@@ -7,11 +7,11 @@ import cantera as ct
 import ceptr.converter as converter
 
 
-def convert(fname, hformat, remove_1, remove_pow2, min_op_count):
+def convert(fname, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
-        mechanism, hformat, remove_1, remove_pow2, min_op_count
+        mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count
     )
     conv.writer()
     conv.formatter()
@@ -70,6 +70,13 @@ def main():
         default=0,
     )
 
+    parser.add_argument(
+        "-roc",
+        "--recursive_op_count",
+        action="store_true",
+        help="Recursive elimination of expression",
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -79,6 +86,7 @@ def main():
             args.remove_1,
             args.remove_pow2,
             args.min_op_count,
+            args.recursive_op_count,
         )
     elif args.lst:
         convert_lst(
@@ -87,6 +95,7 @@ def main():
             args.remove_1,
             args.remove_pow2,
             args.min_op_count,
+            args.recursive_op_count,
         )
 
 
