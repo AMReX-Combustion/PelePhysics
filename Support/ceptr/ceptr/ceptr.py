@@ -7,11 +7,25 @@ import cantera as ct
 import ceptr.converter as converter
 
 
-def convert(fname, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian):
+def convert(
+    fname,
+    hformat,
+    remove_1,
+    remove_pow2,
+    min_op_count,
+    recursive_op_count,
+    store_in_jacobian,
+):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
-        mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian
+        mechanism,
+        hformat,
+        remove_1,
+        remove_pow2,
+        min_op_count,
+        recursive_op_count,
+        store_in_jacobian,
     )
     conv.writer()
     conv.formatter()

@@ -39,7 +39,10 @@ class SymbolicMath:
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
-        if 2*reaction_info.n_qssa_reactions > (species_info.n_species + 1)**2:
+        if (
+            2 * reaction_info.n_qssa_reactions
+            > (species_info.n_species + 1) ** 2
+        ):
             self.store_in_jacobian = False
         # Set to False to use bottom up approach
         self.top_bottom = True
@@ -281,16 +284,32 @@ class SymbolicMath:
         common_expr_rhs = None
         final_expr = None
         if self.recursive_op_count:
-            for count_lim in range(1,self.min_op_count+1):
+            for count_lim in range(1, self.min_op_count + 1):
                 print(" Doing min op count = ", count_lim)
                 times = time.time()
                 if self.top_bottom:
-                    common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_top_bottom(
-                        orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                    (
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
+                    ) = self.reduce_expr_top_bottom(
+                        orig,
+                        count_lim,
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
                     )
                 else:
-                    common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_bottom_up(
-                        orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                    (
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
+                    ) = self.reduce_expr_bottom_up(
+                        orig,
+                        count_lim,
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
                     )
                 print(
                     "Reduced expressions in (time = %.3g s)"
@@ -301,22 +320,45 @@ class SymbolicMath:
             print(" Doing min op count = ", count_lim)
             times = time.time()
             if self.top_bottom:
-                common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_top_bottom(
-                    orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                (
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
+                ) = self.reduce_expr_top_bottom(
+                    orig,
+                    count_lim,
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
                 )
             else:
-                common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_bottom_up(
-                    orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                (
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
+                ) = self.reduce_expr_bottom_up(
+                    orig,
+                    count_lim,
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
                 )
             print(
                 "Reduced expressions in (time = %.3g s)"
                 % (time.time() - times)
             )
-            
+
         return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
-    def reduce_expr_top_bottom(self, orig, count_lim, common_expr_lhs=None, common_expr_rhs=None, final_expr=None):
+    def reduce_expr_top_bottom(
+        self,
+        orig,
+        count_lim,
+        common_expr_lhs=None,
+        common_expr_rhs=None,
+        final_expr=None,
+    ):
         """
         Top bottom loop over common and final expressions and remove the ones that have
         a number of operation < count_lim
@@ -389,7 +431,14 @@ class SymbolicMath:
         return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
-    def reduce_expr_bottom_up(self, orig, count_lim, common_expr_lhs=None, common_expr_rhs=None, final_expr=None):
+    def reduce_expr_bottom_up(
+        self,
+        orig,
+        count_lim,
+        common_expr_lhs=None,
+        common_expr_rhs=None,
+        final_expr=None,
+    ):
         """
         Bottom up loop over common and final expressions and remove the ones that have
         a number of operation < count_lim
@@ -667,7 +716,9 @@ class SymbolicMath:
         print("Made common expr (time = %.3g s)" % (time.time() - times))
 
         if self.min_op_count > 0:
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(array_cse)
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
+                array_cse
+            )
             times = time.time()
             for cse_idx in range(len(common_expr_lhs)):
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
@@ -847,7 +898,9 @@ class SymbolicMath:
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
         if self.min_op_count > 0:
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(array_cse)
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
+                array_cse
+            )
             times = time.time()
             for cse_idx in range(len(common_expr_lhs)):
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])

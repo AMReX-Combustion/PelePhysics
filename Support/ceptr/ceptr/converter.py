@@ -27,7 +27,14 @@ class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
     def __init__(
-        self, mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian
+        self,
+        mechanism,
+        hformat,
+        remove_1,
+        remove_pow2,
+        min_op_count,
+        recursive_op_count,
+        store_in_jacobian,
     ):
         self.mechanism = mechanism
         self.hformat = hformat

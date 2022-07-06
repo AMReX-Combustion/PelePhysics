@@ -1676,7 +1676,6 @@ def ajac_term_fast_debug(
     )
     cw.writer(fstream, "{")
 
-
     if syms.hformat == "readable":
         cw.writer(
             fstream,
@@ -1751,9 +1750,7 @@ def ajac_term_fast_debug(
                 cw.writer(
                     fstream,
                     "amrex::Real kf_qss[%d];"
-                    % (
-                        reaction_info.n_qssa_reactions,
-                    ),
+                    % (reaction_info.n_qssa_reactions,),
                 )
             else:
                 cw.writer(
@@ -1776,15 +1773,15 @@ def ajac_term_fast_debug(
                     % (
                         0,
                         reaction_info.n_qssa_reactions,
-                    )
+                    ),
                 )
                 cw.writer(
-                    fstream, 
+                    fstream,
                     "comp_sc_qss(sc_qss, &J[%d], &J[%d]);"
                     % (
                         0,
                         reaction_info.n_qssa_reactions,
-                    ),     
+                    ),
                 )
                 cw.writer(fstream)
             else:
@@ -1796,7 +1793,9 @@ def ajac_term_fast_debug(
                 cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
                 cw.writer(fstream)
             # Initialize the big Jacobian array
-            cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
+            cw.writer(
+                fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2
+            )
             cw.writer(fstream, "J[i] = 0.0;")
             cw.writer(fstream, "}")
 
@@ -1808,7 +1807,6 @@ def ajac_term_fast_debug(
                 syms.write_symjac_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
-
 
     # dwdotdT
     cw.writer(fstream, "amrex::Real T_pert1, pertT;")
