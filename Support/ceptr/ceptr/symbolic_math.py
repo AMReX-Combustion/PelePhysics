@@ -275,7 +275,7 @@ class SymbolicMath:
             return self.reduce_expr_top_bottom(orig)
         else:
             return self.reduce_expr_bottom_up(orig)
- 
+
     # @profile
     def reduce_expr_top_bottom(self, orig):
         """
@@ -372,7 +372,9 @@ class SymbolicMath:
             suffix="Complete",
             length=20,
         )
-        for i, (lhs, rhs) in reversed(list(enumerate(zip(common_expr_lhs, common_expr_rhs)))):
+        for i, (lhs, rhs) in reversed(
+            list(enumerate(zip(common_expr_lhs, common_expr_rhs)))
+        ):
             op_count = sme.count_ops(rhs)
             isFloat = True
             try:
@@ -880,9 +882,13 @@ class SymbolicMath:
                     )
                     # Append the dscqssdscqss CSE to chain list
                     if self.min_op_count > 0:
-                        cse_string = self.convert_to_cpp(final_expr[dscqssdscqss_cse_idx])
+                        cse_string = self.convert_to_cpp(
+                            final_expr[dscqssdscqss_cse_idx]
+                        )
                     else:
-                        cse_string = self.convert_to_cpp(array_cse[1][dscqssdscqss_cse_idx])
+                        cse_string = self.convert_to_cpp(
+                            array_cse[1][dscqssdscqss_cse_idx]
+                        )
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssdepnum
                         + sc_item["number"]
@@ -922,8 +928,6 @@ class SymbolicMath:
                     (wdot_item["number"], sc_item["number"]),
                 )
 
-                    
-         
                 # Get the dwdotdsc CSE string to start
                 if self.min_op_count > 0:
                     start_string = f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
@@ -940,9 +944,13 @@ class SymbolicMath:
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
                     if self.min_op_count > 0:
-                        cse_string = self.convert_to_cpp(final_expr[dwdotdscqss_cse_idx])
+                        cse_string = self.convert_to_cpp(
+                            final_expr[dwdotdscqss_cse_idx]
+                        )
                     else:
-                        cse_string = self.convert_to_cpp(array_cse[1][dwdotdscqss_cse_idx])
+                        cse_string = self.convert_to_cpp(
+                            array_cse[1][dwdotdscqss_cse_idx]
+                        )
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssnum + sc_item["number"]
                     ]
