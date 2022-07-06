@@ -36,7 +36,7 @@ class SymbolicMath:
         self.remove_pow2 = remove_pow2
         self.min_op_count = min_op_count
         # Set to False to use bottom up approach
-        self.top_bottom = False
+        self.top_bottom = True
 
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
