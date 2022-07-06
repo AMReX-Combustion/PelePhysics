@@ -229,8 +229,8 @@ class SymbolicMath:
         idec = 0
         for inum, num in enumerate(list_num):
             while True:
-                rounded = round(float(num),idec)
-                if abs(rounded-float(num))<1e-12:
+                rounded = round(float(num), idec)
+                if abs(rounded - float(num)) < 1e-12:
                     string = string.replace(list_decimal[inum], str(rounded))
                     break
                 else:
