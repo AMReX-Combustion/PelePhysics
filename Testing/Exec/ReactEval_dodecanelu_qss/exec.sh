@@ -11,8 +11,8 @@ fi
 if test -f "PPreaction_GMRES.txt"; then
     rm PPreaction_GMRES.txt
 fi
-if test -f "Pele*.ex"; then
-    rm Pele3d.*
+if compgen -G "Pele*.ex" > /dev/null; then
+    rm Pele*.ex
 fi
 
 # Compile

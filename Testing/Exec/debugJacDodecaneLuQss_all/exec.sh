@@ -5,8 +5,8 @@ fi
 if test -f "logSym.txt"; then
     rm logSym.txt
 fi
-if test -f "Pele*.ex"; then
-    rm Pele3d.*
+if compgen -G "Pele*.ex" > /dev/null; then
+    rm Pele*.ex
 fi
 
 # Compile
