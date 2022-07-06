@@ -1676,10 +1676,6 @@ def ajac_term_fast_debug(
     )
     cw.writer(fstream, "{")
 
-    # Initialize the big Jacobian array
-    cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
-    cw.writer(fstream, "J[i] = 0.0;")
-    cw.writer(fstream, "}")
 
     if syms.hformat == "readable":
         cw.writer(
@@ -1751,25 +1747,58 @@ def ajac_term_fast_debug(
                 "amrex::Real sc_qss[%d];"
                 % (max(1, species_info.n_qssa_species)),
             )
-            cw.writer(
-                fstream,
-                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
-                % (
-                    reaction_info.n_qssa_reactions,
-                    reaction_info.n_qssa_reactions,
-                    reaction_info.n_qssa_reactions,
-                ),
-            )
+            if syms.store_in_jacobian:
+                cw.writer(
+                    fstream,
+                    "amrex::Real kf_qss[%d];"
+                    % (
+                        reaction_info.n_qssa_reactions,
+                    ),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                    % (
+                        reaction_info.n_qssa_reactions,
+                        reaction_info.n_qssa_reactions,
+                        reaction_info.n_qssa_reactions,
+                    ),
+                )
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
             cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
-            cw.writer(
-                fstream,
-                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
-                " g_RT_qss);",
-            )
-            cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
-            cw.writer(fstream)
+            if syms.store_in_jacobian:
+                cw.writer(
+                    fstream,
+                    "comp_qss_coeff(kf_qss, &J[%d], &J[%d], sc, tc, g_RT,"
+                    " g_RT_qss);"
+                    % (
+                        0,
+                        reaction_info.n_qssa_reactions,
+                    )
+                )
+                cw.writer(
+                    fstream, 
+                    "comp_sc_qss(sc_qss, &J[%d], &J[%d]);"
+                    % (
+                        0,
+                        reaction_info.n_qssa_reactions,
+                    ),     
+                )
+                cw.writer(fstream)
+            else:
+                cw.writer(
+                    fstream,
+                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                    " g_RT_qss);",
+                )
+                cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
+                cw.writer(fstream)
+            # Initialize the big Jacobian array
+            cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
+            cw.writer(fstream, "J[i] = 0.0;")
+            cw.writer(fstream, "}")
 
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
@@ -1779,6 +1808,7 @@ def ajac_term_fast_debug(
                 syms.write_symjac_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
+
 
     # dwdotdT
     cw.writer(fstream, "amrex::Real T_pert1, pertT;")
