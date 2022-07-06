@@ -35,6 +35,7 @@ class Converter:
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
+        round_decimals,
     ):
         self.mechanism = mechanism
         self.hformat = hformat
@@ -43,6 +44,7 @@ class Converter:
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
+        self.round_decimals = round_decimals
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -95,6 +97,7 @@ class Converter:
             self.min_op_count,
             self.recursive_op_count,
             self.store_in_jacobian,
+            self.round_decimals,
         )
 
     def set_species(self):

@@ -15,6 +15,7 @@ def convert(
     min_op_count,
     recursive_op_count,
     store_in_jacobian,
+    round_decimals,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -26,6 +27,7 @@ def convert(
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
+        round_decimals,
     )
     conv.writer()
     conv.formatter()
@@ -98,6 +100,13 @@ def main():
         help="Store temporary arrays in Jacobian array",
     )
 
+    parser.add_argument(
+        "-rd",
+        "--round_decimals",
+        action="store_true",
+        help="Round decimal numbers when possible",
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -109,6 +118,7 @@ def main():
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,
+            args.round_decimals,
         )
     elif args.lst:
         convert_lst(
@@ -119,6 +129,7 @@ def main():
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,
+            args.round_decimals,
         )
 
 
