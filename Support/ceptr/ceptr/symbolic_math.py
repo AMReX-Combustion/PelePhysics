@@ -30,6 +30,7 @@ class SymbolicMath:
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
+        round_decimals,
     ):
 
         # Formatting options
@@ -44,6 +45,7 @@ class SymbolicMath:
             > (species_info.n_species + 1) ** 2
         ):
             self.store_in_jacobian = False
+        self.round_decimals = round_decimals
         # Set to False to use bottom up approach
         self.top_bottom = True
 
@@ -220,6 +222,24 @@ class SymbolicMath:
             self.dscqssdsc_slow = {}
 
     # @profile
+    def round_in_string(self, string, maxdec=6):
+        """Round decimal numbers if possible"""
+        list_decimal = re.findall("\d+\.\d+", string)
+        list_num = [float(s) for s in list_decimal]
+        idec = 0
+        for inum, num in enumerate(list_num):
+            while True:
+                rounded = round(float(num),idec)
+                if abs(rounded-float(num))<1e-12:
+                    string = string.replace(list_decimal[inum], str(rounded))
+                    break
+                else:
+                    idec += 1
+                if idec > maxdec:
+                    break
+        return string
+
+    # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
         if self.remove_pow2:
@@ -244,6 +264,9 @@ class SymbolicMath:
 
         if self.remove_1:
             cpp_str = cpp_str.replace("1.0*", "")
+
+        if self.round_decimals:
+            cpp_str = self.round_in_string(cpp_str)
 
         return cpp_str
 
