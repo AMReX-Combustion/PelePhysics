@@ -31,6 +31,7 @@ I tried to not modify functions that did not need be modified but we should prob
     - ~~Remove `xxx = 0` and replace it with `0` in the expressions~~
     - ~~Recursive removal of expression~~
     - ~~Place `qf` and `qr` in `J`~~
+    - Round numbers when possible
     - Include subsequent use of expression in the cost estimate
   - Reduce number of intermediate values (Nick)
     - ~~Eliminate the allocation of array `dscqssdsc`~~
