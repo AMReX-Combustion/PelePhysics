@@ -33,9 +33,9 @@ I tried to not modify functions that did not need be modified but we should prob
     - ~~Place `qf` and `qr` in `J`~~
     - Include subsequent use of expression in the cost estimate
   - Reduce number of intermediate values (Nick)
-    - Eliminate the allocation of array `dscqssdsc`
-    - Eliminate intermediate `dscqssdscxxx` reals
-    - Write the Jacobian values as a sequence of `+=` (Bottom up approach)
+    - ~~Eliminate the allocation of array `dscqssdsc`~~
+    - ~~Eliminate intermediate `dscqssdscxxx` reals~~
+    - Write the Jacobian values as a sequence of `+=` (Bottom up approach) -> Not planned for now
   - Test Execution in PeleLM
   - Test Compilation with CUDA and HIP
     - Keep track of when things are just too expensive for HIP and we can ask for HIP people input.
