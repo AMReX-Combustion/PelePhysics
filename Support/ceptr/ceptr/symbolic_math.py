@@ -35,6 +35,8 @@ class SymbolicMath:
         self.remove_1 = remove_1
         self.remove_pow2 = remove_pow2
         self.min_op_count = min_op_count
+        # Set to False to use bottom up approach
+        self.top_bottom = False
 
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
@@ -267,7 +269,17 @@ class SymbolicMath:
     # @profile
     def reduce_expr(self, orig):
         """
-        Loop over common and final expressions and remove the ones that have
+        Reduce expression interface
+        """
+        if self.top_bottom:
+            return self.reduce_expr_top_bottom(orig)
+        else:
+            return self.reduce_expr_bottom_up(orig)
+ 
+    # @profile
+    def reduce_expr_top_bottom(self, orig):
+        """
+        Top bottom loop over common and final expressions and remove the ones that have
         a number of operation < self.min_op_count
         """
 
@@ -327,6 +339,82 @@ class SymbolicMath:
                 length=20,
             )
         replacements.reverse()
+        for rep in replacements:
+            del common_expr_lhs[rep]
+            del common_expr_rhs[rep]
+
+        return common_expr_lhs, common_expr_rhs, final_expr
+
+    # @profile
+    def reduce_expr_bottom_up(self, orig):
+        """
+        Bottom up loop over common and final expressions and remove the ones that have
+        a number of operation < self.min_op_count
+        """
+
+        # Make a dict
+        replacements = []
+        n_cse = len(orig[0])
+        n_exp = len(orig[1])
+
+        # Init
+        common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
+        common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr = [orig[1][i] for i in range(n_exp)]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+
+        # Replacement loop
+        printProgressBar(
+            0,
+            n_cse,
+            prefix="Expr = %d / %d " % (0, n_cse),
+            suffix="Complete",
+            length=20,
+        )
+        for i, (lhs, rhs) in reversed(list(enumerate(zip(common_expr_lhs, common_expr_rhs)))):
+            op_count = sme.count_ops(rhs)
+            isFloat = True
+            try:
+                number = float(rhs)
+                rhs = number
+            except RuntimeError:
+                isFloat = False
+            if op_count < self.min_op_count or isFloat:
+                replacements.append(i)
+                ind = [
+                    j + i
+                    for j, s in enumerate(common_expr_symbols[i:])
+                    if lhs in s
+                ]
+                for j in ind:
+                    common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
+                    common_expr_symbols[j].remove(lhs)
+                    try:
+                        common_expr_symbols[j].update(rhs.free_symbols)
+                    except AttributeError:
+                        pass
+                ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
+                for j in ind:
+                    final_expr[j] = final_expr[j].subs(lhs, rhs)
+                    final_expr_symbols[j].remove(lhs)
+                    try:
+                        final_expr_symbols[j].update(rhs.free_symbols)
+                    except AttributeError:
+                        pass
+
+            printProgressBar(
+                n_cse - i,
+                n_cse,
+                prefix="Expr = %d / %d, removed expr = %d "
+                % (
+                    n_cse - i,
+                    n_cse,
+                    len(replacements),
+                ),
+                suffix="Complete",
+                length=20,
+            )
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
