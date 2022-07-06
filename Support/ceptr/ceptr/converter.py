@@ -27,7 +27,7 @@ class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
     def __init__(
-        self, mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count
+        self, mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian
     ):
         self.mechanism = mechanism
         self.hformat = hformat
@@ -35,6 +35,7 @@ class Converter:
         self.remove_pow2 = remove_pow2
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
+        self.store_in_jacobian = store_in_jacobian
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -86,6 +87,7 @@ class Converter:
             self.remove_pow2,
             self.min_op_count,
             self.recursive_op_count,
+            self.store_in_jacobian,
         )
 
     def set_species(self):

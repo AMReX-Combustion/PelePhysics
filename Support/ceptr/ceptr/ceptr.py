@@ -7,11 +7,11 @@ import cantera as ct
 import ceptr.converter as converter
 
 
-def convert(fname, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count):
+def convert(fname, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
-        mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count
+        mechanism, hformat, remove_1, remove_pow2, min_op_count, recursive_op_count, store_in_jacobian
     )
     conv.writer()
     conv.formatter()
@@ -77,6 +77,13 @@ def main():
         help="Recursive elimination of expression",
     )
 
+    parser.add_argument(
+        "-sj",
+        "--store_in_jacobian",
+        action="store_true",
+        help="Store temporary arrays in Jacobian array",
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -87,6 +94,7 @@ def main():
             args.remove_pow2,
             args.min_op_count,
             args.recursive_op_count,
+            args.store_in_jacobian,
         )
     elif args.lst:
         convert_lst(
@@ -96,6 +104,7 @@ def main():
             args.remove_pow2,
             args.min_op_count,
             args.recursive_op_count,
+            args.store_in_jacobian,
         )
 
 

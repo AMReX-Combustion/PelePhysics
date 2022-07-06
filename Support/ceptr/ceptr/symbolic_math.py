@@ -29,6 +29,7 @@ class SymbolicMath:
         remove_pow2,
         min_op_count,
         recursive_op_count,
+        store_in_jacobian,
     ):
 
         # Formatting options
@@ -37,6 +38,9 @@ class SymbolicMath:
         self.remove_pow2 = remove_pow2
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
+        self.store_in_jacobian = store_in_jacobian
+        if 2*reaction_info.n_qssa_reactions > (species_info.n_species + 1)**2:
+            self.store_in_jacobian = False
         # Set to False to use bottom up approach
         self.top_bottom = True
 
