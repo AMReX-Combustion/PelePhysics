@@ -28,6 +28,7 @@ class SymbolicMath:
         remove_1,
         remove_pow2,
         min_op_count,
+        recursive_op_count,
     ):
 
         # Formatting options
@@ -35,6 +36,7 @@ class SymbolicMath:
         self.remove_1 = remove_1
         self.remove_pow2 = remove_pow2
         self.min_op_count = min_op_count
+        self.recursive_op_count = recursive_op_count
         # Set to False to use bottom up approach
         self.top_bottom = True
 
@@ -271,29 +273,66 @@ class SymbolicMath:
         """
         Reduce expression interface
         """
-        if self.top_bottom:
-            return self.reduce_expr_top_bottom(orig)
+        common_expr_lhs = None
+        common_expr_rhs = None
+        final_expr = None
+        if self.recursive_op_count:
+            for count_lim in range(1,self.min_op_count+1):
+                print(" Doing min op count = ", count_lim)
+                times = time.time()
+                if self.top_bottom:
+                    common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_top_bottom(
+                        orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                    )
+                else:
+                    common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_bottom_up(
+                        orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                    )
+                print(
+                    "Reduced expressions in (time = %.3g s)"
+                    % (time.time() - times)
+                )
         else:
-            return self.reduce_expr_bottom_up(orig)
+            count_lim = self.min_op_count
+            print(" Doing min op count = ", count_lim)
+            times = time.time()
+            if self.top_bottom:
+                common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_top_bottom(
+                    orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                )
+            else:
+                common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr_bottom_up(
+                    orig, count_lim, common_expr_lhs, common_expr_rhs, final_expr
+                )
+            print(
+                "Reduced expressions in (time = %.3g s)"
+                % (time.time() - times)
+            )
+            
+        return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
-    def reduce_expr_top_bottom(self, orig):
+    def reduce_expr_top_bottom(self, orig, count_lim, common_expr_lhs=None, common_expr_rhs=None, final_expr=None):
         """
         Top bottom loop over common and final expressions and remove the ones that have
-        a number of operation < self.min_op_count
+        a number of operation < count_lim
         """
 
-        # Make a dict
         replacements = []
-        n_cse = len(orig[0])
-        n_exp = len(orig[1])
-
-        # Init
-        common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
-        common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
-        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-        final_expr = [orig[1][i] for i in range(n_exp)]
-        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        if common_expr_lhs is None:
+            n_cse = len(orig[0])
+            n_exp = len(orig[1])
+            # Init
+            common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
+            common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
+            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+            final_expr = [orig[1][i] for i in range(n_exp)]
+            final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        else:
+            n_cse = len(common_expr_lhs)
+            n_exp = len(final_expr)
+            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+            final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
         printProgressBar(
@@ -311,7 +350,7 @@ class SymbolicMath:
                 rhs = number
             except RuntimeError:
                 isFloat = False
-            if op_count < self.min_op_count or isFloat:
+            if op_count < count_lim or isFloat:
                 replacements.append(i)
                 ind = [
                     j + i
@@ -346,23 +385,26 @@ class SymbolicMath:
         return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
-    def reduce_expr_bottom_up(self, orig):
+    def reduce_expr_bottom_up(self, orig, count_lim, common_expr_lhs=None, common_expr_rhs=None, final_expr=None):
         """
         Bottom up loop over common and final expressions and remove the ones that have
-        a number of operation < self.min_op_count
+        a number of operation < count_lim
         """
-
-        # Make a dict
         replacements = []
-        n_cse = len(orig[0])
-        n_exp = len(orig[1])
-
-        # Init
-        common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
-        common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
-        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-        final_expr = [orig[1][i] for i in range(n_exp)]
-        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        if common_expr_rhs is None:
+            n_cse = len(orig[0])
+            n_exp = len(orig[1])
+            # Init
+            common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
+            common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
+            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+            final_expr = [orig[1][i] for i in range(n_exp)]
+            final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        else:
+            n_cse = len(common_expr_lhs)
+            n_exp = len(final_expr)
+            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+            final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
         printProgressBar(
@@ -382,7 +424,7 @@ class SymbolicMath:
                 rhs = number
             except RuntimeError:
                 isFloat = False
-            if op_count < self.min_op_count or isFloat:
+            if op_count < count_lim or isFloat:
                 replacements.append(i)
                 ind = [
                     j + i
@@ -621,14 +663,7 @@ class SymbolicMath:
         print("Made common expr (time = %.3g s)" % (time.time() - times))
 
         if self.min_op_count > 0:
-            times = time.time()
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
-                array_cse
-            )
-            print(
-                "Reduced expressions in (time = %.3g s)"
-                % (time.time() - times)
-            )
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(array_cse)
             times = time.time()
             for cse_idx in range(len(common_expr_lhs)):
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
@@ -808,14 +843,7 @@ class SymbolicMath:
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
         if self.min_op_count > 0:
-            times = time.time()
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
-                array_cse
-            )
-            print(
-                "Reduced expressions in (time = %.3g s)"
-                % (time.time() - times)
-            )
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(array_cse)
             times = time.time()
             for cse_idx in range(len(common_expr_lhs)):
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
