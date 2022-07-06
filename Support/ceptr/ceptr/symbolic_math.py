@@ -536,7 +536,7 @@ class SymbolicMath:
                 array_cse
             )
             print(
-                "reduced expressions in (time = %.3g s)"
+                "Reduced expressions in (time = %.3g s)"
                 % (time.time() - times)
             )
             times = time.time()
@@ -551,14 +551,6 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-                # cw.writer(
-                #    fstream,
-                #    'std::cout << "%s = " << %s << "\\n";'
-                #    % (
-                #        left_cse,
-                #        left_cse
-                #    ),
-                # )
         else:
             times = time.time()
             for cse_idx in range(len(array_cse[0])):
@@ -724,20 +716,43 @@ class SymbolicMath:
         # Write common expressions
         times = time.time()
         array_cse = sme.cse(list_smp)
-        for cse_idx in range(len(array_cse[0])):
-            left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
-            right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
-            cw.writer(
-                fstream,
-                "const amrex::Real %s = %s;"
-                % (
-                    left_cse,
-                    right_cse,
-                ),
+        print("Made common expr (time = %.3g s)" % (time.time() - times))
+        if self.min_op_count > 0:
+            times = time.time()
+            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
+                array_cse
             )
+            print(
+                "Reduced expressions in (time = %.3g s)"
+                % (time.time() - times)
+            )
+            times = time.time()
+            for cse_idx in range(len(common_expr_lhs)):
+                left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        left_cse,
+                        right_cse,
+                    ),
+                )
+        else:
+            times = time.time()
+            for cse_idx in range(len(array_cse[0])):
+                left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
+                right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+                cw.writer(
+                    fstream,
+                    "const amrex::Real %s = %s;"
+                    % (
+                        left_cse,
+                        right_cse,
+                    ),
+                )
         timee = time.time()
-
-        print("Made common expr (time = %.3g s)" % (timee - times))
+        print("Write common expr (time = %.3g s)" % (timee - times))
 
         times = time.time()
         # Compute dscqss_dsc strings from CSEs
@@ -760,8 +775,10 @@ class SymbolicMath:
                 )
 
                 # Get the dscqssdsc CSE string to start
-                start_string = f"""{array_cse[1][dscqssdsc_cse_idx]}"""
-
+                if self.min_op_count > 0:
+                    start_string = f"""{self.convert_to_cpp(final_expr[dscqssdsc_cse_idx])}"""
+                else:
+                    start_string = f"""{self.convert_to_cpp(array_cse[1][dscqssdsc_cse_idx])}"""
                 # Loop through the chain terms
                 chain_string = []
                 for scqss_dep in scqss_item["scqss_dep"]:
@@ -774,7 +791,10 @@ class SymbolicMath:
                         (scqss_item["number"], scqssdepnum),
                     )
                     # Append the dscqssdscqss CSE to chain list
-                    cse_string = array_cse[1][dscqssdscqss_cse_idx]
+                    if self.min_op_count > 0:
+                        cse_string = self.convert_to_cpp(final_expr[dscqssdscqss_cse_idx])
+                    else:
+                        cse_string = self.convert_to_cpp(array_cse[1][dscqssdscqss_cse_idx])
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssdepnum
                         + sc_item["number"]
@@ -814,9 +834,13 @@ class SymbolicMath:
                     (wdot_item["number"], sc_item["number"]),
                 )
 
+                    
+         
                 # Get the dwdotdsc CSE string to start
-                start_string = f"""{array_cse[1][dwdotdsc_cse_idx]}"""
-
+                if self.min_op_count > 0:
+                    start_string = f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
+                else:
+                    start_string = f"""{self.convert_to_cpp(array_cse[1][dwdotdsc_cse_idx])}"""
                 # Loop through the chain terms
                 chain_string = []
                 for scqss in wdot_item["scqss_dep"]:
@@ -827,7 +851,10 @@ class SymbolicMath:
                         jac_df, "dwdotdscqss", (wdot_item["number"], scqssnum)
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
-                    cse_string = array_cse[1][dwdotdscqss_cse_idx]
+                    if self.min_op_count > 0:
+                        cse_string = self.convert_to_cpp(final_expr[dwdotdscqss_cse_idx])
+                    else:
+                        cse_string = self.convert_to_cpp(array_cse[1][dwdotdscqss_cse_idx])
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssnum + sc_item["number"]
                     ]
@@ -837,13 +864,13 @@ class SymbolicMath:
                         and not str(cse_string) == "0"
                     ):
                         chain_string.append(
-                            f"""({cse_string}) * ({dscqssdsc_string})"""
+                            f"""({cse_string})*({dscqssdsc_string})"""
                         )
 
                 if chain_string:
-                    final_string = f"""{start_string} + {chain_string[0]} """
+                    final_string = f"""{start_string}+{chain_string[0]}"""
                     for ics in range(len(chain_string) - 1):
-                        final_string += f""" + {chain_string[ics+1]}"""
+                        final_string += f"""+{chain_string[ics+1]}"""
                 else:
                     final_string = start_string
 
@@ -851,7 +878,7 @@ class SymbolicMath:
                     fstream,
                     "J[%s] = %s;"
                     % (
-                        f"""{(species_info.n_species+1)*sc_item["number"] + wdot_item["number"]}""",
+                        f"""{(species_info.n_species+1)*sc_item["number"]+wdot_item["number"]}""",
                         final_string,
                     ),
                 )
