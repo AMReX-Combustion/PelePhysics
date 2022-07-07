@@ -80,15 +80,18 @@ main(int argc, char* argv[])
     amrex::Real * J_sympy = new amrex::Real [NUM_JAC_ENTRIES];
     amrex::Real * J_FD = new amrex::Real [NUM_JAC_ENTRIES];
     amrex::Real pertMag = 1e-5;
+    amrex::Real pertMagT = 1e-2;
     amrex::Real * error = new amrex::Real [NUM_JAC_ENTRIES];
     int index_sc;
+    int index_T;
     int index_wdot;
     int index_J, index_J_T;
     const int consP = 1;
     const int noconsP = 0;
 
     // SET SC 
-    srand (time(NULL));
+    //srand (time(NULL));
+    srand (42);
     for (int i = 0; i < NUM_SPECIES; ++i) {
         // dummy numbers
         sc[i] = ((double) rand() / (RAND_MAX)) + 1e-3;//(i+1)*0.02;
@@ -97,7 +100,7 @@ main(int argc, char* argv[])
     // Compute analytically
     aJacobian(J_sympy, sc, T, consP);
 
-    // Compute dscqss/dsc by finite difference
+    // Compute dwdot/dsc by finite difference
     for (int i=0; i < NUM_SPECIES; ++i){
         for (int j=0; j < NUM_SPECIES; ++j){
 
@@ -113,6 +116,18 @@ main(int argc, char* argv[])
             error[index_J] = std::abs(J_FD[index_J]-J_sympy[index_J])/std::max(std::abs(J_FD[index_J]),1e-16);
         }
     } 
+    // Compute dwdot/dT by finite difference
+    for (int j=0; j < NUM_SPECIES; ++j){
+
+        index_T = NUM_SPECIES;
+        index_wdot = j;
+        index_J = index_T * (NUM_SPECIES+1) + index_wdot;
+        perturb_T(&T_pert1, &T_pert2, T, pertMagT);
+        productionRate(wdot_pert1, sc, T_pert1);
+        productionRate(wdot_pert2, sc, T_pert2);
+        J_FD[index_J] = (wdot_pert1[index_wdot] - wdot_pert2[index_wdot])/(2.0*pertMagT);
+        error[index_J] = std::abs(J_FD[index_J]-J_sympy[index_J])/std::max(std::abs(J_FD[index_J]),1e-16);
+    }
 
     std::cout << "error" << " : "  << "\n";
     for (int i=0; i < NUM_SPECIES; ++i){
@@ -126,6 +141,17 @@ main(int argc, char* argv[])
                 std::cout << "\t \t FD : " << J_FD[index_J] << "\n";
                 std::cout << "\t \t SYMPY : " <<  J_sympy[index_J]  << "\n";
             }
+        }
+    }
+    std::cout << "errorT" << " : "  << "\n";
+    for (int j=0; j < NUM_SPECIES; ++j){
+        index_T = NUM_SPECIES;
+        index_wdot = j;
+        index_J = index_T * (NUM_SPECIES+1) + index_wdot;
+        if (error[index_J] > 1e-2 and (std::abs(J_sympy[index_J])>1e-15 or std::abs(J_sympy[index_J])>1e-15) ){
+            std::cout << "\t wdot " << index_wdot  << " : " <<  error[index_J] << "\n";
+            std::cout << "\t \t FD : " << J_FD[index_J] << "\n";
+            std::cout << "\t \t SYMPY : " <<  J_sympy[index_J]  << "\n";
         }
     }
 
