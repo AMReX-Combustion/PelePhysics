@@ -1690,10 +1690,10 @@ def ajac_term_fast_debug(
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        "amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
         + cw.comment("temperature cache"),
     )
-    cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream)
 
     if n_reactions == 0:
@@ -1715,53 +1715,103 @@ def ajac_term_fast_debug(
         )
         cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
 
+    cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
+    cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "amrex::Real sc_qss[%d];"
+            % (max(1, species_info.n_qssa_species)),
+        )
+        if syms.store_in_jacobian:
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d];"
+                % (reaction_info.n_qssa_reactions,),
+            )
+        else:
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                ),
+            )
+
+    # prepare dwdotdT
+    cw.writer(fstream, "amrex::Real T_pert1, pertT;")
+    cw.writer(
+        fstream,
+        "amrex::Real wdot_pert1[%d], wdot[%d];"
+        % (
+            n_species,
+            n_species,
+        ),
+    )
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
+    cw.writer(fstream, "pertT = 1e-2;")
+    cw.writer(fstream, "T_pert1 = T + pertT;")
+    cw.writer(fstream)
+    if syms.store_in_jacobian:
+        cw.writer(fstream, "tc[0] = log(T_pert1);")
+        cw.writer(fstream, "tc[1] = T_pert1;")
+        cw.writer(fstream, "tc[2] = T_pert1*T_pert1;")
+        cw.writer(fstream, "tc[3] = T_pert1*T_pert1*T_pert1;")
+        cw.writer(fstream, "tc[4] = T_pert1*T_pert1*T_pert1*T_pert1;")
+        cw.writer(fstream, "invT = 1.0 / tc[1];")
+        cw.writer(fstream, 
+                  "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+                   % (
+                        0,
+                        reaction_info.n_qssa_reactions,
+                   ),
+                 )
+        cw.writer(fstream, "tc[0] = log(T);")
+        cw.writer(fstream, "tc[1] = T;")
+        cw.writer(fstream, "tc[2] = T*T;")
+        cw.writer(fstream, "tc[3] = T*T*T;")
+        cw.writer(fstream, "tc[4] = T*T*T*T;")
+        cw.writer(fstream, "invT = 1.0 / tc[1];")
+        cw.writer(fstream, 
+                  "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+                   % (
+                        0,
+                        reaction_info.n_qssa_reactions,
+                   ),
+                 )
+    else:
+        cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
+        cw.writer(fstream, "productionRate(wdot, sc, T);")
+
+
+    cw.writer(fstream)
     if n_reactions > 0:
         # nclassd = n_reactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # Kc stuff
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
-        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
         cw.writer(fstream, "gibbs(g_RT, tc);")
         if species_info.n_qssa_species > 0:
-            cw.writer(
-                fstream,
-                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
-            )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("compute the species enthalpy"))
-        cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
         cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
         if species_info.n_qssa_species > 0:
-            cw.writer(
-                fstream,
-                "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
-            )
             cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
         if species_info.n_qssa_species > 0:
-            cw.writer(
-                fstream,
-                "amrex::Real sc_qss[%d];"
-                % (max(1, species_info.n_qssa_species)),
-            )
-            if syms.store_in_jacobian:
-                cw.writer(
-                    fstream,
-                    "amrex::Real kf_qss[%d];"
-                    % (reaction_info.n_qssa_reactions,),
-                )
-            else:
-                cw.writer(
-                    fstream,
-                    "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
-                    % (
-                        reaction_info.n_qssa_reactions,
-                        reaction_info.n_qssa_reactions,
-                        reaction_info.n_qssa_reactions,
-                    ),
-                )
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
             cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
@@ -1808,23 +1858,8 @@ def ajac_term_fast_debug(
 
             cw.writer(fstream)
 
+
     # dwdotdT
-    cw.writer(fstream, "amrex::Real T_pert1, pertT;")
-    cw.writer(
-        fstream,
-        "amrex::Real wdot_pert1[%d], wdot[%d];"
-        % (
-            n_species,
-            n_species,
-        ),
-    )
-    cw.writer(fstream)
-    cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
-    cw.writer(fstream, "pertT = 1e-2;")
-    cw.writer(fstream, "T_pert1 = T + pertT;")
-    cw.writer(fstream)
-    cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
-    cw.writer(fstream, "productionRate(wdot, sc, T);")
     cw.writer(fstream)
     cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
     cw.writer(
@@ -1833,8 +1868,6 @@ def ajac_term_fast_debug(
         % (n_species * (n_species + 1),),
     )
     cw.writer(fstream, "}")
-
-    cw.writer(fstream)
 
     # depends on dwdotdT and dwdotdsc
     cw.writer(
