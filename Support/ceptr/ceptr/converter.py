@@ -400,6 +400,14 @@ class Converter:
                 self.syms,
             )
             print(f"Time to do production_rate = {time.time()-times}")
+            times = time.time()
+            cp.production_rate_light(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+            )
+            print(f"Time to do production_rate light = {time.time()-times}")
 
             # print("Symbolic wdot print for debug")
             # cp.production_rate_debug(
