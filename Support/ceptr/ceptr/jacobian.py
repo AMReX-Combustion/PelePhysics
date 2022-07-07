@@ -1818,7 +1818,7 @@ def ajac_term_fast_debug(
                 cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             if syms.store_in_jacobian:
-                #cw.writer(
+                # cw.writer(
                 #    fstream,
                 #    "comp_qss_coeff(kf_qss, &J[%d], &J[%d], sc, tc, g_RT,"
                 #    " g_RT_qss);"
@@ -1826,15 +1826,15 @@ def ajac_term_fast_debug(
                 #        0,
                 #        reaction_info.n_qssa_reactions,
                 #    ),
-                #)
-                #cw.writer(
+                # )
+                # cw.writer(
                 #    fstream,
                 #    "comp_sc_qss(sc_qss, &J[%d], &J[%d]);"
                 #    % (
                 #        0,
                 #        reaction_info.n_qssa_reactions,
                 #    ),
-                #)
+                # )
                 cw.writer(fstream)
             else:
                 cw.writer(
