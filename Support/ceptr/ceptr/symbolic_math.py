@@ -250,28 +250,40 @@ class SymbolicMath:
                 user_functions={
                     "Pow": [
                         (
-                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e-1)<1e-16 or abs(e-2)<1e-16 or abs(e-3)<1e-16),
+                            lambda b, e: (e.is_Integer or e.is_Float)
+                            and (
+                                abs(e - 1) < 1e-16
+                                or abs(e - 2) < 1e-16
+                                or abs(e - 3) < 1e-16
+                            ),
                             lambda b, e: "("
                             + "*".join(["(" + b + ")"] * int(float(e)))
                             + ")",
                         ),
                         (
-                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e+1)<1e-16 or abs(e+2)<1e-16 or abs(e+3)<1e-16 ),
+                            lambda b, e: (e.is_Integer or e.is_Float)
+                            and (
+                                abs(e + 1) < 1e-16
+                                or abs(e + 2) < 1e-16
+                                or abs(e + 3) < 1e-16
+                            ),
                             lambda b, e: "("
-                            + "1.0/" + "(" + "*".join(["(" + b + ")"] * int(-float(e))) + ")"
+                            + "1.0/"
+                            + "("
+                            + "*".join(["(" + b + ")"] * int(-float(e)))
+                            + ")"
                             + ")",
                         ),
-                        #(
+                        # (
                         #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
                         #    lambda b, e: ""
                         #    + "exp10("+e+")"
                         #    + "",
-                        #),
+                        # ),
                         (
-                            lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
-                            lambda b, e: ""
-                            + "exp(M_LN10 * ("+e+"))"
-                            + "",
+                            lambda b, e: (b.is_Integer or b.is_Float)
+                            and (abs(b - 10) < 1e-16),
+                            lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
                     ]
@@ -283,15 +295,28 @@ class SymbolicMath:
                 user_functions={
                     "Pow": [
                         (
-                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e-1)<1e-16 or abs(e-2)<1e-16 or abs(e-3)<1e-16),
+                            lambda b, e: (e.is_Integer or e.is_Float)
+                            and (
+                                abs(e - 1) < 1e-16
+                                or abs(e - 2) < 1e-16
+                                or abs(e - 3) < 1e-16
+                            ),
                             lambda b, e: "("
                             + "*".join(["(" + b + ")"] * int(float(e)))
                             + ")",
                         ),
                         (
-                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e+1)<1e-16 or abs(e+2)<1e-16 or abs(e+3)<1e-16 ),
+                            lambda b, e: (e.is_Integer or e.is_Float)
+                            and (
+                                abs(e + 1) < 1e-16
+                                or abs(e + 2) < 1e-16
+                                or abs(e + 3) < 1e-16
+                            ),
                             lambda b, e: "("
-                            + "1.0/" + "(" + "*".join(["(" + b + ")"] * int(-float(e))) + ")"
+                            + "1.0/"
+                            + "("
+                            + "*".join(["(" + b + ")"] * int(-float(e)))
+                            + ")"
                             + ")",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
@@ -303,17 +328,16 @@ class SymbolicMath:
                 sym_smp,
                 user_functions={
                     "Pow": [
-                        #(
+                        # (
                         #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
                         #    lambda b, e: ""
                         #    + "exp10("+e+")"
                         #    + "",
-                        #),
+                        # ),
                         (
-                            lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
-                            lambda b, e: ""
-                            + "exp(M_LN10 * ("+e+"))"
-                            + "",
+                            lambda b, e: (b.is_Integer or b.is_Float)
+                            and (abs(b - 10) < 1e-16),
+                            lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
                     ]

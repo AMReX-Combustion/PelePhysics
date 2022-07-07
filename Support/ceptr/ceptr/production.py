@@ -994,9 +994,8 @@ def production_rate(
 
     cw.writer(fstream)
 
-def production_rate_light(
-    fstream, mechanism, species_info, reaction_info
-):
+
+def production_rate_light(fstream, mechanism, species_info, reaction_info):
     """Write low memory production rate."""
     n_species = species_info.n_species
     n_reactions = mechanism.n_reactions
@@ -1034,15 +1033,15 @@ def production_rate_light(
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
         "productionRate_light("
         "amrex::Real * wdot,"
-        "amrex::Real * sc," 
-        "amrex::Real * g_RT," 
-        "amrex::Real * g_RT_qss," 
-        "amrex::Real * sc_qss," 
-        "amrex::Real * kf_qss," 
-        "amrex::Real * qf_qss," 
-        "amrex::Real * qr_qss," 
+        "amrex::Real * sc,"
+        "amrex::Real * g_RT,"
+        "amrex::Real * g_RT_qss,"
+        "amrex::Real * sc_qss,"
+        "amrex::Real * kf_qss,"
+        "amrex::Real * qf_qss,"
+        "amrex::Real * qr_qss,"
         "const amrex::Real * tc,"
-        "const amrex::Real invT)"
+        "const amrex::Real invT)",
     )
     cw.writer(fstream, "{")
 
@@ -1127,9 +1126,7 @@ def production_rate_light(
             kc_exp_arg = cu.sorted_kc_exp_arg(
                 mechanism, species_info, reaction
             )
-            kc_conv_inv = cu.fkc_conv_inv(
-                mechanism, species_info, reaction
-            )
+            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
 
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
@@ -1464,6 +1461,7 @@ def production_rate_light(
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
+
 
 def production_rate_debug(
     fstream, mechanism, species_info, reaction_info, syms=None

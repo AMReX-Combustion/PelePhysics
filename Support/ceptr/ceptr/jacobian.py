@@ -1728,14 +1728,12 @@ def ajac_term_fast_debug(
         )
         cw.writer(
             fstream,
-            "amrex::Real sc_qss[%d];"
-            % (max(1, species_info.n_qssa_species)),
+            "amrex::Real sc_qss[%d];" % (max(1, species_info.n_qssa_species)),
         )
         if syms.store_in_jacobian:
             cw.writer(
                 fstream,
-                "amrex::Real kf_qss[%d];"
-                % (reaction_info.n_qssa_reactions,),
+                "amrex::Real kf_qss[%d];" % (reaction_info.n_qssa_reactions,),
             )
         else:
             cw.writer(
@@ -1770,30 +1768,31 @@ def ajac_term_fast_debug(
         cw.writer(fstream, "tc[3] = T_pert1*T_pert1*T_pert1;")
         cw.writer(fstream, "tc[4] = T_pert1*T_pert1*T_pert1*T_pert1;")
         cw.writer(fstream, "invT = 1.0 / tc[1];")
-        cw.writer(fstream, 
-                  "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
-                   % (
-                        0,
-                        reaction_info.n_qssa_reactions,
-                   ),
-                 )
+        cw.writer(
+            fstream,
+            "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+            % (
+                0,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
         cw.writer(fstream, "tc[0] = log(T);")
         cw.writer(fstream, "tc[1] = T;")
         cw.writer(fstream, "tc[2] = T*T;")
         cw.writer(fstream, "tc[3] = T*T*T;")
         cw.writer(fstream, "tc[4] = T*T*T*T;")
         cw.writer(fstream, "invT = 1.0 / tc[1];")
-        cw.writer(fstream, 
-                  "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
-                   % (
-                        0,
-                        reaction_info.n_qssa_reactions,
-                   ),
-                 )
+        cw.writer(
+            fstream,
+            "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+            % (
+                0,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
     else:
         cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
         cw.writer(fstream, "productionRate(wdot, sc, T);")
-
 
     cw.writer(fstream)
     if n_reactions > 0:
@@ -1857,7 +1856,6 @@ def ajac_term_fast_debug(
                 syms.write_symjac_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
-
 
     # dwdotdT
     cw.writer(fstream)
