@@ -11,7 +11,7 @@ def convert(
     fname,
     hformat,
     remove_1,
-    remove_pow2,
+    remove_pow,
     min_op_count,
     recursive_op_count,
     store_in_jacobian,
@@ -23,7 +23,7 @@ def convert(
         mechanism,
         hformat,
         remove_1,
-        remove_pow2,
+        remove_pow,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -70,10 +70,10 @@ def main():
     )
 
     parser.add_argument(
-        "-rp2",
-        "--remove_pow2",
+        "-rp",
+        "--remove_pow",
         action="store_true",
-        help="Remove pow(...,2) in printed expressions",
+        help="Remove pow(...,n) if n=2,3 in printed expressions",
     )
 
     parser.add_argument(
@@ -114,7 +114,7 @@ def main():
             args.fname,
             args.hformat,
             args.remove_1,
-            args.remove_pow2,
+            args.remove_pow,
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,
@@ -125,7 +125,7 @@ def main():
             args.lst,
             args.hformat,
             args.remove_1,
-            args.remove_pow2,
+            args.remove_pow,
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,

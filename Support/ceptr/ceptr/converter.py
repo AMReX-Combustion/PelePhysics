@@ -31,7 +31,7 @@ class Converter:
         mechanism,
         hformat,
         remove_1,
-        remove_pow2,
+        remove_pow,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -40,7 +40,7 @@ class Converter:
         self.mechanism = mechanism
         self.hformat = hformat
         self.remove_1 = remove_1
-        self.remove_pow2 = remove_pow2
+        self.remove_pow = remove_pow
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
@@ -93,7 +93,7 @@ class Converter:
             self.mechanism,
             self.hformat,
             self.remove_1,
-            self.remove_pow2,
+            self.remove_pow,
             self.min_op_count,
             self.recursive_op_count,
             self.store_in_jacobian,

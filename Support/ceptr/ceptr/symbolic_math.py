@@ -26,7 +26,7 @@ class SymbolicMath:
         mechanism,
         hformat,
         remove_1,
-        remove_pow2,
+        remove_pow,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -36,7 +36,7 @@ class SymbolicMath:
         # Formatting options
         self.hformat = hformat
         self.remove_1 = remove_1
-        self.remove_pow2 = remove_pow2
+        self.remove_pow = remove_pow
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
@@ -242,15 +242,15 @@ class SymbolicMath:
     # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
-        if self.remove_pow2:
+        if self.remove_pow:
             cppcode = smp.ccode(
                 sym_smp,
                 user_functions={
                     "Pow": [
                         (
-                            lambda b, e: e.is_Integer and e == 2,
+                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e-1)<1e-16 or abs(e-2)<1e-16 or abs(e-3)<1e-16),
                             lambda b, e: "("
-                            + "*".join(["(" + b + ")"] * int(e))
+                            + "*".join(["(" + b + ")"] * int(float(e)))
                             + ")",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
