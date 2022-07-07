@@ -12,6 +12,7 @@ def convert(
     hformat,
     remove_1,
     remove_pow,
+    remove_pow10,
     min_op_count,
     recursive_op_count,
     store_in_jacobian,
@@ -24,6 +25,7 @@ def convert(
         hformat,
         remove_1,
         remove_pow,
+        remove_pow10,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -77,6 +79,13 @@ def main():
     )
 
     parser.add_argument(
+        "-rp10",
+        "--remove_pow10",
+        action="store_true",
+        help="Remove pow(10,...) in printed expressions",
+    )
+
+    parser.add_argument(
         "-moc",
         "--min_op_count",
         type=int,
@@ -115,6 +124,7 @@ def main():
             args.hformat,
             args.remove_1,
             args.remove_pow,
+            args.remove_pow10,
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,
@@ -126,6 +136,7 @@ def main():
             args.hformat,
             args.remove_1,
             args.remove_pow,
+            args.remove_pow10,
             args.min_op_count,
             args.recursive_op_count,
             args.store_in_jacobian,

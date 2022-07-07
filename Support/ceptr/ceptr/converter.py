@@ -32,6 +32,7 @@ class Converter:
         hformat,
         remove_1,
         remove_pow,
+        remove_pow10,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -41,6 +42,7 @@ class Converter:
         self.hformat = hformat
         self.remove_1 = remove_1
         self.remove_pow = remove_pow
+        self.remove_pow10 = remove_pow10
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
@@ -94,6 +96,7 @@ class Converter:
             self.hformat,
             self.remove_1,
             self.remove_pow,
+            self.remove_pow10,
             self.min_op_count,
             self.recursive_op_count,
             self.store_in_jacobian,

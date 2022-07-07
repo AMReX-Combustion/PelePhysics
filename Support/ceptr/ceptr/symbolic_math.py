@@ -27,6 +27,7 @@ class SymbolicMath:
         hformat,
         remove_1,
         remove_pow,
+        remove_pow10,
         min_op_count,
         recursive_op_count,
         store_in_jacobian,
@@ -37,6 +38,7 @@ class SymbolicMath:
         self.hformat = hformat
         self.remove_1 = remove_1
         self.remove_pow = remove_pow
+        self.remove_pow10 = remove_pow10
         self.min_op_count = min_op_count
         self.recursive_op_count = recursive_op_count
         self.store_in_jacobian = store_in_jacobian
@@ -242,7 +244,7 @@ class SymbolicMath:
     # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string."""
-        if self.remove_pow:
+        if self.remove_pow and self.remove_pow10:
             cppcode = smp.ccode(
                 sym_smp,
                 user_functions={
@@ -252,6 +254,66 @@ class SymbolicMath:
                             lambda b, e: "("
                             + "*".join(["(" + b + ")"] * int(float(e)))
                             + ")",
+                        ),
+                        (
+                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e+1)<1e-16 or abs(e+2)<1e-16 or abs(e+3)<1e-16 ),
+                            lambda b, e: "("
+                            + "1.0/" + "(" + "*".join(["(" + b + ")"] * int(-float(e))) + ")"
+                            + ")",
+                        ),
+                        #(
+                        #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
+                        #    lambda b, e: ""
+                        #    + "exp10("+e+")"
+                        #    + "",
+                        #),
+                        (
+                            lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
+                            lambda b, e: ""
+                            + "exp(M_LN10 * ("+e+"))"
+                            + "",
+                        ),
+                        (lambda b, e: not e.is_Integer, "pow"),
+                    ]
+                },
+            )
+        elif self.remove_pow:
+            cppcode = smp.ccode(
+                sym_smp,
+                user_functions={
+                    "Pow": [
+                        (
+                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e-1)<1e-16 or abs(e-2)<1e-16 or abs(e-3)<1e-16),
+                            lambda b, e: "("
+                            + "*".join(["(" + b + ")"] * int(float(e)))
+                            + ")",
+                        ),
+                        (
+                            lambda b, e: (e.is_Integer or e.is_Float) and (abs(e+1)<1e-16 or abs(e+2)<1e-16 or abs(e+3)<1e-16 ),
+                            lambda b, e: "("
+                            + "1.0/" + "(" + "*".join(["(" + b + ")"] * int(-float(e))) + ")"
+                            + ")",
+                        ),
+                        (lambda b, e: not e.is_Integer, "pow"),
+                    ]
+                },
+            )
+        elif self.remove_pow10:
+            cppcode = smp.ccode(
+                sym_smp,
+                user_functions={
+                    "Pow": [
+                        #(
+                        #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
+                        #    lambda b, e: ""
+                        #    + "exp10("+e+")"
+                        #    + "",
+                        #),
+                        (
+                            lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
+                            lambda b, e: ""
+                            + "exp(M_LN10 * ("+e+"))"
+                            + "",
                         ),
                         (lambda b, e: not e.is_Integer, "pow"),
                     ]
