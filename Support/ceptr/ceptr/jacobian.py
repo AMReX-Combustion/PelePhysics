@@ -1800,38 +1800,41 @@ def ajac_term_fast_debug(
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # Kc stuff
-        cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
-        cw.writer(fstream, "gibbs(g_RT, tc);")
-        if species_info.n_qssa_species > 0:
-            cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
-        cw.writer(fstream)
+        if not syms.store_in_jacobian:
+            cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+            cw.writer(fstream, "gibbs(g_RT, tc);")
+            if species_info.n_qssa_species > 0:
+                cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+            cw.writer(fstream)
         cw.writer(fstream, cw.comment("compute the species enthalpy"))
         cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
-        if species_info.n_qssa_species > 0:
-            cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+        if not syms.store_in_jacobian:
+            if species_info.n_qssa_species > 0:
+                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
         if species_info.n_qssa_species > 0:
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
-            cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+            if not syms.store_in_jacobian:
+                cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             if syms.store_in_jacobian:
-                cw.writer(
-                    fstream,
-                    "comp_qss_coeff(kf_qss, &J[%d], &J[%d], sc, tc, g_RT,"
-                    " g_RT_qss);"
-                    % (
-                        0,
-                        reaction_info.n_qssa_reactions,
-                    ),
-                )
-                cw.writer(
-                    fstream,
-                    "comp_sc_qss(sc_qss, &J[%d], &J[%d]);"
-                    % (
-                        0,
-                        reaction_info.n_qssa_reactions,
-                    ),
-                )
+                #cw.writer(
+                #    fstream,
+                #    "comp_qss_coeff(kf_qss, &J[%d], &J[%d], sc, tc, g_RT,"
+                #    " g_RT_qss);"
+                #    % (
+                #        0,
+                #        reaction_info.n_qssa_reactions,
+                #    ),
+                #)
+                #cw.writer(
+                #    fstream,
+                #    "comp_sc_qss(sc_qss, &J[%d], &J[%d]);"
+                #    % (
+                #        0,
+                #        reaction_info.n_qssa_reactions,
+                #    ),
+                #)
                 cw.writer(fstream)
             else:
                 cw.writer(
