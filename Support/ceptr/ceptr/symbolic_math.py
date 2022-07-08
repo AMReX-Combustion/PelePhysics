@@ -873,7 +873,7 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_readable_to_cpp(self, species_info, cw, fstream, to_replace=[], replace_with=[]):
+    def write_symjac_readable_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
@@ -1055,7 +1055,7 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_to_cpp(self, species_info, cw, fstream, to_replace=[], replace_with=[]):
+    def write_symjac_to_cpp(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
