@@ -31,7 +31,6 @@ InterpolateFaceVelocity(
     int zindx = 0;
     int yindx = 0;
     int xindx = 0;
-#if AMREX_SPACEDIM > 1
     int jjn[2] = {
       amrex::max(indx[1] - 1, dom_lo[1]), amrex::min(indx[1], dom_hi[1])};
     amrex::Real ssy[2] = {1. - delL[1], delL[1]};
@@ -44,17 +43,14 @@ InterpolateFaceVelocity(
 #endif
       for (int jj = 0; jj < 2; ++jj) {
         yindx = jjn[jj];
-#endif
         for (int ii = 0; ii < 2; ++ii) {
           xindx = iin[ii];
           vel_fluid[dir] += (umac[dir])(xindx, yindx, zindx, 0) *
                             AMREX_D_TERM(ssx[ii], *ssy[jj], *ssz[kk]);
         }
-#if AMREX_SPACEDIM > 1
       }
 #if AMREX_SPACEDIM == 3
     }
-#endif
 #endif
   }
 }
@@ -192,11 +188,10 @@ trilinear_interp(
   }
   int cc = 0;
 #if AMREX_SPACEDIM == 3
-  for (int kk = -1; kk < 1; kk++) {
+  for (int kk = -1; kk < 1; kk++)
 #endif
-#if AMREX_SPACEDIM > 1
+  {
     for (int jj = -1; jj < 1; jj++) {
-#endif
       for (int ii = -1; ii < 1; ii++) {
         AMREX_D_TERM(indx_array[cc][0] = i + ii;, indx_array[cc][1] = j + jj;
                      , indx_array[cc][2] = k + kk;)
@@ -204,12 +199,8 @@ trilinear_interp(
           AMREX_D_TERM(ssv[ii + 1][0], *ssv[jj + 1][1], *ssv[kk + 1][2]);
         cc++;
       }
-#if AMREX_SPACEDIM > 1
     }
-#endif
-#if AMREX_SPACEDIM == 3
   }
-#endif
 }
 
 #ifdef AMREX_USE_EB
@@ -246,6 +237,7 @@ f(const int dir,
   return a0 + a1 * xi + a2 * eta + a3 * zeta + a4 * xi * eta + a5 * xi * zeta +
          a6 * eta * zeta + a7 * xi * eta * zeta;
 #else
+  amrex::ignore_unused(zeta);
   return a0 + a1 * xi + a2 * eta + a4 * xi * eta;
 #endif
 }
@@ -412,7 +404,6 @@ eb_interp(
   const amrex::RealVect& lx,
   const amrex::RealVect& plo,
   const amrex::IntVect& bflags,
-  const bool eb_in_box,
   amrex::Array4<const amrex::EBCellFlag> const& flags,
   amrex::Array4<const amrex::Real> const& ccent,
   amrex::Array4<const amrex::Real> const& bcent,
@@ -426,22 +417,17 @@ eb_interp(
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
   AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];);
-  if (!eb_in_box) {
-    do_fe_interp = false;
-  } else {
-    // All cells in the stencil are regular. Use
-    // traditional trilinear interpolation
-    if (
+  // All cells in the stencil are regular. Use
+  // traditional trilinear interpolation
+  if (
 #if AMREX_SPACEDIM == 3
-      flags(i - 1, j - 1, k - 1).isRegular() &&
-      flags(i, j - 1, k - 1).isRegular() &&
-      flags(i - 1, j, k - 1).isRegular() && flags(i, j, k - 1).isRegular() &&
-      flags(i - 1, j - 1, k).isRegular() &&
+    flags(i - 1, j - 1, k - 1).isRegular() &&
+    flags(i, j - 1, k - 1).isRegular() && flags(i - 1, j, k - 1).isRegular() &&
+    flags(i, j, k - 1).isRegular() && flags(i - 1, j - 1, k).isRegular() &&
 #endif
-      flags(i, j - 1, k).isRegular() && flags(i - 1, j, k).isRegular() &&
-      flags(i, j, k).isRegular()) {
-      do_fe_interp = false;
-    }
+    flags(i, j - 1, k).isRegular() && flags(i - 1, j, k).isRegular() &&
+    flags(i, j, k).isRegular()) {
+    do_fe_interp = false;
   }
   if (!do_fe_interp) {
     trilinear_interp(ijk, lx, indx_array, weights, bflags);
@@ -519,8 +505,9 @@ eb_interp(
     int covered = 0;
     int kk = 0, jj = 0, ii = 0;
 #if AMREX_SPACEDIM == 3
-    for (kk = -1; kk < 1; kk++) {
+    for (kk = -1; kk < 1; kk++)
 #endif
+    {
       for (jj = -1; jj < 1; jj++) {
         for (ii = -1; ii < 1; ii++) {
           if (!flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk)) {
@@ -528,9 +515,7 @@ eb_interp(
           }
         }
       }
-#if AMREX_SPACEDIM == 3
     }
-#endif
     // A negative value implies that the particle is 'behind' the EB (and
     // therefore inside the wall). Although this shouldn't occur often, it could
     // for fast moving particles.  Set the fluid velocity to zero and use the
@@ -564,8 +549,9 @@ eb_interp(
       int lc = 0;
 
 #if AMREX_SPACEDIM == 3
-      for (kk = -1; kk < 1; kk++) {
+      for (kk = -1; kk < 1; kk++)
 #endif
+      {
         for (jj = -1; jj < 1; jj++) {
           for (ii = -1; ii < 1; ii++) {
             AMREX_D_TERM(
@@ -579,9 +565,7 @@ eb_interp(
             lc += 1;
           }
         }
-#if AMREX_SPACEDIM == 3
       }
-#endif
 
       amrex::Real xi = 0., eta = 0., zeta = 0.;
       AMREX_D_TERM(xi = (pos[0] - nodes[0][0] - plo[0]) * dxi[0];

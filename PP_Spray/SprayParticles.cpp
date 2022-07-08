@@ -493,15 +493,18 @@ SprayParticleContainer::updateParticles(
             // Flag for whether we are near EB boundaries
             bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
-            do_fe_interp = eb_interp(
-              p.pos(), ijkc, ijk, dx, dxi, lx, plo, bflags, eb_in_box,
-              flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
-              indx_array.data(), weights.data());
-#else
-            trilinear_interp(
-              ijk, lx, indx_array.data(), weights.data(), bflags);
-#endif // AMREX_USE_EB
-       // Interpolate fluid state
+            if (eb_in_box) {
+              do_fe_interp = eb_interp(
+                p.pos(), ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
+                ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, indx_array.data(),
+                weights.data());
+            } else
+#endif
+            {
+              trilinear_interp(
+                ijk, lx, indx_array.data(), weights.data(), bflags);
+            }
+            // Interpolate fluid state
             gpv.reset();
             InterpolateGasPhase(
               gpv, state_box, rhoarr, rhoYarr, Tarr, momarr, engarr,
