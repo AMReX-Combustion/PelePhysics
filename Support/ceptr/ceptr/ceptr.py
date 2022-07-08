@@ -17,6 +17,7 @@ def convert(
     recursive_op_count,
     store_in_jacobian,
     round_decimals,
+    recycle_cse,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -30,6 +31,7 @@ def convert(
         recursive_op_count,
         store_in_jacobian,
         round_decimals,
+        recycle_cse,
     )
     conv.writer()
     conv.formatter()
@@ -116,6 +118,13 @@ def main():
         help="Round decimal numbers when possible",
     )
 
+    parser.add_argument(
+        "-rcse",
+        "--recycle_cse",
+        action="store_true",
+        help="Recycle common expressions when possible",
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -129,6 +138,7 @@ def main():
             args.recursive_op_count,
             args.store_in_jacobian,
             args.round_decimals,
+            args.recycle_cse,
         )
     elif args.lst:
         convert_lst(
@@ -141,6 +151,7 @@ def main():
             args.recursive_op_count,
             args.store_in_jacobian,
             args.round_decimals,
+            args.recycle_cse,
         )
 
 
