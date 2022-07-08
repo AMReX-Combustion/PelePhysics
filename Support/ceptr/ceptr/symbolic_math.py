@@ -32,6 +32,7 @@ class SymbolicMath:
         recursive_op_count,
         store_in_jacobian,
         round_decimals,
+        recycle_cse,
     ):
 
         # Formatting options
@@ -48,6 +49,7 @@ class SymbolicMath:
         ):
             self.store_in_jacobian = False
         self.round_decimals = round_decimals
+        self.recycle_cse = recycle_cse
         # Set to False to use bottom up approach
         self.top_bottom = True
 
@@ -389,11 +391,48 @@ class SymbolicMath:
         """
         Reduce expression interface
         """
-        common_expr_lhs = None
-        common_expr_rhs = None
-        final_expr = None
-        if self.recursive_op_count:
-            for count_lim in range(1, self.min_op_count + 1):
+        n_cse = len(orig[0])
+        n_exp = len(orig[1])
+        common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
+        common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
+        final_expr = [orig[1][i] for i in range(n_exp)]
+        to_replace = []
+        replace_with = []
+        if self.min_op_count>0:
+            if self.recursive_op_count:
+                for count_lim in range(1, self.min_op_count + 1):
+                    print(" Doing min op count = ", count_lim)
+                    times = time.time()
+                    if self.top_bottom:
+                        (
+                            common_expr_lhs,
+                            common_expr_rhs,
+                            final_expr,
+                        ) = self.reduce_expr_top_bottom(
+                            orig,
+                            count_lim,
+                            common_expr_lhs,
+                            common_expr_rhs,
+                            final_expr,
+                        )
+                    else:
+                        (
+                            common_expr_lhs,
+                            common_expr_rhs,
+                            final_expr,
+                        ) = self.reduce_expr_bottom_up(
+                            orig,
+                            count_lim,
+                            common_expr_lhs,
+                            common_expr_rhs,
+                            final_expr,
+                        )
+                    print(
+                        "Reduced expressions in (time = %.3g s)"
+                        % (time.time() - times)
+                    )
+            else:
+                count_lim = self.min_op_count
                 print(" Doing min op count = ", count_lim)
                 times = time.time()
                 if self.top_bottom:
@@ -424,49 +463,23 @@ class SymbolicMath:
                     "Reduced expressions in (time = %.3g s)"
                     % (time.time() - times)
                 )
-        else:
-            count_lim = self.min_op_count
-            print(" Doing min op count = ", count_lim)
-            times = time.time()
-            if self.top_bottom:
-                (
-                    common_expr_lhs,
-                    common_expr_rhs,
-                    final_expr,
-                ) = self.reduce_expr_top_bottom(
-                    orig,
-                    count_lim,
-                    common_expr_lhs,
-                    common_expr_rhs,
-                    final_expr,
-                )
-            else:
-                (
-                    common_expr_lhs,
-                    common_expr_rhs,
-                    final_expr,
-                ) = self.reduce_expr_bottom_up(
-                    orig,
-                    count_lim,
-                    common_expr_lhs,
-                    common_expr_rhs,
-                    final_expr,
-                )
-            print(
-                "Reduced expressions in (time = %.3g s)"
-                % (time.time() - times)
-            )
 
-        return common_expr_lhs, common_expr_rhs, final_expr
+        if self.recycle_cse:
+            common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.recycle_cse_post(
+                orig, common_expr_lhs, common_expr_rhs, final_expr
+            )
+         
+
+        return common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with
 
     # @profile
     def reduce_expr_top_bottom(
         self,
         orig,
         count_lim,
-        common_expr_lhs=None,
-        common_expr_rhs=None,
-        final_expr=None,
+        common_expr_lhs,
+        common_expr_rhs,
+        final_expr,
     ):
         """
         Top bottom loop over common and final expressions and remove the ones that have
@@ -474,20 +487,10 @@ class SymbolicMath:
         """
 
         replacements = []
-        if common_expr_lhs is None:
-            n_cse = len(orig[0])
-            n_exp = len(orig[1])
-            # Init
-            common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
-            common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
-            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-            final_expr = [orig[1][i] for i in range(n_exp)]
-            final_expr_symbols = [expr.free_symbols for expr in final_expr]
-        else:
-            n_cse = len(common_expr_lhs)
-            n_exp = len(final_expr)
-            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-            final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        n_cse = len(common_expr_lhs)
+        n_exp = len(final_expr)
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
         printProgressBar(
@@ -544,29 +547,19 @@ class SymbolicMath:
         self,
         orig,
         count_lim,
-        common_expr_lhs=None,
-        common_expr_rhs=None,
-        final_expr=None,
+        common_expr_lhs,
+        common_expr_rhs,
+        final_expr,
     ):
         """
         Bottom up loop over common and final expressions and remove the ones that have
         a number of operation < count_lim
         """
         replacements = []
-        if common_expr_rhs is None:
-            n_cse = len(orig[0])
-            n_exp = len(orig[1])
-            # Init
-            common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
-            common_expr_rhs = [orig[0][i][1] for i in range(n_cse)]
-            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-            final_expr = [orig[1][i] for i in range(n_exp)]
-            final_expr_symbols = [expr.free_symbols for expr in final_expr]
-        else:
-            n_cse = len(common_expr_lhs)
-            n_exp = len(final_expr)
-            common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
-            final_expr_symbols = [expr.free_symbols for expr in final_expr]
+        n_cse = len(common_expr_lhs)
+        n_exp = len(final_expr)
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
         printProgressBar(
@@ -626,6 +619,94 @@ class SymbolicMath:
             del common_expr_rhs[rep]
 
         return common_expr_lhs, common_expr_rhs, final_expr
+
+    # @profile
+    def recycle_cse_post(
+        self,
+        orig,
+        common_expr_lhs,
+        common_expr_rhs,
+        final_expr,
+    ):
+        """
+        Recycle cse that are not used later
+        Done after the replacement
+        """
+        to_replace = []
+        replace_with = []
+
+        n_cse = len(common_expr_lhs)
+        n_exp = len(final_expr)
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+
+    
+        # Figure out which symbols may be recycled
+        printProgressBar(
+            0,
+            n_cse,
+            prefix="Expr = %d / %d " % (0, n_cse),
+            suffix="Complete",
+            length=20,
+        )
+        for isymb, symb in enumerate(common_expr_lhs):
+            ind_final = [
+                    j
+                    for j, s in enumerate(final_expr_symbols)
+                    if symb in s
+                  ]
+            if not ind_final:
+                ind_cse = [
+                        j + isymb
+                        for j, s in enumerate(common_expr_symbols[isymb:])
+                        if symb in s
+                      ]
+                if ind_cse:
+                    # This is the symbol we would like to replace
+                    target_replace = ind_cse[-1]
+                    # Make sure that we havent replaced it already
+                    while target_replace<n_cse and common_expr_lhs[target_replace] in to_replace:
+                         target_replace += 1
+                    if target_replace < n_cse:
+                        to_replace.append(common_expr_lhs[target_replace])
+                        # If the symbol we want to replace with is already replaced, 
+                        # Make sure we are consistent
+                        if symb in to_replace:
+                            ind = to_replace.index(symb)
+                            replace_with.append(replace_with[ind])
+                        else:
+                            replace_with.append(symb)
+            printProgressBar(
+                isymb + 1,
+                n_cse,
+                prefix="Expr = %d / %d, recycled expr = %d "
+                % (
+                    isymb + 1,
+                    n_cse,
+                    len(to_replace),
+                ),
+                suffix="Complete",
+                length=20,
+            )
+        # Use the recycling list to actually recycle
+        for isr, symb_replace in enumerate(to_replace):
+            ind_rhs = [
+                       j
+                       for j, s in enumerate(common_expr_symbols)
+                       if symb_replace in s
+                      ]
+            for ind in ind_rhs:
+                common_expr_rhs[ind] = common_expr_rhs[ind].subs(symb_replace, sme.symbols(replace_with[isr].name))
+            ind_exp = [
+                       j
+                       for j, s in enumerate(final_expr_symbols)
+                       if symb_replace in s
+                      ]
+            for ind in ind_exp:
+                final_expr[ind] = final_expr[ind].subs(symb_replace, sme.symbols(replace_with[isr].name))
+
+        return common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with
+    
 
     # @profile
     def write_array_to_cpp(
@@ -792,7 +873,7 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_readable_to_cpp(self, species_info, cw, fstream):
+    def write_symjac_readable_to_cpp(self, species_info, cw, fstream, to_replace=[], replace_with=[]):
         """Write species jacobian terms as functions of common subexpressions."""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
@@ -824,27 +905,38 @@ class SymbolicMath:
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
 
-        if self.min_op_count > 0:
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
-                array_cse
-            )
-            times = time.time()
-            for cse_idx in range(len(common_expr_lhs)):
+        common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.reduce_expr(
+            array_cse
+        )
+        times = time.time()
+        for cse_idx in range(len(common_expr_lhs)):
+            if common_expr_lhs[cse_idx] in to_replace:
+                ind = to_replace.index(common_expr_lhs[cse_idx])
+                left_cse = self.convert_to_cpp(replace_with[ind])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
+                if not left_cse==right_cse:
+                    cw.writer(
+                        fstream,
+                        "%s = %s;"
+                        % (
+                            left_cse,
+                            right_cse,
+                        ),
+                    )
+            elif common_expr_lhs[cse_idx] in replace_with:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
+                    "amrex::Real %s = %s;"
                     % (
                         left_cse,
                         right_cse,
                     ),
                 )
-        else:
-            times = time.time()
-            for cse_idx in range(len(array_cse[0])):
-                left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
-                right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+            else:
+                left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
                     "const amrex::Real %s = %s;"
@@ -867,10 +959,7 @@ class SymbolicMath:
         # Write all the entries in human readable format
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
-            if self.min_op_count > 0:
-                cpp_str = self.convert_to_cpp(final_expr[i])
-            else:
-                cpp_str = self.convert_to_cpp(array_cse[1][i])
+            cpp_str = self.convert_to_cpp(final_expr[i])
 
             num_idx = tuple_list[i][0]
             den_idx = tuple_list[i][1]
@@ -966,7 +1055,7 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_to_cpp(self, species_info, cw, fstream):
+    def write_symjac_to_cpp(self, species_info, cw, fstream, to_replace=[], replace_with=[]):
         """Write species jacobian terms as functions of common subexpressions."""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
@@ -992,7 +1081,6 @@ class SymbolicMath:
             + dwdotdscqss_tuples
             + dwdotdsc_tuples
         )
-
         # Create Pandas dataframe to store CSE information
         term_type = (
             ["dscqssdscqss"] * n_dscqssdscqss
@@ -1006,27 +1094,39 @@ class SymbolicMath:
         times = time.time()
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
-        if self.min_op_count > 0:
-            common_expr_lhs, common_expr_rhs, final_expr = self.reduce_expr(
-                array_cse
-            )
-            times = time.time()
-            for cse_idx in range(len(common_expr_lhs)):
+
+        common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.reduce_expr(
+            array_cse
+        )
+        times = time.time()
+        for cse_idx in range(len(common_expr_lhs)):
+            if common_expr_lhs[cse_idx] in to_replace:
+                ind = to_replace.index(common_expr_lhs[cse_idx])
+                left_cse = self.convert_to_cpp(replace_with[ind])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
+                if not left_cse==right_cse:
+                    cw.writer(
+                        fstream,
+                        "%s = %s;"
+                        % (
+                            left_cse,
+                            right_cse,
+                        ),
+                    )
+            elif common_expr_lhs[cse_idx] in replace_with:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
+                    "amrex::Real %s = %s;"
                     % (
                         left_cse,
                         right_cse,
                     ),
                 )
-        else:
-            times = time.time()
-            for cse_idx in range(len(array_cse[0])):
-                left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
-                right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+            else:
+                left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
+                right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
                     "const amrex::Real %s = %s;"
@@ -1059,10 +1159,7 @@ class SymbolicMath:
                 )
 
                 # Get the dscqssdsc CSE string to start
-                if self.min_op_count > 0:
-                    start_string = f"""{self.convert_to_cpp(final_expr[dscqssdsc_cse_idx])}"""
-                else:
-                    start_string = f"""{self.convert_to_cpp(array_cse[1][dscqssdsc_cse_idx])}"""
+                start_string = f"""{self.convert_to_cpp(final_expr[dscqssdsc_cse_idx])}"""
                 # Loop through the chain terms
                 chain_string = []
                 for scqss_dep in scqss_item["scqss_dep"]:
@@ -1075,14 +1172,9 @@ class SymbolicMath:
                         (scqss_item["number"], scqssdepnum),
                     )
                     # Append the dscqssdscqss CSE to chain list
-                    if self.min_op_count > 0:
-                        cse_string = self.convert_to_cpp(
-                            final_expr[dscqssdscqss_cse_idx]
-                        )
-                    else:
-                        cse_string = self.convert_to_cpp(
-                            array_cse[1][dscqssdscqss_cse_idx]
-                        )
+                    cse_string = self.convert_to_cpp(
+                        final_expr[dscqssdscqss_cse_idx]
+                    )
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssdepnum
                         + sc_item["number"]
@@ -1103,7 +1195,6 @@ class SymbolicMath:
                         final_string += f""" + {chain_string[ics+1]}"""
                 else:
                     final_string = start_string
-
                 dscqss_dsc[dscqss_dsc_idx] = final_string
 
         print(f"Time to make dscqss_dsc CSE array = {time.time()-times}")
@@ -1123,10 +1214,7 @@ class SymbolicMath:
                 )
 
                 # Get the dwdotdsc CSE string to start
-                if self.min_op_count > 0:
-                    start_string = f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
-                else:
-                    start_string = f"""{self.convert_to_cpp(array_cse[1][dwdotdsc_cse_idx])}"""
+                start_string = f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
                 # Loop through the chain terms
                 chain_string = []
                 for scqss in wdot_item["scqss_dep"]:
@@ -1137,14 +1225,9 @@ class SymbolicMath:
                         jac_df, "dwdotdscqss", (wdot_item["number"], scqssnum)
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
-                    if self.min_op_count > 0:
-                        cse_string = self.convert_to_cpp(
-                            final_expr[dwdotdscqss_cse_idx]
-                        )
-                    else:
-                        cse_string = self.convert_to_cpp(
-                            array_cse[1][dwdotdscqss_cse_idx]
-                        )
+                    cse_string = self.convert_to_cpp(
+                        final_expr[dwdotdscqss_cse_idx]
+                    )
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssnum + sc_item["number"]
                     ]
@@ -1156,7 +1239,6 @@ class SymbolicMath:
                         chain_string.append(
                             f"""({cse_string})*({dscqssdsc_string})"""
                         )
-
                 if chain_string:
                     final_string = f"""{start_string}+{chain_string[0]}"""
                     for ics in range(len(chain_string) - 1):
