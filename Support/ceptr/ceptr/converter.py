@@ -38,6 +38,7 @@ class Converter:
         store_in_jacobian,
         round_decimals,
         recycle_cse,
+        min_op_count_all,
     ):
         self.mechanism = mechanism
 
@@ -51,6 +52,7 @@ class Converter:
         self.store_in_jacobian = store_in_jacobian
         self.round_decimals = round_decimals
         self.recycle_cse = recycle_cse
+        self.min_op_count_all = min_op_count_all
 
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
@@ -107,6 +109,7 @@ class Converter:
             self.store_in_jacobian,
             self.round_decimals,
             self.recycle_cse,
+            self.min_op_count_all,
         )
 
     def set_species(self):

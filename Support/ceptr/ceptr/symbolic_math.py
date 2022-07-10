@@ -33,6 +33,7 @@ class SymbolicMath:
         store_in_jacobian,
         round_decimals,
         recycle_cse,
+        min_op_count_all,
     ):
 
         # Formatting options
@@ -50,6 +51,7 @@ class SymbolicMath:
             self.store_in_jacobian = False
         self.round_decimals = round_decimals
         self.recycle_cse = recycle_cse
+        self.min_op_count_all = min_op_count_all
         # Set to False to use bottom up approach
         self.top_bottom = True
 
@@ -464,6 +466,46 @@ class SymbolicMath:
                     % (time.time() - times)
                 )
 
+        if self.min_op_count_all>0:
+            if self.recursive_op_count:
+                for count_lim in range(1, self.min_op_count_all + 1):
+                    print(" Doing min op count ALL = ", count_lim)
+                    times = time.time()
+                    (
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
+                    ) = self.reduce_expr_top_bottom_rec_count(
+                        orig,
+                        count_lim,
+                        common_expr_lhs,
+                        common_expr_rhs,
+                        final_expr,
+                    )
+                    print(
+                        "Reduced expressions in (time = %.3g s)"
+                        % (time.time() - times)
+                    )
+            else:
+                count_lim = self.min_op_count_all
+                print(" Doing min op count ALL = ", count_lim)
+                times = time.time()
+                (
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
+                ) = self.reduce_expr_top_bottom_rec_count(
+                    orig,
+                    count_lim,
+                    common_expr_lhs,
+                    common_expr_rhs,
+                    final_expr,
+                )
+                print(
+                    "Reduced expressions in (time = %.3g s)"
+                    % (time.time() - times)
+                )
+
         if self.recycle_cse:
             common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.recycle_cse_post(
                 orig, common_expr_lhs, common_expr_rhs, final_expr
@@ -471,6 +513,95 @@ class SymbolicMath:
          
 
         return common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with
+
+    # @profile
+    def reduce_expr_top_bottom_rec_count(
+        self,
+        orig,
+        count_lim,
+        common_expr_lhs,
+        common_expr_rhs,
+        final_expr,
+    ):
+        """
+        Top bottom loop over common and final expressions and remove the ones that have
+        a number of operation < count_lim including operations of variables that use it
+        """
+    
+        replacements = []
+        n_cse = len(common_expr_lhs)
+        n_exp = len(final_expr)
+        common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
+        final_expr_symbols = [expr.free_symbols for expr in final_expr]
+    
+        # Replacement loop
+        printProgressBar(
+            0,
+            n_cse,
+            prefix="Expr = %d / %d " % (0, n_cse),
+            suffix="Complete",
+            length=20,
+        )
+        for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
+            op_count = sme.count_ops(rhs)
+            # count how many times the expression is used later
+            ind_rhs = [
+                j + i
+                for j, s in enumerate(common_expr_symbols[i:])
+                if lhs in s
+            ]
+            ind_final_expr = [
+                j
+                for j, s in enumerate(final_expr_symbols)
+                if lhs in s
+            ]
+            rec_count = 0
+            for ind in ind_rhs:
+                rec_count += smp.sympify(common_expr_rhs[ind]).count(lhs)
+            rec_count_cse = rec_count
+            for ind in ind_final_expr:
+                rec_count += smp.sympify(final_expr[ind]).count(lhs)
+    
+            total_op = (rec_count-1)*op_count
+            isFloat = True
+            try:
+                number = float(rhs)
+                rhs = number
+            except RuntimeError:
+                isFloat = False
+            if total_op < count_lim or isFloat:
+                replacements.append(i)
+                ind = [
+                    j + i
+                    for j, s in enumerate(common_expr_symbols[i:])
+                    if lhs in s
+                ]
+                for j in ind:
+                    common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
+                    common_expr_symbols[j].remove(lhs)
+                ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
+                for j in ind:
+                    final_expr[j] = final_expr[j].subs(lhs, rhs)
+                    final_expr_symbols[j].remove(lhs)
+    
+            printProgressBar(
+                i + 1,
+                n_cse,
+                prefix="Expr = %d / %d, removed expr = %d "
+                % (
+                    i + 1,
+                    n_cse,
+                    len(replacements),
+                ),
+                suffix="Complete",
+                length=20,
+            )
+        replacements.reverse()
+        for rep in replacements:
+            del common_expr_lhs[rep]
+            del common_expr_rhs[rep]
+    
+        return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
     def reduce_expr_top_bottom(

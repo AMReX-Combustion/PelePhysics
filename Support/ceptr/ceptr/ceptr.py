@@ -18,6 +18,7 @@ def convert(
     store_in_jacobian,
     round_decimals,
     recycle_cse,
+    min_op_count_all,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -32,6 +33,7 @@ def convert(
         store_in_jacobian,
         round_decimals,
         recycle_cse,
+        min_op_count_all,
     )
     conv.writer()
     conv.formatter()
@@ -125,6 +127,16 @@ def main():
         help="Recycle common expressions when possible",
     )
 
+    parser.add_argument(
+        "-moca",
+        "--min_op_count_all",
+        type=int,
+        metavar="",
+        required=False,
+        help="Min number of operation count saved per expression",
+        default=0,
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -139,6 +151,7 @@ def main():
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,
+            args.min_op_count_all,
         )
     elif args.lst:
         convert_lst(
@@ -152,6 +165,7 @@ def main():
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,
+            args.min_op_count_all,
         )
 
 
