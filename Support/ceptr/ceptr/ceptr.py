@@ -14,10 +14,12 @@ def convert(
     remove_pow,
     remove_pow10,
     min_op_count,
-    recursive_op_count,
+    gradual_op_count,
     store_in_jacobian,
     round_decimals,
     recycle_cse,
+    min_op_count_all,
+    remove_single_symbols_cse,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -28,10 +30,12 @@ def convert(
         remove_pow,
         remove_pow10,
         min_op_count,
-        recursive_op_count,
+        gradual_op_count,
         store_in_jacobian,
         round_decimals,
         recycle_cse,
+        min_op_count_all,
+        remove_single_symbols_cse,
     )
     conv.writer()
     conv.formatter()
@@ -99,9 +103,9 @@ def main():
 
     parser.add_argument(
         "-roc",
-        "--recursive_op_count",
+        "--gradual_op_count",
         action="store_true",
-        help="Recursive elimination of expression",
+        help="Gradual elimination of expression (ensure monotonicity)",
     )
 
     parser.add_argument(
@@ -125,6 +129,23 @@ def main():
         help="Recycle common expressions when possible",
     )
 
+    parser.add_argument(
+        "-rss",
+        "--remove_single_symbols_cse",
+        action="store_true",
+        help="Remove cse made of a single symbol",
+    )
+
+    parser.add_argument(
+        "-moca",
+        "--min_op_count_all",
+        type=int,
+        metavar="",
+        required=False,
+        help="Min number of operation count saved per expression",
+        default=0,
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -135,10 +156,12 @@ def main():
             args.remove_pow,
             args.remove_pow10,
             args.min_op_count,
-            args.recursive_op_count,
+            args.gradual_op_count,
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,
+            args.min_op_count_all,
+            args.remove_single_symbols_cse,
         )
     elif args.lst:
         convert_lst(
@@ -148,10 +171,12 @@ def main():
             args.remove_pow,
             args.remove_pow10,
             args.min_op_count,
-            args.recursive_op_count,
+            args.gradual_op_count,
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,
+            args.min_op_count_all,
+            args.remove_single_symbols_cse,
         )
 
 
