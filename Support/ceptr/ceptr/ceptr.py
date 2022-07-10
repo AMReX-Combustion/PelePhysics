@@ -19,6 +19,7 @@ def convert(
     round_decimals,
     recycle_cse,
     min_op_count_all,
+    remove_single_symbols_cse,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -34,6 +35,7 @@ def convert(
         round_decimals,
         recycle_cse,
         min_op_count_all,
+        remove_single_symbols_cse,
     )
     conv.writer()
     conv.formatter()
@@ -128,6 +130,13 @@ def main():
     )
 
     parser.add_argument(
+        "-rss",
+        "--remove_single_symbols_cse",
+        action="store_true",
+        help="Remove cse made of a single symbol",
+    )
+
+    parser.add_argument(
         "-moca",
         "--min_op_count_all",
         type=int,
@@ -152,6 +161,7 @@ def main():
             args.round_decimals,
             args.recycle_cse,
             args.min_op_count_all,
+            args.remove_single_symbols_cse,
         )
     elif args.lst:
         convert_lst(
@@ -166,6 +176,7 @@ def main():
             args.round_decimals,
             args.recycle_cse,
             args.min_op_count_all,
+            args.remove_single_symbols_cse,
         )
 
 
