@@ -29,7 +29,7 @@ class SymbolicMath:
         remove_pow,
         remove_pow10,
         min_op_count,
-        recursive_op_count,
+        gradual_op_count,
         store_in_jacobian,
         round_decimals,
         recycle_cse,
@@ -42,7 +42,7 @@ class SymbolicMath:
         self.remove_pow = remove_pow
         self.remove_pow10 = remove_pow10
         self.min_op_count = min_op_count
-        self.recursive_op_count = recursive_op_count
+        self.gradual_op_count = gradual_op_count
         self.store_in_jacobian = store_in_jacobian
         if (
             2 * reaction_info.n_qssa_reactions
@@ -401,7 +401,7 @@ class SymbolicMath:
         to_replace = []
         replace_with = []
         if self.min_op_count>0:
-            if self.recursive_op_count:
+            if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count + 1):
                     print(" Doing min op count = ", count_lim)
                     times = time.time()
@@ -467,7 +467,7 @@ class SymbolicMath:
                 )
 
         if self.min_op_count_all>0:
-            if self.recursive_op_count:
+            if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count_all + 1):
                     print(" Doing min op count ALL = ", count_lim)
                     times = time.time()

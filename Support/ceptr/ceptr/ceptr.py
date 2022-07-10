@@ -14,7 +14,7 @@ def convert(
     remove_pow,
     remove_pow10,
     min_op_count,
-    recursive_op_count,
+    gradual_op_count,
     store_in_jacobian,
     round_decimals,
     recycle_cse,
@@ -29,7 +29,7 @@ def convert(
         remove_pow,
         remove_pow10,
         min_op_count,
-        recursive_op_count,
+        gradual_op_count,
         store_in_jacobian,
         round_decimals,
         recycle_cse,
@@ -101,9 +101,9 @@ def main():
 
     parser.add_argument(
         "-roc",
-        "--recursive_op_count",
+        "--gradual_op_count",
         action="store_true",
-        help="Recursive elimination of expression",
+        help="Gradual elimination of expression (ensure monotonicity)",
     )
 
     parser.add_argument(
@@ -147,7 +147,7 @@ def main():
             args.remove_pow,
             args.remove_pow10,
             args.min_op_count,
-            args.recursive_op_count,
+            args.gradual_op_count,
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,
@@ -161,7 +161,7 @@ def main():
             args.remove_pow,
             args.remove_pow10,
             args.min_op_count,
-            args.recursive_op_count,
+            args.gradual_op_count,
             args.store_in_jacobian,
             args.round_decimals,
             args.recycle_cse,

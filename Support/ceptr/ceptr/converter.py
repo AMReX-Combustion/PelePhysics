@@ -34,7 +34,7 @@ class Converter:
         remove_pow,
         remove_pow10,
         min_op_count,
-        recursive_op_count,
+        gradual_op_count,
         store_in_jacobian,
         round_decimals,
         recycle_cse,
@@ -48,7 +48,7 @@ class Converter:
         self.remove_pow = remove_pow
         self.remove_pow10 = remove_pow10
         self.min_op_count = min_op_count
-        self.recursive_op_count = recursive_op_count
+        self.gradual_op_count = gradual_op_count
         self.store_in_jacobian = store_in_jacobian
         self.round_decimals = round_decimals
         self.recycle_cse = recycle_cse
@@ -105,7 +105,7 @@ class Converter:
             self.remove_pow,
             self.remove_pow10,
             self.min_op_count,
-            self.recursive_op_count,
+            self.gradual_op_count,
             self.store_in_jacobian,
             self.round_decimals,
             self.recycle_cse,
