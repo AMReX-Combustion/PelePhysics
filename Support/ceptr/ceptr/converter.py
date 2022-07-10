@@ -55,7 +55,7 @@ class Converter:
         self.recycle_cse = recycle_cse
         self.min_op_count_all = min_op_count_all
         self.remove_single_symbols_cse = remove_single_symbols_cse
- 
+
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"

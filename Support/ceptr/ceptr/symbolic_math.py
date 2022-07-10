@@ -403,8 +403,7 @@ class SymbolicMath:
         to_replace = []
         replace_with = []
 
-
-        if self.min_op_count_all>0:
+        if self.min_op_count_all > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count_all + 1):
                     print(" Doing min op count ALL = ", count_lim)
@@ -444,7 +443,7 @@ class SymbolicMath:
                     % (time.time() - times)
                 )
 
-        if self.min_op_count>0:
+        if self.min_op_count > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count + 1):
                     print(" Doing min op count = ", count_lim)
@@ -511,30 +510,40 @@ class SymbolicMath:
                 )
 
         if self.remove_single_symbols_cse:
-           times = time.time()
-           (
-               common_expr_lhs,
-               common_expr_rhs,
-               final_expr,
-           ) = self.remove_single_symbol(
-               orig,
-               common_expr_lhs,
-               common_expr_rhs,
-               final_expr,
-           )
-           print(
-                  "Removed single symbols in (time = %.3g s)"
-                  % (time.time() - times)
-                )
-
+            times = time.time()
+            (
+                common_expr_lhs,
+                common_expr_rhs,
+                final_expr,
+            ) = self.remove_single_symbol(
+                orig,
+                common_expr_lhs,
+                common_expr_rhs,
+                final_expr,
+            )
+            print(
+                "Removed single symbols in (time = %.3g s)"
+                % (time.time() - times)
+            )
 
         if self.recycle_cse:
-            common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.recycle_cse_post(
+            (
+                common_expr_lhs,
+                common_expr_rhs,
+                final_expr,
+                to_replace,
+                replace_with,
+            ) = self.recycle_cse_post(
                 orig, common_expr_lhs, common_expr_rhs, final_expr
             )
-         
 
-        return common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with
+        return (
+            common_expr_lhs,
+            common_expr_rhs,
+            final_expr,
+            to_replace,
+            replace_with,
+        )
 
     # @profile
     def remove_single_symbol(
@@ -548,13 +557,13 @@ class SymbolicMath:
         Remove cses made of single symbols.
         Those are typically of the for "-xi" where the operation may disappear after substitution
         """
-    
+
         replacements = []
         n_cse = len(common_expr_lhs)
         n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
-    
+
         # Replacement loop
         printProgressBar(
             0,
@@ -584,12 +593,12 @@ class SymbolicMath:
                 ]
                 for j in ind:
                     common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
-                    #common_expr_symbols[j].remove(lhs)
+                    # common_expr_symbols[j].remove(lhs)
                 ind = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
                 for j in ind:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
-                    #final_expr_symbols[j].remove(lhs)
-    
+                    # final_expr_symbols[j].remove(lhs)
+
             printProgressBar(
                 i + 1,
                 n_cse,
@@ -606,7 +615,7 @@ class SymbolicMath:
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
-    
+
         return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
@@ -622,13 +631,13 @@ class SymbolicMath:
         Top bottom loop over common and final expressions and remove the ones that have
         a number of operation < count_lim including operations of variables that use it
         """
-    
+
         replacements = []
         n_cse = len(common_expr_lhs)
         n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
-    
+
         # Replacement loop
         printProgressBar(
             0,
@@ -646,9 +655,7 @@ class SymbolicMath:
                 if lhs in s
             ]
             ind_final_expr = [
-                j
-                for j, s in enumerate(final_expr_symbols)
-                if lhs in s
+                j for j, s in enumerate(final_expr_symbols) if lhs in s
             ]
             rec_count = 0
             for ind in ind_rhs:
@@ -656,8 +663,8 @@ class SymbolicMath:
             rec_count_cse = rec_count
             for ind in ind_final_expr:
                 rec_count += smp.sympify(final_expr[ind]).count(lhs)
-    
-            total_op = (rec_count-1)*op_count
+
+            total_op = (rec_count - 1) * op_count
             is_float = True
             try:
                 number = float(rhs)
@@ -678,7 +685,7 @@ class SymbolicMath:
                 for j in ind:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     final_expr_symbols[j].remove(lhs)
-    
+
             printProgressBar(
                 i + 1,
                 n_cse,
@@ -695,7 +702,7 @@ class SymbolicMath:
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
-    
+
         return common_expr_lhs, common_expr_rhs, final_expr
 
     # @profile
@@ -866,7 +873,6 @@ class SymbolicMath:
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
-    
         # Figure out which symbols may be recycled
         printProgressBar(
             0,
@@ -877,25 +883,26 @@ class SymbolicMath:
         )
         for isymb, symb in enumerate(common_expr_lhs):
             ind_final = [
-                    j
-                    for j, s in enumerate(final_expr_symbols)
-                    if symb in s
-                  ]
+                j for j, s in enumerate(final_expr_symbols) if symb in s
+            ]
             if not ind_final:
                 ind_cse = [
-                        j + isymb
-                        for j, s in enumerate(common_expr_symbols[isymb:])
-                        if symb in s
-                      ]
+                    j + isymb
+                    for j, s in enumerate(common_expr_symbols[isymb:])
+                    if symb in s
+                ]
                 if ind_cse:
                     # This is the symbol we would like to replace
                     target_replace = ind_cse[-1]
                     # Make sure that we havent replaced it already
-                    while target_replace<n_cse and common_expr_lhs[target_replace] in to_replace:
-                         target_replace += 1
+                    while (
+                        target_replace < n_cse
+                        and common_expr_lhs[target_replace] in to_replace
+                    ):
+                        target_replace += 1
                     if target_replace < n_cse:
                         to_replace.append(common_expr_lhs[target_replace])
-                        # If the symbol we want to replace with is already replaced, 
+                        # If the symbol we want to replace with is already replaced,
                         # Make sure we are consistent
                         if symb in to_replace:
                             ind = to_replace.index(symb)
@@ -917,22 +924,31 @@ class SymbolicMath:
         # Use the recycling list to actually recycle
         for isr, symb_replace in enumerate(to_replace):
             ind_rhs = [
-                       j
-                       for j, s in enumerate(common_expr_symbols)
-                       if symb_replace in s
-                      ]
+                j
+                for j, s in enumerate(common_expr_symbols)
+                if symb_replace in s
+            ]
             for ind in ind_rhs:
-                common_expr_rhs[ind] = common_expr_rhs[ind].subs(symb_replace, sme.symbols(replace_with[isr].name))
+                common_expr_rhs[ind] = common_expr_rhs[ind].subs(
+                    symb_replace, sme.symbols(replace_with[isr].name)
+                )
             ind_exp = [
-                       j
-                       for j, s in enumerate(final_expr_symbols)
-                       if symb_replace in s
-                      ]
+                j
+                for j, s in enumerate(final_expr_symbols)
+                if symb_replace in s
+            ]
             for ind in ind_exp:
-                final_expr[ind] = final_expr[ind].subs(symb_replace, sme.symbols(replace_with[isr].name))
+                final_expr[ind] = final_expr[ind].subs(
+                    symb_replace, sme.symbols(replace_with[isr].name)
+                )
 
-        return common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with
-    
+        return (
+            common_expr_lhs,
+            common_expr_rhs,
+            final_expr,
+            to_replace,
+            replace_with,
+        )
 
     # @profile
     def write_array_to_cpp(
@@ -1131,16 +1147,20 @@ class SymbolicMath:
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
 
-        common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.reduce_expr(
-            array_cse
-        )
+        (
+            common_expr_lhs,
+            common_expr_rhs,
+            final_expr,
+            to_replace,
+            replace_with,
+        ) = self.reduce_expr(array_cse)
         times = time.time()
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
                 left_cse = self.convert_to_cpp(replace_with[ind])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
-                if not left_cse==right_cse:
+                if not left_cse == right_cse:
                     cw.writer(
                         fstream,
                         "%s = %s;"
@@ -1321,16 +1341,20 @@ class SymbolicMath:
         array_cse = sme.cse(list_smp)
         print("Made common expr (time = %.3g s)" % (time.time() - times))
 
-        common_expr_lhs, common_expr_rhs, final_expr, to_replace, replace_with = self.reduce_expr(
-            array_cse
-        )
+        (
+            common_expr_lhs,
+            common_expr_rhs,
+            final_expr,
+            to_replace,
+            replace_with,
+        ) = self.reduce_expr(array_cse)
         times = time.time()
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
                 left_cse = self.convert_to_cpp(replace_with[ind])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
-                if not left_cse==right_cse:
+                if not left_cse == right_cse:
                     cw.writer(
                         fstream,
                         "%s = %s;"
@@ -1385,7 +1409,9 @@ class SymbolicMath:
                 )
 
                 # Get the dscqssdsc CSE string to start
-                start_string = f"""{self.convert_to_cpp(final_expr[dscqssdsc_cse_idx])}"""
+                start_string = (
+                    f"""{self.convert_to_cpp(final_expr[dscqssdsc_cse_idx])}"""
+                )
                 # Loop through the chain terms
                 chain_string = []
                 for scqss_dep in scqss_item["scqss_dep"]:
@@ -1440,7 +1466,9 @@ class SymbolicMath:
                 )
 
                 # Get the dwdotdsc CSE string to start
-                start_string = f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
+                start_string = (
+                    f"""{self.convert_to_cpp(final_expr[dwdotdsc_cse_idx])}"""
+                )
                 # Loop through the chain terms
                 chain_string = []
                 for scqss in wdot_item["scqss_dep"]:
