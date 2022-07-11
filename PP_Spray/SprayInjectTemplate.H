@@ -205,12 +205,12 @@ SprayParticleContainer::sprayInjection(
             amrex::Real phi_1 = azi_lo + amrex::Random() * phi_range;
             // Determine the azimuthal angle for the spread
             amrex::Real phi_2 = 2. * M_PI * amrex::Random();
-#else
-            amrex::Real phi_1 = 0.;
-            amrex::Real phi_2 = 0.;
-#endif
             amrex::RealVect part_vel =
               jet_vel_comp(theta_1, phi_1, theta_2, phi_2);
+#else
+            amrex::Real thetas = theta_1 + theta_2;
+            amrex::RealVect part_vel(std::sin(thetas), std::cos(thetas));
+#endif
             AMREX_D_TERM(p.rdata(pstateVel) = jet_vel * part_vel[0];
                          , p.rdata(pstateVel + 1) = jet_vel * part_vel[1];
                          , p.rdata(pstateVel + 2) = jet_vel * part_vel[2];);
