@@ -76,6 +76,7 @@ public:
   AMREX_GPU_HOST_DEVICE
   virtual ManifoldModel model() = 0;
 
+  AMREX_GPU_HOST_DEVICE
   virtual ~ManifoldFunc() {}
 
 }; // class ManifoldFunc

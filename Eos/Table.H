@@ -254,6 +254,8 @@ namespace pele{
         out = 0.0;
       }
 
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
       virtual ManifoldModel model()
       {
         return tf_data->manmodel;

@@ -1,48 +1,17 @@
-#ifndef _NEURAL_NET_H_
-#define _NEURAL_NET_H_
+#ifndef _NEURAL_NET_HR_H_
+#define _NEURAL_NET_HR_H_
 
-#include <torch/script.h>
-#include <fstream>
-#include <sstream>
-#include <unordered_map>
-#include <cstring>
-#include <vector>
-#include "ManifoldFunc.H"
+#include "NeuralNetModelDef.H"
 
 namespace pele {
 namespace physics {
-
-namespace TensorParams
-{
-  // Whether we are on a GPU or not
-#ifdef AMREX_USE_GPUs
-  const torch::Device device = torch::kGPU;
-#else
-  const torch::Device device = torch::kCPU;
-#endif
-
-  // Set data type
-#ifdef BL_USE_FLOAT
-  const torch::ScalarType dtype = torch::kFloat32;
-#else
-  const torch::ScalarType dtype = torch::kFloat64;
-#endif
-
-  // Tensor creation options
-  const torch::TensorOptions tensoropt = torch::TensorOptions().dtype(dtype).device(device);
-}
-
+  
 class NNFuncParams: public ManFuncParams
 {
 public:
 
-  NNFuncParams()
-  {
-#ifdef AMREX_USE_GPU
-    amrex::Abort("Neural network derived manifolds do not support GPUs at this time.");
-#endif
-  }
-
+  NNFuncParams() {}
+  
   ~NNFuncParams() {}
 
   virtual void initialize()
@@ -53,27 +22,11 @@ public:
 
     std::string nn_filename;
     pp.get("filename", nn_filename);
+    
+    bool cmlm_net;
+    pp.get("cmlm_net", cmlm_net, false);
 
-    torch::jit::script::Module nnmodel;
-    try
-    {
-      // Deserialize the ScriptModule from a file using torch::jit::load().
-      nnmodel = torch::jit::load(amrex::trim(nn_filename));
-      // Convert to proper data type
-      nnmodel.to(TensorParams::dtype);
-      // Move to GPU if needed
-// #ifdef AMREX_USE_GPU
-//       nnmodel.to(device);
-// #endif
-    }
-    catch(const c10::Error& e)
-    {
-      amrex::Error("Unable to load neural network model for manifold EOS.");
-    }
-
-    // The nnmodel should be freed up automatically once it goes out of scope
-    // The code below clears the Torch GPU cache
-    // c10::cuda::CUDACachingAllocator::empty_cache();
+    NNModel nnmodel(nn_filename, cmlm_net);
 
     std::string info_filename;
     pp.get("info_filename", info_filename);
@@ -81,14 +34,34 @@ public:
     strncpy(m_h_nnf_data.nn_filename, nn_filename.c_str(), m_h_nnf_data.len_str*sizeof(char));
     m_h_nnf_data.nn_filename[m_h_nnf_data.len_str] = '\0';
 
-    m_h_nnf_data.nnmodel = nnmodel;
-
+    pack_model(nnmodel);
+    
     read_metadata(info_filename);
 
     pp.query("v", m_verbose);
-    if(m_verbose >= 1) print();
+    if(m_verbose >= 1)
+    {
+      print();
+      nnmodel.print();
+    }
 
     allocate();
+  }
+  
+  void pack_model(NNModel& nnmodel)
+  {
+    // Get sizes of buffers
+    int nreals, nints;
+    nnmodel.buffer_sizes_for_packing(nreals, nints);
+    
+    // Allocate memory for buffers so that they can be copied efficiently to the GPU
+    m_h_nnf_data.nnrdata = static_cast<amrex::Real*>(
+        amrex::The_Pinned_Arena()->alloc(nreals*sizeof(amrex::Real)));
+    m_h_nnf_data.nnidata = static_cast<int*>(
+        amrex::The_Pinned_Arena()->alloc(nints*sizeof(int)));
+        
+    // Pack model
+    nnmodel.pack(m_h_nnf_data.nnrdata, m_h_nnf_data.nnidata);
   }
 
   void read_metadata(std::string& info_filename)
@@ -315,16 +288,18 @@ public:
 
   virtual void allocate()
   {
-    // if(!m_device_allocated)
-    // {
-    //   m_d_nnf_data = static_cast<NNFuncData*>(amrex::The_Device_Arena()->alloc(sizeof(m_h_nnf_data)));
-    //   m_device_allocated = true;
-    //   sync_to_device();
-    // }
+    if(!m_device_allocated)
+    {
+      m_d_nnf_data = static_cast<NNFuncData*>(amrex::The_Device_Arena()->alloc(sizeof(m_h_nnf_data)));
+      m_device_allocated = true;
+      sync_to_device();
+    }
   }
 
   virtual void deallocate()
   {
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnrdata);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnidata);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.varnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.dimnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
@@ -332,29 +307,30 @@ public:
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_coeff);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.man_bias);
 
-    // if(m_device_allocated)
-    // {
-    //   amrex::The_Device_Arena()->free(m_d_nnf_data);
-    // }
+    if(m_device_allocated)
+    {
+      amrex::The_Device_Arena()->free(m_d_nnf_data);
+    }
   }
 
   virtual void sync_to_device()
   {
-    // if(!m_device_allocated)
-    // {
-    //   amrex::Abort("Device params not allocated yet");
-    // }
-    // else
-    // {
-    //   amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_nnf_data, &m_h_nnf_data + 1,
-    //                    m_d_nnf_data);
-    // }
+    if(!m_device_allocated)
+    {
+      amrex::Abort("Device params not allocated yet");
+    }
+    else
+    {
+      amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_nnf_data, &m_h_nnf_data + 1,
+                       m_d_nnf_data);
+    }
   }
 
   struct NNFuncData: ManFuncParams::ManFuncData
   {
+    amrex::Real* nnrdata; // Real data representing the NNModel
+    int* nnidata; // int data representing the NNModel
     char nn_filename[len_str+1]; // Path to neural network file
-    torch::jit::script::Module nnmodel;
     int Ncomb; // Number of variables that the manifold params are linear combinations of
     amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
     int* comb_idx; // Index of variable corresponding to each comb_coeff
@@ -369,8 +345,7 @@ public:
 
   virtual ManFuncData* device_manfunc_data()
   {
-    return &m_h_nnf_data;
-    // return m_d_nnf_data;
+    return m_d_nnf_data;
   }
 
   NNFuncData& host_nnfunc_data()
@@ -380,8 +355,7 @@ public:
 
   NNFuncData* device_nnfunc_data()
   {
-    return &m_h_nnf_data;
-    // return m_d_nnf_data;
+    return m_d_nnf_data;
   }
 
 private:
@@ -404,48 +378,74 @@ public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   NNFunc(NNFuncParams::NNFuncData* nnf_data_in)
+      : nnf_data{nnf_data_in}, nnmodel(nnf_data_in->nnrdata, nnf_data_in->nnidata)
   {
-    nnf_data = nnf_data_in;
+
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual void get_value(const int ivar, const amrex::Real indata[], amrex::Real& out)
   {
-    // Ostensibly cannot use from_blob because the indata array is const
-    torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt);
-    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
-    get_value(ivar, intensor, out);
+    // amrex::Print() << indata[0] << " " << indata[1] << std::endl;
+    out = nnmodel(indata)[ivar];
+    // amrex::Print() << out << std::endl;
+    // amrex::Print() << std::endl;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_values(const int nvar, const int ivar[], const amrex::Real indata[], amrex::Real out[])
+  virtual void get_values(const int nvar, const int ivar[], const amrex::Real indata[],
+      amrex::Real out[])
   {
-    // Ostensibly cannot use from_blob because the indata array is const
-    torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt);
-    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
-    get_values(nvar, ivar, intensor, out);
+    const amrex::Real* outdata = nnmodel(indata);
+    for(int i = 0; i < nvar; i++)
+    {
+      out[i] = (ivar[i] > 0) ? outdata[ivar[i]] : 0.0;  
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[])
   {
-    // Ostensibly cannot use from_blob because the indata array is const
-    torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt.requires_grad(true));
-    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
-    get_derivs(ivar, intensor, derivs);
+    // Use first-order finite difference approach for now
+    constexpr amrex::Real eps = 1e-5;
+    const amrex::Real outval0 = nnmodel(indata)[ivar];
+    amrex::Real diff;
+    
+    amrex::Real indata_copy[nnf_data->Ndim];
+    for(int i = 0; i < nnf_data->Ndim; i++)
+    {
+      indata_copy[i] = indata[i];
+    }
+    
+    for(int i = 0; i < nnf_data->Ndim; i++)
+    {
+      diff = (indata[i] != 0.0) ? eps*indata[i] : eps;
+      indata_copy[i] = indata[i] + diff;
+      derivs[i] = (nnmodel(indata_copy)[ivar] - outval0) / diff;
+      indata_copy[i] = indata[i];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
   {
-    // Ostensibly cannot use from_blob because the indata array is const
-    torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt);
-    std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
-    calculate_Wdot(paramidx, intensor, out);
+    const amrex::Real* outdata = nnmodel(indata);
+    
+    amrex::Real rr = 0.0;
+
+    for(int j = 0; j < nnf_data->Ncomb; j++)
+    {
+      const int& idx = nnf_data->comb_src_idx[paramidx*nnf_data->Ncomb + j];
+      const amrex::Real& coeff = nnf_data->comb_coeff[paramidx*nnf_data->Ncomb + j];
+      const amrex::Real src_term = (idx < 0) ? 0.0 : outdata[idx];
+      rr += coeff*src_term;
+    }
+
+    out = rr;
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -459,79 +459,11 @@ private:
 
   // Variables
   NNFuncParams::NNFuncData* nnf_data;
-
-  // Private helper functions
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  torch::Tensor eval_model(const torch::Tensor& indata)
-  {
-    return nnf_data->nnmodel.forward({indata}).toTensor()[0];
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  torch::Tensor eval_model(const int ivar, const torch::Tensor& indata)
-  {
-    return eval_model(indata)[ivar];
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void get_value(const int ivar, const torch::Tensor& indata, amrex::Real& out)
-  {
-    out = eval_model(ivar, indata).item<amrex::Real>();
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void get_values(const int nvar, const int ivar[], const torch::Tensor& indata, amrex::Real out[])
-  {
-    torch::Tensor predvars = eval_model(indata);
-    auto acc = predvars.accessor<amrex::Real,1>();
-
-    for (int i = 0; i < nvar; i++) {
-      out[i] = (ivar[i] > 0) ? acc[ivar[i]] : 0.0;
-    }
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void get_derivs(const int ivar, torch::Tensor& indata, amrex::Real derivs[])
-  {
-    torch::Tensor out_tensor = eval_model(ivar, indata);
-    out_tensor.backward();
-
-    auto grad = indata.grad();
-    auto acc = grad.accessor<amrex::Real,2>();
-
-    for(int i = 0; i < acc.size(1); i++)
-    {
-      derivs[i] = acc[0][i];
-    }
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void calculate_Wdot(const int paramidx, const torch::Tensor& indata, amrex::Real& out)
-  {
-    torch::Tensor predvars = eval_model(indata);
-    auto acc = predvars.accessor<amrex::Real,1>();
-
-    amrex::Real rr = 0.0;
-
-    for(int j = 0; j < nnf_data->Ncomb; j++)
-    {
-      const int& idx = nnf_data->comb_src_idx[paramidx*nnf_data->Ncomb + j];
-      const amrex::Real& coeff = nnf_data->comb_coeff[paramidx*nnf_data->Ncomb + j];
-      const amrex::Real src_term = (idx < 0) ? 0.0 : acc[idx];
-      rr += coeff*src_term;
-    }
-
-    out = rr;
-  }
+  NNModel nnmodel;
 
 }; // class NNFunc
-}  // namespace physics
-}  // namespace pele
+  
+} // namespace physics
+} // namespace pele
 
 #endif

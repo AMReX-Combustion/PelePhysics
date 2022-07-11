@@ -6,6 +6,8 @@
 
 #ifdef USE_LIBTORCH
 #include "NeuralNet.H"
+#else
+#include "NeuralNetHomerolled.H"
 #endif
 
 namespace pele {
@@ -235,13 +237,9 @@ struct Manifold
     }
     else
     {
-#ifdef USE_LIBTORCH
       NNFuncParams::NNFuncData* nnf_data =
           static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
       manfunc.reset(new pele::physics::NNFunc(nnf_data));
-#else
-      amrex::Error("Must set USE_LIBTORCH = TRUE to run with neural net manifold model.");
-#endif
     }
   }
 
