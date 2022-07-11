@@ -72,14 +72,16 @@ struct SootData
   }
 
   // Given an exponent numerator, return (nucl_vol)^(exp/3)
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real getNuclExp3(const int exp) const
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+  getNuclExp3(const int exp) const
   {
     int indx = exp + 3;
     return nve3[indx];
   }
 
   // Given an exponent numerator, return (nucl_vol)^(exp/6)
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real getNuclExp6(const int exp) const
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+  getNuclExp6(const int exp) const
   {
     int indx = exp + 3;
     return nve6[indx];
@@ -90,9 +92,19 @@ struct SootData
   ********************************************************************/
   // Compute the soot moment and species source terms
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void computeSrcTerms(
-    const amrex::Real& T, const amrex::Real& mu, const amrex::Real& rho, const amrex::Real& molarMass,
-    const amrex::Real& convT, const amrex::Real& betaNucl, const amrex::Real& colConst, amrex::Real xi_n[],
-    amrex::Real omega_src[], amrex::Real moments[], amrex::Real mom_src[], amrex::Real mom_fv[], const SootReaction* sr) const
+    const amrex::Real& T,
+    const amrex::Real& mu,
+    const amrex::Real& rho,
+    const amrex::Real& molarMass,
+    const amrex::Real& convT,
+    const amrex::Real& betaNucl,
+    const amrex::Real& colConst,
+    amrex::Real xi_n[],
+    amrex::Real omega_src[],
+    amrex::Real moments[],
+    amrex::Real mom_src[],
+    amrex::Real mom_fv[],
+    const SootReaction* sr) const
   {
     // Molar concentration of the PAH inception species
     amrex::Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
@@ -115,8 +127,7 @@ struct SootData
     amrex::Real k_ox = 0.;
     amrex::Real k_o2 = 0.;
     // Compute the species reaction source terms into omega_src
-    sr->chemicalSrc(
-       T, surf, xi_n, moments, k_sg, k_ox, k_o2, omega_src);
+    sr->chemicalSrc(T, surf, xi_n, moments, k_sg, k_ox, k_o2, omega_src);
     if (moments[1] * sc.V0 * pele::physics::Constants::Avna > 1.E-12) {
       // Add the surface growth source to mom_src
       surfaceGrowthMomSrc(k_sg, mom_fv, mom_src);
@@ -126,7 +137,9 @@ struct SootData
 
   // Nucleation source term
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void nucleationMomSrc(
-    const amrex::Real& betaNucl, const amrex::Real& dimerConc, amrex::Real mom_src[]) const
+    const amrex::Real& betaNucl,
+    const amrex::Real& dimerConc,
+    amrex::Real mom_src[]) const
   {
     const amrex::Real dimerConc2 = dimerConc * dimerConc;
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
@@ -156,12 +169,13 @@ struct SootData
       const amrex::Real vs1 = momS + 2. * sc.SootAs;
       const amrex::Real vv2 = momV + sc.SootAv;
       const amrex::Real vs2 = momS + sc.SootAs;
-      amrex::Real volTerm = fracMom(vv1 - 1., vs1, momFV) * getDimerExp6(3) +
-                     2. * fracMom(vv2 - 1., vs2, momFV) * getDimerExp6(5) +
-                     fracMom(momV - 1., momS, momFV) * getDimerExp6(7) +
-                     0.5 * fracMom(vv1 - 2., vs1, momFV) * getDimerExp6(9) +
-                     fracMom(vv2 - 2., vs2, momFV) * getDimerExp6(11) +
-                     0.5 * fracMom(momV - 2., momS, momFV) * getDimerExp6(13);
+      amrex::Real volTerm =
+        fracMom(vv1 - 1., vs1, momFV) * getDimerExp6(3) +
+        2. * fracMom(vv2 - 1., vs2, momFV) * getDimerExp6(5) +
+        fracMom(momV - 1., momS, momFV) * getDimerExp6(7) +
+        0.5 * fracMom(vv1 - 2., vs1, momFV) * getDimerExp6(9) +
+        fracMom(vv2 - 2., vs2, momFV) * getDimerExp6(11) +
+        0.5 * fracMom(momV - 2., momS, momFV) * getDimerExp6(13);
       const amrex::Real ss3 = momS + 3. * sc.SootFitE;
       const amrex::Real sv3 = momV - 2. * sc.SootFitE;
       const amrex::Real ss2 = ss3 + sc.SootAs;
@@ -184,14 +198,17 @@ struct SootData
 
   // Surface growth source term
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void surfaceGrowthMomSrc(
-    const amrex::Real& k_sg, const amrex::Real momFV[], amrex::Real mom_src[]) const
+    const amrex::Real& k_sg,
+    const amrex::Real momFV[],
+    amrex::Real mom_src[]) const
   {
     // Index of the weight of the delta function
     const int dwIndx = NUM_SOOT_MOMENTS;
     const amrex::Real weightDelta = momFV[dwIndx];
     const amrex::Real factor = sc.SootDensityC * sc.dVol * k_sg;
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
-      amrex::Real fact1 = fracMom(sc.MomOrderV[i] - 1., sc.MomOrderS[i] + 1., momFV);
+      amrex::Real fact1 =
+        fracMom(sc.MomOrderV[i] - 1., sc.MomOrderS[i] + 1., momFV);
       amrex::Real fact2 = fracMom(
         sc.MomOrderV[i] - 1. - 2. * sc.SootFitE,
         sc.MomOrderS[i] + 1. + 3. * sc.SootFitE, momFV);
@@ -257,7 +274,8 @@ struct SootData
   }
 
   // Clip moment values
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void clipMoments(amrex::Real moments[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+  clipMoments(amrex::Real moments[]) const
   {
     amrex::Real weightDelta = moments[NUM_SOOT_MOMENTS];
     const amrex::Real tolV = sc.smallWeight * nuclVol;
@@ -296,7 +314,8 @@ struct SootData
   }
 
   // Convert from CGS/SI to mol, clip moments, and convert back
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void momConvClipConv(amrex::Real mom[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+  momConvClipConv(amrex::Real mom[]) const
   {
     convertToMol(mom);
     clipMoments(mom);
@@ -328,7 +347,9 @@ struct SootData
     amrex::Real weightDelta2 = std::pow(momFV[dwIndx], 2);
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       // Coagulation does not change total volume
-      if (i == 1) continue;
+      if (i == 1) {
+        continue;
+      }
       // Collisions between two first mode particles
       // Collision model: pure coalescence
       // S_(0+0) = (144*pi)^(1/3)*V0^(2/3)
@@ -336,10 +357,11 @@ struct SootData
       amrex::Real ss_fm = C_fm * ssfmCF[i] * weightDelta2;
       // Continuum regime
       amrex::Real ss_cn = 4. * C_cn * (1. + 1.257 * lambda * getNuclExp3(-1)) *
-                   sscnCF[i] * weightDelta2;
+                          sscnCF[i] * weightDelta2;
       amrex::Real prodss = ss_fm * ss_cn;
       // Harmonic mean for transitional regime
-      amrex::Real ss = (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
+      amrex::Real ss =
+        (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
 
       // Collision between a particle in each mode
       // Collision model: "Splashing"
@@ -352,7 +374,8 @@ struct SootData
       amrex::Real sl_cn = C_cn * CNCoagSL(i, lambda, momFV);
       amrex::Real prodsl = sl_fm * sl_cn;
       // Harmonic mean for transitional regime
-      amrex::Real sl = (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
+      amrex::Real sl =
+        (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
 
       // Collision between two second mode particles
       // Collision model: Pure aggregation
@@ -363,7 +386,8 @@ struct SootData
       amrex::Real ll_cn = C_cn * CNCoagLL(i, lambda, momFV);
       amrex::Real prodll = ll_fm * ll_cn;
       // Harmonic mean for transitional regime
-      amrex::Real ll = (std::abs(prodll) == tol) ? 0. : prodll / (ll_fm + ll_cn);
+      amrex::Real ll =
+        (std::abs(prodll) == tol) ? 0. : prodll / (ll_fm + ll_cn);
       mom_src[i] += (ss + sl + ll);
     }
     // Free molecular regime
@@ -460,12 +484,15 @@ struct SootData
   }
 
   // Moment interpolation
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real
-  fracMomLarge(const amrex::Real volOrd, const amrex::Real surfOrd, const amrex::Real momFV[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real fracMomLarge(
+    const amrex::Real volOrd,
+    const amrex::Real surfOrd,
+    const amrex::Real momFV[]) const
   {
     // Weight of the delta function
     amrex::Real dwVal = momFV[NUM_SOOT_MOMENTS];
-    amrex::Real factor = std::pow(nuclVol, volOrd) * std::pow(nuclSurf, surfOrd);
+    amrex::Real factor =
+      std::pow(nuclVol, volOrd) * std::pow(nuclSurf, surfOrd);
     if (momFV[NUM_SOOT_MOMENTS + 1] == 0.) {
       return factor * 1.E-60;
     }
@@ -475,17 +502,20 @@ struct SootData
   }
 
   // Moment interpolation
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real
-  fracMom(const amrex::Real volOrd, const amrex::Real surfOrd, const amrex::Real momFV[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real fracMom(
+    const amrex::Real volOrd,
+    const amrex::Real surfOrd,
+    const amrex::Real momFV[]) const
   {
     // If modeCoef = 0.; only first mode is used
     // If modeCoef = 1.; both modes are used
     const amrex::Real modeCoef = momFV[NUM_SOOT_MOMENTS + 1];
-    amrex::Real bothPFact = momFV[NUM_SOOT_MOMENTS] * std::pow(nuclVol, volOrd) *
-                     std::pow(nuclSurf, surfOrd) * modeCoef;
+    amrex::Real bothPFact = momFV[NUM_SOOT_MOMENTS] *
+                            std::pow(nuclVol, volOrd) *
+                            std::pow(nuclSurf, surfOrd) * modeCoef;
 #if NUM_SOOT_MOMENTS == 3
     amrex::Real peak = std::pow(momFV[0], 1. - volOrd - surfOrd) *
-                std::pow(momFV[1], volOrd) * std::pow(momFV[2], surfOrd);
+                       std::pow(momFV[1], volOrd) * std::pow(momFV[2], surfOrd);
     return bothPFact + peak;
 #elif NUM_SOOT_MOMENTS == 6
     amrex::Real prod = momFV[0];
@@ -563,7 +593,8 @@ struct SootData
       fracMomLarge(VF_ab[0] + 0.5, SF_ab[0], momFV),
       fracMomLarge(VF_ab[1] + 0.5, SF_ab[1], momFV),
       fracMomLarge(VF_ab[2] + 0.5, SF_ab[2], momFV)};
-    amrex::Real psi1 = xy_M[0] * ab_M[0] + 2. * xy_M[1] * ab_M[1] + xy_M[2] * ab_M[2];
+    amrex::Real psi1 =
+      xy_M[0] * ab_M[0] + 2. * xy_M[1] * ab_M[1] + xy_M[2] * ab_M[2];
     amrex::Real psi2_1 =
       xy_P[0] * ab_M[0] + 2. * xy_P[1] * ab_M[1] + xy_P[2] * ab_M[2];
     amrex::Real psi2_2 =
@@ -602,7 +633,8 @@ struct SootData
                psiSL(2. * fact1 - 2., -3. * fact1 + 2., 2., 0., momFV) -
              psiSL(0., 0., 0., 2., momFV);
     default:
-      amrex::Abort("SootModel::FMCoagSL: Moment not contained in number of moments!");
+      amrex::Abort(
+        "SootModel::FMCoagSL: Moment not contained in number of moments!");
     }
     return 0.;
   }
@@ -627,7 +659,8 @@ struct SootData
     case 5: // M02
       return psiLL(0., 1., 0., 1., momFV);
     default:
-      amrex::Abort("SootModel::FMCoagLL: Moment not contained in number of moments!");
+      amrex::Abort(
+        "SootModel::FMCoagLL: Moment not contained in number of moments!");
     }
     return 0.;
   }
@@ -635,8 +668,8 @@ struct SootData
   // Continuum coagulation source terms
   // Small-Large: "Splashing"
   // Large-Large: Pure aggregation
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real
-  CNCoagSL(const int i, const amrex::Real& lambda, const amrex::Real momFV[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real CNCoagSL(
+    const int i, const amrex::Real& lambda, const amrex::Real momFV[]) const
   {
     const amrex::Real weightDelta = momFV[NUM_SOOT_MOMENTS];
     // Mean free path for finite Knudsen number correction in continuum regime
@@ -729,7 +762,8 @@ struct SootData
     amrex::Real xy_1 = fracMomLarge(x, y, momFV);
     amrex::Real xy_2 = fracMomLarge(x - sc.SootAv, y - sc.SootAs, momFV);
     amrex::Real xy_3 = fracMomLarge(x + sc.SootAv, y + sc.SootAs, momFV);
-    amrex::Real xy_4 = fracMomLarge(x - 2. * sc.SootAv, y - 2. * sc.SootAs, momFV);
+    amrex::Real xy_4 =
+      fracMomLarge(x - 2. * sc.SootAv, y - 2. * sc.SootAs, momFV);
     amrex::Real n_1 = getNuclExp3(n[0]);
     amrex::Real n_2 = getNuclExp3(n[1]);
     amrex::Real n_3 = getNuclExp3(n[2]);
@@ -738,8 +772,8 @@ struct SootData
            1.257 * lambda * (xy_1 * n_3 + xy_2 * n_1 + xy_3 * n_4 + xy_4 * n_2);
   }
 
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real
-  CNCoagLL(const int i, const amrex::Real& lambda, const amrex::Real momFV[]) const
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real CNCoagLL(
+    const int i, const amrex::Real& lambda, const amrex::Real momFV[]) const
   {
     switch (i) {
     case 0: // M00
@@ -759,7 +793,10 @@ struct SootData
   }
 
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real CNCoagLLFunc(
-    const amrex::Real x, const amrex::Real y, const amrex::Real& lambda, const amrex::Real momFV[]) const
+    const amrex::Real x,
+    const amrex::Real y,
+    const amrex::Real& lambda,
+    const amrex::Real momFV[]) const
   {
     const amrex::Real stav = sc.SootAv;
     const amrex::Real stas = sc.SootAs;

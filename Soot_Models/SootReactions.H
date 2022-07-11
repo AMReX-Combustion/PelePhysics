@@ -81,7 +81,8 @@ struct SootReaction
       w_bkwd[i] = k_bkwd[i] * bkwdM;
     }
     // TODO: This will depend on the surface reactions, currently hardcoded
-    amrex::Real fSootStar = computeRadSiteConc(xi_n, k_fwd.data(), k_bkwd.data());
+    amrex::Real fSootStar =
+      computeRadSiteConc(xi_n, k_fwd.data(), k_bkwd.data());
     computeSurfRates(w_fwd.data(), w_bkwd.data(), fSootStar, k_sg, k_ox, k_o2);
     // Determine the concentration of hydrogenated and radical soot surface
     // sites Quasi-steady state for surface radical sites on soot
@@ -121,7 +122,9 @@ struct SootReaction
   // Return fSootStar, fraction of hydrogenated sites
   // that are radical sites
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real computeRadSiteConc(
-    const amrex::Real xi_n[], const amrex::Real k_fwd[], const amrex::Real k_bkwd[]) const
+    const amrex::Real xi_n[],
+    const amrex::Real k_fwd[],
+    const amrex::Real k_bkwd[]) const
   {
     amrex::Real C_OH = xi_n[SootGasSpecIndx::indxOH];
     amrex::Real C_H = xi_n[SootGasSpecIndx::indxH];

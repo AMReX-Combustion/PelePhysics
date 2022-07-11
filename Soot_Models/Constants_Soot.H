@@ -96,14 +96,15 @@ struct SootConst
   amrex::GpuArray<amrex::Real, 6> MomOrderS = {{0., 0., 1., 0., 1., 2.}};
 #endif
   // Volume of smallest soot particles, units L^3
-  amrex::Real V0 = SootMolarMass / (pele::physics::Constants::Avna * SootDensity);
+  amrex::Real V0 =
+    SootMolarMass / (pele::physics::Constants::Avna * SootDensity);
   // Surface area of smallest soot particles, units L^2
   amrex::Real S0 = std::pow(36. * M_PI, 1. / 3.) * std::pow(V0, 2. / 3.);
   // Surface density (mol of C)
   amrex::Real SootDensityC = SootChi * S0;
   // Pi*R/(2*A*rho_soot)
   amrex::Real colFact = M_PI * pele::physics::Constants::RU /
-                 (2. * pele::physics::Constants::Avna * SootDensity);
+                        (2. * pele::physics::Constants::Avna * SootDensity);
   // (M_soot/(A*rho_soot))^2/3
   amrex::Real colFact23 = std::pow(V0, 2. / 3.);
   // (M_soot/(A*rho_soot))^1/6, units sqrt(L)

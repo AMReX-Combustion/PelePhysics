@@ -66,7 +66,9 @@ public:
   //
   // Estimate the soot time step
   //
-  amrex::Real estSootDt(const amrex::Box& vbox, amrex::Array4<const amrex::Real> const& Qstate) const;
+  amrex::Real estSootDt(
+    const amrex::Box& vbox,
+    amrex::Array4<const amrex::Real> const& Qstate) const;
 
   //
   // Access gas phase species name
