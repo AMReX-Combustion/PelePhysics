@@ -249,106 +249,67 @@ class SymbolicMath:
 
     # @profile
     def convert_to_cpp(self, sym_smp):
-        """Convert sympy object to C code compatible string."""
-        if self.remove_pow and self.remove_pow10:
-            cppcode = smp.ccode(
-                sym_smp,
-                user_functions={
-                    "Pow": [
-                        (
-                            lambda b, e: (e.is_Integer or e.is_Float)
-                            and (
-                                abs(e - 1) < 1e-16
-                                or abs(e - 2) < 1e-16
-                                or abs(e - 3) < 1e-16
-                            ),
-                            lambda b, e: "("
-                            + "*".join(["(" + b + ")"] * int(float(e)))
-                            + ")",
-                        ),
-                        (
-                            lambda b, e: (e.is_Integer or e.is_Float)
-                            and (
-                                abs(e + 1) < 1e-16
-                                or abs(e + 2) < 1e-16
-                                or abs(e + 3) < 1e-16
-                            ),
-                            lambda b, e: "("
-                            + "1.0/"
-                            + "("
-                            + "*".join(["(" + b + ")"] * int(-float(e)))
-                            + ")"
-                            + ")",
-                        ),
-                        # (
-                        #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
-                        #    lambda b, e: ""
-                        #    + "exp10("+e+")"
-                        #    + "",
-                        # ),
-                        (
-                            lambda b, e: (b.is_Integer or b.is_Float)
-                            and (abs(b - 10) < 1e-16),
-                            lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
-                        ),
-                        (lambda b, e: not e.is_Integer, "pow"),
-                    ]
-                },
+        """Convert sympy object to C code compatible string.
+        Also apply some formatting.
+        """
+
+        user_functions = {}
+
+        if self.remove_pow or self.remove_pow10:
+            user_functions["Pow"] = []
+
+        if self.remove_pow:
+            # Positive exponents
+            user_functions["Pow"].append(
+                (
+                    lambda b, e: (e.is_Integer or e.is_Float)
+                    and (
+                        abs(e - 1) < 1e-16
+                        or abs(e - 2) < 1e-16
+                        or abs(e - 3) < 1e-16
+                    ),
+                    lambda b, e: "("
+                    + "*".join(["(" + b + ")"] * int(float(e)))
+                    + ")",
+                )
             )
-        elif self.remove_pow:
-            cppcode = smp.ccode(
-                sym_smp,
-                user_functions={
-                    "Pow": [
-                        (
-                            lambda b, e: (e.is_Integer or e.is_Float)
-                            and (
-                                abs(e - 1) < 1e-16
-                                or abs(e - 2) < 1e-16
-                                or abs(e - 3) < 1e-16
-                            ),
-                            lambda b, e: "("
-                            + "*".join(["(" + b + ")"] * int(float(e)))
-                            + ")",
-                        ),
-                        (
-                            lambda b, e: (e.is_Integer or e.is_Float)
-                            and (
-                                abs(e + 1) < 1e-16
-                                or abs(e + 2) < 1e-16
-                                or abs(e + 3) < 1e-16
-                            ),
-                            lambda b, e: "("
-                            + "1.0/"
-                            + "("
-                            + "*".join(["(" + b + ")"] * int(-float(e)))
-                            + ")"
-                            + ")",
-                        ),
-                        (lambda b, e: not e.is_Integer, "pow"),
-                    ]
-                },
+            # Negative exponents
+            user_functions["Pow"].append(
+                (
+                    lambda b, e: (e.is_Integer or e.is_Float)
+                    and (
+                        abs(e + 1) < 1e-16
+                        or abs(e + 2) < 1e-16
+                        or abs(e + 3) < 1e-16
+                    ),
+                    lambda b, e: "("
+                    + "1.0/"
+                    + "("
+                    + "*".join(["(" + b + ")"] * int(-float(e)))
+                    + ")"
+                    + ")",
+                )
             )
-        elif self.remove_pow10:
-            cppcode = smp.ccode(
-                sym_smp,
-                user_functions={
-                    "Pow": [
-                        # (
-                        #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
-                        #    lambda b, e: ""
-                        #    + "exp10("+e+")"
-                        #    + "",
-                        # ),
-                        (
-                            lambda b, e: (b.is_Integer or b.is_Float)
-                            and (abs(b - 10) < 1e-16),
-                            lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
-                        ),
-                        (lambda b, e: not e.is_Integer, "pow"),
-                    ]
-                },
+
+        if self.remove_pow10:
+            user_functions["Pow"].append(
+                # (
+                #    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b-10)<1e-16),
+                #    lambda b, e: ""
+                #    + "exp10("+e+")"
+                #    + "",
+                # ),
+                (
+                    lambda b, e: (b.is_Integer or b.is_Float)
+                    and (abs(b - 10) < 1e-16),
+                    lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
+                )
             )
+
+        if self.remove_pow or self.remove_pow10:
+            user_functions["Pow"].append((lambda b, e: "pow"))
+            cppcode = smp.ccode(sym_smp, user_functions=user_functions)
+
         else:
             cppcode = sme.ccode(sym_smp)
 
