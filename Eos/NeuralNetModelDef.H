@@ -161,6 +161,12 @@ public:
     file.close();
     
     AMREX_ALWAYS_ASSERT(num_layers > 0);
+    if(cmlm_net)
+    {
+      AMREX_ALWAYS_ASSERT(num_layers == 7);
+      AMREX_ALWAYS_ASSERT(lsizes[0] == lsizes[5]);
+      AMREX_ALWAYS_ASSERT(lsizes[0] == maxsize);
+    }
   }
   
   AMREX_GPU_HOST_DEVICE

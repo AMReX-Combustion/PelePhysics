@@ -22,9 +22,14 @@ public:
 
     std::string nn_filename;
     pp.get("filename", nn_filename);
+    std::string ext = amrex::trim(nn_filename).substr(nn_filename.length()-4);
+    if(ext != ".pnn")
+    {
+      amrex::Abort("Home-rolled neural net file should have .pnn extension.");
+    }
     
-    bool cmlm_net;
-    pp.get("cmlm_net", cmlm_net, false);
+    bool cmlm_net = false;
+    pp.query("cmlm_net", cmlm_net);
 
     NNModel nnmodel(nn_filename, cmlm_net);
 
