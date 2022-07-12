@@ -264,6 +264,7 @@ dfdxi(
 
   return a1 + a4 * eta + a5 * zeta + a7 * eta * zeta;
 #else
+  amrex::ignore_unused(zeta);
   return a1 + a4 * eta;
 #endif
 }
@@ -291,6 +292,7 @@ dfdeta(
 
   return a2 + a4 * xi + a6 * zeta + a7 * xi * zeta;
 #else
+  amrex::ignore_unused(zeta);
   return a2 + a4 * xi;
 #endif
 }
@@ -372,6 +374,7 @@ get_interp_mapping(
     amrex::Real new_eta = eta - detJ_eta / detJ;
     amrex::Real new_zeta = zeta - detJ_zeta / detJ;
 #else
+    amrex::ignore_unused(zeta);
     amrex::Real detJ = df0dxi * df1deta - df0deta * df1dxi;
 
     amrex::Real detJ_xi = f0 * df1deta - f1 * df0deta;
