@@ -440,6 +440,7 @@ class Converter:
         cw.writer(fstream, "*/")
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("Species"))
+        nb_ions = 0
         for species in self.species_info.nonqssa_species_list:
             s = species.strip()
             # Ionic species
@@ -456,11 +457,17 @@ class Converter:
                 "#define %s_ID %d"
                 % (s, self.species_info.ordered_idx_map[species]),
             )
+            if s[-1] == "n" or s[-1] == "p" or s == "E":
+                nb_ions += 1
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
         cw.writer(
             fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
         )
+        if nb_ions > 0:
+            cw.writer(
+                fstream, "#define NUM_IONS %d" % (nb_ions)
+            )
         cw.writer(
             fstream,
             "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),
