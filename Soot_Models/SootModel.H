@@ -26,15 +26,6 @@ public:
   SootModel();
 
   //
-  // Copy constructor
-  //
-  // SootModel(SootModel& soot_model)
-  // {
-  //   readSootParams();
-  //   define();
-  // }
-
-  //
   // Destructor
   //
   ~SootModel()
