@@ -231,7 +231,7 @@ public:
     : mean_dia(a_mean), std_dia(a_std)
   {
   }
-  amrex::Real get_dia() { return amrex::RandomNormal(mean_dia, std_dia); }
+  amrex::Real get_dia() const { return amrex::RandomNormal(mean_dia, std_dia); }
 };
 
 // Log-normal distribution
@@ -250,7 +250,7 @@ public:
     log_std = std::sqrt(
       amrex::max(-2. * std::log(a_mean) + std::log(stdsq + meansq), 0.));
   }
-  amrex::Real get_dia()
+  amrex::Real get_dia() const
   {
     return std::exp(amrex::RandomNormal(log_mean, log_std));
   }
@@ -268,7 +268,7 @@ public:
     : mean_dia(a_mean), k(a_k)
   {
   }
-  amrex::Real get_dia()
+  amrex::Real get_dia() const
   {
     amrex::Real fact =
       -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));

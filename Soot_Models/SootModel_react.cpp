@@ -20,7 +20,7 @@ SootModel::initializeReactData()
   m_sootReact->SootChi = sc.SootChi;
   // Be sure that all other member data has been filled
   AMREX_ASSERT(m_memberDataDefined);
-  if (m_sootVerbosity) {
+  if (m_sootVerbosity >= 1) {
     Print() << "SootModel::initializeReactData(): Filling reaction data"
             << std::endl;
   }

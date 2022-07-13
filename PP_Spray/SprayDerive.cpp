@@ -10,7 +10,7 @@ SprayParticleContainer::computeDerivedVars(
   const int level,
   const int start_indx,
   const Vector<std::string> derivePlotVars,
-  std::string* sprayFuelNames)
+  const std::string* sprayFuelNames)
 {
   const int derivePlotVarCount = int(derivePlotVars.size());
   AMREX_ALWAYS_ASSERT(mf_var.nComp() >= derivePlotVarCount);

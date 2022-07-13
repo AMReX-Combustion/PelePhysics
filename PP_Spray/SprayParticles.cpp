@@ -15,9 +15,9 @@ using namespace amrex;
 void
 getInpCoef(
   Real* coef,
-  ParmParse& ppp,
-  std::string fuel_name,
-  std::string varname,
+  const ParmParse& ppp,
+  const std::string& fuel_name,
+  const std::string& varname,
   const int spf)
 {
   std::string psat_read = fuel_name + "_" + varname;

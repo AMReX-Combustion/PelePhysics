@@ -21,14 +21,15 @@ struct SootComps
   int engIndx = -1;
   int specIndx = -1;
   int sootIndx = -1;
-  bool checkIndices()
+  bool checkIndices() const
   {
+    bool check = true;
     if (
       qRhoIndx < 0 || qTempIndx < 0 || qSpecIndx < 0 || qSootIndx < 0 ||
       rhoIndx < 0 || engIndx < 0 || specIndx < 0 || sootIndx < 0) {
-      return false;
+      check = false;
     }
-    return true;
+    return check;
   }
 };
 

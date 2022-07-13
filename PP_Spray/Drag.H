@@ -48,7 +48,7 @@ calcHeatCoeff(
     error = std::abs(B_T - B_T_old);
     k++;
   }
-  logB = std::log(1. + B_T);
+  logB = std::log1p(B_T);
   invFT = B_T / (logB * std::pow(1. + B_T, 0.7));
   Nu_num = 2. + NU2 * invFT;
   return Nu_num * logB / B_T;
@@ -91,7 +91,7 @@ calcFlashVaporRate(
   amrex::Real error = 100.;
   while (error > tol) {
     amrex::Real Gold = Grat;
-    G = coeff / (1. + Grat) * std::log(1. + (1. + Grat) * B_T);
+    G = coeff / (1. + Grat) * std::log1p((1. + Grat) * B_T);
     Grat = Gf / G;
     error = std::abs(Grat - Gold) / Gold;
   }
@@ -358,7 +358,7 @@ calculateSpraySource(
       // TODO: determine best way for multi-component flash boiling
       if (T_part > Tboil) {
         amrex::Real B_T = cp_skin * (gpv.T_fluid - T_part) / L_fuel[maxY];
-        amrex::Real logBT = std::log(1. + B_T);
+        amrex::Real logBT = std::log1p(B_T);
         amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));
         amrex::Real Nu_star = 2. + (Nu_0 - 2.) * invFT;
         Nu_num = Nu_star * logBT / B_T;
@@ -381,7 +381,7 @@ calculateSpraySource(
       } else {
         // Normal evaporation
         amrex::Real Sc_skin = mu_skin / rhoDtotal;
-        amrex::Real logB = std::log(1. + B_M);
+        amrex::Real logB = std::log1p(B_M);
         amrex::Real invFM = B_M / (logB * std::pow(1. + B_M, 0.7));
         amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
         amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;

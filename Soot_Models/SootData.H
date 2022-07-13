@@ -541,8 +541,8 @@ struct SootData
   {
     const amrex::Real weightDelta = momFV[NUM_SOOT_MOMENTS];
     const amrex::Real factor = weightDelta * std::pow(nuclVol, a + 2. / 3. * b);
-    amrex::Real VF[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
-    amrex::Real SF[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
+    const amrex::Real VF[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
+    const amrex::Real SF[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
     const amrex::Real FML_1 = fracMomLarge(VF[0] - 0.5, SF[0], momFV);
     const amrex::Real FML_2 = fracMomLarge(VF[1] - 0.5, SF[1], momFV);
     const amrex::Real FML_3 = fracMomLarge(VF[2] - 0.5, SF[2], momFV);
@@ -573,31 +573,31 @@ struct SootData
     const amrex::Real b,
     const amrex::Real momFV[]) const
   {
-    amrex::Real VF_xy[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
-    amrex::Real SF_xy[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
-    amrex::Real VF_ab[3] = {a, sc.SootAv + a, 2. * sc.SootAv + a};
-    amrex::Real SF_ab[3] = {b, sc.SootAs + b, 2. * sc.SootAs + b};
-    amrex::Real xy_M[3] = {
+    const amrex::Real VF_xy[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
+    const amrex::Real SF_xy[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
+    const amrex::Real VF_ab[3] = {a, sc.SootAv + a, 2. * sc.SootAv + a};
+    const amrex::Real SF_ab[3] = {b, sc.SootAs + b, 2. * sc.SootAs + b};
+    const amrex::Real xy_M[3] = {
       fracMomLarge(VF_xy[0] - 0.5, SF_xy[0], momFV),
       fracMomLarge(VF_xy[1] - 0.5, SF_xy[1], momFV),
       fracMomLarge(VF_xy[2] - 0.5, SF_xy[2], momFV)};
-    amrex::Real xy_P[3] = {
+    const amrex::Real xy_P[3] = {
       fracMomLarge(VF_xy[0] + 0.5, SF_xy[0], momFV),
       fracMomLarge(VF_xy[1] + 0.5, SF_xy[1], momFV),
       fracMomLarge(VF_xy[2] + 0.5, SF_xy[2], momFV)};
-    amrex::Real ab_M[3] = {
+    const amrex::Real ab_M[3] = {
       fracMomLarge(VF_ab[0] - 0.5, SF_ab[0], momFV),
       fracMomLarge(VF_ab[1] - 0.5, SF_ab[1], momFV),
       fracMomLarge(VF_ab[2] - 0.5, SF_ab[2], momFV)};
-    amrex::Real ab_P[3] = {
+    const amrex::Real ab_P[3] = {
       fracMomLarge(VF_ab[0] + 0.5, SF_ab[0], momFV),
       fracMomLarge(VF_ab[1] + 0.5, SF_ab[1], momFV),
       fracMomLarge(VF_ab[2] + 0.5, SF_ab[2], momFV)};
-    amrex::Real psi1 =
+    const amrex::Real psi1 =
       xy_M[0] * ab_M[0] + 2. * xy_M[1] * ab_M[1] + xy_M[2] * ab_M[2];
-    amrex::Real psi2_1 =
+    const amrex::Real psi2_1 =
       xy_P[0] * ab_M[0] + 2. * xy_P[1] * ab_M[1] + xy_P[2] * ab_M[2];
-    amrex::Real psi2_2 =
+    const amrex::Real psi2_2 =
       xy_M[0] * ab_P[0] + 2. * xy_M[1] * ab_P[1] + xy_M[2] * ab_P[2];
     return std::sqrt(psi1 * (psi2_1 + psi2_2));
   }
@@ -648,9 +648,8 @@ struct SootData
     switch (i) {
     case 0: // M00
       return -0.5 * psiLL(0., 0., 0., 0., momFV);
-    case 1: // M10
-      return 0.;
-    case 2: // M01
+    case 1:
+    case 2: // M10 M01
       return 0.;
     case 3: // M20
       return psiLL(1., 0., 1., 0., momFV);
@@ -778,9 +777,8 @@ struct SootData
     switch (i) {
     case 0: // M00
       return -0.5 * CNCoagLLFunc(0., 0., lambda, momFV);
-    case 1: // M10
-      return 0.;
-    case 2: // M01
+    case 1:
+    case 2: // M10 M01
       return 0.;
     case 3: // M20
       return CNCoagLLFunc(1., 0., lambda, momFV);

@@ -46,8 +46,8 @@ public:
   SprayParticleContainer(
     amrex::AmrCore* amr,
     amrex::BCRec* _phys_bc,
-    SprayData fdat,
-    SprayComps SPI,
+    const SprayData& fdat,
+    const SprayComps& SPI,
     amrex::Real wall_temp,
     amrex::Real part_cfl = -1.)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
@@ -154,7 +154,7 @@ public:
     const int level,
     const int start_indx,
     const amrex::Vector<std::string> derivePlotVars,
-    std::string* sprayFuelNames);
+    const std::string* sprayFuelNames);
 
   ///
   /// Compute a maximum time step based on the particle velocities and a

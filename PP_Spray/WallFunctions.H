@@ -26,8 +26,9 @@ tile_at_bndry(
     boxlo.growLo(dir, 1);
     amrex::Box boxhi(in_box);
     boxhi.growHi(dir, 1);
-    if ((!domain.contains(boxlo) && bndry_lo[dir] != 0) ||
-        (!domain.contains(boxhi) && bndry_hi[dir] != 0)) {
+    if (
+      (!domain.contains(boxlo) && bndry_lo[dir] != 0) ||
+      (!domain.contains(boxhi) && bndry_hi[dir] != 0)) {
       at_bndry = true;
     }
   }
@@ -341,8 +342,8 @@ void
 droplet_splashing(
   splash_type& splash_flag,
   SprayParticleContainer::ParticleType& p,
-  SprayComps SPI,
-  SprayData fdat,
+  const SprayComps& SPI,
+  const SprayData& fdat,
   const amrex::RealVect pvel,
   const amrex::Real par_dot_EB,
   const amrex::Real Nw_Vp,
@@ -464,8 +465,8 @@ AMREX_INLINE
 void
 impose_wall(
   SprayParticleContainer::ParticleType& p,
-  SprayComps SPI,
-  SprayData fdat,
+  const SprayComps& SPI,
+  const SprayData& fdat,
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
   const amrex::Real T_wall,
@@ -478,7 +479,7 @@ impose_wall(
 //  amrex::RandomEngine const& engine) // Degrades performance significantly
 {
   const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-  splash_type splash_flag = splash_type::no_impact;
+  splash_type splash_flag;
   amrex::RealVect pvel = {AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2))};

@@ -27,10 +27,12 @@ using namespace amrex;
 SootModel::SootModel()
   : m_sootVerbosity(0),
     m_setIndx(false),
-    m_sootData(nullptr),
-    m_sootReact(nullptr),
-    d_sootData(nullptr),
-    d_sootReact(nullptr),
+    m_sootData(new SootData{}),
+    m_sootReact(new SootReaction{}),
+    d_sootData(
+      static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)))),
+    d_sootReact(static_cast<SootReaction*>(
+      amrex::The_Arena()->alloc(sizeof(SootReaction)))),
     m_readSootParams(false),
     m_memberDataDefined(false),
     m_conserveMass(true),
@@ -43,12 +45,6 @@ SootModel::SootModel()
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {
-  m_sootData = new SootData{};
-  m_sootReact = new SootReaction{};
-  d_sootData =
-    static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)));
-  d_sootReact =
-    static_cast<SootReaction*>(amrex::The_Arena()->alloc(sizeof(SootReaction)));
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";
   m_sootVarName[1] = "soot_fv";
@@ -80,7 +76,7 @@ SootModel::define()
   // Names of PAH species
   // TODO: Currently can only handle naphthalene(C10H8), phenathrene(C14H10),
   // and pyrene(C16H10) and can only handle 1 PAH inception species
-  std::string PAH_names[] = {"A2", "A3", "A4"};
+  const std::string PAH_names[] = {"A2", "A3", "A4"};
   // Corresponding sticking coefficients
   const Real PAH_gammas[] = {0.002, 0.015, 0.025};
   // Average number of C atoms per PAH species
