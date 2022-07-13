@@ -552,11 +552,11 @@ eb_interp(
       int lc = 0;
 
 #if AMREX_SPACEDIM == 3
-      for (kk = -1; kk < 1; kk++)
+      for (int kk = -1; kk < 1; kk++)
 #endif
       {
-        for (jj = -1; jj < 1; jj++) {
-          for (ii = -1; ii < 1; ii++) {
+        for (int jj = -1; jj < 1; jj++) {
+          for (int ii = -1; ii < 1; ii++) {
             AMREX_D_TERM(
               nodes[lc][0] =
                 (ic + ii + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 0)) * dx[0];
