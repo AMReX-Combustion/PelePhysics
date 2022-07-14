@@ -98,7 +98,7 @@ class Converter:
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
-                tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight)
+                tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight, species.charge)
                 self.species_info.all_species.append(tempsp)
                 self.species_info.nonqssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
@@ -268,6 +268,8 @@ class Converter:
             cck.ckwxp(hdr, self.mechanism, self.species_info)
             cck.ckwyr(hdr, self.mechanism, self.species_info)
             cck.ckwxr(hdr, self.mechanism, self.species_info)
+            cck.ckchrg(hdr, self)
+            cck.ckchrgmass(hdr, self.species_info)
             cth.dthermodtemp(hdr, self.mechanism, self.species_info)
             # Approx analytical jacobian
             cj.ajac(
