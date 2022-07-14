@@ -2856,7 +2856,7 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream, "int kchrg[%d];" % (n_species))
     cw.writer(fstream, "CKCHRG(kchrg);")
     cw.writer(fstream)
-    cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(fstream, "zk[id] = %.8e * %.8e * kchrg[id] * imw[id];" % (cc.Na, cc.qc))
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")

@@ -1658,7 +1658,7 @@ CKCHRGMASS(amrex::Real* zk)
   int kchrg[5];
   CKCHRG(kchrg);
 
-  for (id = 0; id < 5; ++id) {
+  for (int id = 0; id < 5; ++id) {
     zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
