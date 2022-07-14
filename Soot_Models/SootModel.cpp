@@ -35,15 +35,20 @@ SootModel::SootModel()
       amrex::The_Arena()->alloc(sizeof(SootReaction)))),
     m_readSootParams(false),
     m_memberDataDefined(false),
-    m_conserveMass(true),
+    m_conserveMass(false),
     m_PAHindx(-1),
+    m_inceptPAH(""),
+    m_PAHname(""),
+    m_gammaStick(-1.),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     m_Xcutoff(-1.),
     m_Tcutoff(-1.),
     m_maxSubcycles(20),
     m_numSubcycles(1),
     m_reactDataFilled(false),
-    m_gasSpecNames(NUM_SOOT_GS, "")
+    m_gasSpecNames(NUM_SOOT_GS, ""),
+    m_betaDimerFact(0.),
+    m_betaNuclFact(0.)
 {
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";

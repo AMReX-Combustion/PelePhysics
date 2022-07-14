@@ -479,7 +479,6 @@ impose_wall(
 //  amrex::RandomEngine const& engine) // Degrades performance significantly
 {
   const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-  splash_type splash_flag;
   amrex::RealVect pvel = {AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2))};
@@ -490,7 +489,7 @@ impose_wall(
     +(p.pos(2) - (bloc[2] + 0.5 + bcentv[2]) * dx[2] - plo[2]) * normal[2]);
   // Check if particle is on the wrong side of the EB
   if (par_dot_EB < tolerance) {
-    splash_flag = splash_type::rebound;
+    splash_type splash_flag = splash_type::rebound;
     // Plane ref point
     amrex::Real Nw_Vp = 0.;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
