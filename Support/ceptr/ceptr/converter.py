@@ -98,7 +98,9 @@ class Converter:
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
-                tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight)
+                tempsp = csi.SpeciesDb(
+                    id, sorted_idx, species.name, weight, species.charge
+                )
                 self.species_info.all_species.append(tempsp)
                 self.species_info.nonqssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
@@ -268,6 +270,8 @@ class Converter:
             cck.ckwxp(hdr, self.mechanism, self.species_info)
             cck.ckwyr(hdr, self.mechanism, self.species_info)
             cck.ckwxr(hdr, self.mechanism, self.species_info)
+            cck.ckchrg(hdr, self)
+            cck.ckchrgmass(hdr, self.species_info)
             cth.dthermodtemp(hdr, self.mechanism, self.species_info)
             # Approx analytical jacobian
             cj.ajac(
@@ -440,6 +444,7 @@ class Converter:
         cw.writer(fstream, "*/")
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("Species"))
+        nb_ions = 0
         for species in self.species_info.nonqssa_species_list:
             s = species.strip()
             # Ionic species
@@ -456,11 +461,14 @@ class Converter:
                 "#define %s_ID %d"
                 % (s, self.species_info.ordered_idx_map[species]),
             )
+            if s[-1] == "n" or s[-1] == "p" or s == "E":
+                nb_ions += 1
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
         cw.writer(
             fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
         )
+        cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
         cw.writer(
             fstream,
             "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),

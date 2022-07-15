@@ -2830,6 +2830,42 @@ def ckwxr(fstream, mechanism, species_info):
     cw.writer(fstream, "}")
 
 
+def ckchrg(fstream, self):
+    """Write the species unit charge number."""
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment(" species unit charge number "))
+    cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void")
+    cw.writer(fstream, "CKCHRG(int * kcharge)")
+    cw.writer(fstream, "{")
+    for i in range(0, self.species_info.n_species):
+        species = self.species_info.nonqssa_species[i]
+        text = "kcharge[%d] = %d;" % (i, species.charge)
+        cw.writer(fstream, text + cw.comment("%s" % species.name))
+    cw.writer(fstream, "}")
+
+
+def ckchrgmass(fstream, species_info):
+    """Write the species charge per unit mass."""
+    n_species = species_info.n_species
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment(" species charge per unit mass "))
+    cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void")
+    cw.writer(fstream, "CKCHRGMASS(amrex::Real * zk)")
+    cw.writer(fstream, "{")
+    cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
+    cw.writer(fstream, "get_imw(imw);")
+    cw.writer(fstream)
+    cw.writer(fstream, "int kchrg[%d];" % (n_species))
+    cw.writer(fstream, "CKCHRG(kchrg);")
+    cw.writer(fstream)
+    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(
+        fstream, "zk[id] = %.8e * %.8e * kchrg[id] * imw[id];" % (cc.Na, cc.qc)
+    )
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "}")
+
+
 def temp_given_ey(fstream):
     """Write temperature given internal energy."""
     cw.writer(fstream)
