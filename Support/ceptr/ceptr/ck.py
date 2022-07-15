@@ -2829,6 +2829,7 @@ def ckwxr(fstream, mechanism, species_info):
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
+
 def ckchrg(fstream, self):
     """Write the species unit charge number."""
     cw.writer(fstream)
@@ -2841,6 +2842,7 @@ def ckchrg(fstream, self):
         text = "kcharge[%d] = %d;" % (i, species.charge)
         cw.writer(fstream, text + cw.comment("%s" % species.name))
     cw.writer(fstream, "}")
+
 
 def ckchrgmass(fstream, species_info):
     """Write the species charge per unit mass."""
@@ -2857,9 +2859,12 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream, "CKCHRG(kchrg);")
     cw.writer(fstream)
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
-    cw.writer(fstream, "zk[id] = %.8e * %.8e * kchrg[id] * imw[id];" % (cc.Na, cc.qc))
+    cw.writer(
+        fstream, "zk[id] = %.8e * %.8e * kchrg[id] * imw[id];" % (cc.Na, cc.qc)
+    )
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
+
 
 def temp_given_ey(fstream):
     """Write temperature given internal energy."""

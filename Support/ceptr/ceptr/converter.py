@@ -98,7 +98,9 @@ class Converter:
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
-                tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight, species.charge)
+                tempsp = csi.SpeciesDb(
+                    id, sorted_idx, species.name, weight, species.charge
+                )
                 self.species_info.all_species.append(tempsp)
                 self.species_info.nonqssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
@@ -466,10 +468,7 @@ class Converter:
         cw.writer(
             fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
         )
-        if nb_ions > 0:
-            cw.writer(
-                fstream, "#define NUM_IONS %d" % (nb_ions)
-            )
+        cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
         cw.writer(
             fstream,
             "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),
