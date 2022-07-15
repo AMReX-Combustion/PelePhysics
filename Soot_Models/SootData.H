@@ -1,6 +1,6 @@
 
-#ifndef _SOOTDATA_H_
-#define _SOOTDATA_H_
+#ifndef SOOTDATA_H
+#define SOOTDATA_H
 
 //#include "PelePhysics.H"
 #include "Constants_Soot.H"

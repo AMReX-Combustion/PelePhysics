@@ -1,5 +1,5 @@
-#ifndef _SPRAYPARTICLES_H_
-#define _SPRAYPARTICLES_H_
+#ifndef SPRAYPARTICLES_H
+#define SPRAYPARTICLES_H
 
 #include "SprayFuelData.H"
 #include <AMReX_AmrParticles.H>

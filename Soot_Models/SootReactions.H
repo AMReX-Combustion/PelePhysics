@@ -1,5 +1,5 @@
-#ifndef _SOOTREACTIONS_H_
-#define _SOOTREACTIONS_H_
+#ifndef SOOTREACTIONS_H
+#define SOOTREACTIONS_H
 
 #include "Constants_Soot.H"
 

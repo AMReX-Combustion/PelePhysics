@@ -1,8 +1,8 @@
 
-#ifndef _SOOTMODEL_DERIVE_H_
-#define _SOOTMODEL_DERIVE_H_
+#ifndef SOOTMODEL_DERIVE_H
+#define SOOTMODEL_DERIVE_H
 #include <AMReX_FArrayBox.H>
-#include <SootModel.H>
+#include "SootModel.H"
 
 void soot_largeparticledata(
   const amrex::Box& bx,

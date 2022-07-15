@@ -1,5 +1,5 @@
-#ifndef DRAG_H_
-#define DRAG_H_
+#ifndef DRAG_H
+#define DRAG_H
 
 #include "SprayParticles.H"
 #include <AMReX_AmrParticles.H>

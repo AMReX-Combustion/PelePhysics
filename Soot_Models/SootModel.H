@@ -1,6 +1,6 @@
 
-#ifndef _SOOTMODEL_H_
-#define _SOOTMODEL_H_
+#ifndef SOOTMODEL_H
+#define SOOTMODEL_H
 
 // Standard libray includes
 #include <array>

@@ -1,5 +1,5 @@
-#ifndef _SPRAYINJECTTEMPLATE_H_
-#define _SPRAYINJECTTEMPLATE_H_
+#ifndef SPRAYINJECTTEMPLATE_H
+#define SPRAYINJECTTEMPLATE_H
 #include "SprayParticles.H"
 
 // This provides a function to be called in the SprayParticlesInitInsert.cpp

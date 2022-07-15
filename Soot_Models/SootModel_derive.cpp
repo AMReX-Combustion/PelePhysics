@@ -1,6 +1,5 @@
 
-//#include <AMReX_CONSTANTS.H>
-#include <SootModel.H>
+#include "SootModel.H"
 #include "SootModel_derive.H"
 
 using namespace amrex;

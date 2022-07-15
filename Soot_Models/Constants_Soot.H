@@ -1,7 +1,6 @@
-#ifndef _CONSTANTS_SOOT_H_
-#define _CONSTANTS_SOOT_H_
+#ifndef CONSTANTS_SOOT_H
+#define CONSTANTS_SOOT_H
 
-//#include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_GpuQualifiers.H>
 

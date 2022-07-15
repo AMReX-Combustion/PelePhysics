@@ -1,5 +1,5 @@
-#ifndef _WALLFUNCTIONS_H_
-#define _WALLFUNCTIONS_H_
+#ifndef WALLFUNCTIONS_H_
+#define WALLFUNCTIONS_H_
 
 #include "Drag.H"
 #include "SprayFuelData.H"
