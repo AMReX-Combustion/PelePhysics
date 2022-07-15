@@ -26,7 +26,8 @@ class SpeciesDb:
 
     def __repr__(self):
         """Representation of SpeciesDb."""
-        return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name}, {self.weight}, {self.charge})"""
+        return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name},
+                             {self.weight}, {self.charge})"""
 
 
 class SpeciesInfo:
