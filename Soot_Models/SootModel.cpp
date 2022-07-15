@@ -31,8 +31,6 @@ SootModel::SootModel()
       static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)))),
     d_sootReact(static_cast<SootReaction*>(
       amrex::The_Arena()->alloc(sizeof(SootReaction)))),
-    m_inceptPAH(""),
-    m_PAHname(""),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {

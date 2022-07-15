@@ -4,7 +4,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_Vector.H>
 
-// PeleC-MP include statements
+// PeleMP include statements
 #include "SootModel.H"
 
 using namespace amrex;

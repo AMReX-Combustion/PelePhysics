@@ -2,7 +2,6 @@
 #ifndef SOOTDATA_H
 #define SOOTDATA_H
 
-//#include "PelePhysics.H"
 #include "Constants_Soot.H"
 #include "SootReactions.H"
 

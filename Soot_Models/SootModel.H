@@ -26,14 +26,14 @@ public:
   SootModel();
 
   //
-  // Copy constructor
+  // No copy constructors
   //
-  SootModel(const SootModel& sm) = default;
+  SootModel(SootModel const&) = delete;
 
   //
-  // Assignment operator
+  // No assignment operator
   //
-  SootModel& operator=(const SootModel& sm) = default;
+  SootModel& operator= (SootModel const&) = delete;
 
   //
   // Destructor
