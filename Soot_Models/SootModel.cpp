@@ -25,30 +25,16 @@ using namespace amrex;
 
 // Default constructor
 SootModel::SootModel()
-  : m_sootVerbosity(0),
-    m_setIndx(false),
-    m_sootData(new SootData{}),
+  : m_sootData(new SootData{}),
     m_sootReact(new SootReaction{}),
     d_sootData(
       static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)))),
     d_sootReact(static_cast<SootReaction*>(
       amrex::The_Arena()->alloc(sizeof(SootReaction)))),
-    m_readSootParams(false),
-    m_memberDataDefined(false),
-    m_conserveMass(false),
-    m_PAHindx(-1),
     m_inceptPAH(""),
     m_PAHname(""),
-    m_gammaStick(-1.),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
-    m_Xcutoff(-1.),
-    m_Tcutoff(-1.),
-    m_maxSubcycles(20),
-    m_numSubcycles(1),
-    m_reactDataFilled(false),
-    m_gasSpecNames(NUM_SOOT_GS, ""),
-    m_betaDimerFact(0.),
-    m_betaNuclFact(0.)
+    m_gasSpecNames(NUM_SOOT_GS, "")
 {
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";
@@ -157,16 +143,13 @@ SootModel::readSootParams()
   m_PAHname = m_inceptPAH;
   // Necessary if species names differ from A2, A3, or A4
   pp.query("pah_name", m_PAHname);
-  m_sootVerbosity = 0;
   pp.query("v", m_sootVerbosity);
   if (m_sootVerbosity >= 1) {
     Print() << "SootModel::readSootParams(): Reading input parameters"
             << std::endl;
   }
   // Set the maximum allowable change for variables during soot source terms
-  m_Xcutoff = 1.E-12;
   pp.query("X_cutoff", m_Xcutoff);
-  m_Tcutoff = 273.;
   pp.query("temp_cutoff", m_Tcutoff);
   pp.query("max_subcycles", m_maxSubcycles);
 #ifdef PELELM_USE_SOOT
@@ -174,7 +157,6 @@ SootModel::readSootParams()
 #endif
   pp.query("num_subcycles", m_numSubcycles);
   // Determines if mass is conserved by adding lost mass to H2
-  m_conserveMass = false;
   pp.query("conserve_mass", m_conserveMass);
   m_readSootParams = true;
 }
