@@ -1,0 +1,2 @@
+CEXE_headers += DistBase.H DistUniform.H DistNormal.H DistLogNormal.H DistWeibull.H
+CEXE_sources += DistUniform.cpp DistNormal.cpp DistLogNormal.cpp DistWeibull.cpp
