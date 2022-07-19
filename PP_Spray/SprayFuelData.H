@@ -220,6 +220,17 @@ struct SprayData
 
 // Here are different typical jet droplet diameter distributions
 
+// Plain uniform distribution
+class UniformDist
+{
+  amrex::Real diam;
+  
+public:
+  explicit UniformDist(amrex::Real a_diam)
+    : diam(a_diam) {}
+  amrex::Real get_dia() const { return diam; }
+}
+
 // Normal or Gaussian distribution
 class NormDist
 {
