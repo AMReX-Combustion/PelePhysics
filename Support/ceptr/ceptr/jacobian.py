@@ -1929,7 +1929,6 @@ def ajac_term_fast_debug(
     cw.writer(fstream)
 
 
-## @profile
 def dscqss_dsc_all(
     fstream,
     mechanism,

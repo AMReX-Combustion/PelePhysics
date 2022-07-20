@@ -229,7 +229,6 @@ class SymbolicMath:
             self.dscqssdscqss_slow = {}
             self.dscqssdsc_slow = {}
 
-    # @profile
     def round_in_string(self, string, maxdec=6):
         """Round decimal numbers if possible"""
         list_decimal = re.findall("\d+\.\d+", string)
@@ -247,7 +246,6 @@ class SymbolicMath:
                     break
         return string
 
-    # @profile
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string.
         Also apply some formatting.
@@ -323,13 +321,11 @@ class SymbolicMath:
 
         return cpp_str
 
-    # @profile
     def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
 
-    # @profile
     def convert_number_to_int(self, number):
         """Convert number to int if possible"""
         factor = float(number)
@@ -341,7 +337,6 @@ class SymbolicMath:
             factor = int(factor)
         return factor
 
-    # @profile
     def convert_symb_to_int(self, symb):
         """Convert symbol to int if possible"""
         try:
@@ -351,7 +346,6 @@ class SymbolicMath:
         except RuntimeError:
             return symb
 
-    # @profile
     def reduce_expr(self, orig):
         """
         Reduce expression interface
@@ -506,7 +500,6 @@ class SymbolicMath:
             replace_with,
         )
 
-    # @profile
     def remove_single_symbol(
         self,
         orig,
@@ -579,7 +572,6 @@ class SymbolicMath:
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
-    # @profile
     def reduce_expr_top_bottom_rec_count(
         self,
         orig,
@@ -666,7 +658,6 @@ class SymbolicMath:
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
-    # @profile
     def reduce_expr_top_bottom(
         self,
         orig,
@@ -736,7 +727,6 @@ class SymbolicMath:
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
-    # @profile
     def reduce_expr_bottom_up(
         self,
         orig,
@@ -814,7 +804,6 @@ class SymbolicMath:
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
-    # @profile
     def recycle_cse_post(
         self,
         orig,
@@ -911,7 +900,6 @@ class SymbolicMath:
             replace_with,
         )
 
-    # @profile
     def write_array_to_cpp(
         self, list_smp, array_str, cw, fstream, indexList=None
     ):
@@ -977,7 +965,6 @@ class SymbolicMath:
                 % (i, timee - times)
             )
 
-    # @profile
     def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
 
@@ -1075,7 +1062,6 @@ class SymbolicMath:
                     ),
                 )
 
-    # @profile
     def write_symjac_to_cpp_cpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
         """Many variables are created to ensure readability"""
@@ -1263,7 +1249,6 @@ class SymbolicMath:
                     ),
                 )
 
-    # @profile
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
         """As little as possible intermediate variables are declared which negatively affects readability.""" 
@@ -1517,7 +1502,6 @@ class SymbolicMath:
                     ),
                 )
 
-    # @profile
     def syms_to_specnum(self, sym_smp):
         """Extracts number from syms string"""
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
@@ -1546,7 +1530,6 @@ class SymbolicMath:
 
         return sc_depend, scqss_depend
 
-    # @profile
     def compute_dwdot_dsc(self, wdot_idx, sc_idx, species_info):
         """Routine to compute dwdot[x]/dsc[y]."""
 
@@ -1576,7 +1559,6 @@ class SymbolicMath:
 
         return dwdotdsc
 
-    # @profile
     def compute_dscqss_dsc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute dsc_qss[x]/dsc[y]."""
 
@@ -1610,7 +1592,6 @@ class SymbolicMath:
 
         return dscqss_dsc
 
-    # @profile
     def chain_scqss_sc(self, scqss_idx, sc_idx, species_info):
         """Routine to compute chain rule scqss dependence recursively."""
 
@@ -1701,7 +1682,6 @@ class SymbolicMath:
         # Return both the computed sympy expressions and the debug string
         return chain_vec_out, chain_vec_debug_out
 
-    # @profile
     def compute_scqss_stopping(self, sc_idx, species_info):
         """Routine that computes the end terms in the sc_qss chain rule."""
 
