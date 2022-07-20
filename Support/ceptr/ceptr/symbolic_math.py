@@ -813,7 +813,6 @@ class SymbolicMath:
     ):
         """
         Recycle cse that are not used later
-        Done after the replacement
         """
         to_replace = []
         replace_with = []
@@ -1508,7 +1507,7 @@ class SymbolicMath:
         return int(num[0])
 
     def get_cse_idx(self, df, type_name, tuple_val):
-
+        """Extracts the id of the common expression from the array created by symengine"""
         tmp_df = df[df.type == type_name]
         cse_idx = tmp_df.index[tmp_df.tuples == tuple_val].tolist()[0]
 
@@ -1712,6 +1711,7 @@ class SymbolicMath:
             pass
 
     def compute_dscqss_dscqss(self, species_info):
+        """Routine that computes the dscqss i / dscqss j."""
 
         # Loop over the species info dataframe and compute dependencies
         for idx, item in species_info.scqss_df.iterrows():
@@ -1734,6 +1734,7 @@ class SymbolicMath:
             #     )
 
     def compute_dscqss_dsc_fast(self, species_info):
+        """Routine that computes the dscqss i / dsc j."""
 
         # Loop over the species info dataframe and compute all dsc derivatives
         for idx, item in species_info.scqss_df.iterrows():
@@ -1759,6 +1760,7 @@ class SymbolicMath:
                 #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
 
     def compute_dwdot_dsc_fast(self, species_info):
+        """Routine that computes the dwdot i / dsc j."""
 
         # Loop over all wdots and sc terms
         for wdot_idx, item in species_info.wdot_df.iterrows():
@@ -1769,6 +1771,7 @@ class SymbolicMath:
                 )
 
     def compute_dwdot_dscqss_fast(self, species_info):
+        """Routine that computes the dwdot i / dscqss j."""
 
         # Loop over all wdots and sc terms
         for wdot_idx, item in species_info.wdot_df.iterrows():
@@ -1780,6 +1783,7 @@ class SymbolicMath:
                 )
 
     def compute_jacobian(self, species_info):
+        """Routine that computes the Jacobian without chain ruling."""
 
         # Create intermediate vectors
         dscqss_dsc = [0.0] * (
