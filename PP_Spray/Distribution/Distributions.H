@@ -3,10 +3,10 @@
 
 #include "DistBase.H"
 
-class DistUniform : public DistBase::Register<DistUniform>
+class Uniform : public DistBase::Register<Uniform>
 {
 public:
-    static std::string identifier() { return "DistUniform"; }
+    static std::string identifier() { return "Uniform"; }
 
     void init(const std::string &a_prefix) override;
 
@@ -16,10 +16,10 @@ private:
     amrex::Real m_diam;
 };
 
-class DistNormal : public DistBase::Register<DistNormal>
+class Normal : public DistBase::Register<Normal>
 {
 public:
-    static std::string identifier() { return "DistNormal"; }
+    static std::string identifier() { return "Normal"; }
 
     void init(const std::string &a_prefix) override;
 
@@ -30,10 +30,10 @@ private:
     amrex::Real m_std;
 };
 
-class DistLogNormal : public DistBase::Register<DistLogNormal>
+class LogNormal : public DistBase::Register<LogNormal>
 {
 public:
-    static std::string identifier() { return "DistLogNormal"; }
+    static std::string identifier() { return "LogNormal"; }
 
     void init(const std::string &a_prefix) override;
 
@@ -44,10 +44,10 @@ private:
     amrex::Real m_log_std;
 };
 
-class DistWeibull : public DistBase::Register<DistWeibull>
+class Weibull : public DistBase::Register<Weibull>
 {
 public:
-    static std::string identifier() { return "DistWeibull"; }
+    static std::string identifier() { return "Weibull"; }
 
     void init(const std::string &a_prefix) override;
 

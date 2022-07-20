@@ -3,20 +3,20 @@
 #include "AMReX_ParmParse.H"
 
 void
-DistUniform::init(const std::string &a_prefix)
+Uniform::init(const std::string &a_prefix)
 {
     amrex::ParmParse pp(a_prefix);
     pp.get("diameter", m_diam);
 }
 
 amrex::Real
-DistUniform::get_dia()
+Uniform::get_dia()
 {
     return m_diam;
 }
 
 void
-DistNormal::init(const std::string &a_prefix)
+Normal::init(const std::string &a_prefix)
 {
     amrex::ParmParse pp(a_prefix);
     pp.get("mean_diam", m_mean);
@@ -24,13 +24,13 @@ DistNormal::init(const std::string &a_prefix)
 }
 
 amrex::Real
-DistNormal::get_dia()
+Normal::get_dia()
 {
     return amrex::RandomNormal(m_mean, m_std);
 }
 
 void
-DistLogNormal::init(const std::string &a_prefix)
+LogNormal::init(const std::string &a_prefix)
 {
     amrex::ParmParse pp(a_prefix);
     amrex::Real mean;
@@ -42,13 +42,13 @@ DistLogNormal::init(const std::string &a_prefix)
 }
 
 amrex::Real
-DistLogNormal::get_dia()
+LogNormal::get_dia()
 {
     return std::exp(amrex::RandomNormal(m_log_mean, m_log_std));
 }
 
 void
-DistWeibull::init(const std::string &a_prefix)
+Weibull::init(const std::string &a_prefix)
 {
     amrex::ParmParse pp(a_prefix);
     pp.get("mean_diam", m_mean);
@@ -56,7 +56,7 @@ DistWeibull::init(const std::string &a_prefix)
 }
 
 amrex::Real
-DistWeibull::get_dia()
+Weibull::get_dia()
 {
     amrex::Real fact =
       -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));
