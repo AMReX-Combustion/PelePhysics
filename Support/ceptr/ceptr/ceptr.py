@@ -63,9 +63,9 @@ def main():
 
     parser.add_argument(
         "--hformat",
-        help="sytle format for .H file output",
+        help="Sytle format for .H file output",
         type=str,
-        choices=["readable", "gpu"],
+        choices=["cpu", "gpu"],
         default="gpu",
         required=False,
     )
@@ -89,16 +89,6 @@ def main():
         "--remove_pow10",
         action="store_true",
         help="Remove pow(10,...) in printed expressions",
-    )
-
-    parser.add_argument(
-        "-moc",
-        "--min_op_count",
-        type=int,
-        metavar="",
-        required=False,
-        help="Min number of operation count per expression",
-        default=0,
     )
 
     parser.add_argument(
@@ -134,6 +124,16 @@ def main():
         "--remove_single_symbols_cse",
         action="store_true",
         help="Remove cse made of a single symbol",
+    )
+
+    parser.add_argument(
+        "-moc",
+        "--min_op_count",
+        type=int,
+        metavar="",
+        required=False,
+        help="Min number of operation count per expression",
+        default=0,
     )
 
     parser.add_argument(

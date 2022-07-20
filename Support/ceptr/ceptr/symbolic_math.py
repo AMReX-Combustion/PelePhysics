@@ -1076,8 +1076,10 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_readable_to_cpp(self, species_info, cw, fstream):
+    def write_symjac_to_cpp_cpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
+        """Many variables are created to ensure readability"""
+        """The memory constraint makes the format useful for CPU"""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
         n_dscqssdsc = len(self.dscqssdsc)
@@ -1262,8 +1264,10 @@ class SymbolicMath:
                 )
 
     # @profile
-    def write_symjac_to_cpp(self, species_info, cw, fstream):
+    def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions."""
+        """As little as possible intermediate variables are declared which negatively affects readability.""" 
+        """The memory efficiency makes the format useful for GPU"""
 
         n_dscqssdscqss = len(self.dscqssdscqss)
         n_dscqssdsc = len(self.dscqssdsc)
