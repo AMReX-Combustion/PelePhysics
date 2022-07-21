@@ -470,20 +470,7 @@ class Converter:
                     self.reaction_info,
                     precond=True,
                 )
-            # # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
-            # cj.ajac(
-            #     hdr,
-            #     self.mechanism,
-            #     self.species_info,
-            #     self.reaction_info,
-            #     # syms=self.syms,
-            #     precond=True,
-            #     syms=None,
-            # )
 
-            # cj.dproduction_rate(
-            #     hdr, self.mechanism, self.species_info, self.reaction_info,
-            # )
             else:
 
                 cp.production_rate(
@@ -514,7 +501,7 @@ class Converter:
                     self.reaction_info,
                     precond=True,
                 )
-                # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
                 cj.ajac(
                     hdr, self.mechanism, self.species_info, self.reaction_info
                 )
