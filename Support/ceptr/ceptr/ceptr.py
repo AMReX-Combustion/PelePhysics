@@ -43,7 +43,21 @@ def convert(
     conv.formatter()
 
 
-def convert_lst(lst, hformat):
+def convert_lst(
+    lst,
+    hformat,
+    remove_1,
+    remove_pow,
+    remove_pow10,
+    min_op_count,
+    gradual_op_count,
+    store_in_jacobian,
+    round_decimals,
+    recycle_cse,
+    min_op_count_all,
+    remove_single_symbols_cse,
+    print_debug,
+):
     """Convert mechanisms from a file containing a list of directories."""
     lpath = pathlib.Path(lst)
     with open(lst, "r") as f:
@@ -51,7 +65,21 @@ def convert_lst(lst, hformat):
             if not line.startswith("#"):
                 mechname = lpath.parents[0] / line.strip()
                 print(f"""Converting file {mechname}""")
-                convert(mechname, hformat)
+                convert(
+                    mechname,
+                    hformat,
+                    remove_1,
+                    remove_pow,
+                    remove_pow10,
+                    min_op_count,
+                    gradual_op_count,
+                    store_in_jacobian,
+                    round_decimals,
+                    recycle_cse,
+                    min_op_count_all,
+                    remove_single_symbols_cse,
+                    print_debug,
+                )
 
 
 def main():
