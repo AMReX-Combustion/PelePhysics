@@ -89,7 +89,7 @@ def qss_sorted_phase_space(
                     )
                     if record_symbolic_operations:
                         conc_smp = pow(
-                            sc[species_info.ordered_idx_map[symbol]],
+                            syms.sc_smp[species_info.ordered_idx_map[symbol]],
                             float(coefficient),
                         )
             phi += [conc]

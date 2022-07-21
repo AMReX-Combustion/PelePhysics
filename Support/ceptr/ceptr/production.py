@@ -613,8 +613,9 @@ def production_rate(
                     )
                     sys.exit(1)
 
+                low_beta = syms.convert_number_to_int(low_beta)
+
             beta = syms.convert_number_to_int(beta)
-            low_beta = syms.convert_number_to_int(low_beta)
 
             cw.writer(
                 fstream,
