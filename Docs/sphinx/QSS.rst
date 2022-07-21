@@ -87,12 +87,97 @@ The three linearization methods are validated against the skeletal :math:`N-C_{1
      :width: 90%
      :align: center
      :name: fig-val
-     :target: ./Visualization/validationQSS.png.png
+     :target: ./Visualization/validationQSS.png
      :alt: Validation of linearization method
 
      Left: Scatter plot of the ignition delay measured with the QSS mechanism linearized and the skeletal mechanism.
      Right: Ignition delays measured for the skeletal mechanism and QSS mechanism linearized at high pressure conditions.
      Top: Method 1. Middle: Method 2. Bottom: Method 3.
+
+
+Analytical Jacobian
+-------------------
+
+In several computational experiments, using analytical Jacobians were found to provide better stability or efficiency compared with finite difference approximation or numerical inversion (see also fig:qss_integrator_).
+Compared with non-QSS mechanisms, analytical Jacobians need to reflect the dependence of each QSS species on non-QSS species. However, QSS species may depend on ensemble of other non-QSS species and therefore ensemble of reactions. Therefore, analytical Jacobian cannot be constructed by sequentially adding the contribution of each reaction. This significantly complicates the analytical jacobian generation. Failure to include the dependence of QSS species with respect to non-QSS species typically results in wrong ignition profiles, unless very small timesteps are used, as seen in figure fig:qss_aj_.
+
+
+.. _fig:qss_aj:
+
+.. figure:: ./Visualization/aj_0D_QSS.png
+     :width: 90%
+     :align: center
+     :name: fig-qss-constant
+     :target: ./Visualization/aj_0D_QSS.png
+     :alt: 
+
+     Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3. 
+     Left: Results without inclusion of dependence of QSS species with respect to non-QSS species.
+     Right: Result with inclusion of dependence of QSS species with respect to non-QSS species.
+
+
+To ease the implementation of analytical Jacobian in presence of QSS species, a symbolic approach is used to construct the analytical Jacobian. This strategy has the advantage of not requiring complex logic, being flexible and readable for future development. For the last row of the Jacobian (partial difference of reaction rate with respect to temperature), finite difference is used since perturbations in temperature are less susceptible to numerical errors than perturbations in species concentrations. During the construction of the reaction rates, the operations printed to file are recorded symbolically using the ``sympy`` and ``symengine`` library [SYMPY]_. For computational efficiency during the symbolic differentiation, the chain-rules terms are computed and the final expressions are computed assembled by chain-ruling using logic internal to `CEPTR` rather than ``sympy``. We have found that this speeds up the Jacobian construction cost by a factor 10. 
+
+Printing the Jacobian terms one by one is not possible since the expressions that include QSS species are typically very large. Instead, the expressions are reduced via common sub-expression precomputing that are later used in each term of the Jacobian. The number of subexpression may be orders of magnitude larger than the number of Jacobian entries which can be problematic if the computational architecture has limited memory.
+
+Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian and listed below::
+
+  $ poetry run convert -h
+  usage: convert [-h] (-f FNAME | -l LST) [--hformat {cpu,gpu}] [-r1] [-rp] [-rp10] [-moc] [-moca] [-roc] [-sj] [-rd] [-rcse] [-rss]
+  
+  Mechanism converter
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -f FNAME, --fname FNAME
+                          Mechanism file
+    -l LST, --lst LST     Mechanism directory file list
+    --hformat {cpu,gpu}   Sytle format for .H file output.
+                          CPU: will print intermediate variables used for chainruling. This gives a readable version of the Jacobian entries, albeit memory consuming.
+                          GPU: will not print intermediate variables used for chainruling, and instead will replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient.
+    -r1, --remove_1       Remove factor 1.0 in printed expressions
+    -rp, --remove_pow     Replace pow(...,n) with multiplications or divisions if n<=3 and n>=-3 in printed expressions.
+    -rp10, --remove_pow10
+                          Remove pow(10,x) in printed expressions and replace it with exp(ln(10)*x).
+    -moc , --min_op_count 
+                          Counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to the value
+    -moca , --min_op_count_all 
+                          Similar to --min_op_count but also counts how many times that common subexpression is used later.
+                          The meaning value passed is how many more operations will be done if the common subexpression is eliminated.
+                          This option only marginally increase the file size (therefore compile time), while still being memory efficient.
+    -roc, --gradual_op_count
+                          Gradual elimination of common subexpressions.
+                          Useful if --min_op_count or --min_op_count_all are active.
+                          Loops from 1 to the min_op_count and min_op_count_all values and gradually eliminate the common subexpressions.
+                          This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as min_op_count and min_op_count_all are increased.
+    -sj, --store_in_jacobian
+                          Use the Jacobian array as a temporary space to store intermediate variables.
+                          In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate, forward and backward reactions).
+                          When the option is active, the `productionRate` function used to compute the finite difference is replaced with a `productionRate_light` functions where references to different parts of the Jacobian are used in place of allocating new arrays.
+    -rd, --round_decimals
+                          Round decimal numbers when possible to minimize character count
+    -rcse, --recycle_cse  Reuse common subexpressions that are not used later to avoid declaring new temporary reals
+    -rss, --remove_single_symbols_cse
+                          Remove common subexpressions that are made of 1 symbol.
+                          Those common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times.
+                          However, when replaced in the later expressions, the `-` operations typically disappear or is merged into another operations which actually does not increase the total number of operations.
+
+
+The analytical Jacobian for QSS mechanisms is typically more accurate and stable than GMRES, and is on par with the finite difference Jacobian of `CVODE` as seen in fig:qss_integrator_
+
+
+.. _fig:qss_integrator:
+
+.. figure:: ./Visualization/qss_integrator.png
+     :width: 70%
+     :align: center
+     :name: fig-qss-integrator
+     :target: ./Visualization/qss_integrator.png
+     :alt: 
+
+     Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3. Results are shown for finite difference jacobian (red thick line), analytical jacobian (black line) and GMRES (crosses) using the same tolerances.
+
+In terms of speed, the analytical Jacobian 0D reactor is faster on CPU than finite difference Jacobian and GMRES. For the piston bowl challenge problem, the analytical Jacobian is 1.5 times slower than GMRES with PeleC. Further optimization and tests are still ongoing.
 
 
 .. [DRG2005] T. Lu, C. K. Law, A directed relation graph method for mechanism reduction, Proceedings of the combustion institute, 30(1):1333-1341, 2005.
@@ -103,3 +188,4 @@ The three linearization methods are validated against the skeletal :math:`N-C_{1
 
 .. [SKEL2017] T. Yao, Y. Pei, B. J. Zhong, S. Som, T. Lu, K. H. Luo, A compact skeletal mechanism for n-dodecane with optimized semi-global ! low-temperature chemistry for diesel engine simulations, 191:339-349, 2017. 
 
+.. [SYMPY] Meurer, Aaron and Smith, Christopher P. and Paprocki, Mateusz and \v{C}ert\'{i}k, Ond\v{r}ej and Kirpichev, Sergey B. and Rocklin, Matthew and Kumar, Amit and Ivanov, Sergiu and Moore, Jason K. and Singh, Sartaj and Rathnayake, Thilina and Vig, Sean and Granger, Brian E. and Muller, Richard P. and Bonazzi, Francesco and Gupta, Harsh and Vats, Shivam and Johansson, Fredrik and Pedregosa, Fabian and Curry, Matthew J. and Terrel, Andy R. and Rou\v{c}ka, \v{S}t\v{e}p\'{a}n and Saboo, Ashutosh and Fernando, Isuru and Kulal, Sumith and Cimrman, Robert and Scopatz, Anthony, SymPy: symbolic computing in Python, 3:e103, 2017

@@ -1436,7 +1436,7 @@ def ajac_term_fast_debug(
     )
     cw.writer(fstream, "{")
 
-    if syms.hformat == "readable":
+    if syms.hformat == "cpu":
         cw.writer(
             fstream,
             "amrex::Real dscqss_dsc[%d];" % (n_species * n_qssa_species),
@@ -1594,10 +1594,10 @@ def ajac_term_fast_debug(
 
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
-            if syms.hformat == "readable":
-                syms.write_symjac_readable_to_cpp(species_info, cw, fstream)
+            if syms.hformat == "cpu":
+                syms.write_symjac_to_cpp_cpu(species_info, cw, fstream)
             else:
-                syms.write_symjac_to_cpp(species_info, cw, fstream)
+                syms.write_symjac_to_cpp_gpu(species_info, cw, fstream)
 
             cw.writer(fstream)
 

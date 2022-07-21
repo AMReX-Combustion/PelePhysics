@@ -1197,7 +1197,6 @@ def dproduction_rate(
     cw.writer(fstream)
 
 
-## @profile
 def dscqss_dsc_all(
     fstream,
     mechanism,
