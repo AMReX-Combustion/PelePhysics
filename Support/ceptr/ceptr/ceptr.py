@@ -1,5 +1,6 @@
 """Convert cantera mechanism to C++ files."""
 import argparse
+from argparse import RawTextHelpFormatter
 import pathlib
 
 import cantera as ct
@@ -54,7 +55,7 @@ def convert_lst(lst, hformat):
 
 def main():
     """Convert cantera mechanisms to C++ files."""
-    parser = argparse.ArgumentParser(description="Mechanism converter")
+    parser = argparse.ArgumentParser(description="Mechanism converter", formatter_class=RawTextHelpFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--fname", help="Mechanism file", type=str)
     group.add_argument(
@@ -108,8 +109,8 @@ def main():
     )
 
     long_help = "Similar to --min_op_count but also counts how many times that common subexpression is used later."
-    long_help += " The meaning value passed is how many more operations will be done if the common subexpression is eliminated."
-    long_help += " This option only marginally increase the file size (therefore compile time), while still being memory efficient."
+    long_help += "\nThe meaning value passed is how many more operations will be done if the common subexpression is eliminated."
+    long_help += "\nThis option only marginally increase the file size (therefore compile time), while still being memory efficient."
     parser.add_argument(
         "-moca",
         "--min_op_count_all",
@@ -121,9 +122,9 @@ def main():
     )
 
     long_help = "Gradual elimination of common subexpressions."
-    long_help += " Useful if --min_op_count or --min_op_count_all are active."
-    long_help += " Loops from 1 to the min_op_count and min_op_count_all values and gradually eliminate the common subexpressions."
-    long_help += " This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as min_op_count and min_op_count_all are increased."
+    long_help += "\nUseful if --min_op_count or --min_op_count_all are active."
+    long_help += "\nLoops from 1 to the min_op_count and min_op_count_all values and gradually eliminate the common subexpressions."
+    long_help += "\nThis has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as min_op_count and min_op_count_all are increased."
     parser.add_argument(
         "-roc",
         "--gradual_op_count",
@@ -132,9 +133,9 @@ def main():
     )
 
     long_help = "Use the Jacobian array as a temporary space to store intermediate variables."
-    long_help += " In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables"
+    long_help += "\nIn particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables"
     long_help += " (production rate, forward and backward reactions)."
-    long_help += " When the option is active, the `productionRate` function used to compute the finite difference"
+    long_help += "\nWhen the option is active, the `productionRate` function used to compute the finite difference"
     long_help += " is replaced with a `productionRate_light` functions where references to different parts of the Jacobian are used in place of allocating new arrays."
     parser.add_argument(
         "-sj",
@@ -158,8 +159,8 @@ def main():
     )
 
     long_help = "Remove common subexpressions that are made of 1 symbol."
-    long_help += " Those common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times."
-    long_help += " However, when replaced in the later expressions, the `-` operations typically disappear or is merged into another"
+    long_help += "\nThose common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times."
+    long_help += "\nHowever, when replaced in the later expressions, the `-` operations typically disappear or is merged into another"
     long_help += " operations which actually does not increase the total number of operations."
     parser.add_argument(
         "-rss",
