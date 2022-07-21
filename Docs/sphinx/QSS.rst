@@ -99,7 +99,7 @@ Analytical Jacobian
 -------------------
 
 In several computational experiments, using analytical Jacobians were found to provide better stability or efficiency compared with finite difference approximation or numerical inversion (CITATION)
-Compared with non-QSS mechanisms, analytical Jacobians need to reflect the dependence of each QSS species on non-QSS species. However, QSS species may depend on ensemble of other non-QSS species and therefore ensemble of reactions. Therefore, analytical Jacobian cannot be constructed by sequentially adding the contribution of each reaction. This significantly complicates the analytical jacobian generation. Failure to include the dependence of QSS species with respect to non-QSS species typically results in wrong ignition profiles, unless very small timesteps are used, as seen in the figure below.
+Compared with non-QSS mechanisms, analytical Jacobians need to reflect the dependence of each QSS species on non-QSS species. However, QSS species may depend on ensemble of other non-QSS species and therefore ensemble of reactions. Therefore, analytical Jacobian cannot be constructed by sequentially adding the contribution of each reaction. This significantly complicates the analytical jacobian generation. Failure to include the dependence of QSS species with respect to non-QSS species typically results in wrong ignition profiles, unless very small timesteps are used, as seen in figure fig:qss_aj_.
 
 
 .. _fig:qss_aj:
@@ -116,11 +116,45 @@ Compared with non-QSS mechanisms, analytical Jacobians need to reflect the depen
      Right: Result with inclusion of dependence of QSS species with respect to non-QSS species.
 
 
-To ease the implementation of analytical Jacobian in presence of QSS species, a symbolic approach is used to construct the analytical Jacobian. This strategy has the advantage of not requiring complex logic, being flexible and readable for future development. During the construction of the reaction rates, the operations printed to file are recorded symbolically using the `sympy` and `symengine` library [SYMPY]_. For computational efficiency during the symbolic differentiation, the chain-rules terms are computed and the final expressions are computed assembled by chain-ruling using logic internal to `CEPTR` rather than `sympy`. We have found that this speeds up the Jacobian construction cost by a factor 10. 
+To ease the implementation of analytical Jacobian in presence of QSS species, a symbolic approach is used to construct the analytical Jacobian. This strategy has the advantage of not requiring complex logic, being flexible and readable for future development. For the last row of the Jacobian (partial difference of reaction rate with respect to temperature), finite difference is used since perturbations in temperature are less susceptible to numerical errors than perturbations in species concentrations. During the construction of the reaction rates, the operations printed to file are recorded symbolically using the `sympy` and `symengine` library [SYMPY]_. For computational efficiency during the symbolic differentiation, the chain-rules terms are computed and the final expressions are computed assembled by chain-ruling using logic internal to `CEPTR` rather than `sympy`. We have found that this speeds up the Jacobian construction cost by a factor 10. 
 
 Printing the Jacobian terms one by one is not possible since the expressions that include QSS species are typically very large. Instead, the expressions are reduced via common sub-expression precomputing that are later used in each term of the Jacobian. The number of subexpression may be orders of magnitude larger than the number of Jacobian entries which can be problematic if the computational architecture has limited memory.
 
 Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian.
+
+.. _optimCuda: https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
+
+* `--hformat`
+  * `cpu` will print intermediate variables used for chainruling. This gives a "readable" version of the Jacobian entries, albeit memory consuming.
+  * `gpu` will not print intermediate variables used for chainruling, and instead will replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient. (RECOMMENDED)
+* `--remove_1` will replace expressions of the type `1.0 * xxx` into `xxx`. (RECOMMENDED)
+* `--remove_pow` will convert expressions of the type `pow(xxx,n)` into multiplications or division. The conversion occurs for `n<=3` and `n>=-3` consistent with optimCuda_  (RECOMMENDED)
+* `--remove_pow10` will convert expressions of the type `pow(10,xxx)` into `exp(ln(10)*xxx)`, consistent with optimCuda_ (RECOMMENDED)
+* `--min_op_count n` counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to `n` 
+* `--min_op_count_all n` is similar to `--min_op_count` but also counts how many times that common subexpression is used later. The meaning of `n` is different than for `--min_op_count` as it refers to how many more operations will be done if the common subexpression is eliminated. This option should be prefered to `--min_op_count` as it tends to only marginally increase the file size (therefore compile time), while still being memory efficient. (HIGHLY RECOMMENDED with `n=10`) 
+* `--gradual_op_count` is useful if `--min_op_count` or `--min_op_count_all` are active. It loops from 1 to `n` and gradually eliminate the common subexpressions. This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as `n` is increased.
+  * `--store_in_jacobian` will use the Jacobian array as a temporary space to store intermediate variables. In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate, forward and backward reactions). When the option is active, the `productionRate` function used to compute the finite difference is replaced with a `productionRate_light` functions where references to different parts of the Jacobian are used in place of allocating new arrays. (RECOMMENDED)
+  * `--round_decimals` will round floats printed by `sympy` when possible to minimize character count in the `mechanism.H` file.
+  * `--recycle_cse` will reuse subexpressions that are not used later to avoid declaring new temporary reals. (HIGHLY RECOMMENDED)
+  * `--remove_single_symbols_cse` will remove common subexpressions that are made of 1 operation and 1 symbol. Those common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times. However, when replaced in the later expressions, the `-` operations typically disappear or is merged into another operations which actually does not increase the total number of operations. (RECOMMENDED)
+
+
+The analytical Jacobian for QSS mechanisms is typically more accurate and stable than GMRES, and is on par with the finite difference Jacobian of `CVODE` as seen in fig:qss_integrator_
+
+
+.. _fig:qss_integrator:
+
+.. figure:: ./Visualization/qss_integrator.png
+     :width: 90%
+     :align: center
+     :name: fig-qss-integrator
+     :target: ./Visualization/qss_integrator.png
+     :alt: 
+
+     Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3. Results are shown for finite difference jacobian (red thick line), analytical jacobian (black line) and GMRES (crosses) using the same tolerances.
+
+In terms of speed, the analytical Jacobian 0D reactor is faster on CPU than finite difference Jacobian and GMRES. For the piston bowl challenge problem, the analytical Jacobian is 1.5 times slower than GMRES with PeleC. Further optimization and tests are still ongoing.
+
 
 .. [DRG2005] T. Lu, C. K. Law, A directed relation graph method for mechanism reduction, Proceedings of the combustion institute, 30(1):1333-1341, 2005.
 
