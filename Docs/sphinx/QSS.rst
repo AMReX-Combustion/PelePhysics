@@ -124,7 +124,7 @@ Several formatting strategies have been implemented to mitigate the memory footp
 
 .. _optimCuda: https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
 
-  $ poetry run qssa -h
+  $ poetry run convert -h
   usage: convert [-h] (-f FNAME | -l LST) [--hformat {cpu,gpu}] [-r1] [-rp] [-rp10] [-moc] [-moca] [-roc] [-sj] [-rd] [-rcse] [-rss]
 
   Mechanism converter
