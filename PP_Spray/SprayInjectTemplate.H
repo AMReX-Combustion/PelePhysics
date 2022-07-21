@@ -114,7 +114,7 @@ SprayParticleContainer::sprayInjection(
 #else
   amrex::Real theta_1 = std::atan2(jet_norm[1], jet_norm[0]) + M_PI / 2.;
 #endif
-  amrex::real mass_perc = inject_mass / injProcs;
+  amrex::Real mass_perc = inject_mass / injProcs;
   while (cur_mass < mass_perc) {
     // Pick random percentage from 0 to 1
     amrex::Real radp = amrex::Random();
