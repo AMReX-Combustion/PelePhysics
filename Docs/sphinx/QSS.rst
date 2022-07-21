@@ -124,19 +124,40 @@ Several formatting strategies have been implemented to mitigate the memory footp
 
 .. _optimCuda: https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
 
-* ``--hformat``
-    * ``cpu`` will print intermediate variables used for chainruling. This gives a "readable" version of the Jacobian entries, albeit memory consuming.
-    * ``gpu`` will not print intermediate variables used for chainruling, and instead will replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient. **(Recommended)**
-* ``--remove_1`` will replace expressions of the type ``1.0 * xxx`` into ``xxx``. **(Recommended)**
-* ``--remove_pow`` will convert expressions of the type ``pow(xxx,n)`` into multiplications or division. The conversion occurs for ``n<=3`` and ``n>=-3`` consistent with optimCuda_  **(Recommended)**
-* ``--remove_pow10`` will convert expressions of the type ``pow(10,xxx)`` into ``exp(ln(10)*xxx)``, consistent with optimCuda_ **(Recommended)**
-* ``--min_op_count n`` counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to ``n`` 
-* ``--min_op_count_all n`` is similar to ``--min_op_count`` but also counts how many times that common subexpression is used later. The meaning of ``n`` is different than for ``--min_op_count`` as it refers to how many more operations will be done if the common subexpression is eliminated. This option should be prefered to ``--min_op_count`` as it tends to only marginally increase the file size (therefore compile time), while still being memory efficient. **(Highly recommended with n=10)**
-* ``--gradual_op_count`` is useful if ``--min_op_count`` or ``--min_op_count_all`` are active. It loops from 1 to ``n`` and gradually eliminate the common subexpressions. This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as `n` is increased.
-* ``--store_in_jacobian`` will use the Jacobian array as a temporary space to store intermediate variables. In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate, forward and backward reactions). When the option is active, the ``productionRate`` function used to compute the finite difference is replaced with a ``productionRate_light`` functions where references to different parts of the Jacobian are used in place of allocating new arrays. **(Recommended)**
-* ``--round_decimals`` will round floats printed by ``sympy`` when possible to minimize character count in the ``mechanism.H`` file.
-* ``--recycle_cse`` will reuse subexpressions that are not used later to avoid declaring new temporary reals. **(Highly recommended)**
-* ``--remove_single_symbols_cse`` will remove common subexpressions that are made of 1 operation and 1 symbol. Those common subexpressions are typically ``-xxx`` and may not appear as worth replacing because they save 1 operations and are reused multiple times. However, when replaced in the later expressions, the ``-`` operations typically disappear or is merged into another operations which actually does not increase the total number of operations. **(Recommended)**
+  $ poetry run qssa -h
+  usage: convert [-h] (-f FNAME | -l LST) [--hformat {cpu,gpu}] [-r1] [-rp] [-rp10] [-moc] [-moca] [-roc] [-sj] [-rd] [-rcse] [-rss]
+
+  Mechanism converter
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -f FNAME, --fname FNAME
+                          Mechanism file
+    -l LST, --lst LST     Mechanism directory file list
+    --hformat {cpu,gpu}   Sytle format for .H file output. CPU: will print intermediate variables used for chainruling. This gives a readable version of the Jacobian entries, albeit memory consuming. GPU: will not print intermediate variables used for chainruling, and instead will
+                          replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient.
+    -r1, --remove_1       Remove factor 1.0 in printed expressions
+    -rp, --remove_pow     Replace pow(...,n) with multiplications or divisions if n<=3 and n>=-3 in printed expressions.
+    -rp10, --remove_pow10
+                          Remove pow(10,x) in printed expressions and replace it with exp(ln(10)*x).
+    -moc , --min_op_count 
+                          Counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to the value
+    -moca , --min_op_count_all 
+                          Similar to --min_op_count but also counts how many times that common subexpression is used later. The meaning value passed is how many more operations will be done if the common subexpression is eliminated. This option only marginally increase the file size
+                          (therefore compile time), while still being memory efficient.
+    -roc, --gradual_op_count
+                          Gradual elimination of common subexpressions. Useful if --min_op_count or --min_op_count_all are active. Loops from 1 to the min_op_count and min_op_count_all values and gradually eliminate the common subexpressions. This has the advantage of ensuring that
+                          the memory footprint is strictly monotonically decreasing as min_op_count and min_op_count_all are increased.
+    -sj, --store_in_jacobian
+                          Use the Jacobian array as a temporary space to store intermediate variables. In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate,
+                          forward and backward reactions). When the option is active, the `productionRate` function used to compute the finite difference is replaced with a `productionRate_light` functions where references to different parts of the Jacobian are used in place of
+                          allocating new arrays.
+    -rd, --round_decimals
+                          Round decimal numbers when possible to minimize character count
+    -rcse, --recycle_cse  Reuse common subexpressions that are not used later to avoid declaring new temporary reals
+    -rss, --remove_single_symbols_cse
+                          Remove common subexpressions that are made of 1 symbol. Those common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times. However, when replaced in the later expressions, the
+                          `-` operations typically disappear or is merged into another operations which actually does not increase the total number of operatio
 
 
 The analytical Jacobian for QSS mechanisms is typically more accurate and stable than GMRES, and is on par with the finite difference Jacobian of `CVODE` as seen in fig:qss_integrator_
