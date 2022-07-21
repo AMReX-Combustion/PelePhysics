@@ -98,7 +98,7 @@ The three linearization methods are validated against the skeletal :math:`N-C_{1
 Analytical Jacobian
 -------------------
 
-In several computational experiments, using analytical Jacobians were found to provide better stability or efficiency compared with finite difference approximation or numerical inversion (CITATION)
+In several computational experiments, using analytical Jacobians were found to provide better stability or efficiency compared with finite difference approximation or numerical inversion (see also fig:qss_integrator_).
 Compared with non-QSS mechanisms, analytical Jacobians need to reflect the dependence of each QSS species on non-QSS species. However, QSS species may depend on ensemble of other non-QSS species and therefore ensemble of reactions. Therefore, analytical Jacobian cannot be constructed by sequentially adding the contribution of each reaction. This significantly complicates the analytical jacobian generation. Failure to include the dependence of QSS species with respect to non-QSS species typically results in wrong ignition profiles, unless very small timesteps are used, as seen in figure fig:qss_aj_.
 
 
