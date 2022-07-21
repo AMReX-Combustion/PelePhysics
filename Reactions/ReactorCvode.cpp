@@ -1928,8 +1928,8 @@ ReactorCvode::close()
 #endif
 }
 
-void // NOLINT
-ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
+void
+ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
 {
   long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
