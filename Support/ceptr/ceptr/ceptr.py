@@ -20,6 +20,7 @@ def convert(
     recycle_cse,
     min_op_count_all,
     remove_single_symbols_cse,
+    print_debug,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
@@ -36,6 +37,7 @@ def convert(
         recycle_cse,
         min_op_count_all,
         remove_single_symbols_cse,
+        print_debug,
     )
     conv.writer()
     conv.formatter()
@@ -59,6 +61,12 @@ def main():
     group.add_argument("-f", "--fname", help="Mechanism file", type=str)
     group.add_argument(
         "-l", "--lst", help="Mechanism directory file list", type=str
+    )
+
+    parser.add_argument(
+        "--print_debug",
+        action="store_true",
+        help="print the debug functions",
     )
 
     parser.add_argument(
@@ -162,6 +170,7 @@ def main():
             args.recycle_cse,
             args.min_op_count_all,
             args.remove_single_symbols_cse,
+            args.print_debug,
         )
     elif args.lst:
         convert_lst(
@@ -177,6 +186,7 @@ def main():
             args.recycle_cse,
             args.min_op_count_all,
             args.remove_single_symbols_cse,
+            args.print_debug,
         )
 
 

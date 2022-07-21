@@ -10,6 +10,7 @@ import symengine as sme
 import sympy as smp
 
 import ceptr.ck as cck
+import ceptr.debug as cdbg
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
 import ceptr.production as cp
@@ -40,6 +41,7 @@ class Converter:
         recycle_cse,
         min_op_count_all,
         remove_single_symbols_cse,
+        print_debug,
     ):
         self.mechanism = mechanism
 
@@ -55,6 +57,7 @@ class Converter:
         self.recycle_cse = recycle_cse
         self.min_op_count_all = min_op_count_all
         self.remove_single_symbols_cse = remove_single_symbols_cse
+        self.print_debug = print_debug
 
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
@@ -287,6 +290,7 @@ class Converter:
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
 
+            self.species_info.create_dicts()
             if self.species_info.n_qssa_species > 0:
 
                 helper_names_to_print = ["H_2"]
@@ -330,207 +334,194 @@ class Converter:
                     helper_names_to_print,
                     intermediate_names_to_print,
                 )
-                # print("Symbolic kf QSS print for debug")
-                # cqc.qssa_kf_debug(
-                #    hdr,
-                #    self.mechanism,
-                #    self.species_info,
-                #    self.reaction_info,
-                #    self.syms,
-                # )
-                # print("Symbolic thermo QSS print for debug")
-                # cth.gibbsQSS_debug(
-                #    hdr,
-                #    self.mechanism,
-                #    self.species_info,
-                #    self.reaction_info,
-                #    self.syms,
-                # )
-                # cth.speciesEnthalpyQSS_debug(
-                #    hdr,
-                #    self.mechanism,
-                #    self.species_info,
-                #    self.reaction_info,
-                #    self.syms,
-                # )
-            #    print("Symbolic Sc qss print for debug")
-            #    cqc.qssa_sc_qss_debug(
-            #        hdr,
-            #        self.mechanism,
-            #        self.species_info,
-            #        self.reaction_info,
-            #        self.syms,
-            #    )
-            #    print("Symbolic qf qss print for debug")
-            #    cqc.qssa_coeff_debug(
-            #        hdr,
-            #        self.mechanism,
-            #        self.species_info,
-            #        self.reaction_info,
-            #        self.syms,
-            #    )
-            #    print("Symbolic qss terms print for debug")
-            #    cqc.qssa_terms_debug(
-            #        hdr,
-            #        self.mechanism,
-            #        self.species_info,
-            #        self.reaction_info,
-            #        self.syms,
-            #        helper_names_to_print,
-            #        intermediate_names_to_print,
-            #    )
 
-            # print("Symbolic thermo print for debug")
-            # cth.gibbs_debug(
-            #    hdr,
-            #    self.mechanism,
-            #    self.species_info,
-            #    self.reaction_info,
-            #    self.syms,
-            # )
-            # cth.speciesEnthalpy_debug(
-            #    hdr,
-            #    self.mechanism,
-            #    self.species_info,
-            #    self.reaction_info,
-            #    self.syms,
-            # )
+                if self.print_debug:
+                    cdbg.qssa_debug(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        self.syms,
+                        helper_names_to_print,
+                        intermediate_names_to_print,
+                    )
 
-            self.species_info.create_dicts()
-            self.species_info.identify_qss_dependencies(self.syms)
-            self.species_info.identify_nonqss_dependencies(self.syms)
-            self.species_info.make_scqss_dataframe()
-            self.species_info.make_sc_dataframe()
+                    cdbg.thermo_debug(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        self.syms,
+                    )
 
-            print(self.species_info.scqss_df)
-            print(self.species_info.sc_df)
+                # self.species_info.create_dicts()
+                self.species_info.identify_qss_dependencies(self.syms)
+                self.species_info.identify_nonqss_dependencies(self.syms)
+                self.species_info.make_scqss_dataframe()
+                self.species_info.make_sc_dataframe()
 
-            # prod rate related
-            times = time.time()
-            cp.production_rate(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
-            print(f"Time to do production_rate = {time.time()-times}")
-            times = time.time()
-            cp.production_rate_light(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-            )
-            print(f"Time to do production_rate light = {time.time()-times}")
+                print(self.species_info.scqss_df)
+                print(self.species_info.sc_df)
 
-            # print("Symbolic wdot print for debug")
-            # cp.production_rate_debug(
-            #    hdr,
-            #    self.mechanism,
-            #    self.species_info,
-            #    self.reaction_info,
-            #    self.syms,
-            # )
+                # prod rate related
+                times = time.time()
+                cp.production_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                )
+                print(f"Time to do production_rate = {time.time()-times}")
+                times = time.time()
+                cp.production_rate_light(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                )
+                print(
+                    f"Time to do production_rate light = {time.time()-times}"
+                )
 
-            times = time.time()
-            self.species_info.identify_wdot_dependencies(self.syms)
-            self.species_info.make_wdot_dataframe()
-            print(
-                f"Time to identify wdot dependencies and make dataframe = {time.time()-times}"
-            )
-            print(self.species_info.wdot_df)
+                if self.print_debug:
+                    cdbg.production_debug(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        self.syms,
+                    )
 
-            # Evaluate the dscqss_dscqss values for later
-            times = time.time()
-            self.syms.compute_dscqss_dscqss(species_info=self.species_info)
-            print(f"Time to do all dscqss_dscqss = {time.time()-times}")
+                # if self.species_info.n_qssa_species > 0:
+                times = time.time()
+                self.species_info.identify_wdot_dependencies(self.syms)
+                self.species_info.make_wdot_dataframe()
+                print(
+                    f"Time to identify wdot dependencies and make dataframe = {time.time()-times}"
+                )
+                print(self.species_info.wdot_df)
 
-            # Evaluate the dscqss_dsc values for later
-            times = time.time()
-            self.syms.compute_dscqss_dsc_fast(species_info=self.species_info)
-            print(f"Time to do all the dscqss_dsc = {time.time()-times}")
+                # Evaluate the dscqss_dscqss values for later
+                times = time.time()
+                self.syms.compute_dscqss_dscqss(species_info=self.species_info)
+                print(f"Time to do all dscqss_dscqss = {time.time()-times}")
 
-            # # Evaluate the dwdot_dscqss values for later
-            times = time.time()
-            self.syms.compute_dwdot_dscqss_fast(species_info=self.species_info)
-            print(f"Time to do all the dwdot_dscqss = {time.time()-times}")
+                # Evaluate the dscqss_dsc values for later
+                times = time.time()
+                self.syms.compute_dscqss_dsc_fast(
+                    species_info=self.species_info
+                )
+                print(f"Time to do all the dscqss_dsc = {time.time()-times}")
 
-            # # Evaluate the dwdot_dsc values for later
-            times = time.time()
-            self.syms.compute_dwdot_dsc_fast(species_info=self.species_info)
-            print(f"Time to do all the dwdot_dsc = {time.time()-times}")
+                # # Evaluate the dwdot_dscqss values for later
+                times = time.time()
+                self.syms.compute_dwdot_dscqss_fast(
+                    species_info=self.species_info
+                )
+                print(f"Time to do all the dwdot_dscqss = {time.time()-times}")
 
-            cck.ckwc(hdr, self.mechanism, self.species_info)
-            cck.ckwyp(hdr, self.mechanism, self.species_info)
-            cck.ckwxp(hdr, self.mechanism, self.species_info)
-            cck.ckwyr(hdr, self.mechanism, self.species_info)
-            cck.ckwxr(hdr, self.mechanism, self.species_info)
-            cth.dthermodtemp(hdr, self.mechanism, self.species_info)
+                # # Evaluate the dwdot_dsc values for later
+                times = time.time()
+                self.syms.compute_dwdot_dsc_fast(
+                    species_info=self.species_info
+                )
+                print(f"Time to do all the dwdot_dsc = {time.time()-times}")
 
-            # print("Symbolic dscqss_dsc term print for debug")
-            # cj.dscqss_dsc_debug(
-            #     hdr,
-            #     self.mechanism,
-            #     self.species_info,
-            #     self.reaction_info,
-            #     self.syms,
-            #     [
-            #         dscqss0dsc0,
-            #         dscqss1dsc0,
-            #         dscqss2dsc0,
-            #     ],
-            #     [
-            #         (self.species_info.n_species) * 0 + 0,
-            #         (self.species_info.n_species) * 0 + 1,
-            #         (self.species_info.n_species) * 0 + 2,
-            #     ],
-            # )
+                cck.ckwc(hdr, self.mechanism, self.species_info)
+                cck.ckwyp(hdr, self.mechanism, self.species_info)
+                cck.ckwxp(hdr, self.mechanism, self.species_info)
+                cck.ckwyr(hdr, self.mechanism, self.species_info)
+                cck.ckwxr(hdr, self.mechanism, self.species_info)
+                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
 
-            # print("Symbolic dscqss_dsc term print for debug")
-            # cj.dscqss_dsc_fast_debug(
-            #     hdr,
-            #     self.mechanism,
-            #     self.species_info,
-            #     self.reaction_info,
-            #     self.syms,
-            # )
+                if self.print_debug:
+                    cdbg.jacobian_debug(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        self.syms,
+                        dscqss_dscList=[
+                            dscqss0dsc0,
+                            dscqss1dsc0,
+                            dscqss2dsc0,
+                        ],
+                        indexList=[
+                            (self.species_info.n_species) * 0 + 0,
+                            (self.species_info.n_species) * 0 + 1,
+                            (self.species_info.n_species) * 0 + 2,
+                        ],
+                    )
 
-            cj.ajac_term_fast_debug(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                self.syms,
-            )
-
-            # Approx analytical jacobian
-            cj.ajac(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                precond=True,
-                syms=self.syms,
-            )
-            cj.dproduction_rate(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                precond=True,
-            )
-            # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                # Approx analytical jacobian
+                cj.ajac(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                    syms=self.syms,
+                )
+                cj.dproduction_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+            # # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
             # cj.ajac(
             #     hdr,
             #     self.mechanism,
             #     self.species_info,
             #     self.reaction_info,
-            #     syms=self.syms,
+            #     # syms=self.syms,
+            #     precond=True,
+            #     syms=None,
             # )
-            cj.dproduction_rate(
-                hdr, self.mechanism, self.species_info, self.reaction_info
-            )
+
+            # cj.dproduction_rate(
+            #     hdr, self.mechanism, self.species_info, self.reaction_info,
+            # )
+            else:
+
+                cp.production_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                )
+                cck.ckwc(hdr, self.mechanism, self.species_info)
+                cck.ckwyp(hdr, self.mechanism, self.species_info)
+                cck.ckwxp(hdr, self.mechanism, self.species_info)
+                cck.ckwyr(hdr, self.mechanism, self.species_info)
+                cck.ckwxr(hdr, self.mechanism, self.species_info)
+                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
+                # Approx analytical jacobian
+                cj.ajac(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+                cj.dproduction_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+                # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                cj.ajac(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
+                )
+                cj.dproduction_rate(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
+                )
+
             # Transport
             cw.writer(hdr)
             ctr.transport(hdr, self.mechanism, self.species_info)
