@@ -77,6 +77,7 @@ public:
   void sprayInjection(
     Dist& dist_type,
     const amrex::RealVect jet_cent,
+    const amrex::RealVect jet_norm,
     const amrex::Real jet_dia,
     const amrex::Real part_temp,
     const amrex::Real mass_flow,
@@ -85,10 +86,9 @@ public:
     const amrex::Real dt,
     const amrex::Real* Y_jet,
     const int level,
-    const amrex::Real jet_angle = 0.,
-    const amrex::Real azi_lo = 0.,
-    const amrex::Real azi_hi = 360.,
-    const int lowD = AMREX_SPACEDIM - 1);
+    int startInjProc = 0,
+    int numInjProcs = 1,
+    const bool hollow_spray = false);
 
   static void readSprayParams(
     int& particle_verbose,
