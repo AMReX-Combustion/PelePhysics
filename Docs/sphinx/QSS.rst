@@ -145,7 +145,7 @@ The analytical Jacobian for QSS mechanisms is typically more accurate and stable
 .. _fig:qss_integrator:
 
 .. figure:: ./Visualization/qss_integrator.png
-     :width: 90%
+     :width: 70%
      :align: center
      :name: fig-qss-integrator
      :target: ./Visualization/qss_integrator.png
