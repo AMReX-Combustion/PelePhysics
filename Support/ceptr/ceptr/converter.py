@@ -34,10 +34,10 @@ class Converter:
         symbolic_jacobian,
     ):
         self.mechanism = mechanism
-        
+
         # Symbolic computations
         self.symbolic_jacobian = symbolic_jacobian
-     
+
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -406,14 +406,14 @@ class Converter:
                         self.reaction_info,
                         self.syms,
                         dscqss_dscList=[
-                            #dscqss0dsc0,
-                            #dscqss1dsc0,
-                            #dscqss2dsc0,
+                            # dscqss0dsc0,
+                            # dscqss1dsc0,
+                            # dscqss2dsc0,
                         ],
                         indexList=[
-                            #(self.species_info.n_species) * 0 + 0,
-                            #(self.species_info.n_species) * 0 + 1,
-                            #(self.species_info.n_species) * 0 + 2,
+                            # (self.species_info.n_species) * 0 + 0,
+                            # (self.species_info.n_species) * 0 + 1,
+                            # (self.species_info.n_species) * 0 + 2,
                         ],
                     )
 
@@ -444,7 +444,10 @@ class Converter:
                     )
                 else:
                     cj.ajac(
-                        hdr, self.mechanism, self.species_info, self.reaction_info
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
                     )
                 cj.dproduction_rate(
                     hdr, self.mechanism, self.species_info, self.reaction_info

@@ -252,6 +252,7 @@ def ajac(
 
     cw.writer(fstream, "}")
 
+
 def ajac_symbolic(
     fstream,
     mechanism,
@@ -526,6 +527,7 @@ def ajac_symbolic(
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
+
 
 def ajac_reaction_d(
     fstream,

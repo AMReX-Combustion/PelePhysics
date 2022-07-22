@@ -38,6 +38,8 @@ def convert_lst(
                 print(f"""Converting file {mechname}""")
                 convert(
                     mechname,
+                    format_input,
+                    symbolic_jac,
                 )
 
 
@@ -54,7 +56,7 @@ def main():
 
     parser.add_argument(
         "--format_input",
-        help="Input file for jacobian formatting parameters",
+        help="Input file for jacobian formatting parameters used with QSS mechanisms",
         type=str,
         default=None,
         required=False,

@@ -12,9 +12,9 @@ import symengine as sme
 import sympy as smp
 
 import ceptr.constants as cc
+import ceptr.inputs as ci
 import ceptr.thermo as cth
 from ceptr.progressBar import printProgressBar
-import ceptr.inputs as ci
 
 
 class SymbolicMath:
@@ -32,29 +32,39 @@ class SymbolicMath:
         params = ci.Input()
         if not format_input is None:
             params.from_toml(format_input)
-       
-        self.hformat = params.inputs['Readability']['hformat'].value
 
-        self.remove_1 = params.inputs['Arithmetic']['remove_1'].value
-        self.remove_pow = params.inputs['Arithmetic']['remove_pow'].value
-        self.remove_pow10 = params.inputs['Arithmetic']['remove_pow10'].value
+        self.hformat = params.inputs["Readability"]["hformat"].value
 
-        self.min_op_count = params.inputs['Replacement']['min_op_count'].value
-        self.min_op_count_all = params.inputs['Replacement']['min_op_count_all'].value
-        self.gradual_op_count = params.inputs['Replacement']['gradual_op_count'].value
-        self.remove_single_symbols_cse = params.inputs['Replacement']['remove_single_symbols_cse'].value
+        self.remove_1 = params.inputs["Arithmetic"]["remove_1"].value
+        self.remove_pow = params.inputs["Arithmetic"]["remove_pow"].value
+        self.remove_pow10 = params.inputs["Arithmetic"]["remove_pow10"].value
 
-        self.recycle_cse = params.inputs['Recycle']['recycle_cse'].value
-        self.store_in_jacobian = params.inputs['Recycle']['store_in_jacobian'].value
+        self.min_op_count = params.inputs["Replacement"]["min_op_count"].value
+        self.min_op_count_all = params.inputs["Replacement"][
+            "min_op_count_all"
+        ].value
+        self.gradual_op_count = params.inputs["Replacement"][
+            "gradual_op_count"
+        ].value
+        self.remove_single_symbols_cse = params.inputs["Replacement"][
+            "remove_single_symbols_cse"
+        ].value
+
+        self.recycle_cse = params.inputs["Recycle"]["recycle_cse"].value
+        self.store_in_jacobian = params.inputs["Recycle"][
+            "store_in_jacobian"
+        ].value
         if (
             2 * reaction_info.n_qssa_reactions
             > (species_info.n_species + 1) ** 2
         ):
             self.store_in_jacobian = False
 
-        self.round_decimals = params.inputs['Characters']['round_decimals'].value
+        self.round_decimals = params.inputs["Characters"][
+            "round_decimals"
+        ].value
 
-        self.print_debug = params.inputs['Debug']['print_debug'].value
+        self.print_debug = params.inputs["Debug"]["print_debug"].value
 
         print("self.hformat = ", self.hformat)
         print("self.remove_1 = ", self.remove_1)
@@ -64,11 +74,13 @@ class SymbolicMath:
         print("self.min_op_count = ", self.min_op_count)
         print("self.min_op_count_all = ", self.min_op_count_all)
         print("self.gradual_op_count = ", self.gradual_op_count)
-        print("self.remove_single_symbols_cse = ", self.remove_single_symbols_cse)
-        
+        print(
+            "self.remove_single_symbols_cse = ", self.remove_single_symbols_cse
+        )
+
         print("self.recycle_cse = ", self.recycle_cse)
         print("self.store_in_jacobian = ", self.store_in_jacobian)
-       
+
         print("self.round_decimals = ", self.round_decimals)
         print("self.print_debug = ", self.print_debug)
 
