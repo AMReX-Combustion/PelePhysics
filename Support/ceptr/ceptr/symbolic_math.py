@@ -1552,7 +1552,7 @@ class SymbolicMath:
             #         sme.symbols(f"sc_qss[{scqssnum}]"),
             #     )
 
-    def compute_dscqss_dsc_fast(self, species_info):
+    def compute_dscqss_dsc(self, species_info):
         """Routine that computes the dscqss i / dsc j."""
 
         # Loop over the species info dataframe and compute all dsc derivatives
@@ -1578,7 +1578,7 @@ class SymbolicMath:
                 # else:
                 #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
 
-    def compute_dwdot_dsc_fast(self, species_info):
+    def compute_dwdot_dsc(self, species_info):
         """Routine that computes the dwdot i / dsc j."""
 
         # Loop over all wdots and sc terms
@@ -1589,7 +1589,7 @@ class SymbolicMath:
                     self.wdot_smp[wdot_idx], sme.symbols(f"sc[{sc_idx}]")
                 )
 
-    def compute_dwdot_dscqss_fast(self, species_info):
+    def compute_dwdot_dscqss(self, species_info):
         """Routine that computes the dwdot i / dscqss j."""
 
         # Loop over all wdots and sc terms
