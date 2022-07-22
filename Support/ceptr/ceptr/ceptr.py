@@ -1,7 +1,7 @@
 """Convert cantera mechanism to C++ files."""
 import argparse
-from argparse import RawTextHelpFormatter
 import pathlib
+from argparse import RawTextHelpFormatter
 
 import cantera as ct
 
