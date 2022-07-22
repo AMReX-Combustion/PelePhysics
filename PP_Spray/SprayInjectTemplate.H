@@ -118,10 +118,10 @@ SprayParticleContainer::sprayInjection(
   while (cur_mass < mass_perc) {
     // Pick random percentage from 0 to 1
     amrex::Real radp = amrex::Random();
+#if AMREX_SPACEDIM == 3
     if (hollow_spray) {
       radp = 1.;
     }
-#if AMREX_SPACEDIM == 3
     // This determines the radial location of the particle within the jet inlet
     amrex::Real cur_rad = radp * jet_dia / 2.;
     // The closer the particle is to the edge of the injection circle, the
@@ -134,7 +134,14 @@ SprayParticleContainer::sprayInjection(
       jet_cent + part_loc_trans(cur_rad, theta_1, phi_1, phi_2);
     amrex::RealVect part_vel = jet_vel_comp(theta_1, phi_1, theta_2, phi_2);
 #else
-    amrex::Real cur_rad = (radp - 0.5) * 0.5 * jet_dia;
+    if (hollow_spray) {
+      if (radp <= 0.5) {
+        radp = 0.;
+      } else {
+        radp = 1.;
+      }
+    }
+    amrex::Real cur_rad = (radp - 0.5) * jet_dia;
     amrex::Real theta_2 = -(radp - 0.5) * spread_angle;
     amrex::Real st1 = std::sin(theta_1);
     amrex::Real ct1 = std::cos(theta_1);
