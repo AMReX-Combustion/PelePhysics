@@ -1,0 +1,23 @@
+[Readability]
+hformat = 			"gpu"
+
+[Arithmetic]
+remove_1 = 			true
+remove_pow = 			true
+remove_pow10 =		 	true
+
+[Replacement]
+min_op_count = 			0
+min_op_count_all = 		10
+gradual_op_count = 		true
+remove_single_symbols_cse = 	true
+
+[Recycle]
+store_in_jacobian =		true
+recycle_cse = 			true
+
+[Characters]
+round_decimals = 		true
+
+[Debug]
+print_debug = 			false

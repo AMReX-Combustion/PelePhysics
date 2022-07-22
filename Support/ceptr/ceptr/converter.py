@@ -30,35 +30,14 @@ class Converter:
     def __init__(
         self,
         mechanism,
-        hformat,
-        remove_1,
-        remove_pow,
-        remove_pow10,
-        min_op_count,
-        gradual_op_count,
-        store_in_jacobian,
-        round_decimals,
-        recycle_cse,
-        min_op_count_all,
-        remove_single_symbols_cse,
-        print_debug,
+        format_input,
+        symbolic_jacobian,
     ):
         self.mechanism = mechanism
-
-        # Format options
-        self.hformat = hformat
-        self.remove_1 = remove_1
-        self.remove_pow = remove_pow
-        self.remove_pow10 = remove_pow10
-        self.min_op_count = min_op_count
-        self.gradual_op_count = gradual_op_count
-        self.store_in_jacobian = store_in_jacobian
-        self.round_decimals = round_decimals
-        self.recycle_cse = recycle_cse
-        self.min_op_count_all = min_op_count_all
-        self.remove_single_symbols_cse = remove_single_symbols_cse
-        self.print_debug = print_debug
-
+        
+        # Symbolic computations
+        self.symbolic_jacobian = symbolic_jacobian
+     
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -105,17 +84,7 @@ class Converter:
             self.species_info,
             self.reaction_info,
             self.mechanism,
-            self.hformat,
-            self.remove_1,
-            self.remove_pow,
-            self.remove_pow10,
-            self.min_op_count,
-            self.gradual_op_count,
-            self.store_in_jacobian,
-            self.round_decimals,
-            self.recycle_cse,
-            self.min_op_count_all,
-            self.remove_single_symbols_cse,
+            format_input,
         )
 
     def set_species(self):
@@ -335,7 +304,7 @@ class Converter:
                     intermediate_names_to_print,
                 )
 
-                if self.print_debug:
+                if self.syms.print_debug:
                     cdbg.qssa_debug(
                         hdr,
                         self.mechanism,
@@ -384,7 +353,7 @@ class Converter:
                     f"Time to do production_rate light = {time.time()-times}"
                 )
 
-                if self.print_debug:
+                if self.syms.print_debug:
                     cdbg.production_debug(
                         hdr,
                         self.mechanism,
@@ -429,7 +398,7 @@ class Converter:
                 cck.ckwxr(hdr, self.mechanism, self.species_info)
                 cth.dthermodtemp(hdr, self.mechanism, self.species_info)
 
-                if self.print_debug:
+                if self.syms.print_debug:
                     cdbg.jacobian_debug(
                         hdr,
                         self.mechanism,
@@ -437,14 +406,14 @@ class Converter:
                         self.reaction_info,
                         self.syms,
                         dscqss_dscList=[
-                            dscqss0dsc0,
-                            dscqss1dsc0,
-                            dscqss2dsc0,
+                            #dscqss0dsc0,
+                            #dscqss1dsc0,
+                            #dscqss2dsc0,
                         ],
                         indexList=[
-                            (self.species_info.n_species) * 0 + 0,
-                            (self.species_info.n_species) * 0 + 1,
-                            (self.species_info.n_species) * 0 + 2,
+                            #(self.species_info.n_species) * 0 + 0,
+                            #(self.species_info.n_species) * 0 + 1,
+                            #(self.species_info.n_species) * 0 + 2,
                         ],
                     )
 
@@ -463,6 +432,22 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     precond=True,
+                )
+                # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                if self.symbolic_jacobian:
+                    cj.ajac_symbolic(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        syms=self.syms,
+                    )
+                else:
+                    cj.ajac(
+                        hdr, self.mechanism, self.species_info, self.reaction_info
+                    )
+                cj.dproduction_rate(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
                 )
 
             else:

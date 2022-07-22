@@ -14,6 +14,7 @@ import sympy as smp
 import ceptr.constants as cc
 import ceptr.thermo as cth
 from ceptr.progressBar import printProgressBar
+import ceptr.inputs as ci
 
 
 class SymbolicMath:
@@ -24,36 +25,53 @@ class SymbolicMath:
         species_info,
         reaction_info,
         mechanism,
-        hformat,
-        remove_1,
-        remove_pow,
-        remove_pow10,
-        min_op_count,
-        gradual_op_count,
-        store_in_jacobian,
-        round_decimals,
-        recycle_cse,
-        min_op_count_all,
-        remove_single_symbols_cse,
+        format_input,
     ):
 
         # Formatting options
-        self.hformat = hformat
-        self.remove_1 = remove_1
-        self.remove_pow = remove_pow
-        self.remove_pow10 = remove_pow10
-        self.min_op_count = min_op_count
-        self.gradual_op_count = gradual_op_count
-        self.store_in_jacobian = store_in_jacobian
+        params = ci.Input()
+        if not format_input is None:
+            params.from_toml(format_input)
+       
+        self.hformat = params.inputs['Readability']['hformat'].value
+
+        self.remove_1 = params.inputs['Arithmetic']['remove_1'].value
+        self.remove_pow = params.inputs['Arithmetic']['remove_pow'].value
+        self.remove_pow10 = params.inputs['Arithmetic']['remove_pow10'].value
+
+        self.min_op_count = params.inputs['Replacement']['min_op_count'].value
+        self.min_op_count_all = params.inputs['Replacement']['min_op_count_all'].value
+        self.gradual_op_count = params.inputs['Replacement']['gradual_op_count'].value
+        self.remove_single_symbols_cse = params.inputs['Replacement']['remove_single_symbols_cse'].value
+
+        self.recycle_cse = params.inputs['Recycle']['recycle_cse'].value
+        self.store_in_jacobian = params.inputs['Recycle']['store_in_jacobian'].value
         if (
             2 * reaction_info.n_qssa_reactions
             > (species_info.n_species + 1) ** 2
         ):
             self.store_in_jacobian = False
-        self.round_decimals = round_decimals
-        self.recycle_cse = recycle_cse
-        self.min_op_count_all = min_op_count_all
-        self.remove_single_symbols_cse = remove_single_symbols_cse
+
+        self.round_decimals = params.inputs['Characters']['round_decimals'].value
+
+        self.print_debug = params.inputs['Debug']['print_debug'].value
+
+        print("self.hformat = ", self.hformat)
+        print("self.remove_1 = ", self.remove_1)
+        print("self.remove_pow = ", self.remove_pow)
+        print("self.remove_pow10 = ", self.remove_pow10)
+
+        print("self.min_op_count = ", self.min_op_count)
+        print("self.min_op_count_all = ", self.min_op_count_all)
+        print("self.gradual_op_count = ", self.gradual_op_count)
+        print("self.remove_single_symbols_cse = ", self.remove_single_symbols_cse)
+        
+        print("self.recycle_cse = ", self.recycle_cse)
+        print("self.store_in_jacobian = ", self.store_in_jacobian)
+       
+        print("self.round_decimals = ", self.round_decimals)
+        print("self.print_debug = ", self.print_debug)
+
         # Set to False to use bottom up approach
         self.top_bottom = True
 
@@ -61,6 +79,7 @@ class SymbolicMath:
         n_qssa_species = species_info.n_qssa_species
 
         self.T_smp = sme.symbols("T")
+        # Keep tc as symbols so we don't compute powers all the time
         # self.tc_smp = [
         #    sme.log(self.T_smp),
         #    self.T_smp,
@@ -68,13 +87,13 @@ class SymbolicMath:
         #    self.T_smp**3,
         #    self.T_smp**4,
         # ]
-        # Keep tc as symbols so we don't compute powers all the time
         self.tc_smp = [sme.symbols("tc[" + str(i) + "]") for i in range(5)]
-        # self.invT_smp = 1.0 / self.tc_smp[1]
         # Keep invT as symbol so we don't do division all the time
+        # self.invT_smp = 1.0 / self.tc_smp[1]
         self.invT_smp = sme.symbols("invT")
         self.invT2_smp = self.invT_smp * self.invT_smp
 
+        # Keep refC and refCinv as symbols to avoid doing divisions all the time
         # coeff1 = cc.Patm_pa
         # coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
         # if self.remove_1:
@@ -85,7 +104,6 @@ class SymbolicMath:
         #    self.refCinv_smp = float(1.0) / self.refC_smp
         # else:
         #    self.refCinv_smp = 1.0 / self.refC_smp
-        # Keep refC and refCinv as symbols to avoid doing divisions all the time
         self.refCinv_smp = sme.symbols("refCinv")
         self.refC_smp = sme.symbols("refC")
 
@@ -1252,7 +1270,6 @@ class SymbolicMath:
         """Write species jacobian terms as functions of common subexpressions."""
         """As little as possible intermediate variables are declared which negatively affects readability."""
         """The memory efficiency makes the format useful for GPU"""
-
         n_dscqssdscqss = len(self.dscqssdscqss)
         n_dscqssdsc = len(self.dscqssdsc)
         n_dwdotdscqss = len(self.dwdotdscqss)
