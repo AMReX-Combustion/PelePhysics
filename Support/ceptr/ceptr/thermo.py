@@ -101,18 +101,18 @@ def generate_thermo_routine(
         " species, const amrex::Real *  tc)" % name,
     )
 
-    syms_g_RT = False
-    syms_g_RT_qss = False
-    syms_h_RT = False
-    syms_h_RT_qss = False
+    syms_g_rt = False
+    syms_g_rt_qss = False
+    syms_h_rt = False
+    syms_h_rt_qss = False
     if name == "gibbs" and not (syms is None):
-        syms_g_RT = True
+        syms_g_rt = True
     if name == "gibbs_qss" and not (syms is None):
-        syms_g_RT_qss = True
+        syms_g_rt_qss = True
     if name == "speciesEnthalpy" and not (syms is None):
-        syms_h_RT = True
+        syms_h_rt = True
     if name == "speciesEnthalpy_qss" and not (syms is None):
-        syms_h_RT_qss = True
+        syms_h_rt_qss = True
 
     cw.writer(fstream, "{")
     # declarations
@@ -175,12 +175,12 @@ def generate_thermo_routine(
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
-            if syms_g_RT:
+            if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     fstream, low_range, syms
                 )
-            elif syms_g_RT_qss:
+            elif syms_g_rt_qss:
                 index = (
                     species_info.ordered_idx_map[species.name]
                     - species_info.n_species
@@ -188,12 +188,12 @@ def generate_thermo_routine(
                 syms.g_RT_qss_smp_tmp[mid_temp]["m"][
                     index
                 ] = expression_generator(fstream, low_range, syms)
-            elif syms_h_RT:
+            elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     fstream, low_range, syms
                 )
-            elif syms_h_RT_qss:
+            elif syms_h_rt_qss:
                 index = (
                     species_info.ordered_idx_map[species.name]
                     - species_info.n_species
@@ -243,12 +243,12 @@ def generate_thermo_routine(
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
-            if syms_g_RT:
+            if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     fstream, high_range, syms
                 )
-            elif syms_g_RT_qss:
+            elif syms_g_rt_qss:
                 index = (
                     species_info.ordered_idx_map[species.name]
                     - species_info.n_species
@@ -256,12 +256,12 @@ def generate_thermo_routine(
                 syms.g_RT_qss_smp_tmp[mid_temp]["p"][
                     index
                 ] = expression_generator(fstream, high_range, syms)
-            elif syms_h_RT:
+            elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     fstream, high_range, syms
                 )
-            elif syms_h_RT_qss:
+            elif syms_h_rt_qss:
                 index = (
                     species_info.ordered_idx_map[species.name]
                     - species_info.n_species

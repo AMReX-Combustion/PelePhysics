@@ -1,8 +1,8 @@
+"""Display progress bar for long function evaluations."""
 import sys
 
 
-# Print iterations progress
-def printProgressBar(
+def print_progress_bar(
     iteration,
     total,
     prefix="",
@@ -10,9 +10,11 @@ def printProgressBar(
     decimals=1,
     length=100,
     fill="█",
-    printEnd="\r",
+    print_end="\r",
 ):
-    """
+    r"""
+    Display progress bar.
+
     Call in a loop to create terminal progress bar
     @params:
         iteration   - Required  : current iteration (Int)
@@ -22,14 +24,14 @@ def printProgressBar(
         decimals    - Optional  : positive number of decimals in percent complete (Int)
         length      - Optional  : character length of bar (Int)
         fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+        print_end    - Optional  : end character (e.g. "\r", "\r\n") (Str)
     """
     percent = ("{0:." + str(decimals) + "f}").format(
         100 * (iteration / float(total))
     )
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + "-" * (length - filledLength)
-    print(f"\x1b[2K\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + "-" * (length - filled_length)
+    print(f"\x1b[2K\r{prefix} |{bar}| {percent}% {suffix}", end=print_end)
     sys.stdout.flush()
     # Print New Line on Complete
     if iteration == total:

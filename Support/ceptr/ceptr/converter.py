@@ -1,13 +1,10 @@
 """Generate C++ files for a mechanism."""
 import pathlib
-import re
 import shutil
 import subprocess as spr
 import time
 
 import numpy as np
-import symengine as sme
-import sympy as smp
 
 import ceptr.ck as cck
 import ceptr.debug as cdbg
@@ -261,7 +258,6 @@ class Converter:
 
             self.species_info.create_dicts()
             if self.species_info.n_qssa_species > 0:
-
                 helper_names_to_print = ["H_2"]
                 intermediate_names_to_print = ["PXC5H11_rhs", "PXC7H15_rhs"]
 
@@ -367,7 +363,8 @@ class Converter:
                 self.species_info.identify_wdot_dependencies(self.syms)
                 self.species_info.make_wdot_dataframe()
                 print(
-                    f"Time to identify wdot dependencies and make dataframe = {time.time()-times}"
+                    "Time to identify wdot dependencies and make dataframe ="
+                    f" {time.time()-times}"
                 )
                 print(self.species_info.wdot_df)
 
@@ -405,12 +402,12 @@ class Converter:
                         self.species_info,
                         self.reaction_info,
                         self.syms,
-                        dscqss_dscList=[
+                        dscqss_dsc_list=[
                             # dscqss0dsc0,
                             # dscqss1dsc0,
                             # dscqss2dsc0,
                         ],
-                        indexList=[
+                        index_list=[
                             # (self.species_info.n_species) * 0 + 0,
                             # (self.species_info.n_species) * 0 + 1,
                             # (self.species_info.n_species) * 0 + 2,
@@ -454,7 +451,6 @@ class Converter:
                 )
 
             else:
-
                 cp.production_rate(
                     hdr,
                     self.mechanism,

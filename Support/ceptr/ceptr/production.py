@@ -1,7 +1,5 @@
 """Production functions."""
-import re
 import sys
-import time
 
 import symengine as sme
 
@@ -670,25 +668,25 @@ def production_rate(
                     mechanism, species_info, reaction, syms
                 )
                 cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
-                Corr_smp = alpha_smp
+                corr_smp = alpha_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc),
                 )
-                qf_smp = Corr_smp * k_f_smp * forward_sc_smp
+                qf_smp = corr_smp * k_f_smp * forward_sc_smp
             else:
                 alpha, alpha_smp = enhancement_d_with_qss(
                     mechanism, species_info, reaction, syms
                 )
                 cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
-                Corr_smp = alpha_smp
+                corr_smp = alpha_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real redP = Corr / k_f * %.15g "
                     % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
                 )
-                redP_smp = (
-                    Corr_smp
+                redp_smp = (
+                    corr_smp
                     / k_f_smp
                     * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
                 )
@@ -698,18 +696,18 @@ def production_rate(
                     % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
                 )
                 coeff = (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).magnitude
-                redP_smp *= sme.exp(
+                redp_smp *= sme.exp(
                     low_beta * syms.tc_smp[0] - coeff * syms.invT_smp
                 )
                 if is_troe:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
                     )
-                    F_smp = redP_smp / (1.0 + redP_smp)
+                    f_smp = redp_smp / (1.0 + redp_smp)
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
-                    logPred_smp = sme.log(redP_smp, 10)
+                    logpred_smp = sme.log(redp_smp, 10)
                     cw.writer(fstream, "const amrex::Real logFcent = log10(")
                     int_smp = 0.0
                     if abs(troe[1]) > 1.0e-100:
@@ -761,59 +759,59 @@ def production_rate(
                             int_smp += sme.exp(first_factor * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
-                    logFcent_smp = sme.log(int_smp, 10)
+                    logfcent_smp = sme.log(int_smp, 10)
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
                     )
-                    troe_c_smp = -0.4 - 0.67 * logFcent_smp
+                    troe_c_smp = -0.4 - 0.67 * logfcent_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_n = 0.75 - 1.27 * logFcent;",
                     )
-                    troe_n_smp = 0.75 - 1.27 * logFcent_smp
+                    troe_n_smp = 0.75 - 1.27 * logfcent_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real troe = (troe_c + logPred) / (troe_n"
                         " - 0.14 * (troe_c + logPred));",
                     )
-                    troe_smp = (troe_c_smp + logPred_smp) / (
-                        troe_n_smp - 0.14 * (troe_c_smp + logPred_smp)
+                    troe_smp = (troe_c_smp + logpred_smp) / (
+                        troe_n_smp - 0.14 * (troe_c_smp + logpred_smp)
                     )
                     cw.writer(
                         fstream,
                         "const amrex::Real F_troe = pow(10, logFcent / (1.0 +"
                         " troe * troe));",
                     )
-                    F_troe_smp = pow(
-                        10, logFcent_smp / (1.0 + troe_smp * troe_smp)
+                    f_troe_smp = pow(
+                        10, logfcent_smp / (1.0 + troe_smp * troe_smp)
                     )
                     cw.writer(fstream, "Corr = F * F_troe;")
-                    Corr_smp = F_smp * F_troe_smp
+                    corr_smp = f_smp * f_troe_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real qf = Corr * k_f * (%s);"
                         % (forward_sc),
                     )
-                    qf_smp = Corr_smp * k_f_smp * forward_sc_smp
+                    qf_smp = corr_smp * k_f_smp * forward_sc_smp
                 elif is_sri:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
                     )
-                    F_smp = redP_smp / (1.0 + redP_smp)
+                    f_smp = redp_smp / (1.0 + redp_smp)
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
-                    logPred_smp = sme.log(redP_smp, 10)
+                    logpred_smp = sme.log(redp_smp, 10)
                     cw.writer(fstream, "X = 1.0 / (1.0 + logPred*logPred);")
-                    X_smp = 1.0 / (1.0 + logPred_smp * logPred_smp)
+                    # x_smp = 1.0 / (1.0 + logpred_smp * logpred_smp)
                     if sri[1] < 0:
                         cw.writer(
                             fstream,
                             "F_sri = exp(X * log(%.15g * exp(%.15g * invT)"
                             % (sri[0], -sri[1]),
                         )
-                        if not syms is None:
+                        if syms is not None:
                             sys.exit("Not done for now")
                     else:
                         cw.writer(
@@ -821,24 +819,24 @@ def production_rate(
                             "F_sri = exp(X * log(%.15g * exp(-%.15g * invT)"
                             % (sri[0], sri[1]),
                         )
-                        if not syms is None:
+                        if syms is not None:
                             sys.exit("Not done for now")
                     if sri[2] > 1.0e-100:
                         cw.writer(
                             fstream, "   +  exp(tc[0] / %.15g) " % sri[2]
                         )
-                        if not syms is None:
+                        if syms is not None:
                             sys.exit("Not done for now")
                     else:
                         cw.writer(fstream, "   +  0. ")
-                        if not syms is None:
+                        if syms is not None:
                             sys.exit("Not done for now")
                     cw.writer(
                         fstream,
                         "   *  (%d > 3 ? %.15g * exp(%.15g * tc[0]) : 1.0);"
                         % (nsri, sri[3], sri[4]),
                     )
-                    if not syms is None:
+                    if syms is not None:
                         sys.exit("Not done for now")
                     cw.writer(fstream, "Corr = F * F_sri;")
                     cw.writer(
@@ -848,13 +846,13 @@ def production_rate(
                     )
                 elif nlindemann > 0:
                     cw.writer(fstream, "Corr = redP / (1.0 + redP);")
-                    Corr_smp = redP_smp / (1.0 + redP_smp)
+                    corr_smp = redp_smp / (1.0 + redp_smp)
                     cw.writer(
                         fstream,
                         "const amrex::Real qf = Corr * k_f * (%s);"
                         % (forward_sc),
                     )
-                    qf_smp = Corr_smp * k_f_smp * forward_sc_smp
+                    qf_smp = corr_smp * k_f_smp * forward_sc_smp
             if kc_conv_inv:
                 if alpha is None:
                     cw.writer(
@@ -871,12 +869,11 @@ def production_rate(
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                        " (%s) * (%s);"
-                        % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s)"
+                        " * (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
                     qr_smp = (
-                        Corr_smp
+                        corr_smp
                         * k_f_smp
                         * sme.exp(-kc_exp_arg_smp)
                         * (kc_conv_inv_smp)
@@ -899,7 +896,7 @@ def production_rate(
                         " (%s);" % (kc_exp_arg, reverse_sc),
                     )
                     qr_smp = (
-                        Corr_smp
+                        corr_smp
                         * k_f_smp
                         * sme.exp(-(kc_exp_arg_smp))
                         * reverse_sc_smp
@@ -1377,9 +1374,8 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                        " (%s) * (%s);"
-                        % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s)"
+                        " * (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
             else:
                 if alpha is None:
@@ -1484,12 +1480,12 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     cw.writer(
         fstream,
         "void progressRateFR"
-        + "(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real T)",
+        + "(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc,"
+        " amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
     if n_reactions > 0:
-
         cw.writer(
             fstream,
             "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"

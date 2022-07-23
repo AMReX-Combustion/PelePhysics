@@ -25,8 +25,8 @@ def ajac(
     if precond:
         cw.writer(
             fstream,
-            "void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real"
-            " T, const int HP)",
+            "void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc,"
+            " amrex::Real T, const int HP)",
         )
     else:
         cw.writer(
@@ -260,8 +260,7 @@ def ajac_symbolic(
     reaction_info,
     syms=None,
 ):
-    """Printing of Jacobian obtained from symbolic recording."""
-
+    """Print the Jacobian obtained from symbolic recording."""
     n_species = species_info.n_species
     n_qssa_species = species_info.n_qssa_species
     n_reactions = mechanism.n_reactions
@@ -271,8 +270,8 @@ def ajac_symbolic(
     # main
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  aJacobian(amrex::Real"
+        " * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
 
@@ -370,7 +369,8 @@ def ajac_symbolic(
         cw.writer(fstream, "invT = 1.0 / tc[1];")
         cw.writer(
             fstream,
-            "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+            "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss,"
+            " kf_qss, &J[%d], &J[%d], tc, invT);"
             % (
                 0,
                 reaction_info.n_qssa_reactions,
@@ -384,7 +384,8 @@ def ajac_symbolic(
         cw.writer(fstream, "invT = 1.0 / tc[1];")
         cw.writer(
             fstream,
-            "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[%d], &J[%d], tc, invT);"
+            "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss,"
+            " &J[%d], &J[%d], tc, invT);"
             % (
                 0,
                 reaction_info.n_qssa_reactions,
@@ -710,18 +711,21 @@ def ajac_reaction_d(
             cw.writer(
                 fstream,
                 cw.comment(
-                    "FIXME: irreversible reaction in _ajac_reaction may not work",
+                    "FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work",
                 ),
             )
         for k in range(n_species):
             if k in sorted_reactants and k in sorted_products:
                 print(
-                    "FIXME: irreversible reaction in _ajac_reaction may not work"
+                    "FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work"
                 )
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "FIXME: irreversible reaction in _ajac_reaction may not work",
+                        "FIXME: irreversible reaction in _ajac_reaction may"
+                        " not work",
                     ),
                 )
 
@@ -1086,7 +1090,6 @@ def ajac_reaction_d(
     #    cw.writer(fstream,'dcdc_fac = q_nocor;')
 
     if has_alpha or falloff:
-
         if not precond:
             cw.writer(fstream, "if (consP) {")
 
@@ -1207,7 +1210,6 @@ def ajac_reaction_d(
                 cw.writer(fstream, s1)
 
     else:
-
         for k in range(n_species):
             dqdc_s = dqdc_d(
                 fstream,
@@ -1429,21 +1431,22 @@ def dproduction_rate(
         cw.writer(
             fstream,
             cw.comment(
-                "compute an approx to the reaction Jacobian (for preconditioning)"
+                "compute an approx to the reaction Jacobian (for"
+                " preconditioning)"
             ),
         )
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real * "
-            " Tp, const int * HP)",
+            " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc,"
+            " amrex::Real *  Tp, const int * HP)",
         )
     else:
         cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
         cw.writer(
             fstream,
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J,"
-            " amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *"
+            "  J, amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
         )
 
     cw.writer(fstream, "{")

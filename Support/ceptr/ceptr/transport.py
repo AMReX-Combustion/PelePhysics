@@ -2045,7 +2045,6 @@ def critical_parameters(fstream, mechanism, species_info):
                 ),
             )
         else:
-
             cw.writer(fstream)
             cw.writer(
                 fstream,

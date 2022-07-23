@@ -5,7 +5,6 @@ import time
 import symengine as sme
 
 import ceptr.constants as cc
-import ceptr.thermo as cth
 import ceptr.writer as cw
 
 # ##########
@@ -23,8 +22,7 @@ def qssa_debug(
     intermediate_names_to_print,
 ):
     """Run all of the QSSA debug routines."""
-
-    print(f"Symbolic kf QSS print for debug")
+    print("Symbolic kf QSS print for debug.")
     qssa_kf_debug(
         fstream,
         mechanism,
@@ -33,7 +31,7 @@ def qssa_debug(
         syms,
     )
 
-    print("Symbolic Sc qss print for debug")
+    print("Symbolic Sc qss print for debug.")
     qssa_sc_qss_debug(
         fstream,
         mechanism,
@@ -42,7 +40,7 @@ def qssa_debug(
         syms,
     )
 
-    print("Symbolic qf qss print for debug")
+    print("Symbolic qf qss print for debug.")
     qssa_coeff_debug(
         fstream,
         mechanism,
@@ -51,7 +49,7 @@ def qssa_debug(
         syms,
     )
 
-    print("Symbolic qss terms print for debug")
+    print("Symbolic qss terms print for debug.")
     qssa_terms_debug(
         fstream,
         mechanism,
@@ -62,8 +60,8 @@ def qssa_debug(
         intermediate_names_to_print,
     )
 
-    print("Symbolic gibbs QSS print for debug")
-    gibbsQSS_debug(
+    print("Symbolic gibbs QSS print for debug.")
+    gibbs_qss_debug(
         fstream,
         mechanism,
         species_info,
@@ -71,8 +69,8 @@ def qssa_debug(
         syms,
     )
 
-    print("Symbolic enthalpy QSS print for debug")
-    speciesEnthalpyQSS_debug(
+    print("Symbolic enthalpy QSS print for debug.")
+    species_enthalpy_qss_debug(
         fstream,
         mechanism,
         species_info,
@@ -88,8 +86,8 @@ def thermo_debug(
     reaction_info,
     syms,
 ):
-
-    print("Symbolic gibbs print for debug")
+    """Run all of the thermo debug routines."""
+    print("Symbolic gibbs print for debug.")
     gibbs_debug(
         fstream,
         mechanism,
@@ -98,8 +96,8 @@ def thermo_debug(
         syms,
     )
 
-    print("Symbolic enthalpy print for debug")
-    speciesEnthalpy_debug(
+    print("Symbolic enthalpy print for debug.")
+    species_enthalpy_debug(
         fstream,
         mechanism,
         species_info,
@@ -109,8 +107,8 @@ def thermo_debug(
 
 
 def production_debug(fstream, mechanism, species_info, reaction_info, syms):
-
-    print("Symbolic wdot print for debug")
+    """Run all of the production debug routines."""
+    print("Symbolic wdot print for debug.")
     production_rate_debug(
         fstream,
         mechanism,
@@ -126,22 +124,22 @@ def jacobian_debug(
     species_info,
     reaction_info,
     syms,
-    dscqss_dscList=[],
-    indexList=None,
+    dscqss_dsc_list,
+    index_list,
 ):
-
-    print("Symbolic dscqss_dsc term print for debug")
+    """Run all of the jacobian debug routines."""
+    print("Symbolic dscqss_dsc term print for debug.")
     dscqss_dsc_debug(
         fstream,
         mechanism,
         species_info,
         reaction_info,
         syms,
-        dscqss_dscList,
-        indexList,
+        dscqss_dsc_list,
+        index_list,
     )
 
-    print("Symbolic dscqss_dsc term print for debug")
+    print("Symbolic dscqss_dsc term print for debug.")
     dscqss_dsc_fast_debug(
         fstream,
         mechanism,
@@ -150,7 +148,7 @@ def jacobian_debug(
         syms,
     )
 
-    print("symbolic jacobian term print for debug")
+    print("Symbolic jacobian term print for debug.")
     ajac_term_fast_debug(
         fstream,
         mechanism,
@@ -173,8 +171,6 @@ def qssa_kf_debug(
     syms,
 ):
     """Temporary QSSA kf debuging function."""
-    n_species = species_info.n_species
-    n_qssa_reactions = species_info.n_species
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -189,7 +185,6 @@ def qssa_kf_debug(
     )
 
     for ireac in range(reaction_info.n_qssa_reactions):
-
         cpp_str = syms.convert_to_cpp(syms.kf_qss_smp_tmp[ireac])
         cw.writer(
             fstream,
@@ -209,8 +204,8 @@ def qssa_terms_debug(
     species_info,
     reaction_info,
     syms,
-    helper_names_to_print=[],
-    intermediate_names_to_print=[],
+    helper_names_to_print=None,
+    intermediate_names_to_print=None,
 ):
     """Temporary QSSA terms debuging function."""
     n_species = species_info.n_species
@@ -330,7 +325,8 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff_debug"
-        + "(amrex::Real * sc, amrex::Real * qf_qss, amrex::Real * qr_qss, amrex::Real T)",
+        + "(amrex::Real * sc, amrex::Real * qf_qss, amrex::Real * qr_qss,"
+        " amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
@@ -567,10 +563,7 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
 
 
 def gibbs_debug(fstream, mechanism, species_info, reaction_info, syms=None):
-    """Temporary Write gibbs obtained with Sympy"""
-    n_species = species_info.n_species
-    n_reactions = mechanism.n_reactions
-
+    """Temporary Write gibbs obtained with Sympy."""
     cw.writer(fstream)
 
     # main function
@@ -640,11 +633,10 @@ def gibbs_debug(fstream, mechanism, species_info, reaction_info, syms=None):
     cw.writer(fstream, "}")
 
 
-def gibbsQSS_debug(fstream, mechanism, species_info, reaction_info, syms=None):
-    """Temporary Write gibbsQSS obtained with Sympy"""
-    n_species = species_info.n_species
-    n_reactions = mechanism.n_reactions
-
+def gibbs_qss_debug(
+    fstream, mechanism, species_info, reaction_info, syms=None
+):
+    """Temporary Write gibbsQSS obtained with Sympy."""
     cw.writer(fstream)
 
     # main function
@@ -714,13 +706,10 @@ def gibbsQSS_debug(fstream, mechanism, species_info, reaction_info, syms=None):
     cw.writer(fstream, "}")
 
 
-def speciesEnthalpy_debug(
+def species_enthalpy_debug(
     fstream, mechanism, species_info, reaction_info, syms=None
 ):
-    """Temporary Write species enthalpy obtained with Sympy"""
-    n_species = species_info.n_species
-    n_reactions = mechanism.n_reactions
-
+    """Temporary Write species enthalpy obtained with Sympy."""
     cw.writer(fstream)
 
     # main function
@@ -790,20 +779,18 @@ def speciesEnthalpy_debug(
     cw.writer(fstream, "}")
 
 
-def speciesEnthalpyQSS_debug(
+def species_enthalpy_qss_debug(
     fstream, mechanism, species_info, reaction_info, syms=None
 ):
-    """Temporary Write species enthalpy QSS obtained with Sympy"""
-    n_species = species_info.n_species
-    n_reactions = mechanism.n_reactions
-
+    """Temporary Write species enthalpy QSS obtained with Sympy."""
     cw.writer(fstream)
 
     # main function
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        "speciesEnthalpy_qss_debug(amrex::Real * h_RT_qss, const amrex::Real * tc)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " speciesEnthalpy_qss_debug(amrex::Real * h_RT_qss, const amrex::Real"
+        " * tc)",
     )
     cw.writer(fstream, "{")
 
@@ -869,8 +856,10 @@ def speciesEnthalpyQSS_debug(
 def production_rate_debug(
     fstream, mechanism, species_info, reaction_info, syms=None
 ):
-    """Temporary Write production rate obtained with Sympy. This is an expensive function"""
-    n_species = species_info.n_species
+    """Temporary Write production rate obtained with Sympy.
+
+    NOTE: This is an expensive function.
+    """
     n_reactions = mechanism.n_reactions
 
     cw.writer(fstream)
@@ -879,7 +868,8 @@ def production_rate_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " productionRate_debug(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
+        " productionRate_debug(amrex::Real * wdot, amrex::Real * sc,"
+        " amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
@@ -970,8 +960,8 @@ def ajac_term_debug(
     species_info,
     reaction_info,
     syms=None,
-    jacList=[],
-    indexList=None,
+    jac_list=None,
+    index_list=None,
 ):
     """Temporary Write jacobian term for debugging."""
     n_species = species_info.n_species
@@ -983,7 +973,8 @@ def ajac_term_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " ajac_term_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        " ajac_term_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+        " const int consP)",
     )
     cw.writer(fstream, "{")
 
@@ -1070,7 +1061,7 @@ def ajac_term_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            syms.write_array_to_cpp(jacList, f"J", cw, fstream, indexList)
+            syms.write_array_to_cpp(jac_list, "J", cw, fstream, index_list)
 
             cw.writer(fstream)
 
@@ -1186,8 +1177,8 @@ def dscqss_dsc_debug(
     species_info,
     reaction_info,
     syms=None,
-    dscqss_dscList=[],
-    indexList=None,
+    dscqss_dsc_list=None,
+    index_list=None,
 ):
     """Temporary Write dscqss_dsc for debugging."""
     n_species = species_info.n_species
@@ -1200,7 +1191,8 @@ def dscqss_dsc_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " dscqss_dsc_debug(amrex::Real * dscqss_dsc, amrex::Real * sc, amrex::Real T)",
+        " dscqss_dsc_debug(amrex::Real * dscqss_dsc, amrex::Real * sc,"
+        " amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
@@ -1290,7 +1282,7 @@ def dscqss_dsc_debug(
             cw.writer(fstream)
 
             syms.write_array_to_cpp(
-                dscqss_dscList, f"dscqss_dsc", cw, fstream, indexList
+                dscqss_dsc_list, "dscqss_dsc", cw, fstream, index_list
             )
 
             cw.writer(fstream)
@@ -1309,7 +1301,6 @@ def dscqss_dsc_fast_debug(
     syms=None,
 ):
     """Temporary Write dscqss_dsc for debugging."""
-
     n_species = species_info.n_species
     n_qssa_species = species_info.n_qssa_species
     n_reactions = mechanism.n_reactions
@@ -1320,7 +1311,8 @@ def dscqss_dsc_fast_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " dscqss_dsc_fast_debug(amrex::Real * dscqss_dsc, amrex::Real * sc, amrex::Real T)",
+        " dscqss_dsc_fast_debug(amrex::Real * dscqss_dsc, amrex::Real * sc,"
+        " amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
@@ -1413,6 +1405,283 @@ def dscqss_dsc_fast_debug(
             syms.write_dscqss_to_cpp(species_info, cw, fstream)
 
             cw.writer(fstream)
+
+    cw.writer(fstream, "return;")
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+
+
+def ajac_term_fast_debug(
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms=None,
+):
+    """Temporary Write jacobian terms for debugging."""
+    n_species = species_info.n_species
+    n_qssa_species = species_info.n_qssa_species
+    n_reactions = mechanism.n_reactions
+
+    cw.writer(fstream)
+
+    # main
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  aJacobian(amrex::Real"
+        " * J, amrex::Real * sc, amrex::Real T, const int consP)",
+    )
+    cw.writer(fstream, "{")
+
+    if syms.hformat == "readable":
+        cw.writer(
+            fstream,
+            "amrex::Real dscqss_dsc[%d];" % (n_species * n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "for (int i=0; i<%d; i++) {" % (n_species * n_qssa_species),
+        )
+        cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
+        cw.writer(fstream, "}")
+
+    cw.writer(
+        fstream,
+        "amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
+    )
+    cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream)
+
+    if n_reactions == 0:
+        cw.writer(fstream)
+    else:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "reference concentration: P_atm / (RT) in inverse mol/m^3"
+            ),
+        )
+        cw.writer(
+            fstream,
+            "const amrex::Real refC = %g / %g * invT;"
+            % (
+                cc.Patm_pa,
+                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
+            ),
+        )
+        cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
+
+    cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
+    cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(
+            fstream,
+            "amrex::Real sc_qss[%d];" % (max(1, species_info.n_qssa_species)),
+        )
+        if syms.store_in_jacobian:
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d];" % (reaction_info.n_qssa_reactions,),
+            )
+        else:
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                ),
+            )
+
+    # prepare dwdotdT
+    cw.writer(fstream, "amrex::Real T_pert1, pertT;")
+    cw.writer(
+        fstream,
+        "amrex::Real wdot_pert1[%d], wdot[%d];"
+        % (
+            n_species,
+            n_species,
+        ),
+    )
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("dwdot/dT by finite difference"))
+    cw.writer(fstream, "pertT = 1e-2;")
+    cw.writer(fstream, "T_pert1 = T + pertT;")
+    cw.writer(fstream)
+    if syms.store_in_jacobian:
+        cw.writer(fstream, "tc[0] = log(T_pert1);")
+        cw.writer(fstream, "tc[1] = T_pert1;")
+        cw.writer(fstream, "tc[2] = T_pert1*T_pert1;")
+        cw.writer(fstream, "tc[3] = T_pert1*T_pert1*T_pert1;")
+        cw.writer(fstream, "tc[4] = T_pert1*T_pert1*T_pert1*T_pert1;")
+        cw.writer(fstream, "invT = 1.0 / tc[1];")
+        cw.writer(
+            fstream,
+            "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss,"
+            " kf_qss, &J[%d], &J[%d], tc, invT);"
+            % (
+                0,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
+        cw.writer(fstream, "tc[0] = log(T);")
+        cw.writer(fstream, "tc[1] = T;")
+        cw.writer(fstream, "tc[2] = T*T;")
+        cw.writer(fstream, "tc[3] = T*T*T;")
+        cw.writer(fstream, "tc[4] = T*T*T*T;")
+        cw.writer(fstream, "invT = 1.0 / tc[1];")
+        cw.writer(
+            fstream,
+            "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss,"
+            " &J[%d], &J[%d], tc, invT);"
+            % (
+                0,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
+    else:
+        cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
+        cw.writer(fstream, "productionRate(wdot, sc, T);")
+
+    cw.writer(fstream)
+    if n_reactions > 0:
+        # nclassd = n_reactions - nspecial
+        # nCorr   = n3body + ntroe + nsri + nlindemann
+
+        # Kc stuff
+        if not syms.store_in_jacobian:
+            cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+            cw.writer(fstream, "gibbs(g_RT, tc);")
+            if species_info.n_qssa_species > 0:
+                cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+            cw.writer(fstream)
+        cw.writer(fstream, cw.comment("compute the species enthalpy"))
+        cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+        if not syms.store_in_jacobian:
+            if species_info.n_qssa_species > 0:
+                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+
+        if species_info.n_qssa_species > 0:
+            if not syms.store_in_jacobian:
+                cw.writer(fstream, cw.comment("Fill sc_qss here"))
+                cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+                cw.writer(
+                    fstream,
+                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                    " g_RT_qss);",
+                )
+                cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
+                cw.writer(fstream)
+            # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
+
+            # Initialize the big Jacobian array
+            cw.writer(
+                fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2
+            )
+            cw.writer(fstream, "J[i] = 0.0;")
+            cw.writer(fstream, "}")
+
+            # Now write out the species jacobian terms
+            cw.writer(fstream, cw.comment("Species terms"))
+            if syms.hformat == "cpu":
+                syms.write_symjac_to_cpp_cpu(species_info, cw, fstream)
+            else:
+                syms.write_symjac_to_cpp_gpu(species_info, cw, fstream)
+
+            cw.writer(fstream)
+
+    # dwdotdT
+    cw.writer(fstream)
+    cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
+    cw.writer(
+        fstream,
+        "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);"
+        % (n_species * (n_species + 1),),
+    )
+    cw.writer(fstream, "}")
+
+    # depends on dwdotdT and dwdotdsc
+    cw.writer(
+        fstream,
+        "amrex::Real c_R[%d], dcRdT[%d], e_RT[%d];"
+        % (n_species, n_species, n_species),
+    )
+    cw.writer(fstream, "amrex::Real * eh_RT;")
+    # if precond:
+    #    cw.writer(fstream, "if (HP) {")
+    # else:
+    #    cw.writer(fstream, "if (consP) {")
+
+    cw.writer(fstream, "if (consP) {")
+
+    cw.writer(fstream, "cp_R(c_R, tc);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+    cw.writer(fstream, "eh_RT = &h_RT[0];")
+
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "else {")
+
+    cw.writer(fstream, "cv_R(c_R, tc);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+    cw.writer(fstream, "speciesInternalEnergy(e_RT, tc);")
+    cw.writer(fstream, "eh_RT = &e_RT[0];")
+
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+
+    cw.writer(
+        fstream,
+        "amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;",
+    )
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "cmix += c_R[k]*sc[k];")
+    cw.writer(fstream, "dcmixdT += dcRdT[k]*sc[k];")
+    cw.writer(fstream, "ehmix += eh_RT[k]*wdot[k];")
+    cw.writer(
+        fstream,
+        "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
+        % (n_species * (n_species + 1)),
+    )
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
+    cw.writer(fstream, "amrex::Real cmixinv = 1.0/cmix;")
+    cw.writer(fstream, "amrex::Real tmp1 = ehmix*cmixinv;")
+    cw.writer(fstream, "amrex::Real tmp3 = cmixinv*T;")
+    cw.writer(fstream, "amrex::Real tmp2 = tmp1*tmp3;")
+    cw.writer(fstream, "amrex::Real dehmixdc;")
+
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "dehmixdc = 0.0;")
+    cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
+    cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+    cw.writer(fstream, "}")
+    cw.writer(
+        fstream,
+        "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
+        % (n_species + 1, n_species),
+    )
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream, cw.comment("dTdot/dT"))
+    cw.writer(
+        fstream,
+        "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
+        % (n_species * (n_species + 1) + n_species),
+    )
 
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")

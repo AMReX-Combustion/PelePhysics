@@ -6,7 +6,6 @@ class QSSAInfo:
     """Information on QSSA."""
 
     def __init__(self):
-
         # sp-sp network
         self.ssnet = []
         # sp-reac network

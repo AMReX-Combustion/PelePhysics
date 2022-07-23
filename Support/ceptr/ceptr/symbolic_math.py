@@ -1,20 +1,15 @@
 """Symbolic math for symbolic differentiation."""
-import concurrent.futures
-import copy
 import re
 import time
 from collections import OrderedDict
-from multiprocessing import Manager
 
-import numpy as np
 import pandas as pd
 import symengine as sme
 import sympy as smp
 
-import ceptr.constants as cc
 import ceptr.inputs as ci
 import ceptr.thermo as cth
-from ceptr.progressBar import printProgressBar
+from ceptr.progress_bar import print_progress_bar
 
 
 class SymbolicMath:
@@ -27,10 +22,9 @@ class SymbolicMath:
         mechanism,
         format_input,
     ):
-
         # Formatting options
         params = ci.Input()
-        if not format_input is None:
+        if format_input is not None:
             params.from_toml(format_input)
 
         self.hformat = params.inputs["Readability"]["hformat"].value
@@ -142,7 +136,7 @@ class SymbolicMath:
         species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
         low_temp, high_temp, midpoints = species_coeffs
         self.midpointsList = []
-        for mid_temp, species_list in list(midpoints.items()):
+        for mid_temp, _ in list(midpoints.items()):
             self.midpointsList.append(mid_temp)
         self.midpointsList_sorted = sorted(self.midpointsList)
 
@@ -175,7 +169,6 @@ class SymbolicMath:
         self.intermediate_terms_smp = {}
 
         if n_qssa_species > 0:
-
             n_qssa_reactions = reaction_info.n_qssa_reactions
 
             self.sc_qss_smp = [
@@ -209,7 +202,7 @@ class SymbolicMath:
             )
             low_temp, high_temp, midpoints = qss_species_coeffs
             self.midpointsQSSList = []
-            for mid_temp, species_list in list(midpoints.items()):
+            for mid_temp, _ in list(midpoints.items()):
                 self.midpointsQSSList.append(mid_temp)
             self.midpointsQSSList_sorted = sorted(self.midpointsQSSList)
 
@@ -260,8 +253,8 @@ class SymbolicMath:
             self.dscqssdsc_slow = {}
 
     def round_in_string(self, string, maxdec=6):
-        """Round decimal numbers if possible"""
-        list_decimal = re.findall("\d+\.\d+", string)
+        """Round decimal numbers if possible."""
+        list_decimal = re.findall(r"\d+\.\d+", string)
         list_num = [float(s) for s in list_decimal]
         idec = 0
         for inum, num in enumerate(list_num):
@@ -278,9 +271,9 @@ class SymbolicMath:
 
     def convert_to_cpp(self, sym_smp):
         """Convert sympy object to C code compatible string.
+
         Also apply some formatting.
         """
-
         user_functions = {}
 
         if self.remove_pow or self.remove_pow10:
@@ -352,12 +345,12 @@ class SymbolicMath:
         return cpp_str
 
     def syms_to_specnum(self, sym_smp):
-        """Extracts number from syms string"""
+        """Extract number from syms string."""
         num = re.findall(r"\[(.*?)\]", str(sym_smp))
         return int(num[0])
 
     def convert_number_to_int(self, number):
-        """Convert number to int if possible"""
+        """Convert number to int if possible."""
         factor = float(number)
         if (
             self.remove_1
@@ -368,7 +361,7 @@ class SymbolicMath:
         return factor
 
     def convert_symb_to_int(self, symb):
-        """Convert symbol to int if possible"""
+        """Convert symbol to int if possible."""
         try:
             number = float(symb)
             number = self.convert_number_to_int(number)
@@ -377,9 +370,7 @@ class SymbolicMath:
             return symb
 
     def reduce_expr(self, orig):
-        """
-        Reduce expression interface
-        """
+        """Reduce expression interface."""
         n_cse = len(orig[0])
         n_exp = len(orig[1])
         common_expr_lhs = [orig[0][i][0] for i in range(n_cse)]
@@ -539,17 +530,17 @@ class SymbolicMath:
     ):
         """
         Remove cses made of single symbols.
-        Those are typically of the for "-xi" where the operation may disappear after substitution
-        """
 
+        Those are typically of the for "-xi" where the operation may disappear
+        after substitution.
+        """
         replacements = []
         n_cse = len(common_expr_lhs)
-        n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        printProgressBar(
+        print_progress_bar(
             0,
             n_cse,
             prefix="Expr = %d / %d " % (0, n_cse),
@@ -583,7 +574,7 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     # final_expr_symbols[j].remove(lhs)
 
-            printProgressBar(
+            print_progress_bar(
                 i + 1,
                 n_cse,
                 prefix="Expr = %d / %d, removed single symb expr = %d "
@@ -611,18 +602,18 @@ class SymbolicMath:
         final_expr,
     ):
         """
+        Reduce number of expressions in cse list.
+
         Top bottom loop over common and final expressions and remove the ones that have
         a number of operation < count_lim including operations of variables that use it
         """
-
         replacements = []
         n_cse = len(common_expr_lhs)
-        n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        printProgressBar(
+        print_progress_bar(
             0,
             n_cse,
             prefix="Expr = %d / %d " % (0, n_cse),
@@ -643,7 +634,7 @@ class SymbolicMath:
             rec_count = 0
             for ind in ind_rhs:
                 rec_count += smp.sympify(common_expr_rhs[ind]).count(lhs)
-            rec_count_cse = rec_count
+            # rec_count_cse = rec_count
             for ind in ind_final_expr:
                 rec_count += smp.sympify(final_expr[ind]).count(lhs)
 
@@ -669,7 +660,7 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     final_expr_symbols[j].remove(lhs)
 
-            printProgressBar(
+            print_progress_bar(
                 i + 1,
                 n_cse,
                 prefix="Expr = %d / %d, removed expr = %d "
@@ -697,18 +688,18 @@ class SymbolicMath:
         final_expr,
     ):
         """
+        Reduce number of expressions in cse list.
+
         Top bottom loop over common and final expressions and remove the ones that have
         a number of operation < count_lim
         """
-
         replacements = []
         n_cse = len(common_expr_lhs)
-        n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        printProgressBar(
+        print_progress_bar(
             0,
             n_cse,
             prefix="Expr = %d / %d " % (0, n_cse),
@@ -738,7 +729,7 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     final_expr_symbols[j].remove(lhs)
 
-            printProgressBar(
+            print_progress_bar(
                 i + 1,
                 n_cse,
                 prefix="Expr = %d / %d, removed expr = %d "
@@ -766,17 +757,18 @@ class SymbolicMath:
         final_expr,
     ):
         """
+        Reduce number of expressions in cse list.
+
         Bottom up loop over common and final expressions and remove the ones that have
         a number of operation < count_lim
         """
         replacements = []
         n_cse = len(common_expr_lhs)
-        n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        printProgressBar(
+        print_progress_bar(
             0,
             n_cse,
             prefix="Expr = %d / %d " % (0, n_cse),
@@ -816,7 +808,7 @@ class SymbolicMath:
                     except AttributeError:
                         pass
 
-            printProgressBar(
+            print_progress_bar(
                 n_cse - i,
                 n_cse,
                 prefix="Expr = %d / %d, removed expr = %d "
@@ -841,19 +833,16 @@ class SymbolicMath:
         common_expr_rhs,
         final_expr,
     ):
-        """
-        Recycle cse that are not used later
-        """
+        """Recycle cse that are not used later."""
         to_replace = []
         replace_with = []
 
         n_cse = len(common_expr_lhs)
-        n_exp = len(final_expr)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Figure out which symbols may be recycled
-        printProgressBar(
+        print_progress_bar(
             0,
             n_cse,
             prefix="Expr = %d / %d " % (0, n_cse),
@@ -888,7 +877,7 @@ class SymbolicMath:
                             replace_with.append(replace_with[ind])
                         else:
                             replace_with.append(symb)
-            printProgressBar(
+            print_progress_bar(
                 isymb + 1,
                 n_cse,
                 prefix="Expr = %d / %d, recycled expr = %d "
@@ -930,7 +919,7 @@ class SymbolicMath:
         )
 
     def write_array_to_cpp(
-        self, list_smp, array_str, cw, fstream, indexList=None
+        self, list_smp, array_str, cw, fstream, index_list=None
     ):
         """Convert sympy array to C code compatible string."""
         n = len(list_smp)
@@ -968,7 +957,7 @@ class SymbolicMath:
             print(
                 "Made expr for entry %d (time = %.3g s)" % (i, timee - times)
             )
-            if indexList is None:
+            if index_list is None:
                 cw.writer(
                     fstream,
                     "%s[%s] = %s;"
@@ -984,7 +973,7 @@ class SymbolicMath:
                     "%s[%s] = %s;"
                     % (
                         array_str,
-                        str(indexList[i]),
+                        str(index_list[i]),
                         cpp_str,
                     ),
                 )
@@ -996,9 +985,7 @@ class SymbolicMath:
 
     def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
-
         n_dscqssdscqss = len(self.dscqssdscqss)
-        n_dscqssdsc = len(self.dscqssdsc)
 
         list_smp = list(self.dscqssdscqss.values()) + list(
             self.dscqssdsc.values()
@@ -1065,7 +1052,7 @@ class SymbolicMath:
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
 
         # Now write the chain rule terms
-        for idx, item in species_info.scqss_df.iterrows():
+        for _, item in species_info.scqss_df.iterrows():
             for scnum in range(species_info.n_species):
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
@@ -1092,14 +1079,14 @@ class SymbolicMath:
                 )
 
     def write_symjac_to_cpp_cpu(self, species_info, cw, fstream):
-        """Write species jacobian terms as functions of common subexpressions."""
-        """Many variables are created to ensure readability"""
-        """The memory constraint makes the format useful for CPU"""
+        """Write species jacobian terms as functions of common subexpressions.
 
+        Many variables are created to ensure readability.
+        The memory constraint makes the format useful for CPU.
+        """
         n_dscqssdscqss = len(self.dscqssdscqss)
         n_dscqssdsc = len(self.dscqssdsc)
         n_dwdotdscqss = len(self.dwdotdscqss)
-        n_dwdotdsc = len(self.dwdotdsc)
 
         list_smp = (
             list(self.dscqssdscqss.values())
@@ -1175,7 +1162,8 @@ class SymbolicMath:
         cw.writer(
             fstream,
             cw.comment(
-                "Write base terms for dscqssdscqss, dscqssdsc, dwdotdscqss, and dwdotdsc..."
+                "Write base terms for dscqssdscqss, dscqssdsc, dwdotdscqss,"
+                " and dwdotdsc..."
             ),
         )
 
@@ -1219,7 +1207,6 @@ class SymbolicMath:
                     % (f"dwdot{num_idx}dsc{den_idx}", cpp_str),
                 )
 
-        timee = time.time()
         print(
             "Printed exprs for scqss (time = %.3g s)" % (time.time() - times)
         )
@@ -1227,7 +1214,7 @@ class SymbolicMath:
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
 
         # Now write the chain rule terms
-        for idx, item in species_info.scqss_df.iterrows():
+        for _, item in species_info.scqss_df.iterrows():
             for scnum in range(species_info.n_species):
                 start_string = f"""dscqss{item["number"]}dsc{scnum}"""
                 chain_string = []
@@ -1279,9 +1266,12 @@ class SymbolicMath:
                 )
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
-        """Write species jacobian terms as functions of common subexpressions."""
-        """As little as possible intermediate variables are declared which negatively affects readability."""
-        """The memory efficiency makes the format useful for GPU"""
+        """Write species jacobian terms as functions of common subexpressions.
+
+        As little as possible intermediate variables are declared which
+        negatively affects readability.
+        The memory efficiency makes the format useful for GPU.
+        """
         n_dscqssdscqss = len(self.dscqssdscqss)
         n_dscqssdsc = len(self.dscqssdsc)
         n_dwdotdscqss = len(self.dwdotdscqss)
@@ -1293,7 +1283,6 @@ class SymbolicMath:
             + list(self.dwdotdscqss.values())
             + list(self.dwdotdsc.values())
         )
-        n_total = len(list_smp)
 
         dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
         dscqssdsc_tuples = list(self.dscqssdsc.keys())
@@ -1435,7 +1424,6 @@ class SymbolicMath:
         times = time.time()
         for _, wdot_item in species_info.wdot_df.iterrows():
             for _, sc_item in species_info.sc_df.iterrows():
-
                 # Find the CSE index for dwdotdsc
                 dwdotdsc_cse_idx = self.get_cse_idx(
                     jac_df,
@@ -1493,7 +1481,7 @@ class SymbolicMath:
         )
 
     def write_array_to_cpp_no_cse(
-        self, list_smp, array_str, cw, fstream, indexList=None
+        self, list_smp, array_str, cw, fstream, index_list=None
     ):
         """Convert sympy array to C code compatible string."""
         n = len(list_smp)
@@ -1504,12 +1492,12 @@ class SymbolicMath:
             try:
                 cpp_str = self.convert_to_cpp(list_smp[i])
             except RecursionError:
-                if indexList is None:
+                if index_list is None:
                     print("Recursion error for index = ", i)
                 else:
-                    print("Recursion error for index = ", indexList[i])
+                    print("Recursion error for index = ", index_list[i])
                 cpp_str = "0"
-            if indexList is None:
+            if index_list is None:
                 cw.writer(
                     fstream,
                     "%s[%s] = %s;"
@@ -1525,18 +1513,13 @@ class SymbolicMath:
                     "%s[%s] = %s;"
                     % (
                         array_str,
-                        str(indexList[i]),
+                        str(index_list[i]),
                         cpp_str,
                     ),
                 )
 
-    def syms_to_specnum(self, sym_smp):
-        """Extracts number from syms string"""
-        num = re.findall(r"\[(.*?)\]", str(sym_smp))
-        return int(num[0])
-
     def get_cse_idx(self, df, type_name, tuple_val):
-        """Extracts the id of the common expression from the array created by symengine"""
+        """Extract id of common expression from the symengine array."""
         tmp_df = df[df.type == type_name]
         cse_idx = tmp_df.index[tmp_df.tuples == tuple_val].tolist()[0]
 
@@ -1544,7 +1527,6 @@ class SymbolicMath:
 
     def compute_spec_dependencies(self, sym_smp):
         """Routine to compute the sc and sc_qss dependencies."""
-
         free_symb = sym_smp.free_symbols
         sc_depend = []
         scqss_depend = []
@@ -1560,10 +1542,8 @@ class SymbolicMath:
 
     def compute_dscqss_dscqss(self, species_info):
         """Routine that computes the dscqss i / dscqss j."""
-
         # Loop over the species info dataframe and compute dependencies
-        for idx, item in species_info.scqss_df.iterrows():
-
+        for _, item in species_info.scqss_df.iterrows():
             # Loop over the dependencies of scqss
             for scqss in item["scqss_dep"]:
                 scqssnum = self.syms_to_specnum(scqss)
@@ -1583,10 +1563,8 @@ class SymbolicMath:
 
     def compute_dscqss_dsc(self, species_info):
         """Routine that computes the dscqss i / dsc j."""
-
         # Loop over the species info dataframe and compute all dsc derivatives
-        for idx, item in species_info.scqss_df.iterrows():
-
+        for _, item in species_info.scqss_df.iterrows():
             # Loop over all sc terms
             for scnum in range(species_info.n_species):
                 self.dscqssdsc[(item["number"], scnum)] = sme.diff(
@@ -1609,9 +1587,8 @@ class SymbolicMath:
 
     def compute_dwdot_dsc(self, species_info):
         """Routine that computes the dwdot i / dsc j."""
-
         # Loop over all wdots and sc terms
-        for wdot_idx, item in species_info.wdot_df.iterrows():
+        for wdot_idx, _ in species_info.wdot_df.iterrows():
             # Loop over all sc terms
             for sc_idx in range(species_info.n_species):
                 self.dwdotdsc[(wdot_idx, sc_idx)] = sme.diff(
@@ -1620,9 +1597,8 @@ class SymbolicMath:
 
     def compute_dwdot_dscqss(self, species_info):
         """Routine that computes the dwdot i / dscqss j."""
-
         # Loop over all wdots and sc terms
-        for wdot_idx, item in species_info.wdot_df.iterrows():
+        for wdot_idx, _ in species_info.wdot_df.iterrows():
             # Loop over all scqss terms
             for scqss in species_info.scqss_df["name"]:
                 scqssnum = self.syms_to_specnum(scqss)
@@ -1632,14 +1608,13 @@ class SymbolicMath:
 
     def compute_jacobian(self, species_info):
         """Routine that computes the Jacobian without chain ruling."""
-
         # Create intermediate vectors
         dscqss_dsc = [0.0] * (
             species_info.n_species * species_info.n_qssa_species
         )
 
-        for scqss_idx, scqss_item in species_info.scqss_df.iterrows():
-            for sc_idx, sc_item in species_info.sc_df.iterrows():
+        for _, scqss_item in species_info.scqss_df.iterrows():
+            for _, sc_item in species_info.sc_df.iterrows():
                 dscqss_dsc_idx = (
                     species_info.n_species * scqss_item["number"]
                     + sc_item["number"]
@@ -1660,7 +1635,7 @@ class SymbolicMath:
                 ]
 
         # Loop over all wdots and sc terms
-        for wdot_idx, wdot_item in species_info.wdot_df.iterrows():
+        for wdot_idx, _ in species_info.wdot_df.iterrows():
             # Loop over all sc terms
             for sc_idx, sc_item in species_info.sc_df.iterrows():
                 self.jacobian[(wdot_idx, sc_idx)] = 0.0

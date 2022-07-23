@@ -86,8 +86,8 @@ class SpeciesInfo:
             ].free_symbols
             qss_symb = []
             sc_symb = []
-            gRTqss_symb = []
-            gRT_symb = []
+            g_rt_qss_symb = []
+            g_rt_symb = []
             kf_symb = []
             kr_symb = []
             for ss in free_symb:
@@ -96,9 +96,9 @@ class SpeciesInfo:
                 elif "sc" in str(ss):
                     sc_symb.append(ss)
                 elif "g_RT_qss" in str(ss):
-                    gRTqss_symb.append(ss)
+                    g_rt_qss_symb.append(ss)
                 elif "g_RT" in str(ss):
-                    gRT_symb.append(ss)
+                    g_rt_symb.append(ss)
                 elif "kf" in str(ss):
                     kf_symb.append(ss)
                 elif "kr" in str(ss):
@@ -106,8 +106,8 @@ class SpeciesInfo:
 
             self.dict_qssdepend_scqss[symbol] = qss_symb
             self.dict_qssdepend_sc[symbol] = sc_symb
-            self.dict_qssdepend_gRTqss[symbol] = gRTqss_symb
-            self.dict_qssdepend_gRT[symbol] = gRT_symb
+            self.dict_qssdepend_gRTqss[symbol] = g_rt_qss_symb
+            self.dict_qssdepend_gRT[symbol] = g_rt_symb
             self.dict_qssdepend_kf[symbol] = kf_symb
             self.dict_qssdepend_kr[symbol] = kr_symb
 
@@ -128,8 +128,8 @@ class SpeciesInfo:
             ].free_symbols
             qss_symb = []
             sc_symb = []
-            gRTqss_symb = []
-            gRT_symb = []
+            g_rt_qss_symb = []
+            g_rt_symb = []
             kf_symb = []
             kr_symb = []
             for ss in free_symb:
@@ -138,9 +138,9 @@ class SpeciesInfo:
                 elif "sc" in str(ss):
                     sc_symb.append(ss)
                 elif "g_RT_qss" in str(ss):
-                    gRTqss_symb.append(ss)
+                    g_rt_qss_symb.append(ss)
                 elif "g_RT" in str(ss):
-                    gRT_symb.append(ss)
+                    g_rt_symb.append(ss)
                 elif "kf" in str(ss):
                     kf_symb.append(ss)
                 elif "kr" in str(ss):
@@ -148,8 +148,8 @@ class SpeciesInfo:
 
             self.dict_nonqssdepend_scqss[symbol] = qss_symb
             self.dict_nonqssdepend_sc[symbol] = sc_symb
-            self.dict_nonqssdepend_gRTqss[symbol] = gRTqss_symb
-            self.dict_nonqssdepend_gRT[symbol] = gRT_symb
+            self.dict_nonqssdepend_gRTqss[symbol] = g_rt_qss_symb
+            self.dict_nonqssdepend_gRT[symbol] = g_rt_symb
             self.dict_nonqssdepend_kf[symbol] = kf_symb
             self.dict_nonqssdepend_kr[symbol] = kr_symb
 
@@ -157,44 +157,25 @@ class SpeciesInfo:
         """Identify wdot dependencies from syms object."""
         self.dict_wdot_scqss = {}
         self.dict_wdot_sc = {}
-        # self.dict_wdot_gRTqss = {}
-        # self.dict_wdot_gRT = {}
-        # self.dict_wdot_kf = {}
-        # self.dict_wdot_kr = {}
+
         for symbol in self.dict_nonqss_species:
             free_symb = syms.wdot_smp[
                 self.dict_nonqss_species[symbol]
             ].free_symbols
             qss_symb = []
             sc_symb = []
-            # gRTqss_symb = []
-            # gRT_symb = []
-            # kf_symb = []
-            # kr_symb = []
+
             for ss in free_symb:
                 if "sc_qss" in str(ss):
                     qss_symb.append(ss)
                 elif "sc" in str(ss):
                     sc_symb.append(ss)
-                # elif "g_RT_qss" in str(ss):
-                #     gRTqss_symb.append(ss)
-                # elif "g_RT" in str(ss):
-                #     gRT_symb.append(ss)
-                # elif "kf" in str(ss):
-                #     kf_symb.append(ss)
-                # elif "kr" in str(ss):
-                #     kr_symb.append(ss)
 
             self.dict_wdot_scqss[symbol] = qss_symb
             self.dict_wdot_sc[symbol] = sc_symb
-            # self.dict_wdot_gRTqss[symbol] = gRTqss_symb
-            # self.dict_wdot_gRT[symbol] = gRT_symb
-            # self.dict_wdot_kf[symbol] = kf_symb
-            # self.dict_wdot_kr[symbol] = kr_symb
 
     def make_scqss_dataframe(self):
-
-        # Create lists for names, levels, and plus, mult
+        """Create lists for names, levels, and plus, mult."""
         name_list = []
         numb_list = []
         symb_list = []
@@ -224,7 +205,6 @@ class SpeciesInfo:
         # Loop until all qss terms have been filled
         level = 1
         while len(qss_filled) < len(self.qssa_species_list):
-
             # Find the sc_qss that only depend upon filled terms
             for symb in self.qssa_species_list:
                 scqssnum = self.dict_qss_species[symb]
@@ -261,7 +241,6 @@ class SpeciesInfo:
         scqss_df["scqss_dep"] = ""
         # Add in a few more attributes for easy of use
         for idx, item in scqss_df.iterrows():
-
             scqss_df.at[idx, "sc_dep"] = self.dict_qssdepend_sc[item["symbol"]]
             scqss_df.at[idx, "scqss_dep"] = self.dict_qssdepend_scqss[
                 item["symbol"]
@@ -271,7 +250,7 @@ class SpeciesInfo:
         self.scqss_df = scqss_df.copy(deep=True)
 
     def make_sc_dataframe(self):
-
+        """Make dataframe for sc species."""
         name_list = []
         numb_list = []
         symb_list = []
@@ -294,7 +273,7 @@ class SpeciesInfo:
         # Loop over the scqss_df and add in scqss dependence upon sc terms
         for sc_idx, sc in sc_df.iterrows():
             scqss_list = []
-            for scqss_idx, scqss in self.scqss_df.iterrows():
+            for _, scqss in self.scqss_df.iterrows():
                 if sc["name"] in str(scqss["sc_dep"]):
                     scqss_list.append(scqss["name"])
 
@@ -304,8 +283,7 @@ class SpeciesInfo:
         self.sc_df = sc_df.copy(deep=True)
 
     def make_wdot_dataframe(self):
-
-        # Create lists for names, levels, and plus, mult
+        """Create lists for names, levels, and plus, mult."""
         name_list = []
         numb_list = []
         symb_list = []
@@ -328,7 +306,6 @@ class SpeciesInfo:
         wdot_df["scqss_dep"] = ""
         # Add in a few more attributes for easy of use
         for idx, item in wdot_df.iterrows():
-
             wdot_df.at[idx, "sc_dep"] = self.dict_wdot_sc[item["symbol"]]
             wdot_df.at[idx, "scqss_dep"] = self.dict_wdot_scqss[item["symbol"]]
 
