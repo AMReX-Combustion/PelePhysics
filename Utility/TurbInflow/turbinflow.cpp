@@ -108,9 +108,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       tp[n].kmax = npts[2];
 
-      amrex::Real rdummy;
       if (tp[n].isswirltype) {
         for (int i = 0; i < tp[n].kmax; i++) {
+          amrex::Real rdummy = 0.0;
           is >> rdummy; // Time for each plane - unused at the moment
         }
       }

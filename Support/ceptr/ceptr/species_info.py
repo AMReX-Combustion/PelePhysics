@@ -9,11 +9,12 @@ import ceptr.qssa_info as cqi
 class SpeciesDb:
     """Species database."""
 
-    def __init__(self, idx, ordered_id, name, mwt):
+    def __init__(self, idx, ordered_id, name, mwt, chrg):
         self.mech_idx = idx
         self.idx = ordered_id
         self.name = name
         self.weight = mwt
+        self.charge = chrg
 
     def __str__(self):
         """Print members of SpeciesDb."""
@@ -22,11 +23,13 @@ class SpeciesDb:
             + f"""mech_idx = {self.mech_idx}, """
             + f"""idx = {self.idx}, """
             + f"""weight = {self.weight}"""
+            + f"""charge = {self.charge}"""
         )
 
     def __repr__(self):
         """Representation of SpeciesDb."""
-        return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name}, {self.weight})"""
+        return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name},
+                             {self.weight}, {self.charge})"""
 
 
 class SpeciesInfo:

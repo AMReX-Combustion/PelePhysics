@@ -60,7 +60,7 @@ main(int argc, char* argv[])
 
     const auto geomdata = geom.data();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
@@ -82,7 +82,7 @@ main(int argc, char* argv[])
     amrex::MultiFab cp(ba, dm, 1, num_grow);
     amrex::MultiFab cv(ba, dm, 1, num_grow);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
@@ -100,7 +100,7 @@ main(int argc, char* argv[])
     }
     amrex::MultiFab::Copy(VarPlt, cp, 0, 0, 1, num_grow);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
@@ -118,7 +118,7 @@ main(int argc, char* argv[])
     }
     amrex::MultiFab::Copy(VarPlt, cv, 0, 1, 1, num_grow);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(mass_frac, amrex::TilingIfNotGPU()); mfi.isValid();
