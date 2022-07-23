@@ -1041,7 +1041,8 @@ class SymbolicMath:
                 for scqss_dep in item["scqss_dep"]:
                     scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
-                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
+                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * """
+                        f"""dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
 
                 if chain_string:
@@ -1203,7 +1204,8 @@ class SymbolicMath:
                 for scqss_dep in item["scqss_dep"]:
                     scqssdepnum = self.syms_to_specnum(scqss_dep)
                     chain_string.append(
-                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
+                        f"""dscqss{item["number"]}dscqss{scqssdepnum} * """
+                        f"""dscqss_dsc[{species_info.n_species*scqssdepnum + scnum}]"""
                     )
 
                 if chain_string:
@@ -1231,7 +1233,8 @@ class SymbolicMath:
                 chain_string = []
                 for scqssnum in species_info.scqss_df["number"]:
                     chain_string.append(
-                        f"""dwdot{idx}dscqss{scqssnum} * dscqss_dsc[{species_info.n_species*scqssnum + scnum}]"""
+                        f"""dwdot{idx}dscqss{scqssnum} * """
+                        f"""dscqss_dsc[{species_info.n_species*scqssnum + scnum}]"""
                     )
 
                 final_string = f"{start_string} + {chain_string[0]}"
@@ -1621,7 +1624,6 @@ class SymbolicMath:
             # Loop over all sc terms
             for sc_idx, sc_item in species_info.sc_df.iterrows():
                 self.jacobian[(wdot_idx, sc_idx)] = 0.0
-                # self.jacobian[(wdot_idx, sc_idx)] = copy.deepcopy(self.dwdotdsc[(wdot_idx, sc_idx)])
 
                 for scqssnum in species_info.scqss_df["number"]:
                     self.jacobian[(wdot_idx, sc_idx)] += (

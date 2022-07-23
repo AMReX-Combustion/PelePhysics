@@ -927,7 +927,10 @@ def production_rate(
             dict_species = {
                 v: i for i, v in enumerate(species_info.all_species_list)
             }
-            agents = sorted(agents, key=lambda v: dict_species[v[0]])
+            agents = sorted(
+                agents,
+                key=lambda v, dict_species=dict_species: dict_species[v[0]],
+            )
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)
@@ -1413,7 +1416,10 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             dict_species = {
                 v: i for i, v in enumerate(species_info.all_species_list)
             }
-            agents = sorted(agents, key=lambda v: dict_species[v[0]])
+            agents = sorted(
+                agents,
+                key=lambda v, dict_species=dict_species: dict_species[v[0]],
+            )
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)

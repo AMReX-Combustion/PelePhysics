@@ -24,7 +24,10 @@ class Parameter:
 
     def describe(self):
         """Describe parameter class."""
-        return f"""Parameter({self.default}, {self.helper}, {self.typer}, choices={self.choices})"""
+        return (
+            f"""Parameter({self.default}, {self.helper},"""
+            f""" {self.typer}, choices={self.choices})"""
+        )
 
     def set_value(self, value):
         """Set value of parameter."""
