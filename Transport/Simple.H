@@ -28,7 +28,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real Temp,
     const amrex::Real* Xloc,
     const amrex::Real rholoc,
-    amrex::Real& wbar,
+    const amrex::Real wbar,
     amrex::Real& mu,
     amrex::Real& lam,
     TransParm<eos::SRK, SimpleTransport> const* trans_parm)
@@ -151,6 +151,7 @@ struct BinaryDiff
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
           const amrex::Real dbintemp =
@@ -185,6 +186,7 @@ struct BinaryDiff<eos::SRK>
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
@@ -221,12 +223,11 @@ struct SimpleTransport
     amrex::Real* xiloc,
     TransParm<EosType, transport_type> const* tparm)
   {
-    amrex::Real cvk[NUM_SPECIES];
-    amrex::Real cvkint[NUM_SPECIES];
-    amrex::Real cvkrot[NUM_SPECIES];
-    amrex::Real FofT[NUM_SPECIES];
-    amrex::Real Fnorm[NUM_SPECIES];
-    amrex::Real epskoverT, epskoverTstd;
+    amrex::Real cvk[NUM_SPECIES] = {0.0};
+    amrex::Real cvkint[NUM_SPECIES] = {0.0};
+    amrex::Real cvkrot[NUM_SPECIES] = {0.0};
+    amrex::Real FofT[NUM_SPECIES] = {0.0};
+    amrex::Real Fnorm[NUM_SPECIES] = {0.0};
     amrex::Real pi3_2 = std::pow(M_PI, 1.5);
 
     CKCVMS(&Tloc, cvk);
@@ -245,8 +246,8 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      epskoverTstd = tparm->eps[i] / 298.0;
-      epskoverT = tparm->eps[i] / Tloc;
+      amrex::Real epskoverTstd = tparm->eps[i] / 298.0;
+      amrex::Real epskoverT = tparm->eps[i] / Tloc;
       Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                  (2.0 + .50 * M_PI * M_PI) * epskoverTstd +
                  pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -287,17 +288,16 @@ struct SimpleTransport
     TransParm<EosType, transport_type> const* tparm)
   {
     amrex::Real trace = 1.e-15;
-    amrex::Real Xloc[NUM_SPECIES];
-    amrex::Real muloc[NUM_SPECIES];
-    amrex::Real xiloc[NUM_SPECIES];
-    amrex::Real lamloc[NUM_SPECIES];
-    amrex::Real logT[NUM_FIT - 1];
+    amrex::Real Xloc[NUM_SPECIES] = {0.0};
+    amrex::Real muloc[NUM_SPECIES] = {0.0};
+    amrex::Real xiloc[NUM_SPECIES] = {0.0};
+    amrex::Real logT[NUM_FIT - 1] = {0.0};
 
     logT[0] = std::log(Tloc);
     logT[1] = logT[0] * logT[0];
     logT[2] = logT[0] * logT[1];
 
-    amrex::Real sum = 0.;
+    amrex::Real sum = 0.0;
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       sum += Yloc[i];
@@ -307,7 +307,7 @@ struct SimpleTransport
       Yloc[i] += trace * (sum / NUM_SPECIES - Yloc[i]);
     }
 
-    amrex::Real wbar = 0.;
+    amrex::Real wbar = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       wbar += Yloc[i] * tparm->iwt[i];
     }
@@ -348,6 +348,7 @@ struct SimpleTransport
     }
 
     if (wtr_get_lam) {
+      amrex::Real lamloc[NUM_SPECIES] = {0.0};
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lamloc[i] = tparm->fitlam[4 * i] + tparm->fitlam[1 + 4 * i] * logT[0] +
                     tparm->fitlam[2 + 4 * i] * logT[1] +
@@ -355,7 +356,7 @@ struct SimpleTransport
         lamloc[i] = std::exp(lamloc[i]);
       }
 
-      lam = 0.;
+      lam = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lam += Xloc[i] * std::sqrt(std::sqrt(
                            lamloc[i])); // lam = sum[Xloc_i * (lamloc_i)^(1/4)]
@@ -421,7 +422,7 @@ struct SimpleTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SimpleTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SimpleTransport(Args... /*unused*/)
   {
   }
 };

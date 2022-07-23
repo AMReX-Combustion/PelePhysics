@@ -2,4 +2,4 @@
  CEPTR: Chemistry Evaluation for Pele Through Recasting
 =======================================================
 
-The documentation for CEPTR can be found at this `link <https://pelephysics.readthedocs.io/en/latest/Ceptr.html>`_.
+The documentation for CEPTR can be found at this `link <https://amrex-combustion.github.io/PelePhysics/Ceptr.html>`_.
