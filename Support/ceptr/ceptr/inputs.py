@@ -94,8 +94,7 @@ class Input:
                     "Counts number operations used to construct each common"
                     " subexpression"
                     + " and replace the common subexpression if the number of"
-                    " operations is"
-                    + " less or equal to the value",
+                    " operations is" + " less or equal to the value",
                     int,
                 ),
                 "min_op_count_all": Parameter(
@@ -120,10 +119,8 @@ class Input:
                     " values"
                     + " and gradually eliminate the common subexpressions."
                     + "\nThis has the advantage of ensuring that the memory"
-                    " footprint"
-                    + " is strictly monotonically decreasing as"
-                    " min_op_count and"
-                    + " min_op_count_all are increased.",
+                    " footprint" + " is strictly monotonically decreasing as"
+                    " min_op_count and" + " min_op_count_all are increased.",
                     bool,
                 ),
                 "remove_single_symbols_cse": Parameter(
@@ -156,8 +153,7 @@ class Input:
                     + " finite difference is replaced with a"
                     " `productionRate_light` function"
                     + " where references to different parts of the Jacobian"
-                    " are used in place of"
-                    + " allocating new arrays.",
+                    " are used in place of" + " allocating new arrays.",
                     bool,
                 ),
                 "recycle_cse": Parameter(

@@ -637,8 +637,7 @@ def cksbml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -700,8 +699,7 @@ def cksbms(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -800,8 +798,7 @@ def ckgbml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -865,8 +862,7 @@ def ckgbms(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -969,8 +965,7 @@ def ckabml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -1037,8 +1032,7 @@ def ckabms(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -1562,8 +1556,7 @@ def cksor(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
 
     # call routine
@@ -2128,8 +2121,7 @@ def ckgml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -2177,8 +2169,7 @@ def ckaml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -2224,8 +2215,7 @@ def cksml(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
 
     # call routine
@@ -2444,8 +2434,7 @@ def ckgms(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -2489,8 +2478,7 @@ def ckams(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
     cw.writer(
         fstream,
@@ -2534,8 +2522,7 @@ def cksms(fstream, mechanism, species_info):
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT,"
-        " tT*tT*tT*tT }; "
-        + cw.comment("temperature cache"),
+        " tT*tT*tT*tT }; " + cw.comment("temperature cache"),
     )
 
     # call routine
