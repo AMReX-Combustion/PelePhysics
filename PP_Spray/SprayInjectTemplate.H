@@ -73,8 +73,8 @@ SprayParticleContainer::sprayInjection(
 {
   // Don't try to use more procs than we have
   numInjProcs = amrex::min(amrex::ParallelDescriptor::NProcs(), numInjProcs);
-  startInjProcs = amrex::min(
-    amrex::ParallelDescriptor::NProcs() - numInjProcs, startInjProcs);
+  startInjProc = amrex::min(
+    amrex::ParallelDescriptor::NProcs() - numInjProcs, startInjProc);
 #if AMREX_SPACEDIM == 2
   // Do not parallelize injection for 2D
   numInjProcs = 1;
