@@ -27,8 +27,8 @@ class Converter:
     def __init__(
         self,
         mechanism,
-        format_input,
-        symbolic_jacobian,
+        format_input=None,
+        symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
 
