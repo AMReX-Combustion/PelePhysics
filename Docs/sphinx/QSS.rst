@@ -118,50 +118,29 @@ Compared with non-QSS mechanisms, analytical Jacobians need to reflect the depen
 
 To ease the implementation of analytical Jacobian in presence of QSS species, a symbolic approach is used to construct the analytical Jacobian. This strategy has the advantage of not requiring complex logic, being flexible and readable for future development. For the last row of the Jacobian (partial difference of reaction rate with respect to temperature), finite difference is used since perturbations in temperature are less susceptible to numerical errors than perturbations in species concentrations. During the construction of the reaction rates, the operations printed to file are recorded symbolically using the ``sympy`` and ``symengine`` library [SYMPY]_. For computational efficiency during the symbolic differentiation, the chain-rules terms are computed and the final expressions are computed assembled by chain-ruling using logic internal to `CEPTR` rather than ``sympy``. We have found that this speeds up the Jacobian construction cost by a factor 10. 
 
+To activate the use of symbolic jacobian, one need to pass the flag ``--symbolic_jacobian`` to `CEPTR`.
+
 Printing the Jacobian terms one by one is not possible since the expressions that include QSS species are typically very large. Instead, the expressions are reduced via common sub-expression precomputing that are later used in each term of the Jacobian. The number of subexpression may be orders of magnitude larger than the number of Jacobian entries which can be problematic if the computational architecture has limited memory.
 
-Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian and listed below::
+Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian. They can be adjusted by providin a `.toml` file to ceptr via the `format_input` flag. A model input file ``Support/ceptr/qssa_input.toml`` is provided. A model execution script for generating a mechanism for ``dodecane_lu_qss`` is available under ``Support/ceptr/makeQss_toml.sh``
 
-  $ poetry run convert -h
-  usage: convert [-h] (-f FNAME | -l LST) [--hformat {cpu,gpu}] [-r1] [-rp] [-rp10] [-moc] [-moca] [-roc] [-sj] [-rd] [-rcse] [-rss]
-  
-  Mechanism converter
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-    -f FNAME, --fname FNAME
-                          Mechanism file
-    -l LST, --lst LST     Mechanism directory file list
-    --hformat {cpu,gpu}   Sytle format for .H file output.
-                          CPU: will print intermediate variables used for chainruling. This gives a readable version of the Jacobian entries, albeit memory consuming.
-                          GPU: will not print intermediate variables used for chainruling, and instead will replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient.
-    -r1, --remove_1       Remove factor 1.0 in printed expressions
-    -rp, --remove_pow     Replace pow(...,n) with multiplications or divisions if n<=3 and n>=-3 in printed expressions.
-    -rp10, --remove_pow10
-                          Remove pow(10,x) in printed expressions and replace it with exp(ln(10)*x).
-    -moc , --min_op_count 
-                          Counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to the value
-    -moca , --min_op_count_all 
-                          Similar to --min_op_count but also counts how many times that common subexpression is used later.
-                          The meaning value passed is how many more operations will be done if the common subexpression is eliminated.
-                          This option only marginally increase the file size (therefore compile time), while still being memory efficient.
-    -roc, --gradual_op_count
-                          Gradual elimination of common subexpressions.
-                          Useful if --min_op_count or --min_op_count_all are active.
-                          Loops from 1 to the min_op_count and min_op_count_all values and gradually eliminate the common subexpressions.
-                          This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as min_op_count and min_op_count_all are increased.
-    -sj, --store_in_jacobian
-                          Use the Jacobian array as a temporary space to store intermediate variables.
-                          In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate, forward and backward reactions).
-                          When the option is active, the `productionRate` function used to compute the finite difference is replaced with a `productionRate_light` functions where references to different parts of the Jacobian are used in place of allocating new arrays.
-    -rd, --round_decimals
-                          Round decimal numbers when possible to minimize character count
-    -rcse, --recycle_cse  Reuse common subexpressions that are not used later to avoid declaring new temporary reals
-    -rss, --remove_single_symbols_cse
-                          Remove common subexpressions that are made of 1 symbol.
-                          Those common subexpressions are typically `-xxx` and may not appear as worth replacing because they save 1 operations and are reused multiple times.
-                          However, when replaced in the later expressions, the `-` operations typically disappear or is merged into another operations which actually does not increase the total number of operations.
+The formatting options are the following
 
+.. _optimCuda: https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
+
+* ``hformat`` **(string)**
+     * ``cpu`` will print intermediate variables used for chainruling. This gives a "readable" version of the Jacobian entries, albeit memory consuming.
+     * ``gpu`` will not print intermediate variables used for chainruling, and instead will replace them directly in the Jacobian entries. This gives a less readable version of the Jacobian, but more memory efficient. 
+ * ``remove_1`` **(boolean)** will replace expressions of the type ``1.0 * xxx`` into ``xxx``. 
+ * ``remove_pow`` **(boolean)** will convert expressions of the type ``pow(xxx,n)`` into multiplications or division. The conversion occurs for ``n<=3`` and ``n>=-3`` consistent with optimCuda_  
+ * ``remove_pow10`` **(boolean)** will convert expressions of the type ``pow(10,xxx)`` into ``exp(ln(10)*xxx)``, consistent with optimCuda_ 
+ * ``min_op_count`` **(integer)** counts number operations used to construct each common subexpression and replace the common subexpression if the number of operations is less or equal to ``n`` 
+ * ``min_op_count_all`` **(integer)** is similar to ``min_op_count`` but also counts how many times that common subexpression is used later. The meaning of ``n`` is different than for ``min_op_count`` as it refers to how many more operations will be done if the common subexpression is eliminated. This option should be prefered to ``min_op_count`` as it tends to only marginally increase the file size (therefore compile time), while still being memory efficient. 
+ * ``gradual_op_count`` **(boolean)** is useful if ``min_op_count`` or ``min_op_count_all`` are active. It loops from 1 to ``n`` and gradually eliminate the common subexpressions. This has the advantage of ensuring that the memory footprint is strictly monotonically decreasing as `n` is increased.
+ * ``store_in_jacobian`` **(boolean)** will use the Jacobian array as a temporary space to store intermediate variables. In particular, the last row of the Jacobian (dependence with respect to temperature) is done by finite difference which requires storing intermediate variables (production rate, forward and backward reactions). When the option is active, the ``productionRate`` function used to compute the finite difference is replaced with a ``productionRate_light`` functions where references to different parts of the Jacobian are used in place of allocating new arrays. 
+ * ``round_decimals`` **(boolean)** will round floats printed by ``sympy`` when possible to minimize character count in the ``mechanism.H`` file.
+ * ``recycle_cse`` **(boolean)** will reuse subexpressions that are not used later to avoid declaring new temporary reals. 
+ * ``remove_single_symbols_cse`` **(boolean)** will remove common subexpressions that are made of 1 operation and 1 symbol. Those common subexpressions are typically ``-xxx`` and may not appear as worth replacing because they save 1 operations and are reused multiple times. However, when replaced in the later expressions, the ``-`` operations typically disappear or is merged into another operations which actually does not increase the total number of operations. 
 
 The analytical Jacobian for QSS mechanisms is typically more accurate and stable than GMRES, and is on par with the finite difference Jacobian of `CVODE` as seen in fig:qss_integrator_
 
@@ -188,4 +167,4 @@ In terms of speed, the analytical Jacobian 0D reactor is faster on CPU than fini
 
 .. [SKEL2017] T. Yao, Y. Pei, B. J. Zhong, S. Som, T. Lu, K. H. Luo, A compact skeletal mechanism for n-dodecane with optimized semi-global ! low-temperature chemistry for diesel engine simulations, 191:339-349, 2017. 
 
-.. [SYMPY] Meurer, Aaron and Smith, Christopher P. and Paprocki, Mateusz and \v{C}ert\'{i}k, Ond\v{r}ej and Kirpichev, Sergey B. and Rocklin, Matthew and Kumar, Amit and Ivanov, Sergiu and Moore, Jason K. and Singh, Sartaj and Rathnayake, Thilina and Vig, Sean and Granger, Brian E. and Muller, Richard P. and Bonazzi, Francesco and Gupta, Harsh and Vats, Shivam and Johansson, Fredrik and Pedregosa, Fabian and Curry, Matthew J. and Terrel, Andy R. and Rou\v{c}ka, \v{S}t\v{e}p\'{a}n and Saboo, Ashutosh and Fernando, Isuru and Kulal, Sumith and Cimrman, Robert and Scopatz, Anthony, SymPy: symbolic computing in Python, 3:e103, 2017
+.. [SYMPY] A. Meurer, C. P. Smith, M. Paprocki, O. \v{C}ert\'{i}k, S. B. Kirpichev, M. Rocklin, A. Kumar, S. Ivanov, J. K. Moore, S. Singh, T. Rathnayake, S. Vig, B. E. Granger, R. P. Muller, F. Bonazzi, H. Gupta, S. Vats, F. Johansson, F. Pedregosa, M. J. Curry, A. R. Terrel, S. Rou\v{c}ka, A. Saboo, I. Fernando, S. Kulal, R. Cimrman, A. Scopatz, SymPy: symbolic computing in Python, 3:e103, 2017.

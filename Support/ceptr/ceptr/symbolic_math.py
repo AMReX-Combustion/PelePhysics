@@ -60,24 +60,6 @@ class SymbolicMath:
 
         self.print_debug = params.inputs["Debug"]["print_debug"].value
 
-        print("self.hformat = ", self.hformat)
-        print("self.remove_1 = ", self.remove_1)
-        print("self.remove_pow = ", self.remove_pow)
-        print("self.remove_pow10 = ", self.remove_pow10)
-
-        print("self.min_op_count = ", self.min_op_count)
-        print("self.min_op_count_all = ", self.min_op_count_all)
-        print("self.gradual_op_count = ", self.gradual_op_count)
-        print(
-            "self.remove_single_symbols_cse = ", self.remove_single_symbols_cse
-        )
-
-        print("self.recycle_cse = ", self.recycle_cse)
-        print("self.store_in_jacobian = ", self.store_in_jacobian)
-
-        print("self.round_decimals = ", self.round_decimals)
-        print("self.print_debug = ", self.print_debug)
-
         # Set to False to use bottom up approach
         self.top_bottom = True
 
