@@ -122,7 +122,7 @@ To activate the use of symbolic jacobian, one need to pass the flag ``--symbolic
 
 Printing the Jacobian terms one by one is not possible since the expressions that include QSS species are typically very large. Instead, the expressions are reduced via common sub-expression precomputing that are later used in each term of the Jacobian. The number of subexpression may be orders of magnitude larger than the number of Jacobian entries which can be problematic if the computational architecture has limited memory.
 
-Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian. They can be adjusted by providin a `.toml` file to ceptr via the `format_input` flag. A model input file ``Support/ceptr/qssa_input.toml`` is provided. A model execution script for generating a mechanism for ``dodecane_lu_qss`` is available under ``Support/ceptr/makeQss_toml.sh``
+Several formatting strategies have been implemented to mitigate the memory footprint of the symbolic Jacobian. They can be adjusted by providin a `.toml` file to ceptr via the `format_input` flag. A model input file is provided in the `Tutorials` section of this documentation. A model execution script for generating a mechanism for ``dodecane_lu_qss`` is available under the `Tutorials` section of this documentation.
 
 The formatting options are the following
 
