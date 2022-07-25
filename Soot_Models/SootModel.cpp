@@ -25,12 +25,10 @@ using namespace amrex;
 
 // Default constructor
 SootModel::SootModel()
-  : m_sootData(new SootData{}),
-    m_sootReact(new SootReaction{}),
-    d_sootData(
-      static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)))),
-    d_sootReact(static_cast<SootReaction*>(
-      amrex::The_Arena()->alloc(sizeof(SootReaction)))),
+  : m_sootData(nullptr),
+    m_sootReact(nullptr),
+    d_sootData(nullptr),
+    d_sootReact(nullptr),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {
@@ -52,6 +50,12 @@ SootModel::define()
   const int ngs = NUM_SOOT_GS;
   // This should be called after readSootParams()
   AMREX_ASSERT(m_readSootParams);
+  m_sootData = new SootData{};
+  m_sootReact = new SootReaction{};
+  d_sootData =
+    static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)));
+  d_sootReact =
+    static_cast<SootReaction*>(amrex::The_Arena()->alloc(sizeof(SootReaction)));
   // Double check indices are set
   m_setIndx = m_sootIndx.checkIndices();
   if (!m_setIndx) {
