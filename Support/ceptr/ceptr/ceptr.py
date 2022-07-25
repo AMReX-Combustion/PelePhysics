@@ -10,14 +10,14 @@ import ceptr.converter as converter
 def convert(
     fname,
     format_input,
-    symbolic_jac,
+    qss_symbolic_jac,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
         mechanism,
         format_input,
-        symbolic_jac,
+        qss_symbolic_jac,
     )
     conv.writer()
     conv.formatter()
@@ -26,7 +26,7 @@ def convert(
 def convert_lst(
     lst,
     format_input,
-    symbolic_jac,
+    qss_symbolic_jac,
 ):
     """Convert mechanisms from a file containing a list of directories."""
     lpath = pathlib.Path(lst)
@@ -38,7 +38,7 @@ def convert_lst(
                 convert(
                     mechname,
                     format_input,
-                    symbolic_jac,
+                    qss_symbolic_jac,
                 )
 
 
@@ -65,10 +65,10 @@ def main():
     )
 
     parser.add_argument(
-        "-sj",
-        "--symbolic_jacobian",
+        "-qsj",
+        "--qss_symbolic_jacobian",
         action="store_true",
-        help="Compute the Jacobian using symbolic recording",
+        help="Compute the QSS Jacobian using symbolic recording",
     )
 
     args = parser.parse_args()
@@ -77,13 +77,13 @@ def main():
         convert(
             args.fname,
             args.format_input,
-            args.symbolic_jacobian,
+            args.qss_symbolic_jacobian,
         )
     elif args.lst:
         convert_lst(
             args.lst,
             args.format_input,
-            args.symbolic_jacobian,
+            args.qss_symbolic_jacobian,
         )
 
 

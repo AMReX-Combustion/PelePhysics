@@ -118,7 +118,7 @@ Compared with non-QSS mechanisms, analytical Jacobians need to reflect the depen
 
 To ease the implementation of analytical Jacobian in presence of QSS species, a symbolic approach is used to construct the analytical Jacobian. This strategy has the advantage of not requiring complex logic, being flexible and readable for future development. For the last row of the Jacobian (partial difference of reaction rate with respect to temperature), finite difference is used since perturbations in temperature are less susceptible to numerical errors than perturbations in species concentrations. During the construction of the reaction rates, the operations printed to file are recorded symbolically using the ``sympy`` and ``symengine`` library [SYMPY]_. For computational efficiency during the symbolic differentiation, the chain-rules terms are computed and the final expressions are computed assembled by chain-ruling using logic internal to `CEPTR` rather than ``sympy``. We have found that this speeds up the Jacobian construction cost by a factor 10. 
 
-To activate the use of symbolic jacobian, one need to pass the flag ``--symbolic_jacobian`` to `CEPTR`.
+To activate the use of symbolic jacobian, one need to pass the flag ``--qss_symbolic_jacobian`` to `CEPTR`.
 
 Printing the Jacobian terms one by one is not possible since the expressions that include QSS species are typically very large. Instead, the expressions are reduced via common sub-expression precomputing that are later used in each term of the Jacobian. The number of subexpression may be orders of magnitude larger than the number of Jacobian entries which can be problematic if the computational architecture has limited memory.
 

@@ -26,12 +26,12 @@ class Converter:
         self,
         mechanism,
         format_input=None,
-        symbolic_jacobian=False,
+        qss_symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
 
         # Symbolic computations
-        self.symbolic_jacobian = symbolic_jacobian
+        self.qss_symbolic_jacobian = qss_symbolic_jacobian
 
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
@@ -387,7 +387,7 @@ class Converter:
                     precond=True,
                 )
                 # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
-                if self.symbolic_jacobian:
+                if self.qss_symbolic_jacobian:
                     cj.ajac_symbolic(
                         hdr,
                         self.mechanism,

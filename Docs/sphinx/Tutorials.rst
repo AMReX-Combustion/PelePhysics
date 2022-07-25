@@ -29,7 +29,7 @@ Generate ``qssa.yaml``::
 Generate ``mechanism.H`` and ``mechanism.cpp``::
   
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
-  $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --format_input qssa_input.toml --symbolic_jacobian
+  $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --format_input qssa_input.toml --qss_symbolic_jacobian
 
 We recommend using the following ``qssa_input.toml``::
  
