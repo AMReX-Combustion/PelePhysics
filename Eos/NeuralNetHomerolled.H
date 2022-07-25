@@ -5,13 +5,13 @@
 
 namespace pele {
 namespace physics {
-  
+
 class NNFuncParams: public ManFuncParams
 {
 public:
 
   NNFuncParams() {}
-  
+
   ~NNFuncParams() {}
 
   virtual void initialize()
@@ -27,7 +27,7 @@ public:
     {
       amrex::Abort("Home-rolled neural net file should have .pnn extension.");
     }
-    
+
     bool cmlm_net = false;
     pp.query("cmlm_net", cmlm_net);
 
@@ -40,7 +40,7 @@ public:
     m_h_nnf_data.nn_filename[m_h_nnf_data.len_str] = '\0';
 
     pack_model(nnmodel);
-    
+
     read_metadata(info_filename);
 
     pp.query("v", m_verbose);
@@ -52,19 +52,19 @@ public:
 
     allocate();
   }
-  
+
   void pack_model(NNModel& nnmodel)
   {
     // Get sizes of buffers
     int nreals, nints;
     nnmodel.buffer_sizes_for_packing(nreals, nints);
-    
+
     // Allocate memory for buffers so that they can be copied efficiently to the GPU
     m_h_nnf_data.nnrdata = static_cast<amrex::Real*>(
         amrex::The_Pinned_Arena()->alloc(nreals*sizeof(amrex::Real)));
     m_h_nnf_data.nnidata = static_cast<int*>(
         amrex::The_Pinned_Arena()->alloc(nints*sizeof(int)));
-        
+
     // Pack model
     nnmodel.pack(m_h_nnf_data.nnrdata, m_h_nnf_data.nnidata);
   }
@@ -168,6 +168,9 @@ public:
 
     AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
     AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);
+    
+    m_h_nnf_data.indata_copy = static_cast<amrex::Real*>(
+            amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*sizeof(amrex::Real)));
 
     m_h_nnf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*str_size));
     std::vector<std::string>& dimnames = umap["dimnames"];
@@ -305,6 +308,7 @@ public:
   {
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnrdata);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnidata);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.indata_copy);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.varnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.dimnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
@@ -335,6 +339,7 @@ public:
   {
     amrex::Real* nnrdata; // Real data representing the NNModel
     int* nnidata; // int data representing the NNModel
+    amrex::Real* indata_copy; // Array for storing temporary copy of input data
     char nn_filename[len_str+1]; // Path to neural network file
     int Ncomb; // Number of variables that the manifold params are linear combinations of
     amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
@@ -392,10 +397,7 @@ public:
   AMREX_FORCE_INLINE
   virtual void get_value(const int ivar, const amrex::Real indata[], amrex::Real& out)
   {
-    // amrex::Print() << indata[0] << " " << indata[1] << std::endl;
     out = nnmodel(indata)[ivar];
-    // amrex::Print() << out << std::endl;
-    // amrex::Print() << std::endl;
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -406,7 +408,7 @@ public:
     const amrex::Real* outdata = nnmodel(indata);
     for(int i = 0; i < nvar; i++)
     {
-      out[i] = (ivar[i] > 0) ? outdata[ivar[i]] : 0.0;  
+      out[i] = (ivar[i] >= 0) ? outdata[ivar[i]] : 0.0;
     }
   }
 
@@ -418,19 +420,18 @@ public:
     constexpr amrex::Real eps = 1e-5;
     const amrex::Real outval0 = nnmodel(indata)[ivar];
     amrex::Real diff;
-    
-    amrex::Real indata_copy[nnf_data->Ndim];
+
     for(int i = 0; i < nnf_data->Ndim; i++)
     {
-      indata_copy[i] = indata[i];
+      nnf_data->indata_copy[i] = indata[i];
     }
-    
+
     for(int i = 0; i < nnf_data->Ndim; i++)
     {
       diff = (indata[i] != 0.0) ? eps*indata[i] : eps;
-      indata_copy[i] = indata[i] + diff;
-      derivs[i] = (nnmodel(indata_copy)[ivar] - outval0) / diff;
-      indata_copy[i] = indata[i];
+      nnf_data->indata_copy[i] = indata[i] + diff;
+      derivs[i] = (nnmodel(nnf_data->indata_copy)[ivar] - outval0) / diff;
+      nnf_data->indata_copy[i] = indata[i];
     }
   }
 
@@ -439,7 +440,7 @@ public:
   virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
   {
     const amrex::Real* outdata = nnmodel(indata);
-    
+
     amrex::Real rr = 0.0;
 
     for(int j = 0; j < nnf_data->Ncomb; j++)
@@ -467,7 +468,7 @@ private:
   NNModel nnmodel;
 
 }; // class NNFunc
-  
+
 } // namespace physics
 } // namespace pele
 

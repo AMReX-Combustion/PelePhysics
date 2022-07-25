@@ -226,7 +226,7 @@ namespace pele{
 
         // interpolate down
         for (int i = 0; i < nvar; ++i) {
-          out[i] = (ivar[i] > 0) ? interpolate(indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing]) : 0.0;
+          out[i] = (ivar[i] >= 0) ? interpolate(indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing]) : 0.0;
         }
       }
 

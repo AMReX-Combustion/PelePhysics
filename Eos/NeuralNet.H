@@ -490,7 +490,7 @@ private:
     auto acc = predvars.accessor<amrex::Real,1>();
 
     for (int i = 0; i < nvar; i++) {
-      out[i] = (ivar[i] > 0) ? acc[ivar[i]] : 0.0;
+      out[i] = (ivar[i] >= 0) ? acc[ivar[i]] : 0.0;
     }
   }
 

@@ -51,6 +51,8 @@ struct EosParm<Manifold>
 {
   ManFuncParams::ManFuncData* manf_data;
   amrex::Real Pnom_cgs;
+  bool use_log_density{true};
+  bool compute_temperature{false};
   int idx_density{0};
   int idx_T{0};
   int idx_Wdot[NUM_SPECIES - 1] = {0};
@@ -74,9 +76,15 @@ struct InitEosParm<Manifold>
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);
     pp.query("has_mani_src", eosparm->has_mani_src);
+    pp.get("use_log_density", eosparm->use_log_density);
+    pp.get("compute_temperature", eosparm->compute_temperature);
 
     // Get important indices
-    eosparm->idx_density = get_var_index("RHO", manf_data_in);
+    if (eosparm->use_log_density) {
+      eosparm->idx_density = get_var_index("lnRHO", manf_data_in);
+    } else {
+      eosparm->idx_density = get_var_index("RHO", manf_data_in);
+    }
     eosparm->idx_T = get_var_index("T", manf_data_in);
 
     // For manifold table parameter source terms, assume if index not found, source term is 0

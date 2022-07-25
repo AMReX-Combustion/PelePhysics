@@ -86,6 +86,7 @@ class NNModel
 {
 public:
   
+  AMREX_GPU_HOST_DEVICE
   NNModel() {}
   
   NNModel(std::string& fname, bool cmlm_net=false) : cmlm_net{cmlm_net}
@@ -164,8 +165,6 @@ public:
     if(cmlm_net)
     {
       AMREX_ALWAYS_ASSERT(num_layers == 7);
-      AMREX_ALWAYS_ASSERT(lsizes[0] == lsizes[5]);
-      AMREX_ALWAYS_ASSERT(lsizes[0] == maxsize);
     }
   }
   

@@ -2,7 +2,6 @@
 #define _NEURAL_NET_LD_H_
 
 #include <fstream>
-#include <limits>
 
 namespace pele {
 namespace physics {
@@ -11,7 +10,7 @@ class NNMath
 {
 // GPU compatible math class
 public:
-  const amrex::Real inf = std::numeric_limits<amrex::Real>::infinity();
+  const amrex::Real inf = INFINITY;
   
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -58,7 +57,7 @@ public:
     }
     else
     {
-      throw std::runtime_error("Cannot read data of size " + std::to_string(fsize) +
+      amrex::Error("Cannot read data of size " + std::to_string(fsize) +
           " bytes into array of amrex::Reals.");
     }
   }
@@ -76,7 +75,7 @@ public:
     else
     {
       // Don't support longs
-      throw std::runtime_error("Cannot read data of size " + std::to_string(isize) +
+      amrex::Error("Cannot read data of size " + std::to_string(isize) +
           " bytes into array of ints.");
     }
   }
