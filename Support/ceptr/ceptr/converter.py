@@ -25,7 +25,7 @@ class Converter:
     def __init__(
         self,
         mechanism,
-        format_input=None,
+        qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
@@ -79,7 +79,7 @@ class Converter:
             self.species_info,
             self.reaction_info,
             self.mechanism,
-            format_input,
+            qss_format_input,
         )
 
     def set_species(self):

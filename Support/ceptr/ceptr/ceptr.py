@@ -9,14 +9,14 @@ import ceptr.converter as converter
 
 def convert(
     fname,
-    format_input,
+    qss_format_input,
     qss_symbolic_jac,
 ):
     """Convert a mechanism file."""
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
         mechanism,
-        format_input,
+        qss_format_input,
         qss_symbolic_jac,
     )
     conv.writer()
@@ -25,7 +25,7 @@ def convert(
 
 def convert_lst(
     lst,
-    format_input,
+    qss_format_input,
     qss_symbolic_jac,
 ):
     """Convert mechanisms from a file containing a list of directories."""
@@ -37,7 +37,7 @@ def convert_lst(
                 print(f"""Converting file {mechname}""")
                 convert(
                     mechname,
-                    format_input,
+                    qss_format_input,
                     qss_symbolic_jac,
                 )
 
@@ -54,9 +54,9 @@ def main():
     )
 
     parser.add_argument(
-        "--format_input",
+        "--qss_format_input",
         help=(
-            "Input file for jacobian formatting parameters used with QSS"
+            "Input file for QSS Jacobian formatting parameters"
             " mechanisms"
         ),
         type=str,
@@ -76,13 +76,13 @@ def main():
     if args.fname:
         convert(
             args.fname,
-            args.format_input,
+            args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
     elif args.lst:
         convert_lst(
             args.lst,
-            args.format_input,
+            args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
 
