@@ -56,8 +56,7 @@ def main():
     parser.add_argument(
         "--qss_format_input",
         help=(
-            "Input file for QSS Jacobian formatting parameters"
-            " mechanisms"
+            "Input file for QSS Jacobian formatting parameters" " mechanisms"
         ),
         type=str,
         default=None,

@@ -356,7 +356,10 @@ class SymbolicMath:
         final_expr = [orig[1][i] for i in range(n_exp)]
         to_replace = []
         replace_with = []
-        print(f"Starting expression reduction from {n_cse} expressions", end="...\n")
+        print(
+            f"Starting expression reduction from {n_cse} expressions",
+            end="...\n",
+        )
         if self.min_op_count_all > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count_all + 1):
@@ -513,7 +516,6 @@ class SymbolicMath:
         after substitution.
         """
         replacements = []
-        n_cse = len(common_expr_lhs)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
@@ -569,7 +571,6 @@ class SymbolicMath:
         a number of operation < count_lim including operations of variables that use it
         """
         replacements = []
-        n_cse = len(common_expr_lhs)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
@@ -638,7 +639,6 @@ class SymbolicMath:
         a number of operation < count_lim
         """
         replacements = []
-        n_cse = len(common_expr_lhs)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
@@ -690,7 +690,6 @@ class SymbolicMath:
         a number of operation < count_lim
         """
         replacements = []
-        n_cse = len(common_expr_lhs)
         common_expr_symbols = [rhs.free_symbols for rhs in common_expr_rhs]
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
@@ -800,7 +799,6 @@ class SymbolicMath:
                 final_expr[ind] = final_expr[ind].subs(
                     symb_replace, sme.symbols(replace_with[isr].name)
                 )
-
 
         print(f"Remaining expressions = {n_cse - len(to_replace)}", end="...")
 
