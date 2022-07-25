@@ -31,6 +31,30 @@ Generate ``mechanism.H`` and ``mechanism.cpp``::
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --format_input qssa_input.toml --symbolic_jacobian
 
+We recommend using the following ``qssa_input.toml``::
+ 
+  $ [Readability]
+    hformat =                       "gpu"
+    
+    [Arithmetic]
+    remove_1 =                      true
+    remove_pow =                    true
+    remove_pow10 =                  true
+    
+    [Replacement]
+    min_op_count =                  0
+    min_op_count_all =              10
+    gradual_op_count =              true
+    remove_single_symbols_cse =     true
+    
+    [Recycle]
+    store_in_jacobian =             true
+    recycle_cse =                   true
+    
+    [Characters]
+    round_decimals =                true
+
+
 Tutorial 2 - Generating NC12H26 QSS mechanism without analytical jacobian
 -------------------------------------------------------------------------
 
