@@ -2,7 +2,6 @@
 import pathlib
 import shutil
 import subprocess as spr
-import time
 
 import numpy as np
 
@@ -333,7 +332,7 @@ class Converter:
                 print(self.species_info.sc_df)
 
                 # prod rate related
-                times = time.time()
+                print("Starting production_rate", flush=True, end="...")
                 cp.production_rate(
                     hdr,
                     self.mechanism,
@@ -341,17 +340,15 @@ class Converter:
                     self.reaction_info,
                     self.syms,
                 )
-                print(f"Time to do production_rate = {time.time()-times}")
-                times = time.time()
+                print("Done!", flush=True)
+                print("Starting production_rate_light", flush=True, end="...")
                 cp.production_rate_light(
                     hdr,
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
                 )
-                print(
-                    f"Time to do production_rate light = {time.time()-times}"
-                )
+                print("Done!", flush=True)
 
                 if self.syms.print_debug:
                     cdbg.production_debug(
@@ -363,34 +360,35 @@ class Converter:
                     )
 
                 # if self.species_info.n_qssa_species > 0:
-                times = time.time()
+                print(
+                    "Starting to identify wdot dependencies and make dataframe",
+                    flush=True,
+                    end="...",
+                )
                 self.species_info.identify_wdot_dependencies(self.syms)
                 self.species_info.make_wdot_dataframe()
-                print(
-                    "Time to identify wdot dependencies and make dataframe ="
-                    f" {time.time()-times}"
-                )
+                print("Done!", flush=True)
                 print(self.species_info.wdot_df)
 
                 # Evaluate the dscqss_dscqss values for later
-                times = time.time()
+                print("Computing dscqss_dscqss", flush=True, end="...")
                 self.syms.compute_dscqss_dscqss(species_info=self.species_info)
-                print(f"Time to do all dscqss_dscqss = {time.time()-times}")
+                print("Done!", flush=True)
 
                 # Evaluate the dscqss_dsc values for later
-                times = time.time()
+                print("Computing dscqss_dsc", flush=True, end="...")
                 self.syms.compute_dscqss_dsc(species_info=self.species_info)
-                print(f"Time to do all the dscqss_dsc = {time.time()-times}")
+                print("Done!", flush=True)
 
                 # # Evaluate the dwdot_dscqss values for later
-                times = time.time()
+                print("Computing dwdotdscqss", flush=True, end="...")
                 self.syms.compute_dwdot_dscqss(species_info=self.species_info)
-                print(f"Time to do all the dwdot_dscqss = {time.time()-times}")
+                print("Done!", flush=True)
 
                 # # Evaluate the dwdot_dsc values for later
-                times = time.time()
+                print("Computing dwdotdsc", flush=True, end="...")
                 self.syms.compute_dwdot_dsc(species_info=self.species_info)
-                print(f"Time to do all the dwdot_dsc = {time.time()-times}")
+                print("Done!", flush=True)
 
                 cck.ckwc(hdr, self.mechanism, self.species_info)
                 cck.ckwyp(hdr, self.mechanism, self.species_info)

@@ -1,6 +1,5 @@
 """Symbolic math for symbolic differentiation."""
 import re
-import time
 from collections import OrderedDict
 
 import pandas as pd
@@ -360,12 +359,15 @@ class SymbolicMath:
         final_expr = [orig[1][i] for i in range(n_exp)]
         to_replace = []
         replace_with = []
-
+        print("Starting expression reduction", end="...\n")
         if self.min_op_count_all > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count_all + 1):
-                    print(" Doing min op count ALL = ", count_lim)
-                    times = time.time()
+                    print(
+                        f"\tStarting min op count ALL, count_lim={count_lim}",
+                        end="...",
+                        flush=True,
+                    )
                     (
                         common_expr_lhs,
                         common_expr_rhs,
@@ -377,14 +379,14 @@ class SymbolicMath:
                         common_expr_rhs,
                         final_expr,
                     )
-                    print(
-                        "Reduced expressions in (time = %.3g s)"
-                        % (time.time() - times)
-                    )
+                    print("Done!", flush=True)
             else:
                 count_lim = self.min_op_count_all
-                print(" Doing min op count ALL = ", count_lim)
-                times = time.time()
+                print(
+                    f"\tStarting min op count ALL, count_lim={count_lim}",
+                    end="...",
+                    flush=True,
+                )
                 (
                     common_expr_lhs,
                     common_expr_rhs,
@@ -396,16 +398,16 @@ class SymbolicMath:
                     common_expr_rhs,
                     final_expr,
                 )
-                print(
-                    "Reduced expressions in (time = %.3g s)"
-                    % (time.time() - times)
-                )
+                print("Done!", flush=True)
 
         if self.min_op_count > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count + 1):
-                    print(" Doing min op count = ", count_lim)
-                    times = time.time()
+                    print(
+                        f"\tStarting min op count, count_lim={count_lim}",
+                        end="...",
+                        flush=True,
+                    )
                     if self.top_bottom:
                         (
                             common_expr_lhs,
@@ -430,14 +432,14 @@ class SymbolicMath:
                             common_expr_rhs,
                             final_expr,
                         )
-                    print(
-                        "Reduced expressions in (time = %.3g s)"
-                        % (time.time() - times)
-                    )
+                    print("Done!", flush=True)
             else:
                 count_lim = self.min_op_count
-                print(" Doing min op count = ", count_lim)
-                times = time.time()
+                print(
+                    f"\tStarting min op count, count_lim={count_lim}",
+                    end="...",
+                    flush=True,
+                )
                 if self.top_bottom:
                     (
                         common_expr_lhs,
@@ -462,13 +464,10 @@ class SymbolicMath:
                         common_expr_rhs,
                         final_expr,
                     )
-                print(
-                    "Reduced expressions in (time = %.3g s)"
-                    % (time.time() - times)
-                )
+                print("Done!", flush=True)
 
         if self.remove_single_symbols_cse:
-            times = time.time()
+            print("\tStarting single symbol removal", end="...", flush=True)
             (
                 common_expr_lhs,
                 common_expr_rhs,
@@ -479,12 +478,10 @@ class SymbolicMath:
                 common_expr_rhs,
                 final_expr,
             )
-            print(
-                "Removed single symbols in (time = %.3g s)"
-                % (time.time() - times)
-            )
+            print("Done!", flush=True)
 
         if self.recycle_cse:
+            print("\tStarting cse recycling", end="...", flush=True)
             (
                 common_expr_lhs,
                 common_expr_rhs,
@@ -494,6 +491,8 @@ class SymbolicMath:
             ) = self.recycle_cse_post(
                 orig, common_expr_lhs, common_expr_rhs, final_expr
             )
+            print("Done!", flush=True)
+        print("Done!", flush=True)
 
         return (
             common_expr_lhs,
@@ -907,7 +906,7 @@ class SymbolicMath:
         n = len(list_smp)
 
         # Write common expressions
-        times = time.time()
+        print("Start making common subexpressions", end="...", flush=True)
         array_cse = sme.cse(list_smp)
         for cse_idx in range(len(array_cse[0])):
             left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
@@ -926,19 +925,13 @@ class SymbolicMath:
             #     """std::cout << "%s = " << %s << std::endl;""" % (left_cse, left_cse),
             # )
 
-        timee = time.time()
-
-        print("Made common expr (time = %.3g s)" % (timee - times))
+        print("Done!", flush=True)
 
         # Write all the entries
+        print("Start writing array entries", end="...", flush=True)
         for i in range(n):
             # The full expression is stored in array_cse index 1
-            times = time.time()
             cpp_str = self.convert_to_cpp(array_cse[1][i])
-            timee = time.time()
-            print(
-                "Made expr for entry %d (time = %.3g s)" % (i, timee - times)
-            )
             if index_list is None:
                 cw.writer(
                     fstream,
@@ -959,11 +952,7 @@ class SymbolicMath:
                         cpp_str,
                     ),
                 )
-            timee = time.time()
-            print(
-                "Printed expr for entry %d (time = %.3g s)"
-                % (i, timee - times)
-            )
+        print("Done!", flush=True)
 
     def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
@@ -979,7 +968,11 @@ class SymbolicMath:
         tuple_list = dscqssdscqss_tuples + dscqssdsc_tuples
 
         # Write common expressions
-        times = time.time()
+        print(
+            "Start making common subexpressions for dscqss",
+            end="...",
+            flush=True,
+        )
         array_cse = sme.cse(list_smp)
         for cse_idx in range(len(array_cse[0])):
             left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
@@ -992,14 +985,12 @@ class SymbolicMath:
                     right_cse,
                 ),
             )
-        timee = time.time()
+        print("Done!", flush=True)
 
-        print("Made common expr (time = %.3g s)" % (timee - times))
+        cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
 
-        cw.writer(fstream, cw.comment("Write dscqss terms..."))
-
-        times = time.time()
         # Write all the entries
+        print("Start writing dscqss_dsc entries", end="...", flush=True)
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(array_cse[1][i])
@@ -1025,13 +1016,9 @@ class SymbolicMath:
                         cpp_str,
                     ),
                 )
+        print("Done!", flush=True)
 
-            timee = time.time()
-        print(
-            "Printed exprs for scqss (time = %.3g s)" % (time.time() - times)
-        )
-
-        cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
+        cw.writer(fstream, cw.comment("Write chain rule terms..."))
 
         # Now write the chain rule terms
         for _, item in species_info.scqss_df.iterrows():
@@ -1091,9 +1078,9 @@ class SymbolicMath:
         )
 
         # Write common expressions
-        times = time.time()
+        print("Starting jacobian common subexpressions", end="...", flush=True)
         array_cse = sme.cse(list_smp)
-        print("Made common expr (time = %.3g s)" % (time.time() - times))
+        print("Done!", flush=True)
 
         (
             common_expr_lhs,
@@ -1102,7 +1089,11 @@ class SymbolicMath:
             to_replace,
             replace_with,
         ) = self.reduce_expr(array_cse)
-        times = time.time()
+        print(
+            "Starting printing jacobian common subexpressions",
+            end="...",
+            flush=True,
+        )
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
@@ -1139,8 +1130,7 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-
-        print("Printed common expr (time = %.3g s)" % (time.time() - times))
+        print("Done!", flush=True)
 
         cw.writer(
             fstream,
@@ -1150,8 +1140,8 @@ class SymbolicMath:
             ),
         )
 
-        times = time.time()
         # Write all the entries in human readable format
+        print("Starting writing jacobian entries", end="...", flush=True)
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(final_expr[i])
@@ -1189,10 +1179,6 @@ class SymbolicMath:
                     "const amrex::Real %s = %s;"
                     % (f"dwdot{num_idx}dsc{den_idx}", cpp_str),
                 )
-
-        print(
-            "Printed exprs for scqss (time = %.3g s)" % (time.time() - times)
-        )
 
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
 
@@ -1249,6 +1235,7 @@ class SymbolicMath:
                         final_string,
                     ),
                 )
+        print("Done!", flush=True)
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions.
@@ -1289,9 +1276,9 @@ class SymbolicMath:
         jac_df = pd.DataFrame({"tuples": tuple_list, "type": term_type})
 
         # Write common expressions
-        times = time.time()
+        print("Starting jacobian common subexpressions", end="...", flush=True)
         array_cse = sme.cse(list_smp)
-        print("Made common expr (time = %.3g s)" % (time.time() - times))
+        print("Done!", flush=True)
 
         (
             common_expr_lhs,
@@ -1300,7 +1287,11 @@ class SymbolicMath:
             to_replace,
             replace_with,
         ) = self.reduce_expr(array_cse)
-        times = time.time()
+        print(
+            "Starting printing jacobian common subexpressions",
+            end="...",
+            flush=True,
+        )
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
@@ -1337,11 +1328,10 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-        timee = time.time()
-        print("Write common expr (time = %.3g s)" % (timee - times))
+        print("Done!", flush=True)
 
-        times = time.time()
         # Compute dscqss_dsc strings from CSEs
+        print("Start making dscqss_dsc CSE array", end="...", flush=True)
         dscqss_dsc = [""] * (
             species_info.n_species * species_info.n_qssa_species
         )
@@ -1400,13 +1390,11 @@ class SymbolicMath:
                 else:
                     final_string = start_string
                 dscqss_dsc[dscqss_dsc_idx] = final_string
-
-        print(f"Time to make dscqss_dsc CSE array = {time.time()-times}")
+        print("Done!", flush=True)
 
         # Now write the full jacobian expression
         cw.writer(fstream, cw.comment("Write the full Jacobian expression..."))
-
-        times = time.time()
+        print("Starting writing jacobian entries", end="...", flush=True)
         for _, wdot_item in species_info.wdot_df.iterrows():
             for _, sc_item in species_info.sc_df.iterrows():
                 # Find the CSE index for dwdotdsc
@@ -1460,10 +1448,7 @@ class SymbolicMath:
                     ),
                 )
 
-        print(
-            "Printed exprs for jacobian (time = %.3g s)"
-            % (time.time() - times)
-        )
+        print("Done!", flush=True)
 
     def write_array_to_cpp_no_cse(
         self, list_smp, array_str, cw, fstream, index_list=None
@@ -1540,7 +1525,6 @@ class SymbolicMath:
             # # Loop over the dependencies of scqss
             # for scqssnum in species_info.scqss_df["number"]:
             #     # scqssnum = self.syms_to_specnum(scqss)
-            #     # times = time.time()
             #     self.dscqssdscqss[(item["number"], scqssnum)] = sme.diff(
             #         self.sc_qss_smp[item["number"]],
             #         sme.symbols(f"sc_qss[{scqssnum}]"),
@@ -1559,13 +1543,9 @@ class SymbolicMath:
 
                 # Only do the derivative if there is an sc dependence explicitly included
                 # if f"sc[{scnum}]" in str(item["sc_dep"]):
-                #     times = time.time()
                 #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = sme.diff(
                 #         self.sc_qss_smp[item["number"]],
                 #         sme.symbols(f"sc[{scnum}]"),
-                #     )
-                #     print(
-                #         f"""Time to do d{item["name"]}/dsc[{scnum}] = {time.time()-times}"""
                 #     )
                 # else:
                 #     self.dscqssdsc[(item["name"], f"sc[{scnum}]")] = 0
