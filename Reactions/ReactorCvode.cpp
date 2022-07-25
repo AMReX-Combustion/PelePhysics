@@ -79,13 +79,14 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (udata_g->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(
-          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
+    if (static_cast<bool>(utils::check_flag(
+          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0))) {
       return (1);
     }
 
     flag = CVodeSetNonlinearSolver(cvode_mem, NLS);
-    if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
+    if (static_cast<bool>(
+          utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1))) {
       return (1);
     }
 
@@ -378,8 +379,9 @@ ReactorCvode::checkCvodeOptions() const
   if (solve_type_str == "fixed_point") {
     solve_type = cvode::fixedPoint;
     analytical_jacobian = 0;
-    if (verbose > 0)
+    if (verbose > 0) {
       amrex::Print() << " Using a fixed-point nonlinear solver\n";
+    }
   } else if (solve_type_str == "dense_direct") {
     solve_type = cvode::denseFDDirect;
     if (verbose > 0) {
@@ -1927,7 +1929,7 @@ ReactorCvode::close()
 }
 
 void
-ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
+ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
 {
   long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
