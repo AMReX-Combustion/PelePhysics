@@ -8,7 +8,6 @@ import sympy as smp
 
 import ceptr.inputs as ci
 import ceptr.thermo as cth
-from ceptr.progress_bar import print_progress_bar
 
 
 class SymbolicMath:
@@ -359,7 +358,7 @@ class SymbolicMath:
         final_expr = [orig[1][i] for i in range(n_exp)]
         to_replace = []
         replace_with = []
-        print("Starting expression reduction", end="...\n")
+        print(f"Starting expression reduction from {n_cse} expressions", end="...\n")
         if self.min_op_count_all > 0:
             if self.gradual_op_count:
                 for count_lim in range(1, self.min_op_count_all + 1):
@@ -521,13 +520,6 @@ class SymbolicMath:
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        print_progress_bar(
-            0,
-            n_cse,
-            prefix="Expr = %d / %d " % (0, n_cse),
-            suffix="Complete",
-            length=20,
-        )
         for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
             op_count = sme.count_ops(rhs)
             is_float = True
@@ -555,22 +547,12 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     # final_expr_symbols[j].remove(lhs)
 
-            print_progress_bar(
-                i + 1,
-                n_cse,
-                prefix="Expr = %d / %d, removed single symb expr = %d "
-                % (
-                    i + 1,
-                    n_cse,
-                    len(replacements),
-                ),
-                suffix="Complete",
-                length=20,
-            )
         replacements.reverse()
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
+
+        print(f"Remaining expressions = {len(common_expr_lhs)}", end="...")
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
@@ -594,13 +576,6 @@ class SymbolicMath:
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        print_progress_bar(
-            0,
-            n_cse,
-            prefix="Expr = %d / %d " % (0, n_cse),
-            suffix="Complete",
-            length=20,
-        )
         for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
             op_count = sme.count_ops(rhs)
             # count how many times the expression is used later
@@ -641,22 +616,12 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     final_expr_symbols[j].remove(lhs)
 
-            print_progress_bar(
-                i + 1,
-                n_cse,
-                prefix="Expr = %d / %d, removed expr = %d "
-                % (
-                    i + 1,
-                    n_cse,
-                    len(replacements),
-                ),
-                suffix="Complete",
-                length=20,
-            )
         replacements.reverse()
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
+
+        print(f"Remaining expressions = {len(common_expr_lhs)}", end="...")
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
@@ -680,13 +645,6 @@ class SymbolicMath:
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        print_progress_bar(
-            0,
-            n_cse,
-            prefix="Expr = %d / %d " % (0, n_cse),
-            suffix="Complete",
-            length=20,
-        )
         for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
             op_count = sme.count_ops(rhs)
             is_float = True
@@ -710,22 +668,12 @@ class SymbolicMath:
                     final_expr[j] = final_expr[j].subs(lhs, rhs)
                     final_expr_symbols[j].remove(lhs)
 
-            print_progress_bar(
-                i + 1,
-                n_cse,
-                prefix="Expr = %d / %d, removed expr = %d "
-                % (
-                    i + 1,
-                    n_cse,
-                    len(replacements),
-                ),
-                suffix="Complete",
-                length=20,
-            )
         replacements.reverse()
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
+
+        print(f"Remaining expressions = {len(common_expr_lhs)}", end="...")
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
@@ -749,13 +697,6 @@ class SymbolicMath:
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Replacement loop
-        print_progress_bar(
-            0,
-            n_cse,
-            prefix="Expr = %d / %d " % (0, n_cse),
-            suffix="Complete",
-            length=20,
-        )
         for i, (lhs, rhs) in reversed(
             list(enumerate(zip(common_expr_lhs, common_expr_rhs)))
         ):
@@ -789,21 +730,11 @@ class SymbolicMath:
                     except AttributeError:
                         pass
 
-            print_progress_bar(
-                n_cse - i,
-                n_cse,
-                prefix="Expr = %d / %d, removed expr = %d "
-                % (
-                    n_cse - i,
-                    n_cse,
-                    len(replacements),
-                ),
-                suffix="Complete",
-                length=20,
-            )
         for rep in replacements:
             del common_expr_lhs[rep]
             del common_expr_rhs[rep]
+
+        print(f"Remaining expressions = {len(common_expr_lhs)}", end="...")
 
         return common_expr_lhs, common_expr_rhs, final_expr
 
@@ -823,13 +754,6 @@ class SymbolicMath:
         final_expr_symbols = [expr.free_symbols for expr in final_expr]
 
         # Figure out which symbols may be recycled
-        print_progress_bar(
-            0,
-            n_cse,
-            prefix="Expr = %d / %d " % (0, n_cse),
-            suffix="Complete",
-            length=20,
-        )
         for isymb, symb in enumerate(common_expr_lhs):
             ind_final = [
                 j for j, s in enumerate(final_expr_symbols) if symb in s
@@ -858,18 +782,6 @@ class SymbolicMath:
                             replace_with.append(replace_with[ind])
                         else:
                             replace_with.append(symb)
-            print_progress_bar(
-                isymb + 1,
-                n_cse,
-                prefix="Expr = %d / %d, recycled expr = %d "
-                % (
-                    isymb + 1,
-                    n_cse,
-                    len(to_replace),
-                ),
-                suffix="Complete",
-                length=20,
-            )
         # Use the recycling list to actually recycle
         for isr, symb_replace in enumerate(to_replace):
             ind_rhs = [
@@ -890,6 +802,9 @@ class SymbolicMath:
                 final_expr[ind] = final_expr[ind].subs(
                     symb_replace, sme.symbols(replace_with[isr].name)
                 )
+
+
+        print(f"Remaining expressions = {n_cse - len(to_replace)}", end="...")
 
         return (
             common_expr_lhs,
