@@ -1,7 +1,6 @@
 """Convert cantera mechanism to C++ files."""
 import argparse
 import pathlib
-from argparse import RawTextHelpFormatter
 
 import cantera as ct
 
@@ -46,7 +45,7 @@ def convert_lst(
 def main():
     """Convert cantera mechanisms to C++ files."""
     parser = argparse.ArgumentParser(
-        description="Mechanism converter", formatter_class=RawTextHelpFormatter
+        description="Mechanism converter",
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--fname", help="Mechanism file", type=str)
