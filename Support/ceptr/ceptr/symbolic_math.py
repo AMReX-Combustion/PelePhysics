@@ -56,8 +56,6 @@ class SymbolicMath:
             "round_decimals"
         ].value
 
-        self.print_debug = params.inputs["Debug"]["print_debug"].value
-
         # Set to False to use bottom up approach
         self.top_bottom = True
 

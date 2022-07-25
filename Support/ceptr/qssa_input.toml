@@ -18,6 +18,3 @@ recycle_cse = 			true
 
 [Characters]
 round_decimals = 		true
-
-[Debug]
-print_debug = 			false

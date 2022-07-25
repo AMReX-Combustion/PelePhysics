@@ -171,14 +171,6 @@ class Input:
                     bool,
                 ),
             },
-            "Debug": {
-                "print_debug": Parameter(
-                    False,
-                    "Add functions to mechanism.H that are useful for"
-                    " debugging",
-                    bool,
-                ),
-            },
         }
 
     def write_toml(self):

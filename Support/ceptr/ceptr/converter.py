@@ -6,7 +6,6 @@ import subprocess as spr
 import numpy as np
 
 import ceptr.ck as cck
-import ceptr.debug as cdbg
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
 import ceptr.production as cp
@@ -303,25 +302,6 @@ class Converter:
                     intermediate_names_to_print,
                 )
 
-                if self.syms.print_debug:
-                    cdbg.qssa_debug(
-                        hdr,
-                        self.mechanism,
-                        self.species_info,
-                        self.reaction_info,
-                        self.syms,
-                        helper_names_to_print,
-                        intermediate_names_to_print,
-                    )
-
-                    cdbg.thermo_debug(
-                        hdr,
-                        self.mechanism,
-                        self.species_info,
-                        self.reaction_info,
-                        self.syms,
-                    )
-
                 # self.species_info.create_dicts()
                 self.species_info.identify_qss_dependencies(self.syms)
                 self.species_info.identify_nonqss_dependencies(self.syms)
@@ -349,15 +329,6 @@ class Converter:
                     self.reaction_info,
                 )
                 print("Done!", flush=True)
-
-                if self.syms.print_debug:
-                    cdbg.production_debug(
-                        hdr,
-                        self.mechanism,
-                        self.species_info,
-                        self.reaction_info,
-                        self.syms,
-                    )
 
                 # if self.species_info.n_qssa_species > 0:
                 print(
@@ -398,25 +369,6 @@ class Converter:
                 cck.ckchrg(hdr, self)
                 cck.ckchrgmass(hdr, self.species_info)
                 cth.dthermodtemp(hdr, self.mechanism, self.species_info)
-
-                if self.syms.print_debug:
-                    cdbg.jacobian_debug(
-                        hdr,
-                        self.mechanism,
-                        self.species_info,
-                        self.reaction_info,
-                        self.syms,
-                        dscqss_dsc_list=[
-                            # dscqss0dsc0,
-                            # dscqss1dsc0,
-                            # dscqss2dsc0,
-                        ],
-                        index_list=[
-                            # (self.species_info.n_species) * 0 + 0,
-                            # (self.species_info.n_species) * 0 + 1,
-                            # (self.species_info.n_species) * 0 + 2,
-                        ],
-                    )
 
                 # Approx analytical jacobian
                 cj.ajac(
