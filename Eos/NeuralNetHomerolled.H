@@ -168,9 +168,6 @@ public:
 
     AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
     AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);
-    
-    m_h_nnf_data.indata_copy = static_cast<amrex::Real*>(
-            amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*sizeof(amrex::Real)));
 
     m_h_nnf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*str_size));
     std::vector<std::string>& dimnames = umap["dimnames"];
@@ -308,7 +305,6 @@ public:
   {
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnrdata);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.nnidata);
-    amrex::The_Pinned_Arena()->free(m_h_nnf_data.indata_copy);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.varnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.dimnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
@@ -339,7 +335,6 @@ public:
   {
     amrex::Real* nnrdata; // Real data representing the NNModel
     int* nnidata; // int data representing the NNModel
-    amrex::Real* indata_copy; // Array for storing temporary copy of input data
     char nn_filename[len_str+1]; // Path to neural network file
     int Ncomb; // Number of variables that the manifold params are linear combinations of
     amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
@@ -421,17 +416,18 @@ public:
     const amrex::Real outval0 = nnmodel(indata)[ivar];
     amrex::Real diff;
 
+    amrex::Real indata_copy[NUM_SPECIES-1];
     for(int i = 0; i < nnf_data->Ndim; i++)
     {
-      nnf_data->indata_copy[i] = indata[i];
+      indata_copy[i] = indata[i];
     }
 
     for(int i = 0; i < nnf_data->Ndim; i++)
     {
       diff = (indata[i] != 0.0) ? eps*indata[i] : eps;
-      nnf_data->indata_copy[i] = indata[i] + diff;
-      derivs[i] = (nnmodel(nnf_data->indata_copy)[ivar] - outval0) / diff;
-      nnf_data->indata_copy[i] = indata[i];
+      indata_copy[i] = indata[i] + diff;
+      derivs[i] = (nnmodel(indata_copy)[ivar] - outval0) / diff;
+      indata_copy[i] = indata[i];
     }
   }
 
@@ -466,6 +462,7 @@ private:
   // Variables
   NNFuncParams::NNFuncData* nnf_data;
   NNModel nnmodel;
+  amrex::Real* indata_copy;
 
 }; // class NNFunc
 
