@@ -1338,7 +1338,6 @@ class SymbolicMath:
                     ),
                 )
 
-
     def write_array_to_cpp_no_cse(
         self, list_smp, array_str, cw, fstream, index_list=None
     ):
