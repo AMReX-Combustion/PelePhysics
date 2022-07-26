@@ -365,28 +365,28 @@ SootModel::computeSootSourceTerm(
       Real RT = pele::physics::Constants::RU * T;
       const Real betaNucl = convT * betaNF;
       int nsub = nsub_init;
+      Real mindt = dt / Real(nsubMAX);
       Real sootdt = dt / Real(nsub);
       int isub = 1;
       Real tstart = 0.;
       // Subcycling
-      while (tstart < dt && isub < nsubMAX) {
+      while (tstart < dt && isub < nsubMAX + 1) {
         sd->computeSrcTerms(
           T, mu, rho, molarMass, convT, betaNucl, colConst, xi_n.data(),
           omega_src.data(), momentsPtr, mom_srcPtr, mom_fvPtr, sr);
         // Estimate subcycling time step size
-        sootdt = amrex::min(sootdt, dt - tstart);
         Real rate = 1.;
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
           rate = amrex::max(rate, 1.05 * -sootdt * mom_src[mom] / moments[mom]);
+        }
+        if (rate > 1.) {
+          sootdt = amrex::max(sootdt / rate, mindt);
         }
         // Update species concentrations within subcycle
         for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
           xi_n[sp] += sootdt * omega_src[sp];
           rho += sootdt * omega_src[sp] * mw_fluid[sp];
           omega_src[sp] = 0.; // Reset omega source
-        }
-        if (rate > 1.) {
-          sootdt = sootdt / rate;
         }
         // Update moments within subcycle
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
