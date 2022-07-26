@@ -406,6 +406,17 @@ public:
       out[i] = (ivar[i] >= 0) ? outdata[ivar[i]] : 0.0;
     }
   }
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  virtual void get_all_values(const amrex::Real indata[], amrex::Real out[])
+  {
+    const amrex::Real* outdata = nnmodel(indata);
+    for(int i = 0; i < nnf_data->Nvar; i++)
+    {
+      out[i] = outdata[i];
+    }
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE

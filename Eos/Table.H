@@ -229,6 +229,22 @@ namespace pele{
           out[i] = (ivar[i] >= 0) ? interpolate(indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing]) : 0.0;
         }
       }
+      
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      virtual void get_all_values(const amrex::Real interpdata[], amrex::Real out[])
+      {
+        // Get alphas and indices
+        int indices[MAXD_TABLE];
+        amrex::Real alphas[MAXD_TABLE];
+        amrex::Real dxinv[MAXD_TABLE];
+        get_indices_alphas_dxinv(interpdata, indices, alphas, dxinv);
+
+        // interpolate down
+        for (int i = 0; i < tf_data->Nvar; ++i) {
+          out[i] = interpolate(indices, alphas, &tf_data->values[i * tf_data->varSpacing]);
+        }
+      }
 
       // Get derivatives of indexed variable with respect to table dimensions using finite difference
       AMREX_GPU_HOST_DEVICE
