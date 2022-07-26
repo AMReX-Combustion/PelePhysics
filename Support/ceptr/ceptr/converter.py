@@ -312,7 +312,6 @@ class Converter:
                 print(self.species_info.sc_df)
 
                 # prod rate related
-                print("Starting production_rate", flush=True, end="...")
                 cp.production_rate(
                     hdr,
                     self.mechanism,
@@ -320,46 +319,29 @@ class Converter:
                     self.reaction_info,
                     self.syms,
                 )
-                print("Done!", flush=True)
-                print("Starting production_rate_light", flush=True, end="...")
                 cp.production_rate_light(
                     hdr,
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
                 )
-                print("Done!", flush=True)
 
                 # if self.species_info.n_qssa_species > 0:
-                print(
-                    "Starting to identify wdot dependencies and make dataframe",
-                    flush=True,
-                    end="...",
-                )
                 self.species_info.identify_wdot_dependencies(self.syms)
                 self.species_info.make_wdot_dataframe()
-                print("Done!", flush=True)
                 print(self.species_info.wdot_df)
 
                 # Evaluate the dscqss_dscqss values for later
-                print("Computing dscqss_dscqss", flush=True, end="...")
                 self.syms.compute_dscqss_dscqss(species_info=self.species_info)
-                print("Done!", flush=True)
 
                 # Evaluate the dscqss_dsc values for later
-                print("Computing dscqss_dsc", flush=True, end="...")
                 self.syms.compute_dscqss_dsc(species_info=self.species_info)
-                print("Done!", flush=True)
 
                 # # Evaluate the dwdot_dscqss values for later
-                print("Computing dwdotdscqss", flush=True, end="...")
                 self.syms.compute_dwdot_dscqss(species_info=self.species_info)
-                print("Done!", flush=True)
 
                 # # Evaluate the dwdot_dsc values for later
-                print("Computing dwdotdsc", flush=True, end="...")
                 self.syms.compute_dwdot_dsc(species_info=self.species_info)
-                print("Done!", flush=True)
 
                 cck.ckwc(hdr, self.mechanism, self.species_info)
                 cck.ckwyp(hdr, self.mechanism, self.species_info)

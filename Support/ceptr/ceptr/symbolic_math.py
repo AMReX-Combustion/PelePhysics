@@ -839,7 +839,6 @@ class SymbolicMath:
         print("Done!", flush=True)
 
         # Write all the entries
-        print("Start writing array entries", end="...", flush=True)
         for i in range(n):
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(array_cse[1][i])
@@ -863,7 +862,6 @@ class SymbolicMath:
                         cpp_str,
                     ),
                 )
-        print("Done!", flush=True)
 
     def write_dscqss_to_cpp(self, species_info, cw, fstream):
         """Write dscqss terms as functions of common subexpressions."""
@@ -901,7 +899,6 @@ class SymbolicMath:
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
 
         # Write all the entries
-        print("Start writing dscqss_dsc entries", end="...", flush=True)
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(array_cse[1][i])
@@ -927,7 +924,6 @@ class SymbolicMath:
                         cpp_str,
                     ),
                 )
-        print("Done!", flush=True)
 
         cw.writer(fstream, cw.comment("Write chain rule terms..."))
 
@@ -1000,11 +996,6 @@ class SymbolicMath:
             to_replace,
             replace_with,
         ) = self.reduce_expr(array_cse)
-        print(
-            "Starting printing jacobian common subexpressions",
-            end="...",
-            flush=True,
-        )
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
@@ -1041,7 +1032,6 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-        print("Done!", flush=True)
 
         cw.writer(
             fstream,
@@ -1052,7 +1042,6 @@ class SymbolicMath:
         )
 
         # Write all the entries in human readable format
-        print("Starting writing jacobian entries", end="...", flush=True)
         for i in range(n_total):
             # The full expression is stored in array_cse index 1
             cpp_str = self.convert_to_cpp(final_expr[i])
@@ -1146,7 +1135,6 @@ class SymbolicMath:
                         final_string,
                     ),
                 )
-        print("Done!", flush=True)
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions.
@@ -1198,11 +1186,6 @@ class SymbolicMath:
             to_replace,
             replace_with,
         ) = self.reduce_expr(array_cse)
-        print(
-            "Starting printing jacobian common subexpressions",
-            end="...",
-            flush=True,
-        )
         for cse_idx in range(len(common_expr_lhs)):
             if common_expr_lhs[cse_idx] in to_replace:
                 ind = to_replace.index(common_expr_lhs[cse_idx])
@@ -1239,10 +1222,8 @@ class SymbolicMath:
                         right_cse,
                     ),
                 )
-        print("Done!", flush=True)
 
         # Compute dscqss_dsc strings from CSEs
-        print("Start making dscqss_dsc CSE array", end="...", flush=True)
         dscqss_dsc = [""] * (
             species_info.n_species * species_info.n_qssa_species
         )
@@ -1301,11 +1282,9 @@ class SymbolicMath:
                 else:
                     final_string = start_string
                 dscqss_dsc[dscqss_dsc_idx] = final_string
-        print("Done!", flush=True)
 
         # Now write the full jacobian expression
         cw.writer(fstream, cw.comment("Write the full Jacobian expression..."))
-        print("Starting writing jacobian entries", end="...", flush=True)
         for _, wdot_item in species_info.wdot_df.iterrows():
             for _, sc_item in species_info.sc_df.iterrows():
                 # Find the CSE index for dwdotdsc
@@ -1359,7 +1338,6 @@ class SymbolicMath:
                     ),
                 )
 
-        print("Done!", flush=True)
 
     def write_array_to_cpp_no_cse(
         self, list_smp, array_str, cw, fstream, index_list=None
