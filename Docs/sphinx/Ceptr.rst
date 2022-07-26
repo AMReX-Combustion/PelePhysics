@@ -76,3 +76,9 @@ The full list of options is::
     -m {0,1,2}, --method {0,1,2}
                           QSSA method (default: 2)
     -v, --visualize       Visualize quadratic coupling and QSSA dependencies
+
+For a detailed description of these options and a further information on the way QSS mechanism are treated in `CEPTR` the reader may consult :ref:`the QSS section <sec_qss>`.
+
+See Tutorials (:ref:`Generating NC12H26 QSS mechanism with analytical jacobian <sec_tutqss1>` and :ref:`Generating NC12H26 QSS mechanism without analytical jacobian <sec_tutqss2>`) for generating QSS mechanisms from the ``.yaml`` files.
+
+

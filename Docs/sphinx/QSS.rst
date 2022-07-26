@@ -1,3 +1,5 @@
+.. _sec_qss:
+
 .. highlight:: rst
 
 .. role:: cpp(code)

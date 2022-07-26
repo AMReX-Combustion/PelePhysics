@@ -13,6 +13,7 @@ This sections includes several tutorials - TODO
 
 Tutorial 1 - Generating NC12H26 QSS mechanism with analytical jacobian
 ----------------------------------------------------------------------
+.. _sec_tutqss1:
 
 Update ``poetry``::
 
@@ -29,7 +30,7 @@ Generate ``qssa.yaml``::
 Generate ``mechanism.H`` and ``mechanism.cpp``::
   
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
-  $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input qssa_input.toml --qss_symbolic_jacobian
+  $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input.toml --qss_symbolic_jacobian
 
 We recommend using the following ``qssa_input.toml``::
  
@@ -57,6 +58,7 @@ We recommend using the following ``qssa_input.toml``::
 
 Tutorial 2 - Generating NC12H26 QSS mechanism without analytical jacobian
 -------------------------------------------------------------------------
+.. _sec_tutqss2:
 
 Update ``poetry``::
 
