@@ -382,6 +382,9 @@ SootModel::computeSootSourceTerm(
         if (rate > 1.) {
           sootdt = amrex::max(sootdt / rate, mindt);
         }
+        if (tstart + sootdt > dt) {
+          sootdt = dt - tstart;
+        }
         // Update species concentrations within subcycle
         for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
           xi_n[sp] += sootdt * omega_src[sp];
@@ -399,11 +402,17 @@ SootModel::computeSootSourceTerm(
       }
       // If not finished with the time step, add remaining source
       if (tstart < dt) {
+        Real remdt = dt - tstart;
         sd->computeSrcTerms(
           T, mu, rho, molarMass, convT, betaNucl, colConst, xi_n.data(),
           omega_src.data(), momentsPtr, mom_srcPtr, mom_fvPtr, sr);
+        // Update species concentrations within subcycle
+        for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+          xi_n[sp] += remdt * omega_src[sp];
+          rho += remdt * omega_src[sp] * mw_fluid[sp];
+        }
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-          moments[mom] += (dt - tstart) * mom_src[mom];
+          moments[mom] += remdt * mom_src[mom];
         }
         sd->clipMoments(momentsPtr);
       }
