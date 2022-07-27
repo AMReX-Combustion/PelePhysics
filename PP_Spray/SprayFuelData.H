@@ -140,7 +140,7 @@ struct SprayData
   // 3 coefficients for Antoine equation and conversion to appropriate units
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
-  amrex::GpuArray<int, SPRAY_FUEL_NUM> indx;
+  amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
 
   void build(const SprayData& fdat)
   {
@@ -243,6 +243,7 @@ public:
   {
   }
   amrex::Real get_dia() const { return amrex::RandomNormal(mean_dia, std_dia); }
+  amrex::Real get_avg_dia() const { return mean_dia; }
 };
 
 // Log-normal distribution
@@ -265,6 +266,7 @@ public:
   {
     return std::exp(amrex::RandomNormal(log_mean, log_std));
   }
+  amrex::Real get_avg_dia() const { return std::exp(log_mean); }
 };
 
 // Weibull or Rosin-Rammler distribution
@@ -285,6 +287,7 @@ public:
       -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));
     return mean_dia * std::pow(fact, 1. / k);
   }
+  amrex::Real get_avg_dia() const { return mean_dia; }
 };
 
 #endif

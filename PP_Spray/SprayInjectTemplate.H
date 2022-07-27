@@ -61,20 +61,21 @@ SprayParticleContainer::sprayInjection(
   const amrex::RealVect jet_norm,
   const amrex::Real jet_dia,
   const amrex::Real part_temp,
-  const amrex::Real mass_flow,
+  const amrex::Real inj_mass_flow,
   const amrex::Real jet_vel,
   const amrex::Real spread_angle,
-  const amrex::Real dt,
+  const amrex::Real sim_dt,
   const amrex::Real* Y_jet,
   const int level,
   int startInjProc,
   int numInjProcs,
-  const bool hollow_spray)
+  const bool hollow_spray,
+  const int min_parcel)
 {
   // Don't try to use more procs than we have
   numInjProcs = amrex::min(amrex::ParallelDescriptor::NProcs(), numInjProcs);
-  startInjProc = amrex::min(
-    amrex::ParallelDescriptor::NProcs() - numInjProcs, startInjProc);
+  startInjProc =
+    amrex::min(amrex::ParallelDescriptor::NProcs() - numInjProcs, startInjProc);
 #if AMREX_SPACEDIM == 2
   // Do not parallelize injection for 2D
   numInjProcs = 1;
@@ -100,6 +101,23 @@ SprayParticleContainer::sprayInjection(
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
   const amrex::Real num_ppp = fdat->num_ppp;
+  // Check if mass must be injected across multiple timesteps
+  const amrex::Real avg_dia = dist_type.get_avg_dia();
+  const amrex::Real avg_mass = Pi_six * rho_part * std::pow(avg_dia, 3);
+  // Minimum number of parcels we want injected at a time
+  const amrex::Real min_inj_parcel = static_cast<amrex::Real>(min_parcel);
+  amrex::Real dt = sim_dt;
+  amrex::Real inject_mass = inj_mass_flow * sim_dt;
+  // See if there is uninjected mass from previous time steps
+  if (m_sumInjMass > 0.) {
+    dt += m_sumInjTime;
+    inject_mass += m_sumInjMass;
+  }
+  if (inject_mass / (num_ppp * avg_mass) < min_inj_parcel) {
+    m_sumInjMass = inject_mass;
+    m_sumInjTime = dt;
+    return;
+  }
 
   amrex::RealVect dom_len(
     AMREX_D_DECL(geom.ProbLength(0), geom.ProbLength(1), geom.ProbLength(2)));
@@ -107,7 +125,6 @@ SprayParticleContainer::sprayInjection(
   std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
     host_particles;
   amrex::Real cur_mass = 0.;
-  amrex::Real inject_mass = mass_flow * dt;
   amrex::Real norm = jet_norm.vectorLength();
   amrex::Real injProcs = static_cast<amrex::Real>(numInjProcs);
 #if AMREX_SPACEDIM == 3
@@ -195,5 +212,8 @@ SprayParticleContainer::sprayInjection(
       amrex::Gpu::hostToDevice, src_tile.begin(), src_tile.end(),
       dst_tile.GetArrayOfStructs().begin() + old_size);
   }
+  // Reset total injection mass and time
+  m_sumInjMass = -1.;
+  m_sumInjTime = -1.;
 }
 #endif

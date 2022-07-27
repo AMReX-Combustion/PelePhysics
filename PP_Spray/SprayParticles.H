@@ -57,7 +57,9 @@ public:
       m_sprayIndx(SPI),
       m_wallT(wall_temp),
       m_partCFL(part_cfl),
-      m_injectVel(0.)
+      m_injectVel(0.),
+      m_sumInjMass(-1.),
+      m_sumInjTime(-1.)
   {
     d_sprayData =
       static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
@@ -80,15 +82,17 @@ public:
     const amrex::RealVect jet_norm,
     const amrex::Real jet_dia,
     const amrex::Real part_temp,
-    const amrex::Real mass_flow,
+    const amrex::Real inj_mass_flow,
     const amrex::Real jet_vel,
     const amrex::Real spread_angle,
-    const amrex::Real dt,
+    const amrex::Real sim_dt,
     const amrex::Real* Y_jet,
     const int level,
     int startInjProc = 0,
     int numInjProcs = 1,
-    const bool hollow_spray = false);
+    const bool hollow_spray = false,
+    const int min_parcel =
+      5); // Minimum number of parcels added during injection
 
   static void readSprayParams(
     int& particle_verbose,
@@ -414,6 +418,8 @@ private:
   // Particle CFL, used for injection cases with LMeX
   amrex::Real m_partCFL;
   amrex::Real m_injectVel;
+  mutable amrex::Real m_sumInjMass;
+  mutable amrex::Real m_sumInjTime;
 };
 
 #endif
