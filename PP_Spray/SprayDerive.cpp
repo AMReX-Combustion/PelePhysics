@@ -1,4 +1,7 @@
 
+#ifdef AMREX_USE_EB
+#include <AMReX_EBFArrayBox.H>
+#endif
 #include "SprayParticles.H"
 #include "Drag.H"
 
@@ -24,6 +27,11 @@ SprayParticleContainer::computeDerivedVars(
   const RealVect plo(AMREX_D_DECL(ploarr[0], ploarr[1], ploarr[2]));
   const RealVect phi(AMREX_D_DECL(phiarr[0], phiarr[1], phiarr[2]));
   const Real cell_vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+#ifdef AMREX_USE_EB
+  const auto& factory =
+    dynamic_cast<EBFArrayBoxFactory const&>(mf_var.Factory());
+  const auto* volfrac = &(factory.getVolFrac());
+#endif
   int total_spec_indx = -1;
   for (int ivar = 0; ivar < derivePlotVarCount; ++ivar) {
     if (derivePlotVars[ivar] == "spray_mass_" + sprayFuelNames[0]) {
@@ -45,9 +53,23 @@ SprayParticleContainer::computeDerivedVars(
     const SprayData* fdat = d_sprayData;
     FArrayBox& varfab = mf_var[pti];
     Array4<Real> const& vararr = mf_var.array(pti, start_indx);
+#ifdef AMREX_USE_EB
+    Box box = pti.tilebox();
+    const auto& interp_fab = static_cast<EBFArrayBox const&>(mf_var[pti]);
+    const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
+    Array4<const Real> volfrac_fab;
+    const auto& flags_array = flags.array();
+    if (flags.getType(box) != FabType::regular) {
+      volfrac_fab = volfrac->array(pti);
+    }
+#endif
     amrex::ParallelFor(
-      Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol,
-           total_spec_indx] AMREX_GPU_DEVICE(int pid) noexcept {
+      Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol, total_spec_indx
+#ifdef AMREX_USE_EB
+           ,
+           flags_array, volfrac_fab
+#endif
+    ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           RealVect lxc = (p.pos() - plo) * dxi;
@@ -67,7 +89,13 @@ SprayParticleContainer::computeDerivedVars(
           Gpu::Atomic::Add(&vararr(ijkc, num_indx), num_ppp);
           Gpu::Atomic::Add(&vararr(ijkc, vol_indx), num_ppp * vol);
           Gpu::Atomic::Add(&vararr(ijkc, surf_indx), num_ppp * surf);
-          Gpu::Atomic::Add(&vararr(ijkc, volf_indx), num_ppp * vol / cell_vol);
+          amrex::Real curvol = cell_vol;
+#ifdef AMREX_USE_EB
+          if (!flags_array(ijkc).isRegular()) {
+            curvol /= volfrac_fab(ijkc);
+          }
+#endif
+          Gpu::Atomic::Add(&vararr(ijkc, volf_indx), num_ppp * vol / curvol);
           Gpu::Atomic::Add(
             &vararr(ijkc, d10_indx),
             num_ppp * dia_part); // To be divided by num later
