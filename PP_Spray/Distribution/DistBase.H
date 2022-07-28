@@ -11,6 +11,7 @@ public:
   virtual void init(const std::string &a_prefix) = 0;
 
   virtual amrex::Real get_dia() = 0; 
+  virtual amrex::Real get_avg_dia() = 0; 
 
 protected:
   int m_verbose = 0;

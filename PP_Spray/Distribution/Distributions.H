@@ -11,6 +11,7 @@ public:
     void init(const std::string &a_prefix) override;
 
     amrex::Real get_dia() override;
+    amrex::Real get_avg_dia() override;
 
 private:
     amrex::Real m_diam;
@@ -24,6 +25,7 @@ public:
     void init(const std::string &a_prefix) override;
 
     amrex::Real get_dia() override;
+    amrex::Real get_avg_dia() override;
 
 private:
     amrex::Real m_mean;
@@ -38,6 +40,7 @@ public:
     void init(const std::string &a_prefix) override;
 
     amrex::Real get_dia() override;
+    amrex::Real get_avg_dia() override;
 
 private:
     amrex::Real m_log_mean;
@@ -52,6 +55,7 @@ public:
     void init(const std::string &a_prefix) override;
 
     amrex::Real get_dia() override;
+    amrex::Real get_avg_dia() override;
 
 private:
     amrex::Real m_mean;

@@ -8,6 +8,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_Particles.H>
 #include <memory>
+#include <DistBase.H>
 
 #ifdef PELELM_USE_SPRAY
 #include "pelelm_prob.H"
@@ -75,9 +76,8 @@ public:
     amrex::The_Arena()->free(d_sprayData);
   }
 
-  template <class Dist>
   void sprayInjection(
-    Dist& dist_type,
+    DistBase& dist_type,
     const amrex::RealVect jet_cent,
     const amrex::RealVect jet_norm,
     const amrex::Real jet_dia,

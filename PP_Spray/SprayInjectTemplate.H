@@ -53,10 +53,9 @@ part_loc_trans(
  Within these coordinates, theta is the inclination angle and phi is
  the azimuthal */
 
-template <class Dist>
 void
 SprayParticleContainer::sprayInjection(
-  Dist& dist_type,
+  DistBase& dist_type,
   const amrex::RealVect jet_cent,
   const amrex::RealVect jet_norm,
   const amrex::Real jet_dia,

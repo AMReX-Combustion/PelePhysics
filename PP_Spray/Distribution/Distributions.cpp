@@ -15,6 +15,12 @@ Uniform::get_dia()
     return m_diam;
 }
 
+amrex::Real
+Uniform::get_avg_dia()
+{
+    return get_dia();
+}
+
 void
 Normal::init(const std::string &a_prefix)
 {
@@ -27,6 +33,12 @@ amrex::Real
 Normal::get_dia()
 {
     return amrex::RandomNormal(m_mean, m_std);
+}
+
+amrex::Real
+Normal::get_avg_dia()
+{
+    return m_mean;
 }
 
 void
@@ -47,6 +59,12 @@ LogNormal::get_dia()
     return std::exp(amrex::RandomNormal(m_log_mean, m_log_std));
 }
 
+amrex::Real
+LogNormal::get_avg_dia()
+{
+    return std::exp(m_log_mean);
+}
+
 void
 Weibull::init(const std::string &a_prefix)
 {
@@ -61,4 +79,10 @@ Weibull::get_dia()
     amrex::Real fact =
       -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));
     return m_mean * std::pow(fact, 1. / m_k);
+}
+
+amrex::Real
+Weibull::get_avg_dia()
+{
+    return m_mean;
 }
