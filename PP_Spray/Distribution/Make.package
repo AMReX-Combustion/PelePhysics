@@ -1,2 +1,3 @@
-CEXE_headers += DistBase.H Distributions.H
+CEXE_headers += DistBase.H
+CEXE_headers += Distributions.H
 CEXE_sources += Distributions.cpp

@@ -1,5 +1,13 @@
 
-CEXE_headers += SprayParticles.H SprayFuelData.H SprayInterpolation.H SprayInjectTemplate.H
-CEXE_sources += SprayParticles.cpp SprayDerive.cpp SprayParticlesInitInsert.cpp
+CEXE_headers += SprayParticles.H
+CEXE_headers += SprayFuelData.H
+CEXE_headers += SprayInterpolation.H
+CEXE_headers += SprayInjectTemplate.H
+CEXE_headers += SprayJet.H
 
-CEXE_headers += Drag.H WallFunctions.H
+CEXE_sources += SprayParticles.cpp
+CEXE_sources += SprayDerive.cpp
+CEXE_sources += SprayParticlesInitInsert.cpp
+
+CEXE_headers += Drag.H
+CEXE_headers += WallFunctions.H
