@@ -101,7 +101,7 @@ SprayParticleContainer::computeDerivedVars(
             num_ppp * dia_part); // To be divided by num later
           Gpu::Atomic::Add(
             &vararr(ijkc, d32_indx),
-            num_ppp * vol / 6.); // To be divided by surf later
+            num_ppp * vol * 6.); // To be divided by surf later
           Gpu::Atomic::Add(&vararr(ijkc, temp_indx), num_ppp * pmass * T_part);
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Gpu::Atomic::Add(
