@@ -103,6 +103,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 88
+#define NUM_IONS 0
 #define NUM_REACTIONS 729
 
 #define NUM_FIT 4
@@ -25562,6 +25563,115 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 88; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0;  // h
+  kcharge[1] = 0;  // h2
+  kcharge[2] = 0;  // o
+  kcharge[3] = 0;  // o2
+  kcharge[4] = 0;  // oh
+  kcharge[5] = 0;  // h2o
+  kcharge[6] = 0;  // co
+  kcharge[7] = 0;  // hco
+  kcharge[8] = 0;  // co2
+  kcharge[9] = 0;  // ch3
+  kcharge[10] = 0; // ch4
+  kcharge[11] = 0; // ho2
+  kcharge[12] = 0; // h2o2
+  kcharge[13] = 0; // ch2o
+  kcharge[14] = 0; // ch3o
+  kcharge[15] = 0; // c2h6
+  kcharge[16] = 0; // c2h4
+  kcharge[17] = 0; // c2h5
+  kcharge[18] = 0; // c2h2
+  kcharge[19] = 0; // c2h3
+  kcharge[20] = 0; // ch2co
+  kcharge[21] = 0; // hcco
+  kcharge[22] = 0; // ch3co
+  kcharge[23] = 0; // ch2cho
+  kcharge[24] = 0; // ch3cho
+  kcharge[25] = 0; // c3h4-a
+  kcharge[26] = 0; // c3h6
+  kcharge[27] = 0; // c4h6
+  kcharge[28] = 0; // nc3h7
+  kcharge[29] = 0; // c4h7
+  kcharge[30] = 0; // c4h8-1
+  kcharge[31] = 0; // pc4h9
+  kcharge[32] = 0; // ch3coch2
+  kcharge[33] = 0; // c2h5cho
+  kcharge[34] = 0; // c2h5co
+  kcharge[35] = 0; // c5h9
+  kcharge[36] = 0; // c5h10-1
+  kcharge[37] = 0; // c2h5o
+  kcharge[38] = 0; // ch3o2
+  kcharge[39] = 0; // ch3o2h
+  kcharge[40] = 0; // c2h3co
+  kcharge[41] = 0; // c2h3cho
+  kcharge[42] = 0; // c3h5o
+  kcharge[43] = 0; // c4h7o
+  kcharge[44] = 0; // c4h8ooh1-3o2
+  kcharge[45] = 0; // c4h8ooh1-3
+  kcharge[46] = 0; // pc4h9o2
+  kcharge[47] = 0; // c3h5-a
+  kcharge[48] = 0; // c3h3
+  kcharge[49] = 0; // c3h2
+  kcharge[50] = 0; // ch2(s)
+  kcharge[51] = 0; // nc4ket13
+  kcharge[52] = 0; // nc3h7cho
+  kcharge[53] = 0; // nc3h7co
+  kcharge[54] = 0; // c2h5coch2
+  kcharge[55] = 0; // nc3h7coch2
+  kcharge[56] = 0; // nc4h9cho
+  kcharge[57] = 0; // nc4h9co
+  kcharge[58] = 0; // nc7h16
+  kcharge[59] = 0; // c7h15-1
+  kcharge[60] = 0; // c7h15-2
+  kcharge[61] = 0; // c7h15-3
+  kcharge[62] = 0; // c7h15-4
+  kcharge[63] = 0; // c7h14-2
+  kcharge[64] = 0; // c7h14-3
+  kcharge[65] = 0; // c7h15o2-1
+  kcharge[66] = 0; // c7h15o2-2
+  kcharge[67] = 0; // c7h15o2-3
+  kcharge[68] = 0; // c7h15o2-4
+  kcharge[69] = 0; // c7h14ooh1-3
+  kcharge[70] = 0; // c7h14ooh2-3
+  kcharge[71] = 0; // c7h14ooh2-4
+  kcharge[72] = 0; // c7h14ooh3-2
+  kcharge[73] = 0; // c7h14ooh3-4
+  kcharge[74] = 0; // c7h14ooh3-5
+  kcharge[75] = 0; // c7h14ooh4-2
+  kcharge[76] = 0; // c7h14ooh4-3
+  kcharge[77] = 0; // c7h14ooh1-3o2
+  kcharge[78] = 0; // c7h14ooh2-4o2
+  kcharge[79] = 0; // c7h14ooh3-5o2
+  kcharge[80] = 0; // c7h14ooh4-2o2
+  kcharge[81] = 0; // c7h14o1-3
+  kcharge[82] = 0; // c7h14o2-4
+  kcharge[83] = 0; // nc7ket13
+  kcharge[84] = 0; // nc7ket24
+  kcharge[85] = 0; // nc7ket35
+  kcharge[86] = 0; // nc7ket42
+  kcharge[87] = 0; // n2
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[88];
+  get_imw(imw);
+
+  int kchrg[88];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 88; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 

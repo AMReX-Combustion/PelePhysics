@@ -71,6 +71,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 56
+#define NUM_IONS 0
 #define NUM_REACTIONS 289
 
 #define NUM_FIT 4
@@ -13406,6 +13407,83 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 56; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0;  // H
+  kcharge[1] = 0;  // O
+  kcharge[2] = 0;  // OH
+  kcharge[3] = 0;  // HO2
+  kcharge[4] = 0;  // H2
+  kcharge[5] = 0;  // H2O
+  kcharge[6] = 0;  // H2O2
+  kcharge[7] = 0;  // O2
+  kcharge[8] = 0;  // CH
+  kcharge[9] = 0;  // CH2
+  kcharge[10] = 0; // CH2*
+  kcharge[11] = 0; // CH3
+  kcharge[12] = 0; // CH4
+  kcharge[13] = 0; // HCO
+  kcharge[14] = 0; // CH2O
+  kcharge[15] = 0; // CH3O
+  kcharge[16] = 0; // CH2OH
+  kcharge[17] = 0; // CH3OH
+  kcharge[18] = 0; // CO
+  kcharge[19] = 0; // CO2
+  kcharge[20] = 0; // C2H
+  kcharge[21] = 0; // C2H2
+  kcharge[22] = 0; // C2H3
+  kcharge[23] = 0; // C2H4
+  kcharge[24] = 0; // C2H5
+  kcharge[25] = 0; // C2H6
+  kcharge[26] = 0; // HCCO
+  kcharge[27] = 0; // CH2CO
+  kcharge[28] = 0; // CH3CO
+  kcharge[29] = 0; // CH2CHO
+  kcharge[30] = 0; // CH3CHO
+  kcharge[31] = 0; // C3H3
+  kcharge[32] = 0; // pC3H4
+  kcharge[33] = 0; // aC3H4
+  kcharge[34] = 0; // aC3H5
+  kcharge[35] = 0; // CH3CCH2
+  kcharge[36] = 0; // C3H6
+  kcharge[37] = 0; // nC3H7
+  kcharge[38] = 0; // iC3H7
+  kcharge[39] = 0; // C2H3CHO
+  kcharge[40] = 0; // C4H2
+  kcharge[41] = 0; // iC4H3
+  kcharge[42] = 0; // C4H4
+  kcharge[43] = 0; // iC4H5
+  kcharge[44] = 0; // C4H5-2
+  kcharge[45] = 0; // C4H6
+  kcharge[46] = 0; // C4H612
+  kcharge[47] = 0; // C4H6-2
+  kcharge[48] = 0; // C4H7
+  kcharge[49] = 0; // C4H81
+  kcharge[50] = 0; // pC4H9
+  kcharge[51] = 0; // NC12H26
+  kcharge[52] = 0; // C6H12
+  kcharge[53] = 0; // C6H11
+  kcharge[54] = 0; // C5H10
+  kcharge[55] = 0; // N2
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[56];
+  get_imw(imw);
+
+  int kchrg[56];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 56; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 
