@@ -87,6 +87,9 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
+  int numLite = 10;
+  amrex::GpuArray<int,10> liteSpec = {0};
+  amrex::GpuArray<amrex::Real,NUM_SPECIES*NUM_FIT*10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
 };
 
@@ -105,7 +108,9 @@ struct InitTransParm<EOSType, SimpleTransport>
     egtransetCOFETA(tparm->fitmu.data());
     egtransetCOFLAM(tparm->fitlam.data());
     egtransetCOFD(tparm->fitdbin.data());
-
+    egtransetNLITE(&tparm->numLite);
+    egtransetKTDIF(tparm->liteSpec.data());
+    egtransetCOFTD(tparm->fittdrat.data());
     for (int i = 0; i < NUM_SPECIES; ++i) {
       tparm->iwt[i] = 1. / tparm->wt[i];
     }
@@ -127,6 +132,9 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
+  int numLite = 10;
+  amrex::GpuArray<int,10> liteSpec = {0};
+  amrex::GpuArray<amrex::Real,NUM_SPECIES*NUM_FIT*10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
   amrex::GpuArray<amrex::Real, 10 * 4> Afac = {0.0};
   amrex::GpuArray<amrex::Real, 7 * 4> Bfac = {0.0};
@@ -155,6 +163,9 @@ struct InitTransParm<eos::SRK, SimpleTransport>
     egtransetCOFETA(tparm->fitmu.data());
     egtransetCOFLAM(tparm->fitlam.data());
     egtransetCOFD(tparm->fitdbin.data());
+    egtransetNLITE(&tparm->numLite);
+    egtransetKTDIF(tparm->liteSpec.data());
+    egtransetCOFTD(tparm->fittdrat.data());
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       tparm->iwt[i] = 1. / tparm->wt[i];

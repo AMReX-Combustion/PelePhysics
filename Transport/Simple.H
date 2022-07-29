@@ -278,10 +278,12 @@ struct SimpleTransport
     const bool wtr_get_mu,
     const bool wtr_get_lam,
     const bool wtr_get_Ddiag,
+    const bool wtr_get_chi,
     const amrex::Real Tloc,
     const amrex::Real rholoc,
     amrex::Real* Yloc,
     amrex::Real* Ddiag,
+    amrex::Real* chi_mix,
     amrex::Real& mu,
     amrex::Real& xi,
     amrex::Real& lam,
@@ -370,6 +372,25 @@ struct SimpleTransport
     if (wtr_get_Ddiag) {
       BinaryDiff<EosType>()(Xloc, Yloc, logT, rholoc, Tloc, Ddiag, tparm);
     }
+    
+    if (wtr_get_chi) {
+      int four_idx_nj;
+      amrex::Real chi;
+      for (int n = 0; n < tparm->numLite; ++n) {
+	int i = tparm->liteSpec[n];	
+	for (int j = 0; j < NUM_SPECIES; ++j) {
+	  if (j!=i) {
+	    four_idx_nj = 4 * (j + NUM_SPECIES * n);
+	    chi = tparm->fittdrat[four_idx_nj]
+	      + Tloc*(tparm->fittdrat[1 + four_idx_nj]
+		      + Tloc*(tparm->fittdrat[2 + four_idx_nj]
+			      + Tloc*(tparm->fittdrat[3 + four_idx_nj])));
+	    chi_mix[i] += Xloc[j]*chi;
+	  }
+	}
+	chi_mix[i] *= Xloc[i];
+      }  
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -379,6 +400,7 @@ struct SimpleTransport
     amrex::Array4<const amrex::Real> const& T_in,
     amrex::Array4<const amrex::Real> const& Rho_in,
     amrex::Array4<amrex::Real> const& D_out,
+    amrex::Array4<amrex::Real> const& chi_out,
     amrex::Array4<amrex::Real> const& mu_out,
     amrex::Array4<amrex::Real> const& xi_out,
     amrex::Array4<amrex::Real> const& lam_out,
@@ -391,6 +413,11 @@ struct SimpleTransport
     const bool wtr_get_mu = true;
     const bool wtr_get_lam = true;
     const bool wtr_get_Ddiag = true;
+#ifdef USE_SORET
+    const bool wtr_get_chi = true;
+#else
+    const bool wtr_get_chi = false;
+#endif
 
     for (int k = lo.z; k <= hi.z; ++k) {
       for (int j = lo.y; j <= hi.y; ++j) {
@@ -405,15 +432,16 @@ struct SimpleTransport
 
           amrex::Real muloc, xiloc, lamloc;
           amrex::Real Ddiag[NUM_SPECIES] = {0.0};
-          transport(
-            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, T, rho, massloc,
-            Ddiag, muloc, xiloc, lamloc, tparm);
+          amrex::Real chi_mix[NUM_SPECIES] = {0.0};
+          transport(wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag,
+          wtr_get_chi, T, rho, massloc,
+	  Ddiag, chi_mix, muloc, xiloc, lamloc, tparm);
 
           //   mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {
             D_out(i, j, k, n) = Ddiag[n];
+	    chi_out(i,j,k,n) = chi_mix[n];
           }
-
           mu_out(i, j, k) = muloc;
           xi_out(i, j, k) = xiloc;
           lam_out(i, j, k) = lamloc;
