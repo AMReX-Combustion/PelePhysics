@@ -31,6 +31,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 16
+#define NUM_IONS 0
 #define NUM_REACTIONS 60
 
 #define NUM_FIT 4
@@ -4126,6 +4127,43 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 16; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0;  // H
+  kcharge[1] = 0;  // O2
+  kcharge[2] = 0;  // O
+  kcharge[3] = 0;  // H2O
+  kcharge[4] = 0;  // OH
+  kcharge[5] = 0;  // H2O2
+  kcharge[6] = 0;  // HO2
+  kcharge[7] = 0;  // CO
+  kcharge[8] = 0;  // CO2
+  kcharge[9] = 0;  // CH4
+  kcharge[10] = 0; // CH3
+  kcharge[11] = 0; // CH3O2H
+  kcharge[12] = 0; // CH3O2
+  kcharge[13] = 0; // CH3O
+  kcharge[14] = 0; // CH2O
+  kcharge[15] = 0; // HCO
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[16];
+  get_imw(imw);
+
+  int kchrg[16];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 16; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 

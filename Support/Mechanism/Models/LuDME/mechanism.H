@@ -54,6 +54,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 39
+#define NUM_IONS 0
 #define NUM_REACTIONS 175
 
 #define NUM_FIT 4
@@ -9270,6 +9271,66 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 39; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0;  // H
+  kcharge[1] = 0;  // H2
+  kcharge[2] = 0;  // CH2
+  kcharge[3] = 0;  // CH2(S)
+  kcharge[4] = 0;  // CH3
+  kcharge[5] = 0;  // O
+  kcharge[6] = 0;  // CH4
+  kcharge[7] = 0;  // OH
+  kcharge[8] = 0;  // H2O
+  kcharge[9] = 0;  // C2H2
+  kcharge[10] = 0; // C2H3
+  kcharge[11] = 0; // CO
+  kcharge[12] = 0; // C2H4
+  kcharge[13] = 0; // HCO
+  kcharge[14] = 0; // C2H5
+  kcharge[15] = 0; // CH2O
+  kcharge[16] = 0; // C2H6
+  kcharge[17] = 0; // CH2OH
+  kcharge[18] = 0; // CH3O
+  kcharge[19] = 0; // O2
+  kcharge[20] = 0; // HO2
+  kcharge[21] = 0; // H2O2
+  kcharge[22] = 0; // CO2
+  kcharge[23] = 0; // CH3HCO
+  kcharge[24] = 0; // CH3OCH2
+  kcharge[25] = 0; // HCOOH
+  kcharge[26] = 0; // CH3OCH3
+  kcharge[27] = 0; // HOCH2O
+  kcharge[28] = 0; // CH3OCO
+  kcharge[29] = 0; // CH3OCHO
+  kcharge[30] = 0; // CH3OCH2O
+  kcharge[31] = 0; // CH3OCH2OH
+  kcharge[32] = 0; // OCH2OCHO
+  kcharge[33] = 0; // HOCH2OCO
+  kcharge[34] = 0; // CH3OCH2O2
+  kcharge[35] = 0; // CH2OCH2O2H
+  kcharge[36] = 0; // HO2CH2OCHO
+  kcharge[37] = 0; // O2CH2OCH2O2H
+  kcharge[38] = 0; // N2
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[39];
+  get_imw(imw);
+
+  int kchrg[39];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 39; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 

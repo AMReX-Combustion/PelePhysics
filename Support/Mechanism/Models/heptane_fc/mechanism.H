@@ -67,6 +67,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 52
+#define NUM_IONS 0
 #define NUM_REACTIONS 218
 
 #define NUM_FIT 4
@@ -11358,6 +11359,79 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 52; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0;  // N2
+  kcharge[1] = 0;  // O
+  kcharge[2] = 0;  // H2
+  kcharge[3] = 0;  // H
+  kcharge[4] = 0;  // OH
+  kcharge[5] = 0;  // H2O
+  kcharge[6] = 0;  // O2
+  kcharge[7] = 0;  // HO2
+  kcharge[8] = 0;  // H2O2
+  kcharge[9] = 0;  // CH
+  kcharge[10] = 0; // HCO
+  kcharge[11] = 0; // CH2
+  kcharge[12] = 0; // CO2
+  kcharge[13] = 0; // CO
+  kcharge[14] = 0; // CH2O
+  kcharge[15] = 0; // CH2GSG
+  kcharge[16] = 0; // CH3
+  kcharge[17] = 0; // CH3O
+  kcharge[18] = 0; // CH4
+  kcharge[19] = 0; // CH3OH
+  kcharge[20] = 0; // C2H6
+  kcharge[21] = 0; // C2H5
+  kcharge[22] = 0; // CH2CO
+  kcharge[23] = 0; // HOCHO
+  kcharge[24] = 0; // CH3O2
+  kcharge[25] = 0; // CH3O2H
+  kcharge[26] = 0; // C2H2
+  kcharge[27] = 0; // HCCO
+  kcharge[28] = 0; // C2H3
+  kcharge[29] = 0; // CH2CHO
+  kcharge[30] = 0; // C3H6
+  kcharge[31] = 0; // C2H4
+  kcharge[32] = 0; // C2H5O
+  kcharge[33] = 0; // CH3CO
+  kcharge[34] = 0; // C2H5O2
+  kcharge[35] = 0; // C3H2
+  kcharge[36] = 0; // C3H3
+  kcharge[37] = 0; // C3H4XA
+  kcharge[38] = 0; // C3H5XA
+  kcharge[39] = 0; // NXC3H7
+  kcharge[40] = 0; // NXC3H7O2
+  kcharge[41] = 0; // C4H6
+  kcharge[42] = 0; // C4H7
+  kcharge[43] = 0; // C4H8X1
+  kcharge[44] = 0; // PXC4H9
+  kcharge[45] = 0; // PXC4H9O2
+  kcharge[46] = 0; // C5H9
+  kcharge[47] = 0; // C5H10X1
+  kcharge[48] = 0; // C5H11X1
+  kcharge[49] = 0; // C6H12X1
+  kcharge[50] = 0; // C7H15X2
+  kcharge[51] = 0; // NXC7H16
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[52];
+  get_imw(imw);
+
+  int kchrg[52];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 52; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 
