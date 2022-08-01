@@ -180,7 +180,7 @@ SprayParticleContainer::readSprayParams(
     AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
   int derive_plot_vars = 1;
   pp.query("derive_plot_vars", derive_plot_vars);
-  int derive_plot_species = 0;
+  int derive_plot_species = 1;
   pp.query("derive_plot_species", derive_plot_species);
   // If derive_spray_vars if present, add above spray quantities in the same
   // order
