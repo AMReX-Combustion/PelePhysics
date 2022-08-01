@@ -33,7 +33,7 @@ This will perform proper sorting of the installed `Python` libraries.
 
 2) Run ``black``::
 
-    poetry run black --preview . 
+    poetry run black . 
 
 This will perform proper formatting of all `Python` files to be consistent with all current files.
 
