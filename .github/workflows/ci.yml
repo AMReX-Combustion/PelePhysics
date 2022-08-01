@@ -205,7 +205,7 @@ jobs:
         working-directory: ${{env.JAC_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          if [ "${{matrix.comp}}" == 'gnu' ]; then \
+          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
                ./Pele3d.${{matrix.comp}}.TPROF.ex; \
               if [ $? -ne 0 ]; then exit 1; fi; \
