@@ -11,7 +11,7 @@ This sections includes several tutorials - TODO
 .. toctree::
    :maxdepth: 1
 
-Tutorial 1 - Generating NC12H26 QSS mechanism with analytical jacobian
+Tutorial 1 - Generating NC12H26 QSS mechanism with analytical Jacobian
 ----------------------------------------------------------------------
 .. _sec_tutqss1:
 
@@ -56,7 +56,7 @@ We recommend using the following ``qssa_input.toml``::
     round_decimals =                true
 
 
-Tutorial 2 - Generating NC12H26 QSS mechanism without analytical jacobian
+Tutorial 2 - Generating NC12H26 QSS mechanism without analytical Jacobian
 -------------------------------------------------------------------------
 .. _sec_tutqss2:
 
