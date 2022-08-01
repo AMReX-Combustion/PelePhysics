@@ -195,7 +195,8 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 "Species "
                                 + species_info.qssa_species_list[j]
                                 + " appears as both prod and reacts. Check"
-                                " reaction " + reaction.equation
+                                " reaction "
+                                + reaction.equation
                             )
 
                     # we know j is in reaction r. Options are
@@ -337,7 +338,8 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 "Species "
                                 + species_info.qssa_species_list[j]
                                 + " appears as both prod and reacts. Check"
-                                " reaction " + reaction.equation
+                                " reaction "
+                                + reaction.equation
                             )
 
                     if reaction.reversible:
@@ -1253,7 +1255,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         )
                         print(
                             "        this reaction does not contribute to any"
-                            " QSSA" + "coefficients and is thus ignored"
+                            " QSSA"
+                            + "coefficients and is thus ignored"
                         )
 
                     else:
@@ -1554,7 +1557,8 @@ def qssa_coeff_functions(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
         + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, amrex::Real"
-        " * sc," + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
+        " * sc,"
+        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
         " g_RT_qss)",
     )
     cw.writer(fstream, "{")

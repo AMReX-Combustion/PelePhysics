@@ -448,7 +448,8 @@ class Converter:
             spr.run([clexec, "-i", self.cppname])
         else:
             print(
-                "Clang-format not found. C++ files will be hard to parse by a human."
+                "Clang-format not found. C++ files will be hard to parse by a"
+                " human."
             )
 
     def atomic_weight(self, fstream):
