@@ -158,7 +158,13 @@ The analytical Jacobian for QSS mechanisms is typically more accurate and stable
 
      Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3. Results are shown for finite difference jacobian (red thick line), analytical jacobian (black line) and GMRES (crosses) using the same tolerances.
 
-In terms of speed, the analytical Jacobian 0D reactor is faster on CPU than finite difference Jacobian and GMRES. For the piston bowl challenge problem, the analytical Jacobian is 1.5 times slower than GMRES with PeleC. Further optimization and tests are still ongoing.
+In terms of speed, the analytical Jacobian 0D reactor is faster on CPU than finite difference Jacobian and GMRES. For the piston bowl challenge problem, the analytical Jacobian relative speed depends on the prevalence of chemical reactions. At some points, the AJ slower than GMRES with PeleC, at others, AJ is faster. Further optimization and tests are still ongoing.
+
+
+Using the Analytical Jacobian
+-----------------------------
+
+To use the analytic Jacobian QSS mechanisms in a Pele run, one must specify the correct ``solve_type``. The choice of the ``solve_type`` will determine whether or not the analytic Jacobian is used. With CUDA, both ``magma_direct`` and ``sparse_direct`` will use the analytic Jacobian, while on HIP only ``magma_direct``  will trigger the use of the analytic Jacobian parts.
 
 
 .. [DRG2005] T. Lu, C. K. Law, A directed relation graph method for mechanism reduction, Proceedings of the combustion institute, 30(1):1333-1341, 2005.
