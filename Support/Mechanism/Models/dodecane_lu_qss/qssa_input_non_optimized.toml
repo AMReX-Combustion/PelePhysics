@@ -1,0 +1,20 @@
+[Readability]
+hformat =                       "cpu"
+
+[Arithmetic]
+remove_1 =                      false
+remove_pow =                    false
+remove_pow10 =                  false
+
+[Replacement]
+min_op_count =                  0
+min_op_count_all =              0
+gradual_op_count =              false
+remove_single_symbols_cse =     false
+
+[Recycle]
+store_in_jacobian =             false
+recycle_cse =                   false
+
+[Characters]
+round_decimals =                false

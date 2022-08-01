@@ -2,7 +2,7 @@ name: PelePhysics-CI
 
 on:
    push:
-     branches: [development]
+     branches: [development, ci_symJac]
    pull_request:
      branches: [development]
 
@@ -54,6 +54,10 @@ jobs:
         run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/air/mechanism.yaml
       - name: Convert LiDryer mechanism
         run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/LiDryer/mechanism.yaml
+      - name: Convert dodecane_lu_qss
+        run: |
+          poetry run qssa -f ${{github.workspace}}/Support/Mechanism/Models/dodecane_lu_qss/skeletal.yaml -n ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/non_qssa_list.yaml 
+          poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
 
   Transport-EOS-Reactions:
     needs: Formatting
