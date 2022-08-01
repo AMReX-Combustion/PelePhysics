@@ -3,7 +3,7 @@ DIM        = 3
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 VERBOSE    = FALSE
-DEBUG      = TRUE
+DEBUG      = FALSE
 
 # Compiler
 COMP	   = gnu
