@@ -245,7 +245,7 @@ For this example, the ``USE_SUNDIALS_PP`` flag should be set to true, as the ODE
 is called from the C++ routine directly using CVODE.
 Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry model should be set to ``drm19``. The full file reads as follows:
 
-.. code-block:: c++
+.. code-block::
 
     PRECISION  = DOUBLE                                                                                                                   
     PROFILE    = FALSE
@@ -366,7 +366,7 @@ The GNUmakefile
 
 Only the middle part of the ``GNUmakefile`` needs to be modified compared to the previous example.
 
-.. code-block:: c++
+.. code-block::
 
     ...
     #######################
@@ -393,7 +393,7 @@ The input file
 For the KLU library to be of use, a solver utilizing sparsity features should 
 be selected. We modify the input file as follows:
 
-.. code-block:: c++
+.. code-block::
 
     ...
     #######################
@@ -605,7 +605,7 @@ The GNUmakefile
 
 The full file reads as follows:
 
-.. code-block:: c++
+.. code-block::
 
     PRECISION  = DOUBLE               
     PROFILE    = FALSE

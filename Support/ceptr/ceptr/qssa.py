@@ -57,7 +57,6 @@ def main():
         qssa_species = cqr.remove_quadratic_method_0(mechanism, qssa_species)
         reactions_to_keep = mechanism.reactions()
     elif args.method == 1 or args.method == 2:
-
         candidates_for_removal = cqr.identify_removals(
             mechanism, reaction_info, qssa_species
         )

@@ -1,5 +1,10 @@
 # Analytically Reduced NC12H26 Mechanism with QSS
 
+## Jacobian
+
+Analytical jacobian (`aJacobian(` function) can be automatically generated using symbolic computations
+
 ## Limitations
 
-Does not support yet analytical Jacobian for the integration method and will abort if analytical Jacobian is used for integration or preconditioning.
+Preconditioner Jacobian (`aJacobian_precond(` function) not ready yet and will abort
+

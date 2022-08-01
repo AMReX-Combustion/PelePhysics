@@ -13,6 +13,7 @@ import ceptr.qssa_converter as cqc
 import ceptr.reaction_info as cri
 import ceptr.sparsity as csp
 import ceptr.species_info as csi
+import ceptr.symbolic_math as csm
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
@@ -21,8 +22,17 @@ import ceptr.writer as cw
 class Converter:
     """Convert Cantera mechanism to C++ files for Pele."""
 
-    def __init__(self, mechanism):
+    def __init__(
+        self,
+        mechanism,
+        qss_format_input=None,
+        qss_symbolic_jacobian=False,
+    ):
         self.mechanism = mechanism
+
+        # Symbolic computations
+        self.qss_symbolic_jacobian = qss_symbolic_jacobian
+
         self.mechpath = pathlib.Path(self.mechanism.source)
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
@@ -33,7 +43,6 @@ class Converter:
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
-
         # QSS  -- sort reactions/networks/check validity of QSSs
         if self.species_info.n_qssa_species > 0:
             print("QSSA information")
@@ -65,6 +74,13 @@ class Converter:
             cqc.set_qssa_isneeded(
                 self.mechanism, self.species_info, self.reaction_info
             )
+        # Initialize symbolic variables
+        self.syms = csm.SymbolicMath(
+            self.species_info,
+            self.reaction_info,
+            self.mechanism,
+            qss_format_input,
+        )
 
     def set_species(self):
         """Set the species."""
@@ -116,7 +132,9 @@ class Converter:
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
-                tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight)
+                tempsp = csi.SpeciesDb(
+                    id, sorted_idx, species.name, weight, species.charge
+                )
                 self.species_info.all_species.append(tempsp)
                 self.species_info.qssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
@@ -186,7 +204,7 @@ class Converter:
             cck.ckindx(hdr, self.mechanism, self.species_info)
             self.molecular_weights(hdr)
             cck.ckrp(hdr, self.mechanism, self.species_info)
-            cth.thermo(hdr, self.mechanism, self.species_info)
+            cth.thermo(hdr, self.mechanism, self.species_info, self.syms)
             # mean quantities -- do not take QSS into account, sumX and Y = 1 without them
             cck.ckcpbl(hdr, self.mechanism, self.species_info)
             cck.ckcpbs(hdr, self.mechanism, self.species_info)
@@ -240,7 +258,11 @@ class Converter:
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
 
+            self.species_info.create_dicts()
             if self.species_info.n_qssa_species > 0:
+                helper_names_to_print = []
+                intermediate_names_to_print = []
+
                 print("QSSA groups")
                 # Figure out dependencies
                 cqc.get_qssa_groups(
@@ -251,48 +273,160 @@ class Converter:
                 cqc.sort_qssa_computation(
                     self.mechanism, self.species_info, self.reaction_info
                 )
+                # Invert QSSA print coeff and QSSA evaluation to see expressions
+                #  in terms of qr and qf
+                print("QSSA print coeff")
+                cqc.qssa_coeff_functions(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                )
                 print("QSSA evaluation")
                 # Actually gauss-pivot the matrix to get algebraic expr
                 cqc.sort_qssa_solution_elements(
-                    self.mechanism, self.species_info, self.reaction_info
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
                 print("QSSA printing")
                 cqc.qssa_component_functions(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                    helper_names_to_print,
+                    intermediate_names_to_print,
+                )
+
+                # self.species_info.create_dicts()
+                self.species_info.identify_qss_dependencies(self.syms)
+                self.species_info.identify_nonqss_dependencies(self.syms)
+                self.species_info.make_scqss_dataframe()
+                self.species_info.make_sc_dataframe()
+
+                print(self.species_info.scqss_df)
+                print(self.species_info.sc_df)
+
+                # prod rate related
+                cp.production_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                )
+                cp.production_rate_light(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                )
+
+                # if self.species_info.n_qssa_species > 0:
+                self.species_info.identify_wdot_dependencies(self.syms)
+                self.species_info.make_wdot_dataframe()
+                print(self.species_info.wdot_df)
+
+                # Evaluate the dscqss_dscqss values for later
+                self.syms.compute_dscqss_dscqss(species_info=self.species_info)
+
+                # Evaluate the dscqss_dsc values for later
+                self.syms.compute_dscqss_dsc(species_info=self.species_info)
+
+                # # Evaluate the dwdot_dscqss values for later
+                self.syms.compute_dwdot_dscqss(species_info=self.species_info)
+
+                # # Evaluate the dwdot_dsc values for later
+                self.syms.compute_dwdot_dsc(species_info=self.species_info)
+
+                cck.ckwc(hdr, self.mechanism, self.species_info)
+                cck.ckwyp(hdr, self.mechanism, self.species_info)
+                cck.ckwxp(hdr, self.mechanism, self.species_info)
+                cck.ckwyr(hdr, self.mechanism, self.species_info)
+                cck.ckwxr(hdr, self.mechanism, self.species_info)
+                cck.ckchrg(hdr, self)
+                cck.ckchrgmass(hdr, self.species_info)
+                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
+
+                # Approx analytical jacobian
+                cj.ajac(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                    syms=self.syms,
+                )
+                cj.dproduction_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+                # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                if self.qss_symbolic_jacobian:
+                    cj.ajac_symbolic(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                        syms=self.syms,
+                    )
+                else:
+                    cj.ajac(
+                        hdr,
+                        self.mechanism,
+                        self.species_info,
+                        self.reaction_info,
+                    )
+                cj.dproduction_rate(
                     hdr, self.mechanism, self.species_info, self.reaction_info
                 )
 
-            # prod rate related
-            cp.production_rate(
-                hdr, self.mechanism, self.species_info, self.reaction_info
-            )
-            cck.ckwc(hdr, self.mechanism, self.species_info)
-            cck.ckwyp(hdr, self.mechanism, self.species_info)
-            cck.ckwxp(hdr, self.mechanism, self.species_info)
-            cck.ckwyr(hdr, self.mechanism, self.species_info)
-            cck.ckwxr(hdr, self.mechanism, self.species_info)
-            cck.ckchrg(hdr, self)
-            cck.ckchrgmass(hdr, self.species_info)
-            cth.dthermodtemp(hdr, self.mechanism, self.species_info)
-            # Approx analytical jacobian
-            cj.ajac(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                precond=True,
-            )
-            cj.dproduction_rate(
-                hdr,
-                self.mechanism,
-                self.species_info,
-                self.reaction_info,
-                precond=True,
-            )
-            # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
-            cj.ajac(hdr, self.mechanism, self.species_info, self.reaction_info)
-            cj.dproduction_rate(
-                hdr, self.mechanism, self.species_info, self.reaction_info
-            )
+            else:
+                cp.production_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                )
+                cck.ckwc(hdr, self.mechanism, self.species_info)
+                cck.ckwyp(hdr, self.mechanism, self.species_info)
+                cck.ckwxp(hdr, self.mechanism, self.species_info)
+                cck.ckwyr(hdr, self.mechanism, self.species_info)
+                cck.ckwxr(hdr, self.mechanism, self.species_info)
+                cck.ckchrg(hdr, self)
+                cck.ckchrgmass(hdr, self.species_info)
+                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
+                # Approx analytical jacobian
+                cj.ajac(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+                cj.dproduction_rate(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    precond=True,
+                )
+                # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
+                cj.ajac(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
+                )
+                cj.dproduction_rate(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
+                )
+
             # Transport
             cw.writer(hdr)
             ctr.transport(hdr, self.mechanism, self.species_info)
