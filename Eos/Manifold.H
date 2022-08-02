@@ -208,8 +208,15 @@ struct Manifold
     // Get value of Rho consistent with other state variables
     amrex::Real rho_from_table;
     manfunc->get_value(eosparm->idx_density, Y, rho_from_table);
-    if (eosparm->use_log_density) {
+    switch (eosparm->dens_lookup) {
+    case density_lookup_type::linear:
+      break;
+    case density_lookup_type::log:
       rho_from_table = exp(rho_from_table);
+      break;
+    case density_lookup_type::inverse:
+      rho_from_table = 1.0/rho_from_table;
+      break;
     }
 
     // Return pressure is nominal pressure scaled due to density mismatch
@@ -221,9 +228,16 @@ struct Manifold
   void PYT2R(const amrex::Real /*P*/, const amrex::Real Y[], const amrex::Real /*T*/, amrex::Real& R)
   {
     manfunc->get_value(eosparm->idx_density, Y, R);
-    if (eosparm->use_log_density) {
+    switch (eosparm->dens_lookup) {
+    case density_lookup_type::linear:
+      break;
+    case density_lookup_type::log:
       R = exp(R);
-    }
+      break;
+    case density_lookup_type::inverse:
+      R = 1.0/R;
+      break;
+      }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -231,10 +245,19 @@ struct Manifold
   void RY2dRdY(const amrex::Real R, const amrex::Real Y[], amrex::Real dRdY[])
   {
     manfunc->get_derivs(eosparm->idx_density, Y, dRdY);
-    if (eosparm->use_log_density) {
+    switch (eosparm->dens_lookup) {
+    case density_lookup_type::linear:
+      break;
+    case density_lookup_type::log:
       for (int is = 0; is < NUM_SPECIES-1; is++) {
         dRdY[is] *= R;
       }
+      break;
+    case density_lookup_type::inverse:
+      for (int is = 0; is < NUM_SPECIES-1; is++) {
+        dRdY[is] *= -R*R;
+      }
+      break;
     }
   }
 

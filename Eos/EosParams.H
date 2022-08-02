@@ -12,6 +12,8 @@ namespace pele {
 namespace physics {
 namespace eos {
 
+enum class density_lookup_type {linear, log, inverse};
+
 struct GammaLaw;
 struct Fuego;
 struct SRK;
@@ -51,7 +53,7 @@ struct EosParm<Manifold>
 {
   ManFuncParams::ManFuncData* manf_data;
   amrex::Real Pnom_cgs;
-  bool use_log_density{true};
+  density_lookup_type dens_lookup;
   bool compute_temperature{false};
   int idx_density{0};
   int idx_T{0};
@@ -76,15 +78,28 @@ struct InitEosParm<Manifold>
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);
     pp.query("has_mani_src", eosparm->has_mani_src);
-    pp.get("use_log_density", eosparm->use_log_density);
     pp.get("compute_temperature", eosparm->compute_temperature);
 
-    // Get important indices
-    if (eosparm->use_log_density) {
-      eosparm->idx_density = get_var_index("lnRHO", manf_data_in);
-    } else {
+    // Setup density lookups
+    std::string density_lookup_type_string {"linear"};
+    pp.query("density_lookup_type", density_lookup_type_string);
+    if (density_lookup_type_string == "linear") {
+      eosparm->dens_lookup = density_lookup_type::linear;
       eosparm->idx_density = get_var_index("RHO", manf_data_in);
+      amrex::Print() << "Manifold EOS: Using linear density lookups : index = " << eosparm->idx_density << std::endl;
+    } else if (density_lookup_type_string == "log") {
+      eosparm->dens_lookup = density_lookup_type::log;
+      eosparm->idx_density = get_var_index("lnRHO", manf_data_in);
+      amrex::Print() << "Manifold EOS: Using logarithmic density lookups : index = " << eosparm->idx_density << std::endl;
+    } else if (density_lookup_type_string == "inverse") {
+      eosparm->dens_lookup = density_lookup_type::inverse;
+      eosparm->idx_density = get_var_index("invRHO", manf_data_in);
+      amrex::Print() << "Manifold EOS: Using inverse density lookups : index = " << eosparm->idx_density << std::endl;
+    } else {
+      amrex::Abort("Invalid density lookup type supplied");
     }
+
+    // Get important indices
     eosparm->idx_T = get_var_index("T", manf_data_in);
 
     // For manifold table parameter source terms, assume if index not found, source term is 0
