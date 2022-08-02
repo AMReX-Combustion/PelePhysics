@@ -216,6 +216,7 @@ jobs:
               poetry install
               poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Support/Mechanism/Models/dodecane_lu_qss/non_qssa_list.yaml
           poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
+              cd ${{env.JAC_WORKING_DIRECTORY}}
               make TPL DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}};
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
               ./Pele3d.${{matrix.comp}}.DEBUG.TPROF.ex; \
