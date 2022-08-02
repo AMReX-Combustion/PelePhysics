@@ -345,7 +345,7 @@ def production_rate(
                     )
                     cw.writer(
                         fstream,
-                        "F_troe = pow(10, logFcent / (1.0 + troe*troe));",
+                        "F_troe = exp10(logFcent / (1.0 + troe*troe));",
                     )
                     cw.writer(fstream, "Corr = F * F_troe;")
                     cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
@@ -780,7 +780,7 @@ def production_rate(
                     )
                     cw.writer(
                         fstream,
-                        "const amrex::Real F_troe = pow(10, logFcent / (1.0 +"
+                        "const amrex::Real F_troe = exp10(logFcent / (1.0 +"
                         " troe * troe));",
                     )
                     f_troe_smp = pow(
@@ -1314,7 +1314,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     )
                     cw.writer(
                         fstream,
-                        "const amrex::Real F_troe = pow(10, logFcent / (1.0 +"
+                        "const amrex::Real F_troe = exp10(logFcent / (1.0 +"
                         " troe * troe));",
                     )
                     cw.writer(fstream, "Corr = F * F_troe;")

@@ -846,7 +846,7 @@ def ajac_reaction_d(
             )
             cw.writer(fstream, "troePr = (troe_c + logPr) * troePr_den;")
             cw.writer(fstream, "troe = 1.0 / (1.0 + troePr*troePr);")
-            cw.writer(fstream, "F = pow(10.0, logFcent * troe);")
+            cw.writer(fstream, "F = exp10(logFcent * troe);")
 
             cw.writer(fstream, "dlogFcentdT = log10e/Fcent*( ")
             if abs(troe[1]) > 1.0e-100:

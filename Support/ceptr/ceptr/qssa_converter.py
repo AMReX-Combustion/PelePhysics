@@ -1866,7 +1866,7 @@ def qssa_coeff_functions(
                 )
                 cw.writer(
                     fstream,
-                    "const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe"
+                    "const amrex::Real F_troe = exp10(logFcent / (1.0 + troe"
                     " * troe));",
                 )
                 f_troe_smp = 10 ** (
