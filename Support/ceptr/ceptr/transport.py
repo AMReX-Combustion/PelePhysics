@@ -2071,7 +2071,14 @@ def critical_parameters(fstream, mechanism, species_info):
             cw.writer(
                 fstream,
                 "bi[%d] = 0.855 * avogadro * 1e-24 * SIG[%d] * SIG[%d] * SIG[%d] /"
-                " (wt[%d]); " % (species.idx, species.idx, species.idx, species.idx, species.idx),
+                " (wt[%d]); "
+                % (
+                    species.idx,
+                    species.idx,
+                    species.idx,
+                    species.idx,
+                    species.idx,
+                ),
             )
             cw.writer(fstream, "acentric_i[%d] = 0.0 ;" % (species.idx))
 

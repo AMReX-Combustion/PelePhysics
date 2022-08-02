@@ -1369,19 +1369,32 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
                             species_info.ordered_idx_map[symbol]
                         )
                     else:
-                        conc = "pow(sc[%d],%f)" % (
-                            species_info.ordered_idx_map[symbol],
-                            (coefficient - 1),
-                        )
+                        exponent = coefficient - 1
+                        if exponent.is_integer():
+                            conc = "*".join(
+                                [f"sc[{species_info.ordered_idx_map[symbol]}]"]
+                                * int(exponent)
+                            )
+                        else:
+                            conc = "pow(sc[%d],%f)" % (
+                                species_info.ordered_idx_map[symbol],
+                                exponent,
+                            )
                     phi += [conc]
             else:
                 if coefficient == 1.0:
                     conc = "sc[%d]" % (species_info.ordered_idx_map[symbol])
                 else:
-                    conc = "pow(sc[%d], %f)" % (
-                        species_info.ordered_idx_map[symbol],
-                        coefficient,
-                    )
+                    if coefficient.is_integer():
+                        conc = "*".join(
+                            [f"sc[{species_info.ordered_idx_map[symbol]}]"]
+                            * int(coefficient)
+                        )
+                    else:
+                        conc = "pow(sc[%d], %f)" % (
+                            species_info.ordered_idx_map[symbol],
+                            coefficient,
+                        )
                 phi += [conc]
         # Symbol is in qssa_species_list
         else:
@@ -1394,11 +1407,18 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
                             - species_info.n_species
                         )
                     else:
-                        conc = "pow(sc_qss[%d],%f)" % (
-                            species_info.ordered_idx_map[symbol]
-                            - species_info.n_species,
-                            (coefficient - 1),
-                        )
+                        exponent = coefficient - 1
+                        if exponent.is_integer():
+                            conc = "*".join(
+                                [f"sc[{species_info.ordered_idx_map[symbol]}]"]
+                                * int(exponent)
+                            )
+                        else:
+                            conc = "pow(sc_qss[%d],%f)" % (
+                                species_info.ordered_idx_map[symbol]
+                                - species_info.n_species,
+                                exponent,
+                            )
                     phi += [conc]
             else:
                 if coefficient == 1.0:
@@ -1407,11 +1427,17 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
                         - species_info.n_species
                     )
                 else:
-                    conc = "pow(sc_qss[%d], %f)" % (
-                        species_info.ordered_idx_map[symbol]
-                        - species_info.n_species,
-                        coefficient,
-                    )
+                    if coefficient.is_integer():
+                        conc = "*".join(
+                            [f"sc[{species_info.ordered_idx_map[symbol]}]"]
+                            * int(coefficient)
+                        )
+                    else:
+                        conc = "pow(sc_qss[%d], %f)" % (
+                            species_info.ordered_idx_map[symbol]
+                            - species_info.n_species,
+                            coefficient,
+                        )
                 phi += [conc]
 
     if phi:

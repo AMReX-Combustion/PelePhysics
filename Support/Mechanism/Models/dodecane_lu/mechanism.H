@@ -6771,7 +6771,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[0] *= Corr * k_f;
   qr[0] *= Corr * k_f * exp(-(g_RT[1] - g_RT[4] + g_RT[8])) * (refC);
@@ -6836,7 +6836,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[1] *= Corr * k_f;
   qr[1] *= Corr * k_f * exp(-(2.000000 * g_RT[3] - g_RT[7])) * (refC);
@@ -6940,7 +6940,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[2] *= Corr * k_f;
   qr[2] *= Corr * k_f * exp(-(g_RT[5] - g_RT[14] + g_RT[16])) * (refC);
@@ -6958,7 +6958,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[3] *= Corr * k_f;
   qr[3] *= Corr * k_f * exp(-(g_RT[1] + g_RT[13] - g_RT[14])) * (refC);
@@ -6976,7 +6976,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[4] *= Corr * k_f;
   qr[4] *= Corr * k_f * exp(-(g_RT[1] + g_RT[9] - g_RT[11])) * (refC);
@@ -7068,7 +7068,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[5] *= Corr * k_f;
   qr[5] *= Corr * k_f * exp(-(g_RT[1] + g_RT[14] - g_RT[15])) * (refC);
@@ -7106,7 +7106,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[6] *= Corr * k_f;
   qr[6] *= Corr * k_f * exp(-(g_RT[1] + g_RT[11] - g_RT[12])) * (refC);
@@ -7172,7 +7172,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[7] *= Corr * k_f;
   qr[7] *= Corr * k_f * exp(-(2.000000 * g_RT[11] - g_RT[22])) * (refC);
@@ -7238,7 +7238,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[8] *= Corr * k_f;
   qr[8] *= Corr * k_f * exp(-(-g_RT[1] - g_RT[18] + g_RT[19])) * (refCinv);
@@ -7272,7 +7272,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[9] *= Corr * k_f;
   qr[9] *= Corr * k_f * exp(-(g_RT[1] + g_RT[19] - g_RT[20])) * (refC);
@@ -7334,7 +7334,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[10] *= Corr * k_f;
   qr[10] *= Corr * k_f * exp(-(g_RT[11] + g_RT[19] - g_RT[25])) * (refC);
@@ -7373,7 +7373,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[11] *= Corr * k_f;
   qr[11] *= Corr * k_f * exp(-(g_RT[1] + g_RT[20] - g_RT[21])) * (refC);
@@ -7439,7 +7439,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[12] *= Corr * k_f;
   qr[12] *= Corr * k_f * exp(-(g_RT[1] + g_RT[21] - g_RT[22])) * (refC);
@@ -7486,7 +7486,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[13] *= Corr * k_f;
   qr[13] *= Corr * k_f * exp(-(g_RT[19] + g_RT[21] - g_RT[29])) * (refC);
@@ -7528,7 +7528,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[14] *= Corr * k_f;
   qr[14] *= Corr * k_f * exp(-(g_RT[1] + g_RT[24] - g_RT[25])) * (refC);
@@ -7572,7 +7572,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[15] *= Corr * k_f;
   qr[15] *= Corr * k_f * exp(-(g_RT[11] + g_RT[24] - g_RT[29])) * (refC);
@@ -7590,7 +7590,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[16] *= Corr * k_f;
   qr[16] *= Corr * k_f * exp(-(g_RT[1] + g_RT[25] - g_RT[26])) * (refC);
@@ -7684,7 +7684,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[17] *= Corr * k_f;
   qr[17] *= Corr * k_f * exp(-(g_RT[1] + g_RT[28] - g_RT[29])) * (refC);
@@ -7715,7 +7715,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[18] *= Corr * k_f;
   qr[18] *= Corr * k_f * exp(-(g_RT[1] + g_RT[29] - g_RT[30])) * (refC);
@@ -7810,7 +7810,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[19] *= Corr * k_f;
   qr[19] *= Corr * k_f * exp(-(g_RT[1] + g_RT[32] - g_RT[33])) * (refC);
@@ -7840,7 +7840,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[20] *= Corr * k_f;
   qr[20] *= Corr * k_f * exp(-(g_RT[1] + g_RT[34] - g_RT[35])) * (refC);
@@ -7870,7 +7870,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[21] *= Corr * k_f;
   qr[21] *= Corr * k_f * exp(-(g_RT[1] + g_RT[36] - g_RT[37])) * (refC);
@@ -7900,7 +7900,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[22] *= Corr * k_f;
   qr[22] *= Corr * k_f * exp(-(g_RT[1] + g_RT[38] - g_RT[39])) * (refC);
@@ -7930,7 +7930,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[23] *= Corr * k_f;
   qr[23] *= Corr * k_f * exp(-(g_RT[1] + g_RT[40] - g_RT[41])) * (refC);
@@ -7960,7 +7960,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp10(logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[24] *= Corr * k_f;
   qr[24] *= Corr * k_f * exp(-(g_RT[1] + g_RT[42] - g_RT[43])) * (refC);
@@ -8187,7 +8187,7 @@ comp_qfqr(
              exp(
                -(-g_RT[3] - 3.000000 * g_RT[20] - g_RT[21] -
                  2.000000 * g_RT[23] + g_RT[51])) *
-             (pow(refCinv, 6.000000));
+             ((refCinv * refCinv * refCinv * refCinv * refCinv * refCinv));
 
   return;
 }
@@ -8232,7 +8232,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[8]);
     const amrex::Real qr =
@@ -8259,7 +8259,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[3] * sc[3]));
     const amrex::Real qr =
@@ -8285,7 +8285,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[5] * sc[16]);
     const amrex::Real qr =
@@ -8313,7 +8313,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[13]);
     const amrex::Real qr =
@@ -8340,7 +8340,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[9]);
     const amrex::Real qr =
@@ -8368,7 +8368,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[14]);
     const amrex::Real qr =
@@ -8396,7 +8396,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[11]);
     const amrex::Real qr =
@@ -8424,7 +8424,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[11] * sc[11]));
     const amrex::Real qr =
@@ -8451,7 +8451,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[19]);
     const amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] - g_RT[18] + g_RT[19])) *
@@ -8479,7 +8479,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[19]);
     const amrex::Real qr =
@@ -8506,7 +8506,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[11] * sc[19]);
     const amrex::Real qr =
@@ -8534,7 +8534,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[20]);
     const amrex::Real qr =
@@ -8562,7 +8562,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[21]);
     const amrex::Real qr =
@@ -8589,7 +8589,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[19] * sc[21]);
     const amrex::Real qr =
@@ -8616,7 +8616,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[24]);
     const amrex::Real qr =
@@ -8644,7 +8644,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[11] * sc[24]);
     const amrex::Real qr =
@@ -8670,7 +8670,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[25]);
     const amrex::Real qr =
@@ -8697,7 +8697,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[28]);
     const amrex::Real qr =
@@ -8723,7 +8723,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[29]);
     const amrex::Real qr =
@@ -8749,7 +8749,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[32]);
     const amrex::Real qr =
@@ -8775,7 +8775,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[34]);
     const amrex::Real qr =
@@ -8801,7 +8801,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[36]);
     const amrex::Real qr =
@@ -8827,7 +8827,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[38]);
     const amrex::Real qr =
@@ -8853,7 +8853,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[40]);
     const amrex::Real qr =
@@ -8879,7 +8879,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp10(logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[42]);
     const amrex::Real qr =
@@ -12147,11 +12147,12 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     // reaction 267:  OC12H23OOH => 3 C2H4 + C2H5 + 2 CH2CHO + OH
     const amrex::Real k_f = 1.8e+15 * exp(-(21167.8090470755) * invT);
     const amrex::Real qf = k_f * (sc[51]);
-    const amrex::Real qr = k_f *
-                           exp(
-                             -(-g_RT[3] - 3.000000 * g_RT[20] - g_RT[21] -
-                               2.000000 * g_RT[23] + g_RT[51])) *
-                           (pow(refCinv, 6.000000)) * (0.0);
+    const amrex::Real qr =
+      k_f *
+      exp(
+        -(-g_RT[3] - 3.000000 * g_RT[20] - g_RT[21] - 2.000000 * g_RT[23] +
+          g_RT[51])) *
+      ((refCinv * refCinv * refCinv * refCinv * refCinv * refCinv)) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[20] += 3.000000 * qdot;
@@ -13002,7 +13003,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent * (-Fcent1 / 1e-30 - Fcent2 / 1e+30);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
   dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
@@ -13120,7 +13121,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1756 + Fcent3 * 5182 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13236,7 +13237,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 197 - Fcent2 / 1540 + Fcent3 * 10300 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13355,7 +13356,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 271 - Fcent2 / 2755 + Fcent3 * 6570 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13474,7 +13475,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 78 - Fcent2 / 1995 + Fcent3 * 5590 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13593,7 +13594,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1555 + Fcent3 * 4200 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13712,7 +13713,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 74 - Fcent2 / 2941 + Fcent3 * 6964 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13831,7 +13832,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 151 - Fcent2 / 1038 + Fcent3 * 4970 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -13947,7 +13948,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 5383.7 - Fcent2 / 4.2932 + Fcent3 * -0.0795 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14066,7 +14067,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 207.5 - Fcent2 / 2663 + Fcent3 * 6095 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14185,7 +14186,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1340.6 - Fcent2 / 60000 + Fcent3 * 10139.8 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14304,7 +14305,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent * (-Fcent1 / 40 - Fcent2 / 1025);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
   dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
@@ -14422,7 +14423,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 125 - Fcent2 / 2219 + Fcent3 * 6882 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14541,7 +14542,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 2277.9 - Fcent2 / 60000 + Fcent3 * 5723.2 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14660,7 +14661,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1096.6 - Fcent2 / 1096.6 + Fcent3 * 6859.5 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14779,7 +14780,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1606 - Fcent2 / 60000 + Fcent3 * 6118.4 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -14898,7 +14899,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15017,7 +15018,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1314 - Fcent2 / 1314 + Fcent3 * 50000 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15136,7 +15137,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15255,7 +15256,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15374,7 +15375,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15493,7 +15494,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15612,7 +15613,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15731,7 +15732,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -15850,7 +15851,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -16324,7 +16325,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[55] += -2 * dqdci; // dwdot[H]/d[H]
   J[59] += dqdci;      // dwdot[H2]/d[H]
   // d()/d[H2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * 2.000000 * sc[5];
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/dT
@@ -16359,7 +16360,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[5];
   J[325] += -2 * dqdci; // dwdot[H]/d[H2O]
   J[329] += dqdci;      // dwdot[H2]/d[H2O]
   // d()/dT
@@ -16394,7 +16395,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/d[CO2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[5];
   J[919] += -2 * dqdci; // dwdot[H]/d[CO2]
   J[923] += dqdci;      // dwdot[H2]/d[CO2]
   // d()/dT
@@ -18068,7 +18069,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[495] -= dqdci;     // dwdot[CH2]/d[CH2]
   J[503] += dqdci;     // dwdot[CO2]/d[CH2]
   // d()/d[CO2]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[919] += 2 * dqdci; // dwdot[H]/d[CO2]
   J[926] -= dqdci;     // dwdot[O2]/d[CO2]
   J[927] -= dqdci;     // dwdot[CH2]/d[CO2]
@@ -22387,7 +22388,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[1320] -= dqdci;     // dwdot[aC3H5]/d[aC3H5]
   J[1323] += dqdci;     // dwdot[C2H3CHO]/d[aC3H5]
   // d()/d[C2H3CHO]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[1459] += 2 * dqdci; // dwdot[H]/d[C2H3CHO]
   J[1461] -= dqdci;     // dwdot[OH]/d[C2H3CHO]
   J[1482] -= dqdci;     // dwdot[aC3H5]/d[C2H3CHO]
@@ -22752,7 +22753,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[1375] -= dqdci;     // dwdot[C3H6]/d[C3H6]
   J[1377] += dqdci;     // dwdot[C2H3CHO]/d[C3H6]
   // d()/d[C2H3CHO]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[1459] += 2 * dqdci; // dwdot[H]/d[C2H3CHO]
   J[1460] -= dqdci;     // dwdot[O]/d[C2H3CHO]
   J[1483] -= dqdci;     // dwdot[C3H6]/d[C2H3CHO]
@@ -27598,7 +27599,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent * (-Fcent1 / 1e-30 - Fcent2 / 1e+30);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
   dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
@@ -27749,7 +27750,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1756 + Fcent3 * 5182 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -27892,7 +27893,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 197 - Fcent2 / 1540 + Fcent3 * 10300 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28049,7 +28050,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 271 - Fcent2 / 2755 + Fcent3 * 6570 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28216,7 +28217,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 78 - Fcent2 / 1995 + Fcent3 * 5590 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28383,7 +28384,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1555 + Fcent3 * 4200 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28550,7 +28551,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 74 - Fcent2 / 2941 + Fcent3 * 6964 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28712,7 +28713,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 151 - Fcent2 / 1038 + Fcent3 * 4970 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -28859,7 +28860,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 5383.7 - Fcent2 / 4.2932 + Fcent3 * -0.0795 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -29031,7 +29032,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 207.5 - Fcent2 / 2663 + Fcent3 * 6095 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -29203,7 +29204,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1340.6 - Fcent2 / 60000 + Fcent3 * 10139.8 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -29380,7 +29381,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent * (-Fcent1 / 40 - Fcent2 / 1025);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
   dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
@@ -29546,7 +29547,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 125 - Fcent2 / 2219 + Fcent3 * 6882 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -29708,7 +29709,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 2277.9 - Fcent2 / 60000 + Fcent3 * 5723.2 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -29875,7 +29876,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1096.6 - Fcent2 / 1096.6 + Fcent3 * 6859.5 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30042,7 +30043,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT = log10e / Fcent *
                 (-Fcent1 / 1606 - Fcent2 / 60000 + Fcent3 * 6118.4 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30209,7 +30210,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30376,7 +30377,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1314 - Fcent2 / 1314 + Fcent3 * 50000 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30543,7 +30544,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30710,7 +30711,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -30877,7 +30878,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -31044,7 +31045,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -31211,7 +31212,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -31378,7 +31379,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -31545,7 +31546,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp10(logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 1000 - Fcent2 / 1310 + Fcent3 * 48097 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -32172,7 +32173,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[55] += -2 * dqdci; // dwdot[H]/d[H]
   J[59] += dqdci;      // dwdot[H2]/d[H]
   // d()/d[H2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * 2.000000 * sc[5];
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/dT
@@ -32207,7 +32208,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[5];
   J[325] += -2 * dqdci; // dwdot[H]/d[H2O]
   J[329] += dqdci;      // dwdot[H2]/d[H2O]
   // d()/dT
@@ -32242,7 +32243,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[271] += -2 * dqdci; // dwdot[H]/d[H2]
   J[275] += dqdci;      // dwdot[H2]/d[H2]
   // d()/d[CO2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[5];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[5];
   J[919] += -2 * dqdci; // dwdot[H]/d[CO2]
   J[923] += dqdci;      // dwdot[H2]/d[CO2]
   // d()/dT
@@ -33986,7 +33987,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[495] -= dqdci;     // dwdot[CH2]/d[CH2]
   J[503] += dqdci;     // dwdot[CO2]/d[CH2]
   // d()/d[CO2]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[919] += 2 * dqdci; // dwdot[H]/d[CO2]
   J[926] -= dqdci;     // dwdot[O2]/d[CO2]
   J[927] -= dqdci;     // dwdot[CH2]/d[CO2]
@@ -38305,7 +38306,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[1320] -= dqdci;     // dwdot[aC3H5]/d[aC3H5]
   J[1323] += dqdci;     // dwdot[C2H3CHO]/d[aC3H5]
   // d()/d[C2H3CHO]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[1459] += 2 * dqdci; // dwdot[H]/d[C2H3CHO]
   J[1461] -= dqdci;     // dwdot[OH]/d[C2H3CHO]
   J[1482] -= dqdci;     // dwdot[aC3H5]/d[C2H3CHO]
@@ -38670,7 +38671,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[1375] -= dqdci;     // dwdot[C3H6]/d[C3H6]
   J[1377] += dqdci;     // dwdot[C2H3CHO]/d[C3H6]
   // d()/d[C2H3CHO]
-  dqdci = -k_r * pow(sc[1], 2.000000);
+  dqdci = -k_r * sc[1] * sc[1];
   J[1459] += 2 * dqdci; // dwdot[H]/d[C2H3CHO]
   J[1460] -= dqdci;     // dwdot[O]/d[C2H3CHO]
   J[1483] -= dqdci;     // dwdot[C3H6]/d[C2H3CHO]
@@ -56027,42 +56028,42 @@ GET_CRITPARAMS(
 
   // species 0: NC12H26
   Tci[0] = 1.316 * EPS[0];
-  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann *
-           pow(1e-8 * SIG[0], 3.0)) /
+  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann * 1e-24 * SIG[0] *
+           SIG[0] * SIG[0]) /
           (wt[0] * wt[0]);
-  bi[0] = 0.855 * avogadro * pow(1e-8 * SIG[0], 3.0) / (wt[0]);
+  bi[0] = 0.855 * avogadro * 1e-24 * SIG[0] * SIG[0] * SIG[0] / (wt[0]);
   acentric_i[0] = 0.0;
 
   // species 1: H
   Tci[1] = 1.316 * EPS[1];
-  ai[1] = (5.55 * avogadro * avogadro * EPS[1] * boltzmann *
-           pow(1e-8 * SIG[1], 3.0)) /
+  ai[1] = (5.55 * avogadro * avogadro * EPS[1] * boltzmann * 1e-24 * SIG[1] *
+           SIG[1] * SIG[1]) /
           (wt[1] * wt[1]);
-  bi[1] = 0.855 * avogadro * pow(1e-8 * SIG[1], 3.0) / (wt[1]);
+  bi[1] = 0.855 * avogadro * 1e-24 * SIG[1] * SIG[1] * SIG[1] / (wt[1]);
   acentric_i[1] = 0.0;
 
   // species 2: O
   Tci[2] = 1.316 * EPS[2];
-  ai[2] = (5.55 * avogadro * avogadro * EPS[2] * boltzmann *
-           pow(1e-8 * SIG[2], 3.0)) /
+  ai[2] = (5.55 * avogadro * avogadro * EPS[2] * boltzmann * 1e-24 * SIG[2] *
+           SIG[2] * SIG[2]) /
           (wt[2] * wt[2]);
-  bi[2] = 0.855 * avogadro * pow(1e-8 * SIG[2], 3.0) / (wt[2]);
+  bi[2] = 0.855 * avogadro * 1e-24 * SIG[2] * SIG[2] * SIG[2] / (wt[2]);
   acentric_i[2] = 0.0;
 
   // species 3: OH
   Tci[3] = 1.316 * EPS[3];
-  ai[3] = (5.55 * avogadro * avogadro * EPS[3] * boltzmann *
-           pow(1e-8 * SIG[3], 3.0)) /
+  ai[3] = (5.55 * avogadro * avogadro * EPS[3] * boltzmann * 1e-24 * SIG[3] *
+           SIG[3] * SIG[3]) /
           (wt[3] * wt[3]);
-  bi[3] = 0.855 * avogadro * pow(1e-8 * SIG[3], 3.0) / (wt[3]);
+  bi[3] = 0.855 * avogadro * 1e-24 * SIG[3] * SIG[3] * SIG[3] / (wt[3]);
   acentric_i[3] = 0.0;
 
   // species 4: HO2
   Tci[4] = 1.316 * EPS[4];
-  ai[4] = (5.55 * avogadro * avogadro * EPS[4] * boltzmann *
-           pow(1e-8 * SIG[4], 3.0)) /
+  ai[4] = (5.55 * avogadro * avogadro * EPS[4] * boltzmann * 1e-24 * SIG[4] *
+           SIG[4] * SIG[4]) /
           (wt[4] * wt[4]);
-  bi[4] = 0.855 * avogadro * pow(1e-8 * SIG[4], 3.0) / (wt[4]);
+  bi[4] = 0.855 * avogadro * 1e-24 * SIG[4] * SIG[4] * SIG[4] / (wt[4]);
   acentric_i[4] = 0.0;
 
   // species 5: H2
@@ -56083,10 +56084,10 @@ GET_CRITPARAMS(
 
   // species 7: H2O2
   Tci[7] = 1.316 * EPS[7];
-  ai[7] = (5.55 * avogadro * avogadro * EPS[7] * boltzmann *
-           pow(1e-8 * SIG[7], 3.0)) /
+  ai[7] = (5.55 * avogadro * avogadro * EPS[7] * boltzmann * 1e-24 * SIG[7] *
+           SIG[7] * SIG[7]) /
           (wt[7] * wt[7]);
-  bi[7] = 0.855 * avogadro * pow(1e-8 * SIG[7], 3.0) / (wt[7]);
+  bi[7] = 0.855 * avogadro * 1e-24 * SIG[7] * SIG[7] * SIG[7] / (wt[7]);
   acentric_i[7] = 0.0;
 
   // species 8: O2
@@ -56099,26 +56100,26 @@ GET_CRITPARAMS(
 
   // species 9: CH2
   Tci[9] = 1.316 * EPS[9];
-  ai[9] = (5.55 * avogadro * avogadro * EPS[9] * boltzmann *
-           pow(1e-8 * SIG[9], 3.0)) /
+  ai[9] = (5.55 * avogadro * avogadro * EPS[9] * boltzmann * 1e-24 * SIG[9] *
+           SIG[9] * SIG[9]) /
           (wt[9] * wt[9]);
-  bi[9] = 0.855 * avogadro * pow(1e-8 * SIG[9], 3.0) / (wt[9]);
+  bi[9] = 0.855 * avogadro * 1e-24 * SIG[9] * SIG[9] * SIG[9] / (wt[9]);
   acentric_i[9] = 0.0;
 
   // species 10: CH2*
   Tci[10] = 1.316 * EPS[10];
-  ai[10] = (5.55 * avogadro * avogadro * EPS[10] * boltzmann *
-            pow(1e-8 * SIG[10], 3.0)) /
+  ai[10] = (5.55 * avogadro * avogadro * EPS[10] * boltzmann * 1e-24 * SIG[10] *
+            SIG[10] * SIG[10]) /
            (wt[10] * wt[10]);
-  bi[10] = 0.855 * avogadro * pow(1e-8 * SIG[10], 3.0) / (wt[10]);
+  bi[10] = 0.855 * avogadro * 1e-24 * SIG[10] * SIG[10] * SIG[10] / (wt[10]);
   acentric_i[10] = 0.0;
 
   // species 11: CH3
   Tci[11] = 1.316 * EPS[11];
-  ai[11] = (5.55 * avogadro * avogadro * EPS[11] * boltzmann *
-            pow(1e-8 * SIG[11], 3.0)) /
+  ai[11] = (5.55 * avogadro * avogadro * EPS[11] * boltzmann * 1e-24 * SIG[11] *
+            SIG[11] * SIG[11]) /
            (wt[11] * wt[11]);
-  bi[11] = 0.855 * avogadro * pow(1e-8 * SIG[11], 3.0) / (wt[11]);
+  bi[11] = 0.855 * avogadro * 1e-24 * SIG[11] * SIG[11] * SIG[11] / (wt[11]);
   acentric_i[11] = 0.0;
 
   // species 12: CH4
@@ -56131,26 +56132,26 @@ GET_CRITPARAMS(
 
   // species 13: HCO
   Tci[13] = 1.316 * EPS[13];
-  ai[13] = (5.55 * avogadro * avogadro * EPS[13] * boltzmann *
-            pow(1e-8 * SIG[13], 3.0)) /
+  ai[13] = (5.55 * avogadro * avogadro * EPS[13] * boltzmann * 1e-24 * SIG[13] *
+            SIG[13] * SIG[13]) /
            (wt[13] * wt[13]);
-  bi[13] = 0.855 * avogadro * pow(1e-8 * SIG[13], 3.0) / (wt[13]);
+  bi[13] = 0.855 * avogadro * 1e-24 * SIG[13] * SIG[13] * SIG[13] / (wt[13]);
   acentric_i[13] = 0.0;
 
   // species 14: CH2O
   Tci[14] = 1.316 * EPS[14];
-  ai[14] = (5.55 * avogadro * avogadro * EPS[14] * boltzmann *
-            pow(1e-8 * SIG[14], 3.0)) /
+  ai[14] = (5.55 * avogadro * avogadro * EPS[14] * boltzmann * 1e-24 * SIG[14] *
+            SIG[14] * SIG[14]) /
            (wt[14] * wt[14]);
-  bi[14] = 0.855 * avogadro * pow(1e-8 * SIG[14], 3.0) / (wt[14]);
+  bi[14] = 0.855 * avogadro * 1e-24 * SIG[14] * SIG[14] * SIG[14] / (wt[14]);
   acentric_i[14] = 0.0;
 
   // species 15: CH3O
   Tci[15] = 1.316 * EPS[15];
-  ai[15] = (5.55 * avogadro * avogadro * EPS[15] * boltzmann *
-            pow(1e-8 * SIG[15], 3.0)) /
+  ai[15] = (5.55 * avogadro * avogadro * EPS[15] * boltzmann * 1e-24 * SIG[15] *
+            SIG[15] * SIG[15]) /
            (wt[15] * wt[15]);
-  bi[15] = 0.855 * avogadro * pow(1e-8 * SIG[15], 3.0) / (wt[15]);
+  bi[15] = 0.855 * avogadro * 1e-24 * SIG[15] * SIG[15] * SIG[15] / (wt[15]);
   acentric_i[15] = 0.0;
 
   // species 16: CO
@@ -56179,10 +56180,10 @@ GET_CRITPARAMS(
 
   // species 19: C2H3
   Tci[19] = 1.316 * EPS[19];
-  ai[19] = (5.55 * avogadro * avogadro * EPS[19] * boltzmann *
-            pow(1e-8 * SIG[19], 3.0)) /
+  ai[19] = (5.55 * avogadro * avogadro * EPS[19] * boltzmann * 1e-24 * SIG[19] *
+            SIG[19] * SIG[19]) /
            (wt[19] * wt[19]);
-  bi[19] = 0.855 * avogadro * pow(1e-8 * SIG[19], 3.0) / (wt[19]);
+  bi[19] = 0.855 * avogadro * 1e-24 * SIG[19] * SIG[19] * SIG[19] / (wt[19]);
   acentric_i[19] = 0.0;
 
   // species 20: C2H4
@@ -56195,10 +56196,10 @@ GET_CRITPARAMS(
 
   // species 21: C2H5
   Tci[21] = 1.316 * EPS[21];
-  ai[21] = (5.55 * avogadro * avogadro * EPS[21] * boltzmann *
-            pow(1e-8 * SIG[21], 3.0)) /
+  ai[21] = (5.55 * avogadro * avogadro * EPS[21] * boltzmann * 1e-24 * SIG[21] *
+            SIG[21] * SIG[21]) /
            (wt[21] * wt[21]);
-  bi[21] = 0.855 * avogadro * pow(1e-8 * SIG[21], 3.0) / (wt[21]);
+  bi[21] = 0.855 * avogadro * 1e-24 * SIG[21] * SIG[21] * SIG[21] / (wt[21]);
   acentric_i[21] = 0.0;
 
   // species 22: C2H6
@@ -56211,234 +56212,234 @@ GET_CRITPARAMS(
 
   // species 23: CH2CHO
   Tci[23] = 1.316 * EPS[23];
-  ai[23] = (5.55 * avogadro * avogadro * EPS[23] * boltzmann *
-            pow(1e-8 * SIG[23], 3.0)) /
+  ai[23] = (5.55 * avogadro * avogadro * EPS[23] * boltzmann * 1e-24 * SIG[23] *
+            SIG[23] * SIG[23]) /
            (wt[23] * wt[23]);
-  bi[23] = 0.855 * avogadro * pow(1e-8 * SIG[23], 3.0) / (wt[23]);
+  bi[23] = 0.855 * avogadro * 1e-24 * SIG[23] * SIG[23] * SIG[23] / (wt[23]);
   acentric_i[23] = 0.0;
 
   // species 24: aC3H5
   Tci[24] = 1.316 * EPS[24];
-  ai[24] = (5.55 * avogadro * avogadro * EPS[24] * boltzmann *
-            pow(1e-8 * SIG[24], 3.0)) /
+  ai[24] = (5.55 * avogadro * avogadro * EPS[24] * boltzmann * 1e-24 * SIG[24] *
+            SIG[24] * SIG[24]) /
            (wt[24] * wt[24]);
-  bi[24] = 0.855 * avogadro * pow(1e-8 * SIG[24], 3.0) / (wt[24]);
+  bi[24] = 0.855 * avogadro * 1e-24 * SIG[24] * SIG[24] * SIG[24] / (wt[24]);
   acentric_i[24] = 0.0;
 
   // species 25: C3H6
   Tci[25] = 1.316 * EPS[25];
-  ai[25] = (5.55 * avogadro * avogadro * EPS[25] * boltzmann *
-            pow(1e-8 * SIG[25], 3.0)) /
+  ai[25] = (5.55 * avogadro * avogadro * EPS[25] * boltzmann * 1e-24 * SIG[25] *
+            SIG[25] * SIG[25]) /
            (wt[25] * wt[25]);
-  bi[25] = 0.855 * avogadro * pow(1e-8 * SIG[25], 3.0) / (wt[25]);
+  bi[25] = 0.855 * avogadro * 1e-24 * SIG[25] * SIG[25] * SIG[25] / (wt[25]);
   acentric_i[25] = 0.0;
 
   // species 26: nC3H7
   Tci[26] = 1.316 * EPS[26];
-  ai[26] = (5.55 * avogadro * avogadro * EPS[26] * boltzmann *
-            pow(1e-8 * SIG[26], 3.0)) /
+  ai[26] = (5.55 * avogadro * avogadro * EPS[26] * boltzmann * 1e-24 * SIG[26] *
+            SIG[26] * SIG[26]) /
            (wt[26] * wt[26]);
-  bi[26] = 0.855 * avogadro * pow(1e-8 * SIG[26], 3.0) / (wt[26]);
+  bi[26] = 0.855 * avogadro * 1e-24 * SIG[26] * SIG[26] * SIG[26] / (wt[26]);
   acentric_i[26] = 0.0;
 
   // species 27: C2H3CHO
   Tci[27] = 1.316 * EPS[27];
-  ai[27] = (5.55 * avogadro * avogadro * EPS[27] * boltzmann *
-            pow(1e-8 * SIG[27], 3.0)) /
+  ai[27] = (5.55 * avogadro * avogadro * EPS[27] * boltzmann * 1e-24 * SIG[27] *
+            SIG[27] * SIG[27]) /
            (wt[27] * wt[27]);
-  bi[27] = 0.855 * avogadro * pow(1e-8 * SIG[27], 3.0) / (wt[27]);
+  bi[27] = 0.855 * avogadro * 1e-24 * SIG[27] * SIG[27] * SIG[27] / (wt[27]);
   acentric_i[27] = 0.0;
 
   // species 28: C4H7
   Tci[28] = 1.316 * EPS[28];
-  ai[28] = (5.55 * avogadro * avogadro * EPS[28] * boltzmann *
-            pow(1e-8 * SIG[28], 3.0)) /
+  ai[28] = (5.55 * avogadro * avogadro * EPS[28] * boltzmann * 1e-24 * SIG[28] *
+            SIG[28] * SIG[28]) /
            (wt[28] * wt[28]);
-  bi[28] = 0.855 * avogadro * pow(1e-8 * SIG[28], 3.0) / (wt[28]);
+  bi[28] = 0.855 * avogadro * 1e-24 * SIG[28] * SIG[28] * SIG[28] / (wt[28]);
   acentric_i[28] = 0.0;
 
   // species 29: C4H81
   Tci[29] = 1.316 * EPS[29];
-  ai[29] = (5.55 * avogadro * avogadro * EPS[29] * boltzmann *
-            pow(1e-8 * SIG[29], 3.0)) /
+  ai[29] = (5.55 * avogadro * avogadro * EPS[29] * boltzmann * 1e-24 * SIG[29] *
+            SIG[29] * SIG[29]) /
            (wt[29] * wt[29]);
-  bi[29] = 0.855 * avogadro * pow(1e-8 * SIG[29], 3.0) / (wt[29]);
+  bi[29] = 0.855 * avogadro * 1e-24 * SIG[29] * SIG[29] * SIG[29] / (wt[29]);
   acentric_i[29] = 0.0;
 
   // species 30: pC4H9
   Tci[30] = 1.316 * EPS[30];
-  ai[30] = (5.55 * avogadro * avogadro * EPS[30] * boltzmann *
-            pow(1e-8 * SIG[30], 3.0)) /
+  ai[30] = (5.55 * avogadro * avogadro * EPS[30] * boltzmann * 1e-24 * SIG[30] *
+            SIG[30] * SIG[30]) /
            (wt[30] * wt[30]);
-  bi[30] = 0.855 * avogadro * pow(1e-8 * SIG[30], 3.0) / (wt[30]);
+  bi[30] = 0.855 * avogadro * 1e-24 * SIG[30] * SIG[30] * SIG[30] / (wt[30]);
   acentric_i[30] = 0.0;
 
   // species 31: C5H9
   Tci[31] = 1.316 * EPS[31];
-  ai[31] = (5.55 * avogadro * avogadro * EPS[31] * boltzmann *
-            pow(1e-8 * SIG[31], 3.0)) /
+  ai[31] = (5.55 * avogadro * avogadro * EPS[31] * boltzmann * 1e-24 * SIG[31] *
+            SIG[31] * SIG[31]) /
            (wt[31] * wt[31]);
-  bi[31] = 0.855 * avogadro * pow(1e-8 * SIG[31], 3.0) / (wt[31]);
+  bi[31] = 0.855 * avogadro * 1e-24 * SIG[31] * SIG[31] * SIG[31] / (wt[31]);
   acentric_i[31] = 0.0;
 
   // species 32: C5H10
   Tci[32] = 1.316 * EPS[32];
-  ai[32] = (5.55 * avogadro * avogadro * EPS[32] * boltzmann *
-            pow(1e-8 * SIG[32], 3.0)) /
+  ai[32] = (5.55 * avogadro * avogadro * EPS[32] * boltzmann * 1e-24 * SIG[32] *
+            SIG[32] * SIG[32]) /
            (wt[32] * wt[32]);
-  bi[32] = 0.855 * avogadro * pow(1e-8 * SIG[32], 3.0) / (wt[32]);
+  bi[32] = 0.855 * avogadro * 1e-24 * SIG[32] * SIG[32] * SIG[32] / (wt[32]);
   acentric_i[32] = 0.0;
 
   // species 33: PXC5H11
   Tci[33] = 1.316 * EPS[33];
-  ai[33] = (5.55 * avogadro * avogadro * EPS[33] * boltzmann *
-            pow(1e-8 * SIG[33], 3.0)) /
+  ai[33] = (5.55 * avogadro * avogadro * EPS[33] * boltzmann * 1e-24 * SIG[33] *
+            SIG[33] * SIG[33]) /
            (wt[33] * wt[33]);
-  bi[33] = 0.855 * avogadro * pow(1e-8 * SIG[33], 3.0) / (wt[33]);
+  bi[33] = 0.855 * avogadro * 1e-24 * SIG[33] * SIG[33] * SIG[33] / (wt[33]);
   acentric_i[33] = 0.0;
 
   // species 34: C6H12
   Tci[34] = 1.316 * EPS[34];
-  ai[34] = (5.55 * avogadro * avogadro * EPS[34] * boltzmann *
-            pow(1e-8 * SIG[34], 3.0)) /
+  ai[34] = (5.55 * avogadro * avogadro * EPS[34] * boltzmann * 1e-24 * SIG[34] *
+            SIG[34] * SIG[34]) /
            (wt[34] * wt[34]);
-  bi[34] = 0.855 * avogadro * pow(1e-8 * SIG[34], 3.0) / (wt[34]);
+  bi[34] = 0.855 * avogadro * 1e-24 * SIG[34] * SIG[34] * SIG[34] / (wt[34]);
   acentric_i[34] = 0.0;
 
   // species 35: PXC6H13
   Tci[35] = 1.316 * EPS[35];
-  ai[35] = (5.55 * avogadro * avogadro * EPS[35] * boltzmann *
-            pow(1e-8 * SIG[35], 3.0)) /
+  ai[35] = (5.55 * avogadro * avogadro * EPS[35] * boltzmann * 1e-24 * SIG[35] *
+            SIG[35] * SIG[35]) /
            (wt[35] * wt[35]);
-  bi[35] = 0.855 * avogadro * pow(1e-8 * SIG[35], 3.0) / (wt[35]);
+  bi[35] = 0.855 * avogadro * 1e-24 * SIG[35] * SIG[35] * SIG[35] / (wt[35]);
   acentric_i[35] = 0.0;
 
   // species 36: C7H14
   Tci[36] = 1.316 * EPS[36];
-  ai[36] = (5.55 * avogadro * avogadro * EPS[36] * boltzmann *
-            pow(1e-8 * SIG[36], 3.0)) /
+  ai[36] = (5.55 * avogadro * avogadro * EPS[36] * boltzmann * 1e-24 * SIG[36] *
+            SIG[36] * SIG[36]) /
            (wt[36] * wt[36]);
-  bi[36] = 0.855 * avogadro * pow(1e-8 * SIG[36], 3.0) / (wt[36]);
+  bi[36] = 0.855 * avogadro * 1e-24 * SIG[36] * SIG[36] * SIG[36] / (wt[36]);
   acentric_i[36] = 0.0;
 
   // species 37: PXC7H15
   Tci[37] = 1.316 * EPS[37];
-  ai[37] = (5.55 * avogadro * avogadro * EPS[37] * boltzmann *
-            pow(1e-8 * SIG[37], 3.0)) /
+  ai[37] = (5.55 * avogadro * avogadro * EPS[37] * boltzmann * 1e-24 * SIG[37] *
+            SIG[37] * SIG[37]) /
            (wt[37] * wt[37]);
-  bi[37] = 0.855 * avogadro * pow(1e-8 * SIG[37], 3.0) / (wt[37]);
+  bi[37] = 0.855 * avogadro * 1e-24 * SIG[37] * SIG[37] * SIG[37] / (wt[37]);
   acentric_i[37] = 0.0;
 
   // species 38: C8H16
   Tci[38] = 1.316 * EPS[38];
-  ai[38] = (5.55 * avogadro * avogadro * EPS[38] * boltzmann *
-            pow(1e-8 * SIG[38], 3.0)) /
+  ai[38] = (5.55 * avogadro * avogadro * EPS[38] * boltzmann * 1e-24 * SIG[38] *
+            SIG[38] * SIG[38]) /
            (wt[38] * wt[38]);
-  bi[38] = 0.855 * avogadro * pow(1e-8 * SIG[38], 3.0) / (wt[38]);
+  bi[38] = 0.855 * avogadro * 1e-24 * SIG[38] * SIG[38] * SIG[38] / (wt[38]);
   acentric_i[38] = 0.0;
 
   // species 39: PXC8H17
   Tci[39] = 1.316 * EPS[39];
-  ai[39] = (5.55 * avogadro * avogadro * EPS[39] * boltzmann *
-            pow(1e-8 * SIG[39], 3.0)) /
+  ai[39] = (5.55 * avogadro * avogadro * EPS[39] * boltzmann * 1e-24 * SIG[39] *
+            SIG[39] * SIG[39]) /
            (wt[39] * wt[39]);
-  bi[39] = 0.855 * avogadro * pow(1e-8 * SIG[39], 3.0) / (wt[39]);
+  bi[39] = 0.855 * avogadro * 1e-24 * SIG[39] * SIG[39] * SIG[39] / (wt[39]);
   acentric_i[39] = 0.0;
 
   // species 40: C9H18
   Tci[40] = 1.316 * EPS[40];
-  ai[40] = (5.55 * avogadro * avogadro * EPS[40] * boltzmann *
-            pow(1e-8 * SIG[40], 3.0)) /
+  ai[40] = (5.55 * avogadro * avogadro * EPS[40] * boltzmann * 1e-24 * SIG[40] *
+            SIG[40] * SIG[40]) /
            (wt[40] * wt[40]);
-  bi[40] = 0.855 * avogadro * pow(1e-8 * SIG[40], 3.0) / (wt[40]);
+  bi[40] = 0.855 * avogadro * 1e-24 * SIG[40] * SIG[40] * SIG[40] / (wt[40]);
   acentric_i[40] = 0.0;
 
   // species 41: PXC9H19
   Tci[41] = 1.316 * EPS[41];
-  ai[41] = (5.55 * avogadro * avogadro * EPS[41] * boltzmann *
-            pow(1e-8 * SIG[41], 3.0)) /
+  ai[41] = (5.55 * avogadro * avogadro * EPS[41] * boltzmann * 1e-24 * SIG[41] *
+            SIG[41] * SIG[41]) /
            (wt[41] * wt[41]);
-  bi[41] = 0.855 * avogadro * pow(1e-8 * SIG[41], 3.0) / (wt[41]);
+  bi[41] = 0.855 * avogadro * 1e-24 * SIG[41] * SIG[41] * SIG[41] / (wt[41]);
   acentric_i[41] = 0.0;
 
   // species 42: C10H20
   Tci[42] = 1.316 * EPS[42];
-  ai[42] = (5.55 * avogadro * avogadro * EPS[42] * boltzmann *
-            pow(1e-8 * SIG[42], 3.0)) /
+  ai[42] = (5.55 * avogadro * avogadro * EPS[42] * boltzmann * 1e-24 * SIG[42] *
+            SIG[42] * SIG[42]) /
            (wt[42] * wt[42]);
-  bi[42] = 0.855 * avogadro * pow(1e-8 * SIG[42], 3.0) / (wt[42]);
+  bi[42] = 0.855 * avogadro * 1e-24 * SIG[42] * SIG[42] * SIG[42] / (wt[42]);
   acentric_i[42] = 0.0;
 
   // species 43: PXC10H21
   Tci[43] = 1.316 * EPS[43];
-  ai[43] = (5.55 * avogadro * avogadro * EPS[43] * boltzmann *
-            pow(1e-8 * SIG[43], 3.0)) /
+  ai[43] = (5.55 * avogadro * avogadro * EPS[43] * boltzmann * 1e-24 * SIG[43] *
+            SIG[43] * SIG[43]) /
            (wt[43] * wt[43]);
-  bi[43] = 0.855 * avogadro * pow(1e-8 * SIG[43], 3.0) / (wt[43]);
+  bi[43] = 0.855 * avogadro * 1e-24 * SIG[43] * SIG[43] * SIG[43] / (wt[43]);
   acentric_i[43] = 0.0;
 
   // species 44: PXC12H25
   Tci[44] = 1.316 * EPS[44];
-  ai[44] = (5.55 * avogadro * avogadro * EPS[44] * boltzmann *
-            pow(1e-8 * SIG[44], 3.0)) /
+  ai[44] = (5.55 * avogadro * avogadro * EPS[44] * boltzmann * 1e-24 * SIG[44] *
+            SIG[44] * SIG[44]) /
            (wt[44] * wt[44]);
-  bi[44] = 0.855 * avogadro * pow(1e-8 * SIG[44], 3.0) / (wt[44]);
+  bi[44] = 0.855 * avogadro * 1e-24 * SIG[44] * SIG[44] * SIG[44] / (wt[44]);
   acentric_i[44] = 0.0;
 
   // species 45: SXC12H25
   Tci[45] = 1.316 * EPS[45];
-  ai[45] = (5.55 * avogadro * avogadro * EPS[45] * boltzmann *
-            pow(1e-8 * SIG[45], 3.0)) /
+  ai[45] = (5.55 * avogadro * avogadro * EPS[45] * boltzmann * 1e-24 * SIG[45] *
+            SIG[45] * SIG[45]) /
            (wt[45] * wt[45]);
-  bi[45] = 0.855 * avogadro * pow(1e-8 * SIG[45], 3.0) / (wt[45]);
+  bi[45] = 0.855 * avogadro * 1e-24 * SIG[45] * SIG[45] * SIG[45] / (wt[45]);
   acentric_i[45] = 0.0;
 
   // species 46: S3XC12H25
   Tci[46] = 1.316 * EPS[46];
-  ai[46] = (5.55 * avogadro * avogadro * EPS[46] * boltzmann *
-            pow(1e-8 * SIG[46], 3.0)) /
+  ai[46] = (5.55 * avogadro * avogadro * EPS[46] * boltzmann * 1e-24 * SIG[46] *
+            SIG[46] * SIG[46]) /
            (wt[46] * wt[46]);
-  bi[46] = 0.855 * avogadro * pow(1e-8 * SIG[46], 3.0) / (wt[46]);
+  bi[46] = 0.855 * avogadro * 1e-24 * SIG[46] * SIG[46] * SIG[46] / (wt[46]);
   acentric_i[46] = 0.0;
 
   // species 47: C12H24
   Tci[47] = 1.316 * EPS[47];
-  ai[47] = (5.55 * avogadro * avogadro * EPS[47] * boltzmann *
-            pow(1e-8 * SIG[47], 3.0)) /
+  ai[47] = (5.55 * avogadro * avogadro * EPS[47] * boltzmann * 1e-24 * SIG[47] *
+            SIG[47] * SIG[47]) /
            (wt[47] * wt[47]);
-  bi[47] = 0.855 * avogadro * pow(1e-8 * SIG[47], 3.0) / (wt[47]);
+  bi[47] = 0.855 * avogadro * 1e-24 * SIG[47] * SIG[47] * SIG[47] / (wt[47]);
   acentric_i[47] = 0.0;
 
   // species 48: C12H25O2
   Tci[48] = 1.316 * EPS[48];
-  ai[48] = (5.55 * avogadro * avogadro * EPS[48] * boltzmann *
-            pow(1e-8 * SIG[48], 3.0)) /
+  ai[48] = (5.55 * avogadro * avogadro * EPS[48] * boltzmann * 1e-24 * SIG[48] *
+            SIG[48] * SIG[48]) /
            (wt[48] * wt[48]);
-  bi[48] = 0.855 * avogadro * pow(1e-8 * SIG[48], 3.0) / (wt[48]);
+  bi[48] = 0.855 * avogadro * 1e-24 * SIG[48] * SIG[48] * SIG[48] / (wt[48]);
   acentric_i[48] = 0.0;
 
   // species 49: C12OOH
   Tci[49] = 1.316 * EPS[49];
-  ai[49] = (5.55 * avogadro * avogadro * EPS[49] * boltzmann *
-            pow(1e-8 * SIG[49], 3.0)) /
+  ai[49] = (5.55 * avogadro * avogadro * EPS[49] * boltzmann * 1e-24 * SIG[49] *
+            SIG[49] * SIG[49]) /
            (wt[49] * wt[49]);
-  bi[49] = 0.855 * avogadro * pow(1e-8 * SIG[49], 3.0) / (wt[49]);
+  bi[49] = 0.855 * avogadro * 1e-24 * SIG[49] * SIG[49] * SIG[49] / (wt[49]);
   acentric_i[49] = 0.0;
 
   // species 50: O2C12H24OOH
   Tci[50] = 1.316 * EPS[50];
-  ai[50] = (5.55 * avogadro * avogadro * EPS[50] * boltzmann *
-            pow(1e-8 * SIG[50], 3.0)) /
+  ai[50] = (5.55 * avogadro * avogadro * EPS[50] * boltzmann * 1e-24 * SIG[50] *
+            SIG[50] * SIG[50]) /
            (wt[50] * wt[50]);
-  bi[50] = 0.855 * avogadro * pow(1e-8 * SIG[50], 3.0) / (wt[50]);
+  bi[50] = 0.855 * avogadro * 1e-24 * SIG[50] * SIG[50] * SIG[50] / (wt[50]);
   acentric_i[50] = 0.0;
 
   // species 51: OC12H23OOH
   Tci[51] = 1.316 * EPS[51];
-  ai[51] = (5.55 * avogadro * avogadro * EPS[51] * boltzmann *
-            pow(1e-8 * SIG[51], 3.0)) /
+  ai[51] = (5.55 * avogadro * avogadro * EPS[51] * boltzmann * 1e-24 * SIG[51] *
+            SIG[51] * SIG[51]) /
            (wt[51] * wt[51]);
-  bi[51] = 0.855 * avogadro * pow(1e-8 * SIG[51], 3.0) / (wt[51]);
+  bi[51] = 0.855 * avogadro * 1e-24 * SIG[51] * SIG[51] * SIG[51] / (wt[51]);
   acentric_i[51] = 0.0;
 
   // species 52: N2
