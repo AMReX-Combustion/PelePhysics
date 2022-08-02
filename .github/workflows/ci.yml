@@ -2,7 +2,7 @@ name: PelePhysics-CI
 
 on:
    push:
-     branches: [development, ci_symJac]
+     branches: [development]
    pull_request:
      branches: [development]
 
