@@ -160,8 +160,9 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             if record_symbolic_operations:
                 conversion_smp *= syms.refCinv_smp
         else:
-            if dim == 2.0:
-                conversion = "*".join(["(refCinv * refCinv)"])
+            if dim.is_integer():
+                mult_str = "*".join(["refCinv"] * int(dim))
+                conversion = "*".join([f"({mult_str})"])
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp * syms.refCinv_smp
             else:
