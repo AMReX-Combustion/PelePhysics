@@ -15,15 +15,16 @@ All C++ code should be processed by the Clang formatter prior to being added for
 
 Run ``clang-format``::
 
-    clang-format -i .
+    clang-format -i FILE.cpp
+    clang-format -i FILE.H
 
-Will apply all of the correct formatting and make the changes directly to the files.
+Will apply all of the correct formatting and make the changes directly to the cpp source files.
 
 
 Python
 ------
 
-The tools necessary to format the `Python` code in `CEPTR` are maintained through `poetry`.
+The tools necessary to format the `Python` code are maintained through `poetry`.
 
 1) Run ``isort``::
 
