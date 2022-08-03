@@ -771,13 +771,14 @@ def ajac_reaction_d(
         )
     if remove_forward:
         cw.writer(fstream, cw.comment("Remove forward reaction"))
-        # DLNKFDT CHECK
         cw.writer(
             fstream,
-            "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
+            cw.comment(
+                "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
+                % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m)
+            ),
         )
-        cw.writer(fstream, cw.comment("dlnkfdT = 0.0;"))
+        cw.writer(fstream, "dlnkfdT = 0.0;")
     else:
         if (beta == 0) and (ae.m == 0):
             cw.writer(

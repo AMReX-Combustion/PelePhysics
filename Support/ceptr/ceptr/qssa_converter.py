@@ -1920,11 +1920,17 @@ def qssa_coeff_functions(
 
         if kc_conv_inv:
             if alpha == 1.0:
-                cw.writer(
-                    fstream,
-                    "qr[%d] = k_f[%d] * exp(-(%s)) * (%s) * (%s);"
-                    % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
-                )
+                if reverse_sc_smp == 0:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = 0.0;",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = k_f[%d] * exp(-(%s)) * (%s) * (%s);"
+                        % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
+                    )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
                     * sme.exp(-kc_exp_arg_smp)
@@ -1932,11 +1938,17 @@ def qssa_coeff_functions(
                     * reverse_sc_smp
                 )
             else:
-                cw.writer(
-                    fstream,
-                    "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s) * (%s);"
-                    % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
-                )
+                if reverse_sc_smp == 0:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = 0.0;",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s) * (%s);"
+                        % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
+                    )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
                     * syms.kf_qss_smp[idx]
@@ -1946,22 +1958,34 @@ def qssa_coeff_functions(
                 )
         else:
             if alpha == 1.0:
-                cw.writer(
-                    fstream,
-                    "qr[%d] = k_f[%d] * exp(-(%s)) * (%s);"
-                    % (idx, idx, kc_exp_arg, reverse_sc),
-                )
+                if reverse_sc_smp == 0:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = 0.0;",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = k_f[%d] * exp(-(%s)) * (%s);"
+                        % (idx, idx, kc_exp_arg, reverse_sc),
+                    )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
                     * sme.exp(-kc_exp_arg_smp)
                     * reverse_sc_smp
                 )
             else:
-                cw.writer(
-                    fstream,
-                    "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s);"
-                    % (idx, idx, kc_exp_arg, reverse_sc),
-                )
+                if reverse_sc_smp == 0.0:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = 0.0;",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s);"
+                        % (idx, idx, kc_exp_arg, reverse_sc),
+                    )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
                     * syms.kf_qss_smp[idx]
