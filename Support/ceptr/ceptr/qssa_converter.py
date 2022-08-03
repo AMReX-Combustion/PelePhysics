@@ -1923,7 +1923,7 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;",
+                        "qr[%d] = 0.0;" % (idx),
                     )
                 else:
                     cw.writer(
@@ -1941,7 +1941,7 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;",
+                        "qr[%d] = 0.0;" % (idx),
                     )
                 else:
                     cw.writer(
@@ -1961,7 +1961,7 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;",
+                        "qr[%d] = 0.0;" % (idx),
                     )
                 else:
                     cw.writer(
@@ -1978,7 +1978,7 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0.0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;",
+                        "qr[%d] = 0.0;" % (idx),
                     )
                 else:
                     cw.writer(
