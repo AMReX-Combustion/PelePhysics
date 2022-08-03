@@ -23,7 +23,7 @@ Will apply all of the correct formatting and make the changes directly to the fi
 Python
 ------
 
-The tools necessary to format the `Python` code are maintained through `poetry`.
+The tools necessary to format the `Python` code in `CEPTR` are maintained through `poetry`.
 
 1) Run ``isort``::
 
