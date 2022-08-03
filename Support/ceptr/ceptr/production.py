@@ -307,12 +307,11 @@ def production_rate(
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp(%.15g  * tc[0] - %.15g  * (%.15g)"
+                        "           * exp(%.15g  * tc[0] - (%.15g)"
                         " *invT);"
                         % (
                             low_beta,
-                            (1.0 / cc.Rc / cc.ureg.kelvin).m,
-                            low_ae.m,
+                            (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
                         ),
                     )
                 if is_troe:
