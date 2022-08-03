@@ -24,25 +24,25 @@ Will apply all of the correct formatting and make the changes directly to the cp
 Python
 ------
 
-The tools necessary to format the `Python` code are maintained through `poetry`.
+The tools necessary to format Python code (currently only used within CEPTR) are maintained through Poetry.
 
 1) Run ``isort``::
 
     poetry run isort . 
 
-This will perform proper sorting of the installed `Python` libraries.
+This will perform proper sorting of the installed Python libraries.
 
 2) Run ``black``::
 
     poetry run black . 
 
-This will perform proper formatting of all `Python` files to be consistent with all current files.
+This will perform proper formatting of all Python files to be consistent with all current files.
 
 3) Run ``flake8``::
 
     poetry run flake8 . 
 
-This will run diagnostics on all the `Python` files and will list a series of issues that need to be addressed to adhere to current `Python` best practices.
+This will run diagnostics on all the Python files and will list a series of issues that need to be addressed to adhere to current Python best practices.
 
 
 Once all ``flake8`` messages have been addressed, the code will match the `Pele` suite standard.
