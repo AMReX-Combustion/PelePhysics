@@ -760,22 +760,22 @@ def ajac_reaction_d(
     elif beta == 0:
         cw.writer(
             fstream,
-            "            * exp(- %.15g * (%.15g) * invT);"
-            % ((1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
+            "            * exp(- (%.15g) * invT);"
+            % ((1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
         )
     else:
         cw.writer(
             fstream,
-            "            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
+            "            * exp(%.15g * tc[0] - (%.15g) * invT);"
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
         )
     if remove_forward:
         cw.writer(fstream, cw.comment("Remove forward reaction"))
         # DLNKFDT CHECK
         cw.writer(
             fstream,
-            "dlnkfdT = %.15g * invT + %.15g * (%.15g) * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
+            "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
         )
         cw.writer(fstream, cw.comment("dlnkfdT = 0.0;"))
     else:
@@ -792,14 +792,14 @@ def ajac_reaction_d(
         elif beta == 0:
             cw.writer(
                 fstream,
-                "dlnkfdT = %.15g * (%.15g) * invT2;"
-                % ((1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
+                "dlnkfdT = (%.15g) * invT2;"
+                % ((1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
             )
         else:
             cw.writer(
                 fstream,
-                "dlnkfdT = %.15g * invT + %.15g * (%.15g) * invT2;"
-                % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
+                "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
+                % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
             )
 
     if falloff:
@@ -821,22 +821,20 @@ def ajac_reaction_d(
         elif low_beta == 0:
             cw.writer(
                 fstream,
-                "k_0 = %.15g * exp(- %.15g * (%.15g) * invT);"
+                "k_0 = %.15g * exp(-(%.15g) * invT);"
                 % (
                     low_pef.m * 10 ** (3**dim),
-                    (1.0 / cc.Rc / cc.ureg.kelvin).m,
-                    low_ae.m,
+                    (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
                 ),
             )
         else:
             cw.writer(
                 fstream,
-                "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
+                "k_0 = %.15g * exp(%.15g * tc[0] - (%.15g) * invT);"
                 % (
                     low_pef.m * 10 ** (3**dim),
                     low_beta,
-                    (1.0 / cc.Rc / cc.ureg.kelvin).m,
-                    low_ae.m,
+                    (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
                 ),
             )
         cw.writer(fstream, "Pr = 1e-%d * alpha / k_f * k_0;" % (dim * 6))
@@ -854,14 +852,14 @@ def ajac_reaction_d(
         elif low_beta == 0:
             cw.writer(
                 fstream,
-                "dlnk0dT = %.15g * (%.15g) * invT2;"
-                % ((1.0 / cc.Rc / cc.ureg.kelvin).m, low_ae.m),
+                "dlnk0dT = (%.15g) * invT2;"
+                % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m),
             )
         else:
             cw.writer(
                 fstream,
-                "dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
-                % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_ae.m),
+                "dlnk0dT = %.15g * invT + (%.15g) * invT2;"
+                % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m),
             )
         cw.writer(fstream, "dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
