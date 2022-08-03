@@ -110,12 +110,5 @@ main(int argc, char* argv[])
   amrex::Real norm_error = frobenius(error, NUM_JAC_ENTRIES);
   amrex::Real norm_J = frobenius(J_finite_diff, NUM_JAC_ENTRIES);
 
-  // std::cout << "norm_error = " << norm_error << "\n";
-  // std::cout << "norm_J = " << norm_J << "\n" ;
-
-  if (norm_error / norm_J > 1e-12) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return (norm_error / norm_J > 1e-12) ? 1 : 0;
 }
