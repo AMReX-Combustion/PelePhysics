@@ -1953,10 +1953,10 @@ GET_CRITPARAMS(
 
   // species 0: NC7H16
   Tci[0] = 1.316 * EPS[0];
-  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann *
-           pow(1e-8 * SIG[0], 3.0)) /
+  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann * 1e-24 * SIG[0] *
+           SIG[0] * SIG[0]) /
           (wt[0] * wt[0]);
-  bi[0] = 0.855 * avogadro * pow(1e-8 * SIG[0], 3.0) / (wt[0]);
+  bi[0] = 0.855 * avogadro * 1e-24 * SIG[0] * SIG[0] * SIG[0] / (wt[0]);
   acentric_i[0] = 0.0;
 
   // species 1: O2
