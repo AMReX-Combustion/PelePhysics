@@ -4895,8 +4895,8 @@ comp_qfqr(
   k_f = 123600000 * exp((-0.37) * tc[0]);
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
-  redP = Corr / k_f * 1e-12 * 3.041e+30 *
-         exp(-4.63 * tc[0] - (1031.09094823387) * invT);
+  redP =
+    Corr / k_f * 3.041e+18 * exp(-4.63 * tc[0] - (1031.09094823387) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -4935,8 +4935,7 @@ comp_qfqr(
   k_f = 1475000 * exp((0.6) * tc[0]);
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
-  redP = Corr / k_f * 1e-12 * 3.5e+16 *
-         exp(-0.41 * tc[0] - (-561.549541704803) * invT);
+  redP = Corr / k_f * 35000 * exp(-0.41 * tc[0] - (-561.549541704803) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(0.0 + 0.5 * exp(-tc[1] * 1e-30) + exp(-1e+100 * invT));
@@ -5080,8 +5079,7 @@ comp_qfqr(
   // reaction 45:  CH3 + H (+M) => CH4 (+M)
   k_f = 2138000000 * exp((-0.4) * tc[0]);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
-  redP =
-    Corr / k_f * 1e-12 * 3.31e+30 * exp(-4 * tc[0] - (1060.79582801632) * invT);
+  redP = Corr / k_f * 3.31e+18 * exp(-4 * tc[0] - (1060.79582801632) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(0.0 + 0.0 + exp(-40 * invT));
@@ -5095,8 +5093,8 @@ comp_qfqr(
   // reaction 46:  2 CH3 (+M) <=> C2H6 (+M)
   k_f = 92140000000 * exp((-1.17) * tc[0] - (319.925027452009) * invT);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
-  redP = Corr / k_f * 1e-12 * 1.135e+36 *
-         exp(-5.246 * tc[0] - (858.019640363653) * invT);
+  redP =
+    Corr / k_f * 1.135e+24 * exp(-5.246 * tc[0] - (858.019640363653) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -5165,7 +5163,7 @@ comp_qfqr(
   k_f = 18000 * exp(-(1199.70878861172) * invT);
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
-  redP = Corr / k_f * 1e-12 * 1.35e+24 *
+  redP = Corr / k_f * 1350000000000 *
          exp(-2.788 * tc[0] - (2108.96594988761) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
@@ -5240,8 +5238,7 @@ comp_qfqr(
   // reaction 75:  CH3O (+M) => CH2O + H (+M)
   k_f = 54500000000000 * exp(-(6793.42498836372) * invT);
   Corr = mixture;
-  redP = Corr / k_f * 1e-6 * 2.344e+25 *
-         exp(-2.7 * tc[0] - (15398.3796519578) * invT);
+  redP = Corr / k_f * 2.344e+19 * exp(-2.7 * tc[0] - (15398.3796519578) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 1e-07) + exp(-10000000 * invT));
@@ -5322,8 +5319,8 @@ comp_qfqr(
   // reaction 92:  C2H3 (+M) => C2H2 + H (+M)
   k_f = 16060000000 * exp((1.028) * tc[0] - (20382.0815129214) * invT);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
-  redP = Corr / k_f * 1e-6 * 1.164e+39 *
-         exp(-6.821 * tc[0] - (22388.9297048172) * invT);
+  redP =
+    Corr / k_f * 1.164e+33 * exp(-6.821 * tc[0] - (22388.9297048172) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent =
@@ -5342,8 +5339,7 @@ comp_qfqr(
   // reaction 94:  C2H4 + H (+M) <=> C2H5 (+M)
   k_f = 1081000 * exp((0.45) * tc[0] - (916.830572096251) * invT);
   Corr = mixture;
-  redP = Corr / k_f * 1e-12 * 1.112e+34 *
-         exp(-5 * tc[0] - (2238.25740783281) * invT);
+  redP = Corr / k_f * 1.112e+22 * exp(-5 * tc[0] - (2238.25740783281) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(0.0 + exp(-tc[1] * 0.0105263157894737) + exp(-200 * invT));
@@ -5389,8 +5385,7 @@ comp_qfqr(
   // reaction 103:  C2H4 (+M) => C2H2 + H2 (+M)
   k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
   Corr = mixture;
-  redP =
-    Corr / k_f * 1e-6 * 1.5e+15 * exp(0 * tc[0] - (27898.3369843803) * invT);
+  redP = Corr / k_f * 1500000000 * exp(0 * tc[0] - (27898.3369843803) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 1e-07) + exp(-10000000 * invT));

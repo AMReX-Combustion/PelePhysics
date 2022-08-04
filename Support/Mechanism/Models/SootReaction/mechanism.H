@@ -5948,7 +5948,7 @@ comp_qfqr(
   k_f = 5120000 * exp((0.44) * tc[0]);
   Corr = mixture + (-0.25) * sc[4] + (10.89) * sc[7] + (-0.15) * sc[8] +
          (0.0900000000000001) * sc[11] + (1.18) * sc[15];
-  redP = Corr / k_f * 1e-12 * 6.33e+19 * exp(-1.4 * tc[0]);
+  redP = Corr / k_f * 63300000 * exp(-1.4 * tc[0]);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(0.0 + 0.5 * exp(-tc[1] * 1e-10) + exp(-10000000000 * invT));
@@ -6054,8 +6054,7 @@ comp_qfqr(
   k_f = 482000000000 * exp((-1.16) * tc[0] - (576.102567679875) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 1.88e+38 *
-         exp(-6.36 * tc[0] - (2536.52902215524) * invT);
+  redP = Corr / k_f * 1.88e+26 * exp(-6.36 * tc[0] - (2536.52902215524) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6080,8 +6079,7 @@ comp_qfqr(
   k_f = 69200000 * exp((0.18) * tc[0]);
   Corr = mixture + sc[4] + (5) * sc[7] + (0.5) * sc[11] + sc[15] +
          (2) * sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 3.47e+38 *
-         exp(-6.3 * tc[0] - (2553.36665179307) * invT);
+  redP = Corr / k_f * 3.47e+26 * exp(-6.3 * tc[0] - (2553.36665179307) * invT);
   Corr = redP / (1. + redP);
   qf[12] *= Corr * k_f;
   qr[12] *= Corr * k_f * exp(-(g_RT[5] + g_RT[14] - g_RT[16])) * (refC);
@@ -6098,8 +6096,7 @@ comp_qfqr(
   k_f = 2790000000000 * exp((-1.43) * tc[0] - (669.912218519191) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP =
-    Corr / k_f * 1e-12 * 4e+36 * exp(-5.92 * tc[0] - (1580.37206762635) * invT);
+  redP = Corr / k_f * 4e+24 * exp(-5.92 * tc[0] - (1580.37206762635) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6178,8 +6175,8 @@ comp_qfqr(
   k_f = 13600 * exp(-(1200.31264861068) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 1.17e+24 *
-         exp(-2.79 * tc[0] - (2109.56477771991) * invT);
+  redP =
+    Corr / k_f * 1170000000000 * exp(-2.79 * tc[0] - (2109.56477771991) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 1e-07) + exp(-10000000 * invT));
@@ -6288,8 +6285,7 @@ comp_qfqr(
   k_f = 17100 * exp((1.27) * tc[0] - (1362.67550583257) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 6.34e+31 *
-         exp(-4.66 * tc[0] - (1902.69743857425) * invT);
+  redP = Corr / k_f * 6.34e+19 * exp(-4.66 * tc[0] - (1902.69743857425) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6334,8 +6330,7 @@ comp_qfqr(
   k_f = 6080000 * exp((0.27) * tc[0] - (140.719508425632) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 1.4e+30 *
-         exp(-3.86 * tc[0] - (1670.57365497185) * invT);
+  redP = Corr / k_f * 1.4e+18 * exp(-3.86 * tc[0] - (1670.57365497185) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6389,8 +6384,7 @@ comp_qfqr(
   k_f = 1370 * exp((1.46) * tc[0] - (681.939096831924) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 2.03e+39 *
-         exp(-6.64 * tc[0] - (2903.35887502691) * invT);
+  redP = Corr / k_f * 2.03e+27 * exp(-6.64 * tc[0] - (2903.35887502691) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6436,8 +6430,7 @@ comp_qfqr(
   k_f = 2.55 * exp((1.6) * tc[0] - (2868.48092791999) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP =
-    Corr / k_f * 1e-12 * 3e+63 * exp(-14.6 * tc[0] - (9143.05430867243) * invT);
+  redP = Corr / k_f * 3e+51 * exp(-14.6 * tc[0] - (9143.05430867243) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6454,8 +6447,7 @@ comp_qfqr(
   k_f = 521000000000 * exp((-0.99) * tc[0] - (794.99678513827) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 1.99e+41 *
-         exp(-7.08 * tc[0] - (3363.99837873789) * invT);
+  redP = Corr / k_f * 1.99e+29 * exp(-7.08 * tc[0] - (3363.99837873789) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6493,8 +6485,8 @@ comp_qfqr(
   k_f = 1.88e+50 * exp((-9.72) * tc[0] - (54016.4141771433) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-6 * 3.72e+65 *
-         exp(-13.14 * tc[0] - (51116.6633656102) * invT);
+  redP =
+    Corr / k_f * 3.72e+59 * exp(-13.14 * tc[0] - (51116.6633656102) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6527,8 +6519,8 @@ comp_qfqr(
   k_f = 2.255e+20 * exp((-1.44) * tc[0] - (37606.5438660847) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-6 * 1.213e+35 *
-         exp(-5.18 * tc[0] - (38580.7461702494) * invT);
+  redP =
+    Corr / k_f * 1.213e+29 * exp(-5.18 * tc[0] - (38580.7461702494) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -6695,8 +6687,7 @@ comp_qfqr(
   k_f = 306000000 * exp((-0.37) * tc[0] - (2028.9846930246) * invT);
   Corr = mixture + sc[4] + (11) * sc[7] + (0.75) * sc[11] + (2.6) * sc[15] +
          sc[16] + (2) * sc[26];
-  redP = Corr / k_f * 1e-12 * 6.26e+38 *
-         exp(-6.66 * tc[0] - (3522.75820463262) * invT);
+  redP = Corr / k_f * 6.26e+26 * exp(-6.66 * tc[0] - (3522.75820463262) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 0.000763358778625954) + exp(-48100 * invT));

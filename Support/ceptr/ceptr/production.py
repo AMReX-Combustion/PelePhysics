@@ -296,13 +296,27 @@ def production_rate(
                 cw.writer(fstream, "Corr  = %s;" % (alpha))
                 cw.writer(
                     fstream,
-                    "redP = Corr / k_f * 1e-%d * %.15g "
-                    % (dim * 6, low_pef.m * 10 ** (3**dim)),
+                    "redP = Corr / k_f * %.15g "
+                    % (10**(-dim * 6)* low_pef.m * 10 ** (3**dim)),
                 )
-                if low_ae.m == 0:
+                if (low_beta == 0) and (low_ae.m == 0):
+                    cw.writer(
+                        fstream,
+                        "           ;",
+                    )
+                elif low_ae.m == 0:
                     cw.writer(
                         fstream,
                         "           * exp(%.15g  * tc[0]);" % (low_beta),
+                    )
+                elif low_beta == 0:
+                    cw.writer(
+                        fstream,
+                        "           * exp(- (%.15g)"
+                        " *invT);"
+                        % (
+                            (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
+                        ),
                     )
                 else:
                     cw.writer(

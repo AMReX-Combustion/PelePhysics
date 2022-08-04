@@ -2236,8 +2236,8 @@ comp_qfqr(
   k_f = 1475000 * exp((0.6) * tc[0]);
   Corr = mixture + sc[0] + (-0.22) * sc[1] + (10) * sc[4] + (0.9) * sc[8] +
          (2.8) * sc[9];
-  redP = Corr / k_f * 1e-12 * 6.366e+20 *
-         exp(-1.72 * tc[0] - (264.088106214317) * invT);
+  redP =
+    Corr / k_f * 636600000 * exp(-1.72 * tc[0] - (264.088106214317) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent =
@@ -2276,8 +2276,7 @@ comp_qfqr(
   // reaction 15:  H2O2 (+M) <=> 2 OH (+M)
   k_f = 295100000000000 * exp(-(24370.7831249226) * invT);
   Corr = mixture + (1.5) * sc[0] + (11) * sc[4] + (0.9) * sc[8] + (2.8) * sc[9];
-  redP =
-    Corr / k_f * 1e-6 * 1.202e+17 * exp(0 * tc[0] - (22896.3582941147) * invT);
+  redP = Corr / k_f * 120200000000 * exp(0 * tc[0] - (22896.3582941147) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent =
@@ -2312,8 +2311,8 @@ comp_qfqr(
   // reaction 21:  CO + O (+M) <=> CO2 (+M)
   k_f = 18000 * exp(-(1199.66853127845) * invT);
   Corr = mixture + (1.5) * sc[0] + (11) * sc[4] + (0.9) * sc[8] + (2.8) * sc[9];
-  redP = Corr / k_f * 1e-12 * 1.55e+24 *
-         exp(-2.79 * tc[0] - (2108.98104638758) * invT);
+  redP =
+    Corr / k_f * 1550000000000 * exp(-2.79 * tc[0] - (2108.98104638758) * invT);
   Corr = redP / (1. + redP);
   qf[2] *= Corr * k_f;
   qr[2] *= Corr * k_f * exp(-(g_RT[2] + g_RT[8] - g_RT[9])) * (refC);
