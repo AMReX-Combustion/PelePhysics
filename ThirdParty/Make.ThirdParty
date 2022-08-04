@@ -48,7 +48,8 @@ ifeq ($(PELE_USE_MAGMA), TRUE)
     endif
   endif
   DEFINES   += -DPELE_USE_MAGMA
-  MAGMA_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
+  REL_MAGMA_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
+  MAGMA_DIR := $(abspath $(lastword $(REL_MAGMA_DIR)))
   LIBRARIES += -L$(SUNDIALS_LIB_DIR)  -lsundials_sunmatrixmagmadense -lsundials_sunlinsolmagmadense
   LIBRARIES += -L$(MAGMA_DIR)/lib -lmagma
   INCLUDE_LOCATIONS += $(MAGMA_DIR)/include
