@@ -3116,10 +3116,16 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
                 conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
-                conc = "pow(sc[%d], %f)" % (
-                    species_info.ordered_idx_map[symbol],
-                    float(coefficient),
-                )
+                if coefficient.is_integer():
+                    conc = "*".join(
+                        [f"sc[{species_info.ordered_idx_map[symbol]}]"]
+                        * int(coefficient)
+                    )
+                else:
+                    conc = "pow(sc[%d], %f)" % (
+                        species_info.ordered_idx_map[symbol],
+                        float(coefficient),
+                    )
                 conc_smp = syms.sc_smp[
                     species_info.ordered_idx_map[symbol]
                 ] ** float(coefficient)

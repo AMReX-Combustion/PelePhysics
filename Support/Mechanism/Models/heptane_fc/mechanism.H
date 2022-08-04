@@ -7517,7 +7517,7 @@ comp_qfqr(
   Corr = mixture + (-1) * sc[9] + (-1) * sc[15] + (-1) * sc[27] +
          (-1) * sc[29] + (-1) * sc[32] + (-1) * sc[33] + (-1) * sc[35] +
          (-1) * sc[42] + (-1) * sc[44] + (-1) * sc[48] + (-1) * sc[50];
-  redP = Corr / k_f * 1200000000 * exp(0 * tc[0] - (6300.31291320835) * invT);
+  redP = Corr / k_f * 1200000000 * exp(-(6300.31291320835) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 1e-07) + exp(-10000000 * invT));
@@ -8231,7 +8231,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
                        (-1) * sc[35] + (-1) * sc[42] + (-1) * sc[44] +
                        (-1) * sc[48] + (-1) * sc[50];
     const amrex::Real redP =
-      Corr / k_f * 1200000000 * exp(0 * tc[0] - 6300.31291320835 * invT);
+      Corr / k_f * 1200000000 * exp(-6300.31291320835 * invT);
     const amrex::Real F = redP / (1.0 + redP);
     const amrex::Real logPred = log10(redP);
     const amrex::Real logFcent =

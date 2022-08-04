@@ -5385,7 +5385,7 @@ comp_qfqr(
   // reaction 103:  C2H4 (+M) => C2H2 + H2 (+M)
   k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
   Corr = mixture;
-  redP = Corr / k_f * 1500000000 * exp(0 * tc[0] - (27898.3369843803) * invT);
+  redP = Corr / k_f * 1500000000 * exp(-(27898.3369843803) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(+exp(-tc[1] * 1e-07) + exp(-10000000 * invT));
@@ -5890,7 +5890,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
     amrex::Real Corr = mixture;
     const amrex::Real redP =
-      Corr / k_f * 1500000000 * exp(0 * tc[0] - 27898.3369843803 * invT);
+      Corr / k_f * 1500000000 * exp(-27898.3369843803 * invT);
     const amrex::Real F = redP / (1.0 + redP);
     const amrex::Real logPred = log10(redP);
     const amrex::Real logFcent =

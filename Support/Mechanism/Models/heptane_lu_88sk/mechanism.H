@@ -12603,7 +12603,7 @@ comp_qfqr(
   // reaction 70:  c2h4 (+M) <=> c2h2 + h2 (+M)
   k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
   Corr = mixture;
-  redP = Corr / k_f * 1500000000 * exp(0 * tc[0] - (27899.8416022111) * invT);
+  redP = Corr / k_f * 1500000000 * exp(-(27899.8416022111) * invT);
   Corr = redP / (1. + redP);
   qf[9] *= Corr * k_f;
   qr[9] *= Corr * k_f * exp(-(-g_RT[1] + g_RT[16] - g_RT[18])) * (refCinv);
@@ -12973,7 +12973,7 @@ comp_qfqr(
   // reaction 151:  ch3co (+M) <=> ch3 + co (+M)
   k_f = 3000000000000 * exp(-(8413.78265225491) * invT);
   Corr = mixture;
-  redP = Corr / k_f * 1200000000 * exp(0 * tc[0] - (6299.26622254348) * invT);
+  redP = Corr / k_f * 1200000000 * exp(-(6299.26622254348) * invT);
   Corr = redP / (1. + redP);
   qf[10] *= Corr * k_f;
   qr[10] *= Corr * k_f * exp(-(-g_RT[6] - g_RT[9] + g_RT[22])) * (refCinv);
@@ -15577,7 +15577,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
     amrex::Real Corr = mixture;
     const amrex::Real redP =
-      Corr / k_f * 1500000000 * exp(0 * tc[0] - 27899.8416022111 * invT);
+      Corr / k_f * 1500000000 * exp(-27899.8416022111 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[16]);
     const amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] + g_RT[16] - g_RT[18])) *
@@ -15593,7 +15593,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real k_f = 3000000000000 * exp(-(8413.78265225491) * invT);
     amrex::Real Corr = mixture;
     const amrex::Real redP =
-      Corr / k_f * 1200000000 * exp(0 * tc[0] - 6299.26622254348 * invT);
+      Corr / k_f * 1200000000 * exp(-6299.26622254348 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[22]);
     const amrex::Real qr = Corr * k_f * exp(-(-g_RT[6] - g_RT[9] + g_RT[22])) *

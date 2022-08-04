@@ -4920,7 +4920,7 @@ comp_qfqr(
   k_f = 18000 * exp(-(1200.17174794426) * invT);
   Corr = mixture + sc[0] + (5) * sc[3] + (5) * sc[5] + sc[13] + (0.5) * sc[14] +
          (2.5) * sc[15] + (2) * sc[26];
-  redP = Corr / k_f * 602 * exp(0 * tc[0] - (1509.64999741416) * invT);
+  redP = Corr / k_f * 602 * exp(-(1509.64999741416) * invT);
   Corr = redP / (1. + redP);
   qf[25] *= Corr * k_f;
   qr[25] *= Corr * k_f * exp(-(g_RT[2] + g_RT[14] - g_RT[15])) * (refC);
@@ -6825,8 +6825,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real k_f = 18000 * exp(-(1200.17174794426) * invT);
     amrex::Real Corr = mixture + sc[0] + (5) * sc[3] + (5) * sc[5] + sc[13] +
                        (0.5) * sc[14] + (2.5) * sc[15] + (2) * sc[26];
-    const amrex::Real redP =
-      Corr / k_f * 602 * exp(0 * tc[0] - 1509.64999741416 * invT);
+    const amrex::Real redP = Corr / k_f * 602 * exp(-1509.64999741416 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[14]);
     const amrex::Real qr =

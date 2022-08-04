@@ -297,7 +297,7 @@ def production_rate(
                 cw.writer(
                     fstream,
                     "redP = Corr / k_f * %.15g "
-                    % (10**(-dim * 6)* low_pef.m * 10 ** (3**dim)),
+                    % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
                 )
                 if (low_beta == 0) and (low_ae.m == 0):
                     cw.writer(
@@ -314,9 +314,7 @@ def production_rate(
                         fstream,
                         "           * exp(- (%.15g)"
                         " *invT);"
-                        % (
-                            (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
-                        ),
+                        % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,),
                     )
                 else:
                     cw.writer(
@@ -720,10 +718,21 @@ def production_rate(
                     / k_f_smp
                     * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
                 )
-                if low_ae.m == 0:
+                if (low_beta == 0) and (low_ae.m == 0):
+                    cw.writer(
+                        fstream,
+                        "           ;",
+                    )
+                elif low_ae.m == 0:
                     cw.writer(
                         fstream,
                         "           * exp(%.15g * tc[0]);" % (low_beta),
+                    )
+                elif low_beta == 0:
+                    cw.writer(
+                        fstream,
+                        "           * exp(- %.15g * invT);"
+                        % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
                     )
                 else:
                     cw.writer(
@@ -1417,11 +1426,17 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     )
             if kc_conv_inv:
                 if alpha is None:
-                    cw.writer(
-                        fstream,
-                        "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
-                        " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
-                    )
+                    if reverse_sc == "0.0":
+                        cw.writer(
+                            fstream,
+                            "const amrex::Real qr = 0.0;",
+                        )
+                    else:
+                        cw.writer(
+                            fstream,
+                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
+                            " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                        )
                 else:
                     cw.writer(
                         fstream,
@@ -1430,11 +1445,17 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     )
             else:
                 if alpha is None:
-                    cw.writer(
-                        fstream,
-                        "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
-                        % (kc_exp_arg, reverse_sc),
-                    )
+                    if reverse_sc == "0.0":
+                        cw.writer(
+                            fstream,
+                            "const amrex::Real qr = 0.0;",
+                        )
+                    else:
+                        cw.writer(
+                            fstream,
+                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
+                            % (kc_exp_arg, reverse_sc),
+                        )
                 else:
                     cw.writer(
                         fstream,

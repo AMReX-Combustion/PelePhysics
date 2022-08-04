@@ -9586,7 +9586,7 @@ comp_qfqr(
   k_f = 18000 * exp(-(1200.17174794426) * invT);
   Corr = mixture + sc[0] + (5) * sc[3] + (5) * sc[5] + sc[13] + (0.5) * sc[14] +
          (2.5) * sc[15] + (2) * sc[26] + (-0.5) * sc[48];
-  redP = Corr / k_f * 602 * exp(0 * tc[0] - (1509.64999741416) * invT);
+  redP = Corr / k_f * 602 * exp(-(1509.64999741416) * invT);
   Corr = redP / (1. + redP);
   qf[26] *= Corr * k_f;
   qr[26] *= Corr * k_f * exp(-(g_RT[2] + g_RT[14] - g_RT[15])) * (refC);
@@ -10558,7 +10558,7 @@ comp_qfqr(
   k_f = 79100000000 * exp(-(28190.1976183804) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.375) * sc[48];
-  redP = Corr / k_f * 637000000 * exp(0 * tc[0] - (28502.1919511793) * invT);
+  redP = Corr / k_f * 637000000 * exp(-(28502.1919511793) * invT);
   Corr = redP / (1. + redP);
   qf[27] *= Corr * k_f;
   qr[27] *= Corr * k_f * exp(-(-g_RT[2] + g_RT[37] - g_RT[47])) * (refCinv);
@@ -11330,7 +11330,7 @@ comp_qfqr(
   k_f = 100000000000000 * exp(-(42773.4165934012) * invT);
   Corr = mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + sc[53] + (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
-  redP = Corr / k_f * 15000000000 * exp(0 * tc[0] - (33966.6217251528) * invT);
+  redP = Corr / k_f * 15000000000 * exp(-(33966.6217251528) * invT);
   Corr = redP / (1. + redP);
   qf[29] *= Corr * k_f;
   qr[29] *= Corr * k_f * exp(-(-g_RT[11] - g_RT[53] + g_RT[56])) * (refCinv);
@@ -11707,7 +11707,7 @@ comp_qfqr(
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48] + sc[53] + (5) * sc[56] + (5) * sc[57] +
          (5) * sc[58] + (5) * sc[59];
-  redP = Corr / k_f * 2290000000 * exp(0 * tc[0] - (48042.0950843766) * invT);
+  redP = Corr / k_f * 2290000000 * exp(-(48042.0950843766) * invT);
   Corr = redP / (1. + redP);
   qf[30] *= Corr * k_f;
   qr[30] *= Corr * k_f * exp(-(-g_RT[54] + g_RT[64] - g_RT[65])) * (refCinv);
@@ -11976,7 +11976,7 @@ comp_qfqr(
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48] + sc[53] + (5) * sc[56] + (5) * sc[57] +
          (5) * sc[58];
-  redP = Corr / k_f * 5000000000 * exp(0 * tc[0] - (30021.9062819096) * invT);
+  redP = Corr / k_f * 5000000000 * exp(-(30021.9062819096) * invT);
   Corr = redP / (1. + redP);
   qf[31] *= Corr * k_f;
   qr[31] *= Corr * k_f * exp(-(-g_RT[54] + g_RT[62] - g_RT[64])) * (refCinv);
@@ -12813,8 +12813,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     amrex::Real Corr = mixture + sc[0] + (5) * sc[3] + (5) * sc[5] + sc[13] +
                        (0.5) * sc[14] + (2.5) * sc[15] + (2) * sc[26] +
                        (-0.5) * sc[48];
-    const amrex::Real redP =
-      Corr / k_f * 602 * exp(0 * tc[0] - 1509.64999741416 * invT);
+    const amrex::Real redP = Corr / k_f * 602 * exp(-1509.64999741416 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[14]);
     const amrex::Real qr =
@@ -12831,7 +12830,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     amrex::Real Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] +
                        sc[15] + (2) * sc[26] + (-0.375) * sc[48];
     const amrex::Real redP =
-      Corr / k_f * 637000000 * exp(0 * tc[0] - 28502.1919511793 * invT);
+      Corr / k_f * 637000000 * exp(-28502.1919511793 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[37]);
     const amrex::Real qr = Corr * k_f * exp(-(-g_RT[2] + g_RT[37] - g_RT[47])) *
@@ -12866,7 +12865,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
                        sc[15] + (2) * sc[26] + sc[53] + (5) * sc[56] +
                        (5) * sc[57] + (5) * sc[58];
     const amrex::Real redP =
-      Corr / k_f * 15000000000 * exp(0 * tc[0] - 33966.6217251528 * invT);
+      Corr / k_f * 15000000000 * exp(-33966.6217251528 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[56]);
     const amrex::Real qr = Corr * k_f *
@@ -12886,7 +12885,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
                        (5) * sc[56] + (5) * sc[57] + (5) * sc[58] +
                        (5) * sc[59];
     const amrex::Real redP =
-      Corr / k_f * 2290000000 * exp(0 * tc[0] - 48042.0950843766 * invT);
+      Corr / k_f * 2290000000 * exp(-48042.0950843766 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[64]);
     const amrex::Real qr = Corr * k_f *
@@ -12905,7 +12904,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
                        sc[15] + (2) * sc[26] + (-0.3) * sc[48] + sc[53] +
                        (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
     const amrex::Real redP =
-      Corr / k_f * 5000000000 * exp(0 * tc[0] - 30021.9062819096 * invT);
+      Corr / k_f * 5000000000 * exp(-30021.9062819096 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[62]);
     const amrex::Real qr = Corr * k_f *

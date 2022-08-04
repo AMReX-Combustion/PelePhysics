@@ -50,10 +50,18 @@ def qss_sorted_phase_space(
                         species_info.ordered_idx_map[symbol] - n_species
                     ]
             else:
-                conc = "pow(sc_qss[%d], %f)" % (
-                    species_info.ordered_idx_map[symbol] - n_species,
-                    float(coefficient),
-                )
+                if coefficient.is_integer():
+                    conc = "*".join(
+                        [
+                            f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"
+                        ]
+                        * int(coefficient)
+                    )
+                else:
+                    conc = "pow(sc_qss[%d], %f)" % (
+                        species_info.ordered_idx_map[symbol] - n_species,
+                        float(coefficient),
+                    )
                 if record_symbolic_operations:
                     conc_smp = pow(
                         syms.sc_qss_smp[
