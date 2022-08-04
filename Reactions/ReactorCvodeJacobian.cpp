@@ -40,6 +40,7 @@ cJac(
       (SUNMatrix_cuSparse_NNZ(J) == ncells * NNZ));
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+	printf("%s %s %d : %d\n",__FILE__,__FUNCTION__,__LINE__,nbThreads);
 	if (nbThreads<=32)
 	{
 		amrex::launch_global<32><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
@@ -102,6 +103,7 @@ cJac(
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+	printf("%s %s %d : %d\n",__FILE__,__FUNCTION__,__LINE__,nbThreads);
 	if (nbThreads==32)
 	{
 		amrex::launch_global<32><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
