@@ -383,7 +383,7 @@ public:
   );
 
   void InitSprayParticles(
-    bool initialize_parts,
+    const bool init_parts,
 #ifdef PELELM_USE_SPRAY
     ProbParm const& prob_parm
 #else

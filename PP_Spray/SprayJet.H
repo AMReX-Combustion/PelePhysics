@@ -8,6 +8,7 @@ class SprayJet
 public:
   // Constructor for assigning parameters directly
   SprayJet(
+    const GeometryData* geom,
     const amrex::RealVect jet_cent,
     const amrex::RealVect jet_norm,
     const amrex::Real spread_angle,
@@ -22,7 +23,8 @@ public:
     bool hollow_spray = false)
     : m_jetCent(jet_cent),
       m_jetNorm(jet_norm),
-      m_spreadAngle(spread_angle * M_PI / 180.), // Assumes spread is in degrees
+      m_spreadAngle(
+        spread_angle * M_PI / 180.), // Assumes spread is given in degrees
       m_jetDia(jet_dia),
       m_jetVel(jet_vel),
       m_massFlow(mass_flow),
@@ -37,10 +39,11 @@ public:
     m_dropDist = DistBase::create(dist_type);
     std::string ppspray = "spray";
     m_dropDist->init(ppspray);
+    check_jet_cent(geom);
   }
 
   // Constructor assumes parameters are set from input file
-  SprayJet(const std::string jet_name)
+  SprayJet(const std::string jet_name, const GeometryData* geom)
   {
     std::string ppspray = "spray." + jet_name;
     amrex::ParmParse ps(ppspray);
@@ -63,6 +66,7 @@ public:
       m_jetCent[dir] = jcent[dir];
       m_jetNorm[dir] = jnorm[dir];
     }
+    check_jet_cent(geom);
     ps.get("jet_dia", m_jetDia);
     ps.get("spread_angle", m_spreadAngle);
     ps.get("T", m_jetT);
@@ -124,7 +128,32 @@ public:
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
   void set_jet_norm(amrex::RealVect jet_norm) { m_jetNorm = jet_norm; }
-  void set_jet_cent(amrex::RealVect jet_cent) { m_jetCent = jet_cent; }
+  void set_jet_cent(amrex::RealVect jet_cent, const GeometryData* geom)
+  {
+    m_jetCent = jet_cent;
+    check_jet_cent(geom);
+  }
+  void check_jet_cent(const GeometryData* geom)
+  {
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      if (
+        m_jetCent[dir] > geom->ProbHi(dir) ||
+        m_jetCent[dir] < geom->ProbLi(dir)) {
+        amrex::Abort("Jet center outside of problem domain");
+      }
+    }
+  }
+  void set_mass_frac(amrex::Real* Y_jet)
+  {
+    amrex::Real sumtest = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      m_jetY[spf] = Y_jet[spf];
+      sumtest += m_jetY[spf];
+    }
+    if (std::abs(1. - sumtest) > 1.E-8) {
+      amrex::Abort("Jet mass fractions must sum to 1");
+    }
+  }
 
   void reset_sum()
   {
