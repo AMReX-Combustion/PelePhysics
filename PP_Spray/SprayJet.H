@@ -8,7 +8,7 @@ class SprayJet
 public:
   // Constructor for assigning parameters directly
   SprayJet(
-    const amrex::GeometryData* geom,
+    const amrex::Geometry& geom,
     const amrex::RealVect jet_cent,
     const amrex::RealVect jet_norm,
     const amrex::Real spread_angle,
@@ -43,7 +43,7 @@ public:
   }
 
   // Constructor assumes parameters are set from input file
-  SprayJet(const std::string jet_name, const amrex::GeometryData* geom)
+  SprayJet(const std::string jet_name, const amrex::Geometry& geom)
   {
     std::string ppspray = "spray." + jet_name;
     amrex::ParmParse ps(ppspray);
@@ -128,17 +128,17 @@ public:
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
   void set_jet_norm(amrex::RealVect jet_norm) { m_jetNorm = jet_norm; }
-  void set_jet_cent(amrex::RealVect jet_cent, const amrex::GeometryData* geom)
+  void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
     m_jetCent = jet_cent;
     check_jet_cent(geom);
   }
-  void check_jet_cent(const amrex::GeometryData* geom)
+  void check_jet_cent(const amrex::Geometry& geom)
   {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       if (
-        m_jetCent[dir] > geom->ProbHi(dir) ||
-        m_jetCent[dir] < geom->ProbLo(dir)) {
+        m_jetCent[dir] > geom.ProbHi(dir) ||
+        m_jetCent[dir] < geom.ProbLo(dir)) {
         amrex::Abort("Jet center outside of problem domain");
       }
     }
