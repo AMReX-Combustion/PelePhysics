@@ -21,10 +21,9 @@ public:
     const amrex::Real jet_start = 0.,
     const amrex::Real jet_end = 1.E8,
     bool hollow_spray = false)
-    : m_jetCent(jet_cent),
-      m_jetNorm(jet_norm),
-      m_spreadAngle(
-        spread_angle * M_PI / 180.), // Assumes spread is given in degrees
+    : m_jetNorm(jet_norm),
+      m_jetCent(jet_cent),
+      m_spreadAngle(spread_angle),
       m_jetDia(jet_dia),
       m_jetVel(jet_vel),
       m_massFlow(mass_flow),
@@ -33,6 +32,7 @@ public:
       m_jetEnd(jet_end),
       m_hollowSpray(hollow_spray)
   {
+    m_spreadAngle *= M_PI / 180.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       m_jetY[spf] = jet_Y[spf];
     }
@@ -121,7 +121,7 @@ public:
     return check;
   }
 
-  inline const bool hollow_spray() { return m_hollowSpray; }
+  inline bool hollow_spray() { return m_hollowSpray; }
   inline amrex::Real get_dia() { return m_dropDist->get_dia(); }
   inline amrex::Real get_avg_dia() { return m_dropDist->get_avg_dia(); }
 

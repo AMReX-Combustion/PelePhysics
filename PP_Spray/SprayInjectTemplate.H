@@ -4,7 +4,7 @@
 
 // This provides a function to be called in the SprayParticlesInitInsert.cpp
 // file included is a standard jet injection calls
-
+#if AMREX_SPACEDIM == 3
 amrex::RealVect
 jet_vel_comp(
   amrex::Real theta_1,
@@ -21,17 +21,17 @@ jet_vel_comp(
   amrex::Real sp2 = std::sin(phi_2);
   amrex::Real cp2 = std::cos(phi_2);
   amrex::Real v1 = st1 * ct2 + st2 * cp2 * ct1;
-  amrex::RealVect vel(AMREX_D_DECL(
+  amrex::RealVect vel(
     cp1 * v1 - sp1 * sp2 * st2, sp1 * v1 + sp2 * st2 * cp1,
-    ct1 * ct2 - st1 * st2 * cp2));
+    ct1 * ct2 - st1 * st2 * cp2);
   return vel;
 }
+#endif
 
 amrex::RealVect
 part_loc_trans(
   amrex::Real radius, amrex::Real theta_1, amrex::Real phi_1, amrex::Real phi_2)
 {
-  amrex::Real st1 = std::sin(theta_1);
   amrex::Real ct1 = std::cos(theta_1);
   amrex::Real sp1 = std::sin(phi_1);
   amrex::Real cp1 = std::cos(phi_1);
@@ -39,7 +39,7 @@ part_loc_trans(
   amrex::Real cp2 = std::cos(phi_2);
   amrex::RealVect loc(AMREX_D_DECL(
     radius * (cp1 * cp2 * ct1 - sp1 * sp2),
-    radius * (sp1 * cp2 * ct1 + cp1 * sp2), -radius * st1 * cp2));
+    radius * (sp1 * cp2 * ct1 + cp1 * sp2), -radius * std::sin(theta_1) * cp2));
   return loc;
 }
 
@@ -74,10 +74,6 @@ SprayParticleContainer::sprayInjection(
   if (curProc < startInjProc || curProc >= startInjProc + numInjProcs) {
     return;
   }
-  const amrex::Geometry& geom = this->m_gdb->Geom(level);
-  const auto plo = geom.ProbLoArray();
-  const auto phi = geom.ProbHiArray();
-  const auto dx = geom.CellSize();
   const int pstateVel = m_sprayIndx.pstateVel;
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateDia = m_sprayIndx.pstateDia;
@@ -109,8 +105,6 @@ SprayParticleContainer::sprayInjection(
     return;
   }
 
-  amrex::RealVect dom_len(
-    AMREX_D_DECL(geom.ProbLength(0), geom.ProbLength(1), geom.ProbLength(2)));
   amrex::ParticleLocData pld;
   std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
     host_particles;
@@ -118,9 +112,9 @@ SprayParticleContainer::sprayInjection(
   amrex::RealVect jet_norm = spray_jet->jet_norm();
   amrex::RealVect jet_cent = spray_jet->jet_cent();
   amrex::Real jet_vel = spray_jet->jet_vel();
-  amrex::Real norm = jet_norm.vectorLength();
   amrex::Real injProcs = static_cast<amrex::Real>(numInjProcs);
 #if AMREX_SPACEDIM == 3
+  amrex::Real norm = jet_norm.vectorLength();
   amrex::Real theta_1 = std::acos(jet_norm[2] / norm);
   amrex::Real phi_1 = std::atan2(jet_norm[1] / norm, jet_norm[0] / norm);
   amrex::Real dphi = 2. * M_PI / injProcs;
