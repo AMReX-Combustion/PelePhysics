@@ -192,7 +192,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
           $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
           $(KLU_DEFINES) $(MAGMA_DEFINES) \
           $(SUNDIALS_SOURCE_DIR) && \
-        cmake --build $(SUNDIALS_BUILD_DIR) --parallel && \
+        cmake --build $(SUNDIALS_BUILD_DIR) --parallel 16 && \
         cmake --install $(SUNDIALS_BUILD_DIR)
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
@@ -213,7 +213,7 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
           -DBUILD_SHARED_LIBS:BOOL=ON \
           $(MAGMA_COMPILER_OPT) \
           $(MAGMA_SOURCE_DIR) && \
-        cmake --build $(MAGMA_BUILD_DIR) --parallel && \
+        cmake --build $(MAGMA_BUILD_DIR) --parallel 10 && \
         cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
