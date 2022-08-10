@@ -182,9 +182,7 @@ struct Fuego
     }
   }
 
-	__attribute__((noinline))
-  AMREX_GPU_HOST_DEVICE
-  static void RTY2JAC(
+  __attribute__((noinline)) AMREX_GPU_HOST_DEVICE static void RTY2JAC(
     amrex::Real R,
     amrex::Real T,
     amrex::Real Y[],
