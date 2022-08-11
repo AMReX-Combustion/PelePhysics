@@ -14,7 +14,6 @@ chem-CH4-2step/mechanism.yaml
 chem-H/mechanism.yaml
 decane_3sp/mechanism.yaml
 dodecane_lu/mechanism.yaml
-dodecane_lu_qss/qssa.yaml
 dodecane_wang/mechanism.yaml
 dodmethair_4sp/mechanism.yaml
 drm19/mechanism.yaml
