@@ -44,6 +44,16 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
+#ifdef AMREX_USE_GPU
+#ifdef AMREX_USE_CUDA
+#define CVODE_NB_THREADS 32
+#elseif AMREX_USE_HIP
+#define CVODE_NB_THREADS 64
+#else
+#define CVODE_NB_THREADS 32
+#endif
+#endif
+
 namespace pele {
 namespace physics {
 namespace reactions {
