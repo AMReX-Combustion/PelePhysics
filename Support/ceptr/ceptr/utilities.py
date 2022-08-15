@@ -50,10 +50,18 @@ def qss_sorted_phase_space(
                         species_info.ordered_idx_map[symbol] - n_species
                     ]
             else:
-                conc = "pow(sc_qss[%d], %f)" % (
-                    species_info.ordered_idx_map[symbol] - n_species,
-                    float(coefficient),
-                )
+                if coefficient.is_integer():
+                    conc = "*".join(
+                        [
+                            f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"
+                        ]
+                        * int(coefficient)
+                    )
+                else:
+                    conc = "pow(sc_qss[%d], %f)" % (
+                        species_info.ordered_idx_map[symbol] - n_species,
+                        float(coefficient),
+                    )
                 if record_symbolic_operations:
                     conc_smp = pow(
                         syms.sc_qss_smp[
@@ -160,8 +168,9 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             if record_symbolic_operations:
                 conversion_smp *= syms.refCinv_smp
         else:
-            if dim == 2.0:
-                conversion = "*".join(["(refCinv * refCinv)"])
+            if dim.is_integer():
+                mult_str = "*".join(["refCinv"] * int(dim))
+                conversion = "*".join([f"({mult_str})"])
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp * syms.refCinv_smp
             else:

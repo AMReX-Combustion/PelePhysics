@@ -3312,8 +3312,7 @@ comp_qfqr(
   k_f = 25000000000 * exp((-0.8) * tc[0]);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 3.2e+27 *
-         exp(-3.14 * tc[0] - 0.50321666580472 * (1230) * invT);
+  redP = Corr / k_f * 3.2e+15 * exp(-3.14 * tc[0] - (618.956498939805) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3322,7 +3321,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[0] *= Corr * k_f;
   qr[0] *= Corr * k_f * exp(-(g_RT[1] + g_RT[7] - g_RT[9])) * (refC);
@@ -3330,8 +3329,8 @@ comp_qfqr(
   k_f = 12700000000 * exp((-0.63) * tc[0] - (192.731983003208) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 2.477e+33 *
-         exp(-4.76 * tc[0] - 0.50321666580472 * (2440) * invT);
+  redP =
+    Corr / k_f * 2.477e+21 * exp(-4.76 * tc[0] - (1227.84866456352) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3340,7 +3339,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[1] *= Corr * k_f;
   qr[1] *= Corr * k_f * exp(-(g_RT[1] + g_RT[9] - g_RT[10])) * (refC);
@@ -3352,8 +3351,8 @@ comp_qfqr(
   k_f = 1090000 * exp((0.48) * tc[0] - (-130.836333109227) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 1.35e+24 *
-         exp(-2.57 * tc[0] - 0.50321666580472 * (1425) * invT);
+  redP =
+    Corr / k_f * 1350000000000 * exp(-2.57 * tc[0] - (717.083748771726) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3362,7 +3361,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[2] *= Corr * k_f;
   qr[2] *= Corr * k_f * exp(-(g_RT[1] + g_RT[13] - g_RT[14])) * (refC);
@@ -3374,8 +3373,7 @@ comp_qfqr(
   k_f = 540000 * exp((0.454) * tc[0] - (1308.36333109227) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18];
-  redP = Corr / k_f * 1e-12 * 2.2e+30 *
-         exp(-4.8 * tc[0] - 0.50321666580472 * (5560) * invT);
+  redP = Corr / k_f * 2.2e+18 * exp(-4.8 * tc[0] - (2797.88466187424) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3384,7 +3382,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[3] *= Corr * k_f;
   qr[3] *= Corr * k_f * exp(-(g_RT[1] + g_RT[14] - g_RT[15])) * (refC);
@@ -3400,8 +3398,7 @@ comp_qfqr(
   k_f = 1080000 * exp((0.454) * tc[0] - (915.85433176459) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 1.2e+42 *
-         exp(-7.62 * tc[0] - 0.50321666580472 * (6970) * invT);
+  redP = Corr / k_f * 1.2e+30 * exp(-7.62 * tc[0] - (3507.4201606589) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3410,7 +3407,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[4] *= Corr * k_f;
   qr[4] *= Corr * k_f * exp(-(g_RT[1] + g_RT[16] - g_RT[17])) * (refC);
@@ -3418,8 +3415,7 @@ comp_qfqr(
   k_f = 521000000000 * exp((-0.99) * tc[0] - (795.082331971457) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 1.99e+41 *
-         exp(-7.08 * tc[0] - 0.50321666580472 * (6685) * invT);
+  redP = Corr / k_f * 1.99e+29 * exp(-7.08 * tc[0] - (3364.00341090455) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3428,7 +3424,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[5] *= Corr * k_f;
   qr[5] *= Corr * k_f * exp(-(g_RT[1] + g_RT[17] - g_RT[18])) * (refC);
@@ -3440,8 +3436,7 @@ comp_qfqr(
   k_f = 43 * exp((1.5) * tc[0] - (40056.0465980557) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 5.07e+27 *
-         exp(-3.42 * tc[0] - 0.50321666580472 * (84350) * invT);
+  redP = Corr / k_f * 5.07e+15 * exp(-3.42 * tc[0] - (42446.3257606281) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3450,7 +3445,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[6] *= Corr * k_f;
   qr[6] *= Corr * k_f * exp(-(g_RT[0] + g_RT[11] - g_RT[14])) * (refC);
@@ -3591,8 +3586,7 @@ comp_qfqr(
   k_f = 21200000000 * exp((-0.97) * tc[0] - (311.994332798926) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[10] + (0.5) * sc[11] + sc[12] +
          (2) * sc[18] + (-0.3) * sc[20];
-  redP = Corr / k_f * 1e-12 * 1.77e+50 *
-         exp(-9.67 * tc[0] - 0.50321666580472 * (6220) * invT);
+  redP = Corr / k_f * 1.77e+38 * exp(-9.67 * tc[0] - (3130.00766130536) * invT);
   F = redP / (1.0 + redP);
   logPred = log10(redP);
   logFcent = log10(
@@ -3601,7 +3595,7 @@ comp_qfqr(
   troe_c = -0.4 - 0.67 * logFcent;
   troe_n = 0.75 - 1.27 * logFcent;
   troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-  F_troe = pow(10, logFcent / (1.0 + troe * troe));
+  F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[7] *= Corr * k_f;
   qr[7] *= Corr * k_f * exp(-(2.000000 * g_RT[9] - g_RT[18])) * (refC);
@@ -3688,7 +3682,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[7]);
     const amrex::Real qr =
@@ -3716,7 +3710,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[9]);
     const amrex::Real qr =
@@ -3744,7 +3738,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[13]);
     const amrex::Real qr =
@@ -3772,7 +3766,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[14]);
     const amrex::Real qr =
@@ -3800,7 +3794,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[16]);
     const amrex::Real qr =
@@ -3828,7 +3822,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[17]);
     const amrex::Real qr =
@@ -3855,7 +3849,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[0] * sc[11]);
     const amrex::Real qr =
@@ -3883,7 +3877,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
     const amrex::Real troe =
       (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[9] * sc[9]));
     const amrex::Real qr =
@@ -5352,13 +5346,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[7];
-  k_f = 25000000000 * exp(-0.8 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.8 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 25000000000 * exp(-0.8 * tc[0]);
+  dlnkfdT = -0.8 * invT;
   // pressure-fall-off
-  k_0 = 3.2e+27 * exp(-3.14 * tc[0] - 0.50321666580472 * (1230) * invT);
+  k_0 = 3.2e+27 * exp(-3.14 * tc[0] - (618.956498939805) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -3.14 * invT + 0.50321666580472 * (1230) * invT2;
+  dlnk0dT = -3.14 * invT + (618.956498939805) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5373,7 +5367,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 78 - Fcent2 / 1995 + Fcent3 * 5590 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5439,13 +5433,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[9];
-  k_f = 12700000000 * exp(-0.63 * tc[0] - 0.50321666580472 * (383) * invT);
-  dlnkfdT = -0.63 * invT + 0.50321666580472 * (383) * invT2;
+  k_f = 12700000000 * exp(-0.63 * tc[0] - (192.731983003208) * invT);
+  dlnkfdT = -0.63 * invT + (192.731983003208) * invT2;
   // pressure-fall-off
-  k_0 = 2.477e+33 * exp(-4.76 * tc[0] - 0.50321666580472 * (2440) * invT);
+  k_0 = 2.477e+33 * exp(-4.76 * tc[0] - (1227.84866456352) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -4.76 * invT + 0.50321666580472 * (2440) * invT2;
+  dlnk0dT = -4.76 * invT + (1227.84866456352) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5460,7 +5454,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 74 - Fcent2 / 2941 + Fcent3 * 6964 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5526,13 +5520,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[13];
-  k_f = 1090000 * exp(0.48 * tc[0] - 0.50321666580472 * (-260) * invT);
-  dlnkfdT = 0.48 * invT + 0.50321666580472 * (-260) * invT2;
+  k_f = 1090000 * exp(0.48 * tc[0] - (-130.836333109227) * invT);
+  dlnkfdT = 0.48 * invT + (-130.836333109227) * invT2;
   // pressure-fall-off
-  k_0 = 1.35e+24 * exp(-2.57 * tc[0] - 0.50321666580472 * (1425) * invT);
+  k_0 = 1.35e+24 * exp(-2.57 * tc[0] - (717.083748771726) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -2.57 * invT + 0.50321666580472 * (1425) * invT2;
+  dlnk0dT = -2.57 * invT + (717.083748771726) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5547,7 +5541,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 271 - Fcent2 / 2755 + Fcent3 * 6570 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5613,13 +5607,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18];
   // forward
   phi_f = sc[1] * sc[14];
-  k_f = 540000 * exp(0.454 * tc[0] - 0.50321666580472 * (2600) * invT);
-  dlnkfdT = 0.454 * invT + 0.50321666580472 * (2600) * invT2;
+  k_f = 540000 * exp(0.454 * tc[0] - (1308.36333109227) * invT);
+  dlnkfdT = 0.454 * invT + (1308.36333109227) * invT2;
   // pressure-fall-off
-  k_0 = 2.2e+30 * exp(-4.8 * tc[0] - 0.50321666580472 * (5560) * invT);
+  k_0 = 2.2e+30 * exp(-4.8 * tc[0] - (2797.88466187424) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -4.8 * invT + 0.50321666580472 * (5560) * invT2;
+  dlnk0dT = -4.8 * invT + (2797.88466187424) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5634,7 +5628,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1555 + Fcent3 * 4200 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5700,13 +5694,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[16];
-  k_f = 1080000 * exp(0.454 * tc[0] - 0.50321666580472 * (1820) * invT);
-  dlnkfdT = 0.454 * invT + 0.50321666580472 * (1820) * invT2;
+  k_f = 1080000 * exp(0.454 * tc[0] - (915.85433176459) * invT);
+  dlnkfdT = 0.454 * invT + (915.85433176459) * invT2;
   // pressure-fall-off
-  k_0 = 1.2e+42 * exp(-7.62 * tc[0] - 0.50321666580472 * (6970) * invT);
+  k_0 = 1.2e+42 * exp(-7.62 * tc[0] - (3507.4201606589) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -7.62 * invT + 0.50321666580472 * (6970) * invT2;
+  dlnk0dT = -7.62 * invT + (3507.4201606589) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5721,7 +5715,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 210 - Fcent2 / 984 + Fcent3 * 4374 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5787,13 +5781,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[17];
-  k_f = 521000000000 * exp(-0.99 * tc[0] - 0.50321666580472 * (1580) * invT);
-  dlnkfdT = -0.99 * invT + 0.50321666580472 * (1580) * invT2;
+  k_f = 521000000000 * exp(-0.99 * tc[0] - (795.082331971457) * invT);
+  dlnkfdT = -0.99 * invT + (795.082331971457) * invT2;
   // pressure-fall-off
-  k_0 = 1.99e+41 * exp(-7.08 * tc[0] - 0.50321666580472 * (6685) * invT);
+  k_0 = 1.99e+41 * exp(-7.08 * tc[0] - (3364.00341090455) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -7.08 * invT + 0.50321666580472 * (6685) * invT2;
+  dlnk0dT = -7.08 * invT + (3364.00341090455) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5808,7 +5802,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 125 - Fcent2 / 2219 + Fcent3 * 6882 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5874,13 +5868,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[0] * sc[11];
-  k_f = 43 * exp(1.5 * tc[0] - 0.50321666580472 * (79600) * invT);
-  dlnkfdT = 1.5 * invT + 0.50321666580472 * (79600) * invT2;
+  k_f = 43 * exp(1.5 * tc[0] - (40056.0465980557) * invT);
+  dlnkfdT = 1.5 * invT + (40056.0465980557) * invT2;
   // pressure-fall-off
-  k_0 = 5.07e+27 * exp(-3.42 * tc[0] - 0.50321666580472 * (84350) * invT);
+  k_0 = 5.07e+27 * exp(-3.42 * tc[0] - (42446.3257606281) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -3.42 * invT + 0.50321666580472 * (84350) * invT2;
+  dlnk0dT = -3.42 * invT + (42446.3257606281) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5895,7 +5889,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 197 - Fcent2 / 1540 + Fcent3 * 10300 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -5961,13 +5955,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = (sc[9] * sc[9]);
-  k_f = 21200000000 * exp(-0.97 * tc[0] - 0.50321666580472 * (620) * invT);
-  dlnkfdT = -0.97 * invT + 0.50321666580472 * (620) * invT2;
+  k_f = 21200000000 * exp(-0.97 * tc[0] - (311.994332798926) * invT);
+  dlnkfdT = -0.97 * invT + (311.994332798926) * invT2;
   // pressure-fall-off
-  k_0 = 1.77e+50 * exp(-9.67 * tc[0] - 0.50321666580472 * (6220) * invT);
+  k_0 = 1.77e+50 * exp(-9.67 * tc[0] - (3130.00766130536) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -9.67 * invT + 0.50321666580472 * (6220) * invT2;
+  dlnk0dT = -9.67 * invT + (3130.00766130536) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -5982,7 +5976,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 151 - Fcent2 / 1038 + Fcent3 * 4970 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -6045,8 +6039,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[2];
-  k_f = 500000 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 500000 * exp(-1 * tc[0]);
+  dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[4];
   Kc = refCinv * exp(g_RT[1] + g_RT[2] - g_RT[4]);
@@ -6102,8 +6096,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           (0.5 - 1) * sc[20];
   // forward
   phi_f = sc[2] * sc[11];
-  k_f = 602 * exp(0 * tc[0] - 0.50321666580472 * (3000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3000) * invT2;
+  k_f = 602 * exp(-(1509.64999741416) * invT);
+  dlnkfdT = (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[12];
   Kc = refCinv * exp(g_RT[2] + g_RT[11] - g_RT[12]);
@@ -6159,8 +6153,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           (0 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[3];
-  k_f = 2800000 * exp(-0.86 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.86 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 2800000 * exp(-0.86 * tc[0]);
+  dlnkfdT = -0.86 * invT;
   // reverse
   phi_r = sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -6212,8 +6206,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * (sc[3] * sc[3]);
-  k_f = 300000000 * exp(-1.72 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.72 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 300000000 * exp(-1.72 * tc[0]);
+  dlnkfdT = -1.72 * invT;
   // reverse
   phi_r = sc[3] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -6229,7 +6223,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * pow(sc[3], 2.000000);
+  dqdci = +k_f * sc[3] * sc[3];
   J[23] -= dqdci; // dwdot[H]/d[H]
   J[25] -= dqdci; // dwdot[O2]/d[H]
   J[28] += dqdci; // dwdot[HO2]/d[H]
@@ -6252,8 +6246,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[5];
-  k_f = 9380000 * exp(-0.76 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.76 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 9380000 * exp(-0.76 * tc[0]);
+  dlnkfdT = -0.76 * invT;
   // reverse
   phi_r = sc[5] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -6297,8 +6291,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[19];
-  k_f = 375000000 * exp(-1.72 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.72 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 375000000 * exp(-1.72 * tc[0]);
+  dlnkfdT = -1.72 * invT;
   // reverse
   phi_r = sc[6] * sc[19];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -6342,8 +6336,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[20];
-  k_f = 700000 * exp(-0.8 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.8 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 700000 * exp(-0.8 * tc[0]);
+  dlnkfdT = -0.8 * invT;
   // reverse
   phi_r = sc[6] * sc[20];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -6390,8 +6384,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           (0 - 1) * sc[12] + (3 - 1) * sc[18] + (0.63 - 1) * sc[20];
   // forward
   phi_f = (sc[1] * sc[1]);
-  k_f = 1000000 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 1000000 * exp(-1 * tc[0]);
+  dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[0];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -6440,8 +6434,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * (sc[1] * sc[1]);
-  k_f = 90000 * exp(-0.6 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.6 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 90000 * exp(-0.6 * tc[0]);
+  dlnkfdT = -0.6 * invT;
   // reverse
   phi_r = (sc[0] * sc[0]);
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -6456,7 +6450,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * 2.000000 * sc[0];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
@@ -6471,8 +6465,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[1] * sc[1]) * sc[5];
-  k_f = 60000000 * exp(-1.25 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.25 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 60000000 * exp(-1.25 * tc[0]);
+  dlnkfdT = -1.25 * invT;
   // reverse
   phi_r = sc[0] * sc[5];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -6495,7 +6489,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[22] += dqdci;      // dwdot[H2]/d[H]
   J[23] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[0];
   J[110] += dqdci;      // dwdot[H2]/d[H2O]
   J[111] += -2 * dqdci; // dwdot[H]/d[H2O]
   // d()/dT
@@ -6506,8 +6500,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[1] * sc[1]) * sc[12];
-  k_f = 550000000 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -2 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 550000000 * exp(-2 * tc[0]);
+  dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[0] * sc[12];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -6530,7 +6524,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   J[22] += dqdci;      // dwdot[H2]/d[H]
   J[23] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/d[CO2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[0];
   J[264] += dqdci;      // dwdot[H2]/d[CO2]
   J[265] += -2 * dqdci; // dwdot[H]/d[CO2]
   // d()/dT
@@ -6544,8 +6538,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           (3 - 1) * sc[18] + (0.38 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[4];
-  k_f = 22000000000 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -2 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 22000000000 * exp(-2 * tc[0]);
+  dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[5];
   Kc = refCinv * exp(g_RT[1] + g_RT[4] - g_RT[5]);
@@ -6597,8 +6591,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[5] * sc[13];
-  k_f = 2244000000000 * exp(-1 * tc[0] - 0.50321666580472 * (17000) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (17000) * invT2;
+  k_f = 2244000000000 * exp(-1 * tc[0] - (8554.68331868023) * invT);
+  dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[5] * sc[11];
   Kc = refC * exp(-g_RT[1] - g_RT[11] + g_RT[13]);
@@ -6645,8 +6639,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
           sc[12] + (3 - 1) * sc[18];
   // forward
   phi_f = sc[13];
-  k_f = 187000000000 * exp(-1 * tc[0] - 0.50321666580472 * (17000) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (17000) * invT2;
+  k_f = 187000000000 * exp(-1 * tc[0] - (8554.68331868023) * invT);
+  dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[11];
   Kc = refC * exp(-g_RT[1] - g_RT[11] + g_RT[13]);
@@ -6698,8 +6692,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[2];
-  k_f = 0.05 * exp(2.67 * tc[0] - 0.50321666580472 * (6290) * invT);
-  dlnkfdT = 2.67 * invT + 0.50321666580472 * (6290) * invT2;
+  k_f = 0.05 * exp(2.67 * tc[0] - (3165.23282791169) * invT);
+  dlnkfdT = 2.67 * invT + (3165.23282791169) * invT2;
   // reverse
   phi_r = sc[1] * sc[4];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4]);
@@ -6748,8 +6742,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[6];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[4];
   Kc = exp(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]);
@@ -6798,8 +6792,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[7];
-  k_f = 80000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 80000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[13];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[7] - g_RT[13]);
@@ -6848,8 +6842,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[8];
-  k_f = 15000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 15000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[13];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[8] - g_RT[13]);
@@ -6898,8 +6892,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[9];
-  k_f = 84300000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 84300000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14]);
@@ -6948,8 +6942,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[10];
-  k_f = 1020 * exp(1.5 * tc[0] - 0.50321666580472 * (8600) * invT);
-  dlnkfdT = 1.5 * invT + 0.50321666580472 * (8600) * invT2;
+  k_f = 1020 * exp(1.5 * tc[0] - (4327.66332592059) * invT);
+  dlnkfdT = 1.5 * invT + (4327.66332592059) * invT2;
   // reverse
   phi_r = sc[4] * sc[9];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10]);
@@ -6998,8 +6992,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[13];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[11];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[13]);
@@ -7048,8 +7042,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[13];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[12];
   Kc = exp(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13]);
@@ -7098,8 +7092,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[14];
-  k_f = 39000000 * exp(0 * tc[0] - 0.50321666580472 * (3540) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3540) * invT2;
+  k_f = 39000000 * exp(-(1781.38699694871) * invT);
+  dlnkfdT = (1781.38699694871) * invT2;
   // reverse
   phi_r = sc[4] * sc[13];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14]);
@@ -7148,8 +7142,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[16];
-  k_f = 19.2 * exp(1.83 * tc[0] - 0.50321666580472 * (220) * invT);
-  dlnkfdT = 1.83 * invT + 0.50321666580472 * (220) * invT2;
+  k_f = 19.2 * exp(1.83 * tc[0] - (110.707666477038) * invT);
+  dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[9] * sc[13];
   Kc = exp(g_RT[2] - g_RT[9] - g_RT[13] + g_RT[16]);
@@ -7198,8 +7192,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[17];
-  k_f = 132000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 132000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[14];
   Kc = exp(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[17]);
@@ -7248,8 +7242,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[18];
-  k_f = 89.8 * exp(1.92 * tc[0] - 0.50321666580472 * (5690) * invT);
-  dlnkfdT = 1.92 * invT + 0.50321666580472 * (5690) * invT2;
+  k_f = 89.8 * exp(1.92 * tc[0] - (2863.30282842885) * invT);
+  dlnkfdT = 1.92 * invT + (2863.30282842885) * invT2;
   // reverse
   phi_r = sc[4] * sc[17];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]);
@@ -7298,8 +7292,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[11];
-  k_f = 2500000 * exp(0 * tc[0] - 0.50321666580472 * (47800) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (47800) * invT2;
+  k_f = 2500000 * exp(-(24053.7566254656) * invT);
+  dlnkfdT = (24053.7566254656) * invT2;
   // reverse
   phi_r = sc[2] * sc[12];
   Kc = exp(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12]);
@@ -7348,8 +7342,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[14];
-  k_f = 100000000 * exp(0 * tc[0] - 0.50321666580472 * (40000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (40000) * invT2;
+  k_f = 100000000 * exp(-(20128.6666321888) * invT);
+  dlnkfdT = (20128.6666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[13];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14]);
@@ -7398,8 +7392,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3];
-  k_f = 83000000 * exp(0 * tc[0] - 0.50321666580472 * (14413) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (14413) * invT2;
+  k_f = 83000000 * exp(-(7252.86180424342) * invT);
+  dlnkfdT = (7252.86180424342) * invT2;
   // reverse
   phi_r = sc[2] * sc[4];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]);
@@ -7448,8 +7442,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[6];
-  k_f = 28000000 * exp(0 * tc[0] - 0.50321666580472 * (1068) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (1068) * invT2;
+  k_f = 28000000 * exp(-(537.435399079441) * invT);
+  dlnkfdT = (537.435399079441) * invT2;
   // reverse
   phi_r = sc[0] * sc[3];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]);
@@ -7498,8 +7492,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[6];
-  k_f = 134000000 * exp(0 * tc[0] - 0.50321666580472 * (635) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (635) * invT2;
+  k_f = 134000000 * exp(-(319.542582785997) * invT);
+  dlnkfdT = (319.542582785997) * invT2;
   // reverse
   phi_r = (sc[4] * sc[4]);
   Kc = exp(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6]);
@@ -7537,8 +7531,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[10];
-  k_f = 660 * exp(1.62 * tc[0] - 0.50321666580472 * (10840) * invT);
-  dlnkfdT = 1.62 * invT + 0.50321666580472 * (10840) * invT2;
+  k_f = 660 * exp(1.62 * tc[0] - (5454.86865732316) * invT);
+  dlnkfdT = 1.62 * invT + (5454.86865732316) * invT2;
   // reverse
   phi_r = sc[0] * sc[9];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[10]);
@@ -7587,8 +7581,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[13];
-  k_f = 73400000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 73400000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[11];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[11] + g_RT[13]);
@@ -7637,8 +7631,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[14];
-  k_f = 23000 * exp(1.05 * tc[0] - 0.50321666580472 * (3275) * invT);
-  dlnkfdT = 1.05 * invT + 0.50321666580472 * (3275) * invT2;
+  k_f = 23000 * exp(1.05 * tc[0] - (1648.03458051046) * invT);
+  dlnkfdT = 1.05 * invT + (1648.03458051046) * invT2;
   // reverse
   phi_r = sc[0] * sc[13];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[13] + g_RT[14]);
@@ -7687,8 +7681,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[15];
-  k_f = 32000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 32000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[9];
   Kc = exp(g_RT[1] - g_RT[4] - g_RT[9] + g_RT[15]);
@@ -7737,8 +7731,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[18];
-  k_f = 115 * exp(1.9 * tc[0] - 0.50321666580472 * (7530) * invT);
-  dlnkfdT = 1.9 * invT + 0.50321666580472 * (7530) * invT2;
+  k_f = 115 * exp(1.9 * tc[0] - (3789.22149350954) * invT);
+  dlnkfdT = 1.9 * invT + (3789.22149350954) * invT2;
   // reverse
   phi_r = sc[0] * sc[17];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18]);
@@ -7787,8 +7781,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[4];
-  k_f = 216 * exp(1.51 * tc[0] - 0.50321666580472 * (3430) * invT);
-  dlnkfdT = 1.51 * invT + 0.50321666580472 * (3430) * invT2;
+  k_f = 216 * exp(1.51 * tc[0] - (1726.03316371019) * invT);
+  dlnkfdT = 1.51 * invT + (1726.03316371019) * invT2;
   // reverse
   phi_r = sc[1] * sc[5];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5]);
@@ -7837,8 +7831,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[4] * sc[4]);
-  k_f = 0.0357 * exp(2.4 * tc[0] - 0.50321666580472 * (-2110) * invT);
-  dlnkfdT = 2.4 * invT + 0.50321666580472 * (-2110) * invT2;
+  k_f = 0.0357 * exp(2.4 * tc[0] - (-1061.78716484796) * invT);
+  dlnkfdT = 2.4 * invT + (-1061.78716484796) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
   Kc = exp(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5]);
@@ -7876,8 +7870,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[6];
-  k_f = 29000000 * exp(0 * tc[0] - 0.50321666580472 * (-500) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-500) * invT2;
+  k_f = 29000000 * exp(-(-251.60833290236) * invT);
+  dlnkfdT = (-251.60833290236) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
   Kc = exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]);
@@ -7926,8 +7920,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[7];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[7] - g_RT[14]);
@@ -7976,8 +7970,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[8];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14]);
@@ -8026,8 +8020,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[9];
-  k_f = 56 * exp(1.6 * tc[0] - 0.50321666580472 * (5420) * invT);
-  dlnkfdT = 1.6 * invT + 0.50321666580472 * (5420) * invT2;
+  k_f = 56 * exp(1.6 * tc[0] - (2727.43432866158) * invT);
+  dlnkfdT = 1.6 * invT + (2727.43432866158) * invT2;
   // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[7] + g_RT[9]);
@@ -8076,8 +8070,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[9];
-  k_f = 25010000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 25010000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[8];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[8] + g_RT[9]);
@@ -8126,8 +8120,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[10];
-  k_f = 100 * exp(1.6 * tc[0] - 0.50321666580472 * (3120) * invT);
-  dlnkfdT = 1.6 * invT + 0.50321666580472 * (3120) * invT2;
+  k_f = 100 * exp(1.6 * tc[0] - (1570.03599731073) * invT);
+  dlnkfdT = 1.6 * invT + (1570.03599731073) * invT2;
   // reverse
   phi_r = sc[5] * sc[9];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10]);
@@ -8176,8 +8170,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[11];
-  k_f = 47.6 * exp(1.228 * tc[0] - 0.50321666580472 * (70) * invT);
-  dlnkfdT = 1.228 * invT + 0.50321666580472 * (70) * invT2;
+  k_f = 47.6 * exp(1.228 * tc[0] - (35.2251666063304) * invT);
+  dlnkfdT = 1.228 * invT + (35.2251666063304) * invT2;
   // reverse
   phi_r = sc[1] * sc[12];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[12]);
@@ -8226,8 +8220,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[13];
-  k_f = 50000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 50000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[11];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[13]);
@@ -8276,8 +8270,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[14];
-  k_f = 3430 * exp(1.18 * tc[0] - 0.50321666580472 * (-447) * invT);
-  dlnkfdT = 1.18 * invT + 0.50321666580472 * (-447) * invT2;
+  k_f = 3430 * exp(1.18 * tc[0] - (-224.93784961471) * invT);
+  dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[13];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[13] + g_RT[14]);
@@ -8326,8 +8320,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[18];
-  k_f = 3.54 * exp(2.12 * tc[0] - 0.50321666580472 * (870) * invT);
-  dlnkfdT = 2.12 * invT + 0.50321666580472 * (870) * invT2;
+  k_f = 3.54 * exp(2.12 * tc[0] - (437.798499250106) * invT);
+  dlnkfdT = 2.12 * invT + (437.798499250106) * invT2;
   // reverse
   phi_r = sc[5] * sc[17];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18]);
@@ -8376,8 +8370,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[7];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[7] - g_RT[14]);
@@ -8426,8 +8420,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[9];
-  k_f = 1000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 1000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[10];
   Kc = exp(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[10]);
@@ -8476,8 +8470,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[9];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[15];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15]);
@@ -8526,8 +8520,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[11];
-  k_f = 150000000 * exp(0 * tc[0] - 0.50321666580472 * (23600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (23600) * invT2;
+  k_f = 150000000 * exp(-(11875.9133129914) * invT);
+  dlnkfdT = (11875.9133129914) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12]);
@@ -8576,8 +8570,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[7];
-  k_f = 13200000 * exp(0 * tc[0] - 0.50321666580472 * (1500) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (1500) * invT2;
+  k_f = 13200000 * exp(-(754.82499870708) * invT);
+  dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[4] * sc[13];
   Kc = exp(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13]);
@@ -8626,8 +8620,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[7];
-  k_f = 0.5 * exp(2 * tc[0] - 0.50321666580472 * (7230) * invT);
-  dlnkfdT = 2 * invT + 0.50321666580472 * (7230) * invT2;
+  k_f = 0.5 * exp(2 * tc[0] - (3638.25649376812) * invT);
+  dlnkfdT = 2 * invT + (3638.25649376812) * invT2;
   // reverse
   phi_r = sc[1] * sc[9];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[7] - g_RT[9]);
@@ -8676,8 +8670,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[7] * sc[9];
-  k_f = 40000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 40000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
   Kc = exp(-g_RT[1] + g_RT[7] + g_RT[9] - g_RT[16]);
@@ -8726,8 +8720,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[7] * sc[10];
-  k_f = 2.46 * exp(2 * tc[0] - 0.50321666580472 * (8270) * invT);
-  dlnkfdT = 2 * invT + 0.50321666580472 * (8270) * invT2;
+  k_f = 2.46 * exp(2 * tc[0] - (4161.60182620503) * invT);
+  dlnkfdT = 2 * invT + (4161.60182620503) * invT2;
   // reverse
   phi_r = (sc[9] * sc[9]);
   Kc = exp(g_RT[7] - 2.000000 * g_RT[9] + g_RT[10]);
@@ -8765,8 +8759,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[19];
-  k_f = 15000000 * exp(0 * tc[0] - 0.50321666580472 * (600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (600) * invT2;
+  k_f = 15000000 * exp(-(301.929999482832) * invT);
+  dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[7] * sc[19];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19]);
@@ -8799,8 +8793,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[20];
-  k_f = 9000000 * exp(0 * tc[0] - 0.50321666580472 * (600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (600) * invT2;
+  k_f = 9000000 * exp(-(301.929999482832) * invT);
+  dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[7] * sc[20];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20]);
@@ -8833,8 +8827,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[8];
-  k_f = 28000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 28000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[4] * sc[11];
   Kc = refC * exp(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[8] - g_RT[11]);
@@ -8897,8 +8891,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[8];
-  k_f = 12000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 12000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[11];
   Kc = exp(g_RT[3] - g_RT[5] + g_RT[8] - g_RT[11]);
@@ -8947,8 +8941,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[8];
-  k_f = 70000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 70000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[9];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[8] - g_RT[9]);
@@ -8997,8 +8991,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[5] * sc[8];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8]);
@@ -9031,8 +9025,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[9];
-  k_f = 12000000 * exp(0 * tc[0] - 0.50321666580472 * (-570) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-570) * invT2;
+  k_f = 12000000 * exp(-(-286.83349950869) * invT);
+  dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = sc[1] * sc[16];
   Kc = exp(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16]);
@@ -9081,8 +9075,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[10];
-  k_f = 16000000 * exp(0 * tc[0] - 0.50321666580472 * (-570) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-570) * invT2;
+  k_f = 16000000 * exp(-(-286.83349950869) * invT);
+  dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = (sc[9] * sc[9]);
   Kc = exp(g_RT[8] - 2.000000 * g_RT[9] + g_RT[10]);
@@ -9120,8 +9114,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[11];
-  k_f = 9000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 9000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[7] * sc[11];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[11] - g_RT[11]);
@@ -9154,8 +9148,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[12];
-  k_f = 7000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 7000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[7] * sc[12];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[12] - g_RT[12]);
@@ -9188,8 +9182,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[12];
-  k_f = 14000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 14000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[14];
   Kc = exp(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14]);
@@ -9238,8 +9232,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[9];
-  k_f = 26750000 * exp(0 * tc[0] - 0.50321666580472 * (28800) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (28800) * invT2;
+  k_f = 26750000 * exp(-(14492.6399751759) * invT);
+  dlnkfdT = (14492.6399751759) * invT2;
   // reverse
   phi_r = sc[2] * sc[15];
   Kc = exp(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15]);
@@ -9288,8 +9282,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[9];
-  k_f = 36000 * exp(0 * tc[0] - 0.50321666580472 * (8940) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (8940) * invT2;
+  k_f = 36000 * exp(-(4498.75699229419) * invT);
+  dlnkfdT = (4498.75699229419) * invT2;
   // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14]);
@@ -9338,8 +9332,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[9] * sc[9]);
-  k_f = 4990000 * exp(0.1 * tc[0] - 0.50321666580472 * (10600) * invT);
-  dlnkfdT = 0.1 * invT + 0.50321666580472 * (10600) * invT2;
+  k_f = 4990000 * exp(0.1 * tc[0] - (5334.09665753003) * invT);
+  dlnkfdT = 0.1 * invT + (5334.09665753003) * invT2;
   // reverse
   phi_r = sc[1] * sc[17];
   Kc = exp(-g_RT[1] + 2.000000 * g_RT[9] - g_RT[17]);
@@ -9377,8 +9371,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[13];
-  k_f = 26480000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 26480000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[11];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[11] + g_RT[13]);
@@ -9427,8 +9421,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[14];
-  k_f = 0.00332 * exp(2.81 * tc[0] - 0.50321666580472 * (5860) * invT);
-  dlnkfdT = 2.81 * invT + 0.50321666580472 * (5860) * invT2;
+  k_f = 0.00332 * exp(2.81 * tc[0] - (2948.84966161566) * invT);
+  dlnkfdT = 2.81 * invT + (2948.84966161566) * invT2;
   // reverse
   phi_r = sc[10] * sc[13];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[13] + g_RT[14]);
@@ -9477,8 +9471,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[18];
-  k_f = 6.14 * exp(1.74 * tc[0] - 0.50321666580472 * (10450) * invT);
-  dlnkfdT = 1.74 * invT + 0.50321666580472 * (10450) * invT2;
+  k_f = 6.14 * exp(1.74 * tc[0] - (5258.61415765932) * invT);
+  dlnkfdT = 1.74 * invT + (5258.61415765932) * invT2;
   // reverse
   phi_r = sc[10] * sc[17];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[17] + g_RT[18]);
@@ -9527,8 +9521,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[13];
-  k_f = 7600000 * exp(0 * tc[0] - 0.50321666580472 * (400) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (400) * invT2;
+  k_f = 7600000 * exp(-(201.286666321888) * invT);
+  dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[11];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13]);
@@ -9577,8 +9571,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[15];
-  k_f = 4.28e-19 * exp(7.6 * tc[0] - 0.50321666580472 * (-3530) * invT);
-  dlnkfdT = 7.6 * invT + 0.50321666580472 * (-3530) * invT2;
+  k_f = 4.28e-19 * exp(7.6 * tc[0] - (-1776.35483029066) * invT);
+  dlnkfdT = 7.6 * invT + (-1776.35483029066) * invT2;
   // reverse
   phi_r = sc[6] * sc[14];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15]);
@@ -9627,8 +9621,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[17];
-  k_f = 840000 * exp(0 * tc[0] - 0.50321666580472 * (3875) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3875) * invT2;
+  k_f = 840000 * exp(-(1949.96457999329) * invT);
+  dlnkfdT = (1949.96457999329) * invT2;
   // reverse
   phi_r = sc[6] * sc[16];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]);
@@ -9788,13 +9782,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[7];
-  k_f = 25000000000 * exp(-0.8 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.8 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 25000000000 * exp(-0.8 * tc[0]);
+  dlnkfdT = -0.8 * invT;
   // pressure-fall-off
-  k_0 = 3.2e+27 * exp(-3.14 * tc[0] - 0.50321666580472 * (1230) * invT);
+  k_0 = 3.2e+27 * exp(-3.14 * tc[0] - (618.956498939805) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -3.14 * invT + 0.50321666580472 * (1230) * invT2;
+  dlnk0dT = -3.14 * invT + (618.956498939805) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -9809,7 +9803,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 78 - Fcent2 / 1995 + Fcent3 * 5590 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -9928,13 +9922,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[9];
-  k_f = 12700000000 * exp(-0.63 * tc[0] - 0.50321666580472 * (383) * invT);
-  dlnkfdT = -0.63 * invT + 0.50321666580472 * (383) * invT2;
+  k_f = 12700000000 * exp(-0.63 * tc[0] - (192.731983003208) * invT);
+  dlnkfdT = -0.63 * invT + (192.731983003208) * invT2;
   // pressure-fall-off
-  k_0 = 2.477e+33 * exp(-4.76 * tc[0] - 0.50321666580472 * (2440) * invT);
+  k_0 = 2.477e+33 * exp(-4.76 * tc[0] - (1227.84866456352) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -4.76 * invT + 0.50321666580472 * (2440) * invT2;
+  dlnk0dT = -4.76 * invT + (1227.84866456352) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -9949,7 +9943,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 74 - Fcent2 / 2941 + Fcent3 * 6964 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10063,13 +10057,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[13];
-  k_f = 1090000 * exp(0.48 * tc[0] - 0.50321666580472 * (-260) * invT);
-  dlnkfdT = 0.48 * invT + 0.50321666580472 * (-260) * invT2;
+  k_f = 1090000 * exp(0.48 * tc[0] - (-130.836333109227) * invT);
+  dlnkfdT = 0.48 * invT + (-130.836333109227) * invT2;
   // pressure-fall-off
-  k_0 = 1.35e+24 * exp(-2.57 * tc[0] - 0.50321666580472 * (1425) * invT);
+  k_0 = 1.35e+24 * exp(-2.57 * tc[0] - (717.083748771726) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -2.57 * invT + 0.50321666580472 * (1425) * invT2;
+  dlnk0dT = -2.57 * invT + (717.083748771726) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10084,7 +10078,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 271 - Fcent2 / 2755 + Fcent3 * 6570 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10203,13 +10197,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18];
   // forward
   phi_f = sc[1] * sc[14];
-  k_f = 540000 * exp(0.454 * tc[0] - 0.50321666580472 * (2600) * invT);
-  dlnkfdT = 0.454 * invT + 0.50321666580472 * (2600) * invT2;
+  k_f = 540000 * exp(0.454 * tc[0] - (1308.36333109227) * invT);
+  dlnkfdT = 0.454 * invT + (1308.36333109227) * invT2;
   // pressure-fall-off
-  k_0 = 2.2e+30 * exp(-4.8 * tc[0] - 0.50321666580472 * (5560) * invT);
+  k_0 = 2.2e+30 * exp(-4.8 * tc[0] - (2797.88466187424) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -4.8 * invT + 0.50321666580472 * (5560) * invT2;
+  dlnk0dT = -4.8 * invT + (2797.88466187424) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10224,7 +10218,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 94 - Fcent2 / 1555 + Fcent3 * 4200 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10338,13 +10332,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[16];
-  k_f = 1080000 * exp(0.454 * tc[0] - 0.50321666580472 * (1820) * invT);
-  dlnkfdT = 0.454 * invT + 0.50321666580472 * (1820) * invT2;
+  k_f = 1080000 * exp(0.454 * tc[0] - (915.85433176459) * invT);
+  dlnkfdT = 0.454 * invT + (915.85433176459) * invT2;
   // pressure-fall-off
-  k_0 = 1.2e+42 * exp(-7.62 * tc[0] - 0.50321666580472 * (6970) * invT);
+  k_0 = 1.2e+42 * exp(-7.62 * tc[0] - (3507.4201606589) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -7.62 * invT + 0.50321666580472 * (6970) * invT2;
+  dlnk0dT = -7.62 * invT + (3507.4201606589) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10359,7 +10353,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 210 - Fcent2 / 984 + Fcent3 * 4374 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10478,13 +10472,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[17];
-  k_f = 521000000000 * exp(-0.99 * tc[0] - 0.50321666580472 * (1580) * invT);
-  dlnkfdT = -0.99 * invT + 0.50321666580472 * (1580) * invT2;
+  k_f = 521000000000 * exp(-0.99 * tc[0] - (795.082331971457) * invT);
+  dlnkfdT = -0.99 * invT + (795.082331971457) * invT2;
   // pressure-fall-off
-  k_0 = 1.99e+41 * exp(-7.08 * tc[0] - 0.50321666580472 * (6685) * invT);
+  k_0 = 1.99e+41 * exp(-7.08 * tc[0] - (3364.00341090455) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -7.08 * invT + 0.50321666580472 * (6685) * invT2;
+  dlnk0dT = -7.08 * invT + (3364.00341090455) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10499,7 +10493,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 125 - Fcent2 / 2219 + Fcent3 * 6882 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10613,13 +10607,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[0] * sc[11];
-  k_f = 43 * exp(1.5 * tc[0] - 0.50321666580472 * (79600) * invT);
-  dlnkfdT = 1.5 * invT + 0.50321666580472 * (79600) * invT2;
+  k_f = 43 * exp(1.5 * tc[0] - (40056.0465980557) * invT);
+  dlnkfdT = 1.5 * invT + (40056.0465980557) * invT2;
   // pressure-fall-off
-  k_0 = 5.07e+27 * exp(-3.42 * tc[0] - 0.50321666580472 * (84350) * invT);
+  k_0 = 5.07e+27 * exp(-3.42 * tc[0] - (42446.3257606281) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -3.42 * invT + 0.50321666580472 * (84350) * invT2;
+  dlnk0dT = -3.42 * invT + (42446.3257606281) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10634,7 +10628,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 197 - Fcent2 / 1540 + Fcent3 * 10300 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10743,13 +10737,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = (sc[9] * sc[9]);
-  k_f = 21200000000 * exp(-0.97 * tc[0] - 0.50321666580472 * (620) * invT);
-  dlnkfdT = -0.97 * invT + 0.50321666580472 * (620) * invT2;
+  k_f = 21200000000 * exp(-0.97 * tc[0] - (311.994332798926) * invT);
+  dlnkfdT = -0.97 * invT + (311.994332798926) * invT2;
   // pressure-fall-off
-  k_0 = 1.77e+50 * exp(-9.67 * tc[0] - 0.50321666580472 * (6220) * invT);
+  k_0 = 1.77e+50 * exp(-9.67 * tc[0] - (3130.00766130536) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
-  dlnk0dT = -9.67 * invT + 0.50321666580472 * (6220) * invT2;
+  dlnk0dT = -9.67 * invT + (3130.00766130536) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
   // Troe form
@@ -10764,7 +10758,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   troePr_den = 1.0 / (troe_n - .14 * (troe_c + logPr));
   troePr = (troe_c + logPr) * troePr_den;
   troe = 1.0 / (1.0 + troePr * troePr);
-  F = pow(10.0, logFcent * troe);
+  F = exp(M_LN10 * logFcent * troe);
   dlogFcentdT =
     log10e / Fcent * (-Fcent1 / 151 - Fcent2 / 1038 + Fcent3 * 4970 * invT2);
   dlogFdcn_fac = 2.0 * logFcent * troe * troe * troePr * troePr_den;
@@ -10862,8 +10856,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18] + (0.7 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[2];
-  k_f = 500000 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 500000 * exp(-1 * tc[0]);
+  dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[4];
   Kc = refCinv * exp(g_RT[1] + g_RT[2] - g_RT[4]);
@@ -10972,8 +10966,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           (0.5 - 1) * sc[20];
   // forward
   phi_f = sc[2] * sc[11];
-  k_f = 602 * exp(0 * tc[0] - 0.50321666580472 * (3000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3000) * invT2;
+  k_f = 602 * exp(-(1509.64999741416) * invT);
+  dlnkfdT = (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[12];
   Kc = refCinv * exp(g_RT[2] + g_RT[11] - g_RT[12]);
@@ -11077,8 +11071,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           (0 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[3];
-  k_f = 2800000 * exp(-0.86 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.86 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 2800000 * exp(-0.86 * tc[0]);
+  dlnkfdT = -0.86 * invT;
   // reverse
   phi_r = sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -11175,8 +11169,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * (sc[3] * sc[3]);
-  k_f = 300000000 * exp(-1.72 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.72 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 300000000 * exp(-1.72 * tc[0]);
+  dlnkfdT = -1.72 * invT;
   // reverse
   phi_r = sc[3] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -11192,7 +11186,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * pow(sc[3], 2.000000);
+  dqdci = +k_f * sc[3] * sc[3];
   J[23] -= dqdci; // dwdot[H]/d[H]
   J[25] -= dqdci; // dwdot[O2]/d[H]
   J[28] += dqdci; // dwdot[HO2]/d[H]
@@ -11215,8 +11209,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[5];
-  k_f = 9380000 * exp(-0.76 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.76 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 9380000 * exp(-0.76 * tc[0]);
+  dlnkfdT = -0.76 * invT;
   // reverse
   phi_r = sc[5] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -11260,8 +11254,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[19];
-  k_f = 375000000 * exp(-1.72 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.72 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 375000000 * exp(-1.72 * tc[0]);
+  dlnkfdT = -1.72 * invT;
   // reverse
   phi_r = sc[6] * sc[19];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -11305,8 +11299,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3] * sc[20];
-  k_f = 700000 * exp(-0.8 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.8 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 700000 * exp(-0.8 * tc[0]);
+  dlnkfdT = -0.8 * invT;
   // reverse
   phi_r = sc[6] * sc[20];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
@@ -11353,8 +11347,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           (0 - 1) * sc[12] + (3 - 1) * sc[18] + (0.63 - 1) * sc[20];
   // forward
   phi_f = (sc[1] * sc[1]);
-  k_f = 1000000 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 1000000 * exp(-1 * tc[0]);
+  dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[0];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -11432,8 +11426,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * (sc[1] * sc[1]);
-  k_f = 90000 * exp(-0.6 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -0.6 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 90000 * exp(-0.6 * tc[0]);
+  dlnkfdT = -0.6 * invT;
   // reverse
   phi_r = (sc[0] * sc[0]);
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -11448,7 +11442,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * 2.000000 * sc[0];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
@@ -11463,8 +11457,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[1] * sc[1]) * sc[5];
-  k_f = 60000000 * exp(-1.25 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -1.25 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 60000000 * exp(-1.25 * tc[0]);
+  dlnkfdT = -1.25 * invT;
   // reverse
   phi_r = sc[0] * sc[5];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -11487,7 +11481,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[22] += dqdci;      // dwdot[H2]/d[H]
   J[23] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[0];
   J[110] += dqdci;      // dwdot[H2]/d[H2O]
   J[111] += -2 * dqdci; // dwdot[H]/d[H2O]
   // d()/dT
@@ -11498,8 +11492,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[1] * sc[1]) * sc[12];
-  k_f = 550000000 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -2 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 550000000 * exp(-2 * tc[0]);
+  dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[0] * sc[12];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
@@ -11522,7 +11516,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   J[22] += dqdci;      // dwdot[H2]/d[H]
   J[23] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/d[CO2]
-  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  dqdci = +k_f * sc[1] * sc[1] - k_r * sc[0];
   J[264] += dqdci;      // dwdot[H2]/d[CO2]
   J[265] += -2 * dqdci; // dwdot[H]/d[CO2]
   // d()/dT
@@ -11536,8 +11530,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           (3 - 1) * sc[18] + (0.38 - 1) * sc[20];
   // forward
   phi_f = sc[1] * sc[4];
-  k_f = 22000000000 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = -2 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 22000000000 * exp(-2 * tc[0]);
+  dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[5];
   Kc = refCinv * exp(g_RT[1] + g_RT[4] - g_RT[5]);
@@ -11627,8 +11621,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[5] * sc[13];
-  k_f = 2244000000000 * exp(-1 * tc[0] - 0.50321666580472 * (17000) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (17000) * invT2;
+  k_f = 2244000000000 * exp(-1 * tc[0] - (8554.68331868023) * invT);
+  dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[5] * sc[11];
   Kc = refC * exp(-g_RT[1] - g_RT[11] + g_RT[13]);
@@ -11675,8 +11669,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
           sc[12] + (3 - 1) * sc[18];
   // forward
   phi_f = sc[13];
-  k_f = 187000000000 * exp(-1 * tc[0] - 0.50321666580472 * (17000) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * (17000) * invT2;
+  k_f = 187000000000 * exp(-1 * tc[0] - (8554.68331868023) * invT);
+  dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[11];
   Kc = refC * exp(-g_RT[1] - g_RT[11] + g_RT[13]);
@@ -11770,8 +11764,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[2];
-  k_f = 0.05 * exp(2.67 * tc[0] - 0.50321666580472 * (6290) * invT);
-  dlnkfdT = 2.67 * invT + 0.50321666580472 * (6290) * invT2;
+  k_f = 0.05 * exp(2.67 * tc[0] - (3165.23282791169) * invT);
+  dlnkfdT = 2.67 * invT + (3165.23282791169) * invT2;
   // reverse
   phi_r = sc[1] * sc[4];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4]);
@@ -11820,8 +11814,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[6];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[4];
   Kc = exp(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]);
@@ -11870,8 +11864,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[7];
-  k_f = 80000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 80000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[13];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[7] - g_RT[13]);
@@ -11920,8 +11914,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[8];
-  k_f = 15000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 15000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[13];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[8] - g_RT[13]);
@@ -11970,8 +11964,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[9];
-  k_f = 84300000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 84300000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14]);
@@ -12020,8 +12014,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[10];
-  k_f = 1020 * exp(1.5 * tc[0] - 0.50321666580472 * (8600) * invT);
-  dlnkfdT = 1.5 * invT + 0.50321666580472 * (8600) * invT2;
+  k_f = 1020 * exp(1.5 * tc[0] - (4327.66332592059) * invT);
+  dlnkfdT = 1.5 * invT + (4327.66332592059) * invT2;
   // reverse
   phi_r = sc[4] * sc[9];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10]);
@@ -12070,8 +12064,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[13];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[11];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[13]);
@@ -12120,8 +12114,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[13];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[12];
   Kc = exp(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13]);
@@ -12170,8 +12164,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[14];
-  k_f = 39000000 * exp(0 * tc[0] - 0.50321666580472 * (3540) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3540) * invT2;
+  k_f = 39000000 * exp(-(1781.38699694871) * invT);
+  dlnkfdT = (1781.38699694871) * invT2;
   // reverse
   phi_r = sc[4] * sc[13];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14]);
@@ -12220,8 +12214,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[16];
-  k_f = 19.2 * exp(1.83 * tc[0] - 0.50321666580472 * (220) * invT);
-  dlnkfdT = 1.83 * invT + 0.50321666580472 * (220) * invT2;
+  k_f = 19.2 * exp(1.83 * tc[0] - (110.707666477038) * invT);
+  dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[9] * sc[13];
   Kc = exp(g_RT[2] - g_RT[9] - g_RT[13] + g_RT[16]);
@@ -12270,8 +12264,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[17];
-  k_f = 132000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 132000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[14];
   Kc = exp(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[17]);
@@ -12320,8 +12314,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[2] * sc[18];
-  k_f = 89.8 * exp(1.92 * tc[0] - 0.50321666580472 * (5690) * invT);
-  dlnkfdT = 1.92 * invT + 0.50321666580472 * (5690) * invT2;
+  k_f = 89.8 * exp(1.92 * tc[0] - (2863.30282842885) * invT);
+  dlnkfdT = 1.92 * invT + (2863.30282842885) * invT2;
   // reverse
   phi_r = sc[4] * sc[17];
   Kc = exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]);
@@ -12370,8 +12364,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[11];
-  k_f = 2500000 * exp(0 * tc[0] - 0.50321666580472 * (47800) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (47800) * invT2;
+  k_f = 2500000 * exp(-(24053.7566254656) * invT);
+  dlnkfdT = (24053.7566254656) * invT2;
   // reverse
   phi_r = sc[2] * sc[12];
   Kc = exp(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12]);
@@ -12420,8 +12414,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[14];
-  k_f = 100000000 * exp(0 * tc[0] - 0.50321666580472 * (40000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (40000) * invT2;
+  k_f = 100000000 * exp(-(20128.6666321888) * invT);
+  dlnkfdT = (20128.6666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[13];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14]);
@@ -12470,8 +12464,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[3];
-  k_f = 83000000 * exp(0 * tc[0] - 0.50321666580472 * (14413) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (14413) * invT2;
+  k_f = 83000000 * exp(-(7252.86180424342) * invT);
+  dlnkfdT = (7252.86180424342) * invT2;
   // reverse
   phi_r = sc[2] * sc[4];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]);
@@ -12520,8 +12514,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[6];
-  k_f = 28000000 * exp(0 * tc[0] - 0.50321666580472 * (1068) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (1068) * invT2;
+  k_f = 28000000 * exp(-(537.435399079441) * invT);
+  dlnkfdT = (537.435399079441) * invT2;
   // reverse
   phi_r = sc[0] * sc[3];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]);
@@ -12570,8 +12564,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[6];
-  k_f = 134000000 * exp(0 * tc[0] - 0.50321666580472 * (635) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (635) * invT2;
+  k_f = 134000000 * exp(-(319.542582785997) * invT);
+  dlnkfdT = (319.542582785997) * invT2;
   // reverse
   phi_r = (sc[4] * sc[4]);
   Kc = exp(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6]);
@@ -12609,8 +12603,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[10];
-  k_f = 660 * exp(1.62 * tc[0] - 0.50321666580472 * (10840) * invT);
-  dlnkfdT = 1.62 * invT + 0.50321666580472 * (10840) * invT2;
+  k_f = 660 * exp(1.62 * tc[0] - (5454.86865732316) * invT);
+  dlnkfdT = 1.62 * invT + (5454.86865732316) * invT2;
   // reverse
   phi_r = sc[0] * sc[9];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[10]);
@@ -12659,8 +12653,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[13];
-  k_f = 73400000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 73400000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[11];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[11] + g_RT[13]);
@@ -12709,8 +12703,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[14];
-  k_f = 23000 * exp(1.05 * tc[0] - 0.50321666580472 * (3275) * invT);
-  dlnkfdT = 1.05 * invT + 0.50321666580472 * (3275) * invT2;
+  k_f = 23000 * exp(1.05 * tc[0] - (1648.03458051046) * invT);
+  dlnkfdT = 1.05 * invT + (1648.03458051046) * invT2;
   // reverse
   phi_r = sc[0] * sc[13];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[13] + g_RT[14]);
@@ -12759,8 +12753,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[15];
-  k_f = 32000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 32000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[9];
   Kc = exp(g_RT[1] - g_RT[4] - g_RT[9] + g_RT[15]);
@@ -12809,8 +12803,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[1] * sc[18];
-  k_f = 115 * exp(1.9 * tc[0] - 0.50321666580472 * (7530) * invT);
-  dlnkfdT = 1.9 * invT + 0.50321666580472 * (7530) * invT2;
+  k_f = 115 * exp(1.9 * tc[0] - (3789.22149350954) * invT);
+  dlnkfdT = 1.9 * invT + (3789.22149350954) * invT2;
   // reverse
   phi_r = sc[0] * sc[17];
   Kc = exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18]);
@@ -12859,8 +12853,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[4];
-  k_f = 216 * exp(1.51 * tc[0] - 0.50321666580472 * (3430) * invT);
-  dlnkfdT = 1.51 * invT + 0.50321666580472 * (3430) * invT2;
+  k_f = 216 * exp(1.51 * tc[0] - (1726.03316371019) * invT);
+  dlnkfdT = 1.51 * invT + (1726.03316371019) * invT2;
   // reverse
   phi_r = sc[1] * sc[5];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5]);
@@ -12909,8 +12903,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[4] * sc[4]);
-  k_f = 0.0357 * exp(2.4 * tc[0] - 0.50321666580472 * (-2110) * invT);
-  dlnkfdT = 2.4 * invT + 0.50321666580472 * (-2110) * invT2;
+  k_f = 0.0357 * exp(2.4 * tc[0] - (-1061.78716484796) * invT);
+  dlnkfdT = 2.4 * invT + (-1061.78716484796) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
   Kc = exp(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5]);
@@ -12948,8 +12942,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[6];
-  k_f = 29000000 * exp(0 * tc[0] - 0.50321666580472 * (-500) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-500) * invT2;
+  k_f = 29000000 * exp(-(-251.60833290236) * invT);
+  dlnkfdT = (-251.60833290236) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
   Kc = exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]);
@@ -12998,8 +12992,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[7];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[7] - g_RT[14]);
@@ -13048,8 +13042,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[8];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14]);
@@ -13098,8 +13092,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[9];
-  k_f = 56 * exp(1.6 * tc[0] - 0.50321666580472 * (5420) * invT);
-  dlnkfdT = 1.6 * invT + 0.50321666580472 * (5420) * invT2;
+  k_f = 56 * exp(1.6 * tc[0] - (2727.43432866158) * invT);
+  dlnkfdT = 1.6 * invT + (2727.43432866158) * invT2;
   // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[7] + g_RT[9]);
@@ -13148,8 +13142,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[9];
-  k_f = 25010000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 25010000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[8];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[8] + g_RT[9]);
@@ -13198,8 +13192,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[10];
-  k_f = 100 * exp(1.6 * tc[0] - 0.50321666580472 * (3120) * invT);
-  dlnkfdT = 1.6 * invT + 0.50321666580472 * (3120) * invT2;
+  k_f = 100 * exp(1.6 * tc[0] - (1570.03599731073) * invT);
+  dlnkfdT = 1.6 * invT + (1570.03599731073) * invT2;
   // reverse
   phi_r = sc[5] * sc[9];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10]);
@@ -13248,8 +13242,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[11];
-  k_f = 47.6 * exp(1.228 * tc[0] - 0.50321666580472 * (70) * invT);
-  dlnkfdT = 1.228 * invT + 0.50321666580472 * (70) * invT2;
+  k_f = 47.6 * exp(1.228 * tc[0] - (35.2251666063304) * invT);
+  dlnkfdT = 1.228 * invT + (35.2251666063304) * invT2;
   // reverse
   phi_r = sc[1] * sc[12];
   Kc = exp(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[12]);
@@ -13298,8 +13292,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[13];
-  k_f = 50000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 50000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[11];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[13]);
@@ -13348,8 +13342,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[14];
-  k_f = 3430 * exp(1.18 * tc[0] - 0.50321666580472 * (-447) * invT);
-  dlnkfdT = 1.18 * invT + 0.50321666580472 * (-447) * invT2;
+  k_f = 3430 * exp(1.18 * tc[0] - (-224.93784961471) * invT);
+  dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[13];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[13] + g_RT[14]);
@@ -13398,8 +13392,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[4] * sc[18];
-  k_f = 3.54 * exp(2.12 * tc[0] - 0.50321666580472 * (870) * invT);
-  dlnkfdT = 2.12 * invT + 0.50321666580472 * (870) * invT2;
+  k_f = 3.54 * exp(2.12 * tc[0] - (437.798499250106) * invT);
+  dlnkfdT = 2.12 * invT + (437.798499250106) * invT2;
   // reverse
   phi_r = sc[5] * sc[17];
   Kc = exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18]);
@@ -13448,8 +13442,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[7];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[7] - g_RT[14]);
@@ -13498,8 +13492,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[9];
-  k_f = 1000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 1000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[10];
   Kc = exp(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[10]);
@@ -13548,8 +13542,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[9];
-  k_f = 20000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 20000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[15];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15]);
@@ -13598,8 +13592,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[6] * sc[11];
-  k_f = 150000000 * exp(0 * tc[0] - 0.50321666580472 * (23600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (23600) * invT2;
+  k_f = 150000000 * exp(-(11875.9133129914) * invT);
+  dlnkfdT = (11875.9133129914) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
   Kc = exp(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12]);
@@ -13648,8 +13642,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[7];
-  k_f = 13200000 * exp(0 * tc[0] - 0.50321666580472 * (1500) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (1500) * invT2;
+  k_f = 13200000 * exp(-(754.82499870708) * invT);
+  dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[4] * sc[13];
   Kc = exp(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13]);
@@ -13698,8 +13692,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[7];
-  k_f = 0.5 * exp(2 * tc[0] - 0.50321666580472 * (7230) * invT);
-  dlnkfdT = 2 * invT + 0.50321666580472 * (7230) * invT2;
+  k_f = 0.5 * exp(2 * tc[0] - (3638.25649376812) * invT);
+  dlnkfdT = 2 * invT + (3638.25649376812) * invT2;
   // reverse
   phi_r = sc[1] * sc[9];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[7] - g_RT[9]);
@@ -13748,8 +13742,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[7] * sc[9];
-  k_f = 40000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 40000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
   Kc = exp(-g_RT[1] + g_RT[7] + g_RT[9] - g_RT[16]);
@@ -13798,8 +13792,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[7] * sc[10];
-  k_f = 2.46 * exp(2 * tc[0] - 0.50321666580472 * (8270) * invT);
-  dlnkfdT = 2 * invT + 0.50321666580472 * (8270) * invT2;
+  k_f = 2.46 * exp(2 * tc[0] - (4161.60182620503) * invT);
+  dlnkfdT = 2 * invT + (4161.60182620503) * invT2;
   // reverse
   phi_r = (sc[9] * sc[9]);
   Kc = exp(g_RT[7] - 2.000000 * g_RT[9] + g_RT[10]);
@@ -13837,8 +13831,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[19];
-  k_f = 15000000 * exp(0 * tc[0] - 0.50321666580472 * (600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (600) * invT2;
+  k_f = 15000000 * exp(-(301.929999482832) * invT);
+  dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[7] * sc[19];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19]);
@@ -13871,8 +13865,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[20];
-  k_f = 9000000 * exp(0 * tc[0] - 0.50321666580472 * (600) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (600) * invT2;
+  k_f = 9000000 * exp(-(301.929999482832) * invT);
+  dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[7] * sc[20];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20]);
@@ -13905,8 +13899,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[8];
-  k_f = 28000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 28000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[4] * sc[11];
   Kc = refC * exp(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[8] - g_RT[11]);
@@ -13969,8 +13963,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[8];
-  k_f = 12000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 12000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[11];
   Kc = exp(g_RT[3] - g_RT[5] + g_RT[8] - g_RT[11]);
@@ -14019,8 +14013,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[0] * sc[8];
-  k_f = 70000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 70000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[9];
   Kc = exp(g_RT[0] - g_RT[1] + g_RT[8] - g_RT[9]);
@@ -14069,8 +14063,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[5] * sc[8];
-  k_f = 30000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 30000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8]);
@@ -14103,8 +14097,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[9];
-  k_f = 12000000 * exp(0 * tc[0] - 0.50321666580472 * (-570) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-570) * invT2;
+  k_f = 12000000 * exp(-(-286.83349950869) * invT);
+  dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = sc[1] * sc[16];
   Kc = exp(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16]);
@@ -14153,8 +14147,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[10];
-  k_f = 16000000 * exp(0 * tc[0] - 0.50321666580472 * (-570) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (-570) * invT2;
+  k_f = 16000000 * exp(-(-286.83349950869) * invT);
+  dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = (sc[9] * sc[9]);
   Kc = exp(g_RT[8] - 2.000000 * g_RT[9] + g_RT[10]);
@@ -14192,8 +14186,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[11];
-  k_f = 9000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 9000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[7] * sc[11];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[11] - g_RT[11]);
@@ -14226,8 +14220,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[12];
-  k_f = 7000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 7000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[7] * sc[12];
   Kc = exp(-g_RT[7] + g_RT[8] + g_RT[12] - g_RT[12]);
@@ -14260,8 +14254,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[8] * sc[12];
-  k_f = 14000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 14000000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[14];
   Kc = exp(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14]);
@@ -14310,8 +14304,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[9];
-  k_f = 26750000 * exp(0 * tc[0] - 0.50321666580472 * (28800) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (28800) * invT2;
+  k_f = 26750000 * exp(-(14492.6399751759) * invT);
+  dlnkfdT = (14492.6399751759) * invT2;
   // reverse
   phi_r = sc[2] * sc[15];
   Kc = exp(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15]);
@@ -14360,8 +14354,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[9];
-  k_f = 36000 * exp(0 * tc[0] - 0.50321666580472 * (8940) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (8940) * invT2;
+  k_f = 36000 * exp(-(4498.75699229419) * invT);
+  dlnkfdT = (4498.75699229419) * invT2;
   // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14]);
@@ -14410,8 +14404,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = (sc[9] * sc[9]);
-  k_f = 4990000 * exp(0.1 * tc[0] - 0.50321666580472 * (10600) * invT);
-  dlnkfdT = 0.1 * invT + 0.50321666580472 * (10600) * invT2;
+  k_f = 4990000 * exp(0.1 * tc[0] - (5334.09665753003) * invT);
+  dlnkfdT = 0.1 * invT + (5334.09665753003) * invT2;
   // reverse
   phi_r = sc[1] * sc[17];
   Kc = exp(-g_RT[1] + 2.000000 * g_RT[9] - g_RT[17]);
@@ -14449,8 +14443,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[13];
-  k_f = 26480000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
+  k_f = 26480000;
+  dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[11];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[11] + g_RT[13]);
@@ -14499,8 +14493,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[14];
-  k_f = 0.00332 * exp(2.81 * tc[0] - 0.50321666580472 * (5860) * invT);
-  dlnkfdT = 2.81 * invT + 0.50321666580472 * (5860) * invT2;
+  k_f = 0.00332 * exp(2.81 * tc[0] - (2948.84966161566) * invT);
+  dlnkfdT = 2.81 * invT + (2948.84966161566) * invT2;
   // reverse
   phi_r = sc[10] * sc[13];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[13] + g_RT[14]);
@@ -14549,8 +14543,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[9] * sc[18];
-  k_f = 6.14 * exp(1.74 * tc[0] - 0.50321666580472 * (10450) * invT);
-  dlnkfdT = 1.74 * invT + 0.50321666580472 * (10450) * invT2;
+  k_f = 6.14 * exp(1.74 * tc[0] - (5258.61415765932) * invT);
+  dlnkfdT = 1.74 * invT + (5258.61415765932) * invT2;
   // reverse
   phi_r = sc[10] * sc[17];
   Kc = exp(g_RT[9] - g_RT[10] - g_RT[17] + g_RT[18]);
@@ -14599,8 +14593,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[13];
-  k_f = 7600000 * exp(0 * tc[0] - 0.50321666580472 * (400) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (400) * invT2;
+  k_f = 7600000 * exp(-(201.286666321888) * invT);
+  dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[11];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13]);
@@ -14649,8 +14643,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[15];
-  k_f = 4.28e-19 * exp(7.6 * tc[0] - 0.50321666580472 * (-3530) * invT);
-  dlnkfdT = 7.6 * invT + 0.50321666580472 * (-3530) * invT2;
+  k_f = 4.28e-19 * exp(7.6 * tc[0] - (-1776.35483029066) * invT);
+  dlnkfdT = 7.6 * invT + (-1776.35483029066) * invT2;
   // reverse
   phi_r = sc[6] * sc[14];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15]);
@@ -14699,8 +14693,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // a non-third-body and non-pressure-fall-off reaction
   // forward
   phi_f = sc[3] * sc[17];
-  k_f = 840000 * exp(0 * tc[0] - 0.50321666580472 * (3875) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * (3875) * invT2;
+  k_f = 840000 * exp(-(1949.96457999329) * invT);
+  dlnkfdT = (1949.96457999329) * invT2;
   // reverse
   phi_r = sc[6] * sc[16];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]);
@@ -17192,18 +17186,18 @@ GET_CRITPARAMS(
 
   // species 1: H
   Tci[1] = 1.316 * EPS[1];
-  ai[1] = (5.55 * avogadro * avogadro * EPS[1] * boltzmann *
-           pow(1e-8 * SIG[1], 3.0)) /
+  ai[1] = (5.55 * avogadro * avogadro * EPS[1] * boltzmann * 1e-24 * SIG[1] *
+           SIG[1] * SIG[1]) /
           (wt[1] * wt[1]);
-  bi[1] = 0.855 * avogadro * pow(1e-8 * SIG[1], 3.0) / (wt[1]);
+  bi[1] = 0.855 * avogadro * 1e-24 * SIG[1] * SIG[1] * SIG[1] / (wt[1]);
   acentric_i[1] = 0.0;
 
   // species 2: O
   Tci[2] = 1.316 * EPS[2];
-  ai[2] = (5.55 * avogadro * avogadro * EPS[2] * boltzmann *
-           pow(1e-8 * SIG[2], 3.0)) /
+  ai[2] = (5.55 * avogadro * avogadro * EPS[2] * boltzmann * 1e-24 * SIG[2] *
+           SIG[2] * SIG[2]) /
           (wt[2] * wt[2]);
-  bi[2] = 0.855 * avogadro * pow(1e-8 * SIG[2], 3.0) / (wt[2]);
+  bi[2] = 0.855 * avogadro * 1e-24 * SIG[2] * SIG[2] * SIG[2] / (wt[2]);
   acentric_i[2] = 0.0;
 
   // species 3: O2
@@ -17216,10 +17210,10 @@ GET_CRITPARAMS(
 
   // species 4: OH
   Tci[4] = 1.316 * EPS[4];
-  ai[4] = (5.55 * avogadro * avogadro * EPS[4] * boltzmann *
-           pow(1e-8 * SIG[4], 3.0)) /
+  ai[4] = (5.55 * avogadro * avogadro * EPS[4] * boltzmann * 1e-24 * SIG[4] *
+           SIG[4] * SIG[4]) /
           (wt[4] * wt[4]);
-  bi[4] = 0.855 * avogadro * pow(1e-8 * SIG[4], 3.0) / (wt[4]);
+  bi[4] = 0.855 * avogadro * 1e-24 * SIG[4] * SIG[4] * SIG[4] / (wt[4]);
   acentric_i[4] = 0.0;
 
   // species 5: H2O
@@ -17232,34 +17226,34 @@ GET_CRITPARAMS(
 
   // species 6: HO2
   Tci[6] = 1.316 * EPS[6];
-  ai[6] = (5.55 * avogadro * avogadro * EPS[6] * boltzmann *
-           pow(1e-8 * SIG[6], 3.0)) /
+  ai[6] = (5.55 * avogadro * avogadro * EPS[6] * boltzmann * 1e-24 * SIG[6] *
+           SIG[6] * SIG[6]) /
           (wt[6] * wt[6]);
-  bi[6] = 0.855 * avogadro * pow(1e-8 * SIG[6], 3.0) / (wt[6]);
+  bi[6] = 0.855 * avogadro * 1e-24 * SIG[6] * SIG[6] * SIG[6] / (wt[6]);
   acentric_i[6] = 0.0;
 
   // species 7: CH2
   Tci[7] = 1.316 * EPS[7];
-  ai[7] = (5.55 * avogadro * avogadro * EPS[7] * boltzmann *
-           pow(1e-8 * SIG[7], 3.0)) /
+  ai[7] = (5.55 * avogadro * avogadro * EPS[7] * boltzmann * 1e-24 * SIG[7] *
+           SIG[7] * SIG[7]) /
           (wt[7] * wt[7]);
-  bi[7] = 0.855 * avogadro * pow(1e-8 * SIG[7], 3.0) / (wt[7]);
+  bi[7] = 0.855 * avogadro * 1e-24 * SIG[7] * SIG[7] * SIG[7] / (wt[7]);
   acentric_i[7] = 0.0;
 
   // species 8: CH2(S)
   Tci[8] = 1.316 * EPS[8];
-  ai[8] = (5.55 * avogadro * avogadro * EPS[8] * boltzmann *
-           pow(1e-8 * SIG[8], 3.0)) /
+  ai[8] = (5.55 * avogadro * avogadro * EPS[8] * boltzmann * 1e-24 * SIG[8] *
+           SIG[8] * SIG[8]) /
           (wt[8] * wt[8]);
-  bi[8] = 0.855 * avogadro * pow(1e-8 * SIG[8], 3.0) / (wt[8]);
+  bi[8] = 0.855 * avogadro * 1e-24 * SIG[8] * SIG[8] * SIG[8] / (wt[8]);
   acentric_i[8] = 0.0;
 
   // species 9: CH3
   Tci[9] = 1.316 * EPS[9];
-  ai[9] = (5.55 * avogadro * avogadro * EPS[9] * boltzmann *
-           pow(1e-8 * SIG[9], 3.0)) /
+  ai[9] = (5.55 * avogadro * avogadro * EPS[9] * boltzmann * 1e-24 * SIG[9] *
+           SIG[9] * SIG[9]) /
           (wt[9] * wt[9]);
-  bi[9] = 0.855 * avogadro * pow(1e-8 * SIG[9], 3.0) / (wt[9]);
+  bi[9] = 0.855 * avogadro * 1e-24 * SIG[9] * SIG[9] * SIG[9] / (wt[9]);
   acentric_i[9] = 0.0;
 
   // species 10: CH4
@@ -17288,26 +17282,26 @@ GET_CRITPARAMS(
 
   // species 13: HCO
   Tci[13] = 1.316 * EPS[13];
-  ai[13] = (5.55 * avogadro * avogadro * EPS[13] * boltzmann *
-            pow(1e-8 * SIG[13], 3.0)) /
+  ai[13] = (5.55 * avogadro * avogadro * EPS[13] * boltzmann * 1e-24 * SIG[13] *
+            SIG[13] * SIG[13]) /
            (wt[13] * wt[13]);
-  bi[13] = 0.855 * avogadro * pow(1e-8 * SIG[13], 3.0) / (wt[13]);
+  bi[13] = 0.855 * avogadro * 1e-24 * SIG[13] * SIG[13] * SIG[13] / (wt[13]);
   acentric_i[13] = 0.0;
 
   // species 14: CH2O
   Tci[14] = 1.316 * EPS[14];
-  ai[14] = (5.55 * avogadro * avogadro * EPS[14] * boltzmann *
-            pow(1e-8 * SIG[14], 3.0)) /
+  ai[14] = (5.55 * avogadro * avogadro * EPS[14] * boltzmann * 1e-24 * SIG[14] *
+            SIG[14] * SIG[14]) /
            (wt[14] * wt[14]);
-  bi[14] = 0.855 * avogadro * pow(1e-8 * SIG[14], 3.0) / (wt[14]);
+  bi[14] = 0.855 * avogadro * 1e-24 * SIG[14] * SIG[14] * SIG[14] / (wt[14]);
   acentric_i[14] = 0.0;
 
   // species 15: CH3O
   Tci[15] = 1.316 * EPS[15];
-  ai[15] = (5.55 * avogadro * avogadro * EPS[15] * boltzmann *
-            pow(1e-8 * SIG[15], 3.0)) /
+  ai[15] = (5.55 * avogadro * avogadro * EPS[15] * boltzmann * 1e-24 * SIG[15] *
+            SIG[15] * SIG[15]) /
            (wt[15] * wt[15]);
-  bi[15] = 0.855 * avogadro * pow(1e-8 * SIG[15], 3.0) / (wt[15]);
+  bi[15] = 0.855 * avogadro * 1e-24 * SIG[15] * SIG[15] * SIG[15] / (wt[15]);
   acentric_i[15] = 0.0;
 
   // species 16: C2H4
@@ -17320,10 +17314,10 @@ GET_CRITPARAMS(
 
   // species 17: C2H5
   Tci[17] = 1.316 * EPS[17];
-  ai[17] = (5.55 * avogadro * avogadro * EPS[17] * boltzmann *
-            pow(1e-8 * SIG[17], 3.0)) /
+  ai[17] = (5.55 * avogadro * avogadro * EPS[17] * boltzmann * 1e-24 * SIG[17] *
+            SIG[17] * SIG[17]) /
            (wt[17] * wt[17]);
-  bi[17] = 0.855 * avogadro * pow(1e-8 * SIG[17], 3.0) / (wt[17]);
+  bi[17] = 0.855 * avogadro * 1e-24 * SIG[17] * SIG[17] * SIG[17] / (wt[17]);
   acentric_i[17] = 0.0;
 
   // species 18: C2H6
