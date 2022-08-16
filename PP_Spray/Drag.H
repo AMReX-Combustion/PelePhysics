@@ -52,50 +52,6 @@ calcHeatCoeff(
   return Nu_num * logB / B_T;
 }
 
-// Compute the flash boiling coefficient
-// From Adachi 1997
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-amrex::Real
-calcAlpha(const amrex::Real& delTb)
-{
-  SprayUnits SPU;
-  amrex::Real alpha = 0.;
-  if (delTb > 25.) {
-    alpha = 13800.0 * std::pow(delTb, 0.39);
-  } else if (delTb > 5.) {
-    alpha = 27.0 * std::pow(delTb, 2.33);
-  } else {
-    alpha = 760.0 * std::pow(delTb, 0.26);
-  }
-  // Normally in J/(s m^2 K), convert when necessary
-  return alpha * 1.E3 * SPU.mass_conv;
-}
-
-// Compute the flash boiling vaporization rate
-// From Zuo, Gomes, and Rutland 2000
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-amrex::Real
-calcFlashVaporRate(
-  const amrex::Real& B_T, const amrex::Real& coeff, const amrex::Real& Gf)
-{
-  if (B_T <= 1.E-5) {
-    return 0.;
-  }
-  amrex::Real tol = 1.E-4;
-  amrex::Real Grat = 1.E-5;
-  amrex::Real G = 0.;
-  amrex::Real error = 100.;
-  while (error > tol) {
-    amrex::Real Gold = Grat;
-    G = coeff / (1. + Grat) * std::log1p((1. + Grat) * B_T);
-    Grat = Gf / G;
-    error = std::abs(Grat - Gold) / Gold;
-  }
-  return G;
-}
-
 // Compute the state in the vapor and skin phase
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
@@ -216,7 +172,7 @@ calculateSpraySource(
   bool get_Ddiag = true;
   bool get_lambda = true;
   bool get_mu = true;
-  if (!SPI.mass_trans) {
+  if (!fdat.mass_trans) {
     get_Ddiag = false;
     get_lambda = false;
   }
@@ -233,6 +189,10 @@ calculateSpraySource(
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
+  // If particle is fixed in place, make velocity zero
+  if (fdat.fixed_parts) {
+    vel_part = amrex::RealVect::TheZeroVector();
+  }
   amrex::Real T_part = p.rdata(SPI.pstateT);
   fdat.calcBoilT(gpv, cBoilT.data());
   amrex::Real dia_part = p.rdata(SPI.pstateDia);
@@ -272,7 +232,7 @@ calculateSpraySource(
     amrex::Real mw_skin = 0.; // Average molar mass of skin phase
     amrex::Real B_M = 0.;     // Mass Spalding number
     amrex::Real sumXVap = 0.; // Sum of Y_L Psat_f / mw_f
-    if (SPI.mass_trans) {
+    if (fdat.mass_trans) {
       calcVaporState(
         fdat, gpv, rule, T_part, C_eps, Y_part.data(), h_part.data(),
         cp_n.data(), cBoilT.data(), Y_skin.data(), Psat.data(), L_fuel.data(),
@@ -314,8 +274,8 @@ calculateSpraySource(
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
     part_mom_src = drag_force * diff_vel;
-    gpv.fluid_mom_src += part_mom_src;
-    if (SPI.mom_trans) {
+    if (fdat.mom_trans) {
+      gpv.fluid_mom_src += part_mom_src;
 #ifndef PELELM_USE_SPRAY
       // s_d,mu dot u_d
       amrex::Real S_dmu_dot_u = part_mom_src.dotProduct(vel_part);
@@ -331,7 +291,7 @@ calculateSpraySource(
     // Solve mass and energy transfer source terms
     amrex::Real part_temp_src = 0.;
     amrex::Real m_dot = 0.;
-    if (SPI.mass_trans) {
+    if (fdat.mass_trans) {
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR =
         amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
@@ -358,30 +318,15 @@ calculateSpraySource(
       }
       amrex::Real sumL = 0.;
       amrex::Real Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
-      // Check if flash boiling is occuring, if so, only the species
-      // with the higher saturation pressure is assumed to evaporate
-      // TODO: determine best way for multi-component flash boiling
       if (T_part > Tboil) {
+        // Normal boiling of only the species with the highest saturation pressure
         amrex::Real B_T = cp_skin * (gpv.T_fluid - T_part) / L_fuel[maxY];
         amrex::Real logBT = std::log1p(B_T);
         amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));
         amrex::Real Nu_star = 2. + (Nu_0 - 2.) * invFT;
-        Nu_num = Nu_star * logBT / B_T;
         amrex::Real coeff = M_PI * lambda_skin / cp_skin * dia_part * Nu_star;
-        // Flash boiling
-        if (Psat_total > 0.999 * gpv.p_fluid) {
-          // Max operation necessary for LLVM compiler
-          amrex::Real delTb = amrex::max(0., T_part - Tboil);
-          amrex::Real alpha = calcAlpha(delTb);
-          amrex::Real Gf =
-            M_PI * dia_part * dia_part * alpha * delTb / L_fuel[maxY];
-          amrex::Real G = calcFlashVaporRate(B_T, coeff, Gf);
-          mi_dot[maxY] = -amrex::max(G + Gf, 0.);
-        } else {
-          // Normal boiling
-          mi_dot[maxY] = -amrex::max(coeff * logBT, 0.);
-          Nu_num = 0.; // Assume Q_L = 0
-        }
+        mi_dot[maxY] = -amrex::max(coeff * logBT, 0.);
+        Nu_num = 0.; // Assume Q_L = 0
         m_dot += mi_dot[maxY];
         sumL += mi_dot[maxY] * L_fuel[maxY];
       } else {
@@ -423,13 +368,13 @@ calculateSpraySource(
       dt = flow_dt / amrex::Real(nsub);
     }
     const amrex::Real part_dt = fdat.dtmod * dt;
-    if (SPI.mom_trans) {
-      // Update particle values
+    if (!fdat.fixed_parts) {
+      // Update particle velocity
       AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0] * inv_pmass;
                    , vel_part[1] += part_dt * part_mom_src[1] * inv_pmass;
                    , vel_part[2] += part_dt * part_mom_src[2] * inv_pmass;);
     }
-    if (SPI.mass_trans) {
+    if (fdat.mass_trans) {
       T_part += part_dt * part_temp_src;
       T_part = amrex::min(0.999 * Tcrit, T_part);
       amrex::Real new_mass = pmass + m_dot * part_dt;
@@ -479,7 +424,7 @@ calculateSpraySource(
   amrex::Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
 #endif
-  if (SPI.mom_trans) {
+  if (fdat.mom_trans) {
     gpv.fluid_mom_src += vel_part * mdot_total;
   }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

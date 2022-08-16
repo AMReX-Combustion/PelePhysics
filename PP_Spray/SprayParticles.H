@@ -87,8 +87,6 @@ public:
     int& particle_verbose,
     amrex::Real& particle_cfl,
     amrex::Real& wall_temp,
-    bool& mass_trans,
-    bool& mom_trans,
     int& write_spray_ascii_files,
     int& plot_spray_src,
     int& init_function,

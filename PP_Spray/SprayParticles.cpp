@@ -54,8 +54,6 @@ SprayParticleContainer::readSprayParams(
   int& particle_verbose,
   Real& particle_cfl,
   Real& wall_temp,
-  bool& mass_trans,
-  bool& mom_trans,
   int& write_spray_ascii_files,
   int& plot_spray_src,
   int& init_function,
@@ -70,8 +68,9 @@ SprayParticleContainer::readSprayParams(
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
 
-  pp.query("mass_transfer", mass_trans);
-  pp.query("mom_transfer", mom_trans);
+  pp.query("mass_transfer", sprayData.mass_trans);
+  pp.query("mom_transfer", sprayData.mom_trans);
+  pp.query("fixed_parts", sprayData.fixed_parts);
   pp.query("cfl", particle_cfl);
   if (particle_cfl > max_cfl) {
     std::string errorstr =
@@ -278,7 +277,7 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   BL_PROFILE("ParticleContainer::estTimestep()");
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-  if (level >= this->GetParticles().size() || !m_sprayIndx.mom_trans) {
+  if (level >= this->GetParticles().size() || m_sprayData->fixed_parts) {
     return -1.;
   }
 
@@ -513,7 +512,7 @@ SprayParticleContainer::updateParticles(
             gpv.define();
             calculateSpraySource(cur_dt, gpv, SPI, *fdat, p, ltransparm);
             // Modify particle position by whole time step
-            if (do_move && SPI.mom_trans) {
+            if (do_move && !fdat->fixed_parts) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
@@ -537,11 +536,13 @@ SprayParticleContainer::updateParticles(
                   continue;
                 }
               }
-              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                Gpu::Atomic::Add(
-                  &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
+              if (fdat->mom_trans) {
+                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                  Gpu::Atomic::Add(
+                    &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
+                }
               }
-              if (SPI.mass_trans) {
+              if (fdat->mass_trans) {
                 Gpu::Atomic::Add(
                   &rhoSrcarr(cur_indx), cur_coef * gpv.fluid_mass_src);
                 for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

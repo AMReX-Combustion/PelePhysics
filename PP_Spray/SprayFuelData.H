@@ -9,8 +9,6 @@
 // Spray flags and indices
 struct SprayComps
 {
-  bool mass_trans;
-  bool mom_trans;
   int pstateVel = 0; // Particle indices
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
@@ -124,6 +122,9 @@ struct GasPhaseVals
 // Structure containing values for the liquid sprays
 struct SprayData
 {
+  bool mass_trans = true; // If evaporation is on
+  bool mom_trans = true; // If momentum transfer is on
+  bool fixed_parts = false; // If particles are fixed in place
   amrex::Real num_ppp; // Parcel size
   amrex::Real ref_T;
   amrex::Real sigma; // Surface tension
@@ -144,6 +145,9 @@ struct SprayData
 
   void build(const SprayData& fdat)
   {
+    mass_trans = fdat.mass_trans;
+    mom_trans = fdat.mom_trans;
+    fixed_parts = fdat.fixed_parts;
     // Convert input values from CGS to MKS for PeleLM
     num_ppp = fdat.num_ppp;
     ref_T = fdat.ref_T;
