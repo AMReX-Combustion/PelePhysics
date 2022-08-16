@@ -41,7 +41,7 @@ cJac(
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
 
-    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS)
+    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
     amrex::launch_global<CVODE_NB_THREADS>
       <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
         [=] AMREX_GPU_DEVICE() noexcept {
