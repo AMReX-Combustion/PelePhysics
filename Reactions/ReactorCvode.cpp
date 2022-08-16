@@ -820,7 +820,6 @@ ReactorCvode::allocUserData(
   udata->verbose = verbose;
 #ifdef AMREX_USE_GPU
   udata->nbThreads = CVODE_NB_THREADS;
-  ppcv.query("gpu_threads_per_block", udata->nbThreads);
   udata->nbBlocks = std::max(1, a_ncells / udata->nbThreads);
   udata->stream = stream;
 #endif

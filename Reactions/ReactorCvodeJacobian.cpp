@@ -41,8 +41,9 @@ cJac(
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
 
-    if (nbThreads <= 32) {
-      amrex::launch_global<32><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS)
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
         [=] AMREX_GPU_DEVICE() noexcept {
           for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                    stride = blockDim.x * gridDim.x;
@@ -52,42 +53,6 @@ cJac(
               Jdata);
           }
         });
-    } else if (nbThreads <= 64) {
-      amrex::launch_global<64><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelComputeAJchem(
-              icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
-              Jdata);
-          }
-        });
-    } else if (nbThreads <= 128) {
-      amrex::launch_global<128><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelComputeAJchem(
-              icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
-              Jdata);
-          }
-        });
-    } else if (nbThreads <= 256) {
-      amrex::launch_global<256><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelComputeAJchem(
-              icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
-              Jdata);
-          }
-        });
-    } else {
-      amrex::Abort("nbThreads must be <= 256");
-    }
     amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
@@ -98,8 +63,9 @@ cJac(
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    if (nbThreads == 32) {
-      amrex::launch_global<32><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
         [=] AMREX_GPU_DEVICE() noexcept {
           for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                    stride = blockDim.x * gridDim.x;
@@ -107,36 +73,6 @@ cJac(
             fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
           }
         });
-    } else if (nbThreads <= 64) {
-      amrex::launch_global<64><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
-          }
-        });
-    } else if (nbThreads <= 128) {
-      amrex::launch_global<128><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
-          }
-        });
-    } else if (nbThreads <= 256) {
-      amrex::launch_global<256><<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-        [=] AMREX_GPU_DEVICE() noexcept {
-          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                   stride = blockDim.x * gridDim.x;
-               icell < ncells; icell += stride) {
-            fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
-          }
-        });
-    } else {
-      amrex::Abort("nbThreads must be <= 256");
-    }
     amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
