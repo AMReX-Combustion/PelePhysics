@@ -1,14 +1,6 @@
 #ifndef DRAG_H
 #define DRAG_H
 
-#include "SprayParticles.H"
-#include <AMReX_AmrParticles.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_ParIter.H>
-#include <AMReX_Particles.H>
-#include <AMReX_REAL.H>
-#include <Transport.H>
-
 // Compute the heat transfer coefficient using the
 // corrected Nusselt number and B_T value
 AMREX_GPU_DEVICE
@@ -34,7 +26,7 @@ calcHeatCoeff(
   amrex::Real Nu_num = 2. + NU2 * invFT;
   phi = ratio / Nu_num;
   amrex::Real B_T = std::pow(BM1, phi) - 1.;
-  amrex::Real error = std::abs(B_T - B_T_old);
+  amrex::Real error = amrex::Math::abs(B_T - B_T_old);
   int k = 0;
   while (k < maxIter && error > B_eps) {
     B_T_old = B_T;
@@ -43,7 +35,7 @@ calcHeatCoeff(
     Nu_num = 2. + NU2 * invFT;
     phi = ratio / Nu_num;
     B_T = std::pow(BM1, phi) - 1.;
-    error = std::abs(B_T - B_T_old);
+    error = amrex::Math::abs(B_T - B_T_old);
     k++;
   }
   logB = std::log1p(B_T);
@@ -81,12 +73,13 @@ calcVaporState(
   amrex::Real sum1 = 0.;
   amrex::Real sum2 = 0.;
   amrex::Real sum3 = 0.;
-  // This computes the mass fractions in the vapor
-  // The vapor mass fraction is y_vi = x_vi * mw_i / mw_vg
-  // where mw_vg = mw_gas * (1 - sum_k x_vk) + sum_k x_vk * mw_k
-  // and x_vk = x_lk * psat_k / p_gas
-  // Note: this function seems more convuluted because we start with
-  // the liquid mass fractions, not molar fractions
+  /*
+    This computes the mass fractions in the vapor. The vapor mass fraction is
+    y_vi = x_vi * mw_i / mw_vg where mw_vg = mw_gas * (1 - sum_k x_vk) + sum_k
+    x_vk * mw_k and x_vk = x_lk * psat_k / p_gas Note: this function seems more
+    convuluted because we start with the liquid mass fractions, not molar
+    fractions
+  */
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     if (Y_l[spf] > 1.E-12) {
       const int fspec = fdat.indx[spf];
@@ -319,7 +312,8 @@ calculateSpraySource(
       amrex::Real sumL = 0.;
       amrex::Real Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
       if (T_part > Tboil) {
-        // Normal boiling of only the species with the highest saturation pressure
+        // Normal boiling of only the species with the highest saturation
+        // pressure
         amrex::Real B_T = cp_skin * (gpv.T_fluid - T_part) / L_fuel[maxY];
         amrex::Real logBT = std::log1p(B_T);
         amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));

@@ -2,19 +2,11 @@
 #define SPRAYPARTICLES_H
 
 #include "SprayFuelData.H"
-#include <AMReX_AmrParticles.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_Gpu.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_Particles.H>
-#include <memory>
 #include "SprayJet.H"
 
 #ifdef PELELM_USE_SPRAY
-#include "pelelm_prob.H"
 #include "pelelm_prob_parm.H"
 #else
-#include "prob.H"
 #include "prob_parm.H"
 #endif
 

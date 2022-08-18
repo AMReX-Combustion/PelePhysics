@@ -81,7 +81,7 @@ public:
         m_jetY[spf] = in_Y_jet[spf];
         sumY += in_Y_jet[spf];
       }
-      if (std::abs(sumY - 1.) > 1.E-8) {
+      if (amrex::Math::abs(sumY - 1.) > 1.E-8) {
         amrex::Abort(ppspray + ".Y must sum to 1");
       }
     }
@@ -150,7 +150,7 @@ public:
       m_jetY[spf] = Y_jet[spf];
       sumtest += m_jetY[spf];
     }
-    if (std::abs(1. - sumtest) > 1.E-8) {
+    if (amrex::Math::abs(1. - sumtest) > 1.E-8) {
       amrex::Abort("Jet mass fractions must sum to 1");
     }
   }

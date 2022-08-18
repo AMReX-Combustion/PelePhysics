@@ -21,23 +21,24 @@ SootModel::initializeReactData()
     Print() << "SootModel::initializeReactData(): Filling reaction data"
             << std::endl;
   }
-  // Units are CGS
-  // Demonstration of reaction indices using a fake reaction
-  // Soot-H + 2OH + C2H2 <=> Soot-* + 4H + 2CO
-  // For the i-th reaction
-  // rNum[i] = 2; // 2 gas phase reactants
-  // nIndx_f[3*i+0] = GasSpecIndx::indxOH;
-  // nu_f[3*i+0] = 2.; // Since there are 2 moles of OH
-  // nIndx_f[3*i+1] = GasSpecIndx::indxC2H4;
-  // nu_f[3*i+1] = 1; // Since there is 1 mole of C2H2
-  // sIndx_f[i] = SootIndx::indxSootH;
+  /* Units are CGS
+     Demonstration of reaction indices using a fake reaction
+     Soot-H + 2OH + C2H2 <=> Soot-* + 4H + 2CO
+     For the ith reaction
+     rNum[i] = 2; // 2 gas phase reactants
+     nIndx_f[i*3+0] = GasSpecIndx::indxOH;
+     nu_f[i*3+0] = 2.; // Since there are 2 moles of OH
+     nIndx_f[i*3+1] = GasSpecIndx::indxC2H4;
+     nu_f[i*3+1] = 1; // Since there is 1 mole of C2H2
+     sIndx_f[i] = SootIndx::indxSootH;
 
-  // pNum[i] = 2; // 2 gas phase products
-  // nIndx_b[3*i+0] = GasSpecIndx::indxH;
-  // nu_b[3*i+0] = 4.; // Since there are 4 moles of H
-  // nIndx_b[3*i+1] = GasSpecIndx::indxCO;
-  // nu_b[3*i+1] = 2.; // Since there are 2 moles of CO
-  // sIndx_b[i] = SootIndx::indxSootS;
+     pNum[i] = 2; // 2 gas phase products
+     nIndx_b[i*3+0] = GasSpecIndx::indxH;
+     nu_b[i*3+0] = 4.; // Since there are 4 moles of H
+     nIndx_b[i*3+1] = GasSpecIndx::indxCO;
+     nu_b[i*3+1] = 2.; // Since there are 2 moles of CO
+     sIndx_b[i] = SootIndx::indxSootS;
+  */
 
   // 1. Soot-H + OH <=> Soot-* + H2O
   m_sootReact->A_f[0] = 6.72E1;

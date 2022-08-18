@@ -3,8 +3,6 @@
 
 #include "PelePhysics.H"
 #include <AMReX_RealVect.H>
-#include <AMReX_Gpu.H>
-#include <AMReX_GpuMemory.H>
 
 // Spray flags and indices
 struct SprayComps
@@ -122,10 +120,10 @@ struct GasPhaseVals
 // Structure containing values for the liquid sprays
 struct SprayData
 {
-  bool mass_trans = true; // If evaporation is on
-  bool mom_trans = true; // If momentum transfer is on
+  bool mass_trans = true;   // If evaporation is on
+  bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
-  amrex::Real num_ppp; // Parcel size
+  amrex::Real num_ppp;      // Parcel size
   amrex::Real ref_T;
   amrex::Real sigma; // Surface tension
   // If particle is updated half dt or whole dt

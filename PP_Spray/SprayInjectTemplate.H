@@ -51,7 +51,8 @@ part_loc_trans(
  2: Spread spherical coordinates for spread of particle relative
  center of jet. This uses the spread_angle
  Within these coordinates, theta is the inclination angle and phi is
- the azimuthal */
+ the azimuthal
+*/
 
 void
 SprayParticleContainer::sprayInjection(

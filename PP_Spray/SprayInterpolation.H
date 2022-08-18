@@ -1,7 +1,6 @@
 #ifndef SPRAYINTERPOLATION_H
 #define SPRAYINTERPOLATION_H
 
-#include <AMReX_RealVect.H>
 #ifdef AMREX_USE_EB
 #include <AMReX_EBMultiFabUtil.H>
 #endif
@@ -54,15 +53,16 @@ InterpolateFaceVelocity(
   }
 }
 
-// Check if outside of bounds of Cartesian grid
-// Return IntVect that where the flags are per direction
-// 0 - Not outside domain or at periodic boundary
-// -1 - Outside lower reflective domain
-// 1 - Outside upper reflective domain
-// -2 - Adjacent to lower reflective domain boundary
-// 2 - Adjacent to upper reflective domain boundary
-// And true is returned if outside non-reflective domain
-// If near a domain, ijk is shifted inward for interpolation purposes
+/* Check if outside of bounds of Cartesian grid
+ Return IntVect that where the flags are per direction
+ 0 - Not outside domain or at periodic boundary
+ -1 - Outside lower reflective boundary
+ 1 - Outside upper reflective boundary
+ -2 - Adjacent to lower reflective boundary
+ 2 - Adjacent to upper reflective boundary
+ And true is returned if outside non-reflective domain
+ If near a domain boundary, ijk is shifted inward for interpolation purposes
+*/
 AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
 check_bounds(
   const amrex::RealVect pos,
@@ -72,7 +72,7 @@ check_bounds(
   const amrex::IntVect bndry_lo,
   const amrex::IntVect bndry_hi,
   amrex::IntVect& ijk,
-  amrex::IntVect& dflags)
+  amrex::IntVect& bflags)
 {
   for (int hilo = 0; hilo < 2; ++hilo) {
     amrex::Real fact = (hilo == 0) ? 1. : -1.;
@@ -84,14 +84,15 @@ check_bounds(
       if (bflag != 0) { // Not periodic
         amrex::Real diff = fact * (pos[dir] - dom_loc);
         if (diff < 0.) {
-          if (bflag == 1) {
-            dflags[dir] = -int(fact);
-          } else {
+          // Outside domain
+          if (bflag == 1) { // Outside reflective BC
+            bflags[dir] = -int(fact);
+          } else { // Outside non-reflective BC
             return true;
           }
           // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
-          dflags[dir] = -2 * int(fact);
+          bflags[dir] = -2 * int(fact);
           ijk[dir] += int(fact);
         }
       }

@@ -3,7 +3,6 @@
 
 #include "Drag.H"
 #include "SprayFuelData.H"
-#include "SprayInterpolation.H"
 
 // Check if tile is adjacent to non-periodic boundaries
 AMREX_GPU_HOST_DEVICE
@@ -35,8 +34,178 @@ tile_at_bndry(
   return at_bndry;
 }
 
+/**
+Determines if particle must be reflected off BC or EB
+@param[in] pos Position of the particle after advecting
+@param[in] bflags Flags if particle is outside reflective boundaries
+@param[in] dx Grid spacing
+@param[in] plo Low domain location
+@param[in] ijkc Grid cell index containing particle
+@param[in] ijkc_prev Previous grid cell index containing particle
+@param[in] use_EB Flag if EB is used in the current box
+@param[in] flags Array of flags denoting if a cell has EB in it
+@param[in] bcent Array of EB centroids for each cell
+@param[in] bnorm Array of EB normal vectors for each cell
+@param[out] par_dot Magnitude of vector from wall plane to particle, negative
+means outside the domain
+@param[out] normal Boundary normal vector
+@return Flag if particle must be reflected
+*/
+AMREX_GPU_HOST_DEVICE
+AMREX_INLINE
+bool
+check_wall(
+  const amrex::RealVect pos,
+  const amrex::IntVect bflags,
+  const amrex::RealVect& dx,
+  const amrex::RealVect& plo,
+  const amrex::IntVect ijkc,
+#ifdef AMREX_USE_EB
+  const amrex::IntVect ijkc_prev,
+  const bool use_EB,
+  amrex::Array4<amrex::EBCellFlag const> const& flags,
+  amrex::Array4<amrex::Real const> const& bcent,
+  amrex::Array4<amrex::Real const> const& bnorm,
+#endif
+  amrex::Real& par_dot,
+  amrex::RealVect& normal)
+{
+  bool wall_check = false; // Check if particle is reflected
+  amrex::RealVect bcentv;  // Absolute location of point on boundary face
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    // -1 - Outside lower reflective boundary
+    // 1 - Outside upper reflective boundary
+    // Only accounts for 1  Cartesian direction
+    if ((bflags[dir] == -1 || bflags[dir] == 1) && !wall_check) {
+      normal[dir] = -bflags[dir];
+      bcentv[dir] =
+        (amrex::Real(ijkc[dir]) + 0.5 * (1. - bflags[dir])) * dx[dir];
+      wall_check = true;
+    } else {
+      normal[dir] = 0.;
+      bcentv[dir] = 0.;
+    }
+  }
+#ifdef AMREX_USE_EB
+  if (use_EB && !wall_check) {
+    // If particle has moved into a cut-cell
+    if (flags(ijkc).isSingleValued()) {
+      wall_check = true;
+      // Use the normal and boundary centroid from the new cell
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        normal[dir] = -bnorm(ijkc, dir);
+        bcentv[dir] =
+          (amrex::Real(ijkc[dir]) + 0.5 + bcent(ijkc, dir)) * dx[dir];
+      }
+      // If the particle has moved into a covered cell
+    } else if (flags(ijkc).isCovered()) {
+      wall_check = true;
+      // If the cell the particle came from is a cut-cell
+      if (flags(ijkc_prev).isSingleValued()) {
+        // Use the normal and boundary centroid from the previous cell
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          normal[dir] = -bnorm(ijkc_prev, dir);
+          bcentv[dir] =
+            (amrex::Real(ijkc_prev[dir]) + 0.5 + bcent(ijkc_prev, dir)) *
+            dx[dir];
+        }
+        // otherwise an error has occurred
+      } else {
+        amrex::Abort("WallFunctions::check_wall: Particle is outside EB");
+      }
+    }
+  }
+#endif
+  bool refl_check = false;
+  if (wall_check) {
+    const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
+    // Projection of vector pointing from EB centroid to particle onto EB normal
+    par_dot = AMREX_D_TERM(
+      (pos[0] - plo[0] - bcentv[0]) * normal[0],
+      +(pos[1] - plo[1] - bcentv[1]) * normal[1],
+      +(pos[2] - plo[2] - bcentv[2]) * normal[2]);
+    if (par_dot < tolerance) {
+      refl_check = true;
+    }
+  }
+  return refl_check;
+}
+
+/*
+Checks and reflects particles off BC or EB. If particle reflects too many times,
+it places the particle near the wall sets the normal velocity component to zero.
+*/
+AMREX_GPU_DEVICE
+AMREX_INLINE
+void
+impose_wall(
+  SprayParticleContainer::ParticleType& p,
+  const SprayComps& SPI,
+  const amrex::RealVect& dx,
+  const amrex::RealVect& plo,
+  const amrex::IntVect bflags,
+#ifdef AMREX_USE_EB
+  const bool use_EB,
+  amrex::Array4<amrex::EBCellFlag const> const& flags,
+  amrex::Array4<amrex::Real const> const& bcent,
+  amrex::Array4<amrex::Real const> const& bnorm,
+#endif
+  amrex::IntVect& ijkc,
+  amrex::IntVect& ijkc_prev)
+{
+  amrex::Real par_dot = 2.;
+  amrex::RealVect normal;
+  // Check if particle is behind a wall
+  bool do_refl = check_wall(
+    p.pos(), bflags, dx, plo, ijkc,
+#ifdef AMREX_USE_EB
+    ijkc_prev, use_EB, flags, bcent, bnorm,
+#endif
+    par_dot, normal);
+  // Keep track of number of times particle bounces
+  int bounce_counter = 0;
+  // Maximum allowable bounces
+  int max_bounce = 5;
+  while (do_refl) {
+    // Plane ref point
+    amrex::Real Nw_Vp = AMREX_D_TERM(
+      normal[0] * p.rdata(SPI.pstateVel),
+      +normal[1] * p.rdata(SPI.pstateVel + 1),
+      +normal[2] * p.rdata(SPI.pstateVel + 2));
+    ijkc_prev = ijkc;
+    // Reflect particle position and velocity around the boundary
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) -= 2. * par_dot * normal[dir];
+      p.rdata(SPI.pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
+      ijkc[dir] = amrex::Math::floor((p.pos(dir) - plo[dir]) / dx[dir]);
+    }
+    do_refl = check_wall(
+      p.pos(), bflags, dx, plo, ijkc,
+#ifdef AMREX_USE_EB
+      ijkc_prev, use_EB, flags, bcent, bnorm,
+#endif
+      par_dot, normal);
+    bounce_counter++;
+    // If particle exceeds max bounces, place near wall and set normal velocity
+    // to zero
+    if (bounce_counter > max_bounce && do_refl) {
+      amrex::Real Nw_Vp = AMREX_D_TERM(
+        normal[0] * p.rdata(SPI.pstateVel),
+        +normal[1] * p.rdata(SPI.pstateVel + 1),
+        +normal[2] * p.rdata(SPI.pstateVel + 2));
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        p.pos(dir) += (0.5 * p.rdata(SPI.pstateDia) - par_dot) * normal[dir];
+        p.rdata(SPI.pstateVel + dir) -= Nw_Vp * normal[dir];
+        ijkc[dir] = amrex::Math::floor((p.pos(dir) - plo[dir]) / dx[dir]);
+      }
+      do_refl = false;
+    }
+  }
+}
+
 /****************************************************************
  Functions computing wall film source terms
+ WIP
  ***************************************************************/
 #if 0
 AMREX_GPU_DEVICE AMREX_INLINE void
@@ -174,7 +343,7 @@ calculateWallFilmSource(
     p.id() = -1;
   }
 }
-#endif
+
 /****************************************************************
  Functions for imposing wall boundaries including adding
  splashed droplets, modifying particles to be wall film,
@@ -281,61 +450,6 @@ compute_angles(
   SPRF.beta_stdv = std::sqrt(amrex::max(-2. * term1 + term2, 0.));
 }
 
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
-bool
-check_wall(
-  const amrex::IntVect bflags,
-#ifdef AMREX_USE_EB
-  const amrex::IntVect ijkc,
-  const amrex::IntVect ijkc_prev,
-  const bool use_EB,
-  amrex::Array4<amrex::EBCellFlag const> const& flags,
-  amrex::Array4<amrex::Real const> const& bcent,
-  amrex::Array4<amrex::Real const> const& bnorm,
-  amrex::IntVect& bloc,
-#endif
-  amrex::RealVect& normal,
-  amrex::RealVect& bcentv)
-{
-  bool wall_check = false; // Check if particle is reflected
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    if (bflags[dir] == -1 || bflags[dir] == 1) {
-      normal[dir] = -bflags[dir];
-      bcentv[dir] = -0.5 * bflags[dir];
-      wall_check = true;
-    }
-  }
-#ifdef AMREX_USE_EB
-  if (use_EB && !wall_check) {
-    // If particle has moved into a cut-cell
-    if (flags(ijkc).isSingleValued()) {
-      // Use the normal and boundary centroid from the new cell
-      normal = {
-        AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
-      bcentv = {AMREX_D_DECL(bcent(ijkc, 0), bcent(ijkc, 1), bcent(ijkc, 2))};
-      wall_check = true;
-      // If the particle has moved into a covered cell
-    } else if (flags(ijkc).isCovered()) {
-      // If the cell the particle came from is a cut-cell
-      if (flags(ijkc_prev).isSingleValued()) {
-        // Use the normal and boundary centroid from the previous cell
-        bloc = ijkc_prev;
-        normal = {AMREX_D_DECL(
-          -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2))};
-        bcentv = {AMREX_D_DECL(
-          bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2))};
-        // otherwise an error has occurred
-      } else {
-        amrex::Abort("WallFunctions::check_wall: Particle is outside EB");
-      }
-      wall_check = true;
-    }
-  }
-#endif
-  return wall_check;
-}
-
 AMREX_GPU_DEVICE
 AMREX_INLINE
 void
@@ -368,12 +482,12 @@ droplet_splashing(
   const amrex::Real pmass = M_PI / 6. * rho_part * d3;
   // Weber number
   const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
-  const amrex::Real Re_L = std::abs(Nw_Vp) * dia_part * rho_part / mu_part;
+  const amrex::Real Re_L = amrex::Math::abs(Nw_Vp) * dia_part * rho_part / mu_part;
   const amrex::Real sqReyn = std::sqrt(Re_L);
   const amrex::Real Kv = std::sqrt(We) * std::pow(Re_L, 0.25);
   amrex::Real umag = pvel.vectorLength();
   // Inclination of on-coming particle to surface in radians
-  const amrex::Real alpha = std::asin(std::abs(Nw_Vp) / umag);
+  const amrex::Real alpha = std::asin(amrex::Math::abs(Nw_Vp) / umag);
   splash_flag = splash_criteria(Kv, Tstar, alpha);
   // Boundary layer thickness of particle estimate provided by
   // Pasandideh-Fard et al. 1996
@@ -460,70 +574,6 @@ droplet_splashing(
   } // if (splash_flag != splash_type::rebound)
 }
 
-AMREX_GPU_DEVICE
-AMREX_INLINE
-void
-impose_wall(
-  SprayParticleContainer::ParticleType& p,
-  const SprayComps& SPI,
-  const SprayData& fdat,
-  const amrex::RealVect& dx,
-  const amrex::RealVect& plo,
-  const amrex::Real T_wall,
-  const amrex::IntVect bloc,
-  const amrex::RealVect normal,
-  const amrex::RealVect bcentv,
-  SprayRefl& SPRF,
-  bool isActive,
-  const bool dry_wall)
-//  amrex::RandomEngine const& engine) // Degrades performance significantly
-{
-  const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-  amrex::RealVect pvel = {AMREX_D_DECL(
-    p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
-    p.rdata(SPI.pstateVel + 2))};
-  // Projection of vector pointing from EB centroid to particle onto EB normal
-  const amrex::Real par_dot_EB = AMREX_D_TERM(
-    (p.pos(0) - (bloc[0] + 0.5 + bcentv[0]) * dx[0] - plo[0]) * normal[0],
-    +(p.pos(1) - (bloc[1] + 0.5 + bcentv[1]) * dx[1] - plo[1]) * normal[1],
-    +(p.pos(2) - (bloc[2] + 0.5 + bcentv[2]) * dx[2] - plo[2]) * normal[2]);
-  // Check if particle is on the wrong side of the EB
-  if (par_dot_EB < tolerance) {
-    splash_type splash_flag = splash_type::rebound;
-    // Plane ref point
-    amrex::Real Nw_Vp = 0.;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      Nw_Vp += normal[dir] * pvel[dir];
-    }
-    // Parcel normal velocity
-    amrex::RealVect Vpn = {
-      AMREX_D_DECL(Nw_Vp * normal[0], Nw_Vp * normal[1], Nw_Vp * normal[2])};
-    // Parcel tangential velocity
-    amrex::RealVect Vpt = pvel - Vpn;
-    // If using a splash model
-    // TODO: Implement splash model
-    if (fdat.sigma > 0. && isActive) {
-      droplet_splashing(
-        splash_flag, p, SPI, fdat, pvel, par_dot_EB, Nw_Vp, T_wall, normal,
-        SPRF, dry_wall);
-    } // if (sigma > 0.)
-    // Reflect particle
-    if (fdat.sigma < 0. || splash_flag == splash_type::rebound) {
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) -= 2. * par_dot_EB * normal[dir];
-        p.rdata(SPI.pstateVel + dir) = -Vpn[dir] + Vpt[dir];
-      }
-    } else {
-      // Or place particle at wall
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        SPRF.norm[dir] = normal[dir];
-        SPRF.pos_refl[dir] -= par_dot_EB * normal[dir];
-        p.pos(dir) -= (1. + 1.E-4) * par_dot_EB * normal[dir];
-      }
-    }
-  } // if (par_dot_EB < tolerance)
-}
-
 void
 create_splash_droplet(
   SprayParticleContainer::ParticleType& p, SprayComps SPI, SprayRefl SPRF)
@@ -558,5 +608,5 @@ create_splash_droplet(
     amrex::Gpu::Atomic::Add(&p.rdata(SPI.pstateVel + dir), pvel);
   }
 }
-
+#endif // #if 0
 #endif // _WALLFUNCTIONS_H_

@@ -360,7 +360,7 @@ struct SootData
       amrex::Real prodss = ss_fm * ss_cn;
       // Harmonic mean for transitional regime
       amrex::Real ss =
-        (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
+        (amrex::Math::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
 
       // Collision between a particle in each mode
       // Collision model: "Splashing"
@@ -374,7 +374,7 @@ struct SootData
       amrex::Real prodsl = sl_fm * sl_cn;
       // Harmonic mean for transitional regime
       amrex::Real sl =
-        (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
+        (amrex::Math::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
 
       // Collision between two second mode particles
       // Collision model: Pure aggregation
@@ -386,7 +386,7 @@ struct SootData
       amrex::Real prodll = ll_fm * ll_cn;
       // Harmonic mean for transitional regime
       amrex::Real ll =
-        (std::abs(prodll) == tol) ? 0. : prodll / (ll_fm + ll_cn);
+        (amrex::Math::abs(prodll) == tol) ? 0. : prodll / (ll_fm + ll_cn);
       mom_src[i] += (ss + sl + ll);
     }
     // Free molecular regime
@@ -396,14 +396,16 @@ struct SootData
       -4. * C_cn * (1. + 1.257 * lambda * getNuclExp3(-1)) * weightDelta2;
     // Harmonic mean for transitional regime
     amrex::Real prodss = ss_fm * ss_cn;
-    amrex::Real ss = (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
+    amrex::Real ss =
+      (amrex::Math::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
     // Free molecular regime
     amrex::Real sl_fm = C_fm * FMCoagSL(dwIndx, momFV);
     // Continuum regime
     amrex::Real sl_cn = C_cn * CNCoagSL(dwIndx, lambda, momFV);
     // Harmonic mean for transitional regime
     amrex::Real prodsl = sl_fm * sl_cn;
-    amrex::Real sl = (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
+    amrex::Real sl =
+      (amrex::Math::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
     mom_src[dwIndx] += (ss + sl);
   }
 

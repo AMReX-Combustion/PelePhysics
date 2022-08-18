@@ -3,7 +3,6 @@
 #include <AMReX_EBFArrayBox.H>
 #endif
 #include "SprayParticles.H"
-#include "Drag.H"
 
 using namespace amrex;
 

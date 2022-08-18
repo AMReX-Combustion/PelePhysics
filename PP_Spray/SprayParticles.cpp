@@ -1,7 +1,5 @@
 
 #include "SprayParticles.H"
-#include <AMReX_ParticleReduce.H>
-#include <AMReX_Particles.H>
 #include "Drag.H"
 #include "SprayInterpolation.H"
 #include "Transport.H"
@@ -299,8 +297,8 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
           if (p.id() > 0) {
             const Real max_mag_vdx =
               amrex::max(AMREX_D_DECL(
-                std::abs(p.rdata(0)), std::abs(p.rdata(1)),
-                std::abs(p.rdata(2)))) *
+                amrex::Math::abs(p.rdata(0)), amrex::Math::abs(p.rdata(1)),
+                amrex::Math::abs(p.rdata(2)))) *
               dxi[0];
             Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
             return dt_part;
@@ -511,13 +509,6 @@ SprayParticleContainer::updateParticles(
             // Solve for avg mw and pressure at droplet location
             gpv.define();
             calculateSpraySource(cur_dt, gpv, SPI, *fdat, p, ltransparm);
-            // Modify particle position by whole time step
-            if (do_move && !fdat->fixed_parts) {
-              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                const Real cvel = p.rdata(SPI.pstateVel + dir);
-                p.pos(dir) += cur_dt * cvel;
-              }
-            }
             for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
               IntVect cur_indx = indx_array[aindx];
               Real cvol = inv_vol;
@@ -539,7 +530,8 @@ SprayParticleContainer::updateParticles(
               if (fdat->mom_trans) {
                 for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                   Gpu::Atomic::Add(
-                    &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
+                    &momSrcarr(cur_indx, dir),
+                    cur_coef * gpv.fluid_mom_src[dir]);
                 }
               }
               if (fdat->mass_trans) {
@@ -554,49 +546,40 @@ SprayParticleContainer::updateParticles(
               Gpu::Atomic::Add(
                 &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
             }
-            // Update indices
-            ijkc_prev = ijkc;
-            lx = (p.pos() - plo) * dxi + 0.5;
-            ijk = lx.floor();
-            lxc = (p.pos() - plo) * dxi;
-            ijkc = lxc.floor(); // New cell center
-            // Reflect particle at wall
-            if ((at_bounds || do_fe_interp) && do_move) {
-              IntVect bloc(ijkc);
-              RealVect normal;
-              RealVect bcentv;
-              bool dry_wall = false; // TODO: Implement this check
-              // First check if particle has exited the domain through a
-              // Cartesian boundary
-              bool left_dom = check_bounds(
-                p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
-              if (left_dom) {
-                p.id() = -1;
-              } else {
-                bool wall_check = check_wall(
-                  bflags,
-#ifdef AMREX_USE_EB
-                  ijkc, ijkc_prev, eb_in_box, flags_array, bcent_fab, bnorm_fab,
-                  bloc,
-#endif
-                  normal, bcentv);
-                // If particle has reflected off wall
-                if (wall_check) {
-                  SprayRefl SPRF;
-                  SPRF.pos_refl = p.pos();
-                  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-                    SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
-                  }
+            // Modify particle position by whole time step
+            if (do_move && !fdat->fixed_parts) {
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                const Real cvel = p.rdata(SPI.pstateVel + dir);
+                p.pos(dir) += cur_dt * cvel;
+              }
+              // Update indices
+              ijkc_prev = ijkc;
+              lx = (p.pos() - plo) * dxi + 0.5;
+              ijk = lx.floor();
+              lxc = (p.pos() - plo) * dxi;
+              ijkc = lxc.floor(); // New cell center
+              if (at_bounds || do_fe_interp) {
+                // First check if particle has exited the domain through a
+                // Cartesian boundary
+                bool left_dom = check_bounds(
+                  p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+                if (left_dom) {
+                  p.id() = -1;
+                } else {
+                  // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                    p, SPI, *fdat, dx, plo, wallT, bloc, normal, bcentv, SPRF,
-                    isActive, dry_wall);
+                    p, SPI, dx, plo, bflags,
+#ifdef AMREX_USE_EB
+                    eb_in_box, flags_array, bcent_fab, bnorm_fab,
+#endif
+                    ijkc, ijkc_prev);
                   lx = (p.pos() - plo) * dxi + 0.5;
                   ijk = lx.floor();
                   lxc = (p.pos() - plo) * dxi;
-                  ijkc = lxc.floor(); // New cell center
-                }                     // if (wall_check)
-              }                       // if (left_dom)
-            }                         // if (at_bounds...
+                  ijkc = lxc.floor();
+                }
+              } // if (at_bounds || fe_interp)
+            }   // if (do_move)
             cur_iter++;
             ctime += cur_dt;
             if (isGhost && !src_box.contains(ijkc)) {
