@@ -451,7 +451,6 @@ SprayParticleContainer::updateParticles(
     ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
-          bool isActive = !(isGhost || isVirt);
           auto eos = pele::physics::PhysicsType::eos();
           SprayUnits SPU;
           GasPhaseVals gpv;
@@ -492,9 +491,9 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_USE_EB
             if (eb_in_box) {
               do_fe_interp = eb_interp(
-                p.pos(), ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
-                ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, indx_array.data(),
-                weights.data());
+                p, SPI, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags,
+                flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
+                indx_array.data(), weights.data());
             } else
 #endif
             {

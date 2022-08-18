@@ -399,7 +399,9 @@ get_interp_mapping(
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
 eb_interp(
-  const amrex::RealVect& pos,
+  SprayParticleContainer::ParticleType& p,
+  const SprayComps& SPI,
+  const bool isVirt,
   const amrex::IntVect& ijkc,
   const amrex::IntVect& ijk,
   const amrex::RealVect& dx,
@@ -420,6 +422,7 @@ eb_interp(
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
   AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];);
+  amrex::RealVect pos(AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2)));
   // All cells in the stencil are regular. Use
   // traditional trilinear interpolation
   if (
@@ -463,11 +466,12 @@ eb_interp(
 
     amrex::Real par_dot_EB = 2.;
     amrex::Real cent_dot_EB = 1.;
+    amrex::RealVect normal;
 
     // If the particle is inside a cut-cell, verify that it is on the correct
     // side of the EB before trying to interpolate.
     if (flags(ip, jp, kp).isSingleValued()) {
-      const amrex::RealVect normal = {AMREX_D_DECL(
+      normal = {AMREX_D_DECL(
         -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2))};
 
       // Projection of vector pointing from EB centroid to particle onto EB
@@ -527,7 +531,18 @@ eb_interp(
     if (
       (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
       flags(ip, jp, kp).isCovered()) {
-      amrex::Abort("Particle has penetrated EB boundary");
+      // Virtual particles can inadvertently be placed behind EB walls on lower
+      // levels. For these situations, simply move the particle to the other
+      // side of the wall.
+      if (isVirt) {
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          p.pos(dir) +=
+            (0.5 * p.rdata(SPI.pstateDia) - par_dot_EB) * normal[dir];
+        }
+        // If it is not a virtual particle, throw an error
+      } else {
+        amrex::Abort("Particle has penetrated EB boundary");
+      }
       // The particle is near the EB. It is either
       // 1) between the cell centroid and the EB, or
       // 2) one or more cells in the 2^3 stencil is covered.
