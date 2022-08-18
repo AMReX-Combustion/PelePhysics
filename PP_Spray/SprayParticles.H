@@ -2,6 +2,8 @@
 #define SPRAYPARTICLES_H
 
 #include "SprayFuelData.H"
+#include <AMReX_AmrParticles.H>
+#include <AMReX_Geometry.H>
 #include "SprayJet.H"
 
 #ifdef PELELM_USE_SPRAY
