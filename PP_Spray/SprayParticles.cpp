@@ -159,6 +159,13 @@ SprayParticleContainer::readSprayParams(
   // SprayParticlesInitInsert.cpp problem specific function
   //
   pp.query("init_function", init_function);
+#ifdef AMREX_USE_EB
+  //
+  // Spray source terms are only added to cells with a volume fraction higher
+  // than this value
+  //
+  pp.query("min_eb_vfrac", sprayData.min_eb_vfrac);
+#endif
 
   sprayData.num_ppp = parcel_size;
   sprayData.ref_T = spray_ref_T;
@@ -493,7 +500,7 @@ SprayParticleContainer::updateParticles(
               do_fe_interp = eb_interp(
                 p, SPI, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags,
                 flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
-                indx_array.data(), weights.data());
+                fdat->min_eb_vfrac, indx_array.data(), weights.data());
             } else
 #endif
             {
@@ -512,7 +519,7 @@ SprayParticleContainer::updateParticles(
               IntVect cur_indx = indx_array[aindx];
               Real cvol = inv_vol;
 #ifdef AMREX_USE_EB
-              if (!flags_array(cur_indx).isRegular()) {
+              if (flags_array(cur_indx).isSingleValued()) {
                 cvol *= 1. / (volfrac_fab(cur_indx));
               }
 #endif

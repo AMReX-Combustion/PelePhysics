@@ -200,6 +200,7 @@ calculateSpraySource(
   int nsub = 1;
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
+  amrex::RealVect part_mom_src;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
@@ -212,7 +213,10 @@ calculateSpraySource(
     T_part = amrex::min(0.999 * Tcrit, T_part);
     // Model the fuel vapor using the one-third rule
     amrex::Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
-    amrex::Real T_skin = T_part + rule * delT;
+    amrex::Real T_skin = gpv.T_fluid;
+    if (fdat.mass_trans) {
+      T_skin = T_part + rule * delT;
+    }
     // Calculate the C_p at the skin temperature for each species
     eos.T2Cpi(T_skin, cp_n.data());
     eos.T2Hi(T_part, h_part.data());
@@ -240,9 +244,11 @@ calculateSpraySource(
     amrex::Real lambda_skin = 0.;
     amrex::Real mu_skin = 0.;
     amrex::Real xi_skin = 0.;
-    amrex::Real rho_skin =
-      mw_skin * gpv.p_fluid /
-      (pele::physics::Constants::RU * T_skin * SPU.ru_conv);
+    amrex::Real rho_skin = gpv.rho_fluid;
+    if (fdat.mass_trans) {
+      rho_skin = mw_skin * gpv.p_fluid /
+                 (pele::physics::Constants::RU * T_skin * SPU.ru_conv);
+    }
     amrex::Real rho_cgs = rho_skin / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
@@ -258,7 +264,6 @@ calculateSpraySource(
 
     // Solve momentum source terms
     const amrex::Real inv_pmass = 1. / pmass;
-    amrex::RealVect part_mom_src(amrex::RealVect::TheZeroVector());
     amrex::Real drag_coef = 0.;
     if (Reyn > 0.) {
       drag_coef = (Reyn > 1.) ? 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.)
@@ -266,16 +271,18 @@ calculateSpraySource(
     }
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
-    part_mom_src = drag_force * diff_vel;
+    amrex::Real drag_force_p =
+      0.75 * rho_skin * drag_coef * dia_part * diff_vel_mag / rho_part;
+    part_mom_src = drag_force_p * diff_vel;
     if (fdat.mom_trans) {
-      gpv.fluid_mom_src += part_mom_src;
+      gpv.fluid_mom_src += drag_force * diff_vel;
 #ifndef PELELM_USE_SPRAY
       // s_d,mu dot u_d
-      amrex::Real S_dmu_dot_u = part_mom_src.dotProduct(vel_part);
-      gpv.fluid_eng_src += S_dmu_dot_u;
+      amrex::Real S_dmu_dot_u = diff_vel.dotProduct(vel_part);
+      gpv.fluid_eng_src += drag_force * S_dmu_dot_u;
 #endif
       if (isub == 1) {
-        amrex::Real inv_tau_var = drag_force * inv_pmass;
+        amrex::Real inv_tau_var = drag_force_p;
         nsub =
           amrex::min(amrex::max(nsub, int(flow_dt * inv_tau_var) + 1), nSubMax);
       }
@@ -284,7 +291,8 @@ calculateSpraySource(
     // Solve mass and energy transfer source terms
     amrex::Real part_temp_src = 0.;
     amrex::Real m_dot = 0.;
-    if (fdat.mass_trans) {
+    // Only transfer heat and mass if gas phase is not saturated
+    if (fdat.mass_trans && sumXVap > 0.) {
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR =
         amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
@@ -364,9 +372,9 @@ calculateSpraySource(
     const amrex::Real part_dt = fdat.dtmod * dt;
     if (!fdat.fixed_parts) {
       // Update particle velocity
-      AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0] * inv_pmass;
-                   , vel_part[1] += part_dt * part_mom_src[1] * inv_pmass;
-                   , vel_part[2] += part_dt * part_mom_src[2] * inv_pmass;);
+      AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0];
+                   , vel_part[1] += part_dt * part_mom_src[1];
+                   , vel_part[2] += part_dt * part_mom_src[2];);
     }
     if (fdat.mass_trans) {
       T_part += part_dt * part_temp_src;

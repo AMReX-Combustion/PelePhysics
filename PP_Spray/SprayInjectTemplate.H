@@ -79,6 +79,7 @@ SprayParticleContainer::sprayInjection(
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateDia = m_sprayIndx.pstateDia;
   const int pstateY = m_sprayIndx.pstateY;
+  const SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -91,6 +92,11 @@ SprayParticleContainer::sprayInjection(
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_part * std::pow(avg_dia, 3);
+  const amrex::Real min_dia = std::cbrt(6. * SPU.min_mass / (M_PI * rho_part));
+  if (avg_dia < min_dia || avg_mass < SPU.min_mass) {
+    amrex::Abort(
+      "Average droplet size too small, floating point issues expected");
+  }
   // Minimum number of parcels we want injected at a time
   const amrex::Real min_inj_parcel = static_cast<amrex::Real>(min_parcel);
   amrex::Real dt = sim_dt;
@@ -166,7 +172,8 @@ SprayParticleContainer::sprayInjection(
     AMREX_D_TERM(p.rdata(pstateVel) = jet_vel * part_vel[0];
                  , p.rdata(pstateVel + 1) = jet_vel * part_vel[1];
                  , p.rdata(pstateVel + 2) = jet_vel * part_vel[2];);
-    amrex::Real cur_dia = spray_jet->get_dia();
+    // Never add particle with less than minimum mass
+    amrex::Real cur_dia = amrex::max(min_dia, spray_jet->get_dia());
     // Add particles as if they have advanced some random portion of
     // dt
     amrex::Real pmov = amrex::Random();
@@ -178,13 +185,13 @@ SprayParticleContainer::sprayInjection(
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       p.rdata(pstateY + sp) = spray_jet->Y(sp);
     }
+    amrex::Real pmass = Pi_six * rho_part * std::pow(cur_dia, 3);
     bool where = Where(p, pld);
     if (!where) {
       amrex::Abort("Bad injection particle");
     }
     std::pair<int, int> ind(pld.m_grid, pld.m_tile);
     host_particles[ind].push_back(p);
-    amrex::Real pmass = Pi_six * rho_part * std::pow(cur_dia, 3);
     cur_mass += num_ppp * pmass;
   }
   for (auto& kv : host_particles) {

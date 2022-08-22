@@ -63,7 +63,7 @@ InterpolateFaceVelocity(
  And true is returned if outside non-reflective domain
  If near a domain boundary, ijk is shifted inward for interpolation purposes
 */
-AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
+AMREX_GPU_DEVICE AMREX_INLINE bool
 check_bounds(
   const amrex::RealVect pos,
   const amrex::RealVect plo,
@@ -158,7 +158,7 @@ InterpolateGasPhase(
  Functions for interpolation on non-EB mesh
  ***************************************************************/
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE void
+AMREX_GPU_DEVICE AMREX_INLINE void
 trilinear_interp(
   const amrex::IntVect& ijk,
   const amrex::RealVect& lx,
@@ -209,7 +209,7 @@ trilinear_interp(
  Functions for the Newtons solver
  ***************************************************************/
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real
 f(const int dir,
   const amrex::RealVect& pos,
   const amrex::GpuArray<
@@ -242,7 +242,7 @@ f(const int dir,
 #endif
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real
 dfdxi(
   const int dir,
   const amrex::GpuArray<
@@ -269,7 +269,7 @@ dfdxi(
 #endif
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real
 dfdeta(
   const int dir,
   const amrex::GpuArray<
@@ -298,7 +298,7 @@ dfdeta(
 }
 
 #if AMREX_SPACEDIM == 3
-AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real
 dfdzeta(
   const int dir,
   const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
@@ -320,7 +320,7 @@ dfdzeta(
 }
 #endif
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE void
+AMREX_GPU_DEVICE AMREX_INLINE void
 get_interp_mapping(
   const amrex::RealVect& pos,
   const amrex::GpuArray<
@@ -397,7 +397,7 @@ get_interp_mapping(
   }
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
+AMREX_GPU_DEVICE AMREX_INLINE bool
 eb_interp(
   SprayParticleContainer::ParticleType& p,
   const SprayComps& SPI,
@@ -414,6 +414,7 @@ eb_interp(
   amrex::Array4<const amrex::Real> const& bcent,
   amrex::Array4<const amrex::Real> const& bnorm,
   amrex::Array4<const amrex::Real> const& vfrac,
+  const amrex::Real min_eb_vfrac,
   amrex::IntVect* indx_array,
   amrex::Real* weights)
 {
@@ -446,7 +447,6 @@ eb_interp(
           pos[1] - (jp + 0.5 + ccent(ip, jp, kp, 1)) * dx[1] - plo[1];
       , const amrex::Real cdist_z =
           pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];)
-    const amrex::Real vtol = 0.05;
 
     // Distance between particle and cell centoid.
     const amrex::Real cdist = std::sqrt(
@@ -625,7 +625,7 @@ eb_interp(
       // Will probably have to add a redistribute function
       amrex::Real rw = 0.;
       for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-        if (vfrac(indx_array[aindx]) < vtol) {
+        if (vfrac(indx_array[aindx]) < min_eb_vfrac) {
           weights[aindx] = 0.;
         }
         rw += weights[aindx];

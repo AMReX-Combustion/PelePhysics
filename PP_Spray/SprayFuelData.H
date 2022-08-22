@@ -47,6 +47,7 @@ struct SprayUnits
   amrex::Real lambda_conv = 1.;
   amrex::Real pres_conv = 1.;
 #endif
+  amrex::Real min_mass = 1.E-13 * mass_conv;
 };
 
 // Structure that contains the values for secondary
@@ -123,7 +124,11 @@ struct SprayData
   bool mass_trans = true;   // If evaporation is on
   bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
-  amrex::Real num_ppp;      // Parcel size
+#ifdef AMREX_USE_EB
+  // Min cell volume fraction to add sources to
+  amrex::Real min_eb_vfrac = 0.1;
+#endif
+  amrex::Real num_ppp; // Parcel size
   amrex::Real ref_T;
   amrex::Real sigma; // Surface tension
   // If particle is updated half dt or whole dt
