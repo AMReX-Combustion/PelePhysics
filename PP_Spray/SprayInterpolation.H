@@ -539,6 +539,11 @@ eb_interp(
           p.pos(dir) +=
             (0.5 * p.rdata(SPI.pstateDia) - par_dot_EB) * normal[dir];
         }
+        for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+          indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
+          weights[aindx] = 0.;
+        }
+        weights[0] = 1.;
         // If it is not a virtual particle, throw an error
       } else {
         amrex::Abort("Particle has penetrated EB boundary");
