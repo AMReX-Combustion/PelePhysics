@@ -535,6 +535,24 @@ eb_interp(
       // levels. For these situations, simply move the particle to the other
       // side of the wall.
       if (isVirt) {
+        // If cell is covered, move particle to nearest EB wall in adjacent cell
+        if (flags(ip, jp, kp).isCovered()) {
+          if (flags(ic, jc, kc).isSingleValued()) {
+            AMREX_D_TERM(ip = ic;, jp = jc;, kp = kc;);
+            normal = {AMREX_D_DECL(
+              -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1),
+              -bnorm(ip, jp, kp, 2))};
+            par_dot_EB = AMREX_D_TERM(
+              (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) *
+                normal[0],
+              +(pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
+                normal[1],
+              +(pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) *
+                normal[2]);
+          } else {
+            amrex::Abort("Virtual particle is in covered cell far from EB");
+          }
+        }
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           p.pos(dir) +=
             (0.5 * p.rdata(SPI.pstateDia) - par_dot_EB) * normal[dir];
