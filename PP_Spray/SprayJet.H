@@ -18,18 +18,18 @@ public:
     const amrex::Real jet_temp,
     const amrex::Real jet_Y[SPRAY_FUEL_NUM],
     const std::string dist_type,
-    const amrex::Real jet_start = 0.,
-    const amrex::Real jet_end = 1.E8,
+    const amrex::Real start_time = 0.,
+    const amrex::Real end_time = 1.E8,
     bool hollow_spray = false)
-    : m_jetNorm(jet_norm),
-      m_jetCent(jet_cent),
+    : m_norm(jet_norm),
+      m_cent(jet_cent),
       m_spreadAngle(spread_angle),
       m_jetDia(jet_dia),
       m_jetVel(jet_vel),
       m_massFlow(mass_flow),
       m_jetT(jet_temp),
-      m_jetStart(jet_start),
-      m_jetEnd(jet_end),
+      m_startTime(start_time),
+      m_endTime(end_time),
       m_hollowSpray(hollow_spray)
   {
     m_spreadAngle *= M_PI / 180.;
@@ -63,8 +63,8 @@ public:
     std::vector<amrex::Real> jnorm(AMREX_SPACEDIM);
     ps.getarr("jet_norm", jnorm);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      m_jetCent[dir] = jcent[dir];
-      m_jetNorm[dir] = jnorm[dir];
+      m_cent[dir] = jcent[dir];
+      m_norm[dir] = jnorm[dir];
     }
     check_jet_cent(geom);
     ps.get("jet_dia", m_jetDia);
@@ -85,8 +85,8 @@ public:
         amrex::Abort(ppspray + ".Y must sum to 1");
       }
     }
-    ps.query("jet_start", m_jetStart);
-    ps.query("jet_end", m_jetEnd);
+    ps.query("start_time", m_startTime);
+    ps.query("end_time", m_endTime);
     ps.query("jet_vel", m_jetVel);
     ps.query("mass_flow_rate", m_massFlow);
     ps.query("hollow_spray", m_hollowSpray);
@@ -95,16 +95,16 @@ public:
   SprayJet(SprayJet const&) = delete;
   SprayJet& operator=(SprayJet const&) = delete;
 
-  inline const amrex::RealVect& jet_norm() { return m_jetNorm; }
-  inline const amrex::RealVect& jet_cent() { return m_jetCent; }
+  inline const amrex::RealVect& jet_norm() { return m_norm; }
+  inline const amrex::RealVect& jet_cent() { return m_cent; }
   inline const amrex::Real& jet_vel() { return m_jetVel; }
   inline const amrex::Real& jet_dia() { return m_jetDia; }
   inline const amrex::Real& spread_angle() { return m_spreadAngle; }
   inline const amrex::Real& mass_flow_rate() { return m_massFlow; }
   inline const amrex::Real& Y(const int spf) { return m_jetY[spf]; }
   inline const amrex::Real& T() { return m_jetT; }
-  inline const amrex::Real& jet_start() { return m_jetStart; }
-  inline const amrex::Real& jet_end() { return m_jetEnd; }
+  inline const amrex::Real& start_time() { return m_startTime; }
+  inline const amrex::Real& end_time() { return m_endTime; }
 
   // Call this before using spray jet
   bool jet_active(const amrex::Real time)
@@ -115,7 +115,7 @@ public:
       amrex::Abort("Jet mass flow rate is not set");
     }
     bool check = true;
-    if (time < m_jetStart || time > m_jetEnd) {
+    if (time < m_startTime || time > m_endTime) {
       check = false;
     }
     return check;
@@ -127,18 +127,16 @@ public:
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
-  void set_jet_norm(amrex::RealVect jet_norm) { m_jetNorm = jet_norm; }
+  void set_jet_norm(amrex::RealVect jet_norm) { m_norm = jet_norm; }
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
-    m_jetCent = jet_cent;
+    m_cent = jet_cent;
     check_jet_cent(geom);
   }
   void check_jet_cent(const amrex::Geometry& geom)
   {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      if (
-        m_jetCent[dir] > geom.ProbHi(dir) ||
-        m_jetCent[dir] < geom.ProbLo(dir)) {
+      if (m_cent[dir] > geom.ProbHi(dir) || m_cent[dir] < geom.ProbLo(dir)) {
         amrex::Abort("Jet center outside of problem domain");
       }
     }
@@ -155,6 +153,8 @@ public:
     }
   }
 
+  void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
+  void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
   void reset_sum()
   {
     m_sumInjMass = -1;
@@ -166,8 +166,8 @@ public:
 
 protected:
   // Member data
-  amrex::RealVect m_jetNorm = amrex::RealVect::TheZeroVector();
-  amrex::RealVect m_jetCent = amrex::RealVect::TheZeroVector();
+  amrex::RealVect m_norm = amrex::RealVect::TheZeroVector();
+  amrex::RealVect m_cent = amrex::RealVect::TheZeroVector();
   amrex::Real m_spreadAngle = 0.;
   amrex::Real m_jetDia = -1.;
   amrex::Real m_jetVel = -1.;
@@ -175,8 +175,8 @@ protected:
   amrex::Real m_jetT = -1.;
   amrex::Real m_jetY[SPRAY_FUEL_NUM] = {0.};
   std::unique_ptr<DistBase> m_dropDist;
-  amrex::Real m_jetStart = 0.;
-  amrex::Real m_jetEnd = 1.E8;
+  amrex::Real m_startTime = 0.;
+  amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
 };
 #endif
