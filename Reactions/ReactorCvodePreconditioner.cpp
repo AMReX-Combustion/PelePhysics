@@ -35,28 +35,31 @@ Precond(
   auto react_type = udata->reactor_type;
 
   BL_PROFILE_VAR("Pele::ReactorCvode::fKernelComputeAJ()", fKernelComputeAJ);
+  AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
   if (jok) {
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelComputeAJsys(icell, NNZ, gamma, user_data, u_d, csr_val_d);
-        }
-      });
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelComputeAJsys(icell, NNZ, gamma, user_data, u_d, csr_val_d);
+          }
+        });
     *jcurPtr = SUNFALSE;
   } else {
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelComputeallAJ(
-            icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
-        }
-      });
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelComputeallAJ(
+              icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
+          }
+        });
     *jcurPtr = SUNTRUE;
   }
   cudaError_t cuda_status = cudaStreamSynchronize(stream);
