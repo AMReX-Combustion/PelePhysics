@@ -182,9 +182,14 @@ struct Fuego
     }
   }
 
-  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  // avoid register spillage on AMD, might be able to remove in future
+  __attribute__((noinline))
+#else
   AMREX_FORCE_INLINE
-  static void RTY2JAC(
+#endif
+  AMREX_GPU_HOST_DEVICE static void
+  RTY2JAC(
     amrex::Real R,
     amrex::Real T,
     amrex::Real Y[],

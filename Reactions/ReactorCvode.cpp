@@ -726,6 +726,7 @@ ReactorCvode::allocUserData(
   udata->maxOrder = 2;
   ppcv.query("max_order", udata->maxOrder);
   ppcv.query("solve_type", solve_type_str);
+
   // Defaults
   udata->solve_type = -1;
   udata->analytical_jacobian = 0;
@@ -818,7 +819,7 @@ ReactorCvode::allocUserData(
   udata->ncells = a_ncells;
   udata->verbose = verbose;
 #ifdef AMREX_USE_GPU
-  udata->nbThreads = 32;
+  udata->nbThreads = CVODE_NB_THREADS;
   udata->nbBlocks = std::max(1, a_ncells / udata->nbThreads);
   udata->stream = stream;
 #endif
