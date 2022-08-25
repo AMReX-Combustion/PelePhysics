@@ -66,6 +66,8 @@ check_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
+  const amrex::Real ijk_vfrac,
+  const amrex::Real min_eb_vfrac,
 #endif
   amrex::Real& par_dot,
   amrex::RealVect& normal)
@@ -97,6 +99,16 @@ check_wall(
         bcentv[dir] =
           (amrex::Real(ijkc[dir]) + 0.5 + bcent(ijkc, dir)) * dx[dir];
       }
+      // If volume fraction is too small, treat cell face as the wall to prevent
+      // particle from residing in cell
+      if (ijk_vfrac < min_eb_vfrac) {
+        // Direction of face to treat as wall
+        int fdir = normal.maxDir(true);
+        amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? -0.5 : 0.5;
+        normal = amrex::RealVect::TheZeroVector();
+        normal[fdir] = 1.;
+        bcentv[fdir] = (amrex::Real(ijkc[fdir]) + 0.5 + face_sgn) * dx[fdir];
+      }
       // If the particle has moved into a covered cell
     } else if (flags(ijkc).isCovered()) {
       wall_check = true;
@@ -109,7 +121,7 @@ check_wall(
             (amrex::Real(ijkc_prev[dir]) + 0.5 + bcent(ijkc_prev, dir)) *
             dx[dir];
         }
-        // otherwise an error has occurred
+        // Otherwise an error has occurred
       } else {
         amrex::Abort("WallFunctions::check_wall: Particle is outside EB");
       }
@@ -149,6 +161,8 @@ impose_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
+  amrex::Array4<amrex::Real const> const& vfrac,
+  const amrex::Real min_eb_vfrac,
 #endif
   amrex::IntVect& ijkc,
   amrex::IntVect& ijkc_prev)
@@ -159,7 +173,7 @@ impose_wall(
   bool do_refl = check_wall(
     p.pos(), bflags, dx, plo, ijkc,
 #ifdef AMREX_USE_EB
-    ijkc_prev, use_EB, flags, bcent, bnorm,
+    ijkc_prev, use_EB, flags, bcent, bnorm, vfrac(ijkc), min_eb_vfrac,
 #endif
     par_dot, normal);
   // Keep track of number of times particle bounces
@@ -182,7 +196,7 @@ impose_wall(
     do_refl = check_wall(
       p.pos(), bflags, dx, plo, ijkc,
 #ifdef AMREX_USE_EB
-      ijkc_prev, use_EB, flags, bcent, bnorm,
+      ijkc_prev, use_EB, flags, bcent, bnorm, vfrac(ijkc), min_eb_vfrac,
 #endif
       par_dot, normal);
     bounce_counter++;

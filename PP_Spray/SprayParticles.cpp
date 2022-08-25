@@ -576,7 +576,8 @@ SprayParticleContainer::updateParticles(
                   impose_wall(
                     p, SPI, dx, plo, bflags,
 #ifdef AMREX_USE_EB
-                    eb_in_box, flags_array, bcent_fab, bnorm_fab,
+                    eb_in_box, flags_array, bcent_fab, bnorm_fab, vfrac_fab,
+                    fdat->min_eb_vfrac,
 #endif
                     ijkc, ijkc_prev);
                   lx = (p.pos() - plo) * dxi + 0.5;

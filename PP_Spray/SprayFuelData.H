@@ -126,7 +126,7 @@ struct SprayData
   bool fixed_parts = false; // If particles are fixed in place
 #ifdef AMREX_USE_EB
   // Min cell volume fraction to add sources to
-  amrex::Real min_eb_vfrac = 0.1;
+  amrex::Real min_eb_vfrac = 0.05;
 #endif
   amrex::Real num_ppp; // Parcel size
   amrex::Real ref_T;
