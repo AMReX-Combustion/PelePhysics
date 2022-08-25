@@ -79,9 +79,9 @@ check_wall(
     // 1 - Outside upper reflective boundary
     // Only accounts for 1  Cartesian direction
     if ((bflags[dir] == -1 || bflags[dir] == 1) && !wall_check) {
-      normal[dir] = -bflags[dir];
+      normal[dir] = -amrex::Real(bflags[dir]);
       bcentv[dir] =
-        (amrex::Real(ijkc[dir]) + 0.5 * (1. - bflags[dir])) * dx[dir];
+        (amrex::Real(ijkc[dir]) + 0.5 * amrex::Real(1 - bflags[dir])) * dx[dir];
       wall_check = true;
     } else {
       normal[dir] = 0.;
@@ -104,10 +104,10 @@ check_wall(
       if (ijk_vfrac < min_eb_vfrac) {
         // Direction of face to treat as wall
         int fdir = normal.maxDir(true);
-        amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? -0.5 : 0.5;
+        amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
         normal = amrex::RealVect::TheZeroVector();
-        normal[fdir] = 1.;
-        bcentv[fdir] = (amrex::Real(ijkc[fdir]) + 0.5 + face_sgn) * dx[fdir];
+        normal[fdir] = -face_sgn;
+        bcentv[fdir] = (amrex::Real(ijkc[fdir]) + 0.5 * (1. - face_sgn)) * dx[fdir];
       }
       // If the particle has moved into a covered cell
     } else if (flags(ijkc).isCovered()) {
