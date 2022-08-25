@@ -159,7 +159,7 @@ calculateSpraySource(
   const amrex::Real rule = 1. / 3.;
   const amrex::Real C_eps = 1.E-15;
   const amrex::Real B_eps = 1.E-7;
-  const amrex::Real min_mass = 1.E-12 * SPU.mass_conv;
+  const amrex::Real min_mass = SPU.min_mass;
   const int nSubMax = 100;
   bool get_xi = false;
   bool get_Ddiag = true;

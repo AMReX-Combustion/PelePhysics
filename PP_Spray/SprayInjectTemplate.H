@@ -79,7 +79,7 @@ SprayParticleContainer::sprayInjection(
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateDia = m_sprayIndx.pstateDia;
   const int pstateY = m_sprayIndx.pstateY;
-  const SprayUnits SPU;
+  SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
