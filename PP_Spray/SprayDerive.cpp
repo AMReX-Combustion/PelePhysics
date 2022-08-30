@@ -1,8 +1,8 @@
 
+#include "SprayParticles.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
 #endif
-#include "SprayParticles.H"
 
 using namespace amrex;
 
