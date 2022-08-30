@@ -256,7 +256,8 @@ impose_wall(
     if (bounce_counter > max_bounce && do_refl) {
       Nw_Vp = normal.dotProduct(vel_part);
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) += (0.5 * p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
+        p.pos(dir) +=
+          (0.5 * p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
         p.rdata(SPI.pstateVel + dir) -= Nw_Vp * normal[dir];
         ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
       }
