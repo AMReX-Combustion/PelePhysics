@@ -241,8 +241,7 @@ impose_wall(
       p.pos(dir) -= 2. * par_dot * normal[dir];
       p.rdata(SPI.pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
       vel_part[dir] = p.rdata(SPI.pstateVel + dir);
-      ijkc[dir] = amrex::Math::floor(p.pos(dir));
-      // ijkc[dir] = amrex::Math::floor((p.pos(dir) - plo[dir]) / dx[dir]);
+      ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
     }
     do_refl = check_wall(
       p.pos(), bflags, ijkc,
@@ -255,14 +254,11 @@ impose_wall(
     // If particle exceeds max bounces, place near wall and set normal velocity
     // to zero
     if (bounce_counter > max_bounce && do_refl) {
-      amrex::Real Nw_Vp = AMREX_D_TERM(
-        normal[0] * p.rdata(SPI.pstateVel),
-        +normal[1] * p.rdata(SPI.pstateVel + 1),
-        +normal[2] * p.rdata(SPI.pstateVel + 2));
+      Nw_Vp = normal.dotProduct(vel_part);
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) += (0.5 * p.rdata(SPI.pstateDia) - par_dot) * normal[dir];
+        p.pos(dir) += (0.5 * p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
         p.rdata(SPI.pstateVel + dir) -= Nw_Vp * normal[dir];
-        ijkc[dir] = amrex::Math::floor(p.pos(dir));
+        ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
       }
       do_refl = false;
     }
