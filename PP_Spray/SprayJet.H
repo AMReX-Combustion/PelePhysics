@@ -95,19 +95,19 @@ public:
   SprayJet(SprayJet const&) = delete;
   SprayJet& operator=(SprayJet const&) = delete;
 
-  inline const amrex::RealVect& jet_norm() { return m_norm; }
-  inline const amrex::RealVect& jet_cent() { return m_cent; }
-  inline const amrex::Real& jet_vel() { return m_jetVel; }
-  inline const amrex::Real& jet_dia() { return m_jetDia; }
-  inline const amrex::Real& spread_angle() { return m_spreadAngle; }
-  inline const amrex::Real& mass_flow_rate() { return m_massFlow; }
-  inline const amrex::Real& Y(const int spf) { return m_jetY[spf]; }
-  inline const amrex::Real& T() { return m_jetT; }
-  inline const amrex::Real& start_time() { return m_startTime; }
-  inline const amrex::Real& end_time() { return m_endTime; }
+  inline const amrex::RealVect& jet_norm() const { return m_norm; }
+  inline const amrex::RealVect& jet_cent() const { return m_cent; }
+  inline const amrex::Real& jet_vel() const { return m_jetVel; }
+  inline const amrex::Real& jet_dia() const { return m_jetDia; }
+  inline const amrex::Real& spread_angle() const { return m_spreadAngle; }
+  inline const amrex::Real& mass_flow_rate() const { return m_massFlow; }
+  inline const amrex::Real& Y(const int spf) const { return m_jetY[spf]; }
+  inline const amrex::Real& T() const { return m_jetT; }
+  inline const amrex::Real& start_time() const { return m_startTime; }
+  inline const amrex::Real& end_time() const { return m_endTime; }
 
   // Call this before using spray jet
-  bool jet_active(const amrex::Real time)
+  bool jet_active(const amrex::Real time) const
   {
     if (m_jetVel < 0.) {
       amrex::Abort("Jet velocity is not set");
@@ -121,9 +121,9 @@ public:
     return check;
   }
 
-  inline bool hollow_spray() { return m_hollowSpray; }
-  inline amrex::Real get_dia() { return m_dropDist->get_dia(); }
-  inline amrex::Real get_avg_dia() { return m_dropDist->get_avg_dia(); }
+  inline bool hollow_spray() const { return m_hollowSpray; }
+  inline amrex::Real get_dia() const { return m_dropDist->get_dia(); }
+  inline amrex::Real get_avg_dia() const { return m_dropDist->get_avg_dia(); }
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
@@ -133,7 +133,8 @@ public:
     m_cent = jet_cent;
     check_jet_cent(geom);
   }
-  void check_jet_cent(const amrex::Geometry& geom)
+
+  void check_jet_cent(const amrex::Geometry& geom) const
   {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       if (m_cent[dir] > geom.ProbHi(dir) || m_cent[dir] < geom.ProbLo(dir)) {
@@ -141,7 +142,8 @@ public:
       }
     }
   }
-  void set_mass_frac(amrex::Real* Y_jet)
+
+  void set_mass_frac(const amrex::Real* Y_jet)
   {
     amrex::Real sumtest = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -155,6 +157,7 @@ public:
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
+
   void reset_sum()
   {
     m_sumInjMass = -1;

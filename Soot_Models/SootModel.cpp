@@ -25,12 +25,7 @@ using namespace amrex;
 
 // Default constructor
 SootModel::SootModel()
-  : m_sootData(nullptr),
-    m_sootReact(nullptr),
-    d_sootData(nullptr),
-    d_sootReact(nullptr),
-    m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
-    m_gasSpecNames(NUM_SOOT_GS, "")
+  : m_sootVarName(NUM_SOOT_MOMENTS + 1, ""), m_gasSpecNames(NUM_SOOT_GS, "")
 {
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";

@@ -33,7 +33,7 @@ public:
   //
   // No assignment operator
   //
-  SootModel& operator= (SootModel const&) = delete;
+  SootModel& operator=(SootModel const&) = delete;
 
   //
   // Destructor
@@ -133,12 +133,12 @@ public:
   SootComps m_sootIndx;
   bool m_setIndx = false;
   /// Pointer to soot data and soot specific functions
-  SootData* m_sootData;
+  SootData* m_sootData = nullptr;
   /// Pointer for soot reaction data
-  SootReaction* m_sootReact;
+  SootReaction* m_sootReact = nullptr;
   /// Pointers for data on device
-  SootData* d_sootData;
-  SootReaction* d_sootReact;
+  SootData* d_sootData = nullptr;
+  SootReaction* d_sootReact = nullptr;
   /// Bool for checking if parameters have been read from input file
   bool m_readSootParams = false;
   /// Bool for checking if member data has all been defined

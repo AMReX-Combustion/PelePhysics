@@ -384,7 +384,6 @@ SprayParticleContainer::updateParticles(
       bndry_hi[dir] = 0;
     }
   }
-  const Real wallT = m_wallT;
   const Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
   const Real inv_vol = 1. / vol;
   // If particle subcycling is being done, determine the number of subcycles
@@ -449,8 +448,8 @@ SprayParticleContainer::updateParticles(
       Np,
       [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
        momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
-       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, wallT, isGhost,
-       isVirt, src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev
+       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
+       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev
 #ifdef AMREX_USE_EB
        ,
        flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, eb_in_box
