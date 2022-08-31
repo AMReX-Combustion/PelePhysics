@@ -272,7 +272,7 @@ calculateSpraySource(
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
     amrex::Real drag_force_p =
-      0.75 * rho_skin * drag_coef * dia_part * diff_vel_mag / rho_part;
+      0.75 * rho_skin * drag_coef * diff_vel_mag / (dia_part * rho_part);
     part_mom_src = drag_force_p * diff_vel;
     if (fdat.mom_trans) {
       gpv.fluid_mom_src += drag_force * diff_vel;
