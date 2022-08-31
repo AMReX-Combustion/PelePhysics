@@ -14,7 +14,7 @@ public:
   amrex::Real get_avg_dia() override;
 
 private:
-  amrex::Real m_diam;
+  amrex::Real m_diam = 0.;
 };
 
 class Normal : public DistBase::Register<Normal>
@@ -28,8 +28,8 @@ public:
   amrex::Real get_avg_dia() override;
 
 private:
-  amrex::Real m_mean;
-  amrex::Real m_std;
+  amrex::Real m_mean = 0.;
+  amrex::Real m_std = 0.;
 };
 
 class LogNormal : public DistBase::Register<LogNormal>
@@ -43,8 +43,8 @@ public:
   amrex::Real get_avg_dia() override;
 
 private:
-  amrex::Real m_log_mean;
-  amrex::Real m_log_std;
+  amrex::Real m_log_mean = 0.;
+  amrex::Real m_log_std = 0.;
 };
 
 class Weibull : public DistBase::Register<Weibull>
@@ -58,7 +58,7 @@ public:
   amrex::Real get_avg_dia() override;
 
 private:
-  amrex::Real m_mean;
-  amrex::Real m_k;
+  amrex::Real m_mean = 0.;
+  amrex::Real m_k = 0.;
 };
 #endif

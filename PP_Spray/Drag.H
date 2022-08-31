@@ -297,7 +297,6 @@ calculateSpraySource(
       amrex::Real powR =
         amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
       amrex::Real rhoDtotal = 0.;
-      amrex::Real Psat_total = 0.;
       amrex::Real maxPsat = 0.;
       amrex::Real Nu_num = 0.;
       int maxY = -1;
@@ -311,7 +310,6 @@ calculateSpraySource(
           Y_part[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
         Ddiag[fspec] *= X_norm;
         rhoDtotal += Ddiag[fspec];
-        Psat_total += Psat[spf];
         if (Psat[spf] > maxPsat) {
           maxY = spf;
           maxPsat = Psat[spf];

@@ -17,7 +17,7 @@ public:
     const amrex::Real mass_flow,
     const amrex::Real jet_temp,
     const amrex::Real jet_Y[SPRAY_FUEL_NUM],
-    const std::string dist_type,
+    const std::string& dist_type,
     const amrex::Real start_time = 0.,
     const amrex::Real end_time = 1.E8,
     bool hollow_spray = false)

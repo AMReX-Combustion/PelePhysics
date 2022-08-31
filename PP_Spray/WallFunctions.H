@@ -233,9 +233,13 @@ impose_wall(
   while (do_refl) {
     // Plane ref point
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
+#ifdef AMREX_USE_EB
     if (!flags(ijkc).isCovered()) {
       ijkc_prev = ijkc;
     }
+#else
+    ijkc_prev = ijkc;
+#endif
     // Reflect particle position and velocity around the boundary
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       p.pos(dir) -= 2. * par_dot * normal[dir];
