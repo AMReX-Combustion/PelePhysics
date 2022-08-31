@@ -43,7 +43,7 @@ public:
   }
 
   // Constructor assumes parameters are set from input file
-  SprayJet(const std::string jet_name, const amrex::Geometry& geom)
+  SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   {
     std::string ppspray = "spray." + jet_name;
     amrex::ParmParse ps(ppspray);
