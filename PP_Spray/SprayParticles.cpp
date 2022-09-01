@@ -416,9 +416,10 @@ SprayParticleContainer::updateParticles(
     Array4<Real> const& rhoSrcarr = source.array(pti, SPI.rhoSrcIndx);
     Array4<Real> const& momSrcarr = source.array(pti, SPI.momSrcIndx);
     Array4<Real> const& engSrcarr = source.array(pti, SPI.engSrcIndx);
+    bool eb_in_box = false;
 
 #ifdef AMREX_USE_EB
-    bool eb_in_box = true;
+    eb_in_box = true;
     const auto& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
     const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
     Array4<const Real> ccent_fab;
@@ -449,10 +450,10 @@ SprayParticleContainer::updateParticles(
       [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
        momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
        bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
-       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev
+       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev, eb_in_box
 #ifdef AMREX_USE_EB
        ,
-       flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, eb_in_box
+       flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
 #endif
     ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
@@ -573,9 +574,9 @@ SprayParticleContainer::updateParticles(
                 } else {
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                    p, SPI, dx, plo, bflags,
+                    p, SPI, dx, plo, bflags, eb_in_box,
 #ifdef AMREX_USE_EB
-                    eb_in_box, flags_array, bcent_fab, bnorm_fab, volfrac_fab,
+                    flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
 #endif
                     ijkc, ijkc_prev);

@@ -37,16 +37,17 @@ tile_at_bndry(
 
 /**
 Determines if particle must be reflected off BC or EB
-@param[in] pos Position of the particle after advecting
+@param[in] pos Position of the particle after advecting, normalized by dx
 @param[in] bflags Flags if particle is outside reflective boundaries
-@param[in] dx Grid spacing
-@param[in] plo Low domain location
 @param[in] ijkc Grid cell index containing particle
 @param[in] ijkc_prev Previous grid cell index containing particle
+@param[in] vel_part Velocity of the particle
 @param[in] use_EB Flag if EB is used in the current box
 @param[in] flags Array of flags denoting if a cell has EB in it
 @param[in] bcent Array of EB centroids for each cell
 @param[in] bnorm Array of EB normal vectors for each cell
+@param[in] vfrac Array of EB volume fractions for each cell
+@param[in] min_eb_vfrac Minimum volume fraction to allow particles in
 @param[out] par_dot Magnitude of vector from wall plane to particle, negative
 means outside the domain
 @param[out] normal Boundary normal vector
@@ -66,7 +67,7 @@ check_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
-  const amrex::Real ijk_vfrac,
+  amrex::Array4<amrex::Real const> const& vfrac,
   const amrex::Real min_eb_vfrac,
 #endif
   amrex::Real& par_dot,
@@ -99,7 +100,7 @@ check_wall(
       }
       // If volume fraction is too small, treat cell face as the wall to prevent
       // particle from residing in cell
-      if (ijk_vfrac < min_eb_vfrac) {
+      if (vfrac(ijkc) < min_eb_vfrac) {
         // Direction of face to treat as wall
         int fdir = normal.maxDir(true);
         amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
@@ -167,8 +168,8 @@ check_wall(
               bcentv = cur_bcent;
             }
           }
-        }
-      }
+        } // for (int dir = 0;...
+      }   // if (test_par > 0.)
     }
   }
 #endif
@@ -199,8 +200,8 @@ impose_wall(
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
   const amrex::IntVect bflags,
-#ifdef AMREX_USE_EB
   const bool use_EB,
+#ifdef AMREX_USE_EB
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
@@ -223,7 +224,7 @@ impose_wall(
   bool do_refl = check_wall(
     p.pos(), bflags, ijkc,
 #ifdef AMREX_USE_EB
-    ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac(ijkc), min_eb_vfrac,
+    ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
     par_dot, normal);
   // Keep track of number of times particle bounces
@@ -233,12 +234,15 @@ impose_wall(
   while (do_refl) {
     // Plane ref point
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-#ifdef AMREX_USE_EB
-    if (!flags(ijkc).isCovered()) {
+    if (!use_EB) {
       ijkc_prev = ijkc;
     }
-#else
-    ijkc_prev = ijkc;
+#ifdef AMREX_USE_EB
+    else {
+      if (!flags(ijkc).isCovered()) {
+        ijkc_prev = ijkc;
+      }
+    }
 #endif
     // Reflect particle position and velocity around the boundary
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -250,8 +254,7 @@ impose_wall(
     do_refl = check_wall(
       p.pos(), bflags, ijkc,
 #ifdef AMREX_USE_EB
-      ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac(ijkc),
-      min_eb_vfrac,
+      ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
       par_dot, normal);
     bounce_counter++;
