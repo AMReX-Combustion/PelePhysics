@@ -413,11 +413,7 @@ struct SimpleTransport
     const bool wtr_get_mu = true;
     const bool wtr_get_lam = true;
     const bool wtr_get_Ddiag = true;
-#ifdef USE_SORET
     const bool wtr_get_chi = true;
-#else
-    const bool wtr_get_chi = false;
-#endif
 
     for (int k = lo.z; k <= hi.z; ++k) {
       for (int j = lo.y; j <= hi.y; ++j) {
