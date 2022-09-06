@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'PeleMP'
+project = u'PeleMP'
 copyright = '2022, PeleTeam'
-author = 'PeleTeam'
+author = u'PeleTeam'
 release = u'0.1'
 version = u'0.1'
 
@@ -18,11 +18,11 @@ master_doc = 'index'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = [ 'sphinx.ext.mathjax' ]
 
 templates_path = ['_templates']
-exclude_patterns = []
-
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store' ]
+pygments_style = 'sphinx'
 
 
 # -- Options for HTML output -------------------------------------------------
