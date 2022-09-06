@@ -1,7 +1,9 @@
 .. highlight:: rst
 
-Quickstart
-===================
+.. _GettingStarted:
+
+Getting Started
+===============
 
 The `PeleMP` code can be obtained via `GitHub <https://github.com/AMReX-Combustion/PeleMP>`_.
 `PeleMP` is the repository of multiphysics capabilities for use with other `Pele` codes:
@@ -9,6 +11,7 @@ The `PeleMP` code can be obtained via `GitHub <https://github.com/AMReX-Combusti
 * `PeleC <https://amrex-combustion.github.io/PeleC/>`_
 * `PeleLM <https://amrex-combustion.github.io/PeleLM/>`_
 * `PeleLMeX <https://amrex-combustion.github.io/PeleLMeX/>`_
+
 
 Since the suite of `Pele` codes are in active development, the easiest method to access `PeleMP` for end-users is through the `PeleProduction` repository.
 
@@ -26,11 +29,15 @@ Since the suite of `Pele` codes are in active development, the easiest method to
 
 3. Access the directory of the `Pele` code you wish to interface with, either `PeleC`, `PeleLM`, or `PeleLMeX`.
 
-4. Access the directory of the relevant problem type, either `spray_flame` for a spray injection case, or `laminar_soot` for a sooting flame case. These are just two example problems to help demonstrate the capabilities of `PeleMP`.
+4. Access the directory of the relevant problem type, either ``spray_flame`` for a spray injection case, or ``laminar_soot`` for a sooting flame case. These are just two example problems to help demonstrate the capabilities of `PeleMP`.
 
-5. Modify the GNUmakefile according to the desired build type (compiler, MPI, chemistry, soot and spray flags, etc).
+5. Modify the ``GNUmakefile`` according to the desired build type (compiler, MPI, chemistry, soot and spray flags, etc).
 
-6. Run the build script in the directory ::
+6. Run the build script in the directory ``./build.sh``.
 
-     ./build.sh
+.. toctree::
+   :maxdepth: 1
+
+   SprayInputs
+
 

@@ -3,15 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PeleMP's documentation!
-==================================
+=====================
+PeleMP Documentation
+=====================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   GettingStarted.rst
-   Models.rst
+   GettingStarted
+   Equations
 
 
 Indices and tables
