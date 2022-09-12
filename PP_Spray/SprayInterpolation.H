@@ -579,8 +579,7 @@ eb_interp(
       AMREX_D_TERM(gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
                    , gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
                    , gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
-      AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1;
-                   , jc = (gy < 0.) ? jp : jp + 1;
+      AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1;, jc = (gy < 0.) ? jp : jp + 1;
                    , kc = (gz < 0.) ? kp : kp + 1;);
     }
   } // if (isVirt)
