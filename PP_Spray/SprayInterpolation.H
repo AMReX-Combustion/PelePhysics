@@ -402,7 +402,7 @@ eb_interp(
   SprayParticleContainer::ParticleType& p,
   const SprayComps& SPI,
   const bool isVirt,
-  const amrex::IntVect& ijkc,
+  amrex::IntVect& ijkc,
   const amrex::IntVect& ijk,
   const amrex::RealVect& dx,
   const amrex::RealVect& dxi,
@@ -418,23 +418,34 @@ eb_interp(
   amrex::IntVect* indx_array,
   amrex::Real* weights)
 {
-  bool do_fe_interp = true;
-  int i = 0, j = 0, k = 0, ip = 0, jp = 0, kp = 0;
+  bool do_fe_interp = false;
+  int ip = 0, jp = 0, kp = 0;
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
-  AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];);
   amrex::RealVect pos(AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2)));
+  // Particle position relative to cell center [-0.5, 0.5]
+  AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
+               , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
+               , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
+  // Use the centroid location of the cell containing the particle
+  // to guess the interpolation stencil.
+  int ic = 0, di = 0, jc = 0, dj = 0, kc = 0, dk = 0;
+  AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1; di = ic - ip;
+               , jc = (gy < 0.) ? jp : jp + 1; dj = jc - jp;
+               , kc = (gz < 0.) ? kp : kp + 1; dk = kc - kp;);
   // All cells in the stencil are regular. Use
   // traditional trilinear interpolation
-  if (
 #if AMREX_SPACEDIM == 3
-    flags(i - 1, j - 1, k - 1).isRegular() &&
-    flags(i, j - 1, k - 1).isRegular() && flags(i - 1, j, k - 1).isRegular() &&
-    flags(i, j, k - 1).isRegular() && flags(i - 1, j - 1, k).isRegular() &&
+  for (int kk = kc - 1; kk <= kc; kk++)
 #endif
-    flags(i, j - 1, k).isRegular() && flags(i - 1, j, k).isRegular() &&
-    flags(i, j, k).isRegular()) {
-    do_fe_interp = false;
+  {
+    for (int jj = jc - 1; jj <= jc; jj++) {
+      for (int ii = ic - 1; ii <= ic; ii++) {
+        if (!flags(ii, jj, kk).isRegular()) {
+          do_fe_interp = true;
+        }
+      }
+    }
   }
   if (!do_fe_interp) {
     trilinear_interp(ijk, lx, indx_array, weights, bflags);
@@ -457,7 +468,7 @@ eb_interp(
     if (cdist < tolerance) {
       indx_array[0] = {AMREX_D_DECL(ip, jp, kp)};
       weights[0] = 1.;
-      for (int aindx = 1; aindx < 8; ++aindx) {
+      for (int aindx = 1; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
         indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
         weights[aindx] = 0.;
       }
@@ -495,18 +506,6 @@ eb_interp(
         cent_dot_EB > tolerance,
         "cent_dot_EB < tolerance ... this makes no sense!");
     }
-    // Particle position relative to cell center [-0.5, 0.5]
-    AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
-                 , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
-                 , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5);)
-
-    // Use the centroid location of the cell containing the particle
-    // to guess the interpolation stencil.
-    int ic = 0, di = 0, jc = 0, dj = 0, kc = 0, dk = 0;
-    AMREX_D_TERM(ic = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = ic - ip;
-                 , jc = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = jc - jp;
-                 , kc = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1;
-                 dk = kc - kp;)
 
     // Count the number of non-connected cells in the stencil
     int covered = 0;
@@ -524,60 +523,111 @@ eb_interp(
         }
       }
     }
-    // A negative value implies that the particle is 'behind' the EB (and
-    // therefore inside the wall). Although this shouldn't occur often, it could
-    // for fast moving particles.  Set the fluid velocity to zero and use the
-    // cell value for remaining items.
-    if (
-      (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
-      flags(ip, jp, kp).isCovered()) {
-      // Virtual particles can inadvertently be placed behind EB walls on lower
-      // levels. For these situations, simply move the particle to the other
-      // side of the wall.
-      if (isVirt) {
-        // If cell is covered, move particle to nearest EB wall in adjacent cell
-        if (flags(ip, jp, kp).isCovered()) {
-          if (flags(ic, jc, kc).isSingleValued()) {
-            AMREX_D_TERM(ip = ic;, jp = jc;, kp = kc;);
-            normal = {AMREX_D_DECL(
-              -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1),
-              -bnorm(ip, jp, kp, 2))};
-            par_dot_EB = AMREX_D_TERM(
-              (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) *
-                normal[0],
-              +(pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
-                normal[1],
-              +(pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) *
-                normal[2]);
-          } else {
-            amrex::Abort("Virtual particle is in covered cell far from EB");
+    // Get position normalized by dx
+    amrex::RealVect pcent = {AMREX_D_DECL(
+      (pos[0] - plo[0]) * dxi[0] - 0.5, (pos[1] - plo[1]) * dxi[1] - 0.5,
+      (pos[2] - plo[2]) * dxi[2] - 0.5)};
+    // Virtual particles can inadvertently be placed behind EB walls on lower
+    // levels. For these situations, simply move the particle to the other side of EB
+    if (isVirt) {
+      if (flags(ip, jp, kp).isCovered() || par_dot_EB < tolerance) {
+        amrex::Real min_dist = 1.E8;
+        par_dot_EB = 2.;
+        int kk = 0;
+#if AMREX_SPACEDIM == 3
+        for (kk = kc - 1; kk <= kc; kk++)
+#endif
+        {
+          amrex::Real z = static_cast<amrex::Real>(kk);
+          for (int jj = jc - 1; jj <= jc; jj++) {
+            amrex::Real y = static_cast<amrex::Real>(jj);
+            for (int ii = ic - 1; ii <= ic; ii++) {
+              amrex::Real x = static_cast<amrex::Real>(ii);
+              if (flags(ii, jj, kk).isSingleValued()) {
+                AMREX_D_TERM(
+                  amrex::Real lx = pcent[0] - (x + bcent(ii, jj, kk, 0));
+                  , amrex::Real ly = pcent[1] - (y + bcent(ii, jj, kk, 1));
+                  , amrex::Real lz = pcent[2] - (z + bcent(ii, jj, kk, 2)););
+                amrex::Real len =
+                  std::sqrt(AMREX_D_TERM(lx * lx, +ly * ly, +lz * lz));
+                if (len < min_dist) {
+                  min_dist = len;
+                  normal = {AMREX_D_DECL(
+                    -bnorm(ii, jj, kk, 0), -bnorm(ii, jj, kk, 1),
+                    -bnorm(ii, jj, kk, 2))};
+                  AMREX_D_TERM(ip = ii;, jp = jj;, kp = kk;);
+                  par_dot_EB = AMREX_D_TERM(
+                    lx * dx[0] * normal[0], +ly * dx[1] * normal[1],
+                    +lz * dx[2] * normal[2]);
+                }
+              }
+            }
           }
         }
+        ijkc = {AMREX_D_DECL(ip, jp, kp)};
+        cent_dot_EB = 0.;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           p.pos(dir) +=
             (0.5 * p.rdata(SPI.pstateDia) - par_dot_EB) * normal[dir];
+          pos[dir] = p.pos(dir);
+          cent_dot_EB +=
+            (ccent(ijkc, dir) - bcent(ijkc, dir)) * dx[dir] * normal[dir];
+          pcent[dir] = (pos[dir] - plo[dir]) * dxi[dir] - 0.5;
         }
-        for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-          indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
-          weights[aindx] = 0.;
-        }
-        weights[0] = 1.;
-        // If it is not a virtual particle, throw an error
-      } else {
-        amrex::Abort("Particle has penetrated EB boundary");
       }
+    }
+    if (
+      (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
+      flags(ip, jp, kp).isCovered()) {
+      // If it is not a virtual particle, throw an error
+      amrex::Abort("Particle has penetrated EB boundary");
+
       // The particle is near the EB. It is either
       // 1) between the cell centroid and the EB, or
       // 2) one or more cells in the 2^3 stencil is covered.
-      // Either way, interpolating to the particle is not straight forward so
-      // (for now) we do a 1D interpolation to the EB.
-
+      // Either way, we interpolate using a inverse weighting method
     } else if ((covered > 0) || (par_dot_EB < cent_dot_EB)) {
-      for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-        indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
-        weights[aindx] = 0.;
+      int nic = 0;
+      int found_cells = 0;
+      amrex::Real sum_wt = 0.;
+      int kk = 0;
+#if AMREX_SPACEDIM == 3
+      for (kk = kc - 1; kk <= kc; kk++)
+#endif
+      {
+        amrex::Real z = static_cast<amrex::Real>(kk);
+        for (int jj = jc - 1; jj <= jc; jj++) {
+          amrex::Real y = static_cast<amrex::Real>(jj);
+          for (int ii = ic - 1; ii <= ic; ii++) {
+            amrex::Real x = static_cast<amrex::Real>(ii);
+            if (
+              !flags(ii, jj, kk).isCovered() &&
+              vfrac(ii, jj, kk) > min_eb_vfrac) {
+              AMREX_D_TERM(
+                           amrex::Real lx = pcent[0] - (x + ccent(ii, jj, kk, 0));,
+                           amrex::Real ly = pcent[1] - (y + ccent(ii, jj, kk, 1));,
+                           amrex::Real lz = pcent[2] - (z + ccent(ii, jj, kk, 2)););
+              amrex::Real wt = 1. / std::sqrt(AMREX_D_TERM(lx * lx, + ly * ly, + lz * lz));
+              weights[nic] = wt ;
+              sum_wt += wt;
+              indx_array[nic] = {AMREX_D_DECL(ii, jj, kk)};
+              found_cells++;
+            } else {
+              indx_array[nic] = {AMREX_D_DECL(ic, jc, kc)};
+              weights[nic] = 0.;
+            }
+            nic++;
+          }
+        }
       }
-      weights[0] = 1.;
+      // If all surrounding cells are covered or too small, look further
+      if (found_cells == 0) {
+        amrex::Abort("No valid surrounding cells, consider lowering "
+                     "particles.min_eb_vfrac");
+      }
+      for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+        weights[aindx] /= sum_wt;
+      }
     } else {
       amrex::GpuArray<
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, AMREX_D_PICK(2, 4, 8)>
@@ -591,19 +641,15 @@ eb_interp(
       int lc = 0;
 
 #if AMREX_SPACEDIM == 3
-      for (int kk = -1; kk < 1; kk++)
+      for (int kk = kc - 1; kk <= kc; kk++)
 #endif
       {
-        for (int jj = -1; jj < 1; jj++) {
-          for (int ii = -1; ii < 1; ii++) {
+        for (int jj = jc - 1; jj <= jc; jj++) {
+          for (int ii = ic - 1; ii <= ic; ii++) {
             AMREX_D_TERM(
-              nodes[lc][0] =
-                (ic + ii + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 0)) * dx[0];
-              , nodes[lc][1] =
-                  (jc + jj + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 1)) * dx[1];
-              ,
-              nodes[lc][2] =
-                (kc + kk + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 2)) * dx[2];)
+              nodes[lc][0] = (ii + 0.5 + ccent(ii, jj, kk, 0)) * dx[0];
+              , nodes[lc][1] = (jj + 0.5 + ccent(ii, jj, kk, 1)) * dx[1];
+              , nodes[lc][2] = (kk + 0.5 + ccent(ii, jj, kk, 2)) * dx[2];)
             lc += 1;
           }
         }
@@ -626,19 +672,19 @@ eb_interp(
       indx_array[7] = {ic - 1, jc, kc};
       weights[0] = 1 - xi - eta - zeta + xi * eta + xi * zeta + eta * zeta -
                    xi * eta * zeta;
-      weights[1] = xi * (1 - eta - zeta + eta * zeta);
+      weights[1] = xi * (1. - eta - zeta + eta * zeta);
       weights[2] = xi * eta - xi * eta * zeta;
-      weights[3] = eta * (1 - xi - zeta + xi * zeta);
-      weights[4] = zeta * (1 - xi - eta + xi * eta);
+      weights[3] = eta * (1. - xi - zeta + xi * zeta);
+      weights[4] = zeta * (1. - xi - eta + xi * eta);
       weights[5] = xi * zeta - xi * eta * zeta;
       weights[6] = xi * eta * zeta;
       weights[7] = eta * zeta - xi * eta * zeta;
 #else
       indx_array[0] = {ic - 1, jc - 1};
       indx_array[1] = {ic, jc - 1};
-      indx_array[2] = {ic, j};
-      indx_array[3] = {ic - 1, j};
-      weights[0] = 1 - xi - eta + xi * eta;
+      indx_array[2] = {ic, jc};
+      indx_array[3] = {ic - 1, jc};
+      weights[0] = 1. - xi - eta + xi * eta;
       weights[1] = xi * (1. - eta);
       weights[2] = xi * eta;
       weights[3] = eta * (1. - xi);
