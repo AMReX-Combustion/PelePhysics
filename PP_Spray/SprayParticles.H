@@ -77,6 +77,8 @@ public:
     const int min_parcel =
       5); // Minimum number of parcels added during injection
 
+  static void spraySetup(SprayData& sprayData);
+
   static void readSprayParams(
     int& particle_verbose,
     amrex::Real& particle_cfl,
@@ -86,8 +88,6 @@ public:
     int& init_function,
     std::string& init_file,
     SprayData& sprayData,
-    std::string* sprayFuelNames,
-    amrex::Vector<std::string>& derivePlotVars,
     const amrex::Real& max_cfl =
       0.5); // Only overwrite this if particles are subcycled
 
@@ -95,8 +95,7 @@ public:
     const int level,
     const bool is_checkpoint,
     const int write_ascii,
-    const std::string& dir,
-    const std::string* sprayFuelNames)
+    const std::string& dir)
   {
     const int pstateVel = m_sprayIndx.pstateVel;
     const int pstateT = m_sprayIndx.pstateT;
@@ -109,7 +108,7 @@ public:
     real_comp_names[pstateT] = "temperature";
     real_comp_names[pstateDia] = "diam";
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
-      real_comp_names[pstateY + sp] = "spray_mf_" + sprayFuelNames[sp];
+      real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
     }
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
@@ -135,11 +134,7 @@ public:
   /// Derive grid variables related to sprays
   ///
   void computeDerivedVars(
-    amrex::MultiFab& mf_var,
-    const int level,
-    const int start_indx,
-    const amrex::Vector<std::string> derivePlotVars,
-    const std::string* sprayFuelNames);
+    amrex::MultiFab& mf_var, const int level, const int start_indx);
 
   ///
   /// Compute a maximum time step based on the particle velocities and a
@@ -354,7 +349,7 @@ public:
         ext_src(i, j, k, SPI.rhoIndx) += spraydot(i, j, k, SPI.rhoSrcIndx);
         ext_src(i, j, k, SPI.engIndx) += spraydot(i, j, k, SPI.engSrcIndx);
         for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
-          const int ecomp = SPI.specIndx + fdat->indx[sp];
+          const int ecomp = SPI.specIndx + fdat->dep_indx[sp];
           ext_src(i, j, k, ecomp) += spraydot(i, j, k, SPI.specSrcIndx + sp);
         }
       });
@@ -383,6 +378,10 @@ public:
     ProbParmDevice const& prob_parm_d
 #endif
   );
+
+  static std::string spray_fuel_names[SPRAY_FUEL_NUM];
+  static std::string spray_dep_names[SPRAY_FUEL_NUM];
+  static amrex::Vector<std::string> spray_derive_vars;
 
 private:
   ///

@@ -428,7 +428,7 @@ calculateSpraySource(
     gpv.fluid_mom_src += vel_part * mdot_total;
   }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int fspec = fdat.indx[spf];
+    const int fspec = fdat.dep_indx[spf];
     amrex::Real oldY = p.rdata(SPI.pstateY + spf);
     amrex::Real newY = Y_part[spf];
     amrex::Real midot =

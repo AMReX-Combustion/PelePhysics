@@ -141,6 +141,7 @@ struct SprayData
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
   amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
+  amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
 
   void build(const SprayData& fdat)
   {
@@ -165,6 +166,7 @@ struct SprayData
         rho_coef[4 * spf + cf] = fdat.rho_coef[4 * spf + cf];
       }
       indx[spf] = fdat.indx[spf];
+      dep_indx[spf] = fdat.dep_indx[spf];
     }
     dtmod = fdat.dtmod;
     min_eb_vfrac = fdat.min_eb_vfrac;
