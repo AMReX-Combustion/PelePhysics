@@ -420,6 +420,7 @@ eb_interp(
 {
   bool do_fe_interp = false;
   int ip = 0, jp = 0, kp = 0;
+  int kk = 0;
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
   amrex::RealVect pos(AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2)));
@@ -429,14 +430,14 @@ eb_interp(
                , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
   // Use the centroid location of the cell containing the particle
   // to guess the interpolation stencil.
-  int ic = 0, di = 0, jc = 0, dj = 0, kc = 0, dk = 0;
+  int ic = 0, di = 0, jc = 0, dj = 0, dk = 0;
   AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1; di = ic - ip;
                , jc = (gy < 0.) ? jp : jp + 1; dj = jc - jp;
-               , kc = (gz < 0.) ? kp : kp + 1; dk = kc - kp;);
+               , int kc = (gz < 0.) ? kp : kp + 1; dk = kc - kp;);
   // All cells in the stencil are regular. Use
   // traditional trilinear interpolation
 #if AMREX_SPACEDIM == 3
-  for (int kk = kc - 1; kk <= kc; kk++)
+  for (kk = kc - 1; kk <= kc; kk++)
 #endif
   {
     for (int jj = jc - 1; jj <= jc; jj++) {
@@ -509,9 +510,7 @@ eb_interp(
   // Count the number of non-connected cells in the stencil
   int covered = 0;
 #if AMREX_SPACEDIM == 3
-  for (int kk = -1; kk < 1; kk++)
-#else
-  int kk = 0;
+  for (kk = -1; kk < 1; kk++)
 #endif
   {
     for (int jj = -1; jj < 1; jj++) {
@@ -533,24 +532,22 @@ eb_interp(
     if (flags(ip, jp, kp).isCovered() || par_dot_EB < tolerance) {
       amrex::Real min_dist = 1.E8;
       par_dot_EB = 2.;
-      int kk = 0;
       // Check surrounding cells and determine which EB wall is closest
 #if AMREX_SPACEDIM == 3
       for (kk = kc - 1; kk <= kc; kk++)
 #endif
       {
-        amrex::Real z = static_cast<amrex::Real>(kk);
         for (int jj = jc - 1; jj <= jc; jj++) {
           amrex::Real y = static_cast<amrex::Real>(jj);
           for (int ii = ic - 1; ii <= ic; ii++) {
             amrex::Real x = static_cast<amrex::Real>(ii);
             if (flags(ii, jj, kk).isSingleValued()) {
               AMREX_D_TERM(
-                amrex::Real lx = pcent[0] - (x + bcent(ii, jj, kk, 0));
-                , amrex::Real ly = pcent[1] - (y + bcent(ii, jj, kk, 1));
-                , amrex::Real lz = pcent[2] - (z + bcent(ii, jj, kk, 2)););
+                amrex::Real dlx = pcent[0] - (x + bcent(ii, jj, kk, 0));
+                , amrex::Real dly = pcent[1] - (y + bcent(ii, jj, kk, 1));
+                , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) + bcent(ii, jj, kk, 2)););
               amrex::Real len =
-                std::sqrt(AMREX_D_TERM(lx * lx, +ly * ly, +lz * lz));
+                std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
               if (len < min_dist) {
                 min_dist = len;
                 normal = {AMREX_D_DECL(
@@ -558,8 +555,8 @@ eb_interp(
                   -bnorm(ii, jj, kk, 2))};
                 AMREX_D_TERM(ip = ii;, jp = jj;, kp = kk;);
                 par_dot_EB = AMREX_D_TERM(
-                  lx * dx[0] * normal[0], +ly * dx[1] * normal[1],
-                  +lz * dx[2] * normal[2]);
+                  dlx * dx[0] * normal[0], +dly * dx[1] * normal[1],
+                  +dlz * dx[2] * normal[2]);
               }
             }
           }
@@ -598,12 +595,10 @@ eb_interp(
     int nic = 0;
     int found_cells = 0;
     amrex::Real sum_wt = 0.;
-    int kk = 0;
 #if AMREX_SPACEDIM == 3
     for (kk = kc - 1; kk <= kc; kk++)
 #endif
     {
-      amrex::Real z = static_cast<amrex::Real>(kk);
       for (int jj = jc - 1; jj <= jc; jj++) {
         amrex::Real y = static_cast<amrex::Real>(jj);
         for (int ii = ic - 1; ii <= ic; ii++) {
@@ -612,11 +607,11 @@ eb_interp(
             !flags(ii, jj, kk).isCovered() &&
             vfrac(ii, jj, kk) > min_eb_vfrac) {
             AMREX_D_TERM(
-              amrex::Real lx = pcent[0] - (x + ccent(ii, jj, kk, 0));
-              , amrex::Real ly = pcent[1] - (y + ccent(ii, jj, kk, 1));
-              , amrex::Real lz = pcent[2] - (z + ccent(ii, jj, kk, 2)););
+              amrex::Real dlx = pcent[0] - (x + ccent(ii, jj, kk, 0));
+              , amrex::Real dly = pcent[1] - (y + ccent(ii, jj, kk, 1));
+              , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) + ccent(ii, jj, kk, 2)););
             amrex::Real wt =
-              1. / std::sqrt(AMREX_D_TERM(lx * lx, +ly * ly, +lz * lz));
+              1. / std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
             weights[nic] = wt;
             sum_wt += wt;
             indx_array[nic] = {AMREX_D_DECL(ii, jj, kk)};
@@ -650,7 +645,7 @@ eb_interp(
     int lc = 0;
 
 #if AMREX_SPACEDIM == 3
-    for (int kk = kc - 1; kk <= kc; kk++)
+    for (kk = kc - 1; kk <= kc; kk++)
 #endif
     {
       for (int jj = jc - 1; jj <= jc; jj++) {
