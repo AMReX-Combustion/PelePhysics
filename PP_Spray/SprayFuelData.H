@@ -11,8 +11,6 @@ struct SprayComps
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
-  int pstateVol = pstateVel; // Used when particle is wall film
-  int pstateHt = pstateDia;  // Used when particle is wall film
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;

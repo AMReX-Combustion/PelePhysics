@@ -445,12 +445,28 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
+    Gpu::HostVector<int> Nrefl_h(Np, -1);
+    Gpu::DeviceVector<int> Nrefl_d(Np);
+    Gpu::copyAsync(Gpu::hostToDevice, Nrefl_h.begin(), Nrefl_h.end(), Nrefl_d.begin());
+    auto Nrefl_ptr = Nrefl_d.dataPtr();
+    Gpu::HostVector<Real> norm_h(3 * Np, 0.);
+    Gpu::DeviceVector<Real> norm_d(3 * Np);
+    Gpu::copyAsync(Gpu::hostToDevice, norm_h.begin(), norm_h.end(), norm_d.begin());
+    auto norm_ptr = norm_d.dataPtr();
+    Gpu::HostVector<Real> reflvel_h(3 * Np, 0.);
+    Gpu::DeviceVector<Real> reflvel_d(3 * Np);
+    Gpu::copyAsync(Gpu::hostToDevice, reflvel_h.begin(), reflvel_h.end(), reflvel_d.begin());
+    auto reflvel_ptr = reflvel_d.dataPtr();
+    Gpu::HostVector<Real> reflloc_h(3 * Np, 0.);
+    Gpu::DeviceVector<Real> reflloc_d(3 * Np);
+    Gpu::copyAsync(Gpu::hostToDevice, reflloc_h.begin(), reflloc_h.end(), reflloc_d.begin());
+    auto reflloc_ptr = reflloc_d.dataPtr();
     amrex::ParallelFor(
       Np,
       [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
        momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
        bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
-       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev, eb_in_box
+       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev, eb_in_box, Nrefl_ptr, norm_ptr, reflvel_ptr, reflloc_ptr
 #ifdef AMREX_USE_EB
        ,
        flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
@@ -574,12 +590,13 @@ SprayParticleContainer::updateParticles(
                 } else {
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                    p, SPI, dx, plo, bflags, eb_in_box,
+                    pid, p, SPI, dx, plo, bflags, eb_in_box,
 #ifdef AMREX_USE_EB
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
 #endif
-                    ijkc, ijkc_prev);
+                    ijkc, ijkc_prev,
+                    Nrefl_ptr, norm_ptr, reflvel_ptr, reflloc_ptr);
                   lx = (p.pos() - plo) * dxi + 0.5;
                   ijk = lx.floor();
                   lxc = (p.pos() - plo) * dxi;
@@ -595,5 +612,17 @@ SprayParticleContainer::updateParticles(
           } // End of subcycle loop
         }   // End of p.id() > 0 check
       });   // End of loop over particles
+    Gpu::copyAsync(Gpu::deviceToHost, Nrefl_d.begin(), Nrefl_d.end(), Nrefl_h.begin());
+    bool get_new_parts = false;
+    for (Long n = 0; n < Np; n++) {
+      if (Nrefl_h[n] > 0.) {
+        get_new_parts = true;
+      }
+    }
+    if (get_new_parts) {
+      Gpu::copyAsync(Gpu::deviceToHost, norm_d.begin(), norm_d.end(), norm_h.begin());
+      Gpu::copyAsync(Gpu::deviceToHost, reflvel_d.begin(), reflvel_d.end(), reflvel_h.begin());
+      Gpu::copyAsync(Gpu::deviceToHost, reflloc_d.begin(), reflloc_d.end(), reflloc_h.begin());
+    }
   }         // for (int MyParIter pti..
 }

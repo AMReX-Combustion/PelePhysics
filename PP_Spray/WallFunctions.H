@@ -195,6 +195,7 @@ AMREX_GPU_DEVICE
 AMREX_INLINE
 void
 impose_wall(
+  int pid,
   SprayParticleContainer::ParticleType& p,
   const SprayComps& SPI,
   const amrex::RealVect& dx,
@@ -209,7 +210,11 @@ impose_wall(
   const amrex::Real min_eb_vfrac,
 #endif
   amrex::IntVect& ijkc,
-  amrex::IntVect& ijkc_prev)
+  amrex::IntVect& ijkc_prev,
+  int* Nrefl_ptr,
+  amrex::Real* norm_ptr,
+  amrex::Real* reflvel_ptr,
+  amrex::Real* reflloc_ptr)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
@@ -262,9 +267,13 @@ impose_wall(
     // to zero
     if (bounce_counter > max_bounce && do_refl) {
       Nw_Vp = normal.dotProduct(vel_part);
+      Nrefl_ptr[pid] = 10;
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        norm_ptr[3*pid + dir] = normal[dir];
+        reflvel_ptr[3*pid+dir] = p.rdata(SPI.pstateVel+dir);
         p.pos(dir) +=
           (0.5 * p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
+        reflloc_ptr[3*pid+dir] = p.pos(dir);
         p.rdata(SPI.pstateVel + dir) -= Nw_Vp * normal[dir];
         ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
       }
@@ -609,20 +618,11 @@ droplet_splashing(
         splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
         // Mass deposited into wall film
         amrex::Real depot_mass = pmass - splash_mass;
-        amrex::Real depot_vol = depot_mass / rho_part;
-        // Assume deposited film is a dome shape of height delta,
-        // determine the diameter
-        amrex::Real depot_dia =
-          2. * std::sqrt(
-                 (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
-        // Now estimate the height to be a cylinder of diameter depot_dia
-        amrex::Real depot_height =
-          4. * depot_vol / (M_PI * depot_dia * depot_dia);
+        amrex::Real depot_dia = std::cbrt(6. / M_PI * depot_mass / rho_part);
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           p.rdata(SPI.pstateVel + dir) = 0.;
         }
-        p.rdata(SPI.pstateVol) = depot_vol;
-        p.rdata(SPI.pstateHt) = depot_height;
+        p.rdata(SPI.pstateDia) = depot_dia;
       } else {
         p.id() = -1;
       }
