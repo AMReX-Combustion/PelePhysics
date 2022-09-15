@@ -19,11 +19,13 @@ InterpolateFaceVelocity(
       len[2] + (dir == 2) * 0.5));
     // Compute distances for trilinear interpolation
     amrex::IntVect indx(AMREX_D_DECL(
-      int(amrex::Math::floor(face_len[0])),
-      int(amrex::Math::floor(face_len[1])),
-      int(amrex::Math::floor(face_len[2]))));
+      static_cast<int>(amrex::Math::floor(face_len[0])),
+      static_cast<int>(amrex::Math::floor(face_len[1])),
+      static_cast<int>(amrex::Math::floor(face_len[2]))));
     amrex::RealVect delL(AMREX_D_DECL(
-      face_len[0] - indx[0], face_len[1] - indx[1], face_len[2] - indx[2]));
+      face_len[0] - static_cast<amrex::Real>(indx[0]),
+      face_len[1] - static_cast<amrex::Real>(indx[1]),
+      face_len[2] - static_cast<amrex::Real>(indx[2])));
     const int iin[2] = {
       amrex::max(indx[0] - 1, dom_lo[0]), amrex::min(indx[0], dom_hi[0])};
     const amrex::Real ssx[2] = {1. - delL[0], delL[0]};
@@ -34,22 +36,19 @@ InterpolateFaceVelocity(
     const int kkn[2] = {
       amrex::max(indx[2] - 1, dom_lo[2]), amrex::min(indx[2], dom_hi[2])};
     const amrex::Real ssz[2] = {1. - delL[2], delL[2]};
-    for (int kk = 0; kk < 2; ++kk) {
-      const int zindx = kkn[kk];
-#else
-    const int zindx = 0;
 #endif
+    int ke = (AMREX_SPACEDIM == 3) ? 2 : 1;
+    for (int kk = 0; kk < ke; ++kk) {
       for (int jj = 0; jj < 2; ++jj) {
         const int yindx = jjn[jj];
         for (int ii = 0; ii < 2; ++ii) {
           const int xindx = iin[ii];
-          vel_fluid[dir] += (umac[dir])(xindx, yindx, zindx, 0) *
-                            AMREX_D_TERM(ssx[ii], *ssy[jj], *ssz[kk]);
+          const amrex::IntVect cijk = {AMREX_D_DECL(xindx, yindx, kkn[kk])};
+          vel_fluid[dir] +=
+            (umac[dir])(cijk, 0) * AMREX_D_TERM(ssx[ii], *ssy[jj], *ssz[kk]);
         }
       }
-#if AMREX_SPACEDIM == 3
     }
-#endif
   }
 }
 
@@ -75,25 +74,26 @@ check_bounds(
   amrex::IntVect& bflags)
 {
   for (int hilo = 0; hilo < 2; ++hilo) {
-    amrex::Real fact = (hilo == 0) ? 1. : -1.;
+    int fact = (hilo == 0) ? 1 : -1;
     amrex::RealVect dom_ex = (hilo == 0) ? plo : phi;
     amrex::IntVect bndry_flag = (hilo == 0) ? bndry_lo : bndry_hi;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       amrex::Real dom_loc = dom_ex[dir];
       int bflag = bndry_flag[dir];
       if (bflag != 0) { // Not periodic
-        amrex::Real diff = fact * (pos[dir] - dom_loc);
+        amrex::Real diff =
+          static_cast<amrex::Real>(fact) * (pos[dir] - dom_loc);
         if (diff < 0.) {
           // Outside domain
           if (bflag == 1) { // Outside reflective BC
-            bflags[dir] = -int(fact);
+            bflags[dir] = -fact;
           } else { // Outside non-reflective BC
             return true;
           }
           // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
-          bflags[dir] = -2 * int(fact);
-          ijk[dir] += int(fact);
+          bflags[dir] = -2 * fact;
+          ijk[dir] += fact;
         }
       }
     }
@@ -419,7 +419,6 @@ eb_interp(
 {
   bool do_fe_interp = false;
   int ip = 0, jp = 0, kp = 0;
-  int kk = 0;
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
   amrex::RealVect pos(AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2)));
@@ -429,16 +428,14 @@ eb_interp(
                , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
   // Use the centroid location of the cell containing the particle
   // to guess the interpolation stencil.
-  int ic = 0, di = 0, jc = 0, dj = 0, dk = 0;
-  AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1; di = ic - ip;
-               , jc = (gy < 0.) ? jp : jp + 1; dj = jc - jp;
-               , int kc = (gz < 0.) ? kp : kp + 1; dk = kc - kp;);
+  int ic = 0, jc = 0, kc = 0;
+  AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1;, jc = (gy < 0.) ? jp : jp + 1;
+               , kc = (gz < 0.) ? kp : kp + 1;);
+  int ks = (AMREX_SPACEDIM == 3) ? kc - 1 : 0;
+  int ke = (AMREX_SPACEDIM == 3) ? kc : 0;
   // All cells in the stencil are regular. Use
   // traditional trilinear interpolation
-#if AMREX_SPACEDIM == 3
-  for (kk = kc - 1; kk <= kc; kk++)
-#endif
-  {
+  for (int kk = ks; kk <= ke; kk++) {
     for (int jj = jc - 1; jj <= jc; jj++) {
       for (int ii = ic - 1; ii <= ic; ii++) {
         if (!flags(ii, jj, kk).isRegular()) {
@@ -508,13 +505,10 @@ eb_interp(
 
   // Count the number of non-connected cells in the stencil
   int covered = 0;
-#if AMREX_SPACEDIM == 3
-  for (kk = -1; kk < 1; kk++)
-#endif
-  {
-    for (int jj = -1; jj < 1; jj++) {
-      for (int ii = -1; ii < 1; ii++) {
-        if (!flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk)) {
+  for (int kk = ks; kk <= ke; kk++) {
+    for (int jj = jc - 1; jj <= jc; jj++) {
+      for (int ii = ic - 1; ii <= ic; ii++) {
+        if (!flags(ip, jp, kp).isConnected(ii - ip, jj - jp, kk - kp)) {
           covered += 1;
         }
       }
@@ -532,14 +526,11 @@ eb_interp(
       amrex::Real min_dist = 1.E8;
       par_dot_EB = 2.;
       // Check surrounding cells and determine which EB wall is closest
-#if AMREX_SPACEDIM == 3
-      for (kk = kc - 1; kk <= kc; kk++)
-#endif
-      {
+      for (int kk = ks; kk <= ke; kk++) {
         for (int jj = jc - 1; jj <= jc; jj++) {
-          amrex::Real y = static_cast<amrex::Real>(jj);
+          auto y = static_cast<amrex::Real>(jj);
           for (int ii = ic - 1; ii <= ic; ii++) {
-            amrex::Real x = static_cast<amrex::Real>(ii);
+            auto x = static_cast<amrex::Real>(ii);
             if (flags(ii, jj, kk).isSingleValued()) {
               AMREX_D_TERM(
                 amrex::Real dlx = pcent[0] - (x + bcent(ii, jj, kk, 0));
@@ -595,14 +586,11 @@ eb_interp(
     int nic = 0;
     int found_cells = 0;
     amrex::Real sum_wt = 0.;
-#if AMREX_SPACEDIM == 3
-    for (kk = kc - 1; kk <= kc; kk++)
-#endif
-    {
+    for (int kk = ks; kk <= ke; kk++) {
       for (int jj = jc - 1; jj <= jc; jj++) {
-        amrex::Real y = static_cast<amrex::Real>(jj);
+        auto y = static_cast<amrex::Real>(jj);
         for (int ii = ic - 1; ii <= ic; ii++) {
-          amrex::Real x = static_cast<amrex::Real>(ii);
+          auto x = static_cast<amrex::Real>(ii);
           if (
             !flags(ii, jj, kk).isCovered() &&
             vfrac(ii, jj, kk) > min_eb_vfrac) {
@@ -644,11 +632,7 @@ eb_interp(
     // to allow for a more compact for-loop filling.
 
     int lc = 0;
-
-#if AMREX_SPACEDIM == 3
-    for (kk = kc - 1; kk <= kc; kk++)
-#endif
-    {
+    for (int kk = ks; kk <= ke; kk++) {
       for (int jj = jc - 1; jj <= jc; jj++) {
         for (int ii = ic - 1; ii <= ic; ii++) {
           AMREX_D_TERM(

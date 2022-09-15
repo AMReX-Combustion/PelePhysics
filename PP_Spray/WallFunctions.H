@@ -80,8 +80,9 @@ check_wall(
     // 1 - Outside upper reflective boundary
     // Only accounts for 1  Cartesian direction
     if ((bflags[dir] == -1 || bflags[dir] == 1) && !wall_check) {
-      normal[dir] = -amrex::Real(bflags[dir]);
-      bcentv[dir] = amrex::Real(ijkc[dir]) + 0.5 * amrex::Real(1 - bflags[dir]);
+      normal[dir] = -static_cast<amrex::Real>(bflags[dir]);
+      bcentv[dir] = static_cast<amrex::Real>(ijkc[dir]) +
+                    0.5 * static_cast<amrex::Real>(1 - bflags[dir]);
       wall_check = true;
     } else {
       normal[dir] = 0.;
@@ -96,7 +97,8 @@ check_wall(
       // Use the normal and boundary centroid from the new cell
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         normal[dir] = -bnorm(ijkc, dir);
-        bcentv[dir] = amrex::Real(ijkc[dir]) + 0.5 + bcent(ijkc, dir);
+        bcentv[dir] =
+          static_cast<amrex::Real>(ijkc[dir]) + 0.5 + bcent(ijkc, dir);
       }
       // If volume fraction is too small, treat cell face as the wall to prevent
       // particle from residing in cell
@@ -106,7 +108,8 @@ check_wall(
         amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
         normal = amrex::RealVect::TheZeroVector();
         normal[fdir] = -face_sgn;
-        bcentv[fdir] = amrex::Real(ijkc[fdir]) + 0.5 * (1. - face_sgn);
+        bcentv[fdir] =
+          static_cast<amrex::Real>(ijkc[fdir]) + 0.5 * (1. - face_sgn);
       }
       // If the particle has moved into a covered cell
     } else if (flags(ijkc).isCovered()) {
@@ -118,8 +121,8 @@ check_wall(
         test_par = 0.;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           normal[dir] = -bnorm(ijkc_prev, dir);
-          bcentv[dir] =
-            amrex::Real(ijkc_prev[dir]) + 0.5 + bcent(ijkc_prev, dir);
+          bcentv[dir] = static_cast<amrex::Real>(ijkc_prev[dir]) + 0.5 +
+                        bcent(ijkc_prev, dir);
           test_par += (pos[dir] - bcentv[dir]) * normal[dir];
         }
       }
@@ -142,8 +145,8 @@ check_wall(
               amrex::Real diff2 = 0.;
               for (int okdir = 0; okdir < AMREX_SPACEDIM; ++okdir) {
                 cur_norm[okdir] = -bnorm(tsti, okdir);
-                cur_bcent[okdir] =
-                  amrex::Real(tsti[okdir]) + 0.5 + bcent(tsti, okdir);
+                cur_bcent[okdir] = static_cast<amrex::Real>(tsti[okdir]) + 0.5 +
+                                   bcent(tsti, okdir);
                 diff1 += (pos[okdir] - cur_bcent[okdir]) * cur_norm[okdir];
                 diff2 += vel_part[okdir] * cur_norm[okdir];
               }
@@ -154,7 +157,7 @@ check_wall(
               // to normal cell face
             } else if (flags(tsti).isCovered()) {
               for (int okdir = 0; okdir < AMREX_SPACEDIM; ++okdir) {
-                cur_bcent[okdir] = amrex::Real(tsti[okdir]) + 0.5;
+                cur_bcent[okdir] = static_cast<amrex::Real>(tsti[okdir]) + 0.5;
                 cur_norm[okdir] = 0.;
               }
               amrex::Real sgn = (ijkc_prev[dir] > ijkc[dir]) ? 1. : -1.;
@@ -628,7 +631,7 @@ droplet_splashing(
       }
       amrex::Real mass_refl = M_PI / 6. * rho_part * std::pow(SPRF.dia_refl, 3);
       amrex::Real Ns = splash_mass / mass_refl;
-      SPRF.Ns_refl = int(Ns);
+      SPRF.Ns_refl = static_cast<int>(Ns);
       // TODO: Not sure what this variable is but it ranges from 1.45-2
       amrex::Real nu32 = 1.45;
       amrex::Real We_out =

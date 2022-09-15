@@ -211,8 +211,8 @@ SprayParticleContainer::updateParticles(
   Real sub_dt = flow_dt;
   int num_iter = 1;
   if (do_move && spray_cfl_lev > sub_cfl) {
-    num_iter = int(std::ceil(spray_cfl_lev / sub_cfl));
-    sub_dt = flow_dt / Real(num_iter);
+    num_iter = static_cast<int>(std::ceil(spray_cfl_lev / sub_cfl));
+    sub_dt = flow_dt / static_cast<Real>(num_iter);
   }
   // Particle components indices
   SprayComps SPI = m_sprayIndx;

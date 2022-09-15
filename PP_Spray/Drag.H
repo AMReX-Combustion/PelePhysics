@@ -283,8 +283,9 @@ calculateSpraySource(
 #endif
       if (isub == 1) {
         amrex::Real inv_tau_var = drag_force_p;
-        nsub =
-          amrex::min(amrex::max(nsub, int(flow_dt * inv_tau_var) + 1), nSubMax);
+        nsub = amrex::min(
+          amrex::max(nsub, static_cast<int>(flow_dt * inv_tau_var) + 1),
+          nSubMax);
       }
     }
 
@@ -359,13 +360,15 @@ calculateSpraySource(
         amrex::Real inv_tau_T = conv_src * inv_pmass / (cp_part * delT);
         nsub = amrex::min(
           amrex::max(
-            nsub,
-            amrex::max(int(flow_dt * inv_tau_d), int(flow_dt * inv_tau_T)) + 1),
+            nsub, amrex::max(
+                    static_cast<int>(flow_dt * inv_tau_d),
+                    static_cast<int>(flow_dt * inv_tau_T)) +
+                    1),
           nSubMax);
       }
     }
     if (isub == 1) {
-      dt = flow_dt / amrex::Real(nsub);
+      dt = flow_dt / static_cast<amrex::Real>(nsub);
     }
     const amrex::Real part_dt = fdat.dtmod * dt;
     if (!fdat.fixed_parts) {
@@ -413,8 +416,8 @@ calculateSpraySource(
     ++isub;
   }
   if (nsub > 1) {
-    gpv.fluid_eng_src /= amrex::Real(nsub);
-    gpv.fluid_mom_src /= amrex::Real(nsub);
+    gpv.fluid_eng_src /= static_cast<amrex::Real>(nsub);
+    gpv.fluid_mom_src /= static_cast<amrex::Real>(nsub);
   }
   // Must add any mass related sources at the end in case
   // some species disappear completely
