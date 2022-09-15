@@ -400,7 +400,6 @@ get_interp_mapping(
 AMREX_GPU_DEVICE AMREX_INLINE bool
 eb_interp(
   SprayParticleContainer::ParticleType& p,
-  const SprayComps& SPI,
   const bool isVirt,
   amrex::IntVect& ijkc,
   const amrex::IntVect& ijk,
@@ -545,7 +544,8 @@ eb_interp(
               AMREX_D_TERM(
                 amrex::Real dlx = pcent[0] - (x + bcent(ii, jj, kk, 0));
                 , amrex::Real dly = pcent[1] - (y + bcent(ii, jj, kk, 1));
-                , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) + bcent(ii, jj, kk, 2)););
+                , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) +
+                                                bcent(ii, jj, kk, 2)););
               amrex::Real len =
                 std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
               if (len < min_dist) {
@@ -609,7 +609,8 @@ eb_interp(
             AMREX_D_TERM(
               amrex::Real dlx = pcent[0] - (x + ccent(ii, jj, kk, 0));
               , amrex::Real dly = pcent[1] - (y + ccent(ii, jj, kk, 1));
-              , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) + ccent(ii, jj, kk, 2)););
+              , amrex::Real dlz = pcent[2] - (static_cast<amrex::Real>(kk) +
+                                              ccent(ii, jj, kk, 2)););
             amrex::Real wt =
               1. / std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
             weights[nic] = wt;
