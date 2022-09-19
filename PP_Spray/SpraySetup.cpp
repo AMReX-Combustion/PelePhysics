@@ -130,7 +130,7 @@ SprayParticleContainer::readSprayParams(
   //
   // Set if spray ascii files should be written
   //
-  pp.query("write_spray_ascii_files", write_spray_ascii_files);
+  pp.query("write_ascii_files", write_spray_ascii_files);
   //
   // Set if gas phase spray source term should be written
   //
@@ -226,10 +226,8 @@ SprayParticleContainer::spraySetup(SprayData& sprayData)
     }
   }
 #else
-  for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
-    sprayData.indx[ns] = 0;
-    sprayData.dep_indx[ns] = 0;
-  }
+  sprayData.indx[0] = 0;
+  sprayData.dep_indx[0] = 0;
 #endif
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
