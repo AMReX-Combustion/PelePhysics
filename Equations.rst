@@ -86,4 +86,6 @@ The skin mass fraction for the fuel are computed using the one-third rule and th
 .. math::
    \overline{M}_s = \left(\sum^{N_s}_{n=0} \frac{Y_{s,n}}{M_n}\right)^{-1},
    c_{p,s} = \sum^{N_s}_{n=0} Y_{s,n} c_{p,g,n}(T_s).
+
 where :math:`T_s = (2 T_d + T_g)/3`.
+
