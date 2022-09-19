@@ -60,7 +60,7 @@ and the saturation pressure using either the Clasius-Clapeyron relation
 or the Antoine curve fit
 
 .. math::
-   p_{{rm{sat}}, n} = d 10^{a - b / (T_d + c)}
+   p_{{\rm{sat}}, n} = d 10^{a - b / (T_d + c)}
 
 4. Estimate the mass fractions in the vapor state using Raoult's law
 
