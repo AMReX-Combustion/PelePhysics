@@ -125,7 +125,7 @@ Spray Flags and Inputs
    +--------------------+--------------------------------+--------------------+
    |   ``dist_type``    | Droplet diameter distribution  |  Yes               |
    |                    | type. Options are ``Uniform``, |                    |
-   |                    | `` Normal``, ``LogNormal``,    |                    |
+   |                    | ``Normal``, ``LogNormal``,     |                    |
    |                    | ``Weibull``. Each distribution |                    |
    |                    | type has it's own required     |                    |
    |                    | inputs.                        |                    |
