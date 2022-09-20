@@ -17,50 +17,44 @@ Spray Flags and Inputs
 
 .. table::
    :widths: 40 40 40 40
-   +-----------------------+------------------------------+-------------+--------------------------+
-   |       Input           |        Description           | Per species | Required                 |
-   |                       |                              |             |                          |
-   |                       |                              |             | (Default value)          |
-   +=======================+==============================+=============+==========================+
-   | ``fuel_ref_temp``     | Liquid reference temperature |     No      |    Yes                   |
-   |                       |                              |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``fuel_crit_temp``    | Critical temperature         |     Yes     |    Yes                   |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``fuel_boil_temp``    | Boiling temperature at       |     Yes     |    Yes                   |
-   |                       |                              |             |                          |
-   |                       | atmospheric pressure         |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``fuel_cp``           | Liquid :math:`c_p` at        |     Yes     |    Yes                   |
-   |                       |                              |             |                          |
-   |                       | reference temperature        |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``fuel_latent``       | Latent heat at               |     Yes     |    Yes                   |
-   |                       | reference temperature        |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``mom_transfer``      | Couple momentum with         |     No      |    No (1)                |
-   |                       |                              |             |                          |
-   |                       | gas phase                    |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``mass_transfer``     | Evaporate mass and           |     No      |    No (1)                |
-   |                       |                              |             |                          |
-   |                       | exchange heat                |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``fixed_parts``       | Fix particles in space       |     No      |    No (0)                |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``parcel_size``       | Number of droplets per       |     No      |    No (1.)               |
-   |                       | parcel                       |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``write_ascii_files`` | Output ascii                 |     No      |    No (0)                |
-   |                       | files of spray data          |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``init_function``     | Initialize with              |     No      |    No (1)                |
-   |                       |                              |             |                          |
-   |                       | ``InitSprayParticles()``     |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
-   | ``init_file``         | Ascii file name to initialize|     No      |    No (0)                |
-   |                       | sprays                       |             |                          |
-   +-----------------------+------------------------------+-------------+--------------------------+
+
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   |       Input           |        Description            | Per species | Required (Default value) |
+   |                       |                               |             |                          |
+   +=======================+===============================+=============+==========================+
+   | ``fuel_ref_temp``     | Liquid reference temperature  |     No      |    Yes                   |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``fuel_crit_temp``    | Critical temperature          |     Yes     |    Yes                   |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``fuel_boil_temp``    | Boiling temperature at        |     Yes     |    Yes                   |
+   |                       | atmospheric pressure          |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``fuel_cp``           | Liquid :math:`c_p` at         |     Yes     |    Yes                   |
+   |                       | reference temperature         |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``fuel_latent``       | Latent heat at reference      |     Yes     |    Yes                   |
+   |                       | temperature                   |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``mom_transfer``      | Couple momentum with gas      |     No      |    No (1)                |
+   |                       | phase                         |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``mass_transfer``     | Evaporate mass and exchange   |     No      |    No (1)                |
+   |                       | heat                          |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``fixed_parts``       | Fix particles in space        |     No      |    No (0)                |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``parcel_size``       | Number of droplets per parcel |     No      |    No (1.)               |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``write_ascii_files`` | Output ascii files of spray   |     No      |    No (0)                |
+   |                       | data                          |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``init_function``     | Initialize with               |     No      |    No (1)                |
+   |                       | ``InitSprayParticles()``      |             |                          |
+   |                       |                               |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
+   | ``init_file``         | Ascii file name to initialize |     No      |    No (0)                |
+   |                       | sprays                        |             |                          |
+   +-----------------------+-------------------------------+-------------+--------------------------+
 
 
   * If an Antoine fit for saturation pressure is used, it must be specified for the individual species, ::
@@ -69,8 +63,8 @@ Spray Flags and Inputs
 
     where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
 
-.. math::
-   p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
+  .. math::
+     p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
 
 
 * Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` file. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
@@ -90,53 +84,52 @@ Spray Flags and Inputs
     }
 
 
-    This creates a single jet that is named ``jet1``. This name will be used in the input file to reference this particular jet. For example, to set the location of the jet center for ``jet1``, the following should be included in the input file, ::
+  This creates a single jet that is named ``jet1``. This name will be used in the input file to reference this particular jet. For example, to set the location of the jet center for ``jet1``, the following should be included in the input file, ::
 
-
-  spray.jet1.jet_cent = 0. 0. 0.
-
+    spray.jet1.jet_cent = 0. 0. 0.
 
   If an injector is constructed using only a name and geometry, the injection parameters are read from the input file. Here is a list of injection related inputs:
 
 .. table::
    :widths: 40 40 40
-   +-------------------+-------------------------------+------------------+
-   |  Input            |  Description                  |   Required       |
-   |                   |                               |                  |
-   +===================+===============================+==================+
-   |  ``jet_cent``     | Jet center location           | Yes              |
-   |                   |                               |                  |
-   +-------------------+-------------------------------+------------------+
-   | ``jet_norm``      | Jet normal direction          |  Yes             |
-   |                   |                               |                  |
-   +-------------------+-------------------------------+------------------+
-   | ``jet_dia``       |  Jet diameter                 |  Yes             |
-   |                   |                               |                  |
-   +-------------------+-------------------------------+------------------+
-   |   ``spread_angle``| Angle in degrees that droplets| Yes              |
-   |                   |can vary from the normal       |                  |
-   |                   |direction. This is the full    |                  |
-   |                   |spread angle, meaning the      |                  |
-   |                   |droplet will vary from         |                  |
-   |                   |:math:`-\theta/2` to           |                  |
-   |                   |:math:`\theta/2`.              |                  |
-   +-------------------+-------------------------------+------------------+
-   |  ``T``            | Temperature of the injected   | Yes              |
-   |                   |liquid                         |                  |
-   +-------------------+-------------------------------+------------------+
-   | ``Y``             | Mass fractions of the injected|  Yes, if         |
-   |                   |liquid. Ordered based on       |``SPRAY_FUEL_NUM``|
-   |                   |``particles.fuel_species``     |> 1               |
-   |                   |                               |                  |
-   +-------------------+-------------------------------+------------------+
-   |   ``dist_type``   | Droplet diameter distribution |  Yes             |
-   |                   |type. Options are ``Uniform``, |                  |
-   |                   |`` Normal``, ``LogNormal``,    |                  |
-   |                   |``Weibull``. Each distribution |                  |
-   |                   |type has it's own required     |                  |
-   |                   |inputs                         |                  |
-   |                   |                               |                  |
-   +-------------------+-------------------------------+------------------+
+
+   +--------------------+--------------------------------+--------------------+
+   |  Input             |  Description                   |   Required         |
+   |                    |                                |                    |
+   +====================+================================+====================+
+   |  ``jet_cent``      | Jet center location            | Yes                |
+   |                    |                                |                    |
+   +--------------------+--------------------------------+--------------------+
+   | ``jet_norm``       | Jet normal direction           |  Yes               |
+   |                    |                                |                    |
+   +--------------------+--------------------------------+--------------------+
+   | ``jet_dia``        |  Jet diameter                  |  Yes               |
+   |                    |                                |                    |
+   +--------------------+--------------------------------+--------------------+
+   |    ``spread_angle``| Angle in degrees that droplets | Yes                |
+   |                    | can vary from the normal       |                    |
+   |                    | direction. This is the full    |                    |
+   |                    | spread angle, meaning the      |                    |
+   |                    | droplet will vary from         |                    |
+   |                    | :math:`-\theta/2` to           |                    |
+   |                    | :math:`\theta/2`.              |                    |
+   +--------------------+--------------------------------+--------------------+
+   |  ``T``             | Temperature of the injected    | Yes                |
+   |                    | liquid                         |                    |
+   +--------------------+--------------------------------+--------------------+
+   | ``Y``              | Mass fractions of the injected | Yes, if            |
+   |                    | liquid. Ordered based on       | ``SPRAY_FUEL_NUM`` |
+   |                    | ``particles.fuel_species``     | > 1                |
+   |                    |                                |                    |
+   +--------------------+--------------------------------+--------------------+
+   |   ``dist_type``    | Droplet diameter distribution  |  Yes               |
+   |                    | type. Options are ``Uniform``, |                    |
+   |                    | `` Normal``, ``LogNormal``,    |                    |
+   |                    | ``Weibull``. Each distribution |                    |
+   |                    | type has it's own required     |                    |
+   |                    | inputs.                        |                    |
+   |                    |                                |                    |
+   +--------------------+--------------------------------+--------------------+
 
 
 
