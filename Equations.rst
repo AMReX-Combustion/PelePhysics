@@ -76,11 +76,11 @@ or the Antoine curve fit
 
    \phi_3 = \sum^{N_L}_{n=0} \frac{Y_{d,n}}{M_n}
 
-The reference surface mass fraction for the fuel are computed using the one-third rule and the remaining reference surface mass fractions are normalized mass fractions of the gas phase to ensure they sum to 1
+The reference surface mass fractions for the fuel are computed using the one-third rule and the remaining reference surface mass fractions are normalized gas phase mass fractions to ensure they sum to 1
 
 .. math::
    Y_{s,n} = \left\{\begin{array}{c l}
-   \displaystyle\frac{2 Y_{v,n} + Y_{g,n}}{3} & {\text{If $Y_{v,n} > 0$}, \\
+   \displaystyle\frac{2 Y_{v,n} + Y_{g,n}}{3} & {\text{If $Y_{v,n} > 0$}}, \\
    \displaystyle\frac{1 - \sum^{N_L}_{k=0} Y_{v,k}}{1 - \sum^{N_L}_{k=0} Y_{g,k}} Y_{g,n} & {\text{Otherwise}}.
    \end{array}\right. \forall n \in N_s.
 
