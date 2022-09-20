@@ -95,4 +95,4 @@ The reference surface mass fractions for the fuel are computed using the one-thi
 
 where :math:`T_s = (2 T_d + T_g)/3`.
 
-6. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`. It is important to note that `PelePhysics` provides mixture averaged :math:`\overline{\rho_s D_{s,n}}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \overline{\rho_s D_{s,n}} \overline{M}_s / M_n`.
+6. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`. It is important to note that `PelePhysics` provides mixture averaged :math:`\overline{\rho}_s \overline{D}_{s,n}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \overline{\rho}_s \overline{D}_{s,n} \overline{M}_s / M_n`.

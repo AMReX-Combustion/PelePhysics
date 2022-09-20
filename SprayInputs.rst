@@ -13,14 +13,15 @@ Spray Flags and Inputs
 
   * The liquid fuel species names are specified using ``particles.fuel_species = CH4 NC10H22``. The number of fuel species listed must match the number of liquid species specified in the ``GNUmakefile``. If the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species = SP3 SP3``, although this is not required or typical. All species specified must be present in the chemistry transport and thermodynamic data.
 
-  * The following table lists other inputs related to ``particles.``
+* The following table lists other inputs related to ``particles.``
 
 .. table::
    :widths: 40 40 40 40
 
    +-----------------------+-------------------------------+-------------+--------------------------+
-   |       Input           |        Description            | Per species | Required (Default value) |
+   |       Input           |        Description            | Per species |         Required         |
    |                       |                               |             |                          |
+   |                       |                               |             |     (Default value)      |
    +=======================+===============================+=============+==========================+
    | ``fuel_ref_temp``     | Liquid reference temperature  |     No      |    Yes                   |
    +-----------------------+-------------------------------+-------------+--------------------------+
@@ -57,11 +58,11 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+--------------------------+
 
 
-  * If an Antoine fit for saturation pressure is used, it must be specified for the individual species, ::
+* If an Antoine fit for saturation pressure is used, it must be specified for the individual species, ::
 
-      particles.NC10H22_psat = 4.07857 1501.268 -78.67 1.E5
+    particles.NC10H22_psat = 4.07857 1501.268 -78.67 1.E5
 
-    where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+  where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
 
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
@@ -103,7 +104,7 @@ Spray Flags and Inputs
    | ``jet_norm``       | Jet normal direction           |  Yes               |
    |                    |                                |                    |
    +--------------------+--------------------------------+--------------------+
-   | ``jet_dia``        |  Jet diameter                  |  Yes               |
+   | ``jet_dia``        | Jet diameter                   |  Yes               |
    |                    |                                |                    |
    +--------------------+--------------------------------+--------------------+
    |    ``spread_angle``| Angle in degrees that droplets | Yes                |
