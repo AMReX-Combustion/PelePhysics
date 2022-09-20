@@ -68,13 +68,13 @@ or the Antoine curve fit
 4. Estimate the mass fractions in the vapor state using Raoult's law
 
 .. math::
-   Y_{v,n} = \frac{Y_{d,n} p_{{\rm{sat}}, n}}{\overline{M}_g(\phi_3 p_g - \phi_1) + \phi_2}
+   Y_{v,n} &= \frac{Y_{d,n} p_{{\rm{sat}}, n}}{\overline{M}_g(\phi_3 p_g - \phi_1) + \phi_2}
 
-   \phi_1 = \sum^{N_L}_{n=0} \frac{Y_{d,n} p_{{\rm{sat}},n}}{M_n}
+   \phi_1 &= \sum^{N_L}_{n=0} \frac{Y_{d,n} p_{{\rm{sat}},n}}{M_n}
 
-   \phi_2 = \sum^{N_L}_{n=0} Y_{d,n} p_{{\rm{sat}},n}
+   \phi_2 &= \sum^{N_L}_{n=0} Y_{d,n} p_{{\rm{sat}},n}
 
-   \phi_3 = \sum^{N_L}_{n=0} \frac{Y_{d,n}}{M_n}
+   \phi_3 &= \sum^{N_L}_{n=0} \frac{Y_{d,n}}{M_n}
 
 The reference surface mass fractions for the fuel are computed using the one-third rule and the remaining reference surface mass fractions are normalized gas phase mass fractions to ensure they sum to 1
 
@@ -82,13 +82,15 @@ The reference surface mass fractions for the fuel are computed using the one-thi
    Y_{s,n} = \left\{\begin{array}{c l}
    \displaystyle\frac{2 Y_{v,n} + Y_{g,n}}{3} & {\text{If $Y_{v,n} > 0$}}, \\
    \displaystyle\frac{1 - \sum^{N_L}_{k=0} Y_{v,k}}{1 - \sum^{N_L}_{k=0} Y_{g,k}} Y_{g,n} & {\text{Otherwise}}.
-   \end{array}\right. \forall n \in N_s.
+   \end{array}\right. \; \forall n \in N_s.
 
 5. The average molar mass, specific heat, and density of the reference surface state are computed as
 
 .. math::
    \overline{M}_s = \left(\sum^{N_s}_{n=0} \frac{Y_{s,n}}{M_n}\right)^{-1},
+
    c_{p,s} = \sum^{N_s}_{n=0} Y_{s,n} c_{p,g,n}(T_s),
+
    \rho_s = \frac{\overline{M}_s p_g}{\mathcal{R} T_s}.
 
 where :math:`T_s = (2 T_d + T_g)/3`.
