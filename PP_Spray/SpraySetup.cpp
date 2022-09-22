@@ -101,7 +101,6 @@ SprayParticleContainer::readSprayParams(
 
   Real parcel_size = 1;
   Real spray_ref_T = 300.;
-  Real spray_sigma = -1.;
   bool splash_model = false;
   //
   // Set the number of particles per parcel
@@ -109,15 +108,20 @@ SprayParticleContainer::readSprayParams(
   pp.query("parcel_size", parcel_size);
   pp.query("use_splash_model", splash_model);
   if (splash_model) {
-    if (!pp.contains("fuel_sigma") || !pp.contains("wall_temp") || !pp.contains("fuel_mu")) {
-      // Print() << "'particles.fuel_sigma', 'particles.wall_temp', and 'particles.fuel_mu' must be set for splash model.\n";
-      // Print() << "Set use_splash_model = false to turn off splash model\n";
+    Abort("Splash model is not fully implemented");
+    if (
+      !pp.contains("fuel_sigma") || !pp.contains("wall_temp") ||
+      !pp.contains("fuel_mu")) {
+      Print()
+        << "fuel_sigma, wall_temp, and fuel_mu must be set for splash model. "
+        << "Set use_splash_model = false to turn off splash model."
+        << std::endl;
       Abort();
     }
     // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", spray_sigma);
+    pp.get("fuel_sigma", sprayData.sigma);
     // TODO: Have this retrieved from proper boundary data
-    pp.get("wall_temp", sprayData.T_wall);
+    pp.get("wall_temp", sprayData.wall_T);
   }
 
   // Must use same reference temperature for all fuels
@@ -151,7 +155,6 @@ SprayParticleContainer::readSprayParams(
 
   sprayData.num_ppp = parcel_size;
   sprayData.ref_T = spray_ref_T;
-  sprayData.sigma = spray_sigma;
 
   // List of known derived spray quantities
   std::vector<std::string> derive_names = {

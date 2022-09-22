@@ -311,9 +311,8 @@ SprayParticleContainer::updateParticles(
           IntVect bflags(IntVect::TheZeroVector());
           if (at_bounds) {
             // Check if particle has left the domain or is boundary adjacent
-            // and must be shifted
-            bool left_dom = check_bounds(
-              p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+            bool left_dom =
+              check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bflags);
             if (left_dom) {
               Abort("Particle has incorrectly left the domain");
             }
@@ -401,13 +400,13 @@ SprayParticleContainer::updateParticles(
                 // First check if particle has exited the domain through a
                 // Cartesian boundary
                 bool left_dom = check_bounds(
-                  p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+                  p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bflags);
                 if (left_dom) {
                   p.id() = -1;
                 } else {
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                              isActive, pid, p, *fdat, SPI, dx, plo, bflags, cBoilT.data(), eb_in_box,
+                    p, SPI, dx, plo, phi, bndry_lo, bndry_hi, bflags, eb_in_box,
 #ifdef AMREX_USE_EB
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,

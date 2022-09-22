@@ -127,7 +127,7 @@ struct SprayData
   amrex::Real num_ppp; // Parcel size
   amrex::Real ref_T;
   amrex::Real sigma = -1.; // Surface tension
-  amrex::Real T_wall; // TODO: Make this spatially variable
+  amrex::Real wall_T = -1.;
   // If particle is updated half dt or whole dt
   amrex::Real dtmod = 0.5;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
@@ -153,6 +153,7 @@ struct SprayData
     num_ppp = fdat.num_ppp;
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
+    wall_T = fdat.wall_T;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       critT[spf] = fdat.critT[spf];
       boilT[spf] = fdat.boilT[spf];

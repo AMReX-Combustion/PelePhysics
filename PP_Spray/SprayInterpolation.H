@@ -60,7 +60,6 @@ InterpolateFaceVelocity(
  -2 - Adjacent to lower reflective boundary
  2 - Adjacent to upper reflective boundary
  And true is returned if outside non-reflective domain
- If near a domain boundary, ijk is shifted inward for interpolation purposes
 */
 AMREX_GPU_DEVICE AMREX_INLINE bool
 check_bounds(
@@ -70,16 +69,13 @@ check_bounds(
   const amrex::RealVect dx,
   const amrex::IntVect bndry_lo,
   const amrex::IntVect bndry_hi,
-  amrex::IntVect& ijk,
   amrex::IntVect& bflags)
 {
   for (int hilo = 0; hilo < 2; ++hilo) {
     int fact = (hilo == 0) ? 1 : -1;
-    amrex::RealVect dom_ex = (hilo == 0) ? plo : phi;
-    amrex::IntVect bndry_flag = (hilo == 0) ? bndry_lo : bndry_hi;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      amrex::Real dom_loc = dom_ex[dir];
-      int bflag = bndry_flag[dir];
+      amrex::Real dom_loc = (hilo == 0) ? plo[dir] : phi[dir];
+      int bflag = (hilo == 0) ? bndry_lo[dir] : bndry_hi[dir];
       if (bflag != 0) { // Not periodic
         amrex::Real diff =
           static_cast<amrex::Real>(fact) * (pos[dir] - dom_loc);
@@ -90,6 +86,7 @@ check_bounds(
           } else { // Outside non-reflective BC
             return true;
           }
+          // Adjacent to non-periodic boundary
         } else if (diff < 0.5 * dx[dir]) {
           bflags[dir] = -2 * fact;
         }
@@ -165,7 +162,8 @@ trilinear_interp(
   const amrex::IntVect& bflags)
 {
   // Note: if near a reflective boundary, ijk has been shifted in check_bounds
-  AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];)
+  int i = 0, j = 0, k = 0;
+  AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];)
 
   const amrex::RealVect sx_hi = lx - ijk;
   const amrex::RealVect sx_lo = 1. - sx_hi;
@@ -174,21 +172,19 @@ trilinear_interp(
     // Check if adjacent to upper boundary
     // or lower boundary and make it zeroth-order interpolation
     if (bflags[dir] > 1) {
-      ssv[0][dir] = 0.;
-      ssv[1][dir] = 1.;
-    } else if (bflags[dir] < -1) {
       ssv[0][dir] = 1.;
       ssv[1][dir] = 0.;
+    } else if (bflags[dir] < -1) {
+      ssv[0][dir] = 0.;
+      ssv[1][dir] = 1.;
     } else {
       ssv[0][dir] = sx_lo[dir];
       ssv[1][dir] = sx_hi[dir];
     }
   }
   int cc = 0;
-#if AMREX_SPACEDIM == 3
-  for (int kk = -1; kk < 1; kk++)
-#endif
-  {
+  int ks = (AMREX_SPACEDIM == 3) ? -1 : 0;
+  for (int kk = ks; kk < 1; kk++) {
     for (int jj = -1; jj < 1; jj++) {
       for (int ii = -1; ii < 1; ii++) {
         AMREX_D_TERM(indx_array[cc][0] = i + ii;, indx_array[cc][1] = j + jj;
@@ -420,15 +416,10 @@ eb_interp(
   // Cell containing particle centroid
   AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
   amrex::RealVect pos(AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2)));
-  // Particle position relative to cell center [-0.5, 0.5]
-  AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
-               , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
-               , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
   // Use the centroid location of the cell containing the particle
   // to guess the interpolation stencil.
   int ic = 0, jc = 0, kc = 0;
-  AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1;, jc = (gy < 0.) ? jp : jp + 1;
-               , kc = (gz < 0.) ? kp : kp + 1;);
+  AMREX_D_TERM(ic = ijk[0];, jc = ijk[1];, kc = ijk[2]);
   int ks = (AMREX_SPACEDIM == 3) ? kc - 1 : 0;
   int ke = (AMREX_SPACEDIM == 3) ? kc : 0;
   // All cells in the stencil are regular. Use
@@ -562,11 +553,9 @@ eb_interp(
         pcent[dir] = (pos[dir] - plo[dir]) * dxi[dir] - 0.5;
       }
       par_dot_EB = 0.1 * dx[0];
-      AMREX_D_TERM(gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
-                   , gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
-                   , gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5););
-      AMREX_D_TERM(ic = (gx < 0.) ? ip : ip + 1;, jc = (gy < 0.) ? jp : jp + 1;
-                   , kc = (gz < 0.) ? kp : kp + 1;);
+      AMREX_D_TERM(ic = static_cast<int>(pcent[0] + 1.);
+                   , jc = static_cast<int>(pcent[1] + 1.);
+                   , kc = static_cast<int>(pcent[2] + 1.););
     }
   } // if (isVirt)
 

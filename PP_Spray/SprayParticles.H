@@ -43,14 +43,12 @@ public:
     amrex::BCRec* _phys_bc,
     const SprayData& fdat,
     const SprayComps& SPI,
-    amrex::Real wall_temp,
     amrex::Real part_cfl = -1.)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
       phys_bc(_phys_bc),
       m_sprayData(new SprayData{}),
       d_sprayData(nullptr),
       m_sprayIndx(SPI),
-      m_wallT(wall_temp),
       m_partCFL(part_cfl),
       m_injectVel(0.)
   {
@@ -82,7 +80,6 @@ public:
   static void readSprayParams(
     int& particle_verbose,
     amrex::Real& particle_cfl,
-    amrex::Real& wall_temp,
     int& write_spray_ascii_files,
     int& plot_spray_src,
     int& init_function,
@@ -396,8 +393,6 @@ private:
   SprayData* m_sprayData;
   SprayData* d_sprayData;
   SprayComps m_sprayIndx;
-  // Temperature of walls
-  amrex::Real m_wallT;
   // Particle CFL, used for injection cases with LMeX
   amrex::Real m_partCFL;
   amrex::Real m_injectVel;
