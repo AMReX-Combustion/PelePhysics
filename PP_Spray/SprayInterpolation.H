@@ -90,10 +90,8 @@ check_bounds(
           } else { // Outside non-reflective BC
             return true;
           }
-          // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
           bflags[dir] = -2 * fact;
-          ijk[dir] += fact;
         }
       }
     }

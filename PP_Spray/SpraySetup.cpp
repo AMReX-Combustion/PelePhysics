@@ -27,7 +27,6 @@ void
 SprayParticleContainer::readSprayParams(
   int& particle_verbose,
   Real& particle_cfl,
-  Real& wall_temp,
   int& write_spray_ascii_files,
   int& plot_spray_src,
   int& init_function,
@@ -110,17 +109,15 @@ SprayParticleContainer::readSprayParams(
   pp.query("parcel_size", parcel_size);
   pp.query("use_splash_model", splash_model);
   if (splash_model) {
-    Abort("Splash model is not fully implemented");
-    if (!pp.contains("fuel_sigma") || !pp.contains("wall_temp")) {
-      Print() << "fuel_sigma and wall_temp must be set for splash model. "
-              << "Set use_splash_model = false to turn off splash model"
-              << std::endl;
+    if (!pp.contains("fuel_sigma") || !pp.contains("wall_temp") || !pp.contains("fuel_mu")) {
+      // Print() << "'particles.fuel_sigma', 'particles.wall_temp', and 'particles.fuel_mu' must be set for splash model.\n";
+      // Print() << "Set use_splash_model = false to turn off splash model\n";
       Abort();
     }
     // Set the fuel surface tension and contact angle
     pp.get("fuel_sigma", spray_sigma);
     // TODO: Have this retrieved from proper boundary data
-    pp.get("wall_temp", wall_temp);
+    pp.get("wall_temp", sprayData.T_wall);
   }
 
   // Must use same reference temperature for all fuels

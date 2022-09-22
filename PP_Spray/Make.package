@@ -1,6 +1,7 @@
 
 CEXE_headers += SprayParticles.H
 CEXE_headers += SprayFuelData.H
+CEXE_headers += SprayReflData.H
 CEXE_headers += SprayInterpolation.H
 CEXE_headers += SprayInjectTemplate.H
 CEXE_headers += SprayJet.H

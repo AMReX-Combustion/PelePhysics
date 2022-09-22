@@ -66,6 +66,8 @@ public:
       m_cent[dir] = jcent[dir];
       m_norm[dir] = jnorm[dir];
     }
+    amrex::Real mag = m_norm.vectorLength();
+    m_norm /= mag;
     check_jet_cent(geom);
     ps.get("jet_dia", m_jetDia);
     ps.get("spread_angle", m_spreadAngle);
