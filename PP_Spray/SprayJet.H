@@ -129,7 +129,12 @@ public:
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
-  void set_jet_norm(amrex::RealVect jet_norm) { m_norm = jet_norm; }
+  void set_jet_norm(amrex::RealVect jet_norm)
+  {
+    m_norm = jet_norm;
+    amrex::Real mag = m_norm.vectorLength();
+    m_norm /= mag;
+  }
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
     m_cent = jet_cent;
