@@ -28,6 +28,10 @@ public:
     amrex::MultiFab& a_mf);
 
   amrex::Vector<std::string> getVariableList() { return m_vars; }
+  int getNlev() { return m_nlevels; }
+  amrex::Real getTime() { return m_time; }
+  const amrex::BoxArray& getGrid(int a_lev) { return m_grids[a_lev]; }
+  const amrex::Geometry& getGeom(int a_lev) { return m_geoms[a_lev]; }
 
 protected:
   // MetaData
