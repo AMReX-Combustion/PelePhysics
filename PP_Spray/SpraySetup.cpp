@@ -177,8 +177,8 @@ SprayParticleContainer::readSprayParams(
     spray_derive_vars.push_back(derive_name);
   }
   if (derive_plot_species == 1 && SPRAY_FUEL_NUM > 1) {
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      spray_derive_vars.push_back("spray_mass_" + spray_fuel_names[spf]);
+    for (auto& fuel_name : spray_fuel_names) {
+      spray_derive_vars.push_back("spray_mass_" + fuel_name);
     }
   }
 

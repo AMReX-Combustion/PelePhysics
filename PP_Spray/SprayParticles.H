@@ -128,8 +128,8 @@ public:
       std::string numstring = dirout.substr(num_start_loc, dirout.length());
       std::string dir_path = dir;
       size_t num_end_path = dir_path.find_last_of("/") + 1;
-      dir_path = dir_path.substr(0, num_end_path);
-      std::string fname = dir_path + "spray" + numstring + ".p3d";
+      std::string part_dir_path = dir_path.substr(0, num_end_path);
+      std::string fname = part_dir_path + "spray" + numstring + ".p3d";
       WriteAsciiFile(fname);
     }
   }
