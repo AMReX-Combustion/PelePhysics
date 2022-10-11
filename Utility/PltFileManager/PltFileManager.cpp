@@ -7,9 +7,7 @@
 
 using namespace amrex;
 
-namespace pele {
-namespace physics {
-namespace pltfilemanager {
+namespace pele::physics::pltfilemanager {
 
 namespace {
 const std::string level_prefix{"Level_"};
@@ -333,6 +331,4 @@ PltFileManager::fillPatchFromPlt(
   }
 }
 
-} // namespace pltfilemanager
-} // namespace physics
 } // namespace pele

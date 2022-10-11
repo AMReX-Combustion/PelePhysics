@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorCvode::init(int reactor_type, int ncells)
@@ -1994,6 +1992,4 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
   }
 }
 
-} // namespace reactions
-} // namespace physics
 } // namespace pele

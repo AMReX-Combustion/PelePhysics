@@ -1,9 +1,6 @@
 #include "ReactorCvodePreconditioner.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 #ifdef AMREX_USE_GPU
 #ifdef AMREX_USE_CUDA
 int
@@ -639,7 +636,4 @@ PSolve_custom(
 }
 
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
 } // namespace pele

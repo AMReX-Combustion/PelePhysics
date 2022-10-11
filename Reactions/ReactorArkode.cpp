@@ -1,8 +1,6 @@
 #include "ReactorArkode.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorArkode::init(int reactor_type, int /*ncells*/)
@@ -464,6 +462,4 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "   Error test fails = " << netf << "\n";
   amrex::Print() << "   Total RHS evals  = " << nfe << "\n";
 }
-} // namespace reactions
-} // namespace physics
 } // namespace pele

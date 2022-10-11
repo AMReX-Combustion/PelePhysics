@@ -22,9 +22,7 @@
 #include <nvector/nvector_cuda.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 void
 ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
@@ -143,6 +141,4 @@ ReactorBase::set_sundials_solver_tols(
   N_VDestroy(atol);
 }
 
-} // namespace reactions
-} // namespace physics
 } // namespace pele

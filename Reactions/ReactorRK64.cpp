@@ -1,9 +1,7 @@
 #include "AMReX_Reduce.H"
 #include "ReactorRK64.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorRK64::init(int reactor_type, int /*ncells*/)
@@ -326,6 +324,4 @@ ReactorRK64::react(
   return (int(avgsteps / amrex::Real(ncells)));
 }
 
-} // namespace reactions
-} // namespace physics
 } // namespace pele

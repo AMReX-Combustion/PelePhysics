@@ -1,9 +1,6 @@
 #include "ReactorCvodeCustomLinSolver.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 
 #ifdef AMREX_USE_GPU
 
@@ -255,7 +252,4 @@ SUNLinSolSolve_Sparse_custom(
   return (SUNLS_SUCCESS);
 }
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
 } // namespace pele
