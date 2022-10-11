@@ -1,8 +1,6 @@
 #include <turbinflow.H>
 
-namespace pele {
-namespace physics {
-namespace turbinflow {
+namespace pele::physics::turbinflow {
 void
 TurbInflow::init(amrex::Geometry const& /*geom*/)
 {
@@ -391,6 +389,4 @@ TurbInflow::fill_turb_plane(
   amrex::Gpu::synchronize(); // Ensure that DeviceVector's don't leave scope
                              // early
 }
-} // namespace turbinflow
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::turbinflow

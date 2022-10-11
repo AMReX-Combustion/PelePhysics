@@ -1,9 +1,6 @@
 #include "ReactorUtils.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace utils {
+namespace pele::physics::reactions::utils {
 
 // Check function return value...
 //     opt == 0 means SUNDIALS function allocates memory so check if
@@ -104,7 +101,4 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
   delete reduce_exec_policy;
 }
 #endif
-} // namespace utils
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::utils

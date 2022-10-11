@@ -1,9 +1,6 @@
 #include "ReactorCvodeJacobian.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 #ifdef AMREX_USE_GPU
 int
 cJac(
@@ -347,7 +344,4 @@ cJac_KLU(
 }
 #endif
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

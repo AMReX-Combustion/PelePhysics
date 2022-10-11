@@ -1,8 +1,6 @@
 #include "EOS.H"
 
-namespace pele {
-namespace physics {
-namespace eos {
+namespace pele::physics::eos {
 
 template <typename EOSType>
 void
@@ -140,6 +138,4 @@ speciesNames<SRK>(amrex::Vector<std::string>& spn)
   speciesNames<Fuego>(spn);
 }
 
-} // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::eos
