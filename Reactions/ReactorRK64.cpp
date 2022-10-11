@@ -324,4 +324,4 @@ ReactorRK64::react(
   return (int(avgsteps / amrex::Real(ncells)));
 }
 
-} // namespace pele
+} // namespace pele::physics::reactions

@@ -108,4 +108,4 @@ ReactorNull::react(
 #endif
   return 0;
 }
-} // namespace pele
+} // namespace pele::physics::reactions

@@ -331,4 +331,4 @@ PltFileManager::fillPatchFromPlt(
   }
 }
 
-} // namespace pele
+} // namespace pele::physics::pltfilemanager

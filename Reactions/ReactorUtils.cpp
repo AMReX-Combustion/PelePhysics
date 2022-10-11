@@ -101,4 +101,4 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
   delete reduce_exec_policy;
 }
 #endif
-} // namespace pele
+} // namespace pele::physics::reactions::utils

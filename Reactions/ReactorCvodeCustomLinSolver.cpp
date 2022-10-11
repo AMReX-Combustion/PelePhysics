@@ -252,4 +252,4 @@ SUNLinSolSolve_Sparse_custom(
   return (SUNLS_SUCCESS);
 }
 #endif
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

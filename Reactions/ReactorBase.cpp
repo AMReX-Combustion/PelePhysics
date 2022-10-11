@@ -141,4 +141,4 @@ ReactorBase::set_sundials_solver_tols(
   N_VDestroy(atol);
 }
 
-} // namespace pele
+} // namespace pele::physics::reactions

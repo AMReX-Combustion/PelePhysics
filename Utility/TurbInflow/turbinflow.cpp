@@ -389,4 +389,4 @@ TurbInflow::fill_turb_plane(
   amrex::Gpu::synchronize(); // Ensure that DeviceVector's don't leave scope
                              // early
 }
-} // namespace pele
+} // namespace pele::physics::turbinflow

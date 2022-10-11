@@ -462,4 +462,4 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "   Error test fails = " << netf << "\n";
   amrex::Print() << "   Total RHS evals  = " << nfe << "\n";
 }
-} // namespace pele
+} // namespace pele::physics::reactions

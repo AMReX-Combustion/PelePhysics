@@ -17,4 +17,4 @@ cvodeErrHandler(
   }
 }
 
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

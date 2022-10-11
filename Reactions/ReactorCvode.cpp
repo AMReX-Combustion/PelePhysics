@@ -1992,4 +1992,4 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
   }
 }
 
-} // namespace pele
+} // namespace pele::physics::reactions

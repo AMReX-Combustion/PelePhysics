@@ -138,4 +138,4 @@ speciesNames<SRK>(amrex::Vector<std::string>& spn)
   speciesNames<Fuego>(spn);
 }
 
-} // namespace pele
+} // namespace pele::physics::eos
