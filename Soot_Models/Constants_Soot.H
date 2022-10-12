@@ -3,6 +3,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_GpuQualifiers.H>
+#include "PhysicsConstants.H"
 
 // TODO: This should be specified in makefile when
 // different soot formation reactions are implemented

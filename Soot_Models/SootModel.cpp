@@ -11,12 +11,8 @@
 #include <AMReX_CONSTANTS.H>
 #include <AMReX_FArrayBox.H>
 
-// Pele include statements
-#ifdef PELELM_USE_SOOT
-#include "PeleLM.H"
-#else
-#include "PeleC.H"
-#endif
+// PelePhysics include statements
+#include "PelePhysics.H"
 
 // PeleMP include statements
 #include "SootModel.H"

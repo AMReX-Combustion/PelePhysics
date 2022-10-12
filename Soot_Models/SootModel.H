@@ -9,9 +9,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Box.H>
 #include <AMReX_Vector.H>
-
-// Pele include statements
-#include "PelePhysics.H"
+#include <AMReX_Arena.H>
 
 #include "Constants_Soot.H"
 #include "SootData.H"

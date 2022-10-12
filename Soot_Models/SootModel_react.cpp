@@ -7,6 +7,9 @@
 // PeleMP include statements
 #include "SootModel.H"
 
+// PelePhysics include statements
+#include "PhysicsConstants.H"
+
 using namespace amrex;
 
 void
