@@ -136,28 +136,28 @@ The procedure is as follows for updating the spray droplet:
 9. The mass source term is modeled according to Abramzon and Sirignano (1989). The following non-dimensional numbers and factors are used:
 
    .. math::
-      F(B) = (1 + B)^{0.7}\frac{\log(1 + B)}{B}
+      F(B) &= (1 + B)^{0.7}\frac{\log(1 + B)}{B}
 
-      F_2 = \max(1, \min(400, {\rm{Re}}_d)^{0.077})
+      F_2 &= \max(1, \min(400, {\rm{Re}}_d)^{0.077})
 
-      {\rm{Pr}}_s = \frac{\mu_s c_{p,s}}{\lambda_s}
+      {\rm{Pr}}_s &= \frac{\mu_s c_{p,s}}{\lambda_s}
 
-      {\rm{Sc}}_s = \frac{\mu_s}{\rho_s D_s}
+      {\rm{Sc}}_s &= \frac{\mu_s}{\rho_s D_s}
 
-      {\rm{Sh}}_0 = 1 + (1 + {\rm{Re}}_d {\rm{Sc}}_s)^{1/3} F_2
+      {\rm{Sh}}_0 &= 1 + (1 + {\rm{Re}}_d {\rm{Sc}}_s)^{1/3} F_2
 
-      {\rm{Nu}}_0 = 1 + (1 + {\rm{Re}}_d {\rm{Pr}}_s)^{1/3} F_2
+      {\rm{Nu}}_0 &= 1 + (1 + {\rm{Re}}_d {\rm{Pr}}_s)^{1/3} F_2
 
-      {\rm{Sh}}^* = 2 + \frac{{\rm{Sh}}_0 - 2}{F(B_M)}
+      {\rm{Sh}}^* &= 2 + \frac{{\rm{Sh}}_0 - 2}{F(B_M)}
 
-      {\rm{Nu}}^* = 2 + \frac{{\rm{Nu}}_0 - 2}{F(B_T)}
+      {\rm{Nu}}^* &= 2 + \frac{{\rm{Nu}}_0 - 2}{F(B_T)}
 
    * The Spalding numbers for mass transfer, :math:`B_M`, and heat transfer, :math:`B_T`, are computed using
 
      .. math::
-        B_M = \displaystyle\frac{\sum^{N_L}_{n=0} Y_{v,n} - \sum^{N_L}_{n=0} Y_{g,n}}{1 - \sum^{N_L}_{n=0} Y_{v,n}}
+        B_M &= \displaystyle\frac{\sum^{N_L}_{n=0} Y_{v,n} - \sum^{N_L}_{n=0} Y_{g,n}}{1 - \sum^{N_L}_{n=0} Y_{v,n}}
 
-        B_T = \left(1 + B_M\right)^{\phi} - 1
+        B_T &= \left(1 + B_M\right)^{\phi} - 1
 
      where
 
@@ -167,9 +167,9 @@ The procedure is as follows for updating the spray droplet:
      Note the dependence of :math:`{\rm{Nu}}^*` on :math:`B_T` means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become
 
      .. math::
-        \dot{m}_n = -\pi \rho_s D_{s,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
+        \dot{m}_n &= -\pi \rho_s D_{s,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
 
-        \mathcal{Q}_d = \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
+        \mathcal{Q}_d &= \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
 
    * If the droplet temperature exceeds the boiling temperature, the Spalding number formulas are no longer valid. Instead, it is assumed that all the heat exchange with the droplet is used to boil the species :math:`k` (which is the liquid species with the highest vapor pressure) and the Spalding number for heat transfer becomes
 
@@ -179,9 +179,9 @@ The procedure is as follows for updating the spray droplet:
      The droplet vaporization rate and heat transfer become
 
      .. math::
-        \dot{m}_k = -\pi \frac{\lambda_s}{c_{p,s}} d_d {\rm{Nu}}^* \log(1 + B_T)
+        \dot{m}_k &= -\pi \frac{\lambda_s}{c_{p,s}} d_d {\rm{Nu}}^* \log(1 + B_T)
 
-        \mathcal{Q}_d = 0
+        \mathcal{Q}_d &= 0
 
 10. The gas phase source terms for a single parcel to a particular cell are
 
