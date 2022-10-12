@@ -20,6 +20,8 @@ The equations of motion, mass, momentum, and energy for the Lagrangian spray dro
 
    \frac{d m_d}{d t} &= \sum^{N_L}_{n=0} \dot{m}_n,
 
+   m_d \frac{d Y_{d,n}}{d t} &= \dot{m}_n - Y_{d,n} \frac{d m_d}{d t}
+
    m_d \frac{d \mathbf{u}_d}{d t} &= \mathbf{F}_d,
 
    m_d c_{p,L} \frac{d T_d}{d t} &= \sum^{N_L}_{n=0} \dot{m}_n h_{L,n}(T_d) + \mathcal{Q}_d.
@@ -42,6 +44,11 @@ The procedure is as follows for updating the spray droplet:
 
    .. math::
       T_{b,n} = \left(\log\left(\frac{p_{\rm{atm}}}{p_g}\right) \frac{\mathcal{R}}{M_n h_{L,n}(T^*_{b,n})} + \frac{1}{T^*_{b,n}}\right)
+
+   The boiling temperature of the droplet is computed as
+
+   .. math::
+      T_{d,b} = \sum^{N_L}_{n=0} Y_{d,n} T_{b,n}
 
    Since we only have the latent heat at the reference temperature, we estimate the enthalpy at the boiling condition using Watson's law
 
@@ -95,4 +102,103 @@ The procedure is as follows for updating the spray droplet:
 
    where :math:`T_s = (2 T_d + T_g)/3`.
 
-6. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`. It is important to note that `PelePhysics` provides mixture averaged coefficient :math:`\rho_s \overline{D}_{s,n}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \rho_s \overline{D}_{s,n} \overline{M}_s / M_n`.
+6. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`.
+
+7. It is important to note that `PelePhysics` provides mixture averaged coefficient :math:`\rho_s \overline{D}_{s,n}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \rho_s \overline{D}_{s,n} \overline{M}_s / M_n`. Additionally, the mass diffusion coefficient is normalized by the total fuel vapor molar fraction
+
+   .. math::
+      \rho_s D_{s,n}^* = \rho_s D_{s,n} \frac{Y_{d,n} p_{{\rm{sat}},n}/M_n}{\sum^{N_L}_{k=0}Y_{d,k} p_{{\rm{sat}},k} / M_k}
+
+   and the total is
+
+   .. math::
+      \rho_s D_s = \sum_{n=0}^{N_L} \rho_s D_{s,n}^*
+
+8. The momentum source is a function of the drag force
+
+   .. math::
+      \mathbf{F}_d = \frac{1}{2} \rho_s C_D A_d \left\|\Delta \mathbf{u}\right\| \Delta \mathbf{u}
+
+   where :math:`\Delta \mathbf{u} = \mathbf{u}_g - \mathbf{u}_d`, :math:`A_d = \pi/4 d_d^2` is the frontal area of the droplet, and :math:`C_D` is the drag coefficient for a sphere, which is estimated using the standard drag curve for an immersed sphere
+
+   .. math::
+      C_D = \frac{24}{{\rm{Re}}_d}\left\{\begin{array}{c l}
+      1 & {\text{If Re$_d$ < 1}}, \\
+      \displaystyle 1 + \frac{{\rm{Re}}^{2/3}_d}{6} & {\text{Otherwise}}.
+      \end{array}\right.
+
+   The droplet Reynolds number is defined as
+
+   .. math::
+      {\rm{Re}}_d = \frac{\rho_s d_d \left\|\Delta \mathbf{u}\right\|}{\mu_s}
+
+
+9. The mass source term is modeled according to Abramzon and Sirignano (1989). The following non-dimensional numbers and factors are used:
+
+   .. math::
+      F(B) = (1 + B)^{0.7}\frac{\log(1 + B)}{B}
+
+      F_2 = \max(1, \min(400, {\rm{Re}}_d)^{0.077})
+
+      {\rm{Pr}}_s = \frac{\mu_s c_{p,s}}{\lambda_s}
+
+      {\rm{Sc}}_s = \frac{\mu_s}{\rho_s D_s}
+
+      {\rm{Sh}}_0 = 1 + (1 + {\rm{Re}}_d {\rm{Sc}}_s)^{1/3} F_2
+
+      {\rm{Nu}}_0 = 1 + (1 + {\rm{Re}}_d {\rm{Pr}}_s)^{1/3} F_2
+
+      {\rm{Sh}}^* = 2 + \frac{{\rm{Sh}}_0 - 2}{F(B_M)}
+
+      {\rm{Nu}}^* = 2 + \frac{{\rm{Nu}}_0 - 2}{F(B_T)}
+
+   * The Spalding numbers for mass transfer, :math:`B_M`, and heat transfer, :math:`B_T`, are computed using
+
+     .. math::
+        B_M = \displaystyle\frac{\sum^{N_L}_{n=0} Y_{v,n} - \sum^{N_L}_{n=0} Y_{g,n}}{1 - \sum^{N_L}_{n=0} Y_{v,n}}
+
+        B_T = \left(1 + B_M\right)^{\phi} - 1
+
+     where
+
+     .. math::
+        \phi = \frac{c_{p,s} \rho_s D_s {\rm{Sh}}^*}{\lambda_s {\rm{Nu}}^*}
+
+     Note the dependence of :math:`{\rm{Nu}}^*` on :math:`B_T` means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become
+
+     .. math::
+        \dot{m}_n = -\pi \rho_s D_{s,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
+
+        \mathcal{Q}_d = \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
+
+   * If the droplet temperature exceeds the boiling temperature, the Spalding number formulas are no longer valid. Instead, it is assumed that all the heat exchange with the droplet is used to boil the species :math:`k` (which is the liquid species with the highest vapor pressure) and the Spalding number for heat transfer becomes
+
+     .. math::
+        B_T = \frac{c_{p,s} (T_g - T_d)}{h_{L,k}}
+
+     The droplet vaporization rate and heat transfer become
+
+     .. math::
+        \dot{m}_k = -\pi \frac{\lambda_s}{c_{p,s}} d_d {\rm{Nu}}^* \log(1 + B_T)
+
+        \mathcal{Q}_d = 0
+
+10. The gas phase source terms for a single parcel to a particular cell are
+
+    .. math::
+       S_{\rho} &= \mathcal{C} \sum^{N_L}_{n=0} \dot{m}_n,
+
+       S_{\rho Y_n} &= \mathcal{C} \dot{m}_n,
+
+       \mathbf{S}_{\rho \mathbf{u}} &= \mathcal{C} \mathbf{F}_d,
+
+       S_{\rho h} &= \mathcal{C}\left(\mathcal{Q}_d + \sum_{n=0}^{N_L} \dot{m}_n h_{g,n}(T_d)\right),
+
+       S_{\rho E} &= S_{\rho h} + \frac{1}{2}\left\|\mathbf{u}_d\right\| S_{\rho} + \mathcal{C} \mathbf{F}_d \cdot \mathbf{u}_d
+
+    where
+
+    .. math::
+       \mathcal{C} = -\frac{w_c N_{\rm{parcel}}}{V_{\rm{cell}}}
+
+    and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that this can vary depending on if an EB is present.
