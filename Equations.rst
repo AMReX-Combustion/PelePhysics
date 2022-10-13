@@ -201,4 +201,4 @@ The procedure is as follows for updating the spray droplet:
     .. math::
        \mathcal{C} = -\frac{w_c N_{\rm{parcel}}}{V_{\rm{cell}}}
 
-    and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that this can vary depending on if an EB is present.
+    and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on if an EB is present.
