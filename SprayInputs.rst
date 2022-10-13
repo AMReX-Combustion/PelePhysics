@@ -22,7 +22,6 @@ Spray Flags and Inputs
 * The following table lists other inputs related to ``particles.``
 
 .. table::
-   :widths: 40 40 40 40
 
    +-----------------------+-------------------------------+-------------+-------------------+
    |Input                  |Description                    |Per species  |Default Value      |
@@ -63,7 +62,6 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+-------------------+
    |``init_function``      |Initialize with                |No           |``1``              |
    |                       |``InitSprayParticles()``       |             |                   |
-   |                       |                               |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``cfl``                |Particle CFL number for        |No           |``0.5``            |
    |                       |limiting time step             |             |                   |
@@ -109,51 +107,41 @@ This creates a single jet that is named ``jet1``. This name will be used in the 
 If an injector is constructed using only a name and geometry, the injection parameters are read from the input file. Here is a list of injection related inputs:
 
 .. table::
-   :widths: 40 40 40
+   :widths: 20 40 20
 
    +--------------------+--------------------------------+--------------------+
    |Input               |Description                     |Required            |
    |                    |                                |                    |
    +====================+================================+====================+
-   |``jet_cent``        |Jet center location.            |Yes                 |
+   |``jet_cent``        |Jet center location             |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``jet_norm``        |Jet normal direction.           |Yes                 |
+   |``jet_norm``        |Jet normal direction            |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``jet_vel``         |Jet velocity magnitude.         |Yes                 |
+   |``jet_vel``         |Jet velocity magnitude          |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``jet_dia``         |Jet diameter.                   |Yes                 |
+   |``jet_dia``         |Jet diameter                    |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``spread_angle``    |Angle in degrees that droplets  |Yes                 |
-   |                    |can vary from the normal        |                    |
-   |                    |direction. This is the full     |                    |
-   |                    |spread angle, meaning the       |                    |
-   |                    |droplet will vary from          |                    |
-   |                    |:math:`-\theta/2` to            |                    |
-   |                    |:math:`\theta/2`.               |                    |
+   |``spread_angle``    |Full spread angle in degrees    |Yes                 |
+   |                    |that droplets can vary from the |                    |
+   |                    |normal direction; droplets vary |                    |
+   |                    |from                            |                    |
+   |                    |:math:`[-\theta/2,\theta/2]`    |                    |
    +--------------------+--------------------------------+--------------------+
    |``T``               |Temperature of the injected     |Yes                 |
-   |                    |liquid.                         |                    |
+   |                    |liquid                          |                    |
    +--------------------+--------------------------------+--------------------+
    |``Y``               |Mass fractions of the injected  |Yes, if             |
-   |                    |liquid. Ordered based on        |``SPRAY_FUEL_NUM`` >|
-   |                    |``particles.fuel_species``.     |1                   |
+   |                    |liquid based on                 |``SPRAY_FUEL_NUM`` >|
+   |                    |``particles.fuel_species``      |1                   |
    +--------------------+--------------------------------+--------------------+
-   |``mass_flow_rate``  |Mass flow rate of the jet.      |Yes                 |
-   |                    |                                |                    |
+   |``mass_flow_rate``  |Mass flow rate of the jet       |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``hollow_spray``    |Does a hollow cone              |No (Default: 0)     |
-   |                    |injection. Only injects         |                    |
-   |                    |particles at the edges of the   |                    |
-   |                    |jet.                            |                    |
+   |``hollow_spray``    |Sets hollow cone injection      |No (Default: 0)     |
    +--------------------+--------------------------------+--------------------+
-   |``start_time`` and  |Beginning and end time for jet. |No                  |
+   |``start_time`` and  |Beginning and end time for jet  |No                  |
    |``end_time``        |                                |                    |
    +--------------------+--------------------------------+--------------------+
    |``dist_type``       |Droplet diameter distribution   |Yes                 |
-   |                    |type. Options are ``Uniform``,  |                    |
-   |                    |``Normal``, ``LogNormal``,      |                    |
-   |                    |``Weibull``. Each distribution  |                    |
-   |                    |type has it's own required      |                    |
-   |                    |inputs.                         |                    |
-   |                    |                                |                    |
+   |                    |type: ``Uniform``, ``Normal``,  |                    |
+   |                    |``LogNormal``, ``Weibull``      |                    |
    +--------------------+--------------------------------+--------------------+
