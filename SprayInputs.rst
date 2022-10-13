@@ -122,9 +122,8 @@ If an injector is constructed using only a name and geometry, the injection para
    |``jet_dia``         |Jet diameter                    |Yes                 |
    +--------------------+--------------------------------+--------------------+
    |``spread_angle``    |Full spread angle in degrees    |Yes                 |
-   |                    |that droplets can vary from the |                    |
-   |                    |normal direction; droplets vary |                    |
-   |                    |from                            |                    |
+   |                    |from the jet normal direction;  |                    |
+   |                    |droplets vary from              |                    |
    |                    |:math:`[-\theta/2,\theta/2]`    |                    |
    +--------------------+--------------------------------+--------------------+
    |``T``               |Temperature of the injected     |Yes                 |
