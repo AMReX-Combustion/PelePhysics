@@ -2,6 +2,7 @@
 #define SPRAYPARTICLES_H
 
 #include "SprayFuelData.H"
+#include "SprayReflData.H"
 #include <AMReX_AmrParticles.H>
 #include <AMReX_Geometry.H>
 #include "SprayJet.H"
@@ -87,6 +88,12 @@ public:
     SprayData& sprayData,
     const amrex::Real& max_cfl =
       0.5); // Only overwrite this if particles are subcycled
+
+  ///
+  /// Create reflected droplets
+  ///
+  void CreateReflectedDroplets(
+    const int Np, const int* N_refl_h, const ReflPtrs& rfh, const int level);
 
   void SprayParticleIO(
     const int level,

@@ -10,6 +10,8 @@ public:
 
   void init(const std::string& a_prefix) override;
 
+  void init(const amrex::Real& mean_d, const amrex::Real& std) override;
+
   amrex::Real get_dia() override;
   amrex::Real get_avg_dia() override;
 
@@ -23,6 +25,8 @@ public:
   static std::string identifier() { return "Normal"; }
 
   void init(const std::string& a_prefix) override;
+
+  void init(const amrex::Real& mean_d, const amrex::Real& std) override;
 
   amrex::Real get_dia() override;
   amrex::Real get_avg_dia() override;
@@ -39,12 +43,15 @@ public:
 
   void init(const std::string& a_prefix) override;
 
+  void init(const amrex::Real& mean_d, const amrex::Real& std) override;
+
   amrex::Real get_dia() override;
   amrex::Real get_avg_dia() override;
 
 private:
   amrex::Real m_log_mean = 0.;
   amrex::Real m_log_std = 0.;
+  amrex::Real m_mean = 0.;
 };
 
 class Weibull : public DistBase::Register<Weibull>
@@ -53,6 +60,8 @@ public:
   static std::string identifier() { return "Weibull"; }
 
   void init(const std::string& a_prefix) override;
+
+  void init(const amrex::Real& mean_d, const amrex::Real& k) override;
 
   amrex::Real get_dia() override;
   amrex::Real get_avg_dia() override;

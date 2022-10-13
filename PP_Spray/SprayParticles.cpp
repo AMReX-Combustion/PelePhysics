@@ -167,7 +167,7 @@ SprayParticleContainer::updateParticles(
   BL_PROFILE("SprayParticleContainer::updateParticles()");
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
-  bool isActive = (!isVirt && !isGhost);
+  bool isActive = !(isVirt || isGhost);
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -292,7 +292,7 @@ SprayParticleContainer::updateParticles(
           GasPhaseVals gpv;
           amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
             cBoilT; // Boiling temperature at current pressure
-          bool isActive = (!isVirt && !isGhost);
+          bool isActive = !(isVirt || isGhost);
           eos.molecular_weight(gpv.mw_fluid.data());
           eos.inv_molecular_weight(gpv.invmw.data());
           for (int n = 0; n < NUM_SPECIES; ++n) {
@@ -307,7 +307,6 @@ SprayParticleContainer::updateParticles(
           IntVect ijk = lx.floor(); // Upper cell center
           RealVect lxc = (p.pos() - plo) * dxi;
           IntVect ijkc = lxc.floor(); // Cell with particle
-          IntVect ijkc_prev = ijkc;
           IntVect bflags(IntVect::TheZeroVector());
           if (at_bounds) {
             // Check if particle has left the domain or is boundary adjacent
@@ -390,12 +389,6 @@ SprayParticleContainer::updateParticles(
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
               }
-              // Update indices
-              ijkc_prev = ijkc;
-              lx = (p.pos() - plo) * dxi + 0.5;
-              ijk = lx.floor();
-              lxc = (p.pos() - plo) * dxi;
-              ijkc = lxc.floor(); // New cell center
               if (at_bounds || do_fe_interp) {
                 // First check if particle has exited the domain through a
                 // Cartesian boundary
@@ -406,19 +399,21 @@ SprayParticleContainer::updateParticles(
                 } else {
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                    p, SPI, dx, plo, phi, bndry_lo, bndry_hi, bflags, eb_in_box,
+                    isActive, pid, p, *fdat, SPI, dx, plo, phi, bndry_lo,
+                    bndry_hi, bflags, cBoilT.data(), eb_in_box,
 #ifdef AMREX_USE_EB
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
 #endif
-                    ijkc, ijkc_prev, N_refl, rf_d);
-                  lx = (p.pos() - plo) * dxi + 0.5;
-                  ijk = lx.floor();
-                  lxc = (p.pos() - plo) * dxi;
-                  ijkc = lxc.floor();
+                    ijkc, N_refl, rf_d);
                 }
               } // if (at_bounds || fe_interp)
-            }   // if (do_move)
+              // Update indices
+              lx = (p.pos() - plo) * dxi + 0.5;
+              ijk = lx.floor();
+              lxc = (p.pos() - plo) * dxi;
+              ijkc = lxc.floor(); // New cell center
+            }                     // if (do_move)
             cur_iter++;
             ctime += cur_dt;
             if (isGhost && !src_box.contains(ijkc)) {
@@ -427,48 +422,22 @@ SprayParticleContainer::updateParticles(
           } // End of subcycle loop
         }   // End of p.id() > 0 check
       });   // End of loop over particles
-    // if (isActive && m_sprayData->sigma > 0.) {
-    //   Gpu::copyAsync(Gpu::deviceToHost, N_refl_d.begin(), N_refl_d.end(), N_refl_h.begin());
-    //   bool get_new_parts = false;
-    //   for (Long n = 0; n < Np; n++) {
-    //     if (N_refl_h[n] > 0.) {
-    //       get_new_parts = true;
-    //     }
-    //   }
-    //   if (get_new_parts) {
-    //     refv.retrieve_data();
-    //     ParticleLocData pld;
-    //     std::map<std::pair<int, int>, Gpu::HostVector<ParticleType>>
-    //       host_particles;
-    //     for (Long n = 0; n < Np; n++) {
-    //       if (N_refl_h[n] > 0) {
-    //         ParticleType p;
-    //         p.id() = ParticleType::NextID();
-    //         p.cpu() = ParallelDescriptor::MyProc();
-    //         p.rdata(SPI.pstateDia) = refv.d0_h[n];
-    //         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    //           p.pos(dir) = refv.loc_h[AMREX_SPACEDIM * n + dir];
-    //           p.rdata(SPI.pstateVel + dir)  = 0.;
-    //         }
-    //         p.rdata(SPI.pstateY) = 1.;
-    //         p.rdata(SPI.pstateT) = 300.;
-    //         std::pair<int, int> ind(pld.m_grid, pld.m_tile);
-    //         host_particles[ind].push_back(p);
-    //       }
-    //     }
-    //     for (auto& kv : host_particles) {
-    //       auto grid = kv.first.first;
-    //       auto tile = kv.first.second;
-    //       const auto& src_tile = kv.second;
-    //       auto& dst_tile = GetParticles(level)[std::make_pair(grid, tile)];
-    //       auto old_size = dst_tile.GetArrayOfStructs().size();
-    //       auto new_size = old_size + src_tile.size();
-    //       dst_tile.resize(new_size);
-    //       // Copy the AoS part of the host particles to the GPU
-    //       Gpu::copy(Gpu::hostToDevice, src_tile.begin(), src_tile.end(),
-    //                 dst_tile.GetArrayOfStructs().begin() + old_size);
-    //     }
-    //   }
-    // }
-  }         // for (int MyParIter pti..
+    if (isActive && m_sprayData->sigma > 0.) {
+      Gpu::copy(
+        Gpu::deviceToHost, N_refl_d.begin(), N_refl_d.end(), N_refl_h.begin());
+      bool get_new_parts = false;
+      for (Long n = 0; n < Np; n++) {
+        if (N_refl_h[n] > 0) {
+          get_new_parts = true;
+        }
+      }
+      if (get_new_parts) {
+        refv.retrieve_data();
+        ReflPtrs rfh;
+        refv.fillPtrs_h(rfh);
+        CreateReflectedDroplets(Np, N_refl_h.data(), rfh, level);
+      }
+    }
+  } // for (int MyParIter pti..
+  Gpu::streamSynchronize();
 }

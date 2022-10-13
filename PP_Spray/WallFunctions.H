@@ -93,12 +93,12 @@ AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 bool
 check_wall(
-  const amrex::RealVect pos,
-  const amrex::IntVect bflags,
-  const amrex::IntVect ijkc,
+  const amrex::RealVect& pos,
+  const amrex::IntVect& bflags,
+  const amrex::IntVect& ijkc,
 #ifdef AMREX_USE_EB
-  const amrex::IntVect ijkc_prev,
-  const amrex::RealVect vel_part,
+  const amrex::IntVect& ijkc_prev,
+  const amrex::RealVect& vel_part,
   const bool use_EB,
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
@@ -268,83 +268,23 @@ splash_criteria(
   return crit;
 }
 
-// Find tangents along surface
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
-void
-find_tangents(
-#if AMREX_SPACEDIM == 3
-  const amrex::RealVect& pvel,
-  amrex::RealVect& tanPsi,
-#else
-  const amrex::RealVect& /*pvel*/,
-  amrex::RealVect& /*tanPsi*/,
-#endif
-  const amrex::RealVect& norm,
-  amrex::RealVect& tanBeta)
-{
-#if AMREX_SPACEDIM == 3
-  tanPsi = -pvel.crossProduct(norm);
-  tanBeta = tanPsi.crossProduct(norm);
-  tanPsi /= tanPsi.vectorLength();
-  tanBeta /= tanBeta.vectorLength();
-#else
-  tanBeta[0] = -norm[1];
-  tanBeta[1] = norm[0];
-#endif
-}
-
-// Compute the angles of reflecting droplets
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
-void
-compute_angles(
-  const amrex::Real& alpha,
-  const amrex::Real& We,
-  amrex::Real& omega,
-  amrex::Real& expomega,
-  amrex::Real& beta_mean,
-  amrex::Real& beta_stdv,
-  const bool dry)
-{
-  // Inclination angle in degrees
-  const amrex::Real alphad = alpha * 180. / M_PI;
-  omega = 0.5 * M_PI * M_PI * std::cos(alpha);
-  if (alphad <= 80. && AMREX_SPACEDIM == 3) {
-    omega = std::sqrt(
-      (1. + 8.872 * std::cos(1.152 * alpha)) / (1. - std::cos(alpha)));
-  }
-  omega = omega;
-  expomega = 1. - std::exp(-omega);
-  if (dry) {
-    beta_mean = 9.3 + 0.22 * alphad;
-  // } else if (Tstar > 1.1) {
-  //   beta_mean = 0.225 * alphad * std::exp(std::pow(0.017 * alphad - 0.937, 2));
-  } else {
-    beta_mean = 0.96 * alphad * std::exp(-4.5E-3 * We);
-  }
-  amrex::Real stdev = 4.; // 4 degrees
-  // Now convert mean and stdev to log terms
-  amrex::Real mean2 = beta_mean * beta_mean;
-  amrex::Real st2 = stdev * stdev;
-  amrex::Real term1 = std::log(beta_mean);
-  amrex::Real term2 = std::log(mean2 + st2);
-  beta_mean = 2. * term1 - 0.5 * term2;
-  beta_stdv = std::sqrt(amrex::max(-2. * term1 + term2, 0.));
-}
-
 AMREX_GPU_DEVICE
 AMREX_INLINE
 void
 droplet_splashing(
   splash_type& splash_flag,
   SprayParticleContainer::ParticleType& p,
+  int pid,
+  const amrex::RealVect& dx,
+  const amrex::RealVect& plo,
   const SprayComps& SPI,
   const SprayData& fdat,
   const amrex::RealVect vel_part,
   const amrex::Real par_dot,
   const amrex::RealVect normal,
   const amrex::Real* cBoilT,
+  int* N_refl,
+  const ReflPtrs& rf,
   const bool dry_wall)
 {
   amrex::Real Nw_Vp = normal.dotProduct(vel_part);
@@ -372,106 +312,49 @@ droplet_splashing(
   splash_flag = splash_criteria(Kv, Tstar, alpha);
   // splash_flag == 0, then particle rebounds, no breakup, no deposit
   if (splash_flag != splash_type::rebound) {
-    // If splash_flag == 1, particle is completely deposited onto the wall
-    if (splash_flag == splash_type::deposit) {
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.rdata(SPI.pstateVel + dir) = 0.;
-      }
-    }
-  }
-}
-# if 0
-      // Determine diameter of secondary droplets
-      amrex::Real expon = 3.6 * (alpha / M_PI) * (alpha / M_PI);
-      if (dry_wall) {
-        SPRF.dia_refl = dia_part * 3.3 * std::exp(expon) * std::pow(We, -0.65);
-      } else {
-        SPRF.dia_refl = dia_part * 2.2 * std::exp(expon) * std::pow(We, -0.36);
-      }
-      // Compute angles of reflecting droplets
-      //compute_angles(alpha, Tstar, We, dry_wall, SPRF);
-      // If thermal breakup, all mass is converted to secondary droplets
-      amrex::Real splash_mass = pmass;
-      // If splash, some mass rebounds and some deposits
+    if (
+      splash_flag == splash_type::splash ||
+      splash_flag == splash_type::thermal_breakup) {
       if (splash_flag == splash_type::splash) {
-        // Determine the fraction of the droplet mass
-        // that forms secondary drops from Kuhnke 2004
-        // TODO: This is incomplete by always assuming a dry wall
-        // TODO: Random(engine) degrades performance too much, must add
-        // random values here somehow
-        const amrex::Real B = 0.2 + 0.6; //* amrex::Random(engine);
-        splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
-        // Mass deposited into wall film
-        amrex::Real depot_mass = pmass - splash_mass;
-        amrex::Real depot_dia = std::cbrt(6. / M_PI * depot_mass / rho_part);
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          p.rdata(SPI.pstateVel + dir) = 0.;
-        }
-        p.rdata(SPI.pstateDia) = depot_dia;
+        N_refl[pid] = 2;
       } else {
-        p.id() = -1;
+        // For thermal breakup, no deposition occurs
+        N_refl[pid] = 1;
       }
-      amrex::Real mass_refl = M_PI / 6. * rho_part * std::pow(SPRF.dia_refl, 3);
-      amrex::Real Ns = splash_mass / mass_refl;
-      SPRF.Ns_refl = static_cast<int>(Ns);
-      // TODO: Not sure what this variable is but it ranges from 1.45-2
-      amrex::Real nu32 = 1.45;
-      amrex::Real We_out =
-        SPRF.dia_refl / dia_part *
-          (We * (1. - 0.85 * std::pow(std::sin(alpha * M_PI / 180.), 2)) +
-           12.) -
-        12. / nu32;
-      SPRF.Unorm = std::sqrt(fdat.sigma * We_out / (rho_part * SPRF.dia_refl));
-      // This is the dt to move the secondary droplets
-      SPRF.dt_pp = par_dot / Nw_Vp;
-      // Test vector for finding tangents
-      //amrex::RealVect testvec = -pvel;
-      // Find two tangent vectors by taking the cross product with the
-      // velocity vector
-      //find_tangents(testvec, SPRF.tanPsi, normal, SPRF.tanBeta);
-    }
-  } // if (splash_flag != splash_type::rebound)
-}
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        // Save location where droplet hit wall
+        rf.loc[AMREX_SPACEDIM * pid + dir] =
+          (p.pos(dir) - par_dot * vel_part[dir] / Nw_Vp) * dx[dir] + plo[dir];
+        rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
+        rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
+      }
+      rf.d0[pid] = p.rdata(SPI.pstateDia);
+      rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp;
+      rf.We[pid] = We;
+      rf.alpha[pid] = alpha;
+      rf.Tstar[pid] = Tstar;
+      rf.T0[pid] = p.rdata(SPI.pstateT);
+#if SPRAY_FUEL_NUM > 1
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SPI.pstateY + spf);
+      }
 #endif
-
-void
-create_splash_droplet(
-  SprayParticleContainer::ParticleType& p, SprayComps SPI, SprayRefl SPRF)
-{
-  amrex::Real rand1 = amrex::Random();
-  amrex::Real mean = SPRF.beta_mean;
-  amrex::Real stdev = SPRF.beta_stdv;
-  amrex::Real beta = amrex::RandomNormal(mean, stdev);
-  beta = std::exp(beta) * M_PI / 180.;
-  amrex::Real omega = SPRF.omega;
-  amrex::Real expb = SPRF.expomega;
-  // If incoming angle is greater than 80 degrees, azimuthal
-  // angle of outgoing drop can be between 0 to 2*pi
-  amrex::Real psi = AMREX_D_PICK(0., 0., rand1 * 2. * M_PI);
-  // Otherwise, follow we modify the recommendation by Naber and Reitz 1988,
-  // so the azimuthal angle distribution favors the pre-splash drop path
-  // as the inclination angle decreases
-  if (omega > 0.) {
-    amrex::Real rand2 = std::copysign(1., 0.5 - amrex::Random());
-    psi = -rand2 / omega * std::log(1. - rand1 * expb) * M_PI;
-  }
-  amrex::Real costhetad = std::cos(beta);
-  amrex::Real sinthetad = std::sin(beta);
-  AMREX_D_TERM(amrex::Real un = SPRF.Unorm * sinthetad;
-               , amrex::Real utBeta = SPRF.Unorm * costhetad * std::cos(psi);
-               , amrex::Real utPsi = SPRF.Unorm * costhetad * std::sin(psi););
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    amrex::Real pvel = AMREX_D_TERM(
-      un * SPRF.norm[dir], +utBeta * SPRF.tanBeta[dir],
-      +utPsi * SPRF.tanPsi[dir]);
-    amrex::Gpu::Atomic::Add(&p.pos(dir), SPRF.dt_pp * pvel);
-    amrex::Gpu::Atomic::Add(&p.rdata(SPI.pstateVel + dir), pvel);
+      p.id() = -1;
+    }
+  } else {
+    amrex::Real We1 = 0.678 * We * std::exp(-4.415E-2 * We);
+    amrex::Real u1 = std::sqrt(fdat.sigma * We1 / (rho_part * dia_part));
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) -= (u1 / Nw_Vp + 1.) * par_dot * normal[dir];
+      p.rdata(SPI.pstateVel + dir) -= (Nw_Vp + u1) * normal[dir];
+    }
   }
 }
 
 /*
-Checks and reflects particles off BC or EB. If particle reflects too many times,
-it places the particle near the wall sets the normal velocity component to zero.
+Imposes BC or EB surfaces. Splash model is applied if it is turned on.
+If the particle reflects multiple times, splash model is not applied to avoid
+creating particles outside of boundary
 */
 AMREX_GPU_DEVICE
 AMREX_INLINE
@@ -496,8 +379,7 @@ impose_wall(
   amrex::Array4<amrex::Real const> const& vfrac,
   const amrex::Real min_eb_vfrac,
 #endif
-  amrex::IntVect& ijkc,
-  amrex::IntVect& ijkc_prev,
+  const amrex::IntVect& ijkc_prev,
   int* N_refl,
   const ReflPtrs& rf)
 {
@@ -506,12 +388,14 @@ impose_wall(
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
-  amrex::RealVect normphi;
-  // Normalize pos
+  // Normalize positions
+  amrex::RealVect normphi; // = (phi - plo) / dx;
+  // p.pos() = (p.pos() - plo) / dx;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    p.pos(dir) = (p.pos(dir) - plo[dir]) / dx[dir];
     normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
+    p.pos(dir) = (p.pos(dir) - plo[dir]) / dx[dir];
   }
+  const amrex::IntVect ijkc = p.pos().floor();
   // Check if particle is behind a wall
   bool do_refl = check_wall(
     p.pos(), bflags, ijkc,
@@ -519,79 +403,57 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
     par_dot, normal);
-  splash_type splash_flag = splash_type::rebound;
-  if (do_refl && fdat.sigma > 0. && isActive) {
+  if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    droplet_splashing(splash_flag, p, SPI, fdat, vel_part, par_dot, normal, cBoilT, true);
-    if (splash_flag == splash_type::splash || splash_flag == splash_type::thermal_breakup) {
-      printf("splash or breakup occurs");
-      N_refl[pid] = 1;
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        rf.loc[AMREX_SPACEDIM * pid + dir] = (p.pos(dir) - 1.1 * par_dot * normal[dir]) * dx[dir] + plo[dir];
-        rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
-        rf.d0[pid] = p.rdata(SPI.pstateDia);
-        rf.dtpp[pid] = par_dot * dx[dir] / Nw_Vp;
-      }
-    }
-  }
-  // Keep track of number of times particle bounces
-  int bounce_counter = 0;
-  // Maximum allowable bounces
-  int max_bounce = 5;
-  if (splash_flag != splash_type::deposit || splash_flag != splash_type::thermal_breakup) {
-  while (do_refl) {
-    // Plane ref point
-    amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    if (!use_EB) {
-      ijkc_prev = ijkc;
-    }
-#ifdef AMREX_USE_EB
-    else {
-      if (!flags(ijkc).isCovered()) {
-        ijkc_prev = ijkc;
-      }
-    }
-#endif
-    // Reflect particle position and velocity around the boundary
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= 2. * par_dot * normal[dir];
-      p.rdata(SPI.pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
-      vel_part[dir] = p.rdata(SPI.pstateVel + dir);
-      ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
-    }
+    // Reflect the particle to see if it interacts with another surface or
+    // leaves the domain
+    amrex::RealVect refl_pos = p.pos() - 1.8 * par_dot * normal;
+    amrex::RealVect refl_vel = vel_part - 1.8 * Nw_Vp * normal;
+    amrex::IntVect refl_ijkc = refl_pos.floor();
     bool left_dom =
-      check_bounds_norm(p.pos(), normphi, bndry_lo, bndry_hi, bflags);
+      check_bounds_norm(refl_pos, normphi, bndry_lo, bndry_hi, bflags);
     if (left_dom) {
       p.id() = -1;
       return;
     }
-    do_refl = check_wall(
-      p.pos(), bflags, ijkc,
+    amrex::Real refl_par_dot = 2.;
+    amrex::RealVect refl_normal;
+    amrex::IntVect refl_prev = ijkc;
+    bool bounce_refl = check_wall(
+      refl_pos, bflags, refl_ijkc,
 #ifdef AMREX_USE_EB
-      ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
+      refl_prev, refl_vel, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
-      par_dot, normal);
-    bounce_counter++;
-    // If particle exceeds max bounces, place near wall and set normal velocity
-    // to zero
-    if (bounce_counter > max_bounce && do_refl) {
-      do_refl = false;
+      refl_par_dot, refl_normal);
+    splash_type splash_flag = splash_type::rebound;
+    // If it reflects again, deposit particle at wall
+    if (bounce_refl) {
       splash_flag = splash_type::deposit;
+    } else {
+      // If not bouncing and splash model is on
+      if (fdat.sigma > 0. && isActive) {
+        droplet_splashing(
+          splash_flag, p, pid, dx, plo, SPI, fdat, vel_part, par_dot, normal,
+          cBoilT, N_refl, rf, true);
+      } else {
+        // Otherwise, just reflect particle
+        p.pos() = refl_pos;
+        vel_part = refl_vel;
+      }
     }
-  }
-  }
-  if (splash_flag == splash_type::deposit) {
-    amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) +=
-        (0.5 * p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
-      p.rdata(SPI.pstateVel + dir) -= Nw_Vp * normal[dir];
-      ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
+    // If deposited, place at wall
+    if (splash_flag == splash_type::deposit) {
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        p.pos(dir) -=
+          (p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
+      }
+      vel_part = amrex::RealVect::TheZeroVector();
     }
-  }
-  // Undo normalization
+  } // if (do_refl)
+  // Undo normalization and set new velocity
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     p.pos(dir) = p.pos(dir) * dx[dir] + plo[dir];
+    p.rdata(SPI.pstateVel + dir) = vel_part[dir];
   }
 }
 

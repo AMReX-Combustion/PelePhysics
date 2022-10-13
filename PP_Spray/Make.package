@@ -10,6 +10,7 @@ CEXE_sources += SprayParticles.cpp
 CEXE_sources += SprayDerive.cpp
 CEXE_sources += SprayParticlesInitInsert.cpp
 CEXE_sources += SpraySetup.cpp
+CEXE_sources += SprayRefl.cpp
 
 CEXE_headers += Drag.H
 CEXE_headers += WallFunctions.H

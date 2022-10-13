@@ -35,6 +35,7 @@ struct SprayUnits
   amrex::Real mu_conv = 0.1;
   amrex::Real lambda_conv = 1.E-5;
   amrex::Real pres_conv = 0.1;
+  amrex::Real len_conv = 0.01;
 #else
   amrex::Real ru_conv = 1.;
   amrex::Real eng_conv = 1.;
@@ -44,6 +45,7 @@ struct SprayUnits
   amrex::Real mu_conv = 1.;
   amrex::Real lambda_conv = 1.;
   amrex::Real pres_conv = 1.;
+  amrex::Real len_conv = 1.;
 #endif
   amrex::Real min_mass = 1.E-13 * mass_conv;
 };

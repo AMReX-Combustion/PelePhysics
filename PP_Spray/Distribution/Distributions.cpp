@@ -9,6 +9,12 @@ Uniform::init(const std::string& a_prefix)
   pp.get("diameter", m_diam);
 }
 
+void
+Uniform::init(const amrex::Real& mean, const amrex::Real& /*std*/)
+{
+  m_diam = mean;
+}
+
 amrex::Real
 Uniform::get_dia()
 {
@@ -29,6 +35,13 @@ Normal::init(const std::string& a_prefix)
   pp.get("std_dev", m_std);
 }
 
+void
+Normal::init(const amrex::Real& mean, const amrex::Real& std)
+{
+  m_mean = mean;
+  m_std = std;
+}
+
 amrex::Real
 Normal::get_dia()
 {
@@ -42,6 +55,14 @@ Normal::get_avg_dia()
 }
 
 void
+LogNormal::init(const amrex::Real& mean, const amrex::Real& std)
+{
+  m_mean = mean;
+  m_log_mean = 2. * std::log(mean) - 0.5 * std::log(std * std + mean * mean);
+  m_log_std = std::sqrt(
+    amrex::max(-2. * std::log(mean) + std::log(std * std + mean * mean), 0.));
+}
+void
 LogNormal::init(const std::string& a_prefix)
 {
   amrex::ParmParse pp(a_prefix);
@@ -49,9 +70,7 @@ LogNormal::init(const std::string& a_prefix)
   amrex::Real std;
   pp.get("mean_diam", mean);
   pp.get("std_dev", std);
-  m_log_mean = 2. * std::log(mean) - 0.5 * std::log(std * std + mean * mean);
-  m_log_std = std::sqrt(
-    amrex::max(-2. * std::log(mean) + std::log(std * std + mean * mean), 0.));
+  init(mean, std);
 }
 
 amrex::Real
@@ -63,7 +82,7 @@ LogNormal::get_dia()
 amrex::Real
 LogNormal::get_avg_dia()
 {
-  return std::exp(m_log_mean);
+  return m_mean;
 }
 
 void
@@ -72,6 +91,13 @@ Weibull::init(const std::string& a_prefix)
   amrex::ParmParse pp(a_prefix);
   pp.get("mean_diam", m_mean);
   pp.get("k", m_k);
+}
+
+void
+Weibull::init(const amrex::Real& mean, const amrex::Real& k)
+{
+  m_mean = mean;
+  m_k = k;
 }
 
 amrex::Real
