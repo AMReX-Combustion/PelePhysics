@@ -15,9 +15,9 @@ Spray Flags and Inputs
 
   * The liquid fuel species names are specified using ``particles.fuel_species = NC7H16 NC10H22``. The number of fuel species listed must match ``SPRAY_FUEL_NUM``.
 
-  * Many values must be specified on a per-species basis. Following the current example, one would have to specify ``particles.fuel_crit_temp = 540. 617.`` to set the critical temperature of 540 K for ``NC7H16`` and 617 K for ``NC10H22``.
+  * Many values must be specified on a per-species basis. Following the current example, one would have to specify ``particles.fuel_crit_temp = 540. 617.`` to set a critical temperature of 540 K for ``NC7H16`` and 617 K for ``NC10H22``.
 
-  * Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3`` All species specified must be present in the chemistry transport and thermodynamic data.
+  * Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3``. All species specified must be present in the chemistry transport and thermodynamic data.
 
 * The following table lists other inputs related to ``particles.``
 
@@ -29,8 +29,8 @@ Spray Flags and Inputs
    +=======================+===============================+=============+===================+
    |``fuel_species``       |Names of liquid species        |Yes          |None               |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``dep_fuel_species``   |Name of species to add         |Yes          |Inputs to          |
-   |                       |contribute to in gas phase     |             |``fuel_species``   |
+   |``dep_fuel_species``   |Name of gas phase species to   |Yes          |Inputs to          |
+   |                       |contribute                     |             |``fuel_species``   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``fuel_ref_temp``      |Liquid reference temperature   |No           |None               |
    +-----------------------+-------------------------------+-------------+-------------------+
@@ -48,27 +48,27 @@ Spray Flags and Inputs
    |``fuel_rho``           |Liquid density                 |Yes          |None               |
    |                       |                               |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``mom_transfer``       |Couple momentum with gas phase |No           |1                  |
+   |``mom_transfer``       |Couple momentum with gas phase |No           |``1``              |
    |                       |                               |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``mass_transfer``      |Evaporate mass and exchange    |No           |1                  |
+   |``mass_transfer``      |Evaporate mass and exchange    |No           |``1``              |
    |                       |heat                           |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fixed_parts``        |Fix particles in space         |No           |0                  |
+   |``fixed_parts``        |Fix particles in space         |No           |``0``              |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``parcel_size``        |Number of droplets per parcel  |No           |1.                 |
+   |``parcel_size``        |Number of droplets per parcel  |No           |``1.``             |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``write_ascii_files``  |Output ascii files of spray    |No           |0                  |
+   |``write_ascii_files``  |Output ascii files of spray    |No           |``0``              |
    |                       |data                           |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``init_function``      |Initialize with                |No           |1                  |
+   |``init_function``      |Initialize with                |No           |``1``              |
    |                       |``InitSprayParticles()``       |             |                   |
    |                       |                               |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``cfl``                |Particle CFL number for        |No           |0.5                |
+   |``cfl``                |Particle CFL number for        |No           |``0.5``            |
    |                       |limiting time step             |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``init_file``          |Ascii file name to initialize  |No           |0                  |
+   |``init_file``          |Ascii file name to initialize  |No           |Empty              |
    |                       |sprays                         |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
 
@@ -85,7 +85,7 @@ Spray Flags and Inputs
 Spray Injection Inputs
 ----------------------
 
-Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` file. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
+Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` file. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles()`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
 
   void
   SprayParticleContainer::InitSprayParticles(
