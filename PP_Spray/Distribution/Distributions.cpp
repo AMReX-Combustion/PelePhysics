@@ -31,7 +31,7 @@ void
 Normal::init(const std::string& a_prefix)
 {
   amrex::ParmParse pp(a_prefix);
-  pp.get("mean_diam", m_mean);
+  pp.get("mean_dia", m_mean);
   pp.get("std_dev", m_std);
 }
 
@@ -68,7 +68,7 @@ LogNormal::init(const std::string& a_prefix)
   amrex::ParmParse pp(a_prefix);
   amrex::Real mean;
   amrex::Real std;
-  pp.get("mean_diam", mean);
+  pp.get("mean_dia", mean);
   pp.get("std_dev", std);
   init(mean, std);
 }
@@ -89,7 +89,7 @@ void
 Weibull::init(const std::string& a_prefix)
 {
   amrex::ParmParse pp(a_prefix);
-  pp.get("mean_diam", m_mean);
+  pp.get("mean_dia", m_mean);
   pp.get("k", m_k);
 }
 

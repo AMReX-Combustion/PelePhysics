@@ -89,8 +89,8 @@ public:
     }
     ps.query("start_time", m_startTime);
     ps.query("end_time", m_endTime);
-    ps.query("jet_vel", m_jetVel);
-    ps.query("mass_flow_rate", m_massFlow);
+    ps.get("jet_vel", m_jetVel);
+    ps.get("mass_flow_rate", m_massFlow);
     ps.query("hollow_spray", m_hollowSpray);
   }
 
@@ -124,7 +124,9 @@ public:
   }
 
   inline bool hollow_spray() const { return m_hollowSpray; }
+  /// Returns a randomly selected droplet diameter from the distribution
   inline amrex::Real get_dia() const { return m_dropDist->get_dia(); }
+  /// Returns the average diameter given to the distribution
   inline amrex::Real get_avg_dia() const { return m_dropDist->get_avg_dia(); }
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
