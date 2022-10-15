@@ -7,9 +7,9 @@ struct ReflPtrs
   amrex::Real* vel = nullptr;
   amrex::Real* loc = nullptr;
   amrex::Real* alpha = nullptr;
-  amrex::Real* We = nullptr;
+  amrex::Real* Kv = nullptr;
   amrex::Real* dtpp = nullptr;
-  amrex::Real* Tstar = nullptr;
+  amrex::Real* ms = nullptr;
   amrex::Real* T0 = nullptr;
   amrex::Real* d0 = nullptr;
   amrex::Real* Y0 = nullptr;
@@ -20,7 +20,7 @@ struct ReflVects
   // Normal vector
   amrex::Gpu::HostVector<amrex::Real> norm_h;
   amrex::Gpu::DeviceVector<amrex::Real> norm_d;
-  // Velocity splashing droplet
+  // Velocity of splashing droplet
   amrex::Gpu::HostVector<amrex::Real> vel_h;
   amrex::Gpu::DeviceVector<amrex::Real> vel_d;
   // Location of splashing droplet (at wall)
@@ -30,14 +30,14 @@ struct ReflVects
   amrex::Gpu::HostVector<amrex::Real> alpha_h;
   amrex::Gpu::DeviceVector<amrex::Real> alpha_d;
   // Weber number
-  amrex::Gpu::HostVector<amrex::Real> we_h;
-  amrex::Gpu::DeviceVector<amrex::Real> we_d;
+  amrex::Gpu::HostVector<amrex::Real> kv_h;
+  amrex::Gpu::DeviceVector<amrex::Real> kv_d;
   // Dt fraction remaining after splashing
   amrex::Gpu::HostVector<amrex::Real> dtpp_h;
   amrex::Gpu::DeviceVector<amrex::Real> dtpp_d;
   // T* from Kuhnke model
-  amrex::Gpu::HostVector<amrex::Real> Tstar_h;
-  amrex::Gpu::DeviceVector<amrex::Real> Tstar_d;
+  amrex::Gpu::HostVector<amrex::Real> ms_h;
+  amrex::Gpu::DeviceVector<amrex::Real> ms_d;
   // Splashing droplet temperature
   amrex::Gpu::HostVector<amrex::Real> T0_h;
   amrex::Gpu::DeviceVector<amrex::Real> T0_d;
@@ -53,9 +53,9 @@ struct ReflVects
     vel_h.assign(AMREX_SPACEDIM * Np, 0.);
     loc_h.assign(AMREX_SPACEDIM * Np, 0.);
     alpha_h.assign(Np, 0.);
-    we_h.assign(Np, 0.);
+    kv_h.assign(Np, 0.);
     dtpp_h.assign(Np, 0.);
-    Tstar_h.assign(Np, 0.);
+    ms_h.assign(Np, 0.);
     T0_h.assign(Np, 0.);
     d0_h.assign(Np, 0.);
 
@@ -63,9 +63,9 @@ struct ReflVects
     vel_d.resize(AMREX_SPACEDIM * Np);
     loc_d.resize(AMREX_SPACEDIM * Np);
     alpha_d.resize(Np);
-    we_d.resize(Np);
+    kv_d.resize(Np);
     dtpp_d.resize(Np);
-    Tstar_d.resize(Np);
+    ms_d.resize(Np);
     T0_d.resize(Np);
     d0_d.resize(Np);
 #if SPRAY_FUEL_NUM > 1
@@ -83,12 +83,11 @@ struct ReflVects
       amrex::Gpu::hostToDevice, alpha_h.begin(), alpha_h.end(),
       alpha_d.begin());
     amrex::Gpu::copyAsync(
-      amrex::Gpu::hostToDevice, we_h.begin(), we_h.end(), we_d.begin());
+      amrex::Gpu::hostToDevice, kv_h.begin(), kv_h.end(), kv_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, dtpp_h.begin(), dtpp_h.end(), dtpp_d.begin());
     amrex::Gpu::copyAsync(
-      amrex::Gpu::hostToDevice, Tstar_h.begin(), Tstar_h.end(),
-      Tstar_d.begin());
+      amrex::Gpu::hostToDevice, ms_h.begin(), ms_h.end(), ms_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, T0_h.begin(), T0_h.end(), T0_d.begin());
     amrex::Gpu::copyAsync(
@@ -113,12 +112,11 @@ struct ReflVects
       amrex::Gpu::deviceToHost, alpha_d.begin(), alpha_d.end(),
       alpha_h.begin());
     amrex::Gpu::copy(
-      amrex::Gpu::deviceToHost, we_d.begin(), we_d.end(), we_h.begin());
+      amrex::Gpu::deviceToHost, kv_d.begin(), kv_d.end(), kv_h.begin());
     amrex::Gpu::copy(
       amrex::Gpu::deviceToHost, dtpp_d.begin(), dtpp_d.end(), dtpp_h.begin());
     amrex::Gpu::copy(
-      amrex::Gpu::deviceToHost, Tstar_d.begin(), Tstar_d.end(),
-      Tstar_h.begin());
+      amrex::Gpu::deviceToHost, ms_d.begin(), ms_d.end(), ms_h.begin());
     amrex::Gpu::copy(
       amrex::Gpu::deviceToHost, T0_d.begin(), T0_d.end(), T0_h.begin());
     amrex::Gpu::copy(
@@ -131,9 +129,9 @@ struct ReflVects
     rf.vel = vel_d.data();
     rf.loc = loc_d.data();
     rf.alpha = alpha_d.data();
-    rf.We = we_d.data();
+    rf.Kv = kv_d.data();
     rf.dtpp = dtpp_d.data();
-    rf.Tstar = Tstar_d.data();
+    rf.ms = ms_d.data();
     rf.T0 = T0_d.data();
     rf.d0 = d0_d.data();
     rf.Y0 = Y0_d.data();
@@ -144,9 +142,9 @@ struct ReflVects
     rf.vel = vel_h.data();
     rf.loc = loc_h.data();
     rf.alpha = alpha_h.data();
-    rf.We = we_h.data();
+    rf.Kv = kv_h.data();
     rf.dtpp = dtpp_h.data();
-    rf.Tstar = Tstar_h.data();
+    rf.ms = ms_h.data();
     rf.T0 = T0_h.data();
     rf.d0 = d0_h.data();
     rf.Y0 = Y0_h.data();

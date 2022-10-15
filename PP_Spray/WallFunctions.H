@@ -249,18 +249,19 @@ AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 splash_type
 splash_criteria(
-  const amrex::Real Kv, const amrex::Real Tstar, const amrex::Real alpha)
+  const amrex::Real Kv,
+  const amrex::Real Tstar,
+  const amrex::Real alpha,
+  const amrex::Real Kcrit)
 {
   splash_type crit = splash_type::thermal_breakup;
-  if (Tstar < 1.1) {
-    amrex::Real Kcrit = 130.;
+  if (Tstar < 1.) {
     if (Kv < Kcrit) {
       crit = splash_type::deposit;
     } else {
       crit = splash_type::splash;
     }
   } else {
-    amrex::Real Kcrit = 20. * (1. + 2. * alpha / M_PI);
     if (Kv < Kcrit) {
       crit = splash_type::rebound;
     }
@@ -279,6 +280,7 @@ droplet_splashing(
   const amrex::RealVect& plo,
   const SprayComps& SPI,
   const SprayData& fdat,
+  const amrex::Real p_gas,
   const amrex::RealVect vel_part,
   const amrex::Real par_dot,
   const amrex::RealVect normal,
@@ -309,17 +311,28 @@ droplet_splashing(
   amrex::Real umag = vel_part.vectorLength();
   // Inclination of on-coming particle to surface in radians
   const amrex::Real alpha = std::asin(amrex::Math::abs(Nw_Vp) / umag);
-  splash_flag = splash_criteria(Kv, Tstar, alpha);
+#ifdef PELELM_USE_SPRAY
+  const amrex::Real p_bar = p_gas * 1.E-5;
+#else
+  const amrex::Real p_bar = p_gas * 1.E-6;
+#endif
+  const amrex::Real Kcrit = (26.788 * std::log(p_bar) + 33.546) *
+                              std::exp(-6.E-3 * (fdat.wall_T - 260.)) +
+                            36.;
+  splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit);
   // splash_flag == 0, then particle rebounds, no breakup, no deposit
   if (splash_flag != splash_type::rebound) {
     if (
       splash_flag == splash_type::splash ||
       splash_flag == splash_type::thermal_breakup) {
+      amrex::Real A;
       if (splash_flag == splash_type::splash) {
         N_refl[pid] = 2;
+        A = -3.E-3;
       } else {
         // For thermal breakup, no deposition occurs
         N_refl[pid] = 1;
+        A = -0.0175;
       }
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         // Save location where droplet hit wall
@@ -328,11 +341,12 @@ droplet_splashing(
         rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
         rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
       }
+      amrex::Real ms = pmass * 0.75 * (1. - std::exp(A * (Kv - Kcrit)));
       rf.d0[pid] = p.rdata(SPI.pstateDia);
       rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp;
-      rf.We[pid] = We;
+      rf.Kv[pid] = Kv;
       rf.alpha[pid] = alpha;
-      rf.Tstar[pid] = Tstar;
+      rf.ms[pid] = ms;
       rf.T0[pid] = p.rdata(SPI.pstateT);
 #if SPRAY_FUEL_NUM > 1
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -371,6 +385,8 @@ impose_wall(
   const amrex::IntVect bndry_lo,
   const amrex::IntVect bndry_hi,
   amrex::IntVect& bflags,
+  const amrex::Real* cBoilT,
+  const amrex::Real p_fluid,
   const bool use_EB,
 #ifdef AMREX_USE_EB
   amrex::Array4<amrex::EBCellFlag const> const& flags,
@@ -389,8 +405,7 @@ impose_wall(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
   // Normalize positions
-  amrex::RealVect normphi; // = (phi - plo) / dx;
-  // p.pos() = (p.pos() - plo) / dx;
+  amrex::RealVect normphi;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
     p.pos(dir) = (p.pos(dir) - plo[dir]) / dx[dir];
@@ -433,8 +448,8 @@ impose_wall(
       // If not bouncing and splash model is on
       if (fdat.sigma > 0. && isActive) {
         droplet_splashing(
-          splash_flag, p, pid, dx, plo, SPI, fdat, vel_part, par_dot, normal,
-          cBoilT, N_refl, rf, true);
+          splash_flag, p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
+          normal, cBoilT, N_refl, rf, true);
       } else {
         // Otherwise, just reflect particle
         p.pos() = refl_pos;

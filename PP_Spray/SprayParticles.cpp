@@ -400,7 +400,7 @@ SprayParticleContainer::updateParticles(
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
                     isActive, pid, p, *fdat, SPI, dx, plo, phi, bndry_lo,
-                    bndry_hi, bflags, cBoilT.data(), eb_in_box,
+                    bndry_hi, bflags, cBoilT.data(), gpv.p_fluid, eb_in_box,
 #ifdef AMREX_USE_EB
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
