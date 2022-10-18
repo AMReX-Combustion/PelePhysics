@@ -20,19 +20,11 @@ def qss_sorted_phase_space(
         record_symbolic_operations = False
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
-            reagents = copy.deepcopy(
-                dict(
-                    sum(
-                        (
-                            Counter(x)
-                            for x in [reagents, reaction.efficiencies]
-                        ),
-                        Counter(),
-                    )
-                )
-            )
-
-    phi = []
+            if list(reaction.efficiencies.values())[0] == 1.0:
+                reagents = copy.deepcopy(
+                    dict(
+                        sum(
+                        
     if record_symbolic_operations:
         phi_smp = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
