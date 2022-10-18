@@ -32,7 +32,7 @@ def qss_sorted_phase_space(
                         )
                     )
                 )
-                phi = []
+    phi = []
     if record_symbolic_operations:
         phi_smp = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
