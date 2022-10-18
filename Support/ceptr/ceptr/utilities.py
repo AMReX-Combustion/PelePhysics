@@ -29,9 +29,9 @@ def qss_sorted_phase_space(
                                 for x in [reagents, reaction.efficiencies]
                             ),
                             Counter(),
+                            )
                         )
                     )
-                )
     phi = []
     if record_symbolic_operations:
         phi_smp = []
