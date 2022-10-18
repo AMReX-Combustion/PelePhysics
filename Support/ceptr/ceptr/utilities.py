@@ -24,7 +24,15 @@ def qss_sorted_phase_space(
                 reagents = copy.deepcopy(
                     dict(
                         sum(
-                        
+                            (
+                                Counter(x)
+                                for x in [reagents, reaction.efficiencies]
+                            ),
+                            Counter(),
+                        )
+                    )
+                )
+                phi = []
     if record_symbolic_operations:
         phi_smp = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
