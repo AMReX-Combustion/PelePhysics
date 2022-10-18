@@ -356,11 +356,10 @@ droplet_splashing(
       p.id() = -1;
     }
   } else {
-    amrex::Real We1 = 0.678 * We * std::exp(-4.415E-2 * We);
-    amrex::Real u1 = std::sqrt(fdat.sigma * We1 / (rho_part * dia_part));
+    amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= (u1 / Nw_Vp + 1.) * par_dot * normal[dir];
-      p.rdata(SPI.pstateVel + dir) -= (Nw_Vp + u1) * normal[dir];
+      p.pos(dir) -= (1. + rbound) * par_dot * normal[dir];
+      p.rdata(SPI.pstateVel + dir) -= Nw_Vp * (1. + rbound) * normal[dir];
     }
   }
 }
