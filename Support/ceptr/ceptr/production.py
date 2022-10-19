@@ -685,12 +685,11 @@ def production_rate(
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
                 qf_smp = k_f_smp * forward_sc_smp
-            elif not falloff and len(reaction.efficiencies) == 1:
-                if list(reaction.efficiencies.values())[0] == 1.0:
-                    cw.writer(
-                        fstream,
-                        "const amrex::Real qf = k_f * (%s);" % (forward_sc),
-                    )
+            elif not falloff and len(reaction.efficiencies) == 1 and list(reaction.efficiencies.values())[0] == 1.0:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                )
                 qf_smp = k_f_smp * forward_sc_smp
             elif not falloff:
                 alpha, alpha_smp = enhancement_d_with_qss(
