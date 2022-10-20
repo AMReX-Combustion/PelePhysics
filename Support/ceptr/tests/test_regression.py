@@ -7,9 +7,9 @@ import ceptr.ceptr as ceptr
 
 
 mechanisms = ['grimech12', 'Davis', 'heptane_3sp', 'drm19', 'heptane_fc', 'LiDryer', 'SootReaction',
-            'grimech30-noArN', 'air', 'grimech30', 'alzeta', 'propane_fc', 'ethylene_af', 'Kolla',
-            'heptane_lu_88sk', 'LuDME', 'nitrogens', 'sCO2', 'dodmethair_4sp', 'JL4', 'chem-H',
-            'BurkeDryer', 'FFCM1_Red', 'decane_3sp', 'dodecane_lu', 'dodecane_wang', 'chem-CH4-2step']
+              'grimech30-noArN', 'air', 'grimech30', 'alzeta', 'propane_fc', 'ethylene_af', 'Kolla',
+              'heptane_lu_88sk', 'LuDME', 'nitrogens', 'sCO2', 'dodmethair_4sp', 'chem-H', 'BurkeDryer',
+              'FFCM1_Red', 'decane_3sp', 'dodecane_lu', 'dodecane_wang']
 
 
 class DummyFile(object):
