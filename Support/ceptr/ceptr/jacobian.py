@@ -1,6 +1,7 @@
 """Write jacobian functions."""
 import copy
 import sys
+from math import isclose
 from collections import Counter, OrderedDict
 
 import ceptr.constants as cc
@@ -630,7 +631,7 @@ def ajac_reaction_d(
     corr_s = ""
     if not third_body and not falloff:
         pass
-    elif not falloff and (len(reaction.efficiencies) == 1) and list(reaction.efficiencies.values())[0] == 1.0:
+    elif not falloff and (len(reaction.efficiencies) == 1) and isclose(list(reaction.efficiencies.values())[0], 1.0):
         pass
     elif not falloff:
         corr_s = "alpha *"
@@ -648,7 +649,7 @@ def ajac_reaction_d(
     all_products = copy.deepcopy(reaction.products)
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
-            if list(reaction.efficiencies.values())[0] == 1.0:
+            if isclose(list(reaction.efficiencies.values())[0], 1.0):
                 all_reactants = dict(
                     sum(
                         (

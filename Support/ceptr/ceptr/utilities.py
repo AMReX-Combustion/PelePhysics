@@ -1,6 +1,7 @@
 """Utility functions used across ceptr."""
 import copy
 import sys
+from math import isclose
 from collections import Counter
 
 import ceptr.constants as cc
@@ -20,7 +21,7 @@ def qss_sorted_phase_space(
         record_symbolic_operations = False
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
-            if list(reaction.efficiencies.values())[0] == 1.0:
+            if isclose(list(reaction.efficiencies.values())[0], 1.0):
                 reagents = copy.deepcopy(
                     dict(
                         sum(
