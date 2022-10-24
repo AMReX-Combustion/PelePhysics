@@ -1,8 +1,8 @@
 """Write jacobian functions."""
 import copy
 import sys
-from math import isclose
 from collections import Counter, OrderedDict
+from math import isclose
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -632,9 +632,10 @@ def ajac_reaction_d(
     if not third_body and not falloff:
         pass
     elif (
-         not falloff
-         and len(reaction.efficiencies) == 1
-         and isclose(reaction.default_efficiency, 0.0)):
+        not falloff
+        and len(reaction.efficiencies) == 1
+        and isclose(reaction.default_efficiency, 0.0)
+    ):
 
         pass
     elif not falloff:

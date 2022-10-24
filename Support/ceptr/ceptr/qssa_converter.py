@@ -2,6 +2,7 @@
 import copy
 import sys
 from collections import Counter, OrderedDict, defaultdict
+from math import isclose
 
 import numpy as np
 import symengine as sme
@@ -1711,9 +1712,10 @@ def qssa_coeff_functions(
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
         elif (
-             not falloff
-             and len(reaction.efficiencies) == 1
-             and isclose(reaction.default_efficiency, 0.0)):
+            not falloff
+            and len(reaction.efficiencies) == 1
+            and isclose(reaction.default_efficiency, 0.0)
+        ):
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
@@ -3096,21 +3098,18 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
     """QSSA coefficient."""
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
-            if (
-               not falloff
-               and len(reaction.efficiencies) == 1
-               and isclose(reaction.default_efficiency, 0.0)):
-                  reagents = copy.deepcopy(
-                      dict(
-                          sum(
-                              (
-                                  Counter(x)
-                                  for x in [reagents, reaction.efficiencies]
-                              ),
-                              Counter(),
-                          )
-                      )
-                  )
+            if isclose(reaction.default_efficiency, 0.0):
+                reagents = copy.deepcopy(
+                    dict(
+                        sum(
+                            (
+                                Counter(x)
+                                for x in [reagents, reaction.efficiencies]
+                            ),
+                            Counter(),
+                        )
+                    )
+                )
 
     phi = []
     phi_smp = []

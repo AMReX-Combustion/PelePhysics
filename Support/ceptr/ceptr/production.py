@@ -1,6 +1,7 @@
 """Production functions."""
 import sys
 from math import isclose
+
 import symengine as sme
 
 import ceptr.constants as cc
@@ -284,7 +285,8 @@ def production_rate(
             elif (
                 not falloff
                 and len(reaction.efficiencies) == 1
-                and isclose(reaction.default_efficiency, 0.0)):
+                and isclose(reaction.default_efficiency, 0.0)
+            ):
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff:
                 alpha = enhancement_d_with_qss(
@@ -689,9 +691,10 @@ def production_rate(
                 )
                 qf_smp = k_f_smp * forward_sc_smp
             elif (
-                 not falloff
-                 and len(reaction.efficiencies) == 1
-                 and isclose(reaction.default_efficiency, 0.0)):
+                not falloff
+                and len(reaction.efficiencies) == 1
+                and isclose(reaction.default_efficiency, 0.0)
+            ):
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
@@ -1297,9 +1300,10 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
             elif (
-                 not falloff
-                 and len(reaction.efficiencies) == 1
-                 and isclose(reaction.default_efficiency, 0.0)):
+                not falloff
+                and len(reaction.efficiencies) == 1
+                and isclose(reaction.default_efficiency, 0.0)
+            ):
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
