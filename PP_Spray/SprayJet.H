@@ -2,10 +2,15 @@
 #define SPRAYJET_H
 
 #include "DistBase.H"
+#include <AMReX_RealVect.H>
+#include <AMReX_Geometry.H>
 
 class SprayJet
 {
 public:
+  // Default constructor
+  SprayJet() = default;
+
   // Constructor for assigning parameters directly
   SprayJet(
     const amrex::Geometry& geom,
@@ -20,82 +25,13 @@ public:
     const std::string& dist_type,
     const amrex::Real start_time = 0.,
     const amrex::Real end_time = 1.E8,
-    bool hollow_spray = false)
-    : m_norm(jet_norm),
-      m_cent(jet_cent),
-      m_spreadAngle(spread_angle),
-      m_jetDia(jet_dia),
-      m_jetVel(jet_vel),
-      m_massFlow(mass_flow),
-      m_jetT(jet_temp),
-      m_startTime(start_time),
-      m_endTime(end_time),
-      m_hollowSpray(hollow_spray)
-  {
-    m_spreadAngle *= M_PI / 180.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      m_jetY[spf] = jet_Y[spf];
-    }
-    m_dropDist = DistBase::create(dist_type);
-    std::string ppspray = "spray";
-    m_dropDist->init(ppspray);
-    check_jet_cent(geom);
-  }
+    const amrex::Real phi_swirl = 0.,
+    bool hollow_spray = false);
 
-  // Constructor assumes parameters are set from input file
-  SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
-  {
-    std::string ppspray = "spray." + jet_name;
-    amrex::ParmParse ps(ppspray);
-    /*
-      Some parameters that likely remain constant over time are required as
-      inputs: jet normal, jet center, jet diameter, spread angle, injection
-      droplet temperature, and injection droplet mass fraction Other parameters
-      can be set as constant but might vary with time: jet velocity, mass flow
-      rate
-    */
-    std::string dist_type;
-    ps.get("dist_type", dist_type);
-    m_dropDist = DistBase::create(dist_type);
-    m_dropDist->init(ppspray);
-    std::vector<amrex::Real> jcent(AMREX_SPACEDIM);
-    ps.getarr("jet_cent", jcent);
-    std::vector<amrex::Real> jnorm(AMREX_SPACEDIM);
-    ps.getarr("jet_norm", jnorm);
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      m_cent[dir] = jcent[dir];
-      m_norm[dir] = jnorm[dir];
-    }
-    amrex::Real mag = m_norm.vectorLength();
-    m_norm /= mag;
-    check_jet_cent(geom);
-    ps.get("jet_dia", m_jetDia);
-    ps.get("spread_angle", m_spreadAngle);
-    ps.get("T", m_jetT);
-    m_spreadAngle *= M_PI / 180.; // Assumes spread angle is in degrees
-    std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
-    if (SPRAY_FUEL_NUM == 1) {
-      m_jetY[0] = 1.;
-    } else {
-      ps.getarr("Y", in_Y_jet);
-      amrex::Real sumY = 0.;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        m_jetY[spf] = in_Y_jet[spf];
-        sumY += in_Y_jet[spf];
-      }
-      if (amrex::Math::abs(sumY - 1.) > 1.E-8) {
-        amrex::Abort(ppspray + ".Y must sum to 1");
-      }
-    }
-    ps.query("start_time", m_startTime);
-    ps.query("end_time", m_endTime);
-    ps.get("jet_vel", m_jetVel);
-    ps.get("mass_flow_rate", m_massFlow);
-    ps.query("hollow_spray", m_hollowSpray);
-  }
+  // Constructor where parameters are set from input file
+  SprayJet(const std::string& jet_name, const amrex::Geometry& geom);
 
-  SprayJet(SprayJet const&) = delete;
-  SprayJet& operator=(SprayJet const&) = delete;
+  virtual ~SprayJet() = default;
 
   inline const amrex::RealVect& jet_norm() const { return m_norm; }
   inline const amrex::RealVect& jet_cent() const { return m_cent; }
@@ -124,19 +60,21 @@ public:
   }
 
   inline bool hollow_spray() const { return m_hollowSpray; }
-  /// Returns a randomly selected droplet diameter from the distribution
-  inline amrex::Real get_dia() const { return m_dropDist->get_dia(); }
+
   /// Returns the average diameter given to the distribution
-  inline amrex::Real get_avg_dia() const { return m_dropDist->get_avg_dia(); }
+  virtual amrex::Real get_avg_dia();
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
+
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
+
   void set_jet_norm(amrex::RealVect jet_norm)
   {
     m_norm = jet_norm;
     amrex::Real mag = m_norm.vectorLength();
     m_norm /= mag;
   }
+
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
     m_cent = jet_cent;
@@ -173,6 +111,87 @@ public:
     m_sumInjTime = -1;
   }
 
+  /**
+     Function for creating new particle parameters based on jet location. Note
+     all angles must be in radians.
+     @param[in] time Current solution time
+     @param[in] phi_radial Azimuthal angle of particle location in jet CS
+     @param[in] cur_radius Current radial location in jet CS
+     @param[out] umag Magnitude of velocity
+     @param[out] theta_spread Spread angle for velocity relative to jet norm
+     @param[out] phi_swirl Azimuthal angle for tangential velocity component
+     @param[out] dia_part Droplet diameter
+     @param[out] T_part Droplet temperature
+     @param[out] Y_part Droplet mass fractions
+  */
+  virtual bool get_new_particle(
+    const amrex::Real time,
+    const amrex::Real& phi_radial,
+    const amrex::Real& cur_radius,
+    amrex::Real& umag,
+    amrex::Real& theta_spread,
+    amrex::Real& phi_swirl,
+    amrex::Real& dia_part,
+    amrex::Real& T_part,
+    amrex::Real* Y_part);
+
+  /**
+     Solve for transformed location and velocity based on provided angles and
+     radius.
+     @param[in] theta_spread Spread angle for velocity relative to jet norm
+     @param[in] phi_radial Azimuthal angle of particle location in jet CS
+     @param[in] cur_radius Current radial location of particle
+     @param[in] umag Particle velocity magnitude
+     @param[in] phi_swirl Azimuthal angle for tangential velocity component
+     @param[out] part_vel Particle velocity in jet CS to be solved for
+     @param[out] part_loc Particle location in jet CS to be solved for
+   */
+  void transform_loc_vel(
+    const amrex::Real theta_spread,
+    const amrex::Real phi_radial,
+    const amrex::Real cur_radius,
+    const amrex::Real umag,
+    const amrex::Real phi_swirl,
+    amrex::RealVect& part_vel,
+    amrex::RealVect& part_loc)
+  {
+#if AMREX_SPACEDIM == 3
+    amrex::Real norm_mag = m_norm.vectorLength();
+    amrex::Real theta_jet = std::acos(m_norm[2] / norm_mag);
+    amrex::Real phi_jet =
+      std::atan2(m_norm[1] / norm_mag, m_norm[0] / norm_mag);
+    amrex::Real sp1 = std::sin(phi_jet);
+    amrex::Real cp1 = std::cos(phi_jet);
+    amrex::Real sp2 = std::sin(phi_radial);
+    amrex::Real cp2 = std::cos(phi_radial);
+#else
+    amrex::Real theta_jet = std::atan2(m_norm[1], m_norm[0]) + M_PI / 2.;
+    amrex::ignore_unused(phi_radial, phi_swirl);
+#endif
+    amrex::Real st1 = std::sin(theta_jet);
+    amrex::Real ct1 = std::cos(theta_jet);
+    amrex::Real st2 = std::sin(theta_spread);
+    amrex::Real ct2 = std::cos(theta_spread);
+#if AMREX_SPACEDIM == 3
+    amrex::RealVect dp(AMREX_D_DECL(
+      cp1 * cp2 * ct1 - sp1 * sp2, sp1 * cp2 * ct1 + cp1 * sp2,
+      -std::sin(theta_jet) * cp2));
+    // Add phi_swirl for velocity
+    amrex::Real phivel = phi_radial + phi_swirl;
+    sp2 = std::sin(phivel);
+    cp2 = std::cos(phivel);
+    amrex::Real v1 = st1 * ct2 + st2 * cp2 * ct1;
+    part_vel = {
+      cp1 * v1 - sp1 * sp2 * st2, sp1 * v1 + sp2 * st2 * cp1,
+      ct1 * ct2 - st1 * st2 * cp2};
+#else
+    amrex::RealVect dp(ct1, st1);
+    part_vel = {st1 * ct2 - st2 * ct1, -ct1 * ct2 - st1 * st2};
+#endif
+    part_loc = m_cent + cur_radius * dp;
+    part_vel *= umag;
+  }
+
   amrex::Real m_sumInjMass = -1.;
   amrex::Real m_sumInjTime = -1.;
 
@@ -181,6 +200,7 @@ protected:
   amrex::RealVect m_norm = amrex::RealVect::TheZeroVector();
   amrex::RealVect m_cent = amrex::RealVect::TheZeroVector();
   amrex::Real m_spreadAngle = 0.;
+  amrex::Real m_swirlAngle = 0.;
   amrex::Real m_jetDia = -1.;
   amrex::Real m_jetVel = -1.;
   amrex::Real m_massFlow = -1.;
@@ -191,4 +211,5 @@ protected:
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
 };
+
 #endif

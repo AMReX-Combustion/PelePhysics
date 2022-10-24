@@ -68,13 +68,14 @@ public:
   }
 
   void sprayInjection(
+    const amrex::Real time,
     SprayJet* spray_jet,
     const amrex::Real sim_dt,
     const int level,
     int startInjProc = 0,
     int numInjProcs = 1,
     const int min_parcel =
-      5); // Minimum number of parcels added during injection
+      1); // Minimum number of parcels added during injection
 
   static void spraySetup(SprayData& sprayData);
 
