@@ -2,6 +2,7 @@
 import copy
 import sys
 from collections import Counter
+from math import isclose
 
 import ceptr.constants as cc
 
@@ -20,18 +21,18 @@ def qss_sorted_phase_space(
         record_symbolic_operations = False
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
-            reagents = copy.deepcopy(
-                dict(
-                    sum(
-                        (
-                            Counter(x)
-                            for x in [reagents, reaction.efficiencies]
-                        ),
-                        Counter(),
+            if isclose(reaction.default_efficiency, 0.0):
+                reagents = copy.deepcopy(
+                    dict(
+                        sum(
+                            (
+                                Counter(x)
+                                for x in [reagents, reaction.efficiencies]
+                            ),
+                            Counter(),
+                        )
                     )
                 )
-            )
-
     phi = []
     if record_symbolic_operations:
         phi_smp = []
