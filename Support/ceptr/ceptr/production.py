@@ -281,7 +281,10 @@ def production_rate(
             alpha = None
             if not third_body and not falloff:
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
-            elif not falloff and len(reaction.efficiencies) == 1:
+            elif (
+                not falloff
+                and len(reaction.efficiencies) == 1
+                and isclose(reaction.default_efficiency, 0.0)):
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff:
                 alpha = enhancement_d_with_qss(
@@ -685,7 +688,10 @@ def production_rate(
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
                 qf_smp = k_f_smp * forward_sc_smp
-            elif not falloff and len(reaction.efficiencies) == 1 and isclose(list(reaction.efficiencies.values())[0], 1.0):
+            elif (
+                 not falloff
+                 and len(reaction.efficiencies) == 1
+                 and isclose(reaction.default_efficiency, 0.0)):
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
@@ -1290,7 +1296,10 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
-            elif not falloff and len(reaction.efficiencies) == 1 and isclose(list(reaction.efficiencies.values())[0], 1.0):
+            elif (
+                 not falloff
+                 and len(reaction.efficiencies) == 1
+                 and isclose(reaction.default_efficiency, 0.0)):
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
