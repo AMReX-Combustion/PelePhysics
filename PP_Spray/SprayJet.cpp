@@ -11,6 +11,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.get("dist_type", dist_type);
   m_dropDist = DistBase::create(dist_type);
   m_dropDist->init(ppspray);
+  m_avgDia = m_dropDist->get_avg_dia();
   std::vector<amrex::Real> jcent(AMREX_SPACEDIM);
   ps.getarr("jet_cent", jcent);
   std::vector<amrex::Real> jnorm(AMREX_SPACEDIM);
@@ -28,11 +29,11 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.query("swirl_angle", m_swirlAngle);
   m_swirlAngle *= M_PI / 180.;
   ps.get("T", m_jetT);
-  std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
   if (SPRAY_FUEL_NUM == 1) {
     m_jetY[0] = 1.;
   } else {
-    ps.queryarr("Y", in_Y_jet);
+    std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
+    ps.getarr("Y", in_Y_jet);
     amrex::Real sumY = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       m_jetY[spf] = in_Y_jet[spf];
@@ -86,12 +87,7 @@ SprayJet::SprayJet(
   check_jet_cent(geom);
 }
 
-amrex::Real
-SprayJet::get_avg_dia()
-{
-  return m_dropDist->get_avg_dia();
-}
-
+// Default get_new_particle
 bool
 SprayJet::get_new_particle(
   const amrex::Real time,

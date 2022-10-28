@@ -47,10 +47,14 @@ public:
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
   {
-    if (m_jetVel < 0.) {
-      amrex::Abort("Jet velocity is not set");
-    } else if (m_massFlow < 0.) {
+    if (m_massFlow < 0.) {
       amrex::Abort("Jet mass flow rate is not set");
+    } else if (m_jetDia < 0.) {
+      amrex::Abort("Jet diameter is not set");
+    } else if (m_avgDia < 0.) {
+      amrex::Abort("Average droplet diameter is not set");
+    } else if (m_jetT < 0.) {
+      amrex::Abort("Droplet temperature is not set");
     }
     bool check = true;
     if (time < m_startTime || time > m_endTime) {
@@ -61,8 +65,12 @@ public:
 
   inline bool hollow_spray() const { return m_hollowSpray; }
 
-  /// Returns the average diameter given to the distribution
-  virtual amrex::Real get_avg_dia();
+  /// Returns the average values given for the jet
+  amrex::Real get_avg_dia() { return m_avgDia; }
+
+  amrex::Real get_avg_T() { return m_jetT; }
+
+  amrex::Real get_avg_Y(const int spf) { return m_jetY[spf]; }
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
 
@@ -206,6 +214,7 @@ protected:
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::Real m_jetY[SPRAY_FUEL_NUM] = {0.};
+  amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
   amrex::Real m_startTime = 0.;
   amrex::Real m_endTime = 1.E8;
