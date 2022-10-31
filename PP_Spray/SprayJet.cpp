@@ -84,6 +84,8 @@ SprayJet::SprayJet(
   m_dropDist = DistBase::create(dist_type);
   std::string ppspray = "spray";
   m_dropDist->init(ppspray);
+  amrex::Real mag = m_norm.vectorLength();
+  m_norm /= mag;
   check_jet_cent(geom);
 }
 
