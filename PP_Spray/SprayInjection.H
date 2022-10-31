@@ -82,7 +82,7 @@ SprayParticleContainer::sprayInjection(
   amrex::Real injProcs = static_cast<amrex::Real>(numInjProcs);
   amrex::Real dphi = 2. * M_PI / injProcs;
   amrex::Real phi_rad_lo = amrex::ParallelDescriptor::MyProc() * dphi;
-  mass_perc /= inject_mass / injProcs;
+  mass_perc = inject_mass / injProcs;
 #endif
   while (cur_mass < mass_perc) {
     // Pick random percentage from 0 to 1
@@ -110,10 +110,10 @@ SprayParticleContainer::sprayInjection(
     bool make_new_part = spray_jet->get_new_particle(
       time, phi_radial, cur_rad, umag, theta_spread, phi_swirl, dia_part,
       T_part, Y_part);
-    if (make_new_part) {
+    if (make_new_part && dia_part > min_dia) {
       amrex::RealVect part_loc, part_vel;
       spray_jet->transform_loc_vel(
-        theta_spread, phi_radial, cur_rad, phi_swirl, umag, part_vel, part_loc);
+        theta_spread, phi_radial, cur_rad, umag, phi_swirl, part_vel, part_loc);
       ParticleType p;
       p.id() = ParticleType::NextID();
       p.cpu() = amrex::ParallelDescriptor::MyProc();
@@ -132,6 +132,7 @@ SprayParticleContainer::sprayInjection(
         rho_part = 1. / rho_part;
       } else {
         rho_part = fdat->rhoL(T_part, 0);
+        p.rdata(pstateY) = 1.;
       }
       // Add particles as if they have advanced some random portion of
       // dt
