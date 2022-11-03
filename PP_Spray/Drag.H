@@ -293,63 +293,69 @@ calculateSpraySource(
     amrex::Real part_temp_src = 0.;
     amrex::Real m_dot = 0.;
     // Only transfer heat and mass if gas phase is not saturated
-    if (fdat.mass_trans && sumXVap > 0.) {
+    if (fdat.mass_trans) {
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR =
         amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
-      amrex::Real rhoDtotal = 0.;
-      amrex::Real maxPsat = 0.;
       amrex::Real Nu_num = 0.;
-      int maxY = -1;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx[spf];
-        // Convert mass diffusion coefficient from mixture average
-        // to binary for fuel only, not concerned with other species
-        Ddiag[fspec] *= mw_skin * gpv.invmw[fspec] * SPU.rhod_conv;
-        // Get normalized vapor molar fraction
-        amrex::Real X_norm =
-          Y_part[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
-        Ddiag[fspec] *= X_norm;
-        rhoDtotal += Ddiag[fspec];
-        if (Psat[spf] > maxPsat) {
-          maxY = spf;
-          maxPsat = Psat[spf];
-        }
-      }
       amrex::Real sumL = 0.;
       amrex::Real Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
-      if (T_part > Tboil) {
-        // Normal boiling of only the species with the highest saturation
-        // pressure
-        amrex::Real B_T = cp_skin * (gpv.T_fluid - T_part) / L_fuel[maxY];
-        amrex::Real logBT = std::log1p(B_T);
-        amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));
-        amrex::Real Nu_star = 2. + (Nu_0 - 2.) * invFT;
-        amrex::Real coeff = M_PI * lambda_skin / cp_skin * dia_part * Nu_star;
-        mi_dot[maxY] = -amrex::max(coeff * logBT, 0.);
-        Nu_num = 0.; // Assume Q_L = 0
-        m_dot += mi_dot[maxY];
-        sumL += mi_dot[maxY] * L_fuel[maxY];
-      } else {
-        // Normal evaporation
-        amrex::Real Sc_skin = mu_skin / rhoDtotal;
-        amrex::Real logB = std::log1p(B_M);
-        amrex::Real invFM = B_M / (logB * std::pow(1. + B_M, 0.7));
-        amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
-        amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
-        amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
-        amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
-        Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
+      // If gas phase is not saturated
+      if (sumXVap > 0.) {
+        amrex::Real rhoDtotal = 0.;
+        amrex::Real maxPsat = 0.;
+        int maxY = -1;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           const int fspec = fdat.indx[spf];
-          if (
-            Y_part[spf] > 1.E-12 &&
-            Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
-            mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
-            m_dot += mi_dot[spf];
-            sumL += mi_dot[spf] * L_fuel[spf];
+          // Convert mass diffusion coefficient from mixture average
+          // to binary for fuel only, not concerned with other species
+          Ddiag[fspec] *= mw_skin * gpv.invmw[fspec] * SPU.rhod_conv;
+          // Get normalized vapor molar fraction
+          amrex::Real X_norm =
+            Y_part[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
+          Ddiag[fspec] *= X_norm;
+          rhoDtotal += Ddiag[fspec];
+          if (Psat[spf] > maxPsat) {
+            maxY = spf;
+            maxPsat = Psat[spf];
           }
         }
+        if (T_part > Tboil) {
+          // Normal boiling of only the species with the highest saturation
+          // pressure
+          amrex::Real B_T = cp_skin * (gpv.T_fluid - T_part) / L_fuel[maxY];
+          amrex::Real logBT = std::log1p(B_T);
+          amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));
+          amrex::Real Nu_star = 2. + (Nu_0 - 2.) * invFT;
+          amrex::Real coeff = M_PI * lambda_skin / cp_skin * dia_part * Nu_star;
+          mi_dot[maxY] = -amrex::max(coeff * logBT, 0.);
+          Nu_num = 0.; // Assume Q_L = 0
+          m_dot += mi_dot[maxY];
+          sumL += mi_dot[maxY] * L_fuel[maxY];
+        } else {
+          // Normal evaporation
+          amrex::Real Sc_skin = mu_skin / rhoDtotal;
+          amrex::Real logB = std::log1p(B_M);
+          amrex::Real invFM = B_M / (logB * std::pow(1. + B_M, 0.7));
+          amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
+          amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
+          amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
+          amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
+          Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            const int fspec = fdat.indx[spf];
+            if (
+                Y_part[spf] > 1.E-12 &&
+                Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
+              mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
+              m_dot += mi_dot[spf];
+              sumL += mi_dot[spf] * L_fuel[spf];
+            }
+          }
+        }
+        // If gas phase is saturated, only convective heat transfer
+      } else {
+        Nu_num = Nu_0;
       }
       amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * Nu_num;
       gpv.fluid_eng_src += conv_src;
