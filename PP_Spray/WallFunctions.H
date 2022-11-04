@@ -417,7 +417,11 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
     par_dot, normal);
-  if (do_refl) {
+  int bounce = 0;
+  int max_bounce = 5;
+  amrex::IntVect refl_prev = ijkc;
+  splash_type splash_flag = splash_type::rebound;
+  while (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     // Reflect the particle to see if it interacts with another surface or
     // leaves the domain
@@ -432,38 +436,58 @@ impose_wall(
     }
     amrex::Real refl_par_dot = 2.;
     amrex::RealVect refl_normal;
-    amrex::IntVect refl_prev = ijkc;
-    bool bounce_refl = check_wall(
+    do_refl = check_wall(
       refl_pos, bflags, refl_ijkc,
 #ifdef AMREX_USE_EB
       refl_prev, refl_vel, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
       refl_par_dot, refl_normal);
-    splash_type splash_flag = splash_type::rebound;
-    // If it reflects again, deposit particle at wall
-    if (bounce_refl) {
-      splash_flag = splash_type::deposit;
-    } else {
-      // If not bouncing and splash model is on
-      if (fdat.sigma > 0. && isActive) {
-        droplet_splashing(
-          splash_flag, p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
-          normal, cBoilT, N_refl, rf, true);
+    if (fdat.sigma > 0.) {
+      // If it reflects again, deposit particle at wall
+      if (do_refl) {
+        splash_flag = splash_type::deposit;
+        do_refl = false;
       } else {
-        // Otherwise, just reflect particle
-        p.pos() = refl_pos;
-        vel_part = refl_vel;
+        // If not bouncing and splash model is on
+        if (isActive) {
+          droplet_splashing(
+            splash_flag, p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
+            normal, cBoilT, N_refl, rf, true);
+        } else {
+          // Otherwise, just reflect particle
+          p.pos() = refl_pos;
+          vel_part = refl_vel;
+        }
+      }
+    } else {
+#ifdef AMREX_USE_EB
+      if (!use_EB) {
+        refl_prev = p.pos().floor();
+      } else if (!flags(ijkc).isCovered()) {
+        refl_prev = p.pos().floor();
+      }
+#endif
+      p.pos() = refl_pos;
+      vel_part = refl_vel;
+      normal = refl_normal;
+      par_dot = refl_par_dot;
+      if (do_refl) {
+        bounce++;
+        if (bounce >= max_bounce) {
+          splash_flag = splash_type::deposit;
+          do_refl = false;
+        }
       }
     }
-    // If deposited, place at wall
-    if (splash_flag == splash_type::deposit) {
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) -=
-          (p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
-      }
-      vel_part = amrex::RealVect::TheZeroVector();
+  } // while (do_refl)
+  // If deposited, place at wall
+  if (splash_flag == splash_type::deposit) {
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) -=
+        (p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
     }
-  } // if (do_refl)
+    vel_part = amrex::RealVect::TheZeroVector();
+  }
   // Undo normalization and set new velocity
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     p.pos(dir) = p.pos(dir) * dx[dir] + plo[dir];
