@@ -374,14 +374,12 @@ struct SimpleTransport
     }
     
     if (wtr_get_chi) {
-      int four_idx_nj;
-      amrex::Real chi;
       for (int n = 0; n < tparm->numLite; ++n) {
 	int i = tparm->liteSpec[n];	
 	for (int j = 0; j < NUM_SPECIES; ++j) {
 	  if (j!=i) {
-	    four_idx_nj = 4 * (j + NUM_SPECIES * n);
-	    chi = tparm->fittdrat[four_idx_nj]
+	    const int four_idx_nj = 4 * (j + NUM_SPECIES * n);
+	    const amrex::Real chi = tparm->fittdrat[four_idx_nj]
 	      + Tloc*(tparm->fittdrat[1 + four_idx_nj]
 		      + Tloc*(tparm->fittdrat[2 + four_idx_nj]
 			      + Tloc*(tparm->fittdrat[3 + four_idx_nj])));
