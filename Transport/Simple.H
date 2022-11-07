@@ -411,7 +411,7 @@ struct SimpleTransport
     const bool wtr_get_mu = true;
     const bool wtr_get_lam = true;
     const bool wtr_get_Ddiag = true;
-    const bool wtr_get_chi = true;
+    const bool wtr_get_chi = (tparm->use_soret == 1);
 
     for (int k = lo.z; k <= hi.z; ++k) {
       for (int j = lo.y; j <= hi.y; ++j) {

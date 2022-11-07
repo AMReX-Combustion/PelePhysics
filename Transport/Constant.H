@@ -49,7 +49,7 @@ struct ConstTransport
     }
     if (wtr_get_chi) {
       for (int i=0;i<NUM_SPECIES;++i) {
-	chi[i] = 0.0;
+	chi_mix[i] = 0.0;
       }
     }
   }
@@ -82,6 +82,7 @@ struct ConstTransport
 
           amrex::Real muloc, xiloc, lamloc;
           amrex::Real Ddiag[NUM_SPECIES] = {0.0};
+          amrex::Real chi_mix[NUM_SPECIES] = {0.0};
           transport(
 		    wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, wtr_get_chi, 0.0, 0.0,
 		    nullptr, Ddiag, chi_mix, muloc, xiloc, lamloc, tparm);
