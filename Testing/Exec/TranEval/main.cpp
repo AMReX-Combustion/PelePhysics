@@ -85,7 +85,7 @@ main(int argc, char* argv[])
     amrex::MultiFab mu(ba, dm, 1, num_grow);
     amrex::MultiFab xi(ba, dm, 1, num_grow);
     amrex::MultiFab lam(ba, dm, 1, num_grow);
-    amrex::MultiFab chi(ba, dm, 1, num_grow);
+    amrex::MultiFab chi(ba, dm, NUM_SPECIES, num_grow);
 
     // Get the transport data pointer
     auto const* ltransparm = trans_parms.device_trans_parm();

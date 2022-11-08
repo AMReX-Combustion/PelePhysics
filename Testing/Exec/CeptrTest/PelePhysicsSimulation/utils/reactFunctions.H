@@ -55,7 +55,7 @@ doReact_ode_iE1(
   amrex::FArrayBox lam_fab(box, 1);
   amrex::Elixir lam_fab_eli = lam_fab.elixir();
   auto const& lam_a = lam_fab.array();
-  amrex::FArrayBox chi_fab(box, 1);
+  amrex::FArrayBox chi_fab(box, NUM_SPECIES);
   amrex::Elixir chi_fab_eli = chi_fab.elixir();
   auto const& chi_a = chi_fab.array();
   // Transport
