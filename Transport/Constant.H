@@ -48,8 +48,8 @@ struct ConstTransport
       }
     }
     if (wtr_get_chi) {
-      for (int i=0;i<NUM_SPECIES;++i) {
-	chi_mix[i] = tparm->const_thermal_diffusion_ratio;
+      for (int i = 0; i < NUM_SPECIES; ++i) {
+        chi_mix[i] = tparm->const_thermal_diffusion_ratio;
       }
     }
   }
@@ -61,7 +61,7 @@ struct ConstTransport
     amrex::Array4<const amrex::Real> const& /*T_in*/,
     amrex::Array4<const amrex::Real> const& /*Rho_in*/,
     amrex::Array4<amrex::Real> const& D_out,
-    amrex::Array4<amrex::Real> const& chi_out,    
+    amrex::Array4<amrex::Real> const& chi_out,
     amrex::Array4<amrex::Real> const& mu_out,
     amrex::Array4<amrex::Real> const& xi_out,
     amrex::Array4<amrex::Real> const& lam_out,
@@ -84,13 +84,13 @@ struct ConstTransport
           amrex::Real Ddiag[NUM_SPECIES] = {0.0};
           amrex::Real chi_mix[NUM_SPECIES] = {0.0};
           transport(
-		    wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, wtr_get_chi, 0.0, 0.0,
-		    nullptr, Ddiag, chi_mix, muloc, xiloc, lamloc, tparm);
+            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, wtr_get_chi,
+            0.0, 0.0, nullptr, Ddiag, chi_mix, muloc, xiloc, lamloc, tparm);
 
           // mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {
             D_out(i, j, k, n) = Ddiag[n];
-	    chi_out(i,j,k,n) = chi_mix[n];
+            chi_out(i, j, k, n) = chi_mix[n];
           }
 
           mu_out(i, j, k) = muloc;

@@ -46,7 +46,8 @@ struct InitTransParm<EOSType, ConstTransport>
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
     pp.query("const_conductivity", tparm->const_conductivity);
     pp.query("const_diffusivity", tparm->const_diffusivity);
-    pp.query("const_thermal_diffusion_ratio",tparm->const_thermal_diffusion_ratio);
+    pp.query(
+      "const_thermal_diffusion_ratio", tparm->const_thermal_diffusion_ratio);
     if (std::abs(tparm->const_thermal_diffusion_ratio) > 1e-24) {
       tparm->use_soret = true;
     }
@@ -96,8 +97,8 @@ struct TransParm<EOSType, SimpleTransport>
     0.0};
   bool use_soret = false;
   int numLite = 10;
-  amrex::GpuArray<int,10> liteSpec = {0};
-  amrex::GpuArray<amrex::Real,NUM_SPECIES*NUM_FIT*10> fittdrat = {0.0};
+  amrex::GpuArray<int, 10> liteSpec = {0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
 };
 
@@ -117,7 +118,7 @@ struct InitTransParm<EOSType, SimpleTransport>
     egtransetCOFLAM(tparm->fitlam.data());
     egtransetCOFD(tparm->fitdbin.data());
     amrex::ParmParse pp("transport");
-    pp.query("use_soret",tparm->use_soret);
+    pp.query("use_soret", tparm->use_soret);
     egtransetNLITE(&tparm->numLite);
     egtransetKTDIF(tparm->liteSpec.data());
     egtransetCOFTD(tparm->fittdrat.data());
@@ -143,8 +144,8 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
   int numLite = 10;
-  amrex::GpuArray<int,10> liteSpec = {0};
-  amrex::GpuArray<amrex::Real,NUM_SPECIES*NUM_FIT*10> fittdrat = {0.0};
+  amrex::GpuArray<int, 10> liteSpec = {0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
   amrex::GpuArray<amrex::Real, 10 * 4> Afac = {0.0};
   amrex::GpuArray<amrex::Real, 7 * 4> Bfac = {0.0};
