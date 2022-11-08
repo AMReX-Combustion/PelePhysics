@@ -375,7 +375,7 @@ struct SimpleTransport
     
     if (wtr_get_chi) {
       for (int n = 0; n < tparm->numLite; ++n) {
-	int i = tparm->liteSpec[n];	
+	const int i = tparm->liteSpec[n];	
 	for (int j = 0; j < NUM_SPECIES; ++j) {
 	  if (j!=i) {
 	    const int four_idx_nj = 4 * (j + NUM_SPECIES * n);
@@ -411,7 +411,7 @@ struct SimpleTransport
     const bool wtr_get_mu = true;
     const bool wtr_get_lam = true;
     const bool wtr_get_Ddiag = true;
-    const bool wtr_get_chi = (tparm->use_soret == 1);
+    const bool wtr_get_chi = tparm->use_soret;
 
     for (int k = lo.z; k <= hi.z; ++k) {
       for (int j = lo.y; j <= hi.y; ++j) {
