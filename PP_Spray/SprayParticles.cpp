@@ -328,7 +328,7 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_USE_EB
             if (eb_in_box) {
               do_fe_interp = eb_interp(
-                p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
+                                       p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
                 ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
                 fdat->min_eb_vfrac, indx_array.data(), weights.data());
             } else
@@ -384,7 +384,7 @@ SprayParticleContainer::updateParticles(
                 &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
             }
             // Modify particle position by whole time step
-            if (do_move && !fdat->fixed_parts) {
+            if (do_move && !fdat->fixed_parts && p.id() > 0) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;

@@ -139,6 +139,14 @@ SprayParticleContainer::CreateReflectedDroplets(
           p.pos(dir) = loc0[dir] + dtpp * avg_vel[dir];
           p.rdata(SPI.pstateVel + dir) = avg_vel[dir];
         }
+        p.rdata(SPI.pstateT) = T0;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          p.rdata(SPI.pstateY) = Y0[spf];
+        }
+        bool where = Where(p, pld);
+        if (!where) {
+          amrex::Abort("Bad reflected particle");
+        }
         host_particles[ind].push_back(p);
       } else {
         // Otherwise, droplet forms a film

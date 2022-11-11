@@ -71,6 +71,43 @@ check_bounds_norm(
   return false;
 }
 
+#ifdef AMREX_USE_EB
+AMREX_GPU_HOST_DEVICE
+AMREX_INLINE
+amrex::Real
+find_wall_dis(const amrex::RealVect& pos,
+              const amrex::IntVect& ijkc,
+              const amrex::RealVect& vel_part,
+              const amrex::Real min_eb_vfrac,
+              amrex::RealVect& normtest,
+              amrex::RealVect& centtest,
+              amrex::Array4<amrex::EBCellFlag const> const& flags,
+              amrex::Array4<amrex::Real const> const& bcent,
+              amrex::Array4<amrex::Real const> const& bnorm,
+              amrex::Array4<amrex::Real const> const& vfrac)
+{
+  amrex::Real diff_val = 0.;
+  if (flags(ijkc).isSingleValued()) {
+    normtest = {AMREX_D_DECL(-bnorm(ijkc,0), -bnorm(ijkc,1), -bnorm(ijkc,2))};
+    centtest = {AMREX_D_DECL(ijkc[0] + 0.5 + bcent(ijkc,0), ijkc[1] + 0.5 + bcent(ijkc,1), ijkc[2] + 0.5 + bcent(ijkc,2))};
+    if (vfrac(ijkc) < min_eb_vfrac) {
+      int fdir = normtest.maxDir(true);
+      amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
+      normtest = amrex::RealVect::TheZeroVector();
+      centtest = ijkc + 0.5;
+      normtest[fdir] = -face_sgn;
+      centtest[fdir] = ijkc[fdir] + 0.5 * (1. - face_sgn);
+    }
+    amrex::Real nd = normtest.dotProduct(vel_part);
+    amrex::Real diff1 = normtest.dotProduct(pos - centtest);
+    if (nd < 0. && diff1 < 0.) {
+      diff_val = diff1 / nd;
+    }
+  }
+  return diff_val;
+}
+#endif
+
 /**
 Determines if particle must be reflected off BC or EB
 @param[in] pos Position of the particle after advecting, normalized by dx
@@ -128,87 +165,36 @@ check_wall(
 #ifdef AMREX_USE_EB
   if (use_EB && !wall_check) {
     // If particle has moved into a cut-cell
-    if (flags(ijkc).isSingleValued()) {
+    amrex::RealVect normtest, centtest;
+    amrex::Real max_diff = 0.;
+    amrex::Real wall_dis = find_wall_dis(pos, ijkc, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac);
+    if (wall_dis > max_diff) {
+      max_diff = wall_dis;
+      normal = normtest;
+      bcentv = centtest;
+    }
+    if (wall_dis > 0. || flags(ijkc).isCovered()) {
+      wall_dis = find_wall_dis(pos, ijkc_prev, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac);
+      if (wall_dis > max_diff) {
+        max_diff = wall_dis;
+        normal = normtest;
+        bcentv = centtest;
+      }
+      // for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      //   if (ijkc[dir] != ijkc_prev[dir]) {
+      //     amrex::IntVect testindx = ijkc;
+      //     testindx[dir] = ijkc_prev[dir];
+      //     wall_dis = find_wall_dis(id, pos, testindx, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac, nd, diff1, dir);
+      //     if (wall_dis > max_diff) {
+      //       max_diff = wall_dis;
+      //       normal = normtest;
+      //       bcentv = centtest;
+      //     }
+      //   }
+      // }
+    }
+    if (max_diff > 0.) {
       wall_check = true;
-      // Use the normal and boundary centroid from the new cell
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        normal[dir] = -bnorm(ijkc, dir);
-        bcentv[dir] =
-          static_cast<amrex::Real>(ijkc[dir]) + 0.5 + bcent(ijkc, dir);
-      }
-      // If volume fraction is too small, treat cell face as the wall to prevent
-      // particle from residing in cell
-      if (vfrac(ijkc) < min_eb_vfrac) {
-        // Direction of face to treat as wall
-        int fdir = normal.maxDir(true);
-        amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
-        normal = amrex::RealVect::TheZeroVector();
-        normal[fdir] = -face_sgn;
-        bcentv[fdir] =
-          static_cast<amrex::Real>(ijkc[fdir]) + 0.5 * (1. - face_sgn);
-      }
-      // If the particle has moved into a covered cell
-    } else if (flags(ijkc).isCovered()) {
-      wall_check = true;
-      // If the particle came from a cut-cell, check if it is behind that cells
-      // EB
-      amrex::Real test_par = 2.;
-      if (flags(ijkc_prev).isSingleValued()) {
-        test_par = 0.;
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          normal[dir] = -bnorm(ijkc_prev, dir);
-          bcentv[dir] = static_cast<amrex::Real>(ijkc_prev[dir]) + 0.5 +
-                        bcent(ijkc_prev, dir);
-          test_par += (pos[dir] - bcentv[dir]) * normal[dir];
-        }
-      }
-      // If it didn't come from a cut-cell or isn't behind the EB of the
-      // previous cell, more tests are required
-      if (test_par > 0.) {
-        amrex::Real max_diff = 0.;
-        amrex::RealVect cur_bcent;
-        amrex::RealVect cur_norm;
-        // Determine the distance from the particle to the nearest wall
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          if (ijkc_prev[dir] != ijkc[dir]) {
-            amrex::Real cur_diff = 0.;
-            amrex::IntVect tsti = ijkc_prev;
-            tsti[dir] = ijkc[dir];
-            // If droplet passes through adjacent cell with EB, find distance to
-            // EB
-            if (flags(tsti).isSingleValued()) {
-              amrex::Real diff1 = 0.;
-              amrex::Real diff2 = 0.;
-              for (int okdir = 0; okdir < AMREX_SPACEDIM; ++okdir) {
-                cur_norm[okdir] = -bnorm(tsti, okdir);
-                cur_bcent[okdir] = static_cast<amrex::Real>(tsti[okdir]) + 0.5 +
-                                   bcent(tsti, okdir);
-                diff1 += (pos[okdir] - cur_bcent[okdir]) * cur_norm[okdir];
-                diff2 += vel_part[okdir] * cur_norm[okdir];
-              }
-              if (diff2 != 0.) {
-                cur_diff = diff1 / diff2;
-              }
-              // If droplet passes through another covered cell, find distance
-              // to normal cell face
-            } else if (flags(tsti).isCovered()) {
-              for (int okdir = 0; okdir < AMREX_SPACEDIM; ++okdir) {
-                cur_bcent[okdir] = static_cast<amrex::Real>(tsti[okdir]) + 0.5;
-                cur_norm[okdir] = 0.;
-              }
-              amrex::Real sgn = (ijkc_prev[dir] > ijkc[dir]) ? 1. : -1.;
-              cur_bcent[dir] += sgn * 0.5;
-              cur_norm[dir] = sgn;
-              cur_diff = (pos[dir] - cur_bcent[dir]) / vel_part[dir];
-            }
-            if (cur_diff > max_diff) {
-              max_diff = cur_diff;
-              normal = cur_norm;
-              bcentv = cur_bcent;
-            }
-          }
-        } // for (int dir = 0;...
-      }   // if (test_par > 0.)
     }
   }
 #endif
@@ -255,7 +241,7 @@ splash_criteria(
   const amrex::Real Kcrit)
 {
   splash_type crit = splash_type::thermal_breakup;
-  if (Tstar < 1.) {
+  if (Tstar < 1.1) {
     if (Kv < Kcrit) {
       crit = splash_type::deposit;
     } else {
@@ -281,7 +267,7 @@ droplet_splashing(
   const SprayComps& SPI,
   const SprayData& fdat,
   const amrex::Real p_gas,
-  const amrex::RealVect vel_part,
+  amrex::RealVect& vel_part,
   const amrex::Real par_dot,
   const amrex::RealVect normal,
   const amrex::Real* cBoilT,
@@ -358,8 +344,8 @@ droplet_splashing(
   } else {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= (1. + rbound) * par_dot * normal[dir];
-      p.rdata(SPI.pstateVel + dir) -= Nw_Vp * (1. + rbound) * normal[dir];
+      p.pos(dir) -= (1. + rbound) * par_dot * vel_part[dir] / Nw_Vp;
+      vel_part[dir] -= Nw_Vp * (1. + rbound) * normal[dir];
     }
   }
 }
@@ -409,10 +395,10 @@ impose_wall(
     normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
     p.pos(dir) = (p.pos(dir) - plo[dir]) / dx[dir];
   }
-  const amrex::IntVect ijkc = p.pos().floor();
+  amrex::IntVect ijkc = p.pos().floor();
   // Check if particle is behind a wall
   bool do_refl = check_wall(
-    p.pos(), bflags, ijkc,
+                            p.pos(), bflags, ijkc,
 #ifdef AMREX_USE_EB
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
@@ -460,10 +446,11 @@ impose_wall(
         }
       }
     } else {
-#ifdef AMREX_USE_EB
       if (!use_EB) {
         refl_prev = p.pos().floor();
-      } else if (!flags(ijkc).isCovered()) {
+      }
+#ifdef AMREX_USE_EB
+      else if (!flags(ijkc).isCovered()) {
         refl_prev = p.pos().floor();
       }
 #endif
@@ -482,9 +469,9 @@ impose_wall(
   } // while (do_refl)
   // If deposited, place at wall
   if (splash_flag == splash_type::deposit) {
+    amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -=
-        (p.rdata(SPI.pstateDia) / dx[dir] - par_dot) * normal[dir];
+      p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
     }
     vel_part = amrex::RealVect::TheZeroVector();
   }
