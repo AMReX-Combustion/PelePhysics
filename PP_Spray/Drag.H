@@ -118,7 +118,7 @@ calcVaporState(
     const int fdspec = fdat.dep_indx[spf];
     const amrex::Real mw_fuel = gpv.mw_fluid[fspec];
     amrex::Real Yfv = Y_l[spf] * Psat[spf] / totalmwx;
-    if (Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
+    if (Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
       sumYVap += Yfv;
       amrex::Real gasY = gpv.Y_fluid[fdspec];
       sumYfFluid += gasY;
