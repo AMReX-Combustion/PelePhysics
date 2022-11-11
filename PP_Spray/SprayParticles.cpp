@@ -328,7 +328,7 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_USE_EB
             if (eb_in_box) {
               do_fe_interp = eb_interp(
-                                       p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
+                p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
                 ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
                 fdat->min_eb_vfrac, indx_array.data(), weights.data());
             } else

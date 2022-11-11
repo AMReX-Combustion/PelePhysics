@@ -75,21 +75,25 @@ check_bounds_norm(
 AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 amrex::Real
-find_wall_dis(const amrex::RealVect& pos,
-              const amrex::IntVect& ijkc,
-              const amrex::RealVect& vel_part,
-              const amrex::Real min_eb_vfrac,
-              amrex::RealVect& normtest,
-              amrex::RealVect& centtest,
-              amrex::Array4<amrex::EBCellFlag const> const& flags,
-              amrex::Array4<amrex::Real const> const& bcent,
-              amrex::Array4<amrex::Real const> const& bnorm,
-              amrex::Array4<amrex::Real const> const& vfrac)
+find_wall_dis(
+  const amrex::RealVect& pos,
+  const amrex::IntVect& ijkc,
+  const amrex::RealVect& vel_part,
+  const amrex::Real min_eb_vfrac,
+  amrex::RealVect& normtest,
+  amrex::RealVect& centtest,
+  amrex::Array4<amrex::EBCellFlag const> const& flags,
+  amrex::Array4<amrex::Real const> const& bcent,
+  amrex::Array4<amrex::Real const> const& bnorm,
+  amrex::Array4<amrex::Real const> const& vfrac)
 {
   amrex::Real diff_val = 0.;
   if (flags(ijkc).isSingleValued()) {
-    normtest = {AMREX_D_DECL(-bnorm(ijkc,0), -bnorm(ijkc,1), -bnorm(ijkc,2))};
-    centtest = {AMREX_D_DECL(ijkc[0] + 0.5 + bcent(ijkc,0), ijkc[1] + 0.5 + bcent(ijkc,1), ijkc[2] + 0.5 + bcent(ijkc,2))};
+    normtest = {
+      AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
+    centtest = {AMREX_D_DECL(
+      ijkc[0] + 0.5 + bcent(ijkc, 0), ijkc[1] + 0.5 + bcent(ijkc, 1),
+      ijkc[2] + 0.5 + bcent(ijkc, 2))};
     if (vfrac(ijkc) < min_eb_vfrac) {
       int fdir = normtest.maxDir(true);
       amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
@@ -167,14 +171,18 @@ check_wall(
     // If particle has moved into a cut-cell
     amrex::RealVect normtest, centtest;
     amrex::Real max_diff = 0.;
-    amrex::Real wall_dis = find_wall_dis(pos, ijkc, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac);
+    amrex::Real wall_dis = find_wall_dis(
+      pos, ijkc, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent,
+      bnorm, vfrac);
     if (wall_dis > max_diff) {
       max_diff = wall_dis;
       normal = normtest;
       bcentv = centtest;
     }
     if (wall_dis > 0. || flags(ijkc).isCovered()) {
-      wall_dis = find_wall_dis(pos, ijkc_prev, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac);
+      wall_dis = find_wall_dis(
+        pos, ijkc_prev, vel_part, min_eb_vfrac, normtest, centtest, flags,
+        bcent, bnorm, vfrac);
       if (wall_dis > max_diff) {
         max_diff = wall_dis;
         normal = normtest;
@@ -184,8 +192,9 @@ check_wall(
       //   if (ijkc[dir] != ijkc_prev[dir]) {
       //     amrex::IntVect testindx = ijkc;
       //     testindx[dir] = ijkc_prev[dir];
-      //     wall_dis = find_wall_dis(id, pos, testindx, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent, bnorm, vfrac, nd, diff1, dir);
-      //     if (wall_dis > max_diff) {
+      //     wall_dis = find_wall_dis(id, pos, testindx, vel_part, min_eb_vfrac,
+      //     normtest, centtest, flags, bcent, bnorm, vfrac, nd, diff1, dir); if
+      //     (wall_dis > max_diff) {
       //       max_diff = wall_dis;
       //       normal = normtest;
       //       bcentv = centtest;
@@ -398,7 +407,7 @@ impose_wall(
   amrex::IntVect ijkc = p.pos().floor();
   // Check if particle is behind a wall
   bool do_refl = check_wall(
-                            p.pos(), bflags, ijkc,
+    p.pos(), bflags, ijkc,
 #ifdef AMREX_USE_EB
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
