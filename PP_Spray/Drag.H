@@ -115,12 +115,14 @@ calcVaporState(
   amrex::Real sumYVap = 0.;    // Mass fraction of fuel in the vapor phase
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
+    const int fdspec = fdat.dep_indx[spf];
     const amrex::Real mw_fuel = gpv.mw_fluid[fspec];
     amrex::Real Yfv = Y_l[spf] * Psat[spf] / totalmwx;
     if (Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
       sumYVap += Yfv;
-      sumYfFluid += gpv.Y_fluid[fspec];
-      amrex::Real Ysk = Yfv + rule * (gpv.Y_fluid[fspec] - Yfv);
+      amrex::Real gasY = gpv.Y_fluid[fdspec];
+      sumYfFluid += gasY;
+      amrex::Real Ysk = Yfv + rule * (gasY - Yfv);
       Y_skin[fspec] = Ysk;
       sumYSkin += Ysk;
       sumXVap += Psat[spf] * Y_l[spf] / mw_fuel;
@@ -343,10 +345,13 @@ calculateSpraySource(
           amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
           Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            // Species index
             const int fspec = fdat.indx[spf];
+            // Gas species index, might be the same
+            const int fdspec = fdat.dep_indx[spf];
             if (
                 Y_part[spf] > 1.E-12 &&
-                Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
+                Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
               mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
               m_dot += mi_dot[spf];
               sumL += mi_dot[spf] * L_fuel[spf];
@@ -437,13 +442,13 @@ calculateSpraySource(
     gpv.fluid_mom_src += vel_part * mdot_total;
   }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int fspec = fdat.dep_indx[spf];
+    const int fdspec = fdat.dep_indx[spf];
     amrex::Real oldY = p.rdata(SPI.pstateY + spf);
     amrex::Real newY = Y_part[spf];
     amrex::Real midot =
       (newY * pmass - oldY * startmass) / (fdat.dtmod * flow_dt);
     gpv.fluid_Y_dot[spf] = midot;
-    gpv.fluid_eng_src += midot * h_part[fspec];
+    gpv.fluid_eng_src += midot * h_part[fdspec];
     p.rdata(SPI.pstateY + spf) = Y_part[spf];
   }
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];
