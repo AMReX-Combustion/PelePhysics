@@ -294,7 +294,6 @@ calculateSpraySource(
     // Solve mass and energy transfer source terms
     amrex::Real part_temp_src = 0.;
     amrex::Real m_dot = 0.;
-    // Only transfer heat and mass if gas phase is not saturated
     if (fdat.mass_trans) {
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR =
