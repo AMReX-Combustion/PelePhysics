@@ -39,8 +39,8 @@ The droplets are assumed to be spherical with diameter :math:`d_d`. Therefore, t
 
 The procedure is as follows for updating the spray droplet:
 
-1. Interpolate the gas phase state to the droplet location using a trilinear interpolation scheme.
-2. Compute the boiling temperature for species :math:`n` at the current gas phase pressure using the Clasius-Clapeyron relation
+#. Interpolate the gas phase state to the droplet location using a trilinear interpolation scheme.
+#. Compute the boiling temperature for species :math:`n` at the current gas phase pressure using the Clasius-Clapeyron relation
 
    .. math::
       T_{b,n} = \left(\log\left(\frac{p_{\rm{atm}}}{p_g}\right) \frac{\mathcal{R}}{M_n h_{L,n}(T^*_{b,n})} + \frac{1}{T^*_{b,n}}\right)
@@ -55,7 +55,7 @@ The procedure is as follows for updating the spray droplet:
    .. math::
       h_{L,n}(T^*_{b,n}) = h_{L,n}(T^*) \left(\frac{T_{c,n} - T^*}{T_{c,n} - T^*_{b,n}} \right)^{-0.38}
 
-3. Compute the latent heat of the droplet using
+#. Compute the latent heat of the droplet using
 
    .. math::
       h_{L,n}(T_d) = h_{g,n}(T_d) - h_{g,n}(T^*) + h_{L,n}(T^*) - c_{p,L,n}(T^*) (T_d - T^*) \,.
@@ -72,7 +72,7 @@ The procedure is as follows for updating the spray droplet:
    .. math::
       p_{{\rm{sat}},n} = d 10^{a - b / (T_d + c)}
 
-4. Estimate the mass fractions in the vapor state using Raoult's law
+#. Estimate the mass fractions in the vapor state using Raoult's law
 
    .. math::
       Y_{v,n} &= \frac{Y_{d,n} p_{{\rm{sat}}, n}}{\overline{M}_g(\phi_3 p_g - \phi_1) + \phi_2}
@@ -91,7 +91,7 @@ The procedure is as follows for updating the spray droplet:
       \displaystyle\frac{1 - \sum^{N_L}_{k=0} Y_{v,k}}{1 - \sum^{N_L}_{k=0} Y_{g,k}} Y_{g,n} & {\text{Otherwise}}.
       \end{array}\right. \; \forall n \in N_s.
 
-5. The average molar mass, specific heat, and density of the reference surface state are computed as
+#. The average molar mass, specific heat, and density of the reference surface state are computed as
 
    .. math::
       \overline{M}_s &= \left(\sum^{N_s}_{n=0} \frac{Y_{s,n}}{M_n}\right)^{-1},
@@ -102,9 +102,9 @@ The procedure is as follows for updating the spray droplet:
 
    where :math:`T_s = (2 T_d + T_g)/3`.
 
-6. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`.
+#. Transport properties are computed using the reference surface state: dynamic viscosity, :math:`\mu_s`, thermal conductivity, :math:`\lambda_s`, and mass diffusion coefficient for species :math:`n`, :math:`D_{s,n}`.
 
-7. It is important to note that `PelePhysics` provides mixture averaged coefficient :math:`\rho_s \overline{D}_{s,n}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \rho_s \overline{D}_{s,n} \overline{M}_s / M_n`. Additionally, the mass diffusion coefficient is normalized by the total fuel vapor molar fraction
+#. It is important to note that `PelePhysics` provides mixture averaged coefficient :math:`\rho_s \overline{D}_{s,n}`, which is converted into the binary coefficient with :math:`\rho_s D_{s,n} = \rho_s \overline{D}_{s,n} \overline{M}_s / M_n`. Additionally, the mass diffusion coefficient is normalized by the total fuel vapor molar fraction
 
    .. math::
       \rho_s D_{s,n}^* = \rho_s D_{s,n} \frac{Y_{d,n} p_{{\rm{sat}},n}/M_n}{\sum^{N_L}_{k=0}Y_{d,k} p_{{\rm{sat}},k} / M_k}
@@ -114,7 +114,7 @@ The procedure is as follows for updating the spray droplet:
    .. math::
       \rho_s D_s = \sum_{n=0}^{N_L} \rho_s D_{s,n}^*
 
-8. The momentum source is a function of the drag force
+#. The momentum source is a function of the drag force
 
    .. math::
       \mathbf{F}_d = \frac{1}{2} \rho_s C_D A_d \left\|\Delta \mathbf{u}\right\| \Delta \mathbf{u}
@@ -133,7 +133,7 @@ The procedure is as follows for updating the spray droplet:
       {\rm{Re}}_d = \frac{\rho_s d_d \left\|\Delta \mathbf{u}\right\|}{\mu_s}
 
 
-9. The mass source term is modeled according to Abramzon and Sirignano (1989). The following non-dimensional numbers and factors are used:
+#. The mass source term is modeled according to Abramzon and Sirignano (1989). The following non-dimensional numbers and factors are used:
 
    .. math::
       F(B) &= (1 + B)^{0.7}\frac{\log(1 + B)}{B}
@@ -171,19 +171,14 @@ The procedure is as follows for updating the spray droplet:
 
         \mathcal{Q}_d &= \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
 
-   * If the droplet temperature exceeds the boiling temperature, the Spalding number formulas are no longer valid. Instead, it is assumed that all the heat exchange with the droplet is used to boil the species :math:`k` (which is the liquid species with the highest vapor pressure) and the Spalding number for heat transfer becomes
+   * If :math:`X_{g,n} p_g > p_{{\rm{sat}},n}`, then the gas phase is saturated for species :math:`n`. In this case, :math:`Y_{v,n} = 0` and :math:`\dot{m}_n = 0`. If the gas phase is saturated for all liquid species, the equations for heat and mass transfer become
 
      .. math::
-        B_T = \frac{c_{p,s} (T_g - T_d)}{h_{L,k}}
+        \dot{m}_n &= 0
 
-     The droplet vaporization rate and heat transfer become
+        \mathcal{Q}_d &= \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}_0
 
-     .. math::
-        \dot{m}_k &= -\pi \frac{\lambda_s}{c_{p,s}} d_d {\rm{Nu}}^* \log(1 + B_T)
-
-        \mathcal{Q}_d &= 0
-
-10. The gas phase source terms for a single parcel to a particular cell are
+#. The gas phase source terms for a single parcel to a particular cell are
 
     .. math::
        S_{\rho} &= \mathcal{C} \sum^{N_L}_{n=0} \dot{m}_n,
