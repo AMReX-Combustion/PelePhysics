@@ -71,47 +71,6 @@ check_bounds_norm(
   return false;
 }
 
-#ifdef AMREX_USE_EB
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
-amrex::Real
-find_wall_dis(
-  const amrex::RealVect& pos,
-  const amrex::IntVect& ijkc,
-  const amrex::RealVect& vel_part,
-  const amrex::Real min_eb_vfrac,
-  amrex::RealVect& normtest,
-  amrex::RealVect& centtest,
-  amrex::Array4<amrex::EBCellFlag const> const& flags,
-  amrex::Array4<amrex::Real const> const& bcent,
-  amrex::Array4<amrex::Real const> const& bnorm,
-  amrex::Array4<amrex::Real const> const& vfrac)
-{
-  amrex::Real diff_val = 0.;
-  if (flags(ijkc).isSingleValued()) {
-    normtest = {
-      AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
-    centtest = {AMREX_D_DECL(
-      ijkc[0] + 0.5 + bcent(ijkc, 0), ijkc[1] + 0.5 + bcent(ijkc, 1),
-      ijkc[2] + 0.5 + bcent(ijkc, 2))};
-    if (vfrac(ijkc) < min_eb_vfrac) {
-      int fdir = normtest.maxDir(true);
-      amrex::Real face_sgn = (bcent(ijkc, fdir) < 0.) ? 1. : -1.;
-      normtest = amrex::RealVect::TheZeroVector();
-      centtest = ijkc + 0.5;
-      normtest[fdir] = -face_sgn;
-      centtest[fdir] = ijkc[fdir] + 0.5 * (1. - face_sgn);
-    }
-    amrex::Real nd = normtest.dotProduct(vel_part);
-    amrex::Real diff1 = normtest.dotProduct(pos - centtest);
-    if (nd < 0. && diff1 < 0.) {
-      diff_val = diff1 / nd;
-    }
-  }
-  return diff_val;
-}
-#endif
-
 /**
 Determines if particle must be reflected off BC or EB
 @param[in] pos Position of the particle after advecting, normalized by dx
@@ -168,42 +127,35 @@ check_wall(
   }
 #ifdef AMREX_USE_EB
   if (use_EB && !wall_check) {
-    // If particle has moved into a cut-cell
-    amrex::RealVect normtest, centtest;
-    amrex::Real max_diff = 0.;
-    amrex::Real wall_dis = find_wall_dis(
-      pos, ijkc, vel_part, min_eb_vfrac, normtest, centtest, flags, bcent,
-      bnorm, vfrac);
-    if (wall_dis > max_diff) {
-      max_diff = wall_dis;
-      normal = normtest;
-      bcentv = centtest;
-    }
-    if (wall_dis > 0. || flags(ijkc).isCovered()) {
-      wall_dis = find_wall_dis(
-        pos, ijkc_prev, vel_part, min_eb_vfrac, normtest, centtest, flags,
-        bcent, bnorm, vfrac);
-      if (wall_dis > max_diff) {
-        max_diff = wall_dis;
-        normal = normtest;
-        bcentv = centtest;
-      }
-      // for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      //   if (ijkc[dir] != ijkc_prev[dir]) {
-      //     amrex::IntVect testindx = ijkc;
-      //     testindx[dir] = ijkc_prev[dir];
-      //     wall_dis = find_wall_dis(id, pos, testindx, vel_part, min_eb_vfrac,
-      //     normtest, centtest, flags, bcent, bnorm, vfrac, nd, diff1, dir); if
-      //     (wall_dis > max_diff) {
-      //       max_diff = wall_dis;
-      //       normal = normtest;
-      //       bcentv = centtest;
-      //     }
-      //   }
-      // }
-    }
-    if (max_diff > 0.) {
+    if (flags(ijkc).isSingleValued()) {
       wall_check = true;
+      normal = {
+        AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
+      bcentv = {AMREX_D_DECL(
+        ijkc[0] + 0.5 + bcent(ijkc, 0), ijkc[1] + 0.5 + bcent(ijkc, 1),
+        ijkc[2] + 0.5 + bcent(ijkc, 2))};
+    } else if (flags(ijkc).isCovered()) {
+      wall_check = true;
+      if (flags(ijkc_prev).isSingleValued()) {
+        normal = {AMREX_D_DECL(
+          -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2))};
+        bcentv = {AMREX_D_DECL(
+          ijkc_prev[0] + 0.5 + bcent(ijkc_prev, 0),
+          ijkc_prev[1] + 0.5 + bcent(ijkc_prev, 1),
+          ijkc_prev[2] + 0.5 + bcent(ijkc_prev, 2))};
+      } else {
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          if (ijkc[dir] != ijkc_prev[dir]) {
+            amrex::Real face_sgn = (ijkc[dir] > ijkc_prev[dir]) ? -1. : 1.;
+            normal[dir] = face_sgn;
+            bcentv[dir] = static_cast<amrex::Real>(ijkc[dir]) + 0.5 * face_sgn;
+          } else {
+            normal[dir] = 0.;
+            bcentv[dir] = static_cast<amrex::Real>(ijkc[dir]);
+          }
+        }
+        normal /= normal.vectorLength();
+      }
     }
   }
 #endif
