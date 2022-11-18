@@ -116,7 +116,7 @@ public:
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY = m_sprayIndx.pstateY;
     const int pstateTime = m_sprayIndx.pstateTime;
-    amrex::Vector<std::string> real_comp_names(pstateY + SPRAY_FUEL_NUM);
+    amrex::Vector<std::string> real_comp_names(NSR_SPR);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
                  , real_comp_names[pstateVel + 2] = "zvel";);
