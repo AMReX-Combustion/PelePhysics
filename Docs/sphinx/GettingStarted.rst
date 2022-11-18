@@ -1,7 +1,8 @@
 .. highlight:: rst
 
+************************
 `PelePhysics` Quickstart
-============================
+************************
 
 Greetings impatient user. Once again, note that this documentation focuses on the CHEMISTRY part of `PelePhysics`.
 
@@ -13,7 +14,7 @@ Greetings impatient user. Once again, note that this documentation focuses on th
 .. _sec:GetPP:
 
 Obtaining `PelePhysics`
-----------------------------
+=======================
 
 
 First, make sure that "Git" is installed on your machine---we recommend version 1.7.x or higher. Then...
@@ -38,12 +39,14 @@ This will create a ``PelePhysics`` folder on your machine. Set the environment v
 .. _sec:GetCVODE:
 
 Install CVODE and `SuiteSparse`
----------------------------------------
-**The user is in charge of installing the proper CVODE version, as well as installing and properly linking the KLU library if sparsity features are needed.**
+===============================
+
+***The user is in charge of installing the proper CVODE version, as well as installing and properly linking the KLU library if sparsity features are needed.**
 
 
 SuiteSparse
-^^^^^^^^^^^^^^^^^^^^^^^^
+-----------
+
 `SuiteSparse` is a suite of Sparse Matrix software that is very handy when dealing with big kinetic mechanisms (the Jacobian of which are usually very sparse). 
 In such a case, CVODE can make use of the KLU library, which is part of `SuiteSparse`, to perform sparse linear algebra.
 Documentation and further information can be found on `SuiteSparse website <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_. 
@@ -60,7 +63,8 @@ At the time this note is written, the recommended **SuiteSparse version** is **5
 8. Note that depending upon your compiler, the static ``.a`` versions of the libraries might also be required. In such a case, you can copy them directly from each program folder into the ``SuiteSparse/lib`` folder
 
 CVODE
-^^^^^^^^^^^^^^^^^^^^^^^^
+-----
+
 CVODE is a solver for stiff and nonstiff ordinary differential equation (ODE) systems. Documentation and further information can be found `online <https://computing.llnl.gov/projects/sundials/cvode>`_.
 At the time this note is written, the recommended **CVODE version** is **v5.0.0**. 
 

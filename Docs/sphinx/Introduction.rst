@@ -2,16 +2,17 @@
 
 .. _sec:subsWD:
 
+************
 Introduction
-============
+************
 
 Objectives and State-Of-The-Art
--------------------------------
+===============================
 
 What we will call the `PeleSuite` is currently composed of 3 separate codes:
 
 - `PelePhysics <https://github.com/AMReX-Combustion/PelePhysics>`_ is a repository of physics databases and implementation code for use within the other `Pele` codes. In particular, the choice of chemistry and transport models as well as associated functions and capabilities are managed in `PelePhysics`.
-- `PeleLM <https://github.com/AMReX-Combustion/PeleLM>`_ is an adaptive-mesh Low-Mach number hydrodynamics code for reacting flows. Note that by the time this documentation is written, `PeleLM` does **not** rely on `PelePhysics` yet, and uses in place a `ChemDriver` object. Follow the link to learn more.
+- `PeleLM <https://github.com/AMReX-Combustion/PeleLM>`_ is an adaptive-mesh Low-Mach number hydrodynamics code for reacting flows. Note that by the time this documentation is written, `PeleLM` does ***not** rely on `PelePhysics` yet, and uses in place a `ChemDriver` object. Follow the link to learn more.
 - `PeleC <https://github.com/AMReX-Combustion/PeleC>`_ is an adaptive-mesh compressible hydrodynamics code for reacting flows.
 
 All three codes rely on `AMReX <https://amrex-codes.github.io/amrex>`_, which is a software frameworks that provides the data structure and enable massive parallelization.
@@ -50,7 +51,7 @@ The objective of this user-guide is to document the CVODE-based chemistry integr
 
 
 How to naviguate this documentation
------------------------------------
+===================================
 
 `This section provides a short overview of the chemistry-related features of PelePhysics. For an in-depth discussion, relevant references to specific sections of this manuscript are given.`
 
