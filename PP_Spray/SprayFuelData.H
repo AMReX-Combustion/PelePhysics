@@ -11,6 +11,7 @@ struct SprayComps
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
+  int pstateTime = pstateY + SPRAY_FUEL_NUM;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
@@ -48,25 +49,6 @@ struct SprayUnits
   amrex::Real len_conv = 1.;
 #endif
   amrex::Real min_mass = 1.E-13 * mass_conv;
-};
-
-// Structure that contains the values for secondary
-// droplets that form during impingement
-struct SprayRefl
-{
-  amrex::Real Unorm;
-  amrex::Real dt_pp; // Time remaining to convect reflected drops
-  amrex::Real dia_refl;
-  int Ns_refl = 0;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_refl;
-  amrex::RealVect pos_refl;
-  amrex::RealVect norm;    // Normal to surface
-  amrex::RealVect tanBeta; // Tangent vector along particle path
-  amrex::RealVect tanPsi;  // Tangent normal to particle path
-  amrex::Real omega;       // Used to compute the deviation angle for particle
-  amrex::Real expomega;
-  amrex::Real beta_mean; // Mean ejection angle in degrees
-  amrex::Real beta_stdv; // Standard dev ejection angle in degrees
 };
 
 // Structure that contains the interpolated gas phase state

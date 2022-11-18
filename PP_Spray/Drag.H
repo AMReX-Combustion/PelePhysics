@@ -330,8 +330,8 @@ calculateSpraySource(
           // Gas species index, might be the same
           const int fdspec = fdat.dep_indx[spf];
           if (
-              Y_part[spf] > 1.E-12 &&
-              Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
+            Y_part[spf] > 1.E-12 &&
+            Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
             mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
             m_dot += mi_dot[spf];
             sumL += mi_dot[spf] * L_fuel[spf];
@@ -435,6 +435,7 @@ calculateSpraySource(
                , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
+  p.rdata(SPI.pstateTime) += fdat.dtmod * flow_dt;
 }
 
 #endif

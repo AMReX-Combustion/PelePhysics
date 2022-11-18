@@ -69,13 +69,13 @@ SprayJet::SprayJet(
   : m_norm(jet_norm),
     m_cent(jet_cent),
     m_spreadAngle(spread_angle * M_PI / 180.),
+    m_swirlAngle(phi_swirl * M_PI / 180.),
     m_jetDia(jet_dia),
     m_jetVel(jet_vel),
     m_massFlow(mass_flow),
     m_jetT(jet_temp),
     m_startTime(start_time),
     m_endTime(end_time),
-    m_swirlAngle(phi_swirl * M_PI / 180.),
     m_hollowSpray(hollow_spray)
 {
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -120,6 +120,6 @@ SprayJet::get_new_particle(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = m_jetY[spf];
   }
-  amrex::ignore_unused(phi_radial);
+  amrex::ignore_unused(phi_radial, time);
   return true;
 }

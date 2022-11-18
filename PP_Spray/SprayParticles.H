@@ -13,7 +13,7 @@
 #include "prob_parm.H"
 #endif
 
-#define NSR_SPR (AMREX_SPACEDIM + 2 + SPRAY_FUEL_NUM)
+#define NSR_SPR (AMREX_SPACEDIM + 3 + SPRAY_FUEL_NUM)
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
@@ -77,6 +77,15 @@ public:
     const int min_parcel =
       1); // Minimum number of parcels added during injection
 
+  void uniformSprayInit(
+    const amrex::IntVect num_part,
+    const amrex::RealVect vel_part,
+    const amrex::Real dia_part,
+    const amrex::Real T_part,
+    const amrex::Real* Y_part,
+    const int level,
+    const int NRedist);
+
   static void spraySetup(SprayData& sprayData);
 
   static void readSprayParams(
@@ -106,6 +115,7 @@ public:
     const int pstateT = m_sprayIndx.pstateT;
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY = m_sprayIndx.pstateY;
+    const int pstateTime = m_sprayIndx.pstateTime;
     amrex::Vector<std::string> real_comp_names(pstateY + SPRAY_FUEL_NUM);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
@@ -115,6 +125,7 @@ public:
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
     }
+    real_comp_names[pstateTime] = "time";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
