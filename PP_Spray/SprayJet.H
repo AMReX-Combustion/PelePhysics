@@ -66,11 +66,11 @@ public:
   inline bool hollow_spray() const { return m_hollowSpray; }
 
   /// Returns the average values given for the jet
-  amrex::Real get_avg_dia() { return m_avgDia; }
+  amrex::Real get_avg_dia() const { return m_avgDia; }
 
-  amrex::Real get_avg_T() { return m_jetT; }
+  amrex::Real get_avg_T() const { return m_jetT; }
 
-  amrex::Real get_avg_Y(const int spf) { return m_jetY[spf]; }
+  amrex::Real get_avg_Y(const int spf) const { return m_jetY[spf]; }
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
 

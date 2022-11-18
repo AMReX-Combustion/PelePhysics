@@ -162,8 +162,7 @@ trilinear_interp(
   const amrex::IntVect& bflags)
 {
   // Note: if near a reflective boundary, ijk has been shifted in check_bounds
-  int i = 0, j = 0, k = 0;
-  AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];)
+  AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];)
 
   const amrex::RealVect sx_hi = lx - ijk;
   const amrex::RealVect sx_lo = 1. - sx_hi;
