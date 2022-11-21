@@ -42,25 +42,25 @@ SprayParticleContainer::sprayInjection(
   const int pstateTime = m_sprayIndx.pstateTime;
   SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
-  amrex::Real rho_part = 0.;
+  amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    rho_part +=
+    rho_avg +=
       spray_jet->get_avg_Y(spf) / fdat->rhoL(spray_jet->get_avg_T(), spf);
   }
-  rho_part = 1. / rho_part;
+  rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
   const amrex::Real num_ppp = fdat->num_ppp;
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
-  const amrex::Real avg_mass = Pi_six * rho_part * std::pow(avg_dia, 3);
-  const amrex::Real min_dia = std::cbrt(6. * SPU.min_mass / (M_PI * rho_part));
+  const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
+  const amrex::Real min_dia = std::cbrt(6. * SPU.min_mass / (M_PI * rho_avg));
   if (avg_dia < min_dia || avg_mass < SPU.min_mass) {
     amrex::Abort(
       "Average droplet size too small, floating point issues expected");
   }
   // Minimum number of parcels we want injected at a time
-  const amrex::Real min_inj_parcel = static_cast<amrex::Real>(min_parcel);
+  const auto min_inj_parcel = static_cast<amrex::Real>(min_parcel);
   amrex::Real dt = sim_dt;
   amrex::Real inject_mass = spray_jet->mass_flow_rate() * sim_dt;
   // See if there is uninjected mass from previous time steps
@@ -80,7 +80,7 @@ SprayParticleContainer::sprayInjection(
   amrex::Real cur_mass = 0.;
   amrex::Real mass_perc = inject_mass;
 #if AMREX_SPACEDIM == 3
-  amrex::Real injProcs = static_cast<amrex::Real>(numInjProcs);
+  auto injProcs = static_cast<amrex::Real>(numInjProcs);
   amrex::Real dphi = 2. * M_PI / injProcs;
   amrex::Real phi_rad_lo = amrex::ParallelDescriptor::MyProc() * dphi;
   mass_perc = inject_mass / injProcs;

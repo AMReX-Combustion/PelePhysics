@@ -84,7 +84,7 @@ public:
     const amrex::Real T_part,
     const amrex::Real* Y_part,
     const int level,
-    const int NRedist);
+    const int numRedist);
 
   static void spraySetup(SprayData& sprayData);
 
