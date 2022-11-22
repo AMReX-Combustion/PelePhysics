@@ -1,8 +1,7 @@
 .. highlight:: rst
 
-
 A brief introduction to CVODE
-==============================
+=============================
 
 CVODE is part of a software family called sundials for SUite of Nonlinear and DIfferential / ALgebraic equation Solver [LLNL2005]_. 
 
@@ -16,7 +15,7 @@ The interested user is referred to the very exhaustive `CVODE User-guide <https:
 .. _sec:NMO: 
 
 Numerical methods overview
-----------------------------
+--------------------------
 
 The methods implemented in CVODE are variable-order, variable-step `multistep` methods, based on formulas of the form
 
@@ -50,7 +49,7 @@ in which
 .. _sec:subslinalg:
 
 Linear Algebra
------------------
+--------------
 
 To find the solution of the linear system :eq:`eqc`; CVODE provides several linear solver choices. 
 The linear solver modules distributed with Sundials are organized in two families, a `direct` family comprising direct linear solvers 
@@ -75,7 +74,7 @@ and it is provided in the form of a Jacobian approximation, based on the work of
 
 
 Error control, step-sizing, order determination
--------------------------------------------------
+-----------------------------------------------
 
 In the process of controlling errors at various levels, CVODE uses a weighted root-mean-square norm, 
 denoted :math:`|| \bullet ||_{WRMS}`, for all error-like quantities. The multiplicative weights used are based 
