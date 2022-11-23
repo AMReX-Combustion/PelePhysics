@@ -49,7 +49,7 @@ struct SBVects
   // Breakup: d32, SMD for breaking up droplets
   amrex::Gpu::HostVector<amrex::Real> phi2_h;
   amrex::Gpu::DeviceVector<amrex::Real> phi2_d;
-  BOXVects(const int Np)
+  SBVects(const int Np)
   {
     norm_h.assign(AMREX_SPACEDIM * Np, 0.);
     vel_h.assign(AMREX_SPACEDIM * Np, 0.);
@@ -127,7 +127,7 @@ struct SBVects
     rf.d0 = d0_d.data();
     rf.Y0 = Y0_d.data();
     rf.phi1 = phi1_d.data();
-    rf.ms = phi2_d.data();
+    rf.phi2 = phi2_d.data();
   }
   void fillPtrs_h(SBPtrs& rf)
   {

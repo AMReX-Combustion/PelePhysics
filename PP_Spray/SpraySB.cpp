@@ -21,7 +21,7 @@ find_tangents(
     testvec = {norm[1], norm[2], norm[0]};
   }
   tanPsi = testvec.crossProduct(norm);
-  tanPsi = /= tanPsi.vectorLength();
+  tanPsi /= tanPsi.vectorLength();
   tanBeta = tanPsi.crossProduct(norm);
 #else
   amrex::ignore_unused(pvel, tanPsi);
@@ -41,7 +41,6 @@ SprayParticleContainer::CreateSBDroplets(
   std::pair<int, int> ind(pld.m_grid, pld.m_tile);
   for (int n = 0; n < Np; n++) {
     if (N_SB_h[n] != splash_breakup::no_change) {
-
       RealVect normal;
       RealVect loc0;
       RealVect vel0;
@@ -167,6 +166,7 @@ SprayParticleContainer::CreateSBDroplets(
           // host_particles[ind].push_back(p);
         }
       } else if (N_SB_h[n] == splash_breakup::breakup) {
+        // TODO: Add distribution for radii
         Real r32 = phi1;
         Real d32 = 2. * r32;
         Real Utan = phi2;
@@ -174,10 +174,12 @@ SprayParticleContainer::CreateSBDroplets(
         int Nsint = static_cast<int>(pmass / bmass);
         auto newbmass = pmass / static_cast<Real>(Nsint);
         Real newd32 = std::cbrt(6. * newbmass / (M_PI * rho_part));
-        RealVect tanPsi = RealVect({norm[2], norm[1], norm[0]}).crossProduct(norm);
-        RealVect tanBeta = tanPsi.crossProduct(norm);
+        RealVect testvec(normal[2], normal[1], normal[0]);
+        RealVect tanPsi = testvec.crossProduct(normal);
+        RealVect tanBeta = tanPsi.crossProduct(normal);
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
           Real psi = amrex::Random() * 2. * M_PI;
+          ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
           p.rdata(SPI.pstateDia) = d32;
@@ -188,7 +190,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SPI.pstatePb) = 0.;
           p.rdata(SPI.pstatePbdot) = 0.;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] + std::cos(psi) * tanBeta[psi]);
+            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] + std::cos(psi) * tanBeta[dir]);
             p.pos(dir) = loc0[dir] + dtpp * pvel;
             p.rdata(SPI.pstateVel + dir) = pvel;
           }

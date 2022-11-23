@@ -392,7 +392,7 @@ SprayParticleContainer::updateParticles(
                 p.pos(dir) += cur_dt * cvel;
               }
               if (fdat->sigma > 0.) {
-                updateBreakup(cur_dt, pid, gpv, SPI, fdat, p, N_SB, rf_d);
+                updateBreakup(cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
               }
               if ((at_bounds || do_fe_interp) && p.id() > 0.) {
                 // First check if particle has exited the domain through a

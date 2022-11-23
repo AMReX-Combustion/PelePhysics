@@ -129,8 +129,8 @@ public:
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
     }
-    real_comp_names[pstateP] = "p_breakup";
-    real_comp_names[pstatePdot] = "pdot_breakup";
+    real_comp_names[pstatePb] = "p_breakup";
+    real_comp_names[pstatePbdot] = "pdot_breakup";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);

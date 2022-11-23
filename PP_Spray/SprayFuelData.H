@@ -12,7 +12,7 @@ struct SprayComps
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
   int pstatePb = pstateY + SPRAY_FUEL_NUM;
-  int psttePbdot = pstatePb + 1;
+  int pstatePbdot = pstatePb + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;

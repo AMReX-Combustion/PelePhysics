@@ -33,7 +33,6 @@ updateBreakup(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
   amrex::Real T_part = p.rdata(SPI.pstateT);
-  fdat.calcBoilT(gpv, cBoilT.data());
   amrex::Real dia_part = p.rdata(SPI.pstateDia);
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::Real rho_part = 0.;
@@ -126,3 +125,4 @@ updateBreakup(
     return;
   }
 }
+#endif

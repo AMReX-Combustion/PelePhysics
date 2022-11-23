@@ -65,6 +65,7 @@ droplet_splashing(
   const bool dry_wall)
 {
   amrex::Real Nw_Vp = normal.dotProduct(vel_part);
+  amrex::Real T_part = p.rdata(SPI.pstateT);
   amrex::Real mu_part = 0.;
   amrex::Real rho_part = 0.;
   // TODO: Determine correct method for handling multi-component liquids
