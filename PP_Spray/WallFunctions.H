@@ -1,10 +1,8 @@
 
-#ifndef WALLFUNCTIONS_H_
-#define WALLFUNCTIONS_H_
+#ifndef WALLFUNCTIONS_H
+#define WALLFUNCTIONS_H
 
-#include "Drag.H"
-#include "SprayFuelData.H"
-#include "SprayInterpolation.H"
+#include "AhamedSplash.H"
 
 // Check if tile is adjacent to non-periodic boundaries
 AMREX_GPU_HOST_DEVICE
@@ -173,144 +171,6 @@ check_wall(
   return refl_check;
 }
 
-
-
-/****************************************************************
- Functions for imposing wall boundaries including adding
- splashed droplets, modifying particles to be wall film,
- and rebounding particles. These occur on the host
- ***************************************************************/
-
-enum splash_type {
-  rebound = 0,
-  deposit,
-  splash,
-  thermal_breakup,
-  no_impact,
-  wall_film
-};
-
-// Determine the type of particle impact at the wall
-// Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
-splash_type
-splash_criteria(
-  const amrex::Real Kv,
-  const amrex::Real Tstar,
-  const amrex::Real alpha,
-  const amrex::Real Kcrit)
-{
-  splash_type crit = splash_type::thermal_breakup;
-  if (Tstar < 1.1) {
-    if (Kv < Kcrit) {
-      crit = splash_type::deposit;
-    } else {
-      crit = splash_type::splash;
-    }
-  } else {
-    if (Kv < Kcrit) {
-      crit = splash_type::rebound;
-    }
-  }
-  return crit;
-}
-
-AMREX_GPU_DEVICE
-AMREX_INLINE
-void
-droplet_splashing(
-  splash_type& splash_flag,
-  SprayParticleContainer::ParticleType& p,
-  int pid,
-  const amrex::RealVect& dx,
-  const amrex::RealVect& plo,
-  const SprayComps& SPI,
-  const SprayData& fdat,
-  const amrex::Real p_gas,
-  amrex::RealVect& vel_part,
-  const amrex::Real par_dot,
-  const amrex::RealVect normal,
-  const amrex::Real* cBoilT,
-  int* N_refl,
-  const ReflPtrs& rf,
-  const bool dry_wall)
-{
-  amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-  amrex::Real mu_part = 0.;
-  amrex::Real rho_part = 0.;
-  // TODO: Determine correct method for handling multi-component liquids
-  amrex::Real Tboil = 0.;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int ysp = SPI.pstateY + spf;
-    mu_part += p.rdata(ysp) * fdat.mu[spf];
-    rho_part += p.rdata(ysp) / fdat.rho[spf];
-    Tboil += p.rdata(ysp) * cBoilT[spf];
-  }
-  rho_part = 1. / rho_part;
-  amrex::Real Tstar = fdat.T_wall / Tboil;
-  const amrex::Real dia_part = p.rdata(SPI.pstateDia);
-  const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
-  // Weber number
-  const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
-  const amrex::Real Re_L = amrex::Math::abs(Nw_Vp) * dia_part * rho_part / mu_part;
-  const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
-  amrex::Real umag = vel_part.vectorLength();
-  // Inclination of on-coming particle to surface in radians
-  const amrex::Real alpha = std::asin(amrex::Math::abs(Nw_Vp) / umag);
-#ifdef PELELM_USE_SPRAY
-  const amrex::Real p_bar = p_gas * 1.E-5;
-#else
-  const amrex::Real p_bar = p_gas * 1.E-6;
-#endif
-  const amrex::Real Kcrit = (26.788 * std::log(p_bar) + 33.546) *
-                              std::exp(-6.E-3 * (fdat.wall_T - 260.)) +
-                            36.;
-  splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit);
-  // splash_flag == 0, then particle rebounds, no breakup, no deposit
-  if (splash_flag != splash_type::rebound) {
-    if (
-      splash_flag == splash_type::splash ||
-      splash_flag == splash_type::thermal_breakup) {
-      amrex::Real A;
-      if (splash_flag == splash_type::splash) {
-        N_refl[pid] = 2;
-        A = -3.E-3;
-      } else {
-        // For thermal breakup, no deposition occurs
-        N_refl[pid] = 1;
-        A = -0.0175;
-      }
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        // Save location where droplet hit wall
-        rf.loc[AMREX_SPACEDIM * pid + dir] =
-          (p.pos(dir) - par_dot * vel_part[dir] / Nw_Vp) * dx[dir] + plo[dir];
-        rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
-        rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-      }
-      amrex::Real ms = pmass * 0.75 * (1. - std::exp(A * (Kv - Kcrit)));
-      rf.d0[pid] = p.rdata(SPI.pstateDia);
-      rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp;
-      rf.Kv[pid] = Kv;
-      rf.alpha[pid] = alpha;
-      rf.ms[pid] = ms;
-      rf.T0[pid] = p.rdata(SPI.pstateT);
-#if SPRAY_FUEL_NUM > 1
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SPI.pstateY + spf);
-      }
-#endif
-      p.id() = -1;
-    }
-  } else {
-    amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= (1. + rbound) * par_dot * vel_part[dir] / Nw_Vp;
-      vel_part[dir] -= Nw_Vp * (1. + rbound) * normal[dir];
-    }
-  }
-}
-
 /*
 Imposes BC or EB surfaces. Splash model is applied if it is turned on.
 If the particle reflects multiple times, splash model is not applied to avoid
@@ -342,8 +202,8 @@ impose_wall(
   const amrex::Real min_eb_vfrac,
 #endif
   const amrex::IntVect& ijkc_prev,
-  int* N_refl,
-  const ReflPtrs& rf)
+  splash_breakup* N_SB,
+  const SBPtrs& rf)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
@@ -367,7 +227,7 @@ impose_wall(
   int bounce = 0;
   int max_bounce = 5;
   amrex::IntVect refl_prev = ijkc;
-  splash_type splash_flag = splash_type::rebound;
+  bool do_deposit = false;
   while (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     // Reflect the particle to see if it interacts with another surface or
@@ -392,14 +252,14 @@ impose_wall(
     if (fdat.sigma > 0.) {
       // If it reflects again, deposit particle at wall
       if (do_refl) {
-        splash_flag = splash_type::deposit;
+        do_deposit = true;
         do_refl = false;
       } else {
         // If not bouncing and splash model is on
         if (isActive) {
           droplet_splashing(
-            splash_flag, p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
-            normal, cBoilT, N_refl, rf, true);
+            p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
+            normal, cBoilT, N_SB, rf, true);
         } else {
           // Otherwise, just reflect particle
           p.pos() = refl_pos;
@@ -422,14 +282,15 @@ impose_wall(
       if (do_refl) {
         bounce++;
         if (bounce >= max_bounce) {
-          splash_flag = splash_type::deposit;
+          do_deposit = true;
           do_refl = false;
         }
       }
     }
   } // while (do_refl)
   // If deposited, place at wall
-  if (splash_flag == splash_type::deposit) {
+  // TODO: Implement wall film model for this scenario
+  if (do_deposit) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;

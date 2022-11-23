@@ -102,13 +102,14 @@ SprayParticleContainer::readSprayParams(
   Real parcel_size = 1;
   Real spray_ref_T = 300.;
   bool splash_model = false;
+  bool breakup_model = false;
   //
   // Set the number of particles per parcel
   //
   pp.query("parcel_size", parcel_size);
   pp.query("use_splash_model", splash_model);
-  if (splash_model) {
-    Abort("Splash model is not fully implemented");
+  pp.query("use_breakup_model", breakup_model);
+  if (splash_model || breakup_model) {
     if (
       !pp.contains("fuel_sigma") || !pp.contains("wall_temp") ||
       !pp.contains("fuel_mu")) {

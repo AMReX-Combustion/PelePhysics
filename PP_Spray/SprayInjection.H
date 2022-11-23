@@ -1,5 +1,5 @@
-#ifndef SPRAYINJECTTEMPLATE_H
-#define SPRAYINJECTTEMPLATE_H
+#ifndef SPRAYINJECTION_H
+#define SPRAYINJECTION_H
 #include "SprayParticles.H"
 
 /*
@@ -39,7 +39,8 @@ SprayParticleContainer::sprayInjection(
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateDia = m_sprayIndx.pstateDia;
   const int pstateY = m_sprayIndx.pstateY;
-  const int pstateTime = m_sprayIndx.pstateTime;
+  const int pstatePb = m_sprayIndx.pstatePb;
+  const int pstatePbdot = m_sprayIndx.pstatePbdot;
   SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
@@ -135,7 +136,8 @@ SprayParticleContainer::sprayInjection(
         rho_part = fdat->rhoL(T_part, 0);
         p.rdata(pstateY) = 1.;
       }
-      p.rdata(pstateTime) = 0.;
+      p.rdata(pstatePb) = 0.;
+      p.rdata(pstatePbdot) = 0.;
       // Add particles as if they have advanced some random portion of
       // dt
       amrex::Real pmov = amrex::Random();
@@ -213,7 +215,8 @@ SprayParticleContainer::uniformSprayInit(
   const int pstateDia = m_sprayIndx.pstateDia;
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateY = m_sprayIndx.pstateY;
-  const int pstateTime = m_sprayIndx.pstateTime;
+  const int pstatePb = m_sprayIndx.pstatePb;
+  const int pstatePbdot = m_sprayIndx.pstatePbdot;
   // Reference values for the particles
   amrex::Real part_vals[NAR_SPR + NSR_SPR];
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -224,7 +227,8 @@ SprayParticleContainer::uniformSprayInit(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     part_vals[pstateY + spf] = Y_part[spf];
   }
-  part_vals[pstateTime] = 0.;
+  part_vals[pstatePb] = 0.;
+  part_vals[pstatePbdot] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),

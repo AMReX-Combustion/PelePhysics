@@ -1,5 +1,5 @@
-#ifndef SPRAYFUELDATA_H_
-#define SPRAYFUELDATA_H_
+#ifndef SPRAYFUELDATA_H
+#define SPRAYFUELDATA_H
 
 #include "PelePhysics.H"
 #include <AMReX_RealVect.H>
@@ -11,7 +11,8 @@ struct SprayComps
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
-  int pstateTime = pstateY + SPRAY_FUEL_NUM;
+  int pstatePb = pstateY + SPRAY_FUEL_NUM;
+  int psttePbdot = pstatePb + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
@@ -21,6 +22,13 @@ struct SprayComps
   int momSrcIndx;
   int engSrcIndx;
   int specSrcIndx;
+};
+
+enum splash_breakup {
+  no_change = 0,
+  breakup,
+  splash_splash,
+  splash_thermal_breakup
 };
 
 // Units for sprays

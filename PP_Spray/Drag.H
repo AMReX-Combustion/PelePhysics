@@ -435,7 +435,6 @@ calculateSpraySource(
                , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
-  p.rdata(SPI.pstateTime) += fdat.dtmod * flow_dt;
 }
 
 #endif

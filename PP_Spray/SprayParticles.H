@@ -2,7 +2,6 @@
 #define SPRAYPARTICLES_H
 
 #include "SprayFuelData.H"
-#include "SprayReflData.H"
 #include <AMReX_AmrParticles.H>
 #include <AMReX_Geometry.H>
 #include "SprayJet.H"
@@ -13,10 +12,14 @@
 #include "prob_parm.H"
 #endif
 
-#define NSR_SPR (AMREX_SPACEDIM + 3 + SPRAY_FUEL_NUM)
+// Need components for velocity, diameter, temperature, mass fractions, and breakup model variables P and Pdot
+#define NSR_SPR (AMREX_SPACEDIM + 4 + SPRAY_FUEL_NUM)
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
+
+// Forward declarations
+class SBPtrs;
 
 class MyParIter : public amrex::ParIter<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>
 {
@@ -100,10 +103,10 @@ public:
       0.5); // Only overwrite this if particles are subcycled
 
   ///
-  /// Create reflected droplets
+  /// Create droplets from splashing or breakup
   ///
-  void CreateReflectedDroplets(
-    const int Np, const int* N_refl_h, const ReflPtrs& rfh, const int level);
+  void CreateSBDroplets(
+    const int Np, const splash_breakup* N_SB_h, const SBPtrs& rfh, const int level);
 
   void SprayParticleIO(
     const int level,
@@ -115,7 +118,8 @@ public:
     const int pstateT = m_sprayIndx.pstateT;
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY = m_sprayIndx.pstateY;
-    const int pstateTime = m_sprayIndx.pstateTime;
+    const int pstatePb = m_sprayIndx.pstatePb;
+    const int pstatePbdot = m_sprayIndx.pstatePbdot;
     amrex::Vector<std::string> real_comp_names(NSR_SPR);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
@@ -125,7 +129,8 @@ public:
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
     }
-    real_comp_names[pstateTime] = "time";
+    real_comp_names[pstateP] = "p_breakup";
+    real_comp_names[pstatePdot] = "pdot_breakup";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);

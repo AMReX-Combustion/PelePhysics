@@ -4,6 +4,7 @@
 #include "SprayInterpolation.H"
 #include "Transport.H"
 #include "WallFunctions.H"
+#include "TABBreakup.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
 #endif
@@ -265,21 +266,22 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
-    Gpu::HostVector<int> N_refl_h(Np, -1);
-    Gpu::DeviceVector<int> N_refl_d(Np);
-    Gpu::copyAsync(Gpu::hostToDevice, N_refl_h.begin(), N_refl_h.end(), N_refl_d.begin());
-    auto N_refl = N_refl_d.dataPtr();
-    ReflVects refv(Np);
-    ReflPtrs rf_d;
-    if(isActive && m_sprayData->sigma > 0.) {
+    Gpu::HostVector<splash_breakup> N_SB_h(Np, splash_breakup::no_change);
+    Gpu::DeviceVector<splash_breakup> N_SB_d(Np);
+    Gpu::copyAsync(
+      Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
+    auto N_SB = N_SB_d.dataPtr();
+    SBVects refv(Np);
+    SBPtrs rf_d;
+    if (isActive && m_sprayData->sigma > 0.) {
       refv.fillPtrs_d(rf_d);
     }
     amrex::ParallelFor(
-      Np,
-      [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
-       momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
-       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
-       src_box, state_box, sub_cfl, num_iter, sub_dt, spray_cfl_lev, eb_in_box, N_refl, rf_d
+      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
+           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
+           fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
+           isGhost, isVirt, src_box, state_box, sub_cfl, num_iter, sub_dt,
+           spray_cfl_lev, eb_in_box, N_SB, rf_d
 #ifdef AMREX_USE_EB
        ,
        flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
@@ -389,7 +391,10 @@ SprayParticleContainer::updateParticles(
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
               }
-              if (at_bounds || do_fe_interp) {
+              if (fdat->sigma > 0.) {
+                updateBreakup(cur_dt, pid, gpv, SPI, fdat, p, N_SB, rf_d);
+              }
+              if ((at_bounds || do_fe_interp) && p.id() > 0.) {
                 // First check if particle has exited the domain through a
                 // Cartesian boundary
                 bool left_dom = check_bounds(
@@ -405,7 +410,7 @@ SprayParticleContainer::updateParticles(
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
 #endif
-                    ijkc, N_refl, rf_d);
+                    ijkc, N_SB, rf_d);
                 }
               } // if (at_bounds || fe_interp)
               // Update indices
@@ -424,18 +429,18 @@ SprayParticleContainer::updateParticles(
       });   // End of loop over particles
     if (isActive && m_sprayData->sigma > 0.) {
       Gpu::copy(
-        Gpu::deviceToHost, N_refl_d.begin(), N_refl_d.end(), N_refl_h.begin());
+        Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
       bool get_new_parts = false;
       for (Long n = 0; n < Np; n++) {
-        if (N_refl_h[n] > 0) {
+        if (N_SB_h[n] != splash_breakup::no_change) {
           get_new_parts = true;
         }
       }
       if (get_new_parts) {
         refv.retrieve_data();
-        ReflPtrs rfh;
+        SBPtrs rfh;
         refv.fillPtrs_h(rfh);
-        CreateReflectedDroplets(Np, N_refl_h.data(), rfh, level);
+        CreateSBDroplets(Np, N_SB_h.data(), rfh, level);
       }
     }
   } // for (int MyParIter pti..
