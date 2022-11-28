@@ -9,6 +9,7 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 updateBreakup(
+  const amrex::Real rem_dt,
   const amrex::Real dt,
   int pid,
   const GasPhaseVals& gpv,
@@ -98,18 +99,21 @@ updateBreakup(
       omega * std::exp(-tbv / td) *
         (1. / omega * (Pdotn + (Pn - Wer) / td) * std::cos(omega * tbv) -
          (Pn - Wer) * std::sin(omega * tbv));
-    amrex::Real r32 = rad_part / (1. + 8. * K / 20. + denom * rad_part / sigma * Pdottb * Pdottb * (6. * K - 5.) / 120.);
+    amrex::Real r32 = rad_part / (1. + 8. * K / 20. +
+                                  denom * rad_part / sigma * Pdottb * Pdottb *
+                                    (6. * K - 5.) / 120.);
     amrex::Real Utan = C_b * rad_part * Pdottb;
     N_SB[pid] = splash_breakup::breakup;
-    amrex::Real normVel = vel_part.vectorLength();
+    amrex::Real velMag = vel_part.vectorLength();
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      // Save droplet location
-      rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
+      // Save location of droplet at tb, which is between tb < dt
+      rf.loc[AMREX_SPACEDIM * pid + dir] =
+        p.pos(dir) + (tbv - dt) * vel_part[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-      rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / normVel;
+      rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
     }
     rf.d0[pid] = p.rdata(SPI.pstateDia);
-    rf.dtpp[pid] = tbv;
+    rf.dtpp[pid] = dt - tbv + rem_dt;
     rf.phi1[pid] = r32;
     rf.phi2[pid] = Utan;
     rf.T0[pid] = p.rdata(SPI.pstateT);

@@ -277,11 +277,11 @@ SprayParticleContainer::updateParticles(
       refv.fillPtrs_d(rf_d);
     }
     amrex::ParallelFor(
-      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
-           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
-           fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
-           isGhost, isVirt, src_box, state_box, sub_cfl, num_iter, sub_dt,
-           spray_cfl_lev, eb_in_box, N_SB, rf_d
+      Np,
+      [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
+       momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
+       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
+       src_box, state_box, num_iter, sub_dt, eb_in_box, N_SB, rf_d
 #ifdef AMREX_USE_EB
        ,
        flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
@@ -321,10 +321,8 @@ SprayParticleContainer::updateParticles(
           // Subcycle loop
           Real ctime = 0.;
           Real cur_dt = sub_dt;
-          Real cur_cfl = spray_cfl_lev;
           int cur_iter = 0;
           while (p.id() > 0 && cur_iter < num_iter) {
-            cur_cfl -= sub_cfl;
             // Flag for whether we are near EB boundaries
             bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
@@ -387,12 +385,15 @@ SprayParticleContainer::updateParticles(
             }
             // Modify particle position by whole time step
             if (do_move && !fdat->fixed_parts && p.id() > 0) {
+              // Remaining time in current timestep
+              amrex::Real rem_dt = flow_dt - (cur_iter + 1.) * sub_dt;
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
               }
               if (fdat->sigma > 0.) {
-                updateBreakup(cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
+                updateBreakup(
+                  rem_dt, cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
               }
               if ((at_bounds || do_fe_interp) && p.id() > 0.) {
                 // First check if particle has exited the domain through a
@@ -410,7 +411,7 @@ SprayParticleContainer::updateParticles(
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                     fdat->min_eb_vfrac,
 #endif
-                    ijkc, N_SB, rf_d);
+                    ijkc, N_SB, rf_d, rem_dt);
                 }
               } // if (at_bounds || fe_interp)
               // Update indices

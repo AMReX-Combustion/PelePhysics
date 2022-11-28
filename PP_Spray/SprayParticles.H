@@ -12,7 +12,8 @@
 #include "prob_parm.H"
 #endif
 
-// Need components for velocity, diameter, temperature, mass fractions, and breakup model variables P and Pdot
+// Need components for velocity, diameter, temperature, mass fractions, and
+// breakup model variables P and Pdot
 #define NSR_SPR (AMREX_SPACEDIM + 4 + SPRAY_FUEL_NUM)
 #define NSI_SPR 0
 #define NAR_SPR 0
@@ -106,7 +107,10 @@ public:
   /// Create droplets from splashing or breakup
   ///
   void CreateSBDroplets(
-    const int Np, const splash_breakup* N_SB_h, const SBPtrs& rfh, const int level);
+    const int Np,
+    const splash_breakup* N_SB_h,
+    const SBPtrs& rfh,
+    const int level);
 
   void SprayParticleIO(
     const int level,

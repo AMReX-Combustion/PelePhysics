@@ -32,7 +32,10 @@ find_tangents(
 
 void
 SprayParticleContainer::CreateSBDroplets(
-  const int Np, const splash_breakup* N_SB_h, const SBPtrs& rfh, const int level)
+  const int Np,
+  const splash_breakup* N_SB_h,
+  const SBPtrs& rfh,
+  const int level)
 {
   ParticleLocData pld;
   SprayComps SPI = m_sprayIndx;
@@ -75,7 +78,9 @@ SprayParticleContainer::CreateSBDroplets(
       Real pmass = M_PI / 6. * rho_part * std::pow(d0, 3);
       Real U0mag = vel0.vectorLength();
 
-      if (N_SB_h[n] == splash_breakup::splash_splash || N_SB_h[n] == splash_breakup::splash_thermal_breakup) {
+      if (
+        N_SB_h[n] == splash_breakup::splash_splash ||
+        N_SB_h[n] == splash_breakup::splash_thermal_breakup) {
         // tanPsi: vector tangent to wall normal and velocity direction
         // tanBeta: vector tangent to wall normal in plane with velocity
         RealVect tanPsi, tanBeta;
@@ -90,8 +95,8 @@ SprayParticleContainer::CreateSBDroplets(
 
         // Number of splashed droplets from the Marmanis-Thoroddsen model
         amrex::Real Nsdrops = std::ceil(
-           std::abs(U0norm) / (20. * std::sqrt(mu_part / rho_part)) *
-           std::pow(6. * M_PI * pmass / sigma, 0.25));
+          std::abs(U0norm) / (20. * std::sqrt(mu_part / rho_part)) *
+          std::pow(6. * M_PI * pmass / sigma, 0.25));
         int Nsint = static_cast<int>(Nsdrops);
         Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
         // Average velocity of all splashed droplets
@@ -108,12 +113,12 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SPI.pstateDia) = dia_part;
           Real psi_sign = std::copysign(1., 0.5 - amrex::Random());
           AMREX_D_TERM(
-             Real un = Unmag;
-             , Real utBeta = std::cos(psi / 3.) * U0tan + Utmag * std::cos(psi);
-             , Real utPsi = psi_sign * std::sin(psi) * (0.2 * U0tan + Utmag););
+            Real un = Unmag;
+            , Real utBeta = std::cos(psi / 3.) * U0tan + Utmag * std::cos(psi);
+            , Real utPsi = psi_sign * std::sin(psi) * (0.2 * U0tan + Utmag););
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Real pvel = AMREX_D_TERM(
-               un * normal[dir], +utBeta * tanBeta[dir], +utPsi * tanPsi[dir]);
+              un * normal[dir], +utBeta * tanBeta[dir], +utPsi * tanPsi[dir]);
             avg_vel[dir] += pvel / Nsdrops;
             p.pos(dir) = loc0[dir] + dtpp * pvel;
             p.rdata(SPI.pstateVel + dir) = pvel;
@@ -143,7 +148,8 @@ SprayParticleContainer::CreateSBDroplets(
         p.rdata(SPI.pstateT) = T0;
         p.rdata(SPI.pstatePb) = 0.;
         p.rdata(SPI.pstatePbdot) = 0.;
-        // If droplet splashing is not thermally breakup, center droplet also reflects
+        // If droplet splashing is not thermally breakup, center droplet also
+        // reflects
         if (N_SB_h[n] == splash_breakup::splash_splash) {
           Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
           p.rdata(SPI.pstateDia) = dia_rem;
@@ -174,11 +180,15 @@ SprayParticleContainer::CreateSBDroplets(
         int Nsint = static_cast<int>(pmass / bmass);
         auto newbmass = pmass / static_cast<Real>(Nsint);
         Real newd32 = std::cbrt(6. * newbmass / (M_PI * rho_part));
-        RealVect testvec(normal[2], normal[1], normal[0]);
+#if AMREX_SPACEDIM == 3
+        RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);
         RealVect tanBeta = tanPsi.crossProduct(normal);
+#else
+        RealVect tanBeta(normal[1], normal[0]);
+#endif
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
-          Real psi = amrex::Random() * 2. * M_PI;
+          Real rand = amrex::Random();
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
@@ -190,13 +200,20 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SPI.pstatePb) = 0.;
           p.rdata(SPI.pstatePbdot) = 0.;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] + std::cos(psi) * tanBeta[dir]);
+#if AMREX_SPACEDIM == 3
+            Real psi = rand * 2. * M_PI;
+            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
+                                            std::cos(psi) * tanBeta[dir]);
+#else
+            Real sgn = std::copysign(1., 0.5 - rand);
+            Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
+#endif
             p.pos(dir) = loc0[dir] + dtpp * pvel;
             p.rdata(SPI.pstateVel + dir) = pvel;
           }
           bool where = Where(p, pld);
           if (!where) {
-            amrex::Abort("Bad reflected particle");
+            amrex::Abort("Bad breakup particle");
           }
           host_particles[ind].push_back(p);
         }

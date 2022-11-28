@@ -11,15 +11,9 @@
  and rebounding particles. These occur on the host
  ***************************************************************/
 
-enum splash_type {
-  rebound = 0,
-  deposit,
-  splash,
-  thermal_breakup
-};
+enum splash_type { rebound = 0, deposit, splash, thermal_breakup };
 
 // Determine the type of particle impact at the wall
-// Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
 AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 splash_type
@@ -62,7 +56,8 @@ droplet_splashing(
   const amrex::Real* cBoilT,
   splash_breakup* N_SB,
   const SBPtrs& rf,
-  const bool dry_wall)
+  const bool dry_wall,
+  const amrex::Real rem_dt)
 {
   amrex::Real Nw_Vp = normal.dotProduct(vel_part);
   amrex::Real T_part = p.rdata(SPI.pstateT);
@@ -128,7 +123,7 @@ droplet_splashing(
     }
     amrex::Real ms = pmass * 0.75 * (1. - std::exp(A * (Kv - Kcrit)));
     rf.d0[pid] = p.rdata(SPI.pstateDia);
-    rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp;
+    rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;
     rf.T0[pid] = p.rdata(SPI.pstateT);

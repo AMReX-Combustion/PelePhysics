@@ -203,7 +203,8 @@ impose_wall(
 #endif
   const amrex::IntVect& ijkc_prev,
   splash_breakup* N_SB,
-  const SBPtrs& rf)
+  const SBPtrs& rf,
+  const amrex::Real rem_dt)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
@@ -258,8 +259,8 @@ impose_wall(
         // If not bouncing and splash model is on
         if (isActive) {
           droplet_splashing(
-            p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot,
-            normal, cBoilT, N_SB, rf, true);
+            p, pid, dx, plo, SPI, fdat, p_fluid, vel_part, par_dot, normal,
+            cBoilT, N_SB, rf, true, rem_dt);
         } else {
           // Otherwise, just reflect particle
           p.pos() = refl_pos;
