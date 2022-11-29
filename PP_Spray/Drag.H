@@ -262,14 +262,16 @@ calculateSpraySource(
     amrex::Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
     amrex::Real Reyn = rho_skin * diff_vel_mag * dia_part / mu_skin;
-    Reyn = amrex::min(Reyn, 1000.);
 
     // Solve momentum source terms
     const amrex::Real inv_pmass = 1. / pmass;
     amrex::Real drag_coef = 0.;
-    if (Reyn > 0.) {
-      drag_coef = (Reyn > 1.) ? 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.)
-                              : 24. / Reyn;
+    if (Reyn > 1000.) {
+      drag_coef = 0.424;
+    } else if (Reyn > 1.) {
+      drag_coef = 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.);
+    } else if (Reyn > 0.) {
+      drag_coeff = 24. / Reyn;
     }
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
