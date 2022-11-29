@@ -271,7 +271,7 @@ calculateSpraySource(
     } else if (Reyn > 1.) {
       drag_coef = 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.);
     } else if (Reyn > 0.) {
-      drag_coeff = 24. / Reyn;
+      drag_coef = 24. / Reyn;
     }
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
