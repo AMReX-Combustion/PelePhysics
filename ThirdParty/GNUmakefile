@@ -226,7 +226,7 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
         cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
-	@cd $(MAGMA_DIST_DIR)/..; tar xf magma-2.6.2.tar.gz; find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
+	@cd $(MAGMA_DIST_DIR)/..; tar xf $(MAGMA_DIST_DIR)/magma-2.6.2.tar.gz; find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
