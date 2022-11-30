@@ -277,14 +277,13 @@ SprayParticleContainer::updateParticles(
       refv.fillPtrs_d(rf_d);
     }
     amrex::ParallelFor(
-      Np,
-      [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
-       momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
-       bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
-       src_box, state_box, num_iter, sub_dt, eb_in_box
+      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
+           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
+           fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
+           isGhost, isVirt, src_box, state_box, num_iter, sub_dt, eb_in_box
 #ifdef AMREX_USE_EB
-       ,
-       flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
+           ,
+           flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
 #endif
     ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
