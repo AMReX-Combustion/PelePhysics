@@ -206,10 +206,8 @@ calculateSpraySource(
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
-    amrex::Real Tboil = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tcrit += Y_part[spf] * fdat.critT[spf];
-      Tboil += Y_part[spf] * cBoilT[spf];
       cp_part += Y_part[spf] * fdat.cp[spf];
     }
     T_part = amrex::min(0.999 * Tcrit, T_part);

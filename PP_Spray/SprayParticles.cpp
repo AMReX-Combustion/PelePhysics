@@ -281,7 +281,7 @@ SprayParticleContainer::updateParticles(
       [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr, rhoSrcarr,
        momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI, fdat, bndry_hi,
        bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost, isVirt,
-       src_box, state_box, num_iter, sub_dt, eb_in_box, N_SB, rf_d
+       src_box, state_box, num_iter, sub_dt, eb_in_box
 #ifdef AMREX_USE_EB
        ,
        flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
@@ -319,7 +319,6 @@ SprayParticleContainer::updateParticles(
             }
           }
           // Subcycle loop
-          Real ctime = 0.;
           Real cur_dt = sub_dt;
           int cur_iter = 0;
           while (p.id() > 0 && cur_iter < num_iter) {
@@ -421,7 +420,6 @@ SprayParticleContainer::updateParticles(
               ijkc = lxc.floor(); // New cell center
             }                     // if (do_move)
             cur_iter++;
-            ctime += cur_dt;
             if (isGhost && !src_box.contains(ijkc)) {
               p.id() = -1;
             }
