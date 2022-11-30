@@ -79,12 +79,13 @@ SprayParticleContainer::sprayInjection(
   std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
     host_particles;
   amrex::Real cur_mass = 0.;
-  amrex::Real mass_perc = inject_mass;
 #if AMREX_SPACEDIM == 3
   auto injProcs = static_cast<amrex::Real>(numInjProcs);
   amrex::Real dphi = 2. * M_PI / injProcs;
   amrex::Real phi_rad_lo = amrex::ParallelDescriptor::MyProc() * dphi;
-  mass_perc = inject_mass / injProcs;
+  amrex::Real mass_perc = inject_mass / injProcs;
+#else
+  amrex::Real mass_perc = inject_mass;
 #endif
   while (cur_mass < mass_perc) {
     // Pick random percentage from 0 to 1
