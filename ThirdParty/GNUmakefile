@@ -226,17 +226,15 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
         cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
-	@cd $(MAGMA_DIST_DIR)/..; tar zxf /gpfs/alpine/cmb138/world-shared/jrood/magma-2.6.2.tar.gz; find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
+	@cd $(MAGMA_DIST_DIR)/..; tar xf magma-2.6.2.tar.gz; find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
-	#@cd $(MAGMA_DIST_DIR); wget icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR); cp /gpfs/alpine/cmb138/world-shared/jrood/magma-2.6.2.tar.gz .
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	#@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
-	@cd $(SUNDIALS_SOURCE_DIR)/..; tar zxf /gpfs/alpine/cmb138/world-shared/jrood/sundials-6.4.1.tar.gz
-	#@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
+	@cd $(SUNDIALS_SOURCE_DIR)/..; cp /gpfs/alpine/cmb138/world-shared/jrood/sundials-6.4.1.tar.gz .; tar xf sundials-6.4.1.tar.gz -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
