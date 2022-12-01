@@ -83,7 +83,7 @@ ifeq ($(USE_CUDA),TRUE)
 endif
 ifeq ($(USE_HIP),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
-  ifeq ($(which_computer),crusher)
+  ifeq ($(which_computer),frontier)
     MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
@@ -104,9 +104,8 @@ ifeq ($(USE_CUDA),TRUE)
   endif
 endif
 ifeq ($(USE_HIP),TRUE)
-  ## For spock/crusher only at this point !
   MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH) -DAMDGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGET:STRING=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_cray.so
-  ifeq ($(which_computer),crusher)
+  ifeq ($(which_computer),frontier)
     MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
