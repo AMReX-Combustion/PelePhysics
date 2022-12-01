@@ -122,8 +122,8 @@ public:
     const int pstateT = m_sprayIndx.pstateT;
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY = m_sprayIndx.pstateY;
-    const int pstatePb = m_sprayIndx.pstatePb;
-    const int pstatePbdot = m_sprayIndx.pstatePbdot;
+    const int pstateTABY = m_sprayIndx.pstateTABY;
+    const int pstateTABYdot = m_sprayIndx.pstateTABYdot;
     amrex::Vector<std::string> real_comp_names(NSR_SPR);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
@@ -133,8 +133,8 @@ public:
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
     }
-    real_comp_names[pstatePb] = "p_breakup";
-    real_comp_names[pstatePbdot] = "pdot_breakup";
+    real_comp_names[pstateTABY] = "Y_TAB";
+    real_comp_names[pstateTABYdot] = "Ydot_TAB";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);

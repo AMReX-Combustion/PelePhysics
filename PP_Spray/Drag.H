@@ -184,6 +184,8 @@ calculateSpraySource(
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
+  // TAB model distortion
+  amrex::Real y_tab = p.rdata(SPI.pstateTABY);
   // If particle is fixed in place, make velocity zero
   if (fdat.fixed_parts) {
     vel_part = amrex::RealVect::TheZeroVector();
@@ -272,6 +274,7 @@ calculateSpraySource(
     } else if (Reyn > 0.) {
       drag_coef = 24. / Reyn;
     }
+    drag_coef *= (1. + 2.6432 * y_tab);
     amrex::Real drag_force =
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
     amrex::Real drag_force_p =

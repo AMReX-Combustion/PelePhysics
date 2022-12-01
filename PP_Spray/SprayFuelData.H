@@ -11,8 +11,8 @@ struct SprayComps
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
-  int pstatePb = pstateY + SPRAY_FUEL_NUM;
-  int pstatePbdot = pstatePb + 1;
+  int pstateTABY = pstateY + SPRAY_FUEL_NUM;
+  int pstateTABYdot = pstateTABY + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
@@ -114,6 +114,8 @@ struct SprayData
   bool mass_trans = true;   // If evaporation is on
   bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
+  bool do_breakup = false;
+  bool use_ETAB = false;
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
   amrex::Real num_ppp; // Parcel size
@@ -141,6 +143,8 @@ struct SprayData
     mass_trans = fdat.mass_trans;
     mom_trans = fdat.mom_trans;
     fixed_parts = fdat.fixed_parts;
+    do_breakup = fdat.do_breakup;
+    use_ETAB = fdat.use_ETAB;
     // Convert input values from CGS to MKS for PeleLM
     num_ppp = fdat.num_ppp;
     ref_T = fdat.ref_T;

@@ -55,8 +55,8 @@ updateBreakup(
   amrex::Real td = 2. * denom / (C_d * mu_part);
   amrex::Real omega2 = C_k * sigma / (denom * rad_part) - 1. / (td * td);
   if (omega2 <= 0.) {
-    p.rdata(SPI.pstatePb) = 0.;
-    p.rdata(SPI.pstatePbdot) = 0.;
+    p.rdata(SPI.pstateTABY) = 0.;
+    p.rdata(SPI.pstateTABYdot) = 0.;
     return;
   }
   amrex::Real Pn = p.rdata(SPI.pstatePb);
@@ -102,7 +102,7 @@ updateBreakup(
          (Pn - Wer) * std::sin(omega * tbv));
     amrex::Real Utan, r32;
     // Original TAB model
-    if (use_etab) {
+    if (fdat.use_ETAB) {
       amrex::Real Wet = 80.;
       amrex::Real k1 = 2. / 9.;
       amrex::Real k2 = 2. / 9.;
@@ -111,15 +111,14 @@ updateBreakup(
       if (We > Wet) {
         Kbr = k2 * omega * std::sqrt(We);
       }
-      amrex::Real t = 1. / omega * std::acos(1. - 1. / Wer);
-      r32 = rad_part * std::exp(-Kbr * t);
+      r32 = rad_part * std::exp(-Kbr * tbv);
       amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
       amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
                         omega2 / (Pdottb * Pdottb);
       amrex::Real AE = std::sqrt(AE2);
       Utan = AE * C_b * rad_part * Pdottb;
     } else {
-      r32 = rad_part /
+      r32 = 3. * rad_part /
             (1. + 8. * K / 20. +
              denom * rad_part / sigma * Pdottb * Pdottb * (6. * K - 5.) / 120.);
       Utan = C_b * rad_part * Pdottb;

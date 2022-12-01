@@ -110,19 +110,19 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
-    if (
-      !pp.contains("fuel_sigma") || !pp.contains("wall_temp") ||
-      !pp.contains("fuel_mu")) {
+    pp.query("use_ETAB_model", sprayData.use_ETAB);
+    if (!pp.contains("fuel_sigma") || !pp.contains("fuel_mu")) {
       Print()
-        << "fuel_sigma, wall_temp, and fuel_mu must be set for splash model. "
-        << "Set use_splash_model = false to turn off splash model."
+        << "fuel_sigma and fuel_mu must be set for splash or breakup model. "
         << std::endl;
       Abort();
     }
+    if (splash_model) {
+      // TODO: Have this retrieved from proper boundary data
+      pp.get("wall_temp", sprayData.wall_T);
+    }
     // Set the fuel surface tension and contact angle
     pp.get("fuel_sigma", sprayData.sigma);
-    // TODO: Have this retrieved from proper boundary data
-    pp.get("wall_temp", sprayData.wall_T);
   }
 
   // Must use same reference temperature for all fuels
