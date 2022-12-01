@@ -250,7 +250,7 @@ impose_wall(
       refl_prev, refl_vel, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
       refl_par_dot, refl_normal);
-    if (fdat.wall_temp > 0.) {
+    if (fdat.wall_T > 0.) {
       // If it reflects again, deposit particle at wall
       if (do_refl) {
         do_deposit = true;

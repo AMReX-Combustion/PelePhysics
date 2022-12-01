@@ -120,15 +120,15 @@ SprayParticleContainer::sprayInjection(
       time, phi_radial, cur_rad, umag, theta_spread, phi_swirl, dia_part,
       T_part, Y_part);
     if (make_new_part && dia_part > min_dia) {
-      amrex::RealVect part_loc, part_vel;
+      amrex::RealVect part_loc, vel_part;
       spray_jet->transform_loc_vel(
-        theta_spread, phi_radial, cur_rad, umag, phi_swirl, part_vel, part_loc);
+        theta_spread, phi_radial, cur_rad, umag, phi_swirl, vel_part, part_loc);
       ParticleType p;
       p.id() = ParticleType::NextID();
       p.cpu() = amrex::ParallelDescriptor::MyProc();
-      AMREX_D_TERM(p.rdata(pstateVel) = part_vel[0];
-                   , p.rdata(pstateVel + 1) = part_vel[1];
-                   , p.rdata(pstateVel + 2) = part_vel[2];);
+      AMREX_D_TERM(p.rdata(pstateVel) = vel_part[0];
+                   , p.rdata(pstateVel + 1) = vel_part[1];
+                   , p.rdata(pstateVel + 2) = vel_part[2];);
       p.rdata(pstateT) = T_part;
       // Never add particle with less than minimum mass
       p.rdata(pstateDia) = dia_part;
@@ -233,8 +233,8 @@ SprayParticleContainer::uniformSprayInit(
   const int pstateDia = m_sprayIndx.pstateDia;
   const int pstateT = m_sprayIndx.pstateT;
   const int pstateY = m_sprayIndx.pstateY;
-  const int pstatePb = m_sprayIndx.pstatePb;
-  const int pstatePbdot = m_sprayIndx.pstatePbdot;
+  const int pstateTABY = m_sprayIndx.pstateTABY;
+  const int pstateTABYdot = m_sprayIndx.pstateTABYdot;
   // Reference values for the particles
   amrex::Real part_vals[NAR_SPR + NSR_SPR];
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -245,8 +245,8 @@ SprayParticleContainer::uniformSprayInit(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     part_vals[pstateY + spf] = Y_part[spf];
   }
-  part_vals[pstatePb] = 0.;
-  part_vals[pstatePbdot] = 0.;
+  part_vals[pstateTABY] = 0.;
+  part_vals[pstateTABYdot] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),

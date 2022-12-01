@@ -59,27 +59,27 @@ updateBreakup(
     p.rdata(SPI.pstateTABYdot) = 0.;
     return;
   }
-  amrex::Real Pn = p.rdata(SPI.pstatePb);
-  amrex::Real Pdotn = p.rdata(SPI.pstatePbdot);
-  amrex::Real A2 = std::pow(Pn - Wer, 2) + Pdotn * Pdotn / omega2;
+  amrex::Real yn = p.rdata(SPI.pstateTABY);
+  amrex::Real ydotn = p.rdata(SPI.pstateTABYdot);
+  amrex::Real A2 = std::pow(yn - Wer, 2) + ydotn * ydotn / omega2;
   amrex::Real A = std::sqrt(A2);
   amrex::Real omega = std::sqrt(omega2);
-  amrex::Real Pnp =
+  amrex::Real ynp =
     Wer + std::exp(-dt / td) *
-            ((Pn - Wer) * std::cos(omega * dt) +
-             1. / omega * (Pdotn + (Pn - Wer) / td) * std::sin(omega * dt));
-  amrex::Real Pdotnp =
-    (Wer - Pnp) / td +
+            ((yn - Wer) * std::cos(omega * dt) +
+             1. / omega * (ydotn + (yn - Wer) / td) * std::sin(omega * dt));
+  amrex::Real ydotnp =
+    (Wer - ynp) / td +
     omega * std::exp(-dt / td) *
-      (1. / omega * (Pdotn + (Pn - Wer) / td) * std::cos(omega * dt) -
-       (Pn - Wer) * std::sin(omega * dt));
+      (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * dt) -
+       (yn - Wer) * std::sin(omega * dt));
   if (Wer + A <= 1.) {
-    p.rdata(SPI.pstatePb) = Pnp;
-    p.rdata(SPI.pstatePbdot) = Pdotnp;
+    p.rdata(SPI.pstateTABY) = ynp;
+    p.rdata(SPI.pstateTABYdot) = ydotnp;
     return;
   }
-  amrex::Real pv1 = (Pn - Wer) / A;
-  amrex::Real pv2 = -Pn / (A * omega);
+  amrex::Real pv1 = (yn - Wer) / A;
+  amrex::Real pv2 = -yn / (A * omega);
   amrex::Real phi1 = std::acos(pv1);
   amrex::Real phi2 = std::asin(pv2);
   amrex::Real mnv = std::acos((1. - Wer) / A);
@@ -90,16 +90,16 @@ updateBreakup(
   amrex::Real tbv = amrex::min(tbv1, tbv2);
   // Check if breakup occurs
   if (tbv < dt) {
-    // Evaluate Pdot at tb
-    amrex::Real Ptb =
+    // Evaluate ydot at tb
+    amrex::Real ytb =
       Wer + std::exp(-tbv / td) *
-              ((Pn - Wer) * std::cos(omega * tbv) +
-               1. / omega * (Pdotn + (Pn - Wer) / td) * std::sin(omega * tbv));
-    amrex::Real Pdottb =
-      (Wer - Ptb) / td +
+              ((yn - Wer) * std::cos(omega * tbv) +
+               1. / omega * (ydotn + (yn - Wer) / td) * std::sin(omega * tbv));
+    amrex::Real ydottb =
+      (Wer - ytb) / td +
       omega * std::exp(-tbv / td) *
-        (1. / omega * (Pdotn + (Pn - Wer) / td) * std::cos(omega * tbv) -
-         (Pn - Wer) * std::sin(omega * tbv));
+        (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * tbv) -
+         (yn - Wer) * std::sin(omega * tbv));
     amrex::Real Utan, r32;
     // Original TAB model
     if (fdat.use_ETAB) {
@@ -114,14 +114,14 @@ updateBreakup(
       r32 = rad_part * std::exp(-Kbr * tbv);
       amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
       amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
-                        omega2 / (Pdottb * Pdottb);
+                        omega2 / (ydottb * ydottb);
       amrex::Real AE = std::sqrt(AE2);
-      Utan = AE * C_b * rad_part * Pdottb;
+      Utan = AE * C_b * rad_part * ydottb;
     } else {
       r32 = 3. * rad_part /
             (1. + 8. * K / 20. +
-             denom * rad_part / sigma * Pdottb * Pdottb * (6. * K - 5.) / 120.);
-      Utan = C_b * rad_part * Pdottb;
+             denom * rad_part / sigma * ydottb * ydottb * (6. * K - 5.) / 120.);
+      Utan = C_b * rad_part * ydottb;
     }
     N_SB[pid] = splash_breakup::breakup;
     amrex::Real velMag = vel_part.vectorLength();
@@ -144,8 +144,8 @@ updateBreakup(
 #endif
     p.id() = -1;
   } else {
-    p.rdata(SPI.pstatePb) = Pnp;
-    p.rdata(SPI.pstatePbdot) = Pdotnp;
+    p.rdata(SPI.pstateTABY) = ynp;
+    p.rdata(SPI.pstateTABYdot) = ydotnp;
     return;
   }
 }

@@ -146,8 +146,8 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SPI.pstateY + spf) = Y0[spf];
         }
         p.rdata(SPI.pstateT) = T0;
-        p.rdata(SPI.pstatePb) = 0.;
-        p.rdata(SPI.pstatePbdot) = 0.;
+        p.rdata(SPI.pstateTABY) = 0.;
+        p.rdata(SPI.pstateTABYdot) = 0.;
         // If droplet splashing is not thermally breakup, center droplet also
         // reflects
         if (N_SB_h[n] == splash_breakup::splash_splash) {
@@ -197,8 +197,8 @@ SprayParticleContainer::CreateSBDroplets(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SPI.pstateY + spf) = Y0[spf];
           }
-          p.rdata(SPI.pstatePb) = 0.;
-          p.rdata(SPI.pstatePbdot) = 0.;
+          p.rdata(SPI.pstateTABY) = 0.;
+          p.rdata(SPI.pstateTABYdot) = 0.;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;
