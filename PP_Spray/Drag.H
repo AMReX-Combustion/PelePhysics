@@ -145,7 +145,7 @@ calcVaporState(
 // Compute source terms and update particles
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-void
+amrex::Real
 calculateSpraySource(
   const amrex::Real flow_dt,
   GasPhaseVals& gpv,
@@ -203,6 +203,7 @@ calculateSpraySource(
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
   amrex::RealVect part_mom_src;
+  amrex::Real drag_coef;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
@@ -263,7 +264,7 @@ calculateSpraySource(
 
     // Solve momentum source terms
     const amrex::Real inv_pmass = 1. / pmass;
-    amrex::Real drag_coef = 0.;
+    drag_coef = 0.;
     if (Reyn > 1000.) {
       drag_coef = 0.424;
     } else if (Reyn > 1.) {
@@ -435,6 +436,7 @@ calculateSpraySource(
                , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
+  return drag_coef;
 }
 
 #endif

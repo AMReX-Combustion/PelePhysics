@@ -343,7 +343,8 @@ SprayParticleContainer::updateParticles(
             // Solve for avg mw and pressure at droplet location
             gpv.define();
             fdat->calcBoilT(gpv, cBoilT.data());
-            calculateSpraySource(cur_dt, gpv, SPI, *fdat, p, ltransparm);
+            amrex::Real C_D =
+              calculateSpraySource(cur_dt, gpv, SPI, *fdat, p, ltransparm);
             for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
               IntVect cur_indx = indx_array[aindx];
               Real cvol = inv_vol;
@@ -391,7 +392,7 @@ SprayParticleContainer::updateParticles(
               }
               if (fdat->sigma > 0.) {
                 updateBreakup(
-                  rem_dt, cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
+                  C_D, rem_dt, cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
               }
               if ((at_bounds || do_fe_interp) && p.id() > 0.) {
                 // First check if particle has exited the domain through a

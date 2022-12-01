@@ -9,6 +9,7 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 updateBreakup(
+  const amrex::Real C_D,
   const amrex::Real rem_dt,
   const amrex::Real dt,
   int pid,
@@ -99,10 +100,30 @@ updateBreakup(
       omega * std::exp(-tbv / td) *
         (1. / omega * (Pdotn + (Pn - Wer) / td) * std::cos(omega * tbv) -
          (Pn - Wer) * std::sin(omega * tbv));
-    amrex::Real r32 = rad_part / (1. + 8. * K / 20. +
-                                  denom * rad_part / sigma * Pdottb * Pdottb *
-                                    (6. * K - 5.) / 120.);
-    amrex::Real Utan = C_b * rad_part * Pdottb;
+    amrex::Real Utan, r32;
+    // Original TAB model
+    if (use_etab) {
+      amrex::Real Wet = 80.;
+      amrex::Real k1 = 2. / 9.;
+      amrex::Real k2 = 2. / 9.;
+      k1 *= (k2 / k1 * (std::sqrt(Wet) - 1.)) * std::pow(We / Wet, 4) + 1.;
+      amrex::Real Kbr = k1 * omega;
+      if (We > Wet) {
+        Kbr = k2 * omega * std::sqrt(We);
+      }
+      amrex::Real t = 1. / omega * std::acos(1. - 1. / Wer);
+      r32 = rad_part * std::exp(-Kbr * t);
+      amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
+      amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
+                        omega2 / (Pdottb * Pdottb);
+      amrex::Real AE = std::sqrt(AE2);
+      Utan = AE * C_b * rad_part * Pdottb;
+    } else {
+      r32 = rad_part /
+            (1. + 8. * K / 20. +
+             denom * rad_part / sigma * Pdottb * Pdottb * (6. * K - 5.) / 120.);
+      Utan = C_b * rad_part * Pdottb;
+    }
     N_SB[pid] = splash_breakup::breakup;
     amrex::Real velMag = vel_part.vectorLength();
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
