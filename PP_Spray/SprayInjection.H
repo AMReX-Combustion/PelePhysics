@@ -49,12 +49,7 @@ SprayParticleContainer::sprayInjection(
       spray_jet->get_avg_Y(spf) / fdat->rhoL(spray_jet->get_avg_T(), spf);
   }
   rho_avg = 1. / rho_avg;
-  const amrex::Real rho_gas = spray_jet->get_rho_gas();
-  const amrex::Real jet_C = spray_jet->get_jet_C();
   const amrex::Real Wec = 12.;
-  if (fdat->use_ETAB && rho_gas < 0.) {
-    amrex::Abort("Must call 'set_rho_gas()' if ETAB model is to be used");
-  }
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
   const amrex::Real num_ppp = fdat->num_ppp;
@@ -150,18 +145,7 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) = part_loc[dir] + pmov * dt * p.rdata(pstateVel + dir);
       }
       p.rdata(pstateTABY) = 0.;
-      // If ETAB model is applied
-      if (fdat->use_ETAB) {
-        amrex::Real velMag = vel_part.radSquared();
-        amrex::Real omega =
-          std::sqrt(8. * fdat->sigma / (rho_part * std::pow(dia_part / 2., 3)));
-        amrex::Real We = rho_gas * dia_part / 2. * velMag / fdat->sigma;
-        amrex::Real otbu = 4. * jet_C * std::sqrt(2. / We);
-        p.rdata(pstateTABYdot) =
-          (1. - We / Wec * (1. - std::cos(otbu))) * omega / std::sin(otbu);
-      } else {
-        p.rdata(pstateTABYdot) = 0.;
-      }
+      p.rdata(pstateTABYdot) = 0.;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
       bool where = Where(p, pld);
       if (!where) {

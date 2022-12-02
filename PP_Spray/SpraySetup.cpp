@@ -110,7 +110,6 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
-    pp.query("use_ETAB_model", sprayData.use_ETAB);
     if (!pp.contains("fuel_sigma") || !pp.contains("fuel_mu")) {
       Print()
         << "fuel_sigma and fuel_mu must be set for splash or breakup model. "

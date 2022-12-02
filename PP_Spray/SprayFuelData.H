@@ -115,7 +115,6 @@ struct SprayData
   bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
   bool do_breakup = false;
-  bool use_ETAB = false;
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
   amrex::Real num_ppp; // Parcel size
@@ -144,7 +143,6 @@ struct SprayData
     mom_trans = fdat.mom_trans;
     fixed_parts = fdat.fixed_parts;
     do_breakup = fdat.do_breakup;
-    use_ETAB = fdat.use_ETAB;
     // Convert input values from CGS to MKS for PeleLM
     num_ppp = fdat.num_ppp;
     ref_T = fdat.ref_T;

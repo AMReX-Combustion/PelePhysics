@@ -72,10 +72,6 @@ public:
 
   amrex::Real get_avg_Y(const int spf) const { return m_jetY[spf]; }
 
-  amrex::Real get_rho_gas() const { return m_rhoGas; }
-
-  amrex::Real get_jet_C() const { return m_jetC; }
-
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
 
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
@@ -113,8 +109,6 @@ public:
       amrex::Abort("Jet mass fractions must sum to 1");
     }
   }
-
-  void set_rho_gas(amrex::Real rho_gas) { m_rhoGas = rho_gas; }
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
@@ -222,8 +216,6 @@ protected:
   amrex::Real m_jetY[SPRAY_FUEL_NUM] = {0.};
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
-  amrex::Real m_rhoGas = -1.;
-  amrex::Real m_jetC = 5.5; // Comes from the ETAB paper Tanner 1997
   amrex::Real m_startTime = 0.;
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
