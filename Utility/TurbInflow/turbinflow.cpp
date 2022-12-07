@@ -72,10 +72,12 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       amrex::Array<int, AMREX_SPACEDIM> npts = {{0}};
       amrex::Array<amrex::Real, AMREX_SPACEDIM> probsize = {{0}};
       amrex::Array<int, AMREX_SPACEDIM> iper = {{0}};
-      is >> npts[0] >> npts[1] >> npts[2];
-      is >> probsize[0] >> probsize[1] >> probsize[2];
-      is >> iper[0] >> iper[1] >>
-        iper[2]; // Unused - we assume it is always fully periodic
+
+      AMREX_D_TERM(is >> npts[0], >> npts[1], >> npts[2]);
+      AMREX_D_TERM(is >> probsize[0], >> probsize[1], >> probsize[2]);
+      AMREX_D_TERM(
+        is >> iper[0], >> iper[1],
+        >> iper[2]); // Unused - we assume it is always fully periodic
 
       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         tp[n].dx[idim] = probsize[idim] / amrex::Real(npts[idim] - 1);
@@ -85,18 +87,18 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       // The following is relative to the injection face:
       // 0 and 1 are transverse directions, 2 is normal
       // one ghost point on each side, tangential to inflow face
-      tp[n].pboxsize[0] = probsize[0] - 2.0 * tp[n].dx[0];
-      tp[n].pboxsize[1] = probsize[1] - 2.0 * tp[n].dx[1];
-      tp[n].pboxsize[2] = probsize[2];
+      AMREX_D_TERM(tp[n].pboxsize[0] = probsize[0] - 2.0 * tp[n].dx[0];
+                   , tp[n].pboxsize[1] = probsize[1] - 2.0 * tp[n].dx[1];
+                   , tp[n].pboxsize[2] = probsize[2];)
 
-      tp[n].npboxcells[0] = npts[0] - 3;
-      tp[n].npboxcells[1] = npts[1] - 3;
-      tp[n].npboxcells[2] = npts[2];
+      AMREX_D_TERM(tp[n].npboxcells[0] = npts[0] - 3;
+                   , tp[n].npboxcells[1] = npts[1] - 3;
+                   , tp[n].npboxcells[2] = npts[2];)
 
       // Center the turbulence
-      tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
-      tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
-      tp[n].pboxlo[2] = 0.;
+      AMREX_D_TERM(tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
+                   , tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
+                   , tp[n].pboxlo[2] = 0.0;)
 
       amrex::Box sbx(
         amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
