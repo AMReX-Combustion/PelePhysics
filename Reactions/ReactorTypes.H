@@ -3,9 +3,7 @@
 
 #include <AMReX.H>
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 struct ReactorTypes
 {
@@ -19,7 +17,5 @@ struct ReactorTypes
     }
   }
 };
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

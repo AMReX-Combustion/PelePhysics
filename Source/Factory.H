@@ -8,8 +8,7 @@
 #include "AMReX_Print.H"
 #include "AMReX.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 /** Runtime selection of options based on string keyword lookup
  *
@@ -160,6 +159,5 @@ template <class T>
 bool Factory<Base, Args...>::Register<T>::registered =
   Factory<Base, Args...>::Register<T>::add_sub_type();
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 #endif /* FACTORY_H */

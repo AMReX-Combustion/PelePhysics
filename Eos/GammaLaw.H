@@ -10,9 +10,7 @@
 #include "mechanism.H"
 #include "PhysicsConstants.H"
 
-namespace pele {
-namespace physics {
-namespace eos {
+namespace pele::physics::eos {
 
 struct GammaLaw
 {
@@ -396,7 +394,5 @@ struct GammaLaw
   amrex::Real gamma{Constants::gamma};
 };
 
-} // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::eos
 #endif

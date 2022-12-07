@@ -6,9 +6,7 @@
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
 
-namespace pele {
-namespace physics {
-namespace turbinflow {
+namespace pele::physics::turbinflow {
 
 struct TurbParm
 {
@@ -87,9 +85,6 @@ private:
   amrex::Vector<TurbParm> tp;
   bool turbinflow_initialized = false;
 };
-} // namespace turbinflow
-
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::turbinflow
 
 #endif

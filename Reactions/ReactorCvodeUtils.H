@@ -29,9 +29,7 @@
 #endif
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 struct CVODEUserData
 {
@@ -374,7 +372,5 @@ fKernelDenseSolve( int ncell,
 
 #endif
 } // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

@@ -26,9 +26,7 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 struct ARKODEUserData
 {
@@ -146,8 +144,6 @@ private:
   bool m_clean_init_massfrac{false};
 };
 
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 
 #endif

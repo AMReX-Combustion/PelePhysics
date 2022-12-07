@@ -6,9 +6,7 @@
 #include "TransportTypes.H"
 #include "EOS.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 
 struct ConstTransport;
 struct SimpleTransport;
@@ -354,7 +352,5 @@ private:
   TransParm<EosType, TransportType>* m_d_trans_parm{nullptr};
   bool m_device_allocated{false};
 };
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

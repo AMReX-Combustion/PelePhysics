@@ -5,9 +5,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Geometry.H>
 
-namespace pele {
-namespace physics {
-namespace pltfilemanager {
+namespace pele::physics::pltfilemanager {
 
 class PltFileManager
 {
@@ -48,7 +46,5 @@ protected:
   amrex::Vector<amrex::MultiFab> m_data;
 };
 
-} // namespace pltfilemanager
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::pltfilemanager
 #endif

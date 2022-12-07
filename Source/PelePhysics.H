@@ -8,8 +8,7 @@
 #include "EOS.H"
 #include "Transport.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 template <typename T>
 struct is_eos_type
@@ -63,7 +62,6 @@ struct PelePhysics
 
 using PhysicsType = PelePhysics<EosType, TransportType>;
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 
 #endif
