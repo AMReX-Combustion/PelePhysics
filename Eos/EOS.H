@@ -13,8 +13,7 @@
 #include "Fuego.H"
 #include "SRK.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 #ifdef USE_GAMMALAW_EOS
 using EosType = eos::GammaLaw;
 #elif USE_FUEGO_EOS
@@ -36,6 +35,5 @@ template <typename EOSType>
 void speciesNames(amrex::Vector<std::string>& spn);
 
 } // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 #endif

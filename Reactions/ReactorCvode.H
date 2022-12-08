@@ -44,9 +44,7 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 {
@@ -171,7 +169,5 @@ private:
   CVODEUserData* udata_g = nullptr;
 #endif
 };
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

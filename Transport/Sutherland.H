@@ -3,9 +3,7 @@
 
 #include "TransportParams.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 struct SutherlandTransport
 {
   using transport_type = SutherlandTransport;
@@ -111,7 +109,5 @@ struct SutherlandTransport
   }
 };
 
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

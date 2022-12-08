@@ -8,9 +8,7 @@
 #include "mechanism.H"
 #include "PhysicsConstants.H"
 
-namespace pele {
-namespace physics {
-namespace eos {
+namespace pele::physics::eos {
 
 struct SRK
 {
@@ -998,7 +996,5 @@ struct SRK
   amrex::Real sqrtAsti[NUM_SPECIES];
   amrex::Real Fomega[NUM_SPECIES];
 };
-} // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::eos
 #endif

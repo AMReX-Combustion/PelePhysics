@@ -4,9 +4,7 @@
 #include "TransportParams.H"
 #include "PhysicsConstants.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 
 template <typename EOSType>
 struct NonIdealChungCorrections
@@ -426,7 +424,5 @@ struct SimpleTransport
   {
   }
 };
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

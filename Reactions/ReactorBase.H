@@ -8,9 +8,7 @@
 #include "mechanism.H"
 #include "ReactorUtils.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 class ReactorBase : public Factory<ReactorBase>
 {
@@ -96,7 +94,5 @@ protected:
   int verbose{0};
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

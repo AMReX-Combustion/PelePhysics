@@ -8,9 +8,7 @@
 #include "mechanism.H"
 #include "PhysicsConstants.H"
 
-namespace pele {
-namespace physics {
-namespace eos {
+namespace pele::physics::eos {
 
 struct Fuego
 {
@@ -391,7 +389,5 @@ struct Fuego
   {
   }
 };
-} // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::eos
 #endif

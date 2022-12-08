@@ -1,7 +1,6 @@
 #include <type_traits>
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 // Forward declarations
 namespace eos {
@@ -34,5 +33,4 @@ struct is_valid_physics_combination<eos::SRK, transport::ConstTransport>
 {
 };
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics

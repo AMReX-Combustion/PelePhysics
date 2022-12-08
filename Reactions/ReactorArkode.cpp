@@ -146,7 +146,7 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
 
-  const int ncells = box.numPts();
+  const int ncells = static_cast<int>(box.numPts());
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
   const int neq = NUM_SPECIES + 1;

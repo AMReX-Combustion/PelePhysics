@@ -15,10 +15,7 @@
 #endif
 #include "mechanism.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 #ifdef AMREX_USE_GPU
 struct SUNLinearSolverContent_Dense_custom_struct
 {
@@ -73,8 +70,5 @@ SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 int SUNLinSolSolve_Sparse_custom(
   SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode
 #endif

@@ -31,10 +31,7 @@
 #endif
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 int cJac(
   amrex::Real tn,
   N_Vector u,
@@ -68,8 +65,5 @@ int cJac_KLU(
   N_Vector tmp3);
 #endif
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode
 #endif

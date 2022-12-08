@@ -20,10 +20,7 @@
 #include <nvector/nvector_cuda.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 // Basic preconditioner functions
 int Precond(
   amrex::Real tn,
@@ -90,8 +87,5 @@ int Precond_sparse(
   void* user_data);
 #endif
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode
 #endif

@@ -3,9 +3,7 @@
 
 #include "TransportParams.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 struct ConstTransport
 {
   using transport_type = ConstTransport;
@@ -95,7 +93,5 @@ struct ConstTransport
   {
   }
 };
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif
