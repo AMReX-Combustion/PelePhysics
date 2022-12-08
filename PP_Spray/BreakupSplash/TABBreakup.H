@@ -101,7 +101,7 @@ updateBreakup(
         (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * tbv) -
          (yn - Wer) * std::sin(omega * tbv));
     amrex::Real r32 =
-      3. * rad_part /
+      rad_part /
       (1. + 8. * K / 20. +
        denom * rad_part / sigma * ydottb * ydottb * (6. * K - 5.) / 120.);
     amrex::Real Utan = C_b * rad_part * ydottb;

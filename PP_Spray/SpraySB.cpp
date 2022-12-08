@@ -175,11 +175,15 @@ SprayParticleContainer::CreateSBDroplets(
         // TODO: Add distribution for radii
         Real r32 = phi1;
         Real d32 = 2. * r32;
+        Real dummy = 0.;
+        ChiSquared csdist(d32, dummy);
+        // Child droplets cannot be bigger than half original droplet
+        Real dmean = amrex::min(0.5 * d0, csdist.get_dia());
         Real Utan = phi2;
-        Real bmass = M_PI / 6. * rho_part * std::pow(d32, 3);
+        Real bmass = M_PI / 6. * rho_part * std::pow(dmean, 3);
         int Nsint = static_cast<int>(pmass / bmass);
         auto newbmass = pmass / static_cast<Real>(Nsint);
-        Real newd32 = std::cbrt(6. * newbmass / (M_PI * rho_part));
+        Real newdmean = std::cbrt(6. * newbmass / (M_PI * rho_part));
 #if AMREX_SPACEDIM == 3
         RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);
@@ -192,7 +196,7 @@ SprayParticleContainer::CreateSBDroplets(
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
-          p.rdata(SPI.pstateDia) = d32;
+          p.rdata(SPI.pstateDia) = newdmean;
           p.rdata(SPI.pstateT) = T0;
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SPI.pstateY + spf) = Y0[spf];
