@@ -194,7 +194,7 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  int ncells = box.numPts();
+  int ncells = static_cast<int>(box.numPts());
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
 

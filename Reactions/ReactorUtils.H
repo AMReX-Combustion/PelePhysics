@@ -200,7 +200,7 @@ box_unflatten(
     amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
   temperature(i, j, k, 0) = temp;
-  FC_in(i, j, k, 0) = FCunt;
+  FC_in(i, j, k, 0) = static_cast<amrex::Real>(FCunt);
 }
 
 template <typename OrderType>
