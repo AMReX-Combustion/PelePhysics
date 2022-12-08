@@ -122,6 +122,8 @@ SprayParticleContainer::readSprayParams(
     }
     // Set the fuel surface tension and contact angle
     pp.get("fuel_sigma", sprayData.sigma);
+    sprayData.do_splash = splash_model;
+    sprayData.do_breakup = breakup_model;
   }
 
   // Must use same reference temperature for all fuels

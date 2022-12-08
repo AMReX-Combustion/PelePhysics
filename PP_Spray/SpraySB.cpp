@@ -148,11 +148,11 @@ SprayParticleContainer::CreateSBDroplets(
         p.rdata(SPI.pstateT) = T0;
         p.rdata(SPI.pstateTABY) = 0.;
         p.rdata(SPI.pstateTABYdot) = 0.;
-        // If droplet splashing is not thermally breakup, center droplet also
+        Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
+        p.rdata(SPI.pstateDia) = dia_rem;
+        // If droplet splashing is thermally breakup, center droplet also
         // reflects
-        if (N_SB_h[n] == splash_breakup::splash_splash) {
-          Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
-          p.rdata(SPI.pstateDia) = dia_rem;
+        if (N_SB_h[n] == splash_breakup::splash_thermal_breakup) {
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             p.pos(dir) = loc0[dir] + dtpp * avg_vel[dir];
             p.rdata(SPI.pstateVel + dir) = avg_vel[dir];
@@ -176,7 +176,8 @@ SprayParticleContainer::CreateSBDroplets(
         Real r32 = phi1;
         Real d32 = 2. * r32;
         Real dummy = 0.;
-        ChiSquared csdist(d32, dummy);
+        ChiSquared csdist;
+        csdist.init(d32, dummy);
         // Child droplets cannot be bigger than half original droplet
         Real dmean = amrex::min(0.5 * d0, csdist.get_dia());
         Real Utan = phi2;

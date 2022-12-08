@@ -82,7 +82,7 @@ droplet_splashing(
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   amrex::Real umag = vel_part.vectorLength();
   // Inclination of on-coming particle to surface in radians
-  const amrex::Real alpha = std::asin(amrex::Math::abs(Nw_Vp) / umag);
+  amrex::Real alpha = amrex::max(M_PI / 6., std::asin(amrex::Math::abs(Nw_Vp) / umag));
 #ifdef PELELM_USE_SPRAY
   const amrex::Real p_bar = p_gas * 1.E-5;
 #else

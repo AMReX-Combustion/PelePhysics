@@ -169,6 +169,7 @@ SprayParticleContainer::updateParticles(
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   bool isActive = !(isVirt || isGhost);
+  bool do_splash_breakup = (m_sprayData->do_breakup || m_sprayData->do_splash);
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -273,7 +274,7 @@ SprayParticleContainer::updateParticles(
     auto N_SB = N_SB_d.dataPtr();
     SBVects refv(Np);
     SBPtrs rf_d;
-    if (isActive && m_sprayData->sigma > 0.) {
+    if (isActive && do_splash_breakup) {
       refv.fillPtrs_d(rf_d);
     }
     amrex::ParallelFor(
@@ -390,7 +391,7 @@ SprayParticleContainer::updateParticles(
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
                 p.pos(dir) += cur_dt * cvel;
               }
-              if (fdat->sigma > 0.) {
+              if (fdat->do_breakup) {
                 updateBreakup(
                   C_D, rem_dt, cur_dt, pid, gpv, SPI, *fdat, p, N_SB, rf_d);
               }
@@ -426,7 +427,7 @@ SprayParticleContainer::updateParticles(
           } // End of subcycle loop
         }   // End of p.id() > 0 check
       });   // End of loop over particles
-    if (isActive && m_sprayData->sigma > 0.) {
+    if (isActive && do_splash_breakup) {
       Gpu::copy(
         Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
       bool get_new_parts = false;
