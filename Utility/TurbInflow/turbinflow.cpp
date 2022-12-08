@@ -106,7 +106,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       tp[n].sdata = new amrex::FArrayBox(sbx, 3, amrex::The_Async_Arena());
 
-      tp[n].kmax = npts[2];
+      AMREX_D_TERM(, , tp[n].kmax = npts[2];)
 
       if (tp[n].isswirltype) {
         for (int i = 0; i < tp[n].kmax; i++) {
