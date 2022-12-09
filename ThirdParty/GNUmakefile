@@ -7,7 +7,7 @@ CUDA_ARCH       ?= 70
 AMD_ARCH        ?= gfx90a
 
 SS_VERSION=5.4.0
-MAGMA_VERSION=2.6.2
+MAGMA_VERSION=2.7.0
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
@@ -206,8 +206,8 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
-	@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
-	@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
+	#@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
+	#@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
 	@echo ${CCOMPILER}
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
