@@ -740,7 +740,10 @@ def light_specs(fstream, speclist, do_declarations):
 
     # coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(fstream, "void egtransetKTDIF(int* KTDIF) {")
+    if len(speclist) > 0:
+        cw.writer(fstream, "void egtransetKTDIF(int* KTDIF) {")
+    else:
+        cw.writer(fstream, "void egtransetKTDIF(int* /*KTDIF*/) {")
 
     for i in range(len(speclist)):
         cw.writer(fstream, "%s[%d] = %d;" % ("KTDIF", i, speclist[i]))
@@ -859,7 +862,10 @@ def thermaldiffratios(
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(fstream, "void egtransetCOFTD(amrex::Real* COFTD) {")
+    if len(coftd) >0:
+        cw.writer(fstream, "void egtransetCOFTD(amrex::Real* COFTD) {")
+    else:
+        cw.writer(fstream, "void egtransetCOFTD(amrex::Real* /*COFTD*/) {")
 
     for i in range(len(coftd)):
         for j in range(n_species):
@@ -1981,15 +1987,16 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real   EPS[%d];" % n_species)
     cw.writer(fstream, "amrex::Real   SIG[%d];" % n_species)
     cw.writer(fstream, "amrex::Real    wt[%d];" % n_species)
-    cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
-    cw.writer(
-        fstream,
-        "amrex::Real boltzmann = 1.3806503e-16;"
-        + cw.comment("we work in CGS"),
-    )
     cw.writer(
         fstream, "amrex::Real Rcst = 83.144598;" + cw.comment("in bar [CGS] !")
     )
+    if (not all((species.name in tabulated_critical_params) for species in species_info.nonqssa_species)):
+        cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
+        cw.writer(
+            fstream,
+            "amrex::Real boltzmann = 1.3806503e-16;"
+            + cw.comment("we work in CGS"),
+        )
 
     cw.writer(fstream)
 

@@ -47,12 +47,20 @@ def production_rate(
             " vectors "
         ),
     )
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
-        "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
-        " const amrex::Real * tc, amrex::Real invT)",
-    )
+    if n_reactions > 0:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
+            "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
+            " const amrex::Real * tc, amrex::Real invT)",
+        )
+    else:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
+            " /*qf*/, amrex::Real * /*qr*/, amrex::Real * /*sc*/, amrex::Real * /*sc_qss*/,"
+            " const amrex::Real * /*tc*/, amrex::Real /*invT*/)",
+        )
     cw.writer(fstream, "{")
 
     if n_reactions > 0:
@@ -448,24 +456,31 @@ def production_rate(
     cw.writer(fstream)
 
     # main function
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
-    )
+    if n_reactions > 0:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
+            " productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
+        )
+    else:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
+            " productionRate(amrex::Real * wdot, amrex::Real * /*sc*/, amrex::Real /*T*/)",
+        )
     cw.writer(fstream, "{")
 
-    cw.writer(
-        fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
-        + cw.comment("temperature cache"),
-    )
-    cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
-    cw.writer(fstream)
 
     if n_reactions == 0:
         cw.writer(fstream)
     else:
+        cw.writer(
+            fstream,
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+            + cw.comment("temperature cache"),
+        )
+        cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
+        cw.writer(fstream)
         cw.writer(
             fstream,
             cw.comment(
