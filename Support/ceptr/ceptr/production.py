@@ -18,6 +18,7 @@ def production_rate(
 ):
     """Write production rate."""
     n_species = species_info.n_species
+    n_qss_species = species_info.n_qssa_species
     n_reactions = mechanism.n_reactions
 
     if len(reaction_info.index) != 7:
@@ -48,12 +49,20 @@ def production_rate(
         ),
     )
     if n_reactions > 0:
-        cw.writer(
-            fstream,
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
-            "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
-            " const amrex::Real * tc, amrex::Real invT)",
-        )
+        if n_qss_species > 0:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
+                "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
+                " const amrex::Real * tc, amrex::Real invT)",
+            )
+        else:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
+                "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * /*sc_qss*/,"
+                " const amrex::Real * tc, amrex::Real invT)",
+            )
     else:
         cw.writer(
             fstream,
@@ -174,7 +183,7 @@ def production_rate(
         cw.writer(fstream, cw.comment("Evaluate the kfs"))
         # cw.writer(fstream,"amrex::Real k_f[%d];"% nclassd)
         # cw.writer(fstream,"amrex::Real Corr[%d];" % nclassd)
-        cw.writer(fstream, "amrex::Real k_f, k_r, Corr;")
+        cw.writer(fstream, "amrex::Real k_f, Corr;")
         if ntroe > 0:
             cw.writer(
                 fstream,
