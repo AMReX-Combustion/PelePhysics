@@ -83,7 +83,7 @@ ifeq ($(USE_CUDA),TRUE)
 endif
 ifeq ($(USE_HIP),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
-  ifeq ($(which_computer),crusher)
+  ifeq ($(which_computer),$(filter $(which_computer),frontier crusher))
     MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
@@ -104,9 +104,8 @@ ifeq ($(USE_CUDA),TRUE)
   endif
 endif
 ifeq ($(USE_HIP),TRUE)
-  ## For spock/crusher only at this point !
   MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH) -DAMDGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGET:STRING=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_cray.so
-  ifeq ($(which_computer),crusher)
+  ifeq ($(which_computer),$(filter $(which_computer),frontier crusher))
     MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
@@ -159,7 +158,8 @@ else
   DPCPPSuffix=
 endif
 
-SUNDIALS_BRANCH ?= v6.4.1
+SUNDIALS_VERSION ?= 6.4.1
+SUNDIALS_DIST_FILE ?= v$(SUNDIALS_VERSION).tar.gz
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
@@ -200,7 +200,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
           -DSUNDIALS_INDEX_SIZE:INT=32 \
           $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
           $(KLU_DEFINES) $(MAGMA_DEFINES) \
-          $(SUNDIALS_SOURCE_DIR) && \
+          $(SUNDIALS_SOURCE_DIR)/sundials-$(SUNDIALS_VERSION) && \
         cmake --build $(SUNDIALS_BUILD_DIR) --parallel 16 && \
         cmake --install $(SUNDIALS_BUILD_DIR)
 
@@ -226,15 +226,15 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
         cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
-	@cd $(MAGMA_DIST_DIR)/..; tar zxf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
+	@cd $(MAGMA_DIST_DIR)/..; tar xf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
-	@cd $(MAGMA_DIST_DIR); wget icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR); cp $(WORLDWORK)/cmb138/software/$(MAGMA_DIST_FILE) . || wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
+	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
