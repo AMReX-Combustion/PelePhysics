@@ -4172,7 +4172,7 @@ comp_qfqr(
   amrex::Real* qf,
   amrex::Real* qr,
   amrex::Real* sc,
-  amrex::Real* sc_qss,
+  amrex::Real* /*sc_qss*/,
   const amrex::Real* tc,
   amrex::Real invT)
 {
@@ -4860,7 +4860,7 @@ comp_qfqr(
   amrex::Real refCinv = 1 / refC;
 
   // Evaluate the kfs
-  amrex::Real k_f, k_r, Corr;
+  amrex::Real k_f, Corr;
   amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
   // reaction 0:  H + O + M => OH + M
@@ -21986,7 +21986,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[357] = 5.54637286E+00;
   COFD[358] = -4.87070324E-01;
   COFD[359] = 2.03983467E-02;
-  COFD[360] = -1.79310920E+01;
+  COFD[360] = -1.79310921E+01;
   COFD[361] = 4.98037650E+00;
   COFD[362] = -4.26676911E-01;
   COFD[363] = 1.83007231E-02;
@@ -24626,7 +24626,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[2997] = 4.24084025E+00;
   COFD[2998] = -3.37428619E-01;
   COFD[2999] = 1.47032793E-02;
-  COFD[3000] = -1.79310920E+01;
+  COFD[3000] = -1.79310921E+01;
   COFD[3001] = 4.98037650E+00;
   COFD[3002] = -4.26676911E-01;
   COFD[3003] = 1.83007231E-02;
@@ -24882,7 +24882,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[3253] = 5.15745622E+00;
   COFD[3254] = -4.46648283E-01;
   COFD[3255] = 1.90458987E-02;
-  COFD[3256] = -2.18644448E+01;
+  COFD[3256] = -2.18644449E+01;
   COFD[3257] = 5.53438558E+00;
   COFD[3258] = -4.85873757E-01;
   COFD[3259] = 2.03606278E-02;
@@ -25551,15 +25551,15 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[3922] = -3.75026436E-01;
   COFD[3923] = 1.39466941E-02;
   COFD[3924] = -2.25933772E+01;
-  COFD[3925] = 5.42562555E+00;
+  COFD[3925] = 5.42562556E+00;
   COFD[3926] = -4.48132861E-01;
   COFD[3927] = 1.77847329E-02;
   COFD[3928] = -2.25933772E+01;
-  COFD[3929] = 5.42562555E+00;
+  COFD[3929] = 5.42562556E+00;
   COFD[3930] = -4.48132861E-01;
   COFD[3931] = 1.77847329E-02;
   COFD[3932] = -2.25999325E+01;
-  COFD[3933] = 5.42562555E+00;
+  COFD[3933] = 5.42562556E+00;
   COFD[3934] = -4.48132861E-01;
   COFD[3935] = 1.77847329E-02;
   COFD[3936] = -2.15763414E+01;
@@ -25683,7 +25683,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4054] = -4.81921515E-01;
   COFD[4055] = 1.97721229E-02;
   COFD[4056] = -2.25933772E+01;
-  COFD[4057] = 5.42562555E+00;
+  COFD[4057] = 5.42562556E+00;
   COFD[4058] = -4.48132861E-01;
   COFD[4059] = 1.77847329E-02;
   COFD[4060] = -2.26149331E+01;
@@ -25819,7 +25819,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4190] = -4.81921515E-01;
   COFD[4191] = 1.97721229E-02;
   COFD[4192] = -2.25933772E+01;
-  COFD[4193] = 5.42562555E+00;
+  COFD[4193] = 5.42562556E+00;
   COFD[4194] = -4.48132861E-01;
   COFD[4195] = 1.77847329E-02;
   COFD[4196] = -2.26149331E+01;
@@ -25955,7 +25955,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4326] = -4.81921515E-01;
   COFD[4327] = 1.97721229E-02;
   COFD[4328] = -2.25999325E+01;
-  COFD[4329] = 5.42562555E+00;
+  COFD[4329] = 5.42562556E+00;
   COFD[4330] = -4.48132861E-01;
   COFD[4331] = 1.77847329E-02;
   COFD[4332] = -2.26206807E+01;
@@ -26070,7 +26070,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4441] = 5.44889462E+00;
   COFD[4442] = -4.52325002E-01;
   COFD[4443] = 1.80132629E-02;
-  COFD[4444] = -2.18644448E+01;
+  COFD[4444] = -2.18644449E+01;
   COFD[4445] = 5.53438558E+00;
   COFD[4446] = -4.85873757E-01;
   COFD[4447] = 2.03606278E-02;
@@ -26547,9 +26547,9 @@ GET_CRITPARAMS(
   amrex::Real EPS[34];
   amrex::Real SIG[34];
   amrex::Real wt[34];
+  amrex::Real Rcst = 83.144598; // in bar [CGS] !
   amrex::Real avogadro = 6.02214199e23;
   amrex::Real boltzmann = 1.3806503e-16; // we work in CGS
-  amrex::Real Rcst = 83.144598;          // in bar [CGS] !
 
   egtransetEPS(EPS);
   egtransetSIG(SIG);
