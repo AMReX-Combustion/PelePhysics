@@ -230,11 +230,11 @@ $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
-	@cd $(MAGMA_DIST_DIR); cp $(WORLDWORK)/cmb138/jrood/$(MAGMA_DIST_FILE) . || wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR); cp $(WORLDWORK)/cmb138/software/$(MAGMA_DIST_FILE) . || wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/jrood/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
+	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
