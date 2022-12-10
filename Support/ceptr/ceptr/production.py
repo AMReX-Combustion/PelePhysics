@@ -479,7 +479,6 @@ def production_rate(
         )
     cw.writer(fstream, "{")
 
-
     if n_reactions == 0:
         cw.writer(fstream)
     else:

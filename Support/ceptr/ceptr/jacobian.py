@@ -122,7 +122,8 @@ def ajac(
             if species_info.n_qssa_species > 0:
                 cw.writer(
                     fstream,
-                    "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+                    "amrex::Real g_RT_qss[%d];"
+                    % (species_info.n_qssa_species),
                 )
                 cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
 
@@ -134,7 +135,8 @@ def ajac(
             if species_info.n_qssa_species > 0:
                 cw.writer(
                     fstream,
-                    "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+                    "amrex::Real h_RT_qss[%d];"
+                    % (species_info.n_qssa_species),
                 )
                 cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
@@ -196,7 +198,9 @@ def ajac(
 
                 cw.writer(
                     fstream,
-                    cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
+                    cw.comment(
+                        "reaction %d: %s" % (orig_idx, reaction.equation)
+                    ),
                 )
                 ajac_reaction_d(
                     fstream,
@@ -263,7 +267,9 @@ def ajac(
             cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
             cw.writer(fstream, "dehmixdc = 0.0;")
             cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
-            cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+            cw.writer(
+                fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1)
+            )
             cw.writer(fstream, "}")
             cw.writer(
                 fstream,

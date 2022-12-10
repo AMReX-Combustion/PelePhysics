@@ -862,7 +862,7 @@ def thermaldiffratios(
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    if len(coftd) >0:
+    if len(coftd) > 0:
         cw.writer(fstream, "void egtransetCOFTD(amrex::Real* COFTD) {")
     else:
         cw.writer(fstream, "void egtransetCOFTD(amrex::Real* /*COFTD*/) {")
@@ -1990,7 +1990,10 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(
         fstream, "amrex::Real Rcst = 83.144598;" + cw.comment("in bar [CGS] !")
     )
-    if (not all((species.name in tabulated_critical_params) for species in species_info.nonqssa_species)):
+    if not all(
+        (species.name in tabulated_critical_params)
+        for species in species_info.nonqssa_species
+    ):
         cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
         cw.writer(
             fstream,
