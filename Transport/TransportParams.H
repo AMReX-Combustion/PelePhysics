@@ -51,7 +51,9 @@ struct InitTransParm<EOSType, ConstTransport>
       tparm->const_diffusivity *= amrex::Real(1.0e1);
       tparm->const_conductivity *= amrex::Real(1.0e5);
     } else if (units != "CGS") {
-      amrex::Abort("Unable to initialize transport using unknown units "+units+". Use CGS (def) or MKS");
+      amrex::Abort(
+        "Unable to initialize transport using unknown units " + units +
+        ". Use CGS (def) or MKS");
     }
   }
 };
