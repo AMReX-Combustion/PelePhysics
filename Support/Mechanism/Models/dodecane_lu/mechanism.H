@@ -5647,7 +5647,7 @@ comp_qfqr(
   amrex::Real* qf,
   amrex::Real* qr,
   amrex::Real* sc,
-  amrex::Real* sc_qss,
+  amrex::Real* /*sc_qss*/,
   const amrex::Real* tc,
   amrex::Real invT)
 {
@@ -6739,7 +6739,7 @@ comp_qfqr(
   amrex::Real refCinv = 1 / refC;
 
   // Evaluate the kfs
-  amrex::Real k_f, k_r, Corr;
+  amrex::Real k_f, Corr;
   amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
   // reaction 0:  H + O2 <=> O + OH
@@ -52483,7 +52483,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[8207] = -2.12932795E-03;
   COFD[8208] = -1.76386321E+01;
   COFD[8209] = 2.51509845E+00;
-  COFD[8210] = 1.02670796E-04;
+  COFD[8210] = 1.02670795E-04;
   COFD[8211] = -4.38201691E-03;
   COFD[8212] = -1.76055419E+01;
   COFD[8213] = 2.48711127E+00;
@@ -55958,9 +55958,9 @@ GET_CRITPARAMS(
   amrex::Real EPS[53];
   amrex::Real SIG[53];
   amrex::Real wt[53];
+  amrex::Real Rcst = 83.144598; // in bar [CGS] !
   amrex::Real avogadro = 6.02214199e23;
   amrex::Real boltzmann = 1.3806503e-16; // we work in CGS
-  amrex::Real Rcst = 83.144598;          // in bar [CGS] !
 
   egtransetEPS(EPS);
   egtransetSIG(SIG);
