@@ -42,6 +42,19 @@ struct InitTransParm<EOSType, ConstTransport>
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
     pp.query("const_conductivity", tparm->const_conductivity);
     pp.query("const_diffusivity", tparm->const_diffusivity);
+    std::string units = "CGS";
+    pp.query("units", units);
+    if (units == "MKS") {
+      // If input in MKS, convert to CGS
+      tparm->const_viscosity *= amrex::Real(1.0e1);
+      tparm->const_bulk_viscosity *= amrex::Real(1.0e1);
+      tparm->const_diffusivity *= amrex::Real(1.0e1);
+      tparm->const_conductivity *= amrex::Real(1.0e5);
+    } else if (units != "CGS") {
+      amrex::Abort(
+        "Unable to initialize transport using unknown units " + units +
+        ". Use CGS (def) or MKS");
+    }
   }
 };
 
