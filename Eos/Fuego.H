@@ -168,7 +168,6 @@ struct Fuego
   static void
   RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
   {
-    // CKWYR(&R, &T, Y, WDOT);
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);
     CKWC(&T, C, WDOT);

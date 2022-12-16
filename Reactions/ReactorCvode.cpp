@@ -1022,14 +1022,6 @@ ReactorCvode::allocUserData(
       udata->info);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    /*
-    size_t free_mem = 0;
-    size_t total_mem = 0;
-    cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
-    AMREX_ASSERT( cudaSuccess == cudaStat1 );
-    std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
-    */
-
     // allocate working space
     cusolver_status = cusolverSpDcsrqrBufferInfoBatched(
       udata->cusolverHandle,
@@ -1101,9 +1093,6 @@ ReactorCvode::allocUserData(
       udata->JSPSmat[i] =
         new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
       klu_defaults(&(udata->Common[i]));
-      // udata->Common.btf = 0;
-      //(udata->Common[i]).maxwork = 15;
-      // udata->Common.ordering = 1;
       udata->Symbolic[i] = klu_analyze(
         NUM_SPECIES + 1, udata->colPtrs[i], udata->rowVals[i],
         &(udata->Common[i]));
@@ -1167,7 +1156,6 @@ ReactorCvode::react(
   SUNProfiler sun_profiler = nullptr;
   SUNContext_GetProfiler(
     *amrex::sundials::The_Sundials_Context(), &sun_profiler);
-  // SUNProfiler_Reset(sun_profiler);
 #endif
 
   //----------------------------------------------------------

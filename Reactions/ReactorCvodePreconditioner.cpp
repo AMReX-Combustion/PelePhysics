@@ -124,37 +124,6 @@ PSolve(
   N_VCopyFromDevice_Cuda(z);
   N_VCopyFromDevice_Cuda(r);
 
-  /*
-    // Checks
-    // if (udata->verbose > 4) {
-        for(int batchId = 0 ; batchId < ncells; batchId++){
-            // measure |bj - Aj*xj|
-            realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
-            amrex::Real *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId *
-            (NUM_SPECIES+1); amrex::Real *bj       =
-            N_VGetHostArrayPointer_Cuda(r) + batchId * (NUM_SPECIES+1);
-            // sup| bj - Aj*xj|
-            amrex::Real sup_res = 0;
-            for(int row = 0 ; row < (NUM_SPECIES+1) ; row++){
-                printf("\n     row %d: ", row);
-                const int start = udata->csr_row_count_d[row] - 1;
-                const int end = udata->csr_row_count_d[row +1] - 1;
-                amrex::Real Ax = 0.0; // Aj(row,:)*xj
-                for(int colidx = start ; colidx < end ; colidx++){
-                    const int col = udata->csr_col_index_d[colidx] - 1;
-                    const amrex::Real Areg = csrValAj[colidx];
-                    const amrex::Real xreg = xj[col];
-                    printf("  (%d, %14.8e, %14.8e, %14.8e) ",
-                    col,Areg,xreg,bj[row] ); Ax = Ax + Areg * xreg;
-                }
-                amrex::Real rresidi = bj[row] - Ax;
-                sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
-            }
-            printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
-        }
-    //}
-  */
-
   return (0);
 }
 
