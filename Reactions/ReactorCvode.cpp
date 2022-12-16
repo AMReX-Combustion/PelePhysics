@@ -454,7 +454,7 @@ ReactorCvode::checkCvodeOptions() const
 
   // Print additionnal information
   if (precond_type == cvode::sparseSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -494,7 +494,7 @@ ReactorCvode::checkCvodeOptions() const
 #endif
 #ifndef AMREX_USE_GPU
   } else if (precond_type == cvode::customSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -513,7 +513,7 @@ ReactorCvode::checkCvodeOptions() const
   }
 
   if (analytical_jacobian == 1) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     int ncells = 1; // Print the pattern of the diagonal block. ncells will
