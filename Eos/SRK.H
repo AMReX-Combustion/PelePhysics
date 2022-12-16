@@ -320,7 +320,7 @@ struct SRK
   void RTY2Cp(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
   {
     amrex::Real bm, am, dAmdT, d2AmdT2;
-    amrex::Real K1, Cpig, wbar, tau, Rm;
+    amrex::Real K1, Cpig = 0.0, wbar = 0.0, tau, Rm;
     amrex::Real dpdT, dpdtau, dhmdT, dhmdtau;
 
     CKMMWY(&Y[0], &wbar);
@@ -392,7 +392,7 @@ struct SRK
     // a reasonable initial guess.
     amrex::Real Tn;
     amrex::Real bm, am, dAmdT, d2AmdT2;
-    amrex::Real K1, ei_ig[NUM_SPECIES], Cv;
+    amrex::Real K1, ei_ig[NUM_SPECIES], Cv = 0.0;
     int nIter = 0;
     amrex::Real fzero = 1.0;
 
@@ -450,7 +450,7 @@ struct SRK
   AMREX_FORCE_INLINE
   void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
   {
-    amrex::Real wbar, tau, am, bm;
+    amrex::Real wbar = 0.0, tau, am, bm;
     tau = 1.0 / R;
     CKMMWY(&Y[0], &wbar);
     MixingRuleAmBm(T, Y, am, bm);
@@ -482,7 +482,7 @@ struct SRK
   void RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
   {
     amrex::Real am, bm, dAmdT;
-    amrex::Real tau, wbar, Rm, Pnp1;
+    amrex::Real tau, wbar = 0.0, Rm, Pnp1;
     amrex::Real eosT1Denom, eosT2Denom, InvEosT1Denom, InvEosT2Denom;
     int nIter;
 
@@ -522,7 +522,8 @@ struct SRK
   {
     amrex::Real am, bm, dAmdY[NUM_SPECIES];
     amrex::Real inv_mwt[NUM_SPECIES], mwt[NUM_SPECIES];
-    amrex::Real K1, InvEosT1Denom, InvEosT3Denom, wbar, RmT, InvRuT, InvBm, tau;
+    amrex::Real K1, InvEosT1Denom, InvEosT3Denom, wbar = 0.0, RmT, InvRuT,
+                                                  InvBm, tau;
 
     MixingRuleAmBm(T, Y, am, bm);
     Calc_dAmdY(T, Y, dAmdY);
@@ -650,7 +651,7 @@ struct SRK
     amrex::Real& E)
   {
     // Calculate RHO
-    amrex::Real am, bm, Z, wbar, K1;
+    amrex::Real am, bm, Z, wbar = 0.0, K1;
     MixingRuleAmBm(T, Y, am, bm);
     CKMMWY(&Y[0], &wbar);
     Calc_CompressFactor_Z(Z, am, bm, P, T, wbar);
@@ -672,7 +673,7 @@ struct SRK
   AMREX_FORCE_INLINE
   void PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R)
   {
-    amrex::Real am, bm, Z, wbar;
+    amrex::Real am, bm, Z, wbar = 0.0;
     MixingRuleAmBm(T, Y, am, bm);
     CKMMWY(&Y[0], &wbar);
     Calc_CompressFactor_Z(Z, am, bm, P, T, wbar);
@@ -704,7 +705,7 @@ struct SRK
   {
     amrex::Real am, bm, dAmdT, d2AmdT2;
     amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES], inv_mwt[NUM_SPECIES];
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     amrex::Real dpdtau, dhmdtau;
 
     // Ideal gas part
@@ -764,7 +765,7 @@ struct SRK
     amrex::Real R, amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   {
     amrex::Real bm, am, dAmdT, d2AmdT2;
-    amrex::Real K1, Cpig, Cp, Cv, wbar, tau, Rm;
+    amrex::Real K1, Cpig = 0.0, Cp, Cv = 0.0, wbar = 0.0, tau, Rm;
     amrex::Real P, dpdT, dpdtau, dhmdT, dhmdtau;
 
     CKMMWY(&Y[0], &wbar);
@@ -875,7 +876,7 @@ struct SRK
     amrex::Real& dpde,
     amrex::Real& dpdr_e)
   {
-    amrex::Real am, bm, dAmdT, d2AmdT2, wbar, Cv;
+    amrex::Real am, bm, dAmdT, d2AmdT2, wbar = 0.0, Cv = 0.0;
 
     CKMMWY(&Y[0], &wbar);
     MixingRuleBm(Y, bm);
@@ -906,7 +907,7 @@ struct SRK
     amrex::Real dijY[][NUM_SPECIES])
   {
     amrex::Real bm, am, dAmdY[NUM_SPECIES], d2AmdY2[NUM_SPECIES][NUM_SPECIES];
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     amrex::Real dpdtau, dpdYk[NUM_SPECIES], inv_mwt[NUM_SPECIES];
 
     // Optimize by combining Am derivate calls?
