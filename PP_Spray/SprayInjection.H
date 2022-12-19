@@ -35,12 +35,6 @@ SprayParticleContainer::sprayInjection(
   if (curProc < startInjProc || curProc >= startInjProc + numInjProcs) {
     return;
   }
-  const int pstateVel = m_sprayIndx.pstateVel;
-  const int pstateT = m_sprayIndx.pstateT;
-  const int pstateDia = m_sprayIndx.pstateDia;
-  const int pstateY = m_sprayIndx.pstateY;
-  const int pstateTABY = m_sprayIndx.pstateTABY;
-  const int pstateTABYdot = m_sprayIndx.pstateTABYdot;
   SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
@@ -121,31 +115,33 @@ SprayParticleContainer::sprayInjection(
       ParticleType p;
       p.id() = ParticleType::NextID();
       p.cpu() = amrex::ParallelDescriptor::MyProc();
-      AMREX_D_TERM(p.rdata(pstateVel) = vel_part[0];
-                   , p.rdata(pstateVel + 1) = vel_part[1];
-                   , p.rdata(pstateVel + 2) = vel_part[2];);
-      p.rdata(pstateT) = T_part;
+      AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
+                   , p.rdata(SprayComps::pstateVel + 1) = vel_part[1];
+                   , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
+      p.rdata(SprayComps::pstateT) = T_part;
       // Never add particle with less than minimum mass
-      p.rdata(pstateDia) = dia_part;
+      p.rdata(SprayComps::pstateDia) = dia_part;
       amrex::Real rho_part = 0.;
       if (SPRAY_FUEL_NUM > 1) {
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          p.rdata(pstateY + spf) = Y_part[spf];
+          p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
           rho_part += Y_part[spf] / fdat->rhoL(T_part, spf);
         }
         rho_part = 1. / rho_part;
       } else {
         rho_part = fdat->rhoL(T_part, 0);
-        p.rdata(pstateY) = 1.;
+        p.rdata(SprayComps::pstateY) = 1.;
       }
       // Add particles as if they have advanced some random portion of
       // dt
       amrex::Real pmov = amrex::Random();
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) = part_loc[dir] + pmov * dt * p.rdata(pstateVel + dir);
+        p.pos(dir) =
+          part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      p.rdata(pstateTABY) = 0.;
-      p.rdata(pstateTABYdot) = 0.;
+      p.rdata(SprayComps::pstateTABY) = 0.;
+      p.rdata(SprayComps::pstateTABYdot) = 0.;
+      p.rdata(SprayComps::pstateFilmVol) = 0.;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
       bool where = Where(p, pld);
       if (!where) {
@@ -213,24 +209,19 @@ SprayParticleContainer::uniformSprayInit(
       NRedist = 8;
     }
   }
-  const int pstateVel = m_sprayIndx.pstateVel;
-  const int pstateDia = m_sprayIndx.pstateDia;
-  const int pstateT = m_sprayIndx.pstateT;
-  const int pstateY = m_sprayIndx.pstateY;
-  const int pstateTABY = m_sprayIndx.pstateTABY;
-  const int pstateTABYdot = m_sprayIndx.pstateTABYdot;
   // Reference values for the particles
   amrex::Real part_vals[NAR_SPR + NSR_SPR];
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    part_vals[pstateVel + dir] = vel_part[dir];
+    part_vals[SprayComps::pstateVel + dir] = vel_part[dir];
   }
-  part_vals[pstateT] = T_part;
-  part_vals[pstateDia] = dia_part;
+  part_vals[SprayComps::pstateT] = T_part;
+  part_vals[SprayComps::pstateDia] = dia_part;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    part_vals[pstateY + spf] = Y_part[spf];
+    part_vals[SprayComps::pstateY + spf] = Y_part[spf];
   }
-  part_vals[pstateTABY] = 0.;
-  part_vals[pstateTABYdot] = 0.;
+  part_vals[SprayComps::pstateTABY] = 0.;
+  part_vals[SprayComps::pstateTABYdot] = 0.;
+  part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),

@@ -110,7 +110,9 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
-    if (!pp.contains("fuel_sigma") || !pp.contains("fuel_mu")) {
+    if (
+      !pp.contains("fuel_sigma") || !pp.contains("fuel_mu") ||
+      !pp.contains("fuel_lambda")) {
       Print()
         << "fuel_sigma and fuel_mu must be set for splash or breakup model. "
         << std::endl;
@@ -167,6 +169,7 @@ SprayParticleContainer::readSprayParams(
     "spray_vol_frac",  // Volume fraction of liquid in cell
     "d10",             // Average diameter
     "d32",             // SMD
+    "wall_film_hght",  // Wall film height
     "spray_temp",      // Mass-weighted average temperature
     AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
   int derive_plot_vars = 1;

@@ -12,7 +12,6 @@ SprayParticleContainer::computeDerivedVars(
 {
   auto derivePlotVarCount = spray_derive_vars.size();
   AMREX_ALWAYS_ASSERT(mf_var.nComp() >= derivePlotVarCount);
-  SprayComps SPI = m_sprayIndx;
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -40,7 +39,8 @@ SprayParticleContainer::computeDerivedVars(
   const int volf_indx = surf_indx + 1;
   const int d10_indx = volf_indx + 1;
   const int d32_indx = d10_indx + 1;
-  const int temp_indx = d32_indx + 1;
+  const int wfh_indx = d32_indx + 1;
+  const int temp_indx = wfm_indx + 1;
   const int vel_indx = temp_indx + 1;
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Long Np = pti.numParticles();
@@ -59,7 +59,7 @@ SprayParticleContainer::computeDerivedVars(
     }
 #endif
     amrex::ParallelFor(
-      Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol, total_spec_indx
+      Np, [pstruct, fdat, vararr, plo, dxi, cell_vol, total_spec_indx
 #ifdef AMREX_USE_EB
            ,
            flags_array, volfrac_fab
@@ -69,46 +69,55 @@ SprayParticleContainer::computeDerivedVars(
         if (p.id() > 0) {
           RealVect lxc = (p.pos() - plo) * dxi;
           IntVect ijkc = lxc.floor(); // Cell with particle
-          Real T_part = p.rdata(SPI.pstateT);
-          Real dia_part = p.rdata(SPI.pstateDia);
+          Real T_part = p.rdata(SprayComps::pstateT);
+          Real dia_part = p.rdata(SprayComps::pstateDia);
           Real rho_part = 0.;
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            rho_part += p.rdata(SPI.pstateY + spf) / fdat->rhoL(T_part, spf);
+            rho_part +=
+              p.rdata(SprayComps::pstateY + spf) / fdat->rhoL(T_part, spf);
           }
           rho_part = 1. / rho_part;
           Real surf = M_PI * dia_part * dia_part;
           Real vol = M_PI / 6. * std::pow(dia_part, 3);
           Real pmass = vol * rho_part;
           Real num_ppp = fdat->num_ppp; // Particles per parcel
-          Gpu::Atomic::Add(&vararr(ijkc, mass_indx), num_ppp * pmass);
-          Gpu::Atomic::Add(&vararr(ijkc, num_indx), num_ppp);
-          Gpu::Atomic::Add(&vararr(ijkc, vol_indx), num_ppp * vol);
-          Gpu::Atomic::Add(&vararr(ijkc, surf_indx), num_ppp * surf);
-          amrex::Real curvol = cell_vol;
+          // TODO: Adjust face area for EB
+          Real film_hght = p.rdata(SprayComps::pstateFilmVol) /
+                           (AMREX_D_TERM(1., *dx[0], *dx[0]));
+          if (film_hght == 0.) {
+            Gpu::Atomic::Add(&vararr(ijkc, mass_indx), num_ppp * pmass);
+            Gpu::Atomic::Add(&vararr(ijkc, num_indx), num_ppp);
+            Gpu::Atomic::Add(&vararr(ijkc, vol_indx), num_ppp * vol);
+            Gpu::Atomic::Add(&vararr(ijkc, surf_indx), num_ppp * surf);
+            amrex::Real curvol = cell_vol;
 #ifdef AMREX_USE_EB
-          if (!flags_array(ijkc).isRegular()) {
-            curvol /= volfrac_fab(ijkc);
-          }
-#endif
-          Gpu::Atomic::Add(&vararr(ijkc, volf_indx), num_ppp * vol / curvol);
-          Gpu::Atomic::Add(
-            &vararr(ijkc, d10_indx),
-            num_ppp * dia_part); // To be divided by num later
-          Gpu::Atomic::Add(
-            &vararr(ijkc, d32_indx),
-            num_ppp * vol * 6.); // To be divided by surf later
-          Gpu::Atomic::Add(&vararr(ijkc, temp_indx), num_ppp * pmass * T_part);
-          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-            Gpu::Atomic::Add(
-              &vararr(ijkc, vel_indx + dir),
-              num_ppp * pmass * p.rdata(SPI.pstateVel + dir));
-          }
-          if (total_spec_indx >= 0) {
-            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-              Gpu::Atomic::Add(
-                &vararr(ijkc, total_spec_indx + spf),
-                p.rdata(SPI.pstateY + spf) * pmass);
+            if (!flags_array(ijkc).isRegular()) {
+              curvol /= volfrac_fab(ijkc);
             }
+#endif
+            Gpu::Atomic::Add(&vararr(ijkc, volf_indx), num_ppp * vol / curvol);
+            Gpu::Atomic::Add(
+              &vararr(ijkc, d10_indx),
+              num_ppp * dia_part); // To be divided by num later
+            Gpu::Atomic::Add(
+              &vararr(ijkc, d32_indx),
+              num_ppp * vol * 6.); // To be divided by surf later
+            Gpu::Atomic::Add(
+              &vararr(ijkc, temp_indx), num_ppp * pmass * T_part);
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+              Gpu::Atomic::Add(
+                &vararr(ijkc, vel_indx + dir),
+                num_ppp * pmass * p.rdata(SprayComps::pstateVel + dir));
+            }
+            if (total_spec_indx >= 0) {
+              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+                Gpu::Atomic::Add(
+                  &vararr(ijkc, total_spec_indx + spf),
+                  p.rdata(SprayComps::pstateY + spf) * pmass);
+              }
+            }
+          } else {
+            Gpu::Atomic::Add(&vararr(ijkc, wfh_indx), film_hght);
           }
         }
       });

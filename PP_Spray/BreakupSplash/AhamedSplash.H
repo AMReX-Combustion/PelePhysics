@@ -39,6 +39,7 @@ splash_criteria(
 }
 
 // Determine if droplet is splashing, fill SB data if it is
+// TODO: Add wet wall droplet splashing functions
 AMREX_GPU_DEVICE
 AMREX_INLINE
 void
@@ -47,7 +48,6 @@ droplet_splashing(
   int pid,
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
-  const SprayComps& SPI,
   const SprayData& fdat,
   const amrex::Real p_gas,
   amrex::RealVect& vel_part,
@@ -60,20 +60,20 @@ droplet_splashing(
   const amrex::Real rem_dt)
 {
   amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-  amrex::Real T_part = p.rdata(SPI.pstateT);
+  amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real mu_part = 0.;
   amrex::Real rho_part = 0.;
   // TODO: Determine correct method for handling multi-component liquids
   amrex::Real Tboil = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int ysp = SPI.pstateY + spf;
+    const int ysp = SprayComps::pstateY + spf;
     mu_part += p.rdata(ysp) * fdat.mu[spf];
     rho_part += p.rdata(ysp) / fdat.rhoL(T_part, spf);
     Tboil += p.rdata(ysp) * cBoilT[spf];
   }
   rho_part = 1. / rho_part;
   amrex::Real Tstar = fdat.wall_T / Tboil;
-  const amrex::Real dia_part = p.rdata(SPI.pstateDia);
+  const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
   const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
@@ -82,7 +82,8 @@ droplet_splashing(
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   amrex::Real umag = vel_part.vectorLength();
   // Inclination of on-coming particle to surface in radians
-  amrex::Real alpha = amrex::max(M_PI / 6., std::asin(amrex::Math::abs(Nw_Vp) / umag));
+  amrex::Real alpha =
+    amrex::max(M_PI / 6., std::asin(amrex::Math::abs(Nw_Vp) / umag));
 #ifdef PELELM_USE_SPRAY
   const amrex::Real p_bar = p_gas * 1.E-5;
 #else
@@ -92,6 +93,8 @@ droplet_splashing(
                               std::exp(-6.E-3 * (fdat.wall_T - 260.)) +
                             36.;
   splash_type splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit);
+  // Amount of mass that gets deposited
+  amrex::Real dm = 0.;
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -99,20 +102,20 @@ droplet_splashing(
       vel_part[dir] -= Nw_Vp * (1. + rbound) * normal[dir];
     }
   } else if (splash_flag == splash_type::deposit) {
-    // TODO: Implement wall film model for this scenario
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
-    }
-    vel_part = amrex::RealVect::TheZeroVector();
+    dm = pmass;
   } else {
-    amrex::Real A;
+    amrex::Real ms;
+    // If splashing, turn current particle into wall film
     if (splash_flag == splash_type::splash) {
       N_SB[pid] = splash_breakup::splash_splash;
-      A = -3.E-3;
+      ms = pmass * 0.75 * (1. - std::exp(-3.E-3 * (Kv - Kcrit)));
+      dm = pmass - ms;
     } else {
-      // For thermal breakup, no deposition occurs
+      // For thermal breakup, no deposition occurs and current particle is
+      // deleted
       N_SB[pid] = splash_breakup::splash_thermal_breakup;
-      A = -0.0175;
+      ms = pmass * 0.75 * (1. - std::exp(-0.0175 * (Kv - Kcrit)));
+      p.id() = -1;
     }
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       // Save location where droplet hit wall
@@ -121,18 +124,24 @@ droplet_splashing(
       rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
-    amrex::Real ms = pmass * 0.75 * (1. - std::exp(A * (Kv - Kcrit)));
-    rf.d0[pid] = p.rdata(SPI.pstateDia);
+    rf.d0[pid] = p.rdata(SprayComps::pstateDia);
     rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;
-    rf.T0[pid] = p.rdata(SPI.pstateT);
+    rf.T0[pid] = p.rdata(SprayComps::pstateT);
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SPI.pstateY + spf);
+      rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
     }
 #endif
-    p.id() = -1;
+  }
+  if (dm > 0.) {
+    // Convert parcel to wall film
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
+    }
+    vel_part = amrex::RealVect::TheZeroVector();
+    p.rdata(SprayComps::pstateFilmVol) = dm / rho_part;
   }
 }
 

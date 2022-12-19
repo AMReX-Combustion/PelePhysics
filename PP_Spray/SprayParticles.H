@@ -14,7 +14,7 @@
 
 // Need components for velocity, diameter, temperature, mass fractions, and
 // breakup model variables P and Pdot
-#define NSR_SPR (AMREX_SPACEDIM + 4 + SPRAY_FUEL_NUM)
+#define NSR_SPR (SprayComps::pstateNum)
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
@@ -118,23 +118,19 @@ public:
     const int write_ascii,
     const std::string& dir)
   {
-    const int pstateVel = m_sprayIndx.pstateVel;
-    const int pstateT = m_sprayIndx.pstateT;
-    const int pstateDia = m_sprayIndx.pstateDia;
-    const int pstateY = m_sprayIndx.pstateY;
-    const int pstateTABY = m_sprayIndx.pstateTABY;
-    const int pstateTABYdot = m_sprayIndx.pstateTABYdot;
     amrex::Vector<std::string> real_comp_names(NSR_SPR);
-    AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
-                 , real_comp_names[pstateVel + 1] = "yvel";
-                 , real_comp_names[pstateVel + 2] = "zvel";);
-    real_comp_names[pstateT] = "temperature";
-    real_comp_names[pstateDia] = "diam";
+    AMREX_D_TERM(real_comp_names[SprayComps::pstateVel] = "xvel";
+                 , real_comp_names[SprayComps::pstateVel + 1] = "yvel";
+                 , real_comp_names[SprayComps::pstateVel + 2] = "zvel";);
+    real_comp_names[SprayComps::pstateT] = "temperature";
+    real_comp_names[SprayComps::pstateDia] = "diam";
     for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
-      real_comp_names[pstateY + sp] = "spray_mf_" + spray_fuel_names[sp];
+      real_comp_names[SprayComps::pstateY + sp] =
+        "spray_mf_" + spray_fuel_names[sp];
     }
-    real_comp_names[pstateTABY] = "Y_TAB";
-    real_comp_names[pstateTABYdot] = "Ydot_TAB";
+    real_comp_names[SprayComps::pstateTABY] = "Y_TAB";
+    real_comp_names[SprayComps::pstateTABYdot] = "Ydot_TAB";
+    real_comp_names[SprayComps::pstateFilmVol] = "film_vol";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);

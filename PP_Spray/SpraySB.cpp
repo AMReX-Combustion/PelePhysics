@@ -38,7 +38,6 @@ SprayParticleContainer::CreateSBDroplets(
   const int level)
 {
   ParticleLocData pld;
-  SprayComps SPI = m_sprayIndx;
   const SprayData* fdat = m_sprayData;
   std::map<std::pair<int, int>, Gpu::HostVector<ParticleType>> host_particles;
   std::pair<int, int> ind(pld.m_grid, pld.m_tile);
@@ -110,7 +109,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.cpu() = ParallelDescriptor::MyProc();
           Real new_mass = ms * (1. + tanterm * std::cos(psi)) / Nsdrops;
           Real dia_part = std::cbrt(6. * new_mass / (M_PI * rho_part));
-          p.rdata(SPI.pstateDia) = dia_part;
+          p.rdata(SprayComps::pstateDia) = dia_part;
           Real psi_sign = std::copysign(1., 0.5 - amrex::Random());
           AMREX_D_TERM(
             Real un = Unmag;
@@ -121,55 +120,51 @@ SprayParticleContainer::CreateSBDroplets(
               un * normal[dir], +utBeta * tanBeta[dir], +utPsi * tanPsi[dir]);
             avg_vel[dir] += pvel / Nsdrops;
             p.pos(dir) = loc0[dir] + dtpp * pvel;
-            p.rdata(SPI.pstateVel + dir) = pvel;
+            p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            p.rdata(SPI.pstateY + spf) = Y0[spf];
+            p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          p.rdata(SPI.pstateTABY) = 0.;
-          p.rdata(SPI.pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateTABY) = 0.;
+          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateFilmVol) = 0.;
           bool where = Where(p, pld);
           if (!where) {
             amrex::Abort("Bad reflected particle");
           }
-          p.rdata(SPI.pstateT) = T0;
+          p.rdata(SprayComps::pstateT) = T0;
           host_particles[ind].push_back(p);
           sum_mass += new_mass;
         }
-        // Remaining unsplashed mass
-        Real rem_mass = pmass - sum_mass;
-        // Original droplet is recreated with new values
-        ParticleType p;
-        p.id() = ParticleType::NextID();
-        p.cpu() = ParallelDescriptor::MyProc();
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          p.rdata(SPI.pstateY + spf) = Y0[spf];
-        }
-        p.rdata(SPI.pstateT) = T0;
-        p.rdata(SPI.pstateTABY) = 0.;
-        p.rdata(SPI.pstateTABYdot) = 0.;
-        Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
-        p.rdata(SPI.pstateDia) = dia_rem;
-        // If droplet splashing is thermally breakup, center droplet also
-        // reflects
+        // If droplet undergoes thermal breakup, must create center droplet
+        // For splashing, original droplet was turned into a wall film
         if (N_SB_h[n] == splash_breakup::splash_thermal_breakup) {
+          // Remaining unsplashed mass
+          Real rem_mass = pmass - sum_mass;
+          // Original droplet is recreated with new values
+          ParticleType p;
+          p.id() = ParticleType::NextID();
+          p.cpu() = ParallelDescriptor::MyProc();
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            p.rdata(SprayComps::pstateY + spf) = Y0[spf];
+          }
+          p.rdata(SprayComps::pstateT) = T0;
+          p.rdata(SprayComps::pstateTABY) = 0.;
+          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
+          p.rdata(SprayComps::pstateDia) = dia_rem;
+          // If droplet splashing is thermally breakup, center droplet also
+          // reflects
+          p.rdata(SprayComps::pstateFilmVol) = 0.;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             p.pos(dir) = loc0[dir] + dtpp * avg_vel[dir];
-            p.rdata(SPI.pstateVel + dir) = avg_vel[dir];
+            p.rdata(SprayComps::pstateVel + dir) = avg_vel[dir];
           }
           bool where = Where(p, pld);
           if (!where) {
             amrex::Abort("Bad reflected particle");
           }
           host_particles[ind].push_back(p);
-        } else {
-          // Otherwise, droplet forms a film
-          // TODO: Add wall film
-          // for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          //   p.pos(dir) = loc0[dir];
-          //   p.rdata(SPI.pstateVel + dir) = 0.;
-          // }
-          // host_particles[ind].push_back(p);
         }
       } else if (N_SB_h[n] == splash_breakup::breakup) {
         // TODO: Add distribution for radii
@@ -197,13 +192,14 @@ SprayParticleContainer::CreateSBDroplets(
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
-          p.rdata(SPI.pstateDia) = newdmean;
-          p.rdata(SPI.pstateT) = T0;
+          p.rdata(SprayComps::pstateDia) = newdmean;
+          p.rdata(SprayComps::pstateT) = T0;
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            p.rdata(SPI.pstateY + spf) = Y0[spf];
+            p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          p.rdata(SPI.pstateTABY) = 0.;
-          p.rdata(SPI.pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateTABY) = 0.;
+          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateFilmVol) = 0.;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;
@@ -214,7 +210,7 @@ SprayParticleContainer::CreateSBDroplets(
             Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
 #endif
             p.pos(dir) = loc0[dir] + dtpp * pvel;
-            p.rdata(SPI.pstateVel + dir) = pvel;
+            p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           bool where = Where(p, pld);
           if (!where) {

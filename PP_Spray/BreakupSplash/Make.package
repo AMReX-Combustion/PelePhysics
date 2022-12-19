@@ -2,3 +2,4 @@
 CEXE_headers += AhamedSplash.H
 CEXE_headers += TABBreakup.H
 CEXE_headers += SBData.H
+CEXE_headers += WallFilm.H

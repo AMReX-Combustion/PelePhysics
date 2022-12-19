@@ -149,7 +149,6 @@ amrex::Real
 calculateSpraySource(
   const amrex::Real flow_dt,
   GasPhaseVals& gpv,
-  SprayComps SPI,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
   pele::physics::transport::TransParm<
@@ -182,20 +181,20 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
     cBoilT; // Boiling temperature at current pressure
   amrex::RealVect vel_part(AMREX_D_DECL(
-    p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
-    p.rdata(SPI.pstateVel + 2)));
+    p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
+    p.rdata(SprayComps::pstateVel + 2)));
   // TAB model distortion
-  amrex::Real y_tab = p.rdata(SPI.pstateTABY);
+  amrex::Real y_tab = p.rdata(SprayComps::pstateTABY);
   // If particle is fixed in place, make velocity zero
   if (fdat.fixed_parts) {
     vel_part = amrex::RealVect::TheZeroVector();
   }
-  amrex::Real T_part = p.rdata(SPI.pstateT);
+  amrex::Real T_part = p.rdata(SprayComps::pstateT);
   fdat.calcBoilT(gpv, cBoilT.data());
-  amrex::Real dia_part = p.rdata(SPI.pstateDia);
+  amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Y_part[spf] = p.rdata(SPI.pstateY + spf);
+    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
     rho_part += Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
   }
   rho_part = 1. / rho_part;
@@ -426,19 +425,19 @@ calculateSpraySource(
   }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fdspec = fdat.dep_indx[spf];
-    amrex::Real oldY = p.rdata(SPI.pstateY + spf);
+    amrex::Real oldY = p.rdata(SprayComps::pstateY + spf);
     amrex::Real newY = Y_part[spf];
     amrex::Real midot =
       (newY * pmass - oldY * startmass) / (fdat.dtmod * flow_dt);
     gpv.fluid_Y_dot[spf] = midot;
     gpv.fluid_eng_src += midot * h_part[fdspec];
-    p.rdata(SPI.pstateY + spf) = Y_part[spf];
+    p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
   }
-  AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];
-               , p.rdata(SPI.pstateVel + 1) = vel_part[1];
-               , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
-  p.rdata(SPI.pstateT) = T_part;
-  p.rdata(SPI.pstateDia) = dia_part;
+  AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
+               , p.rdata(SprayComps::pstateVel + 1) = vel_part[1];
+               , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
+  p.rdata(SprayComps::pstateT) = T_part;
+  p.rdata(SprayComps::pstateDia) = dia_part;
   return drag_coef;
 }
 

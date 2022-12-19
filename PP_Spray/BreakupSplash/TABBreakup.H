@@ -14,7 +14,6 @@ updateBreakup(
   const amrex::Real dt,
   int pid,
   const GasPhaseVals& gpv,
-  const SprayComps& SPI,
   const SprayData& fdat,
   SprayParticleContainer::ParticleType& p,
   splash_breakup* N_SB,
@@ -32,15 +31,15 @@ updateBreakup(
 
   // Retreive particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
-    p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
-    p.rdata(SPI.pstateVel + 2)));
-  amrex::Real T_part = p.rdata(SPI.pstateT);
-  amrex::Real dia_part = p.rdata(SPI.pstateDia);
+    p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
+    p.rdata(SprayComps::pstateVel + 2)));
+  amrex::Real T_part = p.rdata(SprayComps::pstateT);
+  amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::Real rho_part = 0.;
   amrex::Real mu_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Y_part[spf] = p.rdata(SPI.pstateY + spf);
+    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
     rho_part += Y_part[spf] / fdat.rhoL(T_part, spf);
     mu_part += Y_part[spf] * fdat.mu[spf];
   }
@@ -55,12 +54,12 @@ updateBreakup(
   amrex::Real td = 2. * denom / (C_d * mu_part);
   amrex::Real omega2 = C_k * sigma / (denom * rad_part) - 1. / (td * td);
   if (omega2 <= 0.) {
-    p.rdata(SPI.pstateTABY) = 0.;
-    p.rdata(SPI.pstateTABYdot) = 0.;
+    p.rdata(SprayComps::pstateTABY) = 0.;
+    p.rdata(SprayComps::pstateTABYdot) = 0.;
     return;
   }
-  amrex::Real yn = p.rdata(SPI.pstateTABY);
-  amrex::Real ydotn = p.rdata(SPI.pstateTABYdot);
+  amrex::Real yn = p.rdata(SprayComps::pstateTABY);
+  amrex::Real ydotn = p.rdata(SprayComps::pstateTABYdot);
   amrex::Real A2 = std::pow(yn - Wer, 2) + ydotn * ydotn / omega2;
   amrex::Real A = std::sqrt(A2);
   amrex::Real omega = std::sqrt(omega2);
@@ -74,8 +73,8 @@ updateBreakup(
       (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * dt) -
        (yn - Wer) * std::sin(omega * dt));
   if (Wer + A <= 1.) {
-    p.rdata(SPI.pstateTABY) = ynp;
-    p.rdata(SPI.pstateTABYdot) = ydotnp;
+    p.rdata(SprayComps::pstateTABY) = ynp;
+    p.rdata(SprayComps::pstateTABYdot) = ydotnp;
     return;
   }
   amrex::Real pv1 = (yn - Wer) / A;
@@ -100,10 +99,9 @@ updateBreakup(
       omega * std::exp(-tbv / td) *
         (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * tbv) -
          (yn - Wer) * std::sin(omega * tbv));
-    amrex::Real r32 =
-      rad_part /
-      (1. + 8. * K / 20. +
-       denom * rad_part / sigma * ydottb * ydottb * (6. * K - 5.) / 120.);
+    amrex::Real r32 = rad_part / (1. + 8. * K / 20. +
+                                  denom * rad_part / sigma * ydottb * ydottb *
+                                    (6. * K - 5.) / 120.);
     amrex::Real Utan = C_b * rad_part * ydottb;
     N_SB[pid] = splash_breakup::breakup;
     amrex::Real velMag = vel_part.vectorLength();
@@ -114,20 +112,20 @@ updateBreakup(
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
       rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
     }
-    rf.d0[pid] = p.rdata(SPI.pstateDia);
+    rf.d0[pid] = p.rdata(SprayComps::pstateDia);
     rf.dtpp[pid] = dt - tbv + rem_dt;
     rf.phi1[pid] = r32;
     rf.phi2[pid] = Utan;
-    rf.T0[pid] = p.rdata(SPI.pstateT);
+    rf.T0[pid] = p.rdata(SprayComps::pstateT);
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SPI.pstateY + spf);
+      rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
     }
 #endif
     p.id() = -1;
   } else {
-    p.rdata(SPI.pstateTABY) = ynp;
-    p.rdata(SPI.pstateTABYdot) = ydotnp;
+    p.rdata(SprayComps::pstateTABY) = ynp;
+    p.rdata(SprayComps::pstateTABYdot) = ydotnp;
     return;
   }
 }
