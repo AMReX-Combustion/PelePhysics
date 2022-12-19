@@ -3142,9 +3142,11 @@ def ckkfkr(fstream, mechanism, species_info):
 
     # convert qdot to chemkin units
     cw.writer(fstream)
-    cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_reactions)
-    cw.writer(fstream, "q_f[id] *= 1.0e-6;")
-    cw.writer(fstream, "q_r[id] *= 1.0e-6;")
-    cw.writer(fstream, "}")
+    if n_reactions > 0:
+        cw.writer(fstream, cw.comment("convert to chemkin units"))
+        cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_reactions)
+        cw.writer(fstream, "q_f[id] *= 1.0e-6;")
+        cw.writer(fstream, "q_r[id] *= 1.0e-6;")
+        cw.writer(fstream, "}")
+
     cw.writer(fstream, "}")
