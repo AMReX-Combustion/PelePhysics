@@ -266,7 +266,6 @@ struct InitTransParm<eos::SRK, SimpleTransport>
       for (int i = 0; i < NUM_SPECIES; i++) {
         if (spec_names_kappa[i] == "H2O") {
           tparm->Kappai[i] = 0.075908;
-          // tparm->Kappai[i] = 0.076;
         } else if (spec_names_kappa[i] == "CH3OH") {
           tparm->Kappai[i] = 0.215175;
         } else if (spec_names_kappa[i] == "CH3CH2OH") {

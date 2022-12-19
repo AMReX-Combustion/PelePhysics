@@ -298,7 +298,6 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
   os.open(junk.c_str());
   a_tp.sdata->writeOn(os);
   os.close();
-  //amrex::Abort();
 #endif
 }
 

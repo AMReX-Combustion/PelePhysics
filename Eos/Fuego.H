@@ -64,7 +64,7 @@ struct Fuego
   RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
   {
     amrex::Real tmp[NUM_SPECIES];
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     CKMMWY(&Y[0], &wbar);
     amrex::Real T = P * wbar / (R * Constants::RU);
     CKCVMS(&T, tmp);
@@ -82,14 +82,14 @@ struct Fuego
   RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
   {
     amrex::Real tmp[NUM_SPECIES];
-    amrex::Real P;
+    amrex::Real P = 0.0;
     CKPY(&R, &T, Y, &P);
     CKCVMS(&T, tmp);
     amrex::Real Cv = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       Cv += Y[i] * tmp[i];
     }
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     CKMMWY(&Y[0], &wbar);
     amrex::Real G = (wbar * Cv + Constants::RU) / (wbar * Cv);
     Cs = std::sqrt(G * P / R);
@@ -158,7 +158,7 @@ struct Fuego
   static void
   RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
   {
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     CKMMWY(&Y[0], &wbar);
     T = P * wbar / (R * Constants::RU);
   }
@@ -168,7 +168,6 @@ struct Fuego
   static void
   RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
   {
-    // CKWYR(&R, &T, Y, WDOT);
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);
     CKWC(&T, C, WDOT);
@@ -258,7 +257,7 @@ struct Fuego
   static void
   RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
   {
-    amrex::Real wbar;
+    amrex::Real wbar = 0.0;
     CKMMWY(&Y[0], &wbar);
     amrex::Real T = P * wbar / (R * Constants::RU);
     amrex::Real ei[NUM_SPECIES];
@@ -309,7 +308,7 @@ struct Fuego
   AMREX_FORCE_INLINE
   static void TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   {
-    amrex::Real wbar, Cv, Cvx;
+    amrex::Real wbar = 0.0, Cv, Cvx;
     TY2Cv(T, Y, Cv);
     CKMMWY(&Y[0], &wbar);
     Cvx = wbar * Cv;

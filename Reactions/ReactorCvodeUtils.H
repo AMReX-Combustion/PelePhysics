@@ -343,33 +343,6 @@ fKernelDenseAJchem(
   }
 }
 
-#ifdef AMREX_USE_CUDA
-/*
-__global__ void
-fKernelDenseSolve( int ncell,
-                   amrex::Real* x_d,
-                   amrex::Real* b_d,
-                   int subsys_size,
-                   int subsys_nnz,
-                   amrex::Real* csr_val)
-{
-  int stride = blockDim.x * gridDim.x;
-
-  for (int icell = blockDim.x * blockIdx.x + threadIdx.x; icell < ncell;
-       icell += stride) {
-    int offset = icell * subsys_size;
-    int offset_A = icell * subsys_nnz;
-
-    amrex::Real* csr_val_cell = csr_val + offset_A;
-    amrex::Real* x_cell = x_d + offset;
-    amrex::Real* b_cell = b_d + offset;
-
-    sgjsolve(csr_val_cell, x_cell, b_cell);
-  }
-}
-*/
-#endif
-
 #endif
 } // namespace cvode
 } // namespace pele::physics::reactions

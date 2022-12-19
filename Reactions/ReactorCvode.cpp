@@ -454,7 +454,7 @@ ReactorCvode::checkCvodeOptions() const
 
   // Print additionnal information
   if (precond_type == cvode::sparseSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -494,7 +494,7 @@ ReactorCvode::checkCvodeOptions() const
 #endif
 #ifndef AMREX_USE_GPU
   } else if (precond_type == cvode::customSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -513,7 +513,7 @@ ReactorCvode::checkCvodeOptions() const
   }
 
   if (analytical_jacobian == 1) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     int ncells = 1; // Print the pattern of the diagonal block. ncells will
@@ -1022,14 +1022,6 @@ ReactorCvode::allocUserData(
       udata->info);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    /*
-    size_t free_mem = 0;
-    size_t total_mem = 0;
-    cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
-    AMREX_ASSERT( cudaSuccess == cudaStat1 );
-    std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
-    */
-
     // allocate working space
     cusolver_status = cusolverSpDcsrqrBufferInfoBatched(
       udata->cusolverHandle,
@@ -1101,9 +1093,6 @@ ReactorCvode::allocUserData(
       udata->JSPSmat[i] =
         new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
       klu_defaults(&(udata->Common[i]));
-      // udata->Common.btf = 0;
-      //(udata->Common[i]).maxwork = 15;
-      // udata->Common.ordering = 1;
       udata->Symbolic[i] = klu_analyze(
         NUM_SPECIES + 1, udata->colPtrs[i], udata->rowVals[i],
         &(udata->Common[i]));
@@ -1167,7 +1156,6 @@ ReactorCvode::react(
   SUNProfiler sun_profiler = nullptr;
   SUNContext_GetProfiler(
     *amrex::sundials::The_Sundials_Context(), &sun_profiler);
-  // SUNProfiler_Reset(sun_profiler);
 #endif
 
   //----------------------------------------------------------
