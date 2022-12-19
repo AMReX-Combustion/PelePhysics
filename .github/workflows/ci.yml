@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        comp: [gnu, llvm, cuda, hip, dpcpp]
+        comp: [gnu, llvm, cuda, hip]
         python-version: [3.8]
         poetry-version: [1.1.7]
         include:
