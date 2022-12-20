@@ -48,6 +48,10 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.get("jet_vel", m_jetVel);
   ps.get("mass_flow_rate", m_massFlow);
   ps.query("hollow_spray", m_hollowSpray);
+  if (m_hollowSpray) {
+    ps.query("hollow_spread", m_hollowSpread);
+    m_hollowSpread *= M_PI / 180.;
+  }
 }
 
 // Constructor for assigning parameters directly
@@ -65,7 +69,8 @@ SprayJet::SprayJet(
   const amrex::Real start_time,
   const amrex::Real end_time,
   const amrex::Real phi_swirl,
-  bool hollow_spray)
+  bool hollow_spray,
+  const amrex::Real hollow_spread)
   : m_norm(jet_norm),
     m_cent(jet_cent),
     m_spreadAngle(spread_angle * M_PI / 180.),
@@ -76,7 +81,8 @@ SprayJet::SprayJet(
     m_jetT(jet_temp),
     m_startTime(start_time),
     m_endTime(end_time),
-    m_hollowSpray(hollow_spray)
+    m_hollowSpray(hollow_spray),
+    m_hollowSpread(hollow_spread * M_PI / 180.)
 {
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     m_jetY[spf] = jet_Y[spf];
@@ -107,6 +113,10 @@ SprayJet::get_new_particle(
   // In 3D, cur_radius is from [0, jetDia/2]
   amrex::Real radp = 2. * cur_radius / m_jetDia;
   theta_spread = radp * m_spreadAngle / 2.;
+  if (m_hollowSpray) {
+    amrex::Real rand = amrex::Random() - 0.5;
+    theta_spread += m_hollowSpread * rand;
+  }
 #else
   // In 2D, cur_radius is from [-jetDia/2, jetDia/2]
   amrex::Real radp = cur_radius / m_jetDia + 0.5;

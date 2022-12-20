@@ -26,7 +26,8 @@ public:
     const amrex::Real start_time = 0.,
     const amrex::Real end_time = 1.E8,
     const amrex::Real phi_swirl = 0.,
-    bool hollow_spray = false);
+    bool hollow_spray = false,
+    const amrex::Real hollow_spread = 0.);
 
   // Constructor where parameters are set from input file
   SprayJet(const std::string& jet_name, const amrex::Geometry& geom);
@@ -219,6 +220,7 @@ protected:
   amrex::Real m_startTime = 0.;
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
+  amrex::Real m_hollowSpread = 0.;
 };
 
 #endif
