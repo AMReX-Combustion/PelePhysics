@@ -1631,17 +1631,17 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
             fstream,
             "amrex::Real sc_qss[%d];" % (max(1, species_info.n_qssa_species)),
         )
-        cw.writer(
-            fstream,
-            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
-            % (
-                reaction_info.n_qssa_reactions,
-                reaction_info.n_qssa_reactions,
-                reaction_info.n_qssa_reactions,
-            ),
-        )
         if species_info.n_qssa_species > 0:
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                ),
+            )
             cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             cw.writer(
                 fstream,

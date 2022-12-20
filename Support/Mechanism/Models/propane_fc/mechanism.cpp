@@ -182,7 +182,6 @@ progressRateFR(
   gibbs(g_RT, tc);
 
   amrex::Real sc_qss[1];
-  amrex::Real kf_qss[0], qf_qss[0], qr_qss[0];
   comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
   return;

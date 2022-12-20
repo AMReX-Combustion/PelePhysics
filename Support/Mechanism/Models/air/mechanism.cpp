@@ -1,13 +1,9 @@
 #include "mechanism.H"
-const int rmap[0] = {};
 
 // Returns 0-based map of reaction order
 void
-GET_RMAP(int* _rmap)
+GET_RMAP(int* /*_rmap*/)
 {
-  for (int j = 0; j < 0; ++j) {
-    _rmap[j] = rmap[j];
-  }
 }
 
 // Returns a count of species in a reaction, and their indices
@@ -57,12 +53,6 @@ CKKFKR(
 
   // convert to chemkin units
   progressRateFR(q_f, q_r, c, *T);
-
-  // convert to chemkin units
-  for (id = 0; id < 0; ++id) {
-    q_f[id] *= 1.0e-6;
-    q_r[id] *= 1.0e-6;
-  }
 }
 
 // compute the progress rate for each reaction

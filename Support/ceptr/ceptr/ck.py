@@ -2929,8 +2929,7 @@ def temp_given_ey(fstream):
     cw.writer(fstream, "dt = (ein - e1) / cv;")
     cw.writer(fstream, "if (dt > 100.) { dt = 100.; }")
     cw.writer(fstream, "else if (dt < -100.) { dt = -100.; }")
-    cw.writer(fstream, "else if (fabs(dt) < tol) break;")
-    cw.writer(fstream, "else if (t1+dt == t1) break;")
+    cw.writer(fstream, "else if (fabs(dt) < tol) {break;}")
     cw.writer(fstream, "t1 += dt;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "*t = t1;")
@@ -3001,8 +3000,7 @@ def temp_given_hy(fstream):
     cw.writer(fstream, "dt = (hin - h1) / cp;")
     cw.writer(fstream, "if (dt > 100.) { dt = 100.; }")
     cw.writer(fstream, "else if (dt < -100.) { dt = -100.; }")
-    cw.writer(fstream, "else if (fabs(dt) < tol) break;")
-    cw.writer(fstream, "else if (t1+dt == t1) break;")
+    cw.writer(fstream, "else if (fabs(dt) < tol) {break;}")
     cw.writer(fstream, "t1 += dt;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "*t = t1;")
@@ -3142,9 +3140,11 @@ def ckkfkr(fstream, mechanism, species_info):
 
     # convert qdot to chemkin units
     cw.writer(fstream)
-    cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_reactions)
-    cw.writer(fstream, "q_f[id] *= 1.0e-6;")
-    cw.writer(fstream, "q_r[id] *= 1.0e-6;")
-    cw.writer(fstream, "}")
+    if n_reactions > 0:
+        cw.writer(fstream, cw.comment("convert to chemkin units"))
+        cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_reactions)
+        cw.writer(fstream, "q_f[id] *= 1.0e-6;")
+        cw.writer(fstream, "q_r[id] *= 1.0e-6;")
+        cw.writer(fstream, "}")
+
     cw.writer(fstream, "}")
