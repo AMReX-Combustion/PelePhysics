@@ -98,7 +98,10 @@ def rmap(fstream, mechanism, reaction_info):
     rmap = reaction_info.idxmap.keys()
     n_reactions = mechanism.n_reactions
     str_rmap = ",".join(str(x) for x in rmap)
-    cw.writer(fstream, "const int rmap[%d] = {%s};" % (n_reactions, str_rmap))
+    if n_reactions > 0:
+        cw.writer(
+            fstream, "const int rmap[%d] = {%s};" % (n_reactions, str_rmap)
+        )
 
 
 def get_rmap(fstream, mechanism):

@@ -1,5 +1,4 @@
 #include "mechanism.H"
-const int rmap[0] = {};
 
 // Returns 0-based map of reaction order
 void
