@@ -12,8 +12,6 @@
 #include "prob_parm.H"
 #endif
 
-// Need components for velocity, diameter, temperature, mass fractions, and
-// breakup model variables P and Pdot
 #define NSR_SPR (SprayComps::pstateNum)
 #define NSI_SPR 0
 #define NAR_SPR 0
@@ -128,9 +126,6 @@ public:
       real_comp_names[SprayComps::pstateY + sp] =
         "spray_mf_" + spray_fuel_names[sp];
     }
-    real_comp_names[SprayComps::pstateTABY] = "Y_TAB";
-    real_comp_names[SprayComps::pstateTABYdot] = "Ydot_TAB";
-    real_comp_names[SprayComps::pstateFilmVol] = "film_vol";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);

@@ -125,8 +125,9 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
           if (p.id() > 0) {
             const Real max_mag_vdx =
               amrex::max(AMREX_D_DECL(
-                amrex::Math::abs(p.rdata(0)), amrex::Math::abs(p.rdata(1)),
-                amrex::Math::abs(p.rdata(2)))) *
+                amrex::Math::abs(p.rdata(SprayComps::pstateVel)),
+                amrex::Math::abs(p.rdata(SprayComps::pstateVel + 1)),
+                amrex::Math::abs(p.rdata(SprayComps::pstateVel + 2)))) *
               dxi[0];
             Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
             return dt_part;
@@ -268,16 +269,16 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
-    // Data structures for wall films
-    FArrayBox wf_fab;
-    Elixir wf_eli;
-    Array4<Real> wall_film;
-    if ((eb_in_box || at_bounds) && m_sprayData->do_splash && isActive) {
-      wf_fab.resize(src_box, WFIndx::wf_num);
-      wf_eli = wf_fab.elixir();
-      wf_fab.setVal<RunOn::Device>(0.);
-      wall_film = wf_fab.array();
-      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
+    amrex::ParallelFor(
+      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
+           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, fdat,
+           bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost,
+           isVirt, src_box, state_box, num_iter, sub_dt, eb_in_box
+#ifdef AMREX_USE_EB
+           ,
+           flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
+#endif
+    ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0 && p.rdata(SprayComps::pstateFilmVol) > 0.) {
           fillFilmFab(wall_film, *fdat, p, plo, dx);
@@ -345,7 +346,16 @@ SprayParticleContainer::updateParticles(
               p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
               ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, fdat->min_eb_vfrac,
               indx_array.data(), weights.data());
-          } else
+            // Solve for avg mw and pressure at droplet location
+            gpv.define();
+            calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+            for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+              IntVect cur_indx = indx_array[aindx];
+              Real cvol = inv_vol;
+#ifdef AMREX_USE_EB
+              if (flags_array(cur_indx).isSingleValued()) {
+                cvol *= 1. / (volfrac_fab(cur_indx));
+              }
 #endif
           {
             trilinear_interp(
@@ -385,9 +395,41 @@ SprayParticleContainer::updateParticles(
             }
             if (fdat->mom_trans) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                Gpu::Atomic::Add(
-                  &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
+                const Real cvel = p.rdata(SprayComps::pstateVel + dir);
+                p.pos(dir) += cur_dt * cvel;
               }
+              // Update indices
+              ijkc_prev = ijkc;
+              lx = (p.pos() - plo) * dxi + 0.5;
+              ijk = lx.floor();
+              lxc = (p.pos() - plo) * dxi;
+              ijkc = lxc.floor(); // New cell center
+              if (at_bounds || do_fe_interp) {
+                // First check if particle has exited the domain through a
+                // Cartesian boundary
+                bool left_dom = check_bounds(
+                  p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bflags);
+                if (left_dom) {
+                  p.id() = -1;
+                } else {
+                  // Next reflect particles off BC or EB walls if necessary
+                  impose_wall(
+                    p, dx, plo, phi, bndry_lo, bndry_hi, bflags, eb_in_box,
+#ifdef AMREX_USE_EB
+                    flags_array, bcent_fab, bnorm_fab, volfrac_fab,
+                    fdat->min_eb_vfrac,
+#endif
+                    ijkc, ijkc_prev);
+                  lx = (p.pos() - plo) * dxi + 0.5;
+                  ijk = lx.floor();
+                  lxc = (p.pos() - plo) * dxi;
+                  ijkc = lxc.floor();
+                }
+              } // if (at_bounds || fe_interp)
+            }   // if (do_move)
+            cur_iter++;
+            if (isGhost && !src_box.contains(ijkc)) {
+              p.id() = -1;
             }
             if (fdat->mass_trans) {
               Gpu::Atomic::Add(

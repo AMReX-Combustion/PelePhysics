@@ -11,10 +11,7 @@ struct SprayComps
   static const int pstateT = AMREX_SPACEDIM;
   static const int pstateDia = pstateT + 1;
   static const int pstateY = pstateDia + 1;
-  static const int pstateTABY = pstateY + SPRAY_FUEL_NUM;
-  static const int pstateTABYdot = pstateTABY + 1;
-  static const int pstateFilmVol = pstateTABYdot + 1;
-  static const int pstateNum = pstateFilmVol + 1;
+  static const int pstateNum = pstateY + SPRAY_FUEL_NUM;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;

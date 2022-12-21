@@ -115,9 +115,9 @@ SprayParticleContainer::sprayInjection(
       ParticleType p;
       p.id() = ParticleType::NextID();
       p.cpu() = amrex::ParallelDescriptor::MyProc();
-      AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
-                   , p.rdata(SprayComps::pstateVel + 1) = vel_part[1];
-                   , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
+      AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = part_vel[0];
+                   , p.rdata(SprayComps::pstateVel + 1) = part_vel[1];
+                   , p.rdata(SprayComps::pstateVel + 2) = part_vel[2];);
       p.rdata(SprayComps::pstateT) = T_part;
       // Never add particle with less than minimum mass
       p.rdata(SprayComps::pstateDia) = dia_part;
@@ -219,9 +219,6 @@ SprayParticleContainer::uniformSprayInit(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     part_vals[SprayComps::pstateY + spf] = Y_part[spf];
   }
-  part_vals[SprayComps::pstateTABY] = 0.;
-  part_vals[SprayComps::pstateTABYdot] = 0.;
-  part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),
