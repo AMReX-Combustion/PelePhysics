@@ -42,8 +42,8 @@ SprayParticleContainer::computeDerivedVars(
   const int vel_indx = temp_indx + 1;
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Long Np = pti.numParticles();
-    const AoS& pbox = pti.GetArrayOfStructs();
-    const ParticleType* pstruct = pbox.data();
+    const auto& pbox = pti.GetArrayOfStructs();
+    const auto pstruct = pbox().data();
     const SprayData* fdat = d_sprayData;
     FArrayBox& varfab = mf_var[pti];
     Array4<Real> const& vararr = mf_var.array(pti, start_indx);
@@ -58,7 +58,7 @@ SprayParticleContainer::computeDerivedVars(
     }
 #endif
     amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
-      ParticleType& p = pstruct[pid];
+      const ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
         RealVect lxc = (p.pos() - plo) * dxi;
         IntVect ijkc = lxc.floor(); // Cell with particle
