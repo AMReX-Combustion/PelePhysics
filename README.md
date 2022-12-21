@@ -17,6 +17,7 @@ This information is read by the CEPTR tool, and source code files are generated 
 * *Constant coefficient* transport
 * *Simple* A simplified mixture-averaged transport model consistent with EGLib under suitable conditions
 * *Inert* Chemistry setting to ignore reactions
+* Mixture-averaged thermal diffusion coefficients are also available using the transport.use_soret flag (see PeleLMeX implementation for more information)
 * Utilization of auxiliary source files (C++) that follow the Cantera species production rate function interface (e.g., QSS approximations)
 
 If the `Pele` codes are built with `Eos_dir = Fuego`, the make system variable `Chemistry_Model` must be set to one of the models (subfolders) that exist in the `${PELE_PHYSICS_HOME}/Support/Mechanism/Models` folder. The repository currently provides (multiple) models for each of the following mixtures:
