@@ -455,8 +455,8 @@ CKCPBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cpbs)
   for (int i = 0; i < 3; i++) {
     tresult[i] = cpor[i] * y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    result += tresult[i];
+  for (const auto& tr : tresult) {
+    result += tr;
   }
 
   *cpbs = result * 8.31446261815324e+07;
@@ -664,7 +664,8 @@ CKSBMS(
 
 //  get temperature given internal energy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_EY(
+  const amrex::Real* e, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -713,12 +714,12 @@ GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 //  get temperature given enthalpy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_HY(
+  const amrex::Real* h, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -767,7 +768,6 @@ GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 // Compute P = rhoRT/W(x)
@@ -858,8 +858,8 @@ CKRHOY(
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *rho = *P / (8.31446261815324e+07 * (*T) * YOW); // rho = P*W/(R*T)
@@ -908,8 +908,8 @@ CKMMWY(const amrex::Real* y, amrex::Real* wtm)
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *wtm = 1.0 / YOW;
@@ -993,8 +993,8 @@ CKYTX(const amrex::Real* y, amrex::Real* x)
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
@@ -1316,24 +1316,21 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 comp_qfqr(
   amrex::Real* /*qf*/,
   amrex::Real* /*qr*/,
-  amrex::Real* /*sc*/,
-  amrex::Real* /*sc_qss*/,
+  const amrex::Real* /*sc*/,
+  const amrex::Real* /*sc_qss*/,
   const amrex::Real* /*tc*/,
-  amrex::Real /*invT*/)
+  const amrex::Real /*invT*/)
 {
-
-  return;
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-productionRate(amrex::Real* wdot, amrex::Real* /*sc*/, amrex::Real /*T*/)
+productionRate(
+  amrex::Real* wdot, const amrex::Real* /*sc*/, const amrex::Real /*T*/)
 {
 
   for (int i = 0; i < 3; ++i) {
     wdot[i] = 0.0;
   }
-
-  return;
 }
 
 // compute the production rate for each species
@@ -1553,7 +1550,10 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 // compute an approx to the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 aJacobian_precond(
-  amrex::Real* J, amrex::Real* /*sc*/, amrex::Real /*T*/, const int /*HP*/)
+  amrex::Real* J,
+  const amrex::Real* /*sc*/,
+  const amrex::Real /*T*/,
+  const int /*HP*/)
 {
 
   for (int i = 0; i < 16; i++) {
@@ -1564,7 +1564,7 @@ aJacobian_precond(
 // compute an approx to the reaction Jacobian (for preconditioning)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 DWDOT_SIMPLIFIED(
-  amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* HP)
+  amrex::Real* J, const amrex::Real* sc, const amrex::Real* Tp, const int* HP)
 {
   amrex::Real c[3];
 
@@ -1580,14 +1580,15 @@ DWDOT_SIMPLIFIED(
     J[12 + k] *= 1.e-6;
     J[k * 4 + 3] *= 1.e6;
   }
-
-  return;
 }
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 aJacobian(
-  amrex::Real* J, amrex::Real* /*sc*/, amrex::Real /*T*/, const int /*consP*/)
+  amrex::Real* J,
+  const amrex::Real* /*sc*/,
+  const amrex::Real /*T*/,
+  const int /*consP*/)
 {
 
   for (int i = 0; i < 16; i++) {
@@ -1597,7 +1598,11 @@ aJacobian(
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
+DWDOT(
+  amrex::Real* J,
+  const amrex::Real* sc,
+  const amrex::Real* Tp,
+  const int* consP)
 {
   amrex::Real c[3];
 
@@ -1613,8 +1618,6 @@ DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
     J[12 + k] *= 1.e-6;
     J[k * 4 + 3] *= 1.e6;
   }
-
-  return;
 }
 
 // Transport function declarations
@@ -1849,8 +1852,6 @@ GET_CRITPARAMS(
           (28.013400 * 28.013400 * 33.958000);
   bi[2] = 0.08664 * Rcst * Tci[2] / (28.013400 * 33.958000);
   acentric_i[2] = 0.037200;
-
-  return;
 }
 
 // gauss-jordan solver external routine

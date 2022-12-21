@@ -6771,8 +6771,8 @@ CKCPBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cpbs)
   for (int i = 0; i < 88; i++) {
     tresult[i] = cpor[i] * y[i] * imw[i];
   }
-  for (int i = 0; i < 88; i++) {
-    result += tresult[i];
+  for (const auto& tr : tresult) {
+    result += tr;
   }
 
   *cpbs = result * 8.31446261815324e+07;
@@ -7405,7 +7405,8 @@ CKSBMS(
 
 //  get temperature given internal energy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_EY(
+  const amrex::Real* e, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -7454,12 +7455,12 @@ GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 //  get temperature given enthalpy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_HY(
+  const amrex::Real* h, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -7508,7 +7509,6 @@ GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 // Compute P = rhoRT/W(x)
@@ -7939,8 +7939,8 @@ CKRHOY(
   for (int i = 0; i < 88; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 88; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *rho = *P / (8.31446261815324e+07 * (*T) * YOW); // rho = P*W/(R*T)
@@ -8074,8 +8074,8 @@ CKMMWY(const amrex::Real* y, amrex::Real* wtm)
   for (int i = 0; i < 88; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 88; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *wtm = 1.0 / YOW;
@@ -8329,8 +8329,8 @@ CKYTX(const amrex::Real* y, amrex::Real* x)
   for (int i = 0; i < 88; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 88; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
@@ -9332,10 +9332,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 comp_qfqr(
   amrex::Real* qf,
   amrex::Real* qr,
-  amrex::Real* sc,
-  amrex::Real* /*sc_qss*/,
+  const amrex::Real* sc,
+  const amrex::Real* /*sc_qss*/,
   const amrex::Real* tc,
-  amrex::Real invT)
+  const amrex::Real invT)
 {
 
   // reaction 0: ch3 + h (+M) <=> ch4 (+M)
@@ -15338,12 +15338,10 @@ comp_qfqr(
   qr[728] *= k_f *
              exp(-(g_RT[11] - g_RT[12] - g_RT[26] - g_RT[53] + g_RT[82])) *
              (refCinv);
-
-  return;
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
+productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
 {
   const amrex::Real tc[5] = {
     log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
@@ -24388,8 +24386,6 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
     wdot[53] += qdot;
     wdot[82] -= qdot;
   }
-
-  return;
 }
 
 // compute the production rate for each species
@@ -25658,7 +25654,8 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 
 // compute an approx to the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
+aJacobian_precond(
+  amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
   for (int i = 0; i < 7921; i++) {
@@ -25666,8 +25663,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   }
 
   amrex::Real wdot[88];
-  for (int k = 0; k < 88; k++) {
-    wdot[k] = 0.0;
+  for (auto& val : wdot) {
+    val = 0.0;
   }
 
   const amrex::Real tc[5] = {
@@ -50727,7 +50724,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
 
   amrex::Real c_R[88], dcRdT[88], e_RT[88];
   amrex::Real* eh_RT;
-  if (HP) {
+  if (HP == 1) {
     cp_R(c_R, tc);
     dcvpRdT(dcRdT, tc);
     eh_RT = &h_RT[0];
@@ -50766,7 +50763,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
 // compute an approx to the reaction Jacobian (for preconditioning)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 DWDOT_SIMPLIFIED(
-  amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* HP)
+  amrex::Real* J, const amrex::Real* sc, const amrex::Real* Tp, const int* HP)
 {
   amrex::Real c[88];
 
@@ -50782,13 +50779,12 @@ DWDOT_SIMPLIFIED(
     J[7832 + k] *= 1.e-6;
     J[k * 89 + 88] *= 1.e6;
   }
-
-  return;
 }
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
+aJacobian(
+  amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
   for (int i = 0; i < 7921; i++) {
@@ -50796,8 +50792,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   }
 
   amrex::Real wdot[88];
-  for (int k = 0; k < 88; k++) {
-    wdot[k] = 0.0;
+  for (auto& val : wdot) {
+    val = 0.0;
   }
 
   const amrex::Real tc[5] = {
@@ -50889,7 +50885,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[9];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -51080,7 +51076,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[16];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -51270,7 +51266,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2 - 1) * dcdc_fac;
     J[98] += -2 * dqdci; // dwdot[ch3]/d[h2]
@@ -51449,7 +51445,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[3];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -51640,7 +51636,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * dcdc_fac;
     J[93] += -2 * dqdci; // dwdot[oh]/d[h2]
@@ -51818,7 +51814,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[19];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -51989,7 +51985,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[18];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -52164,7 +52160,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * dcdc_fac;
     J[91] -= dqdci; // dwdot[o]/d[h2]
@@ -52328,7 +52324,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = -k_r * sc[13];
     J[0] += dqdci;  // dwdot[h]/d[h]
@@ -52482,7 +52478,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = -k_r * sc[18];
     J[90] += dqdci;  // dwdot[h2]/d[h2]
@@ -52636,7 +52632,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
-  if (consP) {
+  if (consP == 1) {
     // d()/d[co]
     dqdci = -k_r * sc[9];
     J[540] += dqdci; // dwdot[co]/d[co]
@@ -52772,7 +52768,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
     J[89] += dqdci; // dwdot[h]/d[h2]
@@ -52918,7 +52914,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[6];
     J[0] -= dqdci; // dwdot[h]/d[h]
@@ -53064,7 +53060,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
     J[89] += dqdci; // dwdot[h]/d[h2]
@@ -53205,7 +53201,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[4];
     J[0] -= dqdci; // dwdot[h]/d[h]
@@ -53355,7 +53351,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[ch2o]
     dqdci = +k_f;
     J[1157] += dqdci; // dwdot[h]/d[ch2o]
@@ -53480,7 +53476,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[7];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -53611,7 +53607,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
     J[89] += dqdci; // dwdot[h]/d[h2]
@@ -53757,7 +53753,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[2];
     J[0] -= dqdci; // dwdot[h]/d[h]
@@ -53907,7 +53903,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
     J[91] += 2 * dqdci; // dwdot[o]/d[h2]
@@ -54045,7 +54041,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
     J[91] += -2 * dqdci; // dwdot[o]/d[h2]
@@ -54183,7 +54179,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor + k_f;
     J[89] += 2 * dqdci; // dwdot[h]/d[h2]
@@ -54317,7 +54313,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * 2.000000 * sc[0];
     J[0] += -2 * dqdci; // dwdot[h]/d[h]
@@ -54455,7 +54451,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[ch2o]
     dqdci = +k_f;
     J[1158] += dqdci; // dwdot[h2]/d[ch2o]
@@ -54580,7 +54576,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h2]
     dqdci = +k_f * sc[6];
     J[90] -= dqdci;  // dwdot[h2]/d[h2]
@@ -54710,7 +54706,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[c2h5o]
     dqdci = +k_f;
     J[3302] += dqdci; // dwdot[ch3]/d[c2h5o]
@@ -54835,7 +54831,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[ch3]
     dqdci = +k_f * sc[13];
     J[810] -= dqdci; // dwdot[ch3]/d[ch3]
@@ -54965,7 +54961,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[ch3o2]
     dqdci = +k_f;
     J[3385] += dqdci; // dwdot[o2]/d[ch3o2]
@@ -55090,7 +55086,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[o2]
     dqdci = +k_f * sc[9];
     J[270] -= dqdci; // dwdot[o2]/d[o2]
@@ -55220,7 +55216,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[c2h5o]
     dqdci = +k_f;
     J[3293] += dqdci; // dwdot[h]/d[c2h5o]
@@ -55345,7 +55341,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[24];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -55475,7 +55471,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[c3h4-a]
     dqdci = +k_f;
     J[2225] += dqdci; // dwdot[h]/d[c3h4-a]
@@ -55600,7 +55596,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // for convenience
   k_f *= alpha;
   k_r = 0.0;
-  if (consP) {
+  if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[48];
     J[0] -= dqdci;  // dwdot[h]/d[h]
@@ -76550,7 +76546,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 
   amrex::Real c_R[88], dcRdT[88], e_RT[88];
   amrex::Real* eh_RT;
-  if (consP) {
+  if (consP == 1) {
     cp_R(c_R, tc);
     dcvpRdT(dcRdT, tc);
     eh_RT = &h_RT[0];
@@ -76588,7 +76584,11 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
+DWDOT(
+  amrex::Real* J,
+  const amrex::Real* sc,
+  const amrex::Real* Tp,
+  const int* consP)
 {
   amrex::Real c[88];
 
@@ -76604,8 +76604,6 @@ DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
     J[7832 + k] *= 1.e-6;
     J[k * 89 + 88] *= 1.e6;
   }
-
-  return;
 }
 
 // Transport function declarations
@@ -110441,8 +110439,6 @@ GET_CRITPARAMS(
            (wt[87] * wt[87]);
   bi[87] = 0.855 * avogadro * 1e-24 * SIG[87] * SIG[87] * SIG[87] / (wt[87]);
   acentric_i[87] = 0.0;
-
-  return;
 }
 
 // gauss-jordan solver external routine
