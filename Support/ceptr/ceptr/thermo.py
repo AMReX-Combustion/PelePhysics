@@ -274,7 +274,6 @@ def generate_thermo_routine(
 
         cw.writer(fstream, "}")
 
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
 
