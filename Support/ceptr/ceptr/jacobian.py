@@ -309,6 +309,7 @@ def ajac_symbolic(
         " * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
+    cw.writer(fstream, "#ifdef PELE_USE_MAGMA")
 
     if syms.hformat == "cpu":
         cw.writer(
@@ -560,6 +561,9 @@ def ajac_symbolic(
     )
 
     cw.writer(fstream, "return;")
+    cw.writer(fstream, "#else")
+    cw.writer(fstream, "amrex::Abort();")
+    cw.writer(fstream, "#endif")
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
