@@ -229,7 +229,7 @@ SprayParticleContainer::updateParticles(
     const Box state_box = pti.growntilebox(state_ghosts);
     bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
     const Long Np = pti.numParticles();
-    ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+    ParticleType* pstruct = pti.GetArrayOfStructs().data();
     const SprayData* fdat = d_sprayData;
     Array4<const Real> const& Tarr = state.array(pti, SPI.utempIndx);
     Array4<const Real> const& rhoYarr = state.array(pti, SPI.specIndx);

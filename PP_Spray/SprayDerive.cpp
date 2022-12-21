@@ -44,7 +44,7 @@ SprayParticleContainer::computeDerivedVars(
   const int vel_indx = temp_indx + 1;
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Long Np = pti.numParticles();
-    ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+    ParticleType* pstruct = pti.GetArrayOfStructs().data();
     const SprayData* fdat = d_sprayData;
     FArrayBox& varfab = mf_var[pti];
     Array4<Real> const& vararr = mf_var.array(pti, start_indx);

@@ -50,10 +50,8 @@ public:
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
       phys_bc(_phys_bc),
       m_sprayData(new SprayData{}),
-      d_sprayData(nullptr),
       m_sprayIndx(SPI),
-      m_partCFL(part_cfl),
-      m_injectVel(0.)
+      m_partCFL(part_cfl)
   {
     d_sprayData =
       static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
@@ -307,42 +305,42 @@ public:
   inline void transferSource(
     const int& source_ghosts,
     const int& level,
-    amrex::MultiFab& tmp_source,
-    amrex::MultiFab& source)
+    amrex::MultiFab& sprayDot,
+    amrex::MultiFab& extSrc)
   {
     BL_PROFILE("ParticleContainer::transferSource()");
     AMREX_ALWAYS_ASSERT(level >= 0);
-    const int nghost = amrex::min(source.nGrow(), source_ghosts);
+    const int nghost = amrex::min(extSrc.nGrow(), source_ghosts);
 #ifdef PELELM_USE_SPRAY
-    const int ncomp = tmp_source.nComp();
+    const int ncomp = sprayDot.nComp();
     if (level > 0) {
       amrex::MultiFab tmp_mf(
         this->m_gdb->ParticleBoxArray(level),
         this->m_gdb->ParticleDistributionMap(level), ncomp, source_ghosts);
       tmp_mf.setVal(0.);
       tmp_mf.ParallelAdd(
-        tmp_source, 0, 0, ncomp, source_ghosts, source_ghosts,
+        sprayDot, 0, 0, ncomp, source_ghosts, source_ghosts,
         Geom(level).periodicity());
-      tmp_source.ParallelCopy(
+      sprayDot.ParallelCopy(
         tmp_mf, 0, 0, ncomp, source_ghosts, source_ghosts,
         Geom(level).periodicity());
     } else
 #endif
     {
-      tmp_source.SumBoundary(Geom(level).periodicity());
+      sprayDot.SumBoundary(Geom(level).periodicity());
     }
-    if (tmp_source.nComp() == source.nComp()) {
-      amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
+    if (sprayDot.nComp() == extSrc.nComp()) {
+      amrex::MultiFab::Add(extSrc, sprayDot, 0, 0, extSrc.nComp(), nghost);
     } else {
-      for (amrex::MFIter mfi(source, amrex::TilingIfNotGPU()); mfi.isValid();
+      for (amrex::MFIter mfi(extSrc, amrex::TilingIfNotGPU()); mfi.isValid();
            ++mfi) {
         const amrex::Box vbox = mfi.growntilebox(nghost);
-        auto const& spraydot = tmp_source.array(mfi);
-        auto const& ext_src = source.array(mfi);
+        auto const& spraydot = sprayDot.array(mfi);
+        auto const& ext_src = extSrc.array(mfi);
         addSpraySrc(vbox, spraydot, ext_src);
       }
     }
-    tmp_source.setVal(0.);
+    sprayDot.setVal(0.);
   }
 
   ///
@@ -410,11 +408,11 @@ private:
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
   SprayData* m_sprayData;
-  SprayData* d_sprayData;
+  SprayData* d_sprayData = nullptr;
   SprayComps m_sprayIndx;
   // Particle CFL, used for injection cases with LMeX
   amrex::Real m_partCFL;
-  amrex::Real m_injectVel;
+  amrex::Real m_injectVel = 0.;
   amrex::Vector<std::unique_ptr<SprayJet>> m_sprayJets;
 };
 
