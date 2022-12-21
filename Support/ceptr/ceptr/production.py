@@ -53,22 +53,24 @@ def production_rate(
             cw.writer(
                 fstream,
                 "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
-                "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
-                " const amrex::Real * tc, amrex::Real invT)",
+                "  qf, amrex::Real * qr, const amrex::Real * sc, const amrex::Real * sc_qss,"
+                " const amrex::Real * tc, const amrex::Real invT)",
             )
         else:
             cw.writer(
                 fstream,
                 "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
-                "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * /*sc_qss*/,"
-                " const amrex::Real * tc, amrex::Real invT)",
+                "  qf, amrex::Real * qr, const amrex::Real * sc,"
+                " const amrex::Real * /*sc_qss*/,const amrex::Real * tc,"
+                " const amrex::Real invT)",
             )
     else:
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
-            " /*qf*/, amrex::Real * /*qr*/, amrex::Real * /*sc*/, amrex::Real * /*sc_qss*/,"
-            " const amrex::Real * /*tc*/, amrex::Real /*invT*/)",
+            " /*qf*/, amrex::Real * /*qr*/, const amrex::Real * /*sc*/,"
+            " const amrex::Real * /*sc_qss*/, const amrex::Real * /*tc*/,"
+            " const amrex::Real /*invT*/)",
         )
     cw.writer(fstream, "{")
 
@@ -459,7 +461,6 @@ def production_rate(
         cw.writer(fstream)
 
     cw.writer(fstream)
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -469,13 +470,14 @@ def production_rate(
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-            " productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
+            " productionRate(amrex::Real * wdot, const amrex::Real * sc, const amrex::Real T)",
         )
     else:
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-            " productionRate(amrex::Real * wdot, amrex::Real * /*sc*/, amrex::Real /*T*/)",
+            " productionRate(amrex::Real * wdot, const amrex::Real * /*sc*/,"
+            " const amrex::Real /*T*/)",
         )
     cw.writer(fstream, "{")
 
@@ -1083,7 +1085,6 @@ def production_rate(
 
     cw.writer(fstream)
 
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -1653,7 +1654,6 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, "comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);")
         cw.writer(fstream)
 
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
 

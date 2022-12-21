@@ -2093,5 +2093,4 @@ def critical_parameters(fstream, mechanism, species_info):
             cw.writer(fstream, "acentric_i[%d] = 0.0 ;" % (species.idx))
 
     cw.writer(fstream)
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")

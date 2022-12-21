@@ -240,10 +240,10 @@ def ckcpbs(fstream, mechanism, species_info):
 
     cw.writer(fstream, "")
     cw.writer(fstream, "}")
-    cw.writer(fstream, "for (int i = 0; i < %d; i++)" % (n_species))
+    cw.writer(fstream, "for (const auto& tr : tresult)")
     cw.writer(fstream, "{")
 
-    cw.writer(fstream, "result += tresult[i];")
+    cw.writer(fstream, "result += tr;")
 
     cw.writer(fstream, "}")
 
@@ -1298,9 +1298,9 @@ def ckrhoy(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(fstream, "tmp[i] = y[i]*imw[i];")
     cw.writer(fstream, "}")
-    cw.writer(fstream, "for (int i = 0; i < %d; i++)" % (n_species))
+    cw.writer(fstream, "for (const auto& tp : tmp)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += tmp[i];")
+    cw.writer(fstream, "YOW += tp;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(
@@ -1400,9 +1400,9 @@ def ckmmwy(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(fstream, "tmp[i] = y[i]*imw[i];")
     cw.writer(fstream, "}")
-    cw.writer(fstream, "for (int i = 0; i < %d; i++)" % (n_species))
+    cw.writer(fstream, "for (const auto & tp : tmp)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += tmp[i];")
+    cw.writer(fstream, "YOW += tp;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(fstream, "*wtm = 1.0 / YOW;")
@@ -1591,9 +1591,9 @@ def ckytx(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(fstream, "tmp[i] = y[i]*imw[i];")
     cw.writer(fstream, "}")
-    cw.writer(fstream, "for (int i = 0; i < %d; i++)" % (n_species))
+    cw.writer(fstream, "for (const auto & tp : tmp)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += tmp[i];")
+    cw.writer(fstream, "YOW += tp;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(fstream, "amrex::Real YOWINV = 1.0/YOW;")
@@ -2878,7 +2878,7 @@ def temp_given_ey(fstream):
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-        " GET_T_GIVEN_EY(amrex::Real *  e, amrex::Real *  y, amrex::Real *  t,"
+        " GET_T_GIVEN_EY(const amrex::Real *  e, const amrex::Real *  y, amrex::Real *  t,"
         " int * ierr)",
     )
     cw.writer(fstream, "{")
@@ -2933,7 +2933,6 @@ def temp_given_ey(fstream):
     cw.writer(fstream, "}")
     cw.writer(fstream, "*t = t1;")
     cw.writer(fstream, "*ierr = 0;")
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
     cw.writer(fstream)
 
@@ -2949,7 +2948,7 @@ def temp_given_hy(fstream):
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-        " GET_T_GIVEN_HY(amrex::Real *  h, amrex::Real *  y, amrex::Real *  t,"
+        " GET_T_GIVEN_HY(const amrex::Real *  h, const amrex::Real *  y, amrex::Real *  t,"
         " int * ierr)",
     )
     cw.writer(fstream, "{")
@@ -3004,7 +3003,6 @@ def temp_given_hy(fstream):
     cw.writer(fstream, "}")
     cw.writer(fstream, "*t = t1;")
     cw.writer(fstream, "*ierr = 0;")
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
 
@@ -3049,7 +3047,9 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("and stoichiometric coefficients. (Eq 50)"))
     cw.writer(
         fstream,
-        "void CKINU" + cc.sym + "(int * i, int * nspec, int * ki, int * nu)",
+        "void CKINU"
+        + cc.sym
+        + "(const int * i, int * nspec, int * ki, int * nu)",
     )
     cw.writer(fstream, "{")
 
@@ -3108,7 +3108,7 @@ def ckkfkr(fstream, mechanism, species_info):
         fstream,
         "void CKKFKR"
         + cc.sym
-        + "(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x"
+        + "(const amrex::Real *  P, const amrex::Real *  T, const amrex::Real *  x"
         + ", amrex::Real *  q_f, amrex::Real *  q_r)",
     )
     cw.writer(fstream, "{")
