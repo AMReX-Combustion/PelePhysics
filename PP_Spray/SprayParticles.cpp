@@ -229,7 +229,8 @@ SprayParticleContainer::updateParticles(
     const Box state_box = pti.growntilebox(state_ghosts);
     bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
     const Long Np = pti.numParticles();
-    ParticleType* pstruct = pti.GetArrayOfStructs().data();
+    AoS& pbox = pti.GetArrayOfStructs();
+    ParticleType* pstruct = pbox().data();
     const SprayData* fdat = d_sprayData;
     Array4<const Real> const& Tarr = state.array(pti, SPI.utempIndx);
     Array4<const Real> const& rhoYarr = state.array(pti, SPI.specIndx);
@@ -269,42 +270,12 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
-    amrex::ParallelFor(
-      Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
-           rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, fdat,
-           bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds, isGhost,
-           isVirt, src_box, state_box, num_iter, sub_dt, eb_in_box
-#ifdef AMREX_USE_EB
-           ,
-           flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab
-#endif
-    ] AMREX_GPU_DEVICE(int pid) noexcept {
-        ParticleType& p = pstruct[pid];
-        if (p.id() > 0 && p.rdata(SprayComps::pstateFilmVol) > 0.) {
-          fillFilmFab(wall_film, *fdat, p, plo, dx);
-        }
-      });
-    }
-    // Data structures for creating new particles during splashing/breakup
-    Gpu::HostVector<splash_breakup> N_SB_h(Np, splash_breakup::no_change);
-    Gpu::DeviceVector<splash_breakup> N_SB_d(Np);
-    Gpu::copyAsync(
-      Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
-    auto N_SB = N_SB_d.dataPtr();
-    SBVects refv(Np);
-    SBPtrs rf_d;
-    if (isActive && do_splash_breakup) {
-      refv.fillPtrs_d(rf_d);
-    }
     amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
         auto eos = pele::physics::PhysicsType::eos();
         SprayUnits SPU;
         GasPhaseVals gpv;
-        amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
-          cBoilT; // Boiling temperature at current pressure
-        bool isActive = !(isVirt || isGhost);
         eos.molecular_weight(gpv.mw_fluid.data());
         eos.inv_molecular_weight(gpv.invmw.data());
         for (int n = 0; n < NUM_SPECIES; ++n) {
@@ -319,6 +290,7 @@ SprayParticleContainer::updateParticles(
         IntVect ijk = lx.floor(); // Upper cell center
         RealVect lxc = (p.pos() - plo) * dxi;
         IntVect ijkc = lxc.floor(); // Cell with particle
+        IntVect ijkc_prev = ijkc;
         IntVect bflags(IntVect::TheZeroVector());
         if (at_bounds) {
           // Check if particle has left the domain or is boundary adjacent
@@ -331,12 +303,6 @@ SprayParticleContainer::updateParticles(
         // Subcycle loop
         Real cur_dt = sub_dt;
         int cur_iter = 0;
-        bool is_film = false;
-        // Gather wall film values
-        if (p.rdata(SprayComps::pstateFilmVol) > 0. && isActive) {
-          is_film = true;
-          getWallFilm(ijkc, wall_film, p, dx);
-        }
         while (p.id() > 0 && cur_iter < num_iter) {
           // Flag for whether we are near EB boundaries
           bool do_fe_interp = false;
@@ -346,16 +312,7 @@ SprayParticleContainer::updateParticles(
               p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
               ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, fdat->min_eb_vfrac,
               indx_array.data(), weights.data());
-            // Solve for avg mw and pressure at droplet location
-            gpv.define();
-            calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
-            for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-              IntVect cur_indx = indx_array[aindx];
-              Real cvol = inv_vol;
-#ifdef AMREX_USE_EB
-              if (flags_array(cur_indx).isSingleValued()) {
-                cvol *= 1. / (volfrac_fab(cur_indx));
-              }
+          } else
 #endif
           {
             trilinear_interp(
@@ -368,13 +325,7 @@ SprayParticleContainer::updateParticles(
             indx_array.data(), weights.data());
           // Solve for avg mw and pressure at droplet location
           gpv.define();
-          fdat->calcBoilT(gpv, cBoilT.data());
-          amrex::Real C_D = 0.;
-          if (is_film) {
-            calculateFilmSource(cur_dt, dx, gpv, *fdat, p, ltransparm);
-          } else {
-            C_D = calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
-          }
+          calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cvol = inv_vol;
@@ -395,41 +346,9 @@ SprayParticleContainer::updateParticles(
             }
             if (fdat->mom_trans) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                const Real cvel = p.rdata(SprayComps::pstateVel + dir);
-                p.pos(dir) += cur_dt * cvel;
+                Gpu::Atomic::Add(
+                  &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
               }
-              // Update indices
-              ijkc_prev = ijkc;
-              lx = (p.pos() - plo) * dxi + 0.5;
-              ijk = lx.floor();
-              lxc = (p.pos() - plo) * dxi;
-              ijkc = lxc.floor(); // New cell center
-              if (at_bounds || do_fe_interp) {
-                // First check if particle has exited the domain through a
-                // Cartesian boundary
-                bool left_dom = check_bounds(
-                  p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bflags);
-                if (left_dom) {
-                  p.id() = -1;
-                } else {
-                  // Next reflect particles off BC or EB walls if necessary
-                  impose_wall(
-                    p, dx, plo, phi, bndry_lo, bndry_hi, bflags, eb_in_box,
-#ifdef AMREX_USE_EB
-                    flags_array, bcent_fab, bnorm_fab, volfrac_fab,
-                    fdat->min_eb_vfrac,
-#endif
-                    ijkc, ijkc_prev);
-                  lx = (p.pos() - plo) * dxi + 0.5;
-                  ijk = lx.floor();
-                  lxc = (p.pos() - plo) * dxi;
-                  ijkc = lxc.floor();
-                }
-              } // if (at_bounds || fe_interp)
-            }   // if (do_move)
-            cur_iter++;
-            if (isGhost && !src_box.contains(ijkc)) {
-              p.id() = -1;
             }
             if (fdat->mass_trans) {
               Gpu::Atomic::Add(
@@ -443,18 +362,18 @@ SprayParticleContainer::updateParticles(
               &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
           }
           // Modify particle position by whole time step
-          if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
-            // Remaining time in current timestep
-            amrex::Real rem_dt = flow_dt - (cur_iter + 1.) * sub_dt;
+          if (do_move && !fdat->fixed_parts) {
             for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-              const Real cvel = p.rdata(SPI.pstateVel + dir);
+              const Real cvel = p.rdata(SprayComps::pstateVel + dir);
               p.pos(dir) += cur_dt * cvel;
             }
-            if (fdat->do_breakup) {
-              updateBreakup(
-                C_D, rem_dt, cur_dt, pid, gpv, *fdat, p, N_SB, rf_d);
-            }
-            if ((at_bounds || do_fe_interp) && p.id() > 0.) {
+            // Update indices
+            ijkc_prev = ijkc;
+            lx = (p.pos() - plo) * dxi + 0.5;
+            ijk = lx.floor();
+            lxc = (p.pos() - plo) * dxi;
+            ijkc = lxc.floor(); // New cell center
+            if (at_bounds || do_fe_interp) {
               // First check if particle has exited the domain through a
               // Cartesian boundary
               bool left_dom =
@@ -464,21 +383,19 @@ SprayParticleContainer::updateParticles(
               } else {
                 // Next reflect particles off BC or EB walls if necessary
                 impose_wall(
-                  isActive, pid, p, *fdat, dx, plo, phi, bndry_lo, bndry_hi,
-                  bflags, cBoilT.data(), gpv.p_fluid, eb_in_box,
+                  p, dx, plo, phi, bndry_lo, bndry_hi, bflags, eb_in_box,
 #ifdef AMREX_USE_EB
                   flags_array, bcent_fab, bnorm_fab, volfrac_fab,
                   fdat->min_eb_vfrac,
 #endif
-                  ijkc, N_SB, rf_d, rem_dt);
+                  ijkc, ijkc_prev);
+                lx = (p.pos() - plo) * dxi + 0.5;
+                ijk = lx.floor();
+                lxc = (p.pos() - plo) * dxi;
+                ijkc = lxc.floor();
               }
             } // if (at_bounds || fe_interp)
-            // Update indices
-            lx = (p.pos() - plo) * dxi + 0.5;
-            ijk = lx.floor();
-            lxc = (p.pos() - plo) * dxi;
-            ijkc = lxc.floor(); // New cell center
-          }                     // if (do_move)
+          }   // if (do_move)
           cur_iter++;
           if (isGhost && !src_box.contains(ijkc)) {
             p.id() = -1;
@@ -486,22 +403,5 @@ SprayParticleContainer::updateParticles(
         } // End of subcycle loop
       }   // End of p.id() > 0 check
     });   // End of loop over particles
-    if (isActive && do_splash_breakup) {
-      Gpu::copy(
-        Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
-      bool get_new_parts = false;
-      for (Long n = 0; n < Np; n++) {
-        if (N_SB_h[n] != splash_breakup::no_change) {
-          get_new_parts = true;
-        }
-      }
-      if (get_new_parts) {
-        refv.retrieve_data();
-        SBPtrs rfh;
-        refv.fillPtrs_h(rfh);
-        CreateSBDroplets(Np, N_SB_h.data(), rfh, level);
-      }
-    }
-  } // for (int MyParIter pti..
-  Gpu::streamSynchronize();
+  }       // for (int MyParIter pti..
 }
