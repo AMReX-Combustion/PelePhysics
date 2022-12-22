@@ -379,6 +379,7 @@ class Converter:
                         self.mechanism,
                         self.species_info,
                         self.reaction_info,
+                        jacobian=self.jacobian,
                         syms=self.syms,
                     )
                 else:

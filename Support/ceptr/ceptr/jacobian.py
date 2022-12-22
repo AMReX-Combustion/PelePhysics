@@ -308,6 +308,7 @@ def ajac_symbolic(
     mechanism,
     species_info,
     reaction_info,
+    jacobian=True,
     syms=None,
 ):
     """Print the Jacobian obtained from symbolic recording."""
@@ -324,6 +325,17 @@ def ajac_symbolic(
         " * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
+
+    if not jacobian:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Mechanism was generated without a jacobian."
+                " Re-build in ceptr without the -nj flag."
+            ),
+        )
+        cw.writer(fstream, "amrex::Abort();")
+        return
 
     if syms.hformat == "cpu":
         cw.writer(
