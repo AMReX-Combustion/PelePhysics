@@ -1554,7 +1554,7 @@ def qssa_coeff_functions(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
-        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, amrex::Real"
+        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const amrex::Real"
         " * sc," + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
         " g_RT_qss)",
     )

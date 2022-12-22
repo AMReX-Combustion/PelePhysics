@@ -28,27 +28,27 @@ def ajac(
         if precond:
             cw.writer(
                 fstream,
-                "void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc,"
-                " amrex::Real T, const int HP)",
+                "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  sc,"
+                " const amrex::Real T, const int HP)",
             )
         else:
             cw.writer(
                 fstream,
-                "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+                "void aJacobian(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
                 " const int consP)",
             )
     else:
         if precond:
             cw.writer(
                 fstream,
-                "void aJacobian_precond(amrex::Real *  J, amrex::Real *  /*sc*/,"
-                " amrex::Real /*T*/, const int /*HP*/)",
+                "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  /*sc*/,"
+                " const amrex::Real /*T*/, const int /*HP*/)",
             )
         else:
             cw.writer(
                 fstream,
-                "void aJacobian(amrex::Real * J, amrex::Real * /*sc*/, amrex::Real /*T*/,"
-                " const int /*consP*/)",
+                "void aJacobian(amrex::Real * J, const amrex::Real * /*sc*/,"
+                " const amrex::Real /*T*/, const int /*consP*/)",
             )
     cw.writer(fstream, "{")
 
@@ -74,8 +74,8 @@ def ajac(
             cw.writer(fstream)
 
             cw.writer(fstream, "amrex::Real wdot[%d];" % (n_species))
-            cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species))
-            cw.writer(fstream, "wdot[k] = 0.0;")
+            cw.writer(fstream, "for (auto& val : wdot) {")
+            cw.writer(fstream, "val = 0.0;")
             cw.writer(fstream, "}")
 
             cw.writer(fstream)
@@ -221,9 +221,9 @@ def ajac(
             )
             cw.writer(fstream, "amrex::Real * eh_RT;")
             if precond:
-                cw.writer(fstream, "if (HP) {")
+                cw.writer(fstream, "if (HP == 1) {")
             else:
-                cw.writer(fstream, "if (consP) {")
+                cw.writer(fstream, "if (consP == 1) {")
 
             cw.writer(fstream, "cp_R(c_R, tc);")
             cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
@@ -499,7 +499,7 @@ def ajac_symbolic(
     # else:
     #    cw.writer(fstream, "if (consP) {")
 
-    cw.writer(fstream, "if (consP) {")
+    cw.writer(fstream, "if (consP == 1) {")
 
     cw.writer(fstream, "cp_R(c_R, tc);")
     cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
@@ -987,7 +987,10 @@ def ajac_reaction_d(
         else:
             cw.writer(fstream, cw.comment("Lindemann form"))
             cw.writer(fstream, "F = 1.0;")
-            cw.writer(fstream, "dlogFdlogPr = 0.0;")
+            if precond:
+                cw.writer(fstream, "// dlogFdlogPr is 0.0 and unused")
+            else:
+                cw.writer(fstream, "dlogFdlogPr = 0.0;")
             cw.writer(fstream, "dlogFdT = 0.0;")
 
     # reverse
@@ -1202,7 +1205,7 @@ def ajac_reaction_d(
 
     if has_alpha or falloff:
         if not precond:
-            cw.writer(fstream, "if (consP) {")
+            cw.writer(fstream, "if (consP == 1) {")
 
             for k in range(n_species):
                 dqdc_s = denhancement_d(
@@ -1575,15 +1578,15 @@ def dproduction_rate(
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc,"
-            " amrex::Real *  Tp, const int * HP)",
+            " DWDOT_SIMPLIFIED(amrex::Real *  J, const amrex::Real *  sc,"
+            " const amrex::Real *  Tp, const int * HP)",
         )
     else:
         cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
         cw.writer(
             fstream,
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *"
-            "  J, amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
+            "  J, const amrex::Real *  sc, const amrex::Real *  Tp, const int * consP)",
         )
 
     cw.writer(fstream, "{")
@@ -1608,6 +1611,5 @@ def dproduction_rate(
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
-    cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
     cw.writer(fstream)
