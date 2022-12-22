@@ -38,7 +38,7 @@ SprayParticleContainer::computeDerivedVars(
   const int d10_indx = volf_indx + 1;
   const int d32_indx = d10_indx + 1;
   const int wfh_indx = d32_indx + 1;
-  const int temp_indx = wfm_indx + 1;
+  const int temp_indx = wfh_indx + 1;
   const int vel_indx = temp_indx + 1;
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Long Np = pti.numParticles();
