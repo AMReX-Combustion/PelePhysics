@@ -80,6 +80,7 @@ def ajac(
         )
         cw.writer(fstream, "amrex::Abort();")
     else:
+        cw.writer(fstream, "#ifndef AMREX_USE_HIP")
         cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
         cw.writer(fstream, "J[i] = 0.0;")
         cw.writer(fstream, "}")
@@ -299,6 +300,12 @@ def ajac(
                 "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
                 % (n_species * (n_species + 1) + n_species),
             )
+        cw.writer(fstream, "#else")
+        cw.writer(
+            fstream, cw.comment("Don't use the analytical jacobian on HIP")
+        )
+        cw.writer(fstream, "amrex::Abort();")
+        cw.writer(fstream, "#endif")
 
     cw.writer(fstream, "}")
 

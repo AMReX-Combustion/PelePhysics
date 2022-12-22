@@ -1419,9 +1419,14 @@ aJacobian_precond(
   const int /*HP*/)
 {
 
+#ifndef AMREX_USE_HIP
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
+#else
+  // Don't use the analytical jacobian on HIP
+  amrex::Abort();
+#endif
 }
 
 // compute an approx to the reaction Jacobian (for preconditioning)
@@ -1454,9 +1459,14 @@ aJacobian(
   const int /*consP*/)
 {
 
+#ifndef AMREX_USE_HIP
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
+#else
+  // Don't use the analytical jacobian on HIP
+  amrex::Abort();
+#endif
 }
 
 // compute the reaction Jacobian
