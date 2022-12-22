@@ -987,7 +987,10 @@ def ajac_reaction_d(
         else:
             cw.writer(fstream, cw.comment("Lindemann form"))
             cw.writer(fstream, "F = 1.0;")
-            cw.writer(fstream, "dlogFdlogPr = 0.0;")
+            if precond:
+                cw.writer(fstream, "// dlogFdlogPr is 0.0 and unused")
+            else:
+                cw.writer(fstream, "dlogFdlogPr = 0.0;")
             cw.writer(fstream, "dlogFdT = 0.0;")
 
     # reverse
