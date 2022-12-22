@@ -779,8 +779,7 @@ def ajac_reaction_d(
             cw.writer(
                 fstream,
                 cw.comment(
-                    "FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work",
+                    "Irreversible reaction in _ajac_reaction may not work",
                 ),
             )
         for k in range(n_species):
@@ -792,7 +791,7 @@ def ajac_reaction_d(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "FIXME: irreversible reaction in _ajac_reaction may"
+                        "Irreversible reaction in _ajac_reaction may"
                         " not work",
                     ),
                 )

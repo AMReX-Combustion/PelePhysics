@@ -11634,7 +11634,7 @@ aJacobian_precond(
   const amrex::Real log10e = 1.0 / log(10.0);
   // reaction 7: H + O2 (+M) => HO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -11748,7 +11748,7 @@ aJacobian_precond(
 
   // reaction 17: H2O2 (+M) => 2 OH (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -11860,7 +11860,7 @@ aJacobian_precond(
 
   // reaction 41: CH3 + OH (+M) => CH3OH (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (6 - 1) * sc[5] + (0 - 1) * sc[9] + sc[12] +
           (1.5 - 1) * sc[13] + (0 - 1) * sc[15] + sc[18] + (3 - 1) * sc[20] +
@@ -11975,7 +11975,7 @@ aJacobian_precond(
 
   // reaction 43: CH3 + H (+M) => CH4 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -12089,7 +12089,7 @@ aJacobian_precond(
 
   // reaction 46: 2 CH3 (+M) => C2H6 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -12201,7 +12201,7 @@ aJacobian_precond(
 
   // reaction 55: CH2 + CO (+M) => CH2CO (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -12315,7 +12315,7 @@ aJacobian_precond(
 
   // reaction 56: CO + O (+M) => CO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -12430,7 +12430,7 @@ aJacobian_precond(
 
   // reaction 72: CH3O (+M) => CH2O + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -12544,7 +12544,7 @@ aJacobian_precond(
 
   // reaction 96: C2H3 (+M) => C2H2 + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -12777,7 +12777,7 @@ aJacobian_precond(
 
   // reaction 125: CH3CO (+M) => CH3 + CO (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -12891,7 +12891,7 @@ aJacobian_precond(
 
   // reaction 4: H + OH + M => H2O + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -12976,7 +12976,7 @@ aJacobian_precond(
 
   // reaction 29: CH2GSG + M => CH2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -13057,7 +13057,7 @@ aJacobian_precond(
 
   // reaction 30: CH2 + M => CH2GSG + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -13138,7 +13138,7 @@ aJacobian_precond(
 
   // reaction 64: HCO + M => CO + H + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (6 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -13279,7 +13279,7 @@ aJacobian_precond(
 
   // reaction 86: CH3O2 + M => CH3 + O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -13363,7 +13363,7 @@ aJacobian_precond(
 
   // reaction 87: CH3 + O2 + M => CH3O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -13447,7 +13447,7 @@ aJacobian_precond(
 
   // reaction 126: C2H5O + M => CH2O + CH3 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -19587,7 +19587,7 @@ aJacobian(
   const amrex::Real log10e = 1.0 / log(10.0);
   // reaction 7: H + O2 (+M) => HO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -19778,7 +19778,7 @@ aJacobian(
 
   // reaction 17: H2O2 (+M) => 2 OH (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -19946,7 +19946,7 @@ aJacobian(
 
   // reaction 41: CH3 + OH (+M) => CH3OH (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (6 - 1) * sc[5] + (0 - 1) * sc[9] + sc[12] +
           (1.5 - 1) * sc[13] + (0 - 1) * sc[15] + sc[18] + (3 - 1) * sc[20] +
@@ -20148,7 +20148,7 @@ aJacobian(
 
   // reaction 43: CH3 + H (+M) => CH4 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -20339,7 +20339,7 @@ aJacobian(
 
   // reaction 46: 2 CH3 (+M) => C2H6 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -20507,7 +20507,7 @@ aJacobian(
 
   // reaction 55: CH2 + CO (+M) => CH2CO (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -20678,7 +20678,7 @@ aJacobian(
 
   // reaction 56: CO + O (+M) => CO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -20865,7 +20865,7 @@ aJacobian(
 
   // reaction 72: CH3O (+M) => CH2O + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -21031,7 +21031,7 @@ aJacobian(
 
   // reaction 96: C2H3 (+M) => C2H2 + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[2] + (5 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3 - 1) * sc[12] + sc[13] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
@@ -21398,7 +21398,7 @@ aJacobian(
 
   // reaction 125: CH3CO (+M) => CH3 + CO (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -21560,7 +21560,7 @@ aJacobian(
 
   // reaction 4: H + OH + M => H2O + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (12 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -21722,7 +21722,7 @@ aJacobian(
 
   // reaction 29: CH2GSG + M => CH2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -21840,7 +21840,7 @@ aJacobian(
 
   // reaction 30: CH2 + M => CH2GSG + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -21961,7 +21961,7 @@ aJacobian(
 
   // reaction 64: HCO + M => CO + H + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[2] + (6 - 1) * sc[5] + (0 - 1) * sc[9] +
           (3.8 - 1) * sc[12] + (1.9 - 1) * sc[13] + (0 - 1) * sc[15] +
@@ -22174,7 +22174,7 @@ aJacobian(
 
   // reaction 86: CH3O2 + M => CH3 + O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -22310,7 +22310,7 @@ aJacobian(
 
   // reaction 87: CH3 + O2 + M => CH3O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
@@ -22451,7 +22451,7 @@ aJacobian(
 
   // reaction 126: C2H5O + M => CH2O + CH3 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (0 - 1) * sc[9] + (0 - 1) * sc[15] + (0 - 1) * sc[27] +
           (0 - 1) * sc[29] + (0 - 1) * sc[32] + (0 - 1) * sc[33] +
