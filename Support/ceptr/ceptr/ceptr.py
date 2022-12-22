@@ -9,7 +9,7 @@ import ceptr.converter as converter
 
 def convert(
     fname,
-    jocobian,
+    jacobian,
     qss_format_input,
     qss_symbolic_jac,
 ):
@@ -17,7 +17,7 @@ def convert(
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
         mechanism,
-        jocobian,
+        jacobian,
         qss_format_input,
         qss_symbolic_jac,
     )
@@ -27,7 +27,7 @@ def convert(
 
 def convert_lst(
     lst,
-    jocobian,
+    jacobian,
     qss_format_input,
     qss_symbolic_jac,
 ):
@@ -40,7 +40,7 @@ def convert_lst(
                 print(f"""Converting file {mechname}""")
                 convert(
                     mechname,
-                    jocobian,
+                    jacobian,
                     qss_format_input,
                     qss_symbolic_jac,
                 )
@@ -74,7 +74,7 @@ def main():
 
     parser.add_argument(
         "-nj",
-        "--no_jocobian",
+        "--no_jacobian",
         action="store_true",
         help="Do not generate a jacobian",
     )
@@ -84,14 +84,14 @@ def main():
     if args.fname:
         convert(
             args.fname,
-            not args.no_jocobian,
+            not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
     elif args.lst:
         convert_lst(
             args.lst,
-            not args.no_jocobian,
+            not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
