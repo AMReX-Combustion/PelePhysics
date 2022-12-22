@@ -10,7 +10,13 @@ import ceptr.writer as cw
 
 
 def ajac(
-    fstream, mechanism, species_info, reaction_info, precond=False, syms=None
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    jacobian=True,
+    precond=False,
+    syms=None,
 ):
     """Write jacobian for a reaction."""
     n_species = species_info.n_species
@@ -64,6 +70,15 @@ def ajac(
         )
         cw.writer(fstream, "amrex::Abort();")
         cw.writer(fstream)
+    elif not jacobian:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Mechanism was generated without a jacobian."
+                " Re-build in ceptr without the -nj flag."
+            ),
+        )
+        cw.writer(fstream, "amrex::Abort();")
     else:
         cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
         cw.writer(fstream, "J[i] = 0.0;")

@@ -25,10 +25,13 @@ class Converter:
     def __init__(
         self,
         mechanism,
+        jacobian=True,
         qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
+
+        self.jacobian = jacobian
 
         # Symbolic computations
         self.qss_symbolic_jacobian = qss_symbolic_jacobian
@@ -358,6 +361,7 @@ class Converter:
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
+                    jacobian=self.jacobian,
                     precond=True,
                     syms=self.syms,
                 )
@@ -383,6 +387,7 @@ class Converter:
                         self.mechanism,
                         self.species_info,
                         self.reaction_info,
+                        jacobian=self.jacobian,
                     )
                 cj.dproduction_rate(
                     hdr, self.mechanism, self.species_info, self.reaction_info
@@ -410,6 +415,7 @@ class Converter:
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
+                    jacobian=self.jacobian,
                     precond=True,
                 )
                 cj.dproduction_rate(
@@ -421,7 +427,11 @@ class Converter:
                 )
                 # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
                 cj.ajac(
-                    hdr, self.mechanism, self.species_info, self.reaction_info
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    jacobian=self.jacobian,
                 )
                 cj.dproduction_rate(
                     hdr, self.mechanism, self.species_info, self.reaction_info
