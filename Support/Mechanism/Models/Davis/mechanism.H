@@ -238,31 +238,17 @@ cv_R(amrex::Real* species, const amrex::Real* tc)
                   4.72084164e-14 * tc[4];
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 2: AR
-    species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4];
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 4: HE
-    species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4];
 }
 
 // compute Cp/R at the given temperature
@@ -375,31 +361,17 @@ cp_R(amrex::Real* species, const amrex::Real* tc)
                   4.72084164e-14 * tc[4];
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 2: AR
-    species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4];
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 4: HE
-    species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4];
 }
 
 // compute the g/(RT) at the given temperature
@@ -545,35 +517,19 @@ gibbs(amrex::Real* species, const amrex::Real* tc)
                   4.362418233333334e-11 * tc[3] + 2.360420820000000e-15 * tc[4];
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
-                 2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
-                 0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
-                 0.000000000000000e+00 * tc[4];
-  } else {
-    // species 2: AR
-    species[2] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
-                 2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
-                 0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
-                 0.000000000000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
+               2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
+               0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
+               0.000000000000000e+00 * tc[4];
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = -7.453750000000000e+02 * invT + 1.571276026000000e+00 -
-                 2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
-                 0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
-                 0.000000000000000e+00 * tc[4];
-  } else {
-    // species 4: HE
-    species[4] = -7.453750000000000e+02 * invT + 1.571276026000000e+00 -
-                 2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
-                 0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
-                 0.000000000000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = -7.453750000000000e+02 * invT + 1.571276026000000e+00 -
+               2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
+               0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
+               0.000000000000000e+00 * tc[4];
 }
 
 // compute the a/(RT) at the given temperature
@@ -711,35 +667,19 @@ helmholtz(amrex::Real* species, const amrex::Real* tc)
                   2.36042082e-15 * tc[4];
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = -7.45375000e+02 * invT - 2.86600000e+00 -
-                 2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
-                 0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 2: AR
-    species[2] = -7.45375000e+02 * invT - 2.86600000e+00 -
-                 2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
-                 0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = -7.45375000e+02 * invT - 2.86600000e+00 -
+               2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
+               0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
+               0.00000000e+00 * tc[4];
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = -7.45375000e+02 * invT + 5.71276026e-01 -
-                 2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
-                 0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
-                 0.00000000e+00 * tc[4];
-  } else {
-    // species 4: HE
-    species[4] = -7.45375000e+02 * invT + 5.71276026e-01 -
-                 2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
-                 0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
-                 0.00000000e+00 * tc[4];
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = -7.45375000e+02 * invT + 5.71276026e-01 -
+               2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
+               0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
+               0.00000000e+00 * tc[4];
 }
 
 // compute the e/(RT) at the given temperature
@@ -853,31 +793,17 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
                   9.44168328e-15 * tc[4] - 4.87591660e+04 * invT;
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  } else {
-    // species 2: AR
-    species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  } else {
-    // species 4: HE
-    species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
@@ -991,31 +917,17 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
                   9.44168328e-15 * tc[4] - 4.87591660e+04 * invT;
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  } else {
-    // species 2: AR
-    species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  } else {
-    // species 4: HE
-    species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
 // compute the S/R at the given temperature (Eq 21)
@@ -1128,31 +1040,17 @@ speciesEntropy(amrex::Real* species, const amrex::Real* tc)
                   1.18021041e-14 * tc[4] + 2.27163806e+00;
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] + 4.36600000e+00;
-  } else {
-    // species 2: AR
-    species[2] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] + 4.36600000e+00;
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] + 4.36600000e+00;
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] + 9.28723974e-01;
-  } else {
-    // species 4: HE
-    species[4] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-                 0.00000000e+00 * tc[4] + 9.28723974e-01;
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+               0.00000000e+00 * tc[4] + 9.28723974e-01;
 }
 
 // Returns the mean specific heat at CP (Eq. 33)
@@ -3520,27 +3418,15 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
                   1.57047056e-09 * tc[2] - 1.88833666e-13 * tc[3];
   }
 
-  // species with midpoint at T=5000 kelvin
-  if (T < 5000) {
-    // species 2: AR
-    species[2] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
-  } else {
-    // species 2: AR
-    species[2] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
-  }
+  // species with no change at a midpoint T
+  // species 2: AR
+  species[2] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
 
-  // species with midpoint at T=6000 kelvin
-  if (T < 6000) {
-    // species 4: HE
-    species[4] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
-  } else {
-    // species 4: HE
-    species[4] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
-                 0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
-  }
+  // species with no change at a midpoint T
+  // species 4: HE
+  species[4] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
+               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
 }
 
 // compute an approx to the reaction Jacobian

@@ -1,4 +1,5 @@
 """Thermodynamics functions."""
+import io
 import sys
 from collections import OrderedDict
 
@@ -131,17 +132,11 @@ def generate_thermo_routine(
     #    stop
     # stop
     for mid_temp, species_list in list(midpoints.items()):
-        cw.writer(fstream, "")
-        cw.writer(
-            fstream,
-            cw.comment("species with midpoint at T=%g kelvin" % mid_temp),
-        )
-        cw.writer(fstream, "if (T < %g) {" % mid_temp)
-
+        lostream = io.StringIO()
         for species, low_range, _ in species_list:
             if qss_flag:
                 cw.writer(
-                    fstream,
+                    lostream,
                     cw.comment(
                         "species %d: %s"
                         % (
@@ -152,7 +147,7 @@ def generate_thermo_routine(
                     ),
                 )
                 cw.writer(
-                    fstream,
+                    lostream,
                     "species[%d] ="
                     % (
                         species_info.ordered_idx_map[species.name]
@@ -161,7 +156,7 @@ def generate_thermo_routine(
                 )
             else:
                 cw.writer(
-                    fstream,
+                    lostream,
                     cw.comment(
                         "species %d: %s"
                         % (
@@ -171,14 +166,14 @@ def generate_thermo_routine(
                     ),
                 )
                 cw.writer(
-                    fstream,
+                    lostream,
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
-                    fstream, low_range, syms
+                    lostream, low_range, syms
                 )
             elif syms_g_rt_qss:
                 index = (
@@ -187,11 +182,11 @@ def generate_thermo_routine(
                 )
                 syms.g_RT_qss_smp_tmp[mid_temp]["m"][
                     index
-                ] = expression_generator(fstream, low_range, syms)
+                ] = expression_generator(lostream, low_range, syms)
             elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
-                    fstream, low_range, syms
+                    lostream, low_range, syms
                 )
             elif syms_h_rt_qss:
                 index = (
@@ -200,16 +195,15 @@ def generate_thermo_routine(
                 )
                 syms.h_RT_qss_smp_tmp[mid_temp]["m"][
                     index
-                ] = expression_generator(fstream, low_range, syms)
+                ] = expression_generator(lostream, low_range, syms)
             else:
-                expression_generator(fstream, low_range)
+                expression_generator(lostream, low_range)
 
-        cw.writer(fstream, "} else {")
-
+        histream = io.StringIO()
         for species, _, high_range in species_list:
             if qss_flag:
                 cw.writer(
-                    fstream,
+                    histream,
                     cw.comment(
                         "species %d: %s"
                         % (
@@ -220,7 +214,7 @@ def generate_thermo_routine(
                     ),
                 )
                 cw.writer(
-                    fstream,
+                    histream,
                     "species[%d] ="
                     % (
                         species_info.ordered_idx_map[species.name]
@@ -229,7 +223,7 @@ def generate_thermo_routine(
                 )
             else:
                 cw.writer(
-                    fstream,
+                    histream,
                     cw.comment(
                         "species %d: %s"
                         % (
@@ -239,14 +233,14 @@ def generate_thermo_routine(
                     ),
                 )
                 cw.writer(
-                    fstream,
+                    histream,
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
-                    fstream, high_range, syms
+                    histream, high_range, syms
                 )
             elif syms_g_rt_qss:
                 index = (
@@ -255,11 +249,11 @@ def generate_thermo_routine(
                 )
                 syms.g_RT_qss_smp_tmp[mid_temp]["p"][
                     index
-                ] = expression_generator(fstream, high_range, syms)
+                ] = expression_generator(histream, high_range, syms)
             elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
-                    fstream, high_range, syms
+                    histream, high_range, syms
                 )
             elif syms_h_rt_qss:
                 index = (
@@ -268,11 +262,32 @@ def generate_thermo_routine(
                 )
                 syms.h_RT_qss_smp_tmp[mid_temp]["p"][
                     index
-                ] = expression_generator(fstream, high_range, syms)
+                ] = expression_generator(histream, high_range, syms)
             else:
-                expression_generator(fstream, high_range)
+                expression_generator(histream, high_range)
 
-        cw.writer(fstream, "}")
+        lostr = lostream.getvalue().rstrip("\n")
+        histr = histream.getvalue().rstrip("\n")
+        cw.writer(fstream, "")
+        if histr == lostr:
+            cw.writer(
+                fstream,
+                cw.comment(
+                    "species with no change at a midpoint T" % mid_temp
+                ),
+            )
+            cw.writer(fstream, lostr)
+        else:
+            cw.writer(
+                fstream,
+                cw.comment("species with midpoint at T=%g kelvin" % mid_temp),
+            )
+            cw.writer(
+                fstream,
+                f"""if (T < {mid_temp:g}) {{\n{lostr}}} else {{\n{histr}}}""",
+            )
+        lostream.close()
+        histream.close()
 
     cw.writer(fstream, "}")
 
