@@ -10821,7 +10821,7 @@ aJacobian_precond(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 2304; i++) {
     J[i] = 0.0;
   }
@@ -19869,7 +19869,6 @@ aJacobian_precond(
   // dTdot/dT
   J[2303] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -19901,7 +19900,7 @@ aJacobian(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 2304; i++) {
     J[i] = 0.0;
   }
@@ -29634,7 +29633,6 @@ aJacobian(
   // dTdot/dT
   J[2303] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }

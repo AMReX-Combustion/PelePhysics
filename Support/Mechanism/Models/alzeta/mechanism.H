@@ -20551,7 +20551,7 @@ aJacobian_precond(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 5329; i++) {
     J[i] = 0.0;
   }
@@ -49515,7 +49515,6 @@ aJacobian_precond(
   // dTdot/dT
   J[5328] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -49547,7 +49546,7 @@ aJacobian(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 5329; i++) {
     J[i] = 0.0;
   }
@@ -80986,7 +80985,6 @@ aJacobian(
   // dTdot/dT
   J[5328] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -82128,7 +82126,7 @@ egtransetCOFLAM(amrex::Real* COFLAM)
   COFLAM[227] = -4.56934676E-02;
   COFLAM[228] = -6.07136823E+00;
   COFLAM[229] = 2.66185913E+00;
-  COFLAM[230] = 3.99059117E-03;
+  COFLAM[230] = 3.99059116E-03;
   COFLAM[231] = -1.08975779E-02;
   COFLAM[232] = -1.65952907E+01;
   COFLAM[233] = 7.48711221E+00;

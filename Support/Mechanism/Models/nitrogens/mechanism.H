@@ -1419,12 +1419,11 @@ aJacobian_precond(
   const int /*HP*/)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -1459,12 +1458,11 @@ aJacobian(
   const int /*consP*/)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }

@@ -80,7 +80,10 @@ def ajac(
         )
         cw.writer(fstream, "amrex::Abort();")
     else:
-        cw.writer(fstream, "#ifndef AMREX_USE_HIP")
+        cw.writer(
+            fstream,
+            "#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)",
+        )
         cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
         cw.writer(fstream, "J[i] = 0.0;")
         cw.writer(fstream, "}")
@@ -301,9 +304,6 @@ def ajac(
                 % (n_species * (n_species + 1) + n_species),
             )
         cw.writer(fstream, "#else")
-        cw.writer(
-            fstream, cw.comment("Don't use the analytical jacobian on HIP")
-        )
         cw.writer(fstream, "amrex::Abort();")
         cw.writer(fstream, "#endif")
 
@@ -343,6 +343,11 @@ def ajac_symbolic(
         )
         cw.writer(fstream, "amrex::Abort();")
         return
+
+    cw.writer(
+        fstream,
+        "#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)",
+    )
 
     if syms.hformat == "cpu":
         cw.writer(
@@ -593,7 +598,9 @@ def ajac_symbolic(
         % (n_species * (n_species + 1) + n_species),
     )
 
-    cw.writer(fstream, "return;")
+    cw.writer(fstream, "#else")
+    cw.writer(fstream, "amrex::Abort();")
+    cw.writer(fstream, "#endif")
     cw.writer(fstream, "}")
 
     cw.writer(fstream)

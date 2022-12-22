@@ -25658,7 +25658,7 @@ aJacobian_precond(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 7921; i++) {
     J[i] = 0.0;
   }
@@ -50760,7 +50760,6 @@ aJacobian_precond(
   // dTdot/dT
   J[7920] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -50792,7 +50791,7 @@ aJacobian(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
-#ifndef AMREX_USE_HIP
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 7921; i++) {
     J[i] = 0.0;
   }
@@ -76587,7 +76586,6 @@ aJacobian(
   // dTdot/dT
   J[7920] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 #else
-  // Don't use the analytical jacobian on HIP
   amrex::Abort();
 #endif
 }
@@ -78105,7 +78103,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[69] = 4.88268692E+00;
   COFD[70] = -4.14917638E-01;
   COFD[71] = 1.78274298E-02;
-  COFD[72] = -1.79310921E+01;
+  COFD[72] = -1.79310920E+01;
   COFD[73] = 4.98037650E+00;
   COFD[74] = -4.26676911E-01;
   COFD[75] = 1.83007231E-02;
@@ -84369,7 +84367,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[6333] = 4.39538102E+00;
   COFD[6334] = -3.56367230E-01;
   COFD[6335] = 1.54788461E-02;
-  COFD[6336] = -1.79310921E+01;
+  COFD[6336] = -1.79310920E+01;
   COFD[6337] = 4.98037650E+00;
   COFD[6338] = -4.26676911E-01;
   COFD[6339] = 1.83007231E-02;
@@ -88058,7 +88056,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[10022] = -4.41046938E-01;
   COFD[10023] = 1.73939950E-02;
   COFD[10024] = -2.25933772E+01;
-  COFD[10025] = 5.42562556E+00;
+  COFD[10025] = 5.42562555E+00;
   COFD[10026] = -4.48132861E-01;
   COFD[10027] = 1.77847329E-02;
   COFD[10028] = -2.23631758E+01;
@@ -92930,7 +92928,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[14894] = -4.14322433E-01;
   COFD[14895] = 1.59763256E-02;
   COFD[14896] = -2.25933772E+01;
-  COFD[14897] = 5.42562556E+00;
+  COFD[14897] = 5.42562555E+00;
   COFD[14898] = -4.48132861E-01;
   COFD[14899] = 1.77847329E-02;
   COFD[14900] = -2.23366684E+01;
