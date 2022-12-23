@@ -89,7 +89,7 @@ static constexpr int nC3H7_ID = 71;
 
 static constexpr int NUM_ELEMENTS = 6;
 static constexpr int NUM_SPECIES = 72;
-static int constexpr NUM_IONS = 0;
+static constexpr int NUM_IONS = 0;
 static constexpr int NUM_REACTIONS = 518;
 
 static constexpr int NUM_FIT = 4;

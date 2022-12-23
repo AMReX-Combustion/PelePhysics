@@ -30,7 +30,7 @@ static constexpr int CO2_ID = 12;
 
 static constexpr int NUM_ELEMENTS = 6;
 static constexpr int NUM_SPECIES = 13;
-static int constexpr NUM_IONS = 0;
+static constexpr int NUM_IONS = 0;
 static constexpr int NUM_REACTIONS = 27;
 
 static constexpr int NUM_FIT = 4;

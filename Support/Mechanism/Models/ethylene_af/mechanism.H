@@ -44,7 +44,7 @@ static constexpr int C2H5O_ID = 28;
 
 static constexpr int NUM_ELEMENTS = 4;
 static constexpr int NUM_SPECIES = 29;
-static int constexpr NUM_IONS = 0;
+static constexpr int NUM_IONS = 0;
 static constexpr int NUM_REACTIONS = 172;
 
 static constexpr int NUM_FIT = 4;

@@ -69,7 +69,7 @@ static constexpr int CH3CHO_ID = 52;
 
 static constexpr int NUM_ELEMENTS = 5;
 static constexpr int NUM_SPECIES = 53;
-static int constexpr NUM_IONS = 0;
+static constexpr int NUM_IONS = 0;
 static constexpr int NUM_REACTIONS = 325;
 
 static constexpr int NUM_FIT = 4;

@@ -71,7 +71,7 @@ static constexpr int N2_ID = 55;
 
 static constexpr int NUM_ELEMENTS = 4;
 static constexpr int NUM_SPECIES = 56;
-static int constexpr NUM_IONS = 0;
+static constexpr int NUM_IONS = 0;
 static constexpr int NUM_REACTIONS = 289;
 
 static constexpr int NUM_FIT = 4;
