@@ -11,22 +11,22 @@
 */
 
 // Species
-static constexpr int H2_ID = 0;
-static constexpr int H_ID = 1;
-static constexpr int O_ID = 2;
-static constexpr int O2_ID = 3;
-static constexpr int OH_ID = 4;
-static constexpr int H2O_ID = 5;
-static constexpr int HO2_ID = 6;
-static constexpr int H2O2_ID = 7;
-static constexpr int N2_ID = 8;
+#define H2_ID 0
+#define H_ID 1
+#define O_ID 2
+#define O2_ID 3
+#define OH_ID 4
+#define H2O_ID 5
+#define HO2_ID 6
+#define H2O2_ID 7
+#define N2_ID 8
 
-static constexpr int NUM_ELEMENTS = 3;
-static constexpr int NUM_SPECIES = 9;
-static constexpr int NUM_IONS = 0;
-static constexpr int NUM_REACTIONS = 27;
+#define NUM_ELEMENTS 3
+#define NUM_SPECIES 9
+#define NUM_IONS 0
+#define NUM_REACTIONS 27
 
-static constexpr int NUM_FIT = 4;
+#define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

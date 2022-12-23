@@ -11,18 +11,18 @@
 */
 
 // Species
-static constexpr int O2_ID = 0;
-static constexpr int N2_ID = 1;
-static constexpr int E_ID = 2;
-static constexpr int On_ID = 3;
-static constexpr int O2n_ID = 4;
+#define O2_ID 0
+#define N2_ID 1
+#define E_ID 2
+#define On_ID 3
+#define O2n_ID 4
 
-static constexpr int NUM_ELEMENTS = 3;
-static constexpr int NUM_SPECIES = 5;
-static constexpr int NUM_IONS = 3;
-static constexpr int NUM_REACTIONS = 0;
+#define NUM_ELEMENTS 3
+#define NUM_SPECIES 5
+#define NUM_IONS 3
+#define NUM_REACTIONS 0
 
-static constexpr int NUM_FIT = 4;
+#define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

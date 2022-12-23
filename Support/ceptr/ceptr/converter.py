@@ -604,25 +604,20 @@ class Converter:
             s = s.replace("-", "").replace("(", "").replace(")", "")
             cw.writer(
                 fstream,
-                "static constexpr int %s_ID = %d;"
+                "#define %s_ID %d"
                 % (s, self.species_info.ordered_idx_map[species]),
             )
             if s[-1] == "n" or s[-1] == "p" or s == "E":
                 nb_ions += 1
         cw.writer(fstream)
+        cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
         cw.writer(
-            fstream, "static constexpr int NUM_ELEMENTS = %d;" % (nb_elem)
+            fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
         )
+        cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
         cw.writer(
             fstream,
-            "static constexpr int NUM_SPECIES = %d;"
-            % (self.species_info.n_species),
-        )
-        cw.writer(fstream, "static constexpr int NUM_IONS = %d;" % (nb_ions))
-        cw.writer(
-            fstream,
-            "static constexpr int NUM_REACTIONS = %d;"
-            % (len(self.mechanism.reactions())),
+            "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),
         )
         cw.writer(fstream)
-        cw.writer(fstream, "static constexpr int NUM_FIT = 4;")
+        cw.writer(fstream, "#define NUM_FIT 4")

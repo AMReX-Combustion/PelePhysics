@@ -13,39 +13,39 @@
 */
 
 // Species
-static constexpr int N2_ID = 0;
-static constexpr int H2_ID = 1;
-static constexpr int H_ID = 2;
-static constexpr int O2_ID = 3;
-static constexpr int O_ID = 4;
-static constexpr int H2O_ID = 5;
-static constexpr int OH_ID = 6;
-static constexpr int H2O2_ID = 7;
-static constexpr int HO2_ID = 8;
-static constexpr int CO_ID = 9;
-static constexpr int CO2_ID = 10;
-static constexpr int CH4_ID = 11;
-static constexpr int CH3_ID = 12;
-static constexpr int CH2_ID = 13;
-static constexpr int CH2S_ID = 14;
-static constexpr int C_ID = 15;
-static constexpr int CH_ID = 16;
-static constexpr int CH3OH_ID = 17;
-static constexpr int CH3O_ID = 18;
-static constexpr int CH2OH_ID = 19;
-static constexpr int CH2O_ID = 20;
-static constexpr int HCO_ID = 21;
-static constexpr int CHOp_ID = 22;
-static constexpr int H3Op_ID = 23;
-static constexpr int O2n_ID = 24;
-static constexpr int E_ID = 25;
+#define N2_ID 0
+#define H2_ID 1
+#define H_ID 2
+#define O2_ID 3
+#define O_ID 4
+#define H2O_ID 5
+#define OH_ID 6
+#define H2O2_ID 7
+#define HO2_ID 8
+#define CO_ID 9
+#define CO2_ID 10
+#define CH4_ID 11
+#define CH3_ID 12
+#define CH2_ID 13
+#define CH2S_ID 14
+#define C_ID 15
+#define CH_ID 16
+#define CH3OH_ID 17
+#define CH3O_ID 18
+#define CH2OH_ID 19
+#define CH2O_ID 20
+#define HCO_ID 21
+#define CHOp_ID 22
+#define H3Op_ID 23
+#define O2n_ID 24
+#define E_ID 25
 
-static constexpr int NUM_ELEMENTS = 5;
-static constexpr int NUM_SPECIES = 26;
-static constexpr int NUM_IONS = 4;
-static constexpr int NUM_REACTIONS = 134;
+#define NUM_ELEMENTS 5
+#define NUM_SPECIES 26
+#define NUM_IONS 4
+#define NUM_REACTIONS 134
 
-static constexpr int NUM_FIT = 4;
+#define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

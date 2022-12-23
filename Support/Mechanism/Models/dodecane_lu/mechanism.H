@@ -12,66 +12,66 @@
 */
 
 // Species
-static constexpr int NC12H26_ID = 0;
-static constexpr int H_ID = 1;
-static constexpr int O_ID = 2;
-static constexpr int OH_ID = 3;
-static constexpr int HO2_ID = 4;
-static constexpr int H2_ID = 5;
-static constexpr int H2O_ID = 6;
-static constexpr int H2O2_ID = 7;
-static constexpr int O2_ID = 8;
-static constexpr int CH2_ID = 9;
-static constexpr int CH2D_ID = 10;
-static constexpr int CH3_ID = 11;
-static constexpr int CH4_ID = 12;
-static constexpr int HCO_ID = 13;
-static constexpr int CH2O_ID = 14;
-static constexpr int CH3O_ID = 15;
-static constexpr int CO_ID = 16;
-static constexpr int CO2_ID = 17;
-static constexpr int C2H2_ID = 18;
-static constexpr int C2H3_ID = 19;
-static constexpr int C2H4_ID = 20;
-static constexpr int C2H5_ID = 21;
-static constexpr int C2H6_ID = 22;
-static constexpr int CH2CHO_ID = 23;
-static constexpr int aC3H5_ID = 24;
-static constexpr int C3H6_ID = 25;
-static constexpr int nC3H7_ID = 26;
-static constexpr int C2H3CHO_ID = 27;
-static constexpr int C4H7_ID = 28;
-static constexpr int C4H81_ID = 29;
-static constexpr int pC4H9_ID = 30;
-static constexpr int C5H9_ID = 31;
-static constexpr int C5H10_ID = 32;
-static constexpr int PXC5H11_ID = 33;
-static constexpr int C6H12_ID = 34;
-static constexpr int PXC6H13_ID = 35;
-static constexpr int C7H14_ID = 36;
-static constexpr int PXC7H15_ID = 37;
-static constexpr int C8H16_ID = 38;
-static constexpr int PXC8H17_ID = 39;
-static constexpr int C9H18_ID = 40;
-static constexpr int PXC9H19_ID = 41;
-static constexpr int C10H20_ID = 42;
-static constexpr int PXC10H21_ID = 43;
-static constexpr int PXC12H25_ID = 44;
-static constexpr int SXC12H25_ID = 45;
-static constexpr int S3XC12H25_ID = 46;
-static constexpr int C12H24_ID = 47;
-static constexpr int C12H25O2_ID = 48;
-static constexpr int C12OOH_ID = 49;
-static constexpr int O2C12H24OOH_ID = 50;
-static constexpr int OC12H23OOH_ID = 51;
-static constexpr int N2_ID = 52;
+#define NC12H26_ID 0
+#define H_ID 1
+#define O_ID 2
+#define OH_ID 3
+#define HO2_ID 4
+#define H2_ID 5
+#define H2O_ID 6
+#define H2O2_ID 7
+#define O2_ID 8
+#define CH2_ID 9
+#define CH2D_ID 10
+#define CH3_ID 11
+#define CH4_ID 12
+#define HCO_ID 13
+#define CH2O_ID 14
+#define CH3O_ID 15
+#define CO_ID 16
+#define CO2_ID 17
+#define C2H2_ID 18
+#define C2H3_ID 19
+#define C2H4_ID 20
+#define C2H5_ID 21
+#define C2H6_ID 22
+#define CH2CHO_ID 23
+#define aC3H5_ID 24
+#define C3H6_ID 25
+#define nC3H7_ID 26
+#define C2H3CHO_ID 27
+#define C4H7_ID 28
+#define C4H81_ID 29
+#define pC4H9_ID 30
+#define C5H9_ID 31
+#define C5H10_ID 32
+#define PXC5H11_ID 33
+#define C6H12_ID 34
+#define PXC6H13_ID 35
+#define C7H14_ID 36
+#define PXC7H15_ID 37
+#define C8H16_ID 38
+#define PXC8H17_ID 39
+#define C9H18_ID 40
+#define PXC9H19_ID 41
+#define C10H20_ID 42
+#define PXC10H21_ID 43
+#define PXC12H25_ID 44
+#define SXC12H25_ID 45
+#define S3XC12H25_ID 46
+#define C12H24_ID 47
+#define C12H25O2_ID 48
+#define C12OOH_ID 49
+#define O2C12H24OOH_ID 50
+#define OC12H23OOH_ID 51
+#define N2_ID 52
 
-static constexpr int NUM_ELEMENTS = 4;
-static constexpr int NUM_SPECIES = 53;
-static constexpr int NUM_IONS = 0;
-static constexpr int NUM_REACTIONS = 268;
+#define NUM_ELEMENTS 4
+#define NUM_SPECIES 53
+#define NUM_IONS 0
+#define NUM_REACTIONS 268
 
-static constexpr int NUM_FIT = 4;
+#define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

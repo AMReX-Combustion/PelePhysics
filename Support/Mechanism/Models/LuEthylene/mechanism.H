@@ -13,45 +13,45 @@
 */
 
 // Species
-static constexpr int H2_ID = 0;
-static constexpr int H_ID = 1;
-static constexpr int O_ID = 2;
-static constexpr int O2_ID = 3;
-static constexpr int OH_ID = 4;
-static constexpr int H2O_ID = 5;
-static constexpr int HO2_ID = 6;
-static constexpr int H2O2_ID = 7;
-static constexpr int CH_ID = 8;
-static constexpr int CH2_ID = 9;
-static constexpr int CH2D_ID = 10;
-static constexpr int CH3_ID = 11;
-static constexpr int CH4_ID = 12;
-static constexpr int CO_ID = 13;
-static constexpr int CO2_ID = 14;
-static constexpr int HCO_ID = 15;
-static constexpr int CH2O_ID = 16;
-static constexpr int CH3O_ID = 17;
-static constexpr int C2H2_ID = 18;
-static constexpr int H2CC_ID = 19;
-static constexpr int C2H3_ID = 20;
-static constexpr int C2H4_ID = 21;
-static constexpr int C2H5_ID = 22;
-static constexpr int C2H6_ID = 23;
-static constexpr int HCCO_ID = 24;
-static constexpr int CH2CO_ID = 25;
-static constexpr int CH2CHO_ID = 26;
-static constexpr int CH3CHO_ID = 27;
-static constexpr int aC3H5_ID = 28;
-static constexpr int C3H6_ID = 29;
-static constexpr int nC3H7_ID = 30;
-static constexpr int N2_ID = 31;
+#define H2_ID 0
+#define H_ID 1
+#define O_ID 2
+#define O2_ID 3
+#define OH_ID 4
+#define H2O_ID 5
+#define HO2_ID 6
+#define H2O2_ID 7
+#define CH_ID 8
+#define CH2_ID 9
+#define CH2D_ID 10
+#define CH3_ID 11
+#define CH4_ID 12
+#define CO_ID 13
+#define CO2_ID 14
+#define HCO_ID 15
+#define CH2O_ID 16
+#define CH3O_ID 17
+#define C2H2_ID 18
+#define H2CC_ID 19
+#define C2H3_ID 20
+#define C2H4_ID 21
+#define C2H5_ID 22
+#define C2H6_ID 23
+#define HCCO_ID 24
+#define CH2CO_ID 25
+#define CH2CHO_ID 26
+#define CH3CHO_ID 27
+#define aC3H5_ID 28
+#define C3H6_ID 29
+#define nC3H7_ID 30
+#define N2_ID 31
 
-static constexpr int NUM_ELEMENTS = 5;
-static constexpr int NUM_SPECIES = 32;
-static constexpr int NUM_IONS = 0;
-static constexpr int NUM_REACTIONS = 206;
+#define NUM_ELEMENTS 5
+#define NUM_SPECIES 32
+#define NUM_IONS 0
+#define NUM_REACTIONS 206
 
-static constexpr int NUM_FIT = 4;
+#define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp
