@@ -618,7 +618,7 @@ class Converter:
             "static constexpr int NUM_SPECIES = %d;"
             % (self.species_info.n_species),
         )
-        cw.writer(fstream, "static int constexpr NUM_IONS = %d;" % (nb_ions))
+        cw.writer(fstream, "static constexpr int NUM_IONS = %d;" % (nb_ions))
         cw.writer(
             fstream,
             "static constexpr int NUM_REACTIONS = %d;"
