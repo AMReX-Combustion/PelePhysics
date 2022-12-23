@@ -8426,6 +8426,7 @@ aJacobian_precond(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 1225; i++) {
     J[i] = 0.0;
   }
@@ -8666,7 +8667,7 @@ aJacobian_precond(
 
   // reaction 45: CH3 + H (+M) => CH4 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[4] + (5 - 1) * sc[6] + sc[12] + (3 - 1) * sc[18];
   // forward
@@ -8854,7 +8855,7 @@ aJacobian_precond(
 
   // reaction 60: CO + O (+M) => CO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -8948,7 +8949,7 @@ aJacobian_precond(
 
   // reaction 75: CH3O (+M) => CH2O + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -9041,7 +9042,7 @@ aJacobian_precond(
 
   // reaction 92: C2H3 (+M) => C2H2 + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[4] + (5 - 1) * sc[6] + sc[12] + (3 - 1) * sc[18];
   // forward
@@ -9231,7 +9232,7 @@ aJacobian_precond(
 
   // reaction 103: C2H4 (+M) => C2H2 + H2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -9324,7 +9325,7 @@ aJacobian_precond(
 
   // reaction 0: H + O + M => OH + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -9388,7 +9389,7 @@ aJacobian_precond(
 
   // reaction 3: 2 O + M => O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -9449,7 +9450,7 @@ aJacobian_precond(
 
   // reaction 7: H + OH + M => H2O + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -9513,7 +9514,7 @@ aJacobian_precond(
 
   // reaction 66: HCO + M => CO + H + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (6 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -9577,7 +9578,7 @@ aJacobian_precond(
 
   // reaction 67: CO + H + M => HCO + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (6 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -9641,7 +9642,7 @@ aJacobian_precond(
 
   // reaction 82: CH3O2 + M => CH3 + O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -9704,7 +9705,7 @@ aJacobian_precond(
 
   // reaction 83: CH3 + O2 + M => CH3O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -14488,6 +14489,9 @@ aJacobian_precond(
   }
   // dTdot/dT
   J[1224] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute an approx to the reaction Jacobian (for preconditioning)
@@ -14517,6 +14521,7 @@ aJacobian(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 1225; i++) {
     J[i] = 0.0;
   }
@@ -14822,7 +14827,7 @@ aJacobian(
 
   // reaction 45: CH3 + H (+M) => CH4 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[4] + (5 - 1) * sc[6] + sc[12] + (3 - 1) * sc[18];
   // forward
@@ -15070,7 +15075,7 @@ aJacobian(
 
   // reaction 60: CO + O (+M) => CO2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -15192,7 +15197,7 @@ aJacobian(
 
   // reaction 75: CH3O (+M) => CH2O + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -15293,7 +15298,7 @@ aJacobian(
 
   // reaction 92: C2H3 (+M) => C2H2 + H (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + sc[4] + (5 - 1) * sc[6] + sc[12] + (3 - 1) * sc[18];
   // forward
@@ -15529,7 +15534,7 @@ aJacobian(
 
   // reaction 103: C2H4 (+M) => C2H2 + H2 (+M)
   // a third-body and pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -15630,7 +15635,7 @@ aJacobian(
 
   // reaction 0: H + O + M => OH + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -15727,7 +15732,7 @@ aJacobian(
 
   // reaction 3: 2 O + M => O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -15811,7 +15816,7 @@ aJacobian(
 
   // reaction 7: H + OH + M => H2O + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (12 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -15908,7 +15913,7 @@ aJacobian(
 
   // reaction 66: HCO + M => CO + H + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (6 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -16000,7 +16005,7 @@ aJacobian(
 
   // reaction 67: CO + H + M => HCO + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture + (2.5 - 1) * sc[4] + (6 - 1) * sc[6] + (1.9 - 1) * sc[12] +
           (3.8 - 1) * sc[18];
@@ -16092,7 +16097,7 @@ aJacobian(
 
   // reaction 82: CH3O2 + M => CH3 + O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -16163,7 +16168,7 @@ aJacobian(
 
   // reaction 83: CH3 + O2 + M => CH3O2 + M
   // a third-body and non-pressure-fall-off reaction
-  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // Irreversible reaction in _ajac_reaction may not work
   // 3-body correction factor
   alpha = mixture;
   // forward
@@ -20960,6 +20965,9 @@ aJacobian(
   }
   // dTdot/dT
   J[1224] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute the reaction Jacobian
@@ -21953,7 +21961,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[357] = 5.54637286E+00;
   COFD[358] = -4.87070324E-01;
   COFD[359] = 2.03983467E-02;
-  COFD[360] = -1.79310921E+01;
+  COFD[360] = -1.79310920E+01;
   COFD[361] = 4.98037650E+00;
   COFD[362] = -4.26676911E-01;
   COFD[363] = 1.83007231E-02;
@@ -24593,7 +24601,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[2997] = 4.24084025E+00;
   COFD[2998] = -3.37428619E-01;
   COFD[2999] = 1.47032793E-02;
-  COFD[3000] = -1.79310921E+01;
+  COFD[3000] = -1.79310920E+01;
   COFD[3001] = 4.98037650E+00;
   COFD[3002] = -4.26676911E-01;
   COFD[3003] = 1.83007231E-02;
@@ -24849,7 +24857,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[3253] = 5.15745622E+00;
   COFD[3254] = -4.46648283E-01;
   COFD[3255] = 1.90458987E-02;
-  COFD[3256] = -2.18644449E+01;
+  COFD[3256] = -2.18644448E+01;
   COFD[3257] = 5.53438558E+00;
   COFD[3258] = -4.85873757E-01;
   COFD[3259] = 2.03606278E-02;
@@ -25518,15 +25526,15 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[3922] = -3.75026436E-01;
   COFD[3923] = 1.39466941E-02;
   COFD[3924] = -2.25933772E+01;
-  COFD[3925] = 5.42562556E+00;
+  COFD[3925] = 5.42562555E+00;
   COFD[3926] = -4.48132861E-01;
   COFD[3927] = 1.77847329E-02;
   COFD[3928] = -2.25933772E+01;
-  COFD[3929] = 5.42562556E+00;
+  COFD[3929] = 5.42562555E+00;
   COFD[3930] = -4.48132861E-01;
   COFD[3931] = 1.77847329E-02;
   COFD[3932] = -2.25999325E+01;
-  COFD[3933] = 5.42562556E+00;
+  COFD[3933] = 5.42562555E+00;
   COFD[3934] = -4.48132861E-01;
   COFD[3935] = 1.77847329E-02;
   COFD[3936] = -2.15763414E+01;
@@ -25650,7 +25658,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4054] = -4.81921515E-01;
   COFD[4055] = 1.97721229E-02;
   COFD[4056] = -2.25933772E+01;
-  COFD[4057] = 5.42562556E+00;
+  COFD[4057] = 5.42562555E+00;
   COFD[4058] = -4.48132861E-01;
   COFD[4059] = 1.77847329E-02;
   COFD[4060] = -2.26149331E+01;
@@ -25786,7 +25794,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4190] = -4.81921515E-01;
   COFD[4191] = 1.97721229E-02;
   COFD[4192] = -2.25933772E+01;
-  COFD[4193] = 5.42562556E+00;
+  COFD[4193] = 5.42562555E+00;
   COFD[4194] = -4.48132861E-01;
   COFD[4195] = 1.77847329E-02;
   COFD[4196] = -2.26149331E+01;
@@ -25922,7 +25930,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4326] = -4.81921515E-01;
   COFD[4327] = 1.97721229E-02;
   COFD[4328] = -2.25999325E+01;
-  COFD[4329] = 5.42562556E+00;
+  COFD[4329] = 5.42562555E+00;
   COFD[4330] = -4.48132861E-01;
   COFD[4331] = 1.77847329E-02;
   COFD[4332] = -2.26206807E+01;
@@ -26037,7 +26045,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[4441] = 5.44889462E+00;
   COFD[4442] = -4.52325002E-01;
   COFD[4443] = 1.80132629E-02;
-  COFD[4444] = -2.18644449E+01;
+  COFD[4444] = -2.18644448E+01;
   COFD[4445] = 5.53438558E+00;
   COFD[4446] = -4.85873757E-01;
   COFD[4447] = 2.03606278E-02;

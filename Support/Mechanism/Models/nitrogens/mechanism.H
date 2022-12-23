@@ -1419,9 +1419,13 @@ aJacobian_precond(
   const int /*HP*/)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute an approx to the reaction Jacobian (for preconditioning)
@@ -1454,9 +1458,13 @@ aJacobian(
   const int /*consP*/)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 9; i++) {
     J[i] = 0.0;
   }
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute the reaction Jacobian

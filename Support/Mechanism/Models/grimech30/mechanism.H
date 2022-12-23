@@ -14235,6 +14235,7 @@ aJacobian_precond(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int HP)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 2916; i++) {
     J[i] = 0.0;
   }
@@ -32417,6 +32418,9 @@ aJacobian_precond(
   }
   // dTdot/dT
   J[2915] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute an approx to the reaction Jacobian (for preconditioning)
@@ -32446,6 +32450,7 @@ aJacobian(
   amrex::Real* J, const amrex::Real* sc, const amrex::Real T, const int consP)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 2916; i++) {
     J[i] = 0.0;
   }
@@ -52607,6 +52612,9 @@ aJacobian(
   }
   // dTdot/dT
   J[2915] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute the reaction Jacobian

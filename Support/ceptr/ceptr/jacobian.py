@@ -10,7 +10,13 @@ import ceptr.writer as cw
 
 
 def ajac(
-    fstream, mechanism, species_info, reaction_info, precond=False, syms=None
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    jacobian=True,
+    precond=False,
+    syms=None,
 ):
     """Write jacobian for a reaction."""
     n_species = species_info.n_species
@@ -64,7 +70,20 @@ def ajac(
         )
         cw.writer(fstream, "amrex::Abort();")
         cw.writer(fstream)
+    elif not jacobian:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Mechanism was generated without a jacobian."
+                " Re-build in ceptr without the -nj flag."
+            ),
+        )
+        cw.writer(fstream, "amrex::Abort();")
     else:
+        cw.writer(
+            fstream,
+            "#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)",
+        )
         cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)
         cw.writer(fstream, "J[i] = 0.0;")
         cw.writer(fstream, "}")
@@ -284,6 +303,9 @@ def ajac(
                 "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
                 % (n_species * (n_species + 1) + n_species),
             )
+        cw.writer(fstream, "#else")
+        cw.writer(fstream, "amrex::Abort();")
+        cw.writer(fstream, "#endif")
 
     cw.writer(fstream, "}")
 
@@ -293,6 +315,7 @@ def ajac_symbolic(
     mechanism,
     species_info,
     reaction_info,
+    jacobian=True,
     syms=None,
 ):
     """Print the Jacobian obtained from symbolic recording."""
@@ -309,6 +332,22 @@ def ajac_symbolic(
         " * J, amrex::Real * sc, amrex::Real T, const int consP)",
     )
     cw.writer(fstream, "{")
+
+    if not jacobian:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Mechanism was generated without a jacobian."
+                " Re-build in ceptr without the -nj flag."
+            ),
+        )
+        cw.writer(fstream, "amrex::Abort();")
+        return
+
+    cw.writer(
+        fstream,
+        "#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)",
+    )
 
     if syms.hformat == "cpu":
         cw.writer(
@@ -559,7 +598,9 @@ def ajac_symbolic(
         % (n_species * (n_species + 1) + n_species),
     )
 
-    cw.writer(fstream, "return;")
+    cw.writer(fstream, "#else")
+    cw.writer(fstream, "amrex::Abort();")
+    cw.writer(fstream, "#endif")
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -752,8 +793,7 @@ def ajac_reaction_d(
             cw.writer(
                 fstream,
                 cw.comment(
-                    "FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work",
+                    "Irreversible reaction in _ajac_reaction may not work",
                 ),
             )
         for k in range(n_species):
@@ -765,7 +805,7 @@ def ajac_reaction_d(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "FIXME: irreversible reaction in _ajac_reaction may"
+                        "Irreversible reaction in _ajac_reaction may"
                         " not work",
                     ),
                 )
