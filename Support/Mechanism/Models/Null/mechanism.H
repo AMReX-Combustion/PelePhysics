@@ -11,12 +11,12 @@
 #endif
 
 /* Species */
-#define XO_ID 0
+static constexpr int XO_ID = 0;
 
-#define NUM_ELEMENTS 1
-#define NUM_SPECIES 1
-#define NUM_REACTIONS 0
-#define NUM_FIT 4
+static constexpr int NUM_ELEMENTS = 1;
+static constexpr int NUM_SPECIES = 1;
+static constexpr int NUM_REACTIONS = 0;
+static constexpr int NUM_FIT = 4;
 
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
  * GPU based. Defined in mechanism.cpp  */
