@@ -12,101 +12,101 @@
 */
 
 // Species
-#define h_ID 0
-#define h2_ID 1
-#define o_ID 2
-#define o2_ID 3
-#define oh_ID 4
-#define h2o_ID 5
-#define co_ID 6
-#define hco_ID 7
-#define co2_ID 8
-#define ch3_ID 9
-#define ch4_ID 10
-#define ho2_ID 11
-#define h2o2_ID 12
-#define ch2o_ID 13
-#define ch3o_ID 14
-#define c2h6_ID 15
-#define c2h4_ID 16
-#define c2h5_ID 17
-#define c2h2_ID 18
-#define c2h3_ID 19
-#define ch2co_ID 20
-#define hcco_ID 21
-#define ch3co_ID 22
-#define ch2cho_ID 23
-#define ch3cho_ID 24
-#define c3h4a_ID 25
-#define c3h6_ID 26
-#define c4h6_ID 27
-#define nc3h7_ID 28
-#define c4h7_ID 29
-#define c4h81_ID 30
-#define pc4h9_ID 31
-#define ch3coch2_ID 32
-#define c2h5cho_ID 33
-#define c2h5co_ID 34
-#define c5h9_ID 35
-#define c5h101_ID 36
-#define c2h5o_ID 37
-#define ch3o2_ID 38
-#define ch3o2h_ID 39
-#define c2h3co_ID 40
-#define c2h3cho_ID 41
-#define c3h5o_ID 42
-#define c4h7o_ID 43
-#define c4h8ooh13o2_ID 44
-#define c4h8ooh13_ID 45
-#define pc4h9o2_ID 46
-#define c3h5a_ID 47
-#define c3h3_ID 48
-#define c3h2_ID 49
-#define ch2s_ID 50
-#define nc4ket13_ID 51
-#define nc3h7cho_ID 52
-#define nc3h7co_ID 53
-#define c2h5coch2_ID 54
-#define nc3h7coch2_ID 55
-#define nc4h9cho_ID 56
-#define nc4h9co_ID 57
-#define nc7h16_ID 58
-#define c7h151_ID 59
-#define c7h152_ID 60
-#define c7h153_ID 61
-#define c7h154_ID 62
-#define c7h142_ID 63
-#define c7h143_ID 64
-#define c7h15o21_ID 65
-#define c7h15o22_ID 66
-#define c7h15o23_ID 67
-#define c7h15o24_ID 68
-#define c7h14ooh13_ID 69
-#define c7h14ooh23_ID 70
-#define c7h14ooh24_ID 71
-#define c7h14ooh32_ID 72
-#define c7h14ooh34_ID 73
-#define c7h14ooh35_ID 74
-#define c7h14ooh42_ID 75
-#define c7h14ooh43_ID 76
-#define c7h14ooh13o2_ID 77
-#define c7h14ooh24o2_ID 78
-#define c7h14ooh35o2_ID 79
-#define c7h14ooh42o2_ID 80
-#define c7h14o13_ID 81
-#define c7h14o24_ID 82
-#define nc7ket13_ID 83
-#define nc7ket24_ID 84
-#define nc7ket35_ID 85
-#define nc7ket42_ID 86
-#define n2_ID 87
+static constexpr int h_ID = 0;
+static constexpr int h2_ID = 1;
+static constexpr int o_ID = 2;
+static constexpr int o2_ID = 3;
+static constexpr int oh_ID = 4;
+static constexpr int h2o_ID = 5;
+static constexpr int co_ID = 6;
+static constexpr int hco_ID = 7;
+static constexpr int co2_ID = 8;
+static constexpr int ch3_ID = 9;
+static constexpr int ch4_ID = 10;
+static constexpr int ho2_ID = 11;
+static constexpr int h2o2_ID = 12;
+static constexpr int ch2o_ID = 13;
+static constexpr int ch3o_ID = 14;
+static constexpr int c2h6_ID = 15;
+static constexpr int c2h4_ID = 16;
+static constexpr int c2h5_ID = 17;
+static constexpr int c2h2_ID = 18;
+static constexpr int c2h3_ID = 19;
+static constexpr int ch2co_ID = 20;
+static constexpr int hcco_ID = 21;
+static constexpr int ch3co_ID = 22;
+static constexpr int ch2cho_ID = 23;
+static constexpr int ch3cho_ID = 24;
+static constexpr int c3h4a_ID = 25;
+static constexpr int c3h6_ID = 26;
+static constexpr int c4h6_ID = 27;
+static constexpr int nc3h7_ID = 28;
+static constexpr int c4h7_ID = 29;
+static constexpr int c4h81_ID = 30;
+static constexpr int pc4h9_ID = 31;
+static constexpr int ch3coch2_ID = 32;
+static constexpr int c2h5cho_ID = 33;
+static constexpr int c2h5co_ID = 34;
+static constexpr int c5h9_ID = 35;
+static constexpr int c5h101_ID = 36;
+static constexpr int c2h5o_ID = 37;
+static constexpr int ch3o2_ID = 38;
+static constexpr int ch3o2h_ID = 39;
+static constexpr int c2h3co_ID = 40;
+static constexpr int c2h3cho_ID = 41;
+static constexpr int c3h5o_ID = 42;
+static constexpr int c4h7o_ID = 43;
+static constexpr int c4h8ooh13o2_ID = 44;
+static constexpr int c4h8ooh13_ID = 45;
+static constexpr int pc4h9o2_ID = 46;
+static constexpr int c3h5a_ID = 47;
+static constexpr int c3h3_ID = 48;
+static constexpr int c3h2_ID = 49;
+static constexpr int ch2s_ID = 50;
+static constexpr int nc4ket13_ID = 51;
+static constexpr int nc3h7cho_ID = 52;
+static constexpr int nc3h7co_ID = 53;
+static constexpr int c2h5coch2_ID = 54;
+static constexpr int nc3h7coch2_ID = 55;
+static constexpr int nc4h9cho_ID = 56;
+static constexpr int nc4h9co_ID = 57;
+static constexpr int nc7h16_ID = 58;
+static constexpr int c7h151_ID = 59;
+static constexpr int c7h152_ID = 60;
+static constexpr int c7h153_ID = 61;
+static constexpr int c7h154_ID = 62;
+static constexpr int c7h142_ID = 63;
+static constexpr int c7h143_ID = 64;
+static constexpr int c7h15o21_ID = 65;
+static constexpr int c7h15o22_ID = 66;
+static constexpr int c7h15o23_ID = 67;
+static constexpr int c7h15o24_ID = 68;
+static constexpr int c7h14ooh13_ID = 69;
+static constexpr int c7h14ooh23_ID = 70;
+static constexpr int c7h14ooh24_ID = 71;
+static constexpr int c7h14ooh32_ID = 72;
+static constexpr int c7h14ooh34_ID = 73;
+static constexpr int c7h14ooh35_ID = 74;
+static constexpr int c7h14ooh42_ID = 75;
+static constexpr int c7h14ooh43_ID = 76;
+static constexpr int c7h14ooh13o2_ID = 77;
+static constexpr int c7h14ooh24o2_ID = 78;
+static constexpr int c7h14ooh35o2_ID = 79;
+static constexpr int c7h14ooh42o2_ID = 80;
+static constexpr int c7h14o13_ID = 81;
+static constexpr int c7h14o24_ID = 82;
+static constexpr int nc7ket13_ID = 83;
+static constexpr int nc7ket24_ID = 84;
+static constexpr int nc7ket35_ID = 85;
+static constexpr int nc7ket42_ID = 86;
+static constexpr int n2_ID = 87;
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 88
-#define NUM_IONS 0
-#define NUM_REACTIONS 729
+static constexpr int NUM_ELEMENTS = 4;
+static constexpr int NUM_SPECIES = 88;
+static int constexpr NUM_IONS = 0;
+static constexpr int NUM_REACTIONS = 729;
 
-#define NUM_FIT 4
+static constexpr int NUM_FIT = 4;
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

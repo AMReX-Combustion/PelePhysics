@@ -12,29 +12,29 @@
 */
 
 // Species
-#define H_ID 0
-#define O2_ID 1
-#define O_ID 2
-#define H2O_ID 3
-#define OH_ID 4
-#define H2O2_ID 5
-#define HO2_ID 6
-#define CO_ID 7
-#define CO2_ID 8
-#define CH4_ID 9
-#define CH3_ID 10
-#define CH3O2H_ID 11
-#define CH3O2_ID 12
-#define CH3O_ID 13
-#define CH2O_ID 14
-#define HCO_ID 15
+static constexpr int H_ID = 0;
+static constexpr int O2_ID = 1;
+static constexpr int O_ID = 2;
+static constexpr int H2O_ID = 3;
+static constexpr int OH_ID = 4;
+static constexpr int H2O2_ID = 5;
+static constexpr int HO2_ID = 6;
+static constexpr int CO_ID = 7;
+static constexpr int CO2_ID = 8;
+static constexpr int CH4_ID = 9;
+static constexpr int CH3_ID = 10;
+static constexpr int CH3O2H_ID = 11;
+static constexpr int CH3O2_ID = 12;
+static constexpr int CH3O_ID = 13;
+static constexpr int CH2O_ID = 14;
+static constexpr int HCO_ID = 15;
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 16
-#define NUM_IONS 0
-#define NUM_REACTIONS 60
+static constexpr int NUM_ELEMENTS = 4;
+static constexpr int NUM_SPECIES = 16;
+static int constexpr NUM_IONS = 0;
+static constexpr int NUM_REACTIONS = 60;
 
-#define NUM_FIT 4
+static constexpr int NUM_FIT = 4;
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp

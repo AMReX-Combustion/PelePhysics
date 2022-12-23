@@ -21,11 +21,11 @@
 
 #ifdef AMREX_USE_GPU
 #if defined(AMREX_USE_CUDA)
-#define CVODE_NB_THREADS 32
+static constexpr int CVODE_NB_THREADS = 32;
 #elif defined(AMREX_USE_HIP)
-#define CVODE_NB_THREADS 64
+static constexpr int CVODE_NB_THREADS = 64;
 #else
-#define CVODE_NB_THREADS 32
+static constexpr int CVODE_NB_THREADS = 32;
 #endif
 #endif
 

@@ -12,47 +12,47 @@
 */
 
 // Species
-#define N2_ID 0
-#define O_ID 1
-#define H_ID 2
-#define OH_ID 3
-#define H2_ID 4
-#define O2_ID 5
-#define H2O_ID 6
-#define H2O2_ID 7
-#define HO2_ID 8
-#define CH2GSG_ID 9
-#define CH2O_ID 10
-#define CH3_ID 11
-#define CO_ID 12
-#define CH3O_ID 13
-#define C2H5_ID 14
-#define CH4_ID 15
-#define C2H4_ID 16
-#define C2H6_ID 17
-#define CO2_ID 18
-#define HCO_ID 19
-#define CH3O2_ID 20
-#define CH3O2H_ID 21
-#define C2H2_ID 22
-#define HCCO_ID 23
-#define C2H3_ID 24
-#define CH2CHO_ID 25
-#define C3H5XA_ID 26
-#define C3H6_ID 27
-#define C3H5O_ID 28
-#define IXC3H7_ID 29
-#define NXC3H7_ID 30
-#define C3H8_ID 31
-#define IXC3H7O2_ID 32
-#define NXC3H7O2_ID 33
+static constexpr int N2_ID = 0;
+static constexpr int O_ID = 1;
+static constexpr int H_ID = 2;
+static constexpr int OH_ID = 3;
+static constexpr int H2_ID = 4;
+static constexpr int O2_ID = 5;
+static constexpr int H2O_ID = 6;
+static constexpr int H2O2_ID = 7;
+static constexpr int HO2_ID = 8;
+static constexpr int CH2GSG_ID = 9;
+static constexpr int CH2O_ID = 10;
+static constexpr int CH3_ID = 11;
+static constexpr int CO_ID = 12;
+static constexpr int CH3O_ID = 13;
+static constexpr int C2H5_ID = 14;
+static constexpr int CH4_ID = 15;
+static constexpr int C2H4_ID = 16;
+static constexpr int C2H6_ID = 17;
+static constexpr int CO2_ID = 18;
+static constexpr int HCO_ID = 19;
+static constexpr int CH3O2_ID = 20;
+static constexpr int CH3O2H_ID = 21;
+static constexpr int C2H2_ID = 22;
+static constexpr int HCCO_ID = 23;
+static constexpr int C2H3_ID = 24;
+static constexpr int CH2CHO_ID = 25;
+static constexpr int C3H5XA_ID = 26;
+static constexpr int C3H6_ID = 27;
+static constexpr int C3H5O_ID = 28;
+static constexpr int IXC3H7_ID = 29;
+static constexpr int NXC3H7_ID = 30;
+static constexpr int C3H8_ID = 31;
+static constexpr int IXC3H7O2_ID = 32;
+static constexpr int NXC3H7O2_ID = 33;
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 34
-#define NUM_IONS 0
-#define NUM_REACTIONS 167
+static constexpr int NUM_ELEMENTS = 4;
+static constexpr int NUM_SPECIES = 34;
+static int constexpr NUM_IONS = 0;
+static constexpr int NUM_REACTIONS = 167;
 
-#define NUM_FIT 4
+static constexpr int NUM_FIT = 4;
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
 //  GPU based. Defined in mechanism.cpp
