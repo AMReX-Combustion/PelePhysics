@@ -20,28 +20,23 @@ def transport(fstream, mechanism, species_info):
         if spec.weight < 5.0:
             n_lite += 1
             idx_light_specs.append(spec.idx)
-    misc_trans_info(
-        fstream, kk=n_species, n_lite=n_lite, do_declarations=False
-    )
-    wt(fstream, species_info, False)
-    eps(fstream, mechanism, species_info, species_transport, False)
-    sig(fstream, mechanism, species_info, species_transport, False)
-    dip(fstream, mechanism, species_info, species_transport, False)
-    pol(fstream, mechanism, species_info, species_transport, False)
-    zrot(fstream, mechanism, species_info, species_transport, False)
-    nlin(fstream, mechanism, species_info, species_transport, False)
+    misc_trans_info(fstream, kk=n_species, n_lite=n_lite)
+    wt(fstream, species_info)
+    eps(fstream, mechanism, species_info, species_transport)
+    sig(fstream, mechanism, species_info, species_transport)
+    dip(fstream, mechanism, species_info, species_transport)
+    pol(fstream, mechanism, species_info, species_transport)
+    zrot(fstream, mechanism, species_info, species_transport)
+    nlin(fstream, mechanism, species_info, species_transport)
 
-    viscosity(
-        fstream, mechanism, species_info, species_transport, False, ntfit=50
-    )
-    diffcoefs(fstream, species_info, species_transport, False, ntfit=50)
-    light_specs(fstream, idx_light_specs, False)
+    viscosity(fstream, mechanism, species_info, species_transport, ntfit=50)
+    diffcoefs(fstream, species_info, species_transport, ntfit=50)
+    light_specs(fstream, idx_light_specs)
     thermaldiffratios(
         fstream,
         species_info,
         species_transport,
         idx_light_specs,
-        False,
         ntfit=50,
     )
 
@@ -78,7 +73,7 @@ def analyze_transport(mechanism, species_info):
     return transdata
 
 
-def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
+def misc_trans_info(fstream, kk, n_lite, no=4):
     """Write transport information."""
     cw.writer(fstream)
     lenimc = 4 * kk + n_lite
@@ -92,7 +87,6 @@ def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
             "LENIMC",
         ],
         lenimc,
-        do_declarations,
     )
 
     cw.writer(fstream)
@@ -108,7 +102,6 @@ def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
             "LENRMC",
         ],
         lenrmc,
-        do_declarations,
     )
 
     cw.writer(fstream)
@@ -123,7 +116,6 @@ def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
             "NO",
         ],
         no,
-        do_declarations,
     )
 
     cw.writer(fstream)
@@ -138,7 +130,6 @@ def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
             "KK",
         ],
         kk,
-        do_declarations,
     )
 
     cw.writer(fstream)
@@ -153,40 +144,19 @@ def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
             "NLITE",
         ],
         n_lite,
-        do_declarations,
     )
 
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Patm in ergs/cm3"))
 
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetPATM EGTRANSETPATM")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetPATM egtransetpatm")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetPATM egtransetpatm_")
-        cw.writer(fstream, "#endif")
-
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetPATM(amrex::Real* PATM) {")
     cw.writer(fstream, "*PATM =   0.1013250000000000E+07;}")
 
 
-def generate_trans_routine_integer(
-    fstream, nametab, expression, do_declarations
-):
+def generate_trans_routine_integer(fstream, nametab, expression):
     """Write generic integer transport routine."""
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[1]))
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[2]))
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[3]))
-        cw.writer(fstream, "#endif")
-
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void %s(int* %s ) {" % (nametab[0], nametab[4]))
 
@@ -194,24 +164,9 @@ def generate_trans_routine_integer(
 
 
 def generate_trans_routine_simple(
-    fstream,
-    mechanism,
-    species_info,
-    nametab,
-    idx,
-    species_transport,
-    do_declarations,
+    fstream, mechanism, species_info, nametab, idx, species_transport
 ):
     """Write generic transport routine."""
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[1]))
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[2]))
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[3]))
-        cw.writer(fstream, "#endif")
-
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(
         fstream, "void %s(amrex::Real* %s ) {" % (nametab[0], nametab[4])
@@ -226,19 +181,10 @@ def generate_trans_routine_simple(
     cw.writer(fstream, "}")
 
 
-def wt(fstream, species_info, do_declarations):
+def wt(fstream, species_info):
     """Write molecular weights function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the molecular weights in g/mol"))
-
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetWT EGTRANSETWT")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetWT egtransetwt")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetWT egtransetwt_")
-        cw.writer(fstream, "#endif")
 
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void %s(amrex::Real* %s ) {" % ("egtransetWT", "WT"))
@@ -254,7 +200,7 @@ def wt(fstream, species_info, do_declarations):
     cw.writer(fstream, "}")
 
 
-def eps(fstream, mechanism, species_info, species_transport, do_declarations):
+def eps(fstream, mechanism, species_info, species_transport):
     """Write the lennard-jones potential well depth function."""
     cw.writer(fstream)
     cw.writer(
@@ -274,11 +220,10 @@ def eps(fstream, mechanism, species_info, species_transport, do_declarations):
         ],
         1,
         species_transport,
-        do_declarations,
     )
 
 
-def sig(fstream, mechanism, species_info, species_transport, do_declarations):
+def sig(fstream, mechanism, species_info, species_transport):
     """Write the the lennard-jones collision diameter function."""
     cw.writer(fstream)
     cw.writer(
@@ -298,11 +243,10 @@ def sig(fstream, mechanism, species_info, species_transport, do_declarations):
         ],
         2,
         species_transport,
-        do_declarations,
     )
 
 
-def dip(fstream, mechanism, species_info, species_transport, do_declarations):
+def dip(fstream, mechanism, species_info, species_transport):
     """Write the dipole moment function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the dipole moment in Debye"))
@@ -319,11 +263,10 @@ def dip(fstream, mechanism, species_info, species_transport, do_declarations):
         ],
         3,
         species_transport,
-        do_declarations,
     )
 
 
-def pol(fstream, mechanism, species_info, species_transport, do_declarations):
+def pol(fstream, mechanism, species_info, species_transport):
     """Write the polarizability function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the polarizability in cubic Angstroms"))
@@ -340,11 +283,10 @@ def pol(fstream, mechanism, species_info, species_transport, do_declarations):
         ],
         4,
         species_transport,
-        do_declarations,
     )
 
 
-def zrot(fstream, mechanism, species_info, species_transport, do_declarations):
+def zrot(fstream, mechanism, species_info, species_transport):
     """Write the rotational relaxation collision number."""
     cw.writer(fstream)
     cw.writer(
@@ -364,23 +306,13 @@ def zrot(fstream, mechanism, species_info, species_transport, do_declarations):
         ],
         5,
         species_transport,
-        do_declarations,
     )
 
 
-def nlin(fstream, mechanism, species_info, species_transport, do_declarations):
+def nlin(fstream, mechanism, species_info, species_transport):
     """Write the (monoatomic, linear, nonlinear) information."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("0: monoatomic, 1: linear, 2: nonlinear"))
-
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetNLIN EGTRANSETNLIN")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetNLIN egtransetnlin")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetNLIN egtransetnlin_")
-        cw.writer(fstream, "#endif")
 
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetNLIN(int* NLIN) {")
@@ -395,9 +327,7 @@ def nlin(fstream, mechanism, species_info, species_transport, do_declarations):
     cw.writer(fstream, "}")
 
 
-def viscosity(
-    fstream, mechanism, species_info, species_transport, do_declarations, ntfit
-):
+def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
     """Write the viscosity function."""
     n_species = species_info.n_species
     # compute single constants in g/cm/s
@@ -522,14 +452,6 @@ def viscosity(
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Poly fits for the viscosities, dim NO*KK"))
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetCOFETA EGTRANSETCOFETA")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetCOFETA egtransetcofeta")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetCOFETA egtransetcofeta_")
-        cw.writer(fstream, "#endif")
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -551,14 +473,6 @@ def viscosity(
     cw.writer(
         fstream, cw.comment("Poly fits for the conductivities, dim NO*KK")
     )
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetCOFLAM EGTRANSETCOFLAM")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetCOFLAM egtransetcoflam")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetCOFLAM egtransetcoflam_")
-        cw.writer(fstream, "#endif")
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -575,9 +489,7 @@ def viscosity(
     cw.writer(fstream, "}")
 
 
-def diffcoefs(
-    fstream, species_info, species_transport, do_declarations, ntfit
-):
+def diffcoefs(fstream, species_info, species_transport, ntfit):
     """Write the diffusion coefficients."""
     # REORDERING OF SPECS
     spec_ordered = []
@@ -681,14 +593,6 @@ def diffcoefs(
         fstream,
         cw.comment("Poly fits for the diffusion coefficients, dim NO*KK*KK"),
     )
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetCOFD EGTRANSETCOFD")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetCOFD egtransetcofd")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetCOFD egtransetcofd_")
-        cw.writer(fstream, "#endif")
 
     # coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -721,7 +625,7 @@ def diffcoefs(
     cw.writer(fstream, "}")
 
 
-def light_specs(fstream, speclist, do_declarations):
+def light_specs(fstream, speclist):
     """Write list of specs with small weight, dim n_lite."""
     # header
     cw.writer(fstream)
@@ -729,14 +633,6 @@ def light_specs(fstream, speclist, do_declarations):
     cw.writer(
         fstream, cw.comment("List of specs with small weight, dim NLITE")
     )
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetKTDIF EGTRANSETKTDIF")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetKTDIF egtransetktdif")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetKTDIF egtransetktdif_")
-        cw.writer(fstream, "#endif")
 
     # coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -756,7 +652,6 @@ def thermaldiffratios(
     species_info,
     species_transport,
     light_spec_list,
-    do_declarations,
     ntfit,
 ):
     """Write thermal diffusion ratios."""
@@ -851,14 +746,6 @@ def thermaldiffratios(
         fstream,
         cw.comment("Poly fits for thermal diff ratios, dim NO*NLITE*KK"),
     )
-    if do_declarations:
-        cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
-        cw.writer(fstream, "#define egtransetCOFTD EGTRANSETCOFTD")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_LOWERCASE)")
-        cw.writer(fstream, "#define egtransetCOFTD egtransetcoftd")
-        cw.writer(fstream, "#elif defined(BL_FORT_USE_UNDERSCORE)")
-        cw.writer(fstream, "#define egtransetCOFTD egtransetcoftd_")
-        cw.writer(fstream, "#endif")
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")

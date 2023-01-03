@@ -1,8 +1,10 @@
+Aromatic_KrNara/mechanism.yaml
 BurkeDryer/mechanism.yaml
 Davis/mechanism.yaml
 FFCM1_Red/mechanism.yaml
 # BROKEN FORD JL4/mechanism.yaml
 Kolla/mechanism.yaml
+IonizedAir/mechanism.yaml
 LiDryer/mechanism.yaml
 LuDME/mechanism.yaml
 # BROKEN plog HP_DME/mechanism.yaml
@@ -25,6 +27,8 @@ heptane_3sp/mechanism.yaml
 heptane_fc/mechanism.yaml
 heptane_lu_88sk/mechanism.yaml
 propane_fc/mechanism.yaml
+methaneIons_diRenzo/reducedS26R134_0.yaml
 nitrogens/mechanism.yaml
+ndodecane_35/mechanism.yaml
 SootReaction/mechanism.yaml
 sCO2/mechanism.yaml
