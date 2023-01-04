@@ -358,7 +358,7 @@ struct GammaLaw
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RTY2H(
-    const amrex::Real /*rho*/,
+    const amrex::Real /*R*/,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real& H)
