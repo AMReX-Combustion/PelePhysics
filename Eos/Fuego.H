@@ -329,7 +329,7 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
-  TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  TY2H(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
   {
     amrex::Real hi[NUM_SPECIES];
     CKHMS(&T, hi);
@@ -337,6 +337,14 @@ struct Fuego
     for (int n = 0; n < NUM_SPECIES; n++) {
       H += Y[n] * hi[n];
     }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void
+  RTY2H(const amrex::Real /*rho*/, const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  {
+    TY2H(T, Y, H);
   }
 
   AMREX_GPU_HOST_DEVICE
