@@ -448,7 +448,11 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2P(const amrex::Real R, const amrex::Real T, const amrex::Real Y[], amrex::Real& P)
+  void RTY2P(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[],
+    amrex::Real& P)
   {
     amrex::Real wbar = 0.0, tau, am, bm;
     tau = 1.0 / R;
@@ -613,7 +617,11 @@ struct SRK
   // Function added for SRK
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2E(const amrex::Real R, const amrex::Real T, const amrex::Real Y[], amrex::Real& E)
+  void RTY2E(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[],
+    amrex::Real& E)
   {
     amrex::Real Ei[NUM_SPECIES];
     amrex::Real am, bm, dAmdT, K1;
@@ -824,21 +832,26 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  TY2H(amrex::Real /*T*/, const amrex::Real* /*Y[NUM_SPECIES]*/, amrex::Real& /*H*/)
+  static void TY2H(
+    amrex::Real /*T*/,
+    const amrex::Real* /*Y[NUM_SPECIES]*/,
+    amrex::Real& /*H*/)
   {
     amrex::Error("TY2H not physically possible for SRK EoS");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
-  RTY2H(const amrex::Real rho, const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  void RTY2H(
+    const amrex::Real rho,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& H)
   {
     amrex::Real E, P;
     RTY2E(rho, T, Y, E);
     RTY2P(rho, T, Y, P);
-    H = E + P/rho;
+    H = E + P / rho;
   }
 
   AMREX_GPU_HOST_DEVICE
