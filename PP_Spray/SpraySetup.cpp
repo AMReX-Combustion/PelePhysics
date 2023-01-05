@@ -15,9 +15,9 @@ getInpCoef(
   const std::string& varname,
   const int spf)
 {
-  std::string psat_read = fuel_name + "_" + varname;
+  std::string var_read = fuel_name + "_" + varname;
   std::vector<Real> inp_coef(4, 0.);
-  ppp.queryarr(psat_read.c_str(), inp_coef);
+  ppp.queryarr(var_read.c_str(), inp_coef);
   for (int i = 0; i < 4; ++i) {
     coef[4 * spf + i] = inp_coef[i];
   }
@@ -73,7 +73,6 @@ SprayParticleContainer::readSprayParams(
     pp.getarr("fuel_cp", spraycp);
     pp.getarr("fuel_latent", latent);
     pp.getarr("fuel_rho", sprayrho);
-    pp.queryarr("fuel_mu", mu);
     pp.queryarr("fuel_lambda", lambda);
     if (pp.contains("dep_fuel_species")) {
       has_dep_spec = true;
@@ -92,10 +91,10 @@ SprayParticleContainer::readSprayParams(
       sprayData.latent[i] = latent[i];
       sprayData.ref_latent[i] = latent[i];
       sprayData.rho[i] = sprayrho[i];
-      sprayData.mu[i] = mu[i];
       sprayData.lambda[i] = lambda[i];
       getInpCoef(sprayData.psat_coef.data(), pp, fuel_names[i], "psat", i);
       getInpCoef(sprayData.rho_coef.data(), pp, fuel_names[i], "rho", i);
+      getInpCoef(sprayData.mu_coef.data(), pp, fuel_names[i], "mu", i);
     }
   }
 
@@ -110,11 +109,16 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
-    if (
-      !pp.contains("fuel_sigma") || !pp.contains("fuel_mu") ||
-      !pp.contains("fuel_lambda")) {
+    bool wrong_data = false;
+    for (int i = 0; i < nfuel; ++i) {
+      std::string var_read = fuel_names[i] + "_mu";
+      if (!pp.contains(var_read.c_str())) {
+        wrong_data = true;
+      }
+    }
+    if (wrong_data || !pp.contains("fuel_sigma")) {
       Print()
-        << "fuel_sigma and fuel_mu must be set for splash or breakup model. "
+        << "fuel_sigma and mu coeffs must be set for splash or breakup model. "
         << std::endl;
       Abort();
     }

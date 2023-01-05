@@ -67,7 +67,7 @@ droplet_splashing(
   amrex::Real Tboil = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int ysp = SprayComps::pstateY + spf;
-    mu_part += p.rdata(ysp) * fdat.mu[spf];
+    mu_part += p.rdata(ysp) * fdat.muL(T_part, spf);
     rho_part += p.rdata(ysp) / fdat.rhoL(T_part, spf);
     Tboil += p.rdata(ysp) * cBoilT[spf];
   }
