@@ -23,6 +23,9 @@ SprayParticleContainer::sprayInjection(
   int numInjProcs,
   const int min_parcel)
 {
+  if (!spray_jet->get_active(time)) {
+    return;
+  }
   // Don't try to use more procs than we have
   numInjProcs = amrex::min(amrex::ParallelDescriptor::NProcs(), numInjProcs);
   startInjProc =
