@@ -219,7 +219,7 @@ SprayParticleContainer::uniformSprayInit(
     }
   }
   // Reference values for the particles
-  amrex::Real part_vals[NAR_SPR + NSR_SPR];
+  amrex::Real part_vals[NSR_SPR];
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     part_vals[SprayComps::pstateVel + dir] = vel_part[dir];
   }
@@ -249,10 +249,6 @@ SprayParticleContainer::uniformSprayInit(
   // Starting particle for this processor
   const amrex::ULong first_part = amrex::ULong(MyProc) * parts_pp;
   amrex::Gpu::HostVector<ParticleType> nparticles;
-  amrex::Vector<amrex::Gpu::HostVector<amrex::Real>> nreals;
-  if (NAR_SPR > 0) {
-    nreals.resize(NAR_SPR);
-  }
   for (amrex::ULong prc = 0; prc < cur_parts_pp; ++prc) {
     amrex::ULong cur_part = first_part + prc;
     amrex::IntVect indx = unflatten_particles(cur_part, num_part);
@@ -265,9 +261,6 @@ SprayParticleContainer::uniformSprayInit(
     for (int n = 0; n < NSR_SPR; ++n) {
       p.rdata(n) = part_vals[n];
     }
-    for (int n = 0; n < NAR_SPR; ++n) {
-      nreals[n].push_back(part_vals[n]);
-    }
     nparticles.push_back(p);
   }
   amrex::ParticleLocData pld;
@@ -276,10 +269,6 @@ SprayParticleContainer::uniformSprayInit(
   for (int nr = 0; nr < NRedist; ++nr) {
     std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
       host_particles;
-    std::map<
-      std::pair<int, int>,
-      std::array<amrex::Gpu::HostVector<amrex::Real>, NAR_SPR>>
-      host_real_attribs;
     if (m_verbose > 0) {
       amrex::Print() << "Redistributing from processor " << nr * NRchunk
                      << " to " << (nr + 1) * NRchunk - 1 << '\n';
@@ -295,14 +284,8 @@ SprayParticleContainer::uniformSprayInit(
           }
           std::pair<int, int> ind(pld.m_grid, pld.m_tile);
           host_particles[ind].push_back(p);
-          for (int n = 0; n < NAR_SPR; ++n) {
-            host_real_attribs[ind][n].push_back(nreals[n].back());
-          }
           // Remove the particle just read
           nparticles.pop_back();
-          for (int n = 0; n < NAR_SPR; ++n) {
-            nreals[n].pop_back();
-          }
         }
       } // if (which == MyProc)
     }   // for (int which ...
@@ -319,13 +302,6 @@ SprayParticleContainer::uniformSprayInit(
       amrex::Gpu::copy(
         amrex::Gpu::hostToDevice, src_tile.begin(), src_tile.end(),
         dst_tile.GetArrayOfStructs().begin() + old_size);
-      for (int i = 0; i < NAR_SPR; ++i) {
-        amrex::Gpu::copy(
-          amrex::Gpu::hostToDevice,
-          host_real_attribs[std::make_pair(grid, tile)][i].begin(),
-          host_real_attribs[std::make_pair(grid, tile)][i].end(),
-          dst_tile.GetStructOfArrays().GetRealData(i).begin() + old_size);
-      }
     }
     Redistribute();
   } // for (int nr ...
@@ -333,10 +309,6 @@ SprayParticleContainer::uniformSprayInit(
   for (int which = NRedist * NRchunk; which < NProcs; ++which) {
     std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
       host_particles;
-    std::map<
-      std::pair<int, int>,
-      std::array<amrex::Gpu::HostVector<amrex::Real>, NAR_SPR>>
-      host_real_attribs;
     if (m_verbose > 0) {
       amrex::Print() << "Redistributing from processor " << NRedist * NRchunk
                      << " to " << NProcs << '\n';
@@ -348,14 +320,8 @@ SprayParticleContainer::uniformSprayInit(
         Where(p, pld);
         std::pair<int, int> ind(pld.m_grid, pld.m_tile);
         host_particles[ind].push_back(p);
-        for (int n = 0; n < NAR_SPR; ++n) {
-          host_real_attribs[ind][n].push_back(nreals[n].back());
-        }
         // Remove the particle just read
         nparticles.pop_back();
-        for (int n = 0; n < NAR_SPR; ++n) {
-          nreals[n].pop_back();
-        }
       }
     } // if (which == MyProc)
     for (auto& kv : host_particles) {
@@ -371,13 +337,6 @@ SprayParticleContainer::uniformSprayInit(
       amrex::Gpu::copy(
         amrex::Gpu::hostToDevice, src_tile.begin(), src_tile.end(),
         dst_tile.GetArrayOfStructs().begin() + old_size);
-      for (int i = 0; i < NAR_SPR; ++i) {
-        amrex::Gpu::copy(
-          amrex::Gpu::hostToDevice,
-          host_real_attribs[std::make_pair(grid, tile)][i].begin(),
-          host_real_attribs[std::make_pair(grid, tile)][i].end(),
-          dst_tile.GetStructOfArrays().GetRealData(i).begin() + old_size);
-      }
     }
     Redistribute();
   } // for (int which ...

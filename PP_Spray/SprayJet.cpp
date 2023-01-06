@@ -65,7 +65,7 @@ SprayJet::SprayJet(
   const amrex::Real jet_vel,
   const amrex::Real mass_flow,
   const amrex::Real jet_temp,
-  const amrex::Real jet_Y[SPRAY_FUEL_NUM],
+  const amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> jet_Y,
   const std::string& dist_type,
   const amrex::Real inject_ppp,
   const amrex::Real start_time,
@@ -93,6 +93,7 @@ SprayJet::SprayJet(
   m_dropDist = DistBase::create(dist_type);
   std::string ppspray = "spray";
   m_dropDist->init(ppspray);
+  m_avgDia = m_dropDist->get_avg_dia();
   amrex::Real mag = m_norm.vectorLength();
   m_norm /= mag;
   check_jet_cent(geom);

@@ -683,4 +683,4 @@ eb_interp(
 }
 
 #endif // AMREX_USE_EB
-#endif // _SPRAYINTERPOLATION_H_
+#endif // _SPRAYINTERPOLATION_H

@@ -21,7 +21,7 @@ public:
     const amrex::Real jet_vel,
     const amrex::Real mass_flow,
     const amrex::Real jet_temp,
-    const amrex::Real jet_Y[SPRAY_FUEL_NUM],
+    const amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> jet_Y,
     const std::string& dist_type,
     const amrex::Real inject_ppp = 5.,
     const amrex::Real start_time = 0.,
@@ -216,7 +216,7 @@ protected:
   amrex::Real m_jetVel = -1.;
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
-  amrex::Real m_jetY[SPRAY_FUEL_NUM] = {0.};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
   amrex::Real m_injectPPP = 5.; // Injection particles per parcel
