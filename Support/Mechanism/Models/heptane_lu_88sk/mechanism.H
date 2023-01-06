@@ -27333,7 +27333,6 @@ aJacobian_precond(
   wdot[7] -= q; // hco
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -27451,7 +27450,6 @@ aJacobian_precond(
   wdot[7] += q; // hco
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[6];
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -27569,7 +27567,6 @@ aJacobian_precond(
   wdot[5] -= q; // h2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -27687,7 +27684,6 @@ aJacobian_precond(
   wdot[5] += q; // h2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[4];
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -27804,7 +27800,6 @@ aJacobian_precond(
   wdot[13] -= q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -27921,7 +27916,6 @@ aJacobian_precond(
   wdot[13] += q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[7];
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -28039,7 +28033,6 @@ aJacobian_precond(
   wdot[4] -= q; // oh
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -28157,7 +28150,6 @@ aJacobian_precond(
   wdot[4] += q; // oh
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[2];
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor + k_f * sc[0];
@@ -28274,7 +28266,6 @@ aJacobian_precond(
   wdot[3] -= q;     // o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -28389,7 +28380,6 @@ aJacobian_precond(
   wdot[3] += q;     // o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor + k_f * 2.000000 * sc[2];
@@ -28504,7 +28494,6 @@ aJacobian_precond(
   wdot[1] -= q;     // h2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = 2.5 * q_nocor + k_f;
   dqdc[2] = q_nocor;
@@ -28619,7 +28608,6 @@ aJacobian_precond(
   wdot[1] += q;     // h2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * 2.000000 * sc[0];
   dqdc[1] = 2.5 * q_nocor;
   dqdc[2] = q_nocor;
@@ -28734,7 +28722,6 @@ aJacobian_precond(
   wdot[13] -= q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -28851,7 +28838,6 @@ aJacobian_precond(
   wdot[13] += q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor + k_f * sc[6];
   dqdc[2] = q_nocor;
@@ -28968,7 +28954,6 @@ aJacobian_precond(
   wdot[37] -= q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29085,7 +29070,6 @@ aJacobian_precond(
   wdot[37] += q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29202,7 +29186,6 @@ aJacobian_precond(
   wdot[38] -= q; // ch3o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29319,7 +29302,6 @@ aJacobian_precond(
   wdot[38] += q; // ch3o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29436,7 +29418,6 @@ aJacobian_precond(
   wdot[37] -= q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29553,7 +29534,6 @@ aJacobian_precond(
   wdot[37] += q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[24];
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29670,7 +29650,6 @@ aJacobian_precond(
   wdot[48] += q; // c3h3
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -29787,7 +29766,6 @@ aJacobian_precond(
   wdot[48] -= q; // c3h3
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor + k_f * sc[48];
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -52772,7 +52750,6 @@ aJacobian(
   wdot[7] -= q; // hco
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -52918,7 +52895,6 @@ aJacobian(
   wdot[7] += q; // hco
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[6];
@@ -53064,7 +53040,6 @@ aJacobian(
   wdot[5] -= q; // h2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -53205,7 +53180,6 @@ aJacobian(
   wdot[5] += q; // h2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[4];
@@ -53355,7 +53329,6 @@ aJacobian(
   wdot[13] -= q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[ch2o]
     dqdci = +k_f;
@@ -53480,7 +53453,6 @@ aJacobian(
   wdot[13] += q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[7];
@@ -53611,7 +53583,6 @@ aJacobian(
   wdot[4] -= q; // oh
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -53757,7 +53728,6 @@ aJacobian(
   wdot[4] += q; // oh
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[2];
@@ -53907,7 +53877,6 @@ aJacobian(
   wdot[3] -= q;     // o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -54045,7 +54014,6 @@ aJacobian(
   wdot[3] += q;     // o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -54183,7 +54151,6 @@ aJacobian(
   wdot[1] -= q;     // h2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = (2.5 - 1) * q_nocor + k_f;
@@ -54317,7 +54284,6 @@ aJacobian(
   wdot[1] += q;     // h2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * 2.000000 * sc[0];
@@ -54455,7 +54421,6 @@ aJacobian(
   wdot[13] -= q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[ch2o]
     dqdci = +k_f;
@@ -54580,7 +54545,6 @@ aJacobian(
   wdot[13] += q; // ch2o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h2]
     dqdci = +k_f * sc[6];
@@ -54710,7 +54674,6 @@ aJacobian(
   wdot[37] -= q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[c2h5o]
     dqdci = +k_f;
@@ -54835,7 +54798,6 @@ aJacobian(
   wdot[37] += q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[ch3]
     dqdci = +k_f * sc[13];
@@ -54965,7 +54927,6 @@ aJacobian(
   wdot[38] -= q; // ch3o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[ch3o2]
     dqdci = +k_f;
@@ -55090,7 +55051,6 @@ aJacobian(
   wdot[38] += q; // ch3o2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[o2]
     dqdci = +k_f * sc[9];
@@ -55220,7 +55180,6 @@ aJacobian(
   wdot[37] -= q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[c2h5o]
     dqdci = +k_f;
@@ -55345,7 +55304,6 @@ aJacobian(
   wdot[37] += q; // c2h5o
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[24];
@@ -55475,7 +55433,6 @@ aJacobian(
   wdot[48] += q; // c3h3
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[c3h4-a]
     dqdci = +k_f;
@@ -55600,7 +55557,6 @@ aJacobian(
   wdot[48] -= q; // c3h3
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[h]
     dqdci = +k_f * sc[48];

@@ -8667,7 +8667,6 @@ aJacobian_precond(
   wdot[18] += q; // CH3O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -15987,7 +15986,6 @@ aJacobian(
   wdot[18] += q; // CH3O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[O]
     dqdci = +k_f * sc[12];
