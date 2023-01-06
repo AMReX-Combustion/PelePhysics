@@ -12302,7 +12302,6 @@ aJacobian_precond(
   wdot[6] += q; // OH
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -12379,7 +12378,6 @@ aJacobian_precond(
   wdot[7] += q; // H2O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -21938,7 +21936,6 @@ aJacobian(
   wdot[6] += q; // OH
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[O]
     dqdci = +k_f * sc[5];
@@ -22058,7 +22055,6 @@ aJacobian(
   wdot[7] += q; // H2O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[H2]
     dqdci = (2 - 1) * q_nocor;

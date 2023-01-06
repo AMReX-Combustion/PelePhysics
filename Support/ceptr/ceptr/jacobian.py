@@ -1230,8 +1230,6 @@ def ajac_reaction_d(
         cw.writer(fstream, "k_f *= alpha;")
         if reaction.reversible:
             cw.writer(fstream, "k_r *= alpha;")
-        else:
-            cw.writer(fstream, "k_r = 0.0;")
 
     if falloff:
         if precond:

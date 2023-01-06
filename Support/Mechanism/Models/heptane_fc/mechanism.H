@@ -12913,7 +12913,6 @@ aJacobian_precond(
   wdot[5] += q; // H2O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = 2.5 * q_nocor;
@@ -12996,7 +12995,6 @@ aJacobian_precond(
   wdot[15] -= q; // CH2GSG
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -13077,7 +13075,6 @@ aJacobian_precond(
   wdot[15] += q; // CH2GSG
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -13160,7 +13157,6 @@ aJacobian_precond(
   wdot[13] += q; // CO
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = 2.5 * q_nocor;
@@ -13300,7 +13296,6 @@ aJacobian_precond(
   wdot[24] -= q; // CH3O2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -13384,7 +13379,6 @@ aJacobian_precond(
   wdot[24] += q; // CH3O2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -13468,7 +13462,6 @@ aJacobian_precond(
   wdot[32] -= q; // C2H5O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   dqdc[0] = q_nocor;
   dqdc[1] = q_nocor;
   dqdc[2] = q_nocor;
@@ -21586,7 +21579,6 @@ aJacobian(
   wdot[5] += q; // H2O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[H2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -21746,7 +21738,6 @@ aJacobian(
   wdot[15] -= q; // CH2GSG
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[CH]
     dqdci = (0 - 1) * q_nocor;
@@ -21864,7 +21855,6 @@ aJacobian(
   wdot[15] += q; // CH2GSG
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[CH]
     dqdci = (0 - 1) * q_nocor;
@@ -21987,7 +21977,6 @@ aJacobian(
   wdot[13] += q; // CO
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[H2]
     dqdci = (2.5 - 1) * q_nocor;
@@ -22199,7 +22188,6 @@ aJacobian(
   wdot[24] -= q; // CH3O2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[CH]
     dqdci = (0 - 1) * q_nocor;
@@ -22335,7 +22323,6 @@ aJacobian(
   wdot[24] += q; // CH3O2
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[O2]
     dqdci = +k_f * sc[16];
@@ -22476,7 +22463,6 @@ aJacobian(
   wdot[32] -= q; // C2H5O
   // for convenience
   k_f *= alpha;
-  k_r = 0.0;
   if (consP == 1) {
     // d()/d[CH]
     dqdci = (0 - 1) * q_nocor;
