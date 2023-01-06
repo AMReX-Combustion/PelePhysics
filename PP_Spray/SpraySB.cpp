@@ -64,13 +64,13 @@ SprayParticleContainer::CreateSBDroplets(
       const int vy = SPRAY_FUEL_NUM * n;
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         Y0[spf] = rfh.Y0[vy + spf];
-        rho_part += Y0[spf] / fdat->rho[spf];
-        mu_part += Y0[spf] * fdat->muL(T_part, spf);
+        rho_part += Y0[spf] / fdat->rhoL(T0, spf);
+        mu_part += Y0[spf] * fdat->muL(T0, spf);
       }
       rho_part = 1. / rho_part;
 #else
-      Real rho_part = fdat->rho[0];
-      Real mu_part = fdat->muL(T_part, 0);
+      Real rho_part = fdat->rhoL(T0, 0);
+      Real mu_part = fdat->muL(T0, 0);
       Y0[0] = 1.;
 #endif
       const Real sigma = fdat->sigma;
