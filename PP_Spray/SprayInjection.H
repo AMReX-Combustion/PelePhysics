@@ -23,7 +23,7 @@ SprayParticleContainer::sprayInjection(
   int numInjProcs,
   const int min_parcel)
 {
-  if (!spray_jet->get_active(time)) {
+  if (!spray_jet->jet_active(time)) {
     return;
   }
   // Don't try to use more procs than we have
