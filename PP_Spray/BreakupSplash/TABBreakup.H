@@ -9,10 +9,10 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 updateBreakup(
-  const amrex::Real C_D,
-  const amrex::Real rem_dt,
-  const amrex::Real dt,
-  int pid,
+  const amrex::Real& C_D,
+  const amrex::Real& rem_dt,
+  const amrex::Real& dt,
+  const int pid,
   const GasPhaseVals& gpv,
   const SprayData& fdat,
   SprayParticleContainer::ParticleType& p,
@@ -21,9 +21,7 @@ updateBreakup(
 {
   // Model constants
   const amrex::Real C_k = 8.;
-  // O'Rourke and Amsden list this value as 5 but Marek in "The double-mass
-  // model of drop..." from 2013 says this value should actually be 10
-  const amrex::Real C_d = 10.;
+  const amrex::Real C_d = 5.;
   const amrex::Real C_b = 0.5;
   const amrex::Real C_F = 1. / 3.;
   // K is used to determine the SMD of the resulting droplets
@@ -41,7 +39,7 @@ updateBreakup(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
     rho_part += Y_part[spf] / fdat.rhoL(T_part, spf);
-    mu_part += Y_part[spf] * fdat.muL(t_part, spf);
+    mu_part += Y_part[spf] * fdat.muL(T_part, spf);
   }
   rho_part = 1. / rho_part;
   amrex::Real sigma = fdat.sigma;
@@ -77,32 +75,52 @@ updateBreakup(
     p.rdata(SprayComps::pstateTABYdot) = ydotnp;
     return;
   }
-  amrex::Real pv1 = (yn - Wer) / A;
-  amrex::Real pv2 = -yn / (A * omega);
-  amrex::Real phi1 = std::acos(pv1);
-  amrex::Real phi2 = std::asin(pv2);
-  amrex::Real mnv = std::acos((1. - Wer) / A);
-  amrex::Real tb1 = (mnv - phi1) / omega;
-  amrex::Real tb2 = (mnv - phi2) / omega;
-  amrex::Real tbv1 = (tb1 > 0.) ? tb1 : 2. * dt;
-  amrex::Real tbv2 = (tb2 > 0.) ? tb2 : 2. * dt;
-  amrex::Real tbv = amrex::min(tbv1, tbv2);
+  amrex::Real ytb = yn;
+  amrex::Real ydottb = ydotn;
+  amrex::Real tbv = 0.;
+  if (yn < 1.) {
+    // This minimum value of tb comes from a maximum phi value
+    amrex::Real pv1 = (yn - Wer) / A;
+    pv1 = amrex::max(amrex::min(pv1, 1.), -1.);
+    amrex::Real phi = std::acos(pv1);
+    // Note the trig identity of cos(2 pi - theta) = cos(theta) = cos(-theta)
+    phi = amrex::max(2. * M_PI - phi, phi);
+    amrex::Real theta = std::acos((1. - Wer) / A);
+    // Minimum tb occurs at a minimum theta that is still above phi
+    if (theta < phi) {
+      theta = 2. * M_PI - theta;
+    }
+    tbv = (theta - phi) / omega;
+    if (tbv < dt) {
+      ytb = 1.;
+      ydottb = -A * omega * std::sin(omega * tbv + phi);
+    }
+  }
   // Check if breakup occurs
   if (tbv < dt) {
-    // Evaluate ydot at tb
-    amrex::Real ytb =
-      Wer + std::exp(-tbv / td) *
-              ((yn - Wer) * std::cos(omega * tbv) +
-               1. / omega * (ydotn + (yn - Wer) / td) * std::sin(omega * tbv));
-    amrex::Real ydottb =
-      (Wer - ytb) / td +
-      omega * std::exp(-tbv / td) *
-        (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * tbv) -
-         (yn - Wer) * std::sin(omega * tbv));
-    amrex::Real r32 = rad_part / (1. + 8. * K / 20. +
-                                  denom * rad_part / sigma * ydottb * ydottb *
-                                    (6. * K - 5.) / 120.);
-    amrex::Real Utan = C_b * rad_part * ydottb;
+    amrex::Real Utan, r32;
+    if (fdat.use_ETAB) {
+      const amrex::Real Wet = 80.;
+      const amrex::Real k1 = (std::sqrt(Wet) - 1.) * std::pow(We / Wet, 4) + 1.;
+      const amrex::Real k2 = 2. / 9.;
+      amrex::Real Kbr = k1 * omega;
+      if (We > Wet) {
+        Kbr = k2 * omega * std::sqrt(We);
+      }
+      amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
+      amrex::Real etb = std::acos(etheta);
+      r32 = rad_part * std::exp(-Kbr * etb);
+      amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
+      amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
+                        omega2 / (ydottb * ydottb);
+      amrex::Real AE = std::sqrt(AE2);
+      Utan = AE * C_b * rad_part * ydottb;
+    } else {
+      r32 = 3. * rad_part /
+            (1. + 8. * K / 20. +
+             denom * rad_part / sigma * ydottb * ydottb * (6. * K - 5.) / 120.);
+      Utan = C_b * rad_part * ydottb;
+    }
     N_SB[pid] = splash_breakup::breakup;
     amrex::Real velMag = vel_part.vectorLength();
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {

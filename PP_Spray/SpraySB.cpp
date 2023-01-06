@@ -65,12 +65,12 @@ SprayParticleContainer::CreateSBDroplets(
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         Y0[spf] = rfh.Y0[vy + spf];
         rho_part += Y0[spf] / fdat->rho[spf];
-        mu_part += Y0[spf] * fdat->mu[spf];
+        mu_part += Y0[spf] * fdat->muL(T_part, spf);
       }
       rho_part = 1. / rho_part;
 #else
       Real rho_part = fdat->rho[0];
-      Real mu_part = fdat->mu[0];
+      Real mu_part = fdat->muL(T_part, 0);
       Y0[0] = 1.;
 #endif
       const Real sigma = fdat->sigma;
@@ -171,10 +171,12 @@ SprayParticleContainer::CreateSBDroplets(
         Real r32 = phi1;
         Real d32 = 2. * r32;
         Real dummy = 0.;
-        ChiSquared csdist;
-        csdist.init(d32, dummy);
-        // Child droplets cannot be bigger than half original droplet
-        Real dmean = amrex::min(0.5 * d0, csdist.get_dia());
+        Real dmean = d32;
+        if (!fdat->use_ETAB) {
+          ChiSquared csdist;
+          csdist.init(d32, dummy);
+          dmean = csdist.get_dia();
+        }
         Real Utan = phi2;
         Real bmass = M_PI / 6. * rho_part * std::pow(dmean, 3);
         int Nsint = static_cast<int>(pmass / bmass);

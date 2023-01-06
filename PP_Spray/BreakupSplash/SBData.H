@@ -1,9 +1,9 @@
-#ifndef SBDATA_H_
-#define SBDATA_H_
+#ifndef SBDATA_H
+#define SBDATA_H
 
 // This contains data SB (splashing or breakup) used for creating new droplets
-// on device. Variables phi1 and phi2 will differ between if the droplet is
-// splashing or breaking up.
+// using data that is generated on device. Variables phi1 and phi2 will differ
+// between if the droplet is splashing or breaking up.
 struct SBPtrs
 {
   amrex::Real* norm = nullptr;

@@ -109,6 +109,7 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
+    pp.query("use_ETAB_model" sprayData.use_ETAB);
     bool wrong_data = false;
     for (int i = 0; i < nfuel; ++i) {
       std::string var_read = fuel_names[i] + "_mu";
