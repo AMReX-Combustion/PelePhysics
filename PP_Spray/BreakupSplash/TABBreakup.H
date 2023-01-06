@@ -101,14 +101,15 @@ updateBreakup(
     amrex::Real Utan, r32;
     if (fdat.use_ETAB) {
       const amrex::Real Wet = 80.;
-      const amrex::Real k1 = (std::sqrt(Wet) - 1.) * std::pow(We / Wet, 4) + 1.;
       const amrex::Real k2 = 2. / 9.;
+      const amrex::Real k1 =
+        k2 * ((std::sqrt(Wet) - 1.) * std::pow(We / Wet, 4) + 1.);
       amrex::Real Kbr = k1 * omega;
       if (We > Wet) {
         Kbr = k2 * omega * std::sqrt(We);
       }
       amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
-      amrex::Real etb = std::acos(etheta);
+      amrex::Real etb = std::acos(etheta) / omega;
       r32 = rad_part * std::exp(-Kbr * etb);
       amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
       amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
