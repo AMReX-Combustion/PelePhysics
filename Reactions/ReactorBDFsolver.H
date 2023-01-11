@@ -66,7 +66,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void SGSprecond(amrex::Real MinvX[NEQNS],
         sum  = 0.0;
         for(int j=0;j<i;j++)
         {
-            sum += -A[i][j]*y_d[j];
+            sum += A[i][j]*y_d[j];
         }
         y_d[i] = (X[i]-sum)*diag_inv[i];
     } 
@@ -83,7 +83,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void SGSprecond(amrex::Real MinvX[NEQNS],
         sum=0.0;
         for(int j=NEQNS-1;j>i;j--)
         {
-            sum += -A[i][j]*MinvX[j];
+            sum += A[i][j]*MinvX[j];
         }
 
         MinvX[i] = (y_dd[i]-sum)*diag_inv[i];
@@ -167,6 +167,40 @@ printmat(std::string str,amrex::Real mat[NEQNS][NEQNS])
         for(int j=0;j<NEQNS;j++)
         {
             amrex::Print()<<mat[i][j]<<"  ";
+        }
+        amrex::Print()<<"\n";
+    }
+    amrex::Print()<<"\n";
+
+}
+//========================================================================
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
+print_hessmat(std::string str,amrex::Real hmat[KSPSIZE+1][KSPSIZE])
+{
+    amrex::Print()<<"\n"<<str<<"\n";
+
+    for(int i=0;i<KSPSIZE+1;i++)
+    {
+        for(int j=0;j<KSPSIZE;j++)
+        {
+            amrex::Print()<<hmat[i][j]<<"  ";
+        }
+        amrex::Print()<<"\n";
+    }
+    amrex::Print()<<"\n";
+
+}
+//========================================================================
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
+print_arnoldivecs(std::string str,amrex::Real arnoldivecs[KSPSIZE+1][NEQNS])
+{
+    amrex::Print()<<"\n"<<str<<"\n";
+
+    for(int i=0;i<(KSPSIZE+1);i++)
+    {
+        for(int j=0;j<NEQNS;j++)
+        {
+            amrex::Print()<<arnoldivecs[i][j]<<"  ";
         }
         amrex::Print()<<"\n";
     }
@@ -302,11 +336,8 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
     nanflag = false;
 
     getkspvector(vj,kspvectors,j);
-    //printvec("vj:",vj);
     findAX(Avj,mat,vj,dt);
-    //printvec("Avj:",Avj);
     precond(MinvAvj,mat,Avj,dt,precond_type);
-    //printvec("MinvAvj:",MinvAvj);
     copyvector(Avj,MinvAvj);
     //Avj is now M^-1 A vj
     //remember we are solving M^-1 A X = M^-1 b
@@ -353,85 +384,82 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
     return(lucky);
 }
 //========================================================================
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
-leastsqminimize(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
-                amrex::Real y[KSPSIZE],amrex::Real beta,
-                int currentkspsize,bool lucky)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+givens_rotate(amrex::Real r,amrex::Real s,amrex::Real &cos,
+              amrex::Real &sin)
 {
-    amrex::Real c,s,h_up,h_down,dtr;
-    amrex::Real val1,val2;
-
-    //local copy
-    amrex::Real Hmat[KSPSIZE+1][KSPSIZE];
-    for(int i=0;i<(KSPSIZE+1);i++)
+    if(r==0)
     {
-        for(int j=0;j<KSPSIZE;j++)
-        {
-            Hmat[i][j]=Hessmat[i][j];
-        }
-    }    
-
-    amrex::Real beta_e1[KSPSIZE+1]={0.0};
-    beta_e1[0] = beta;
-
-    //convert H into QR
-    for(int i=0;i<currentkspsize;i++)
-    {
-        h_up   = Hmat[i][i] ;
-        h_down = Hmat[i+1][i];
-
-        dtr = sqrt(h_up*h_up + h_down*h_down);
-
-        c=h_up/dtr; s=h_down/dtr;
-
-        for(int j=0;j<currentkspsize;j++)
-        {
-            h_up   = Hmat[i][j];
-            h_down = Hmat[i+1][j];
-
-            //perform rotations
-            //ith row
-            Hmat[i][j] =  c*h_up + s*h_down;
-            //(i+1)th row
-            Hmat[i+1][j] = -s*h_up + c*h_down;
-
-        }
-
-        val1 =  c*beta_e1[i] + s*beta_e1[i+1];
-        val2 = -s*beta_e1[i] + c*beta_e1[i+1];
-
-        beta_e1[i]=val1; 
-        beta_e1[i+1]=val2;
-
+        cos=0.0;
+        sin=1.0;
     }
+    else
+    {
+        cos=r/std::sqrt(r*r+s*s);
+        sin=s/std::sqrt(r*r+s*s);
+    }
+}
+//========================================================================
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE amrex::Real 
+triangularize(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
+              amrex::Real cos_arr[KSPSIZE],
+              amrex::Real sin_arr[KSPSIZE],
+              amrex::Real beta_e1[KSPSIZE+1],
+                int k)
+{
 
-    // ||Hm y - beta e1|| = || QR y - Q Q^T beta e1||
-    // || Q ( Ry - Q^T beta e1) || = || Ry - Q^T beta e1||
+  amrex::Real temp,cos,sin;
 
-    //solve least squares problem
-    y[currentkspsize-1] = beta_e1[currentkspsize-1]/
-    Hmat[currentkspsize-1][currentkspsize-1];
+  //apply for ith column
+  for(int i=0;i<=(k-1); i++)
+  {
+    temp   =  cos_arr[i] * Hessmat[i][k] + sin_arr[i] * Hessmat[i+1][k];
+    Hessmat[i+1][k] = -sin_arr[i] * Hessmat[i][k] + cos_arr[i] * Hessmat[i + 1][k];
+    Hessmat[i][k]   = temp;
+  }
 
-    for(int i=currentkspsize-2;i>=0;i--)	
+  //update the next sin cos values for rotation
+  givens_rotate(Hessmat[k][k], Hessmat[k+1][k], cos, sin);
+
+  //eliminate H(i + 1, i)
+  Hessmat[k][k] = cos * Hessmat[k][k] + sin * Hessmat[k+1][k];
+  Hessmat[k+1][k] = 0.0;
+
+  cos_arr[k]=cos;
+  sin_arr[k]=sin;
+
+  beta_e1[k+1] = -sin*beta_e1[k];
+  beta_e1[k]   =  cos*beta_e1[k];
+
+  amrex::Real error=amrex::Math::abs(beta_e1[k+1]);
+
+  return(error);
+}
+//========================================================================
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
+uppertrisolve(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
+         amrex::Real y[KSPSIZE+1],amrex::Real beta_e1[KSPSIZE+1],
+         int k)
+{
+    for(int i=k;i>=0;i--)	
     {
         y[i] = beta_e1[i];
-
-        for(int j=i+1;j<currentkspsize;j++)
+        for(int j=i+1;j<=k;j++)
         {
-            y[i]=y[i] - Hmat[i][j] * y[j];
+            y[i]=y[i] - Hessmat[i][j] * y[j];
         }
 
-        y[i] = y[i]/Hmat[i][i];
+        y[i] = y[i]/Hessmat[i][i];
     }
 }
 //========================================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE 
-bool performgmres(amrex::Real Mat1d[NEQNS2],
+bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
                   amrex::Real ydot[NEQNS],
                   amrex::Real  x0[NEQNS], //initial soln for GMRES
                   amrex::Real x[NEQNS],   //current solution
                   amrex::Real dsoln_n[NEQNS],   //for explicit term
-                  amrex::Real dt_dim,
+                  amrex::Real dt,
                   int precond_type,
                   int restart_it,
                   amrex::Real tol,int printflag)
@@ -442,46 +470,31 @@ bool performgmres(amrex::Real Mat1d[NEQNS2],
     bool nanflag;
     int luckykspdim;
 
-    amrex::Print()<<"kspsize:"<<KSPSIZE<<"\n";
-
     amrex::Real v1[NEQNS]={0.0};
     amrex::Real tempvec[NEQNS]={0.0};
     amrex::Real v[NEQNS]={0.0};
-    amrex::Real y[KSPSIZE]={0.0};
+    amrex::Real y[KSPSIZE+1]={0.0};
     amrex::Real r[NEQNS]={0.0};
     amrex::Real r0[NEQNS]={0.0};
     amrex::Real Ax0[NEQNS]={0.0};
     amrex::Real Ax[NEQNS]={0.0};
     amrex::Real Minvr[NEQNS]={0.0};
     amrex::Real b[NEQNS]={0.0};
-    amrex::Real Mat[NEQNS][NEQNS]={0.0};
     amrex::Real kspvectors[KSPSIZE+1][NEQNS]={0.0};
     amrex::Real Hessmat[KSPSIZE+1][KSPSIZE]={0.0};
+    amrex::Real cos_arr[KSPSIZE]={0.0};
+    amrex::Real sin_arr[KSPSIZE]={0.0};
+    amrex::Real beta_e1[KSPSIZE+1]={0.0};
     amrex::Real residnorm,bnorm;
 
     success = true;
 
-
     //set RHS
     for(int i=0;i<NEQNS;i++)
     {
-        b[i]=-(dsoln_n[i]/dt_dim-ydot[i]);
+        b[i]=-(dsoln_n[i]/dt-ydot[i]);
     }
-    bnorm=findnorm(b);
-    //bnorm=1.0;
-    amrex::Real dt=dt_dim*bnorm;
     
-    //set matrix
-    for(int i=0;i<NEQNS;i++)
-    {
-        for(int j=0;j<NEQNS;j++)
-        {
-              Mat[i][j]=Mat1d[i*NEQNS+j]/bnorm;
-        }
-        b[i]=b[i]/bnorm;
-    }
-
-    printmat("Jacobian",Mat);
     //finding r0
     findAX(Ax0,Mat,x0,dt);
     addvectors(b,Ax0,r0,1.0,-1.0);  //b-Ax0
@@ -491,8 +504,6 @@ bool performgmres(amrex::Real Mat1d[NEQNS2],
     //initial residual is r0=M^-1(b-Ax0)
     //we are solving M^-1 A X = M^-1 b
     copyvector(r,r0);
-    printvec("r0",r0);
-    printvec("r",r);
     copyvector(x,x0); 
 #ifndef AMREX_USE_GPU
     if(printflag) amrex::Print()<<"initial norm of residual:"
@@ -513,15 +524,20 @@ bool performgmres(amrex::Real Mat1d[NEQNS2],
         {
             v1[i]=r[i]/beta;
         }
+        beta_e1[0]=beta;
 
         setkspvector(v1,kspvectors,0);
-
-        for(int kspdim=0;kspdim<KSPSIZE;kspdim++)
+        
+        int kspdim;
+        for(kspdim=0;kspdim<KSPSIZE;kspdim++)
         {
             copyvector(x,x0);
             // finds the ksp vector at kspdim+1
             arnoldistopped = arnoldi(kspdim,Mat,kspvectors,Hessmat,
                                      dt,precond_type,luckykspdim,nanflag);
+
+            residnorm=triangularize(Hessmat,cos_arr,sin_arr,beta_e1,
+                                    kspdim);
 
             if(nanflag)
             {
@@ -530,22 +546,7 @@ bool performgmres(amrex::Real Mat1d[NEQNS2],
                 break;
             }
 
-            leastsqminimize(Hessmat,y,beta,kspdim+1,arnoldistopped);
 
-            for(int i=0;i<(kspdim+1);i++)
-            {
-                getkspvector(v,kspvectors,i);
-                addvectors(x,v,tempvec,1.0,y[i]);
-                copyvector(x,tempvec);
-            }
-
-            //finding new residual
-            findAX(Ax,Mat,x,dt);
-            addvectors(b,Ax,r,1.0,-1.0);
-            precond(Minvr,Mat,r,dt,precond_type); //Minv * r0
-            copyvector(r,Minvr);
-
-            residnorm = findnorm(r);
 #ifndef AMREX_USE_GPU
             if(printflag) amrex::Print()<<"norm of residual:"
                 <<residnorm<<"\t"<<tol<<"\t"<<kspdim<<"\n";
@@ -564,17 +565,22 @@ bool performgmres(amrex::Real Mat1d[NEQNS2],
             {
                 break;
             }
+        }
 
+        uppertrisolve(Hessmat,y,beta_e1,kspdim);
+        for(int i=0;i<=kspdim;i++)
+        {
+            getkspvector(v,kspvectors,i);
+            addvectors(x,v,tempvec,1.0,y[i]);
+            copyvector(x,tempvec);
         }
 
         if( (residnorm <= tol) || (!success) || (arnoldistopped) )
         {
             break;
         }
-
-
-        //amrex::Print()<<"******************\n";
     }
+
 
     return(success);
 }

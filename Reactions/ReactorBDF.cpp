@@ -118,23 +118,37 @@ namespace pele::physics::reactions {
             {
                 for(int nlit=0;nlit<bdf_nonlinear_iters;nlit++)
                 {
-                    for (int sp = 0; sp < neq; sp++) {
+                    for (int sp = 0; sp < neq; sp++)
+                    {
                         dsoln0[sp] = dsoln[sp];
                         dsoln_n[sp] = soln[sp]-soln_n[sp];
                     }
                     
-                    amrex::Real Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
-                    eos.RTY2JAC(rho, temp, massfrac, Jmat, consP);
+                    amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
+                    amrex::Real mw[NUM_SPECIES] = {0.0};
+                    get_mw(mw);
+                    amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
+                    eos.RTY2JAC(rho, temp, massfrac, Jmat1d, consP);
+                    for (int i = 0; i < NUM_SPECIES; i++) 
+                    {
+                        for (int j = 0; j < NUM_SPECIES; j++) 
+                        {
+                            Jmat2d[i][j]=Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
+                        }
+                        Jmat2d[i][NUM_SPECIES] = Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
+                        Jmat2d[NUM_SPECIES][i] = Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
+                    }
+                    Jmat2d[NUM_SPECIES][NUM_SPECIES]=Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
                     
                     utils::fKernelSpec<Ordering>(
                         0, 1, current_time - time_init, 
                         captured_reactor_type, soln, ydot,
                         rhoe_init, rhoesrc_ext, rYsrc_ext);
-                    
-                    performgmres(Jmat,ydot,dsoln0,dsoln,dsoln_n,
+
+                    performgmres(Jmat2d,ydot,dsoln0,dsoln,dsoln_n,
                                  dt_bdf,captured_gmres_precond,
-                    captured_gmres_restarts,captured_gmres_tol,printflag);
-                    
+                                 captured_gmres_restarts,captured_gmres_tol,printflag);
+
                     for (int sp = 0; sp < neq; sp++) {
                         soln[sp] += dsoln[sp];
                     }
@@ -271,14 +285,31 @@ namespace pele::physics::reactions {
                         dsoln0[sp] = dsoln[sp];
                         dsoln_n[sp] = soln[sp]-soln_n[sp];
                     }
-                    amrex::Real Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
-                    eos.RTY2JAC(rho, temp, massfrac, Jmat, consP);
+
+                    amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
+                    amrex::Real mw[NUM_SPECIES] = {0.0};
+                    get_mw(mw);
+                    amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
+                    eos.RTY2JAC(rho, temp, massfrac, Jmat1d, consP);
+                    for (int i = 0; i < NUM_SPECIES; i++) 
+                    {
+                        for (int j = 0; j < NUM_SPECIES; j++) 
+                        {
+                            Jmat2d[i][j]=Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
+                        }
+                        Jmat2d[i][NUM_SPECIES] = Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
+                        Jmat2d[NUM_SPECIES][i] = Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
+                    }
+                    Jmat2d[NUM_SPECIES][NUM_SPECIES]=Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
+
                     utils::fKernelSpec<Ordering>(
                         0, 1, current_time - time_init, captured_reactor_type, soln, ydot,
                         rhoe_init, rhoesrc_ext, rYsrc_ext);
-                    performgmres(Jmat,ydot,dsoln0,dsoln,dsoln_n,
+
+                    performgmres(Jmat2d,ydot,dsoln0,dsoln,dsoln_n,
                                  dt_bdf,captured_gmres_precond,
                                  captured_gmres_restarts,captured_gmres_tol,printflag);
+
                     for (int sp = 0; sp < neq; sp++) {
                         soln[sp] += dsoln[sp];
                     }
