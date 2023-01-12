@@ -3,6 +3,14 @@
 #include "ReactorBDFsolver.H"
 
 namespace pele::physics::reactions {
+    
+    //The linear system for first order backward Euler 
+    //is of the form
+    //[I/dt - df/du] du = (un-u)/dt + f(u)
+
+    //The linear system for second order Crank Nicholson
+    //is of the form
+    //[I/dt - 0.5*df/du] du = (un-u)/dt + 0.5*f(u) + 0.5*f(un)
 
     int
     ReactorBDF::init(int reactor_type, int /*ncells*/)
@@ -118,12 +126,12 @@ namespace pele::physics::reactions {
             {
                 for(int nlit=0;nlit<bdf_nonlinear_iters;nlit++)
                 {
-                    for (int sp = 0; sp < neq; sp++)
+                    for (int sp = 0; sp < neq; sp++) 
                     {
                         dsoln0[sp] = dsoln[sp];
-                        dsoln_n[sp] = soln[sp]-soln_n[sp];
                     }
-                    
+
+                    amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
                     amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
                     amrex::Real mw[NUM_SPECIES] = {0.0};
                     get_mw(mw);
@@ -133,23 +141,28 @@ namespace pele::physics::reactions {
                     {
                         for (int j = 0; j < NUM_SPECIES; j++) 
                         {
-                            Jmat2d[i][j]=Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
+                            Jmat2d[i][j] = -Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
                         }
-                        Jmat2d[i][NUM_SPECIES] = Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
-                        Jmat2d[NUM_SPECIES][i] = Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
+                        Jmat2d[i][NUM_SPECIES] = -Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
+                        Jmat2d[NUM_SPECIES][i] = -Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
                     }
-                    Jmat2d[NUM_SPECIES][NUM_SPECIES]=Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
+                    Jmat2d[NUM_SPECIES][NUM_SPECIES] = -Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
                     
                     utils::fKernelSpec<Ordering>(
-                        0, 1, current_time - time_init, 
-                        captured_reactor_type, soln, ydot,
+                        0, 1, current_time - time_init, captured_reactor_type, soln, ydot,
                         rhoe_init, rhoesrc_ext, rYsrc_ext);
 
-                    performgmres(Jmat2d,ydot,dsoln0,dsoln,dsoln_n,
-                                 dt_bdf,captured_gmres_precond,
+                    for (int i = 0; i < (NUM_SPECIES+1); i++) 
+                    {
+                      Jmat2d[i][i] += (1.0/dt_bdf);
+                      rhs[i]        = -(soln[i]-soln_n[i])/dt_bdf+ydot[i];
+                    }
+
+                    performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
                                  captured_gmres_restarts,captured_gmres_tol,printflag);
 
-                    for (int sp = 0; sp < neq; sp++) {
+                    for (int sp = 0; sp < neq; sp++) 
+                    {
                         soln[sp] += dsoln[sp];
                     }
                 }
@@ -233,7 +246,6 @@ namespace pele::physics::reactions {
             amrex::Real soln[NUM_SPECIES + 1] = {0.0};
             amrex::Real dsoln[NUM_SPECIES + 1] = {0.0};  //newton_soln_k+1 - newton_soln_k
             amrex::Real dsoln0[NUM_SPECIES + 1] = {0.0}; //initial newton_soln_k+1 -newton_soln_k
-            amrex::Real dsoln_n[NUM_SPECIES+1] = {0.0};  //newton_soln_k-newton_soln_n
             amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
             amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
             amrex::Real current_time = time_init;
@@ -281,11 +293,12 @@ namespace pele::physics::reactions {
             {
                 for(int nlit=0;nlit<bdf_nonlinear_iters;nlit++)
                 {
-                    for (int sp = 0; sp < neq; sp++) {
+                    for (int sp = 0; sp < neq; sp++) 
+                    {
                         dsoln0[sp] = dsoln[sp];
-                        dsoln_n[sp] = soln[sp]-soln_n[sp];
                     }
 
+                    amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
                     amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
                     amrex::Real mw[NUM_SPECIES] = {0.0};
                     get_mw(mw);
@@ -295,22 +308,29 @@ namespace pele::physics::reactions {
                     {
                         for (int j = 0; j < NUM_SPECIES; j++) 
                         {
-                            Jmat2d[i][j]=Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
+                            Jmat2d[i][j] = -Jmat1d[j*(NUM_SPECIES+1) + i] * mw[i] / mw[j];
                         }
-                        Jmat2d[i][NUM_SPECIES] = Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
-                        Jmat2d[NUM_SPECIES][i] = Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
+                        Jmat2d[i][NUM_SPECIES] = -Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+i]*mw[i];
+                        Jmat2d[NUM_SPECIES][i] = -Jmat1d[i*(NUM_SPECIES+1)+NUM_SPECIES]/mw[i];
                     }
-                    Jmat2d[NUM_SPECIES][NUM_SPECIES]=Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
-
+                    Jmat2d[NUM_SPECIES][NUM_SPECIES] = -Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
+                    
                     utils::fKernelSpec<Ordering>(
                         0, 1, current_time - time_init, captured_reactor_type, soln, ydot,
                         rhoe_init, rhoesrc_ext, rYsrc_ext);
 
-                    performgmres(Jmat2d,ydot,dsoln0,dsoln,dsoln_n,
-                                 dt_bdf,captured_gmres_precond,
+                    for (int i = 0; i < (NUM_SPECIES+1); i++) 
+                    {
+                      Jmat2d[i][i] += (1.0/dt_bdf);
+                      rhs[i]        = -(soln[i]-soln_n[i])/dt_bdf+ydot[i];
+                    }
+
+                    performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
                                  captured_gmres_restarts,captured_gmres_tol,printflag);
 
-                    for (int sp = 0; sp < neq; sp++) {
+                    for (int sp = 0; sp < neq; sp++) 
+                    {
+                        amrex::Print()<<"dsoln:"<<dsoln[sp]<<"\n";
                         soln[sp] += dsoln[sp];
                     }
                 }

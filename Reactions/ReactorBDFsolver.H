@@ -2,7 +2,7 @@
 #include <ReactorBDF.H>
 #define NEQNS (NUM_SPECIES+1)
 #define NEQNS2 NEQNS*NEQNS
-#define KSPSIZE NEQNS
+#define KSPSIZE 5
 #define NOPC 0
 #define GJPC 1
 #define SGSPC 2
@@ -11,8 +11,7 @@
 //==============================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void noprecond(amrex::Real MinvX[NEQNS],
                                               amrex::Real A[NEQNS][NEQNS],
-                                              amrex::Real X[NEQNS],
-                                              amrex::Real dt)
+                                              amrex::Real X[NEQNS])
 {
     for(int i=0;i<NEQNS;i++)
     {
@@ -22,40 +21,30 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void noprecond(amrex::Real MinvX[NEQNS],
 //==============================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void GJprecond(amrex::Real MinvX[NEQNS],
                                                amrex::Real A[NEQNS][NEQNS],
-                                               amrex::Real X[NEQNS],
-                                               amrex::Real dt)
+                                               amrex::Real X[NEQNS])
 {
-    amrex::Real sum,diag;
-    amrex::Real y_d[NEQNS],y_dd[NEQNS];
-    amrex::Real dt_inv=1.0/dt;
-
     //solve Dy = X
-    //MinvX = y
-
     for(int i=0;i<NEQNS;i++)
     {
-        diag=dt_inv-A[i][i];
-        MinvX[i]=X[i]/diag;
+        MinvX[i]=X[i]/A[i][i];
     }
 }
 //==============================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void SGSprecond(amrex::Real MinvX[NEQNS],
                                                amrex::Real A[NEQNS][NEQNS],
-                                               amrex::Real X[NEQNS],
-                                               amrex::Real dt)
+                                               amrex::Real X[NEQNS])
 {
     amrex::Real sum;
     amrex::Real y_d[NEQNS],y_dd[NEQNS];
     amrex::Real diag_inv[NEQNS];
     amrex::Real diag[NEQNS];
-    amrex::Real dt_inv=1.0/dt;
 
     //solve (D+L)D^-1(D+U)y = X
     //MinvX = y
 
     for(int i=0;i<NEQNS;i++)
     {
-        diag[i]=dt_inv-A[i][i];
+        diag[i]=A[i][i];
         diag_inv[i]=1.0/diag[i];
     }
 
@@ -92,20 +81,19 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void SGSprecond(amrex::Real MinvX[NEQNS],
 //==============================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void precond(amrex::Real MinvX[NEQNS],
                                             amrex::Real A[NEQNS][NEQNS],
-                                            amrex::Real X[NEQNS],
-                                            amrex::Real dt,int type)
+                                            amrex::Real X[NEQNS],int type)
 {
     if(type==NOPC)
     {
-        noprecond(MinvX,A,X,dt);   
+        noprecond(MinvX,A,X);   
     }
     else if(type==GJPC)
     {
-        GJprecond(MinvX,A,X,dt);
+        GJprecond(MinvX,A,X);
     }
     else if(type==SGSPC)
     {
-        SGSprecond(MinvX,A,X,dt);
+        SGSprecond(MinvX,A,X);
     }
     else
     {
@@ -116,32 +104,16 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void precond(amrex::Real MinvX[NEQNS],
 //==============================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void findAX(amrex::Real AX[NEQNS],
                                            amrex::Real A[NEQNS][NEQNS],
-                                           amrex::Real X[NEQNS],
-                                           amrex::Real dt)
+                                           amrex::Real X[NEQNS])
 {
-    //The linear system for first order backward Euler 
-    //is of the form
-    //[I/dt - df/du] du = (un-u)/dt + f(u)
-
-    //The linear system for second order Crank Nicholson
-    //is of the form
-    //[I/dt - 0.5*df/du] du = (un-u)/dt + 0.5*f(u) + 0.5*f(un)
-
-    //time stepping contribution
     for(int i=0;i<NEQNS;i++)
     {
-        AX[i]=X[i]/dt;
-    }
-
-    //Jacobian contribution
-    for(int i=0;i<NEQNS;i++)
-    {
+        AX[i]=0.0;
         for(int j=0;j<NEQNS;j++)
         {
-            AX[i] -= A[i][j]*X[j];
+            AX[i] += A[i][j]*X[j];
         }
     }
-
 }
 //========================================================================
 #ifndef AMREX_USE_GPU
@@ -316,7 +288,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
                                                  amrex::Real mat[NEQNS][NEQNS],
                                                  amrex::Real kspvectors[KSPSIZE+1][NEQNS],
                                                  amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
-                                                 amrex::Real dt,
                                                  int precond_type,
                                                  int luckykspdim,
                                                  bool &nanflag)
@@ -336,8 +307,8 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
     nanflag = false;
 
     getkspvector(vj,kspvectors,j);
-    findAX(Avj,mat,vj,dt);
-    precond(MinvAvj,mat,Avj,dt,precond_type);
+    findAX(Avj,mat,vj);
+    precond(MinvAvj,mat,Avj,precond_type);
     copyvector(Avj,MinvAvj);
     //Avj is now M^-1 A vj
     //remember we are solving M^-1 A X = M^-1 b
@@ -371,6 +342,9 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
     {
         if( !isit_NaN(Hessmat[j+1][j]) )
         {
+#ifndef AMREX_USE_GPU
+            amrex::Print()<<"lucky\n";
+#endif
             lucky=true;
             luckykspdim=j+1;
         }
@@ -455,11 +429,9 @@ uppertrisolve(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
 //========================================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE 
 bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
-                  amrex::Real ydot[NEQNS],
+                  amrex::Real b[NEQNS],
                   amrex::Real  x0[NEQNS], //initial soln for GMRES
-                  amrex::Real x[NEQNS],   //current solution
-                  amrex::Real dsoln_n[NEQNS],   //for explicit term
-                  amrex::Real dt,
+                  amrex::Real x[NEQNS],   //current solution for GMRES
                   int precond_type,
                   int restart_it,
                   amrex::Real tol,int printflag)
@@ -479,26 +451,19 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
     amrex::Real Ax0[NEQNS]={0.0};
     amrex::Real Ax[NEQNS]={0.0};
     amrex::Real Minvr[NEQNS]={0.0};
-    amrex::Real b[NEQNS]={0.0};
     amrex::Real kspvectors[KSPSIZE+1][NEQNS]={0.0};
     amrex::Real Hessmat[KSPSIZE+1][KSPSIZE]={0.0};
     amrex::Real cos_arr[KSPSIZE]={0.0};
     amrex::Real sin_arr[KSPSIZE]={0.0};
     amrex::Real beta_e1[KSPSIZE+1]={0.0};
     amrex::Real residnorm,bnorm;
-
+    
     success = true;
 
-    //set RHS
-    for(int i=0;i<NEQNS;i++)
-    {
-        b[i]=-(dsoln_n[i]/dt-ydot[i]);
-    }
-    
     //finding r0
-    findAX(Ax0,Mat,x0,dt);
+    findAX(Ax0,Mat,x0);
     addvectors(b,Ax0,r0,1.0,-1.0);  //b-Ax0
-    precond(Minvr,Mat,r0,dt,precond_type); //Minv * r0
+    precond(Minvr,Mat,r0,precond_type); //Minv * r0
     copyvector(r0,Minvr);
 
     //initial residual is r0=M^-1(b-Ax0)
@@ -534,7 +499,7 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
             copyvector(x,x0);
             // finds the ksp vector at kspdim+1
             arnoldistopped = arnoldi(kspdim,Mat,kspvectors,Hessmat,
-                                     dt,precond_type,luckykspdim,nanflag);
+                                     precond_type,luckykspdim,nanflag);
 
             residnorm=triangularize(Hessmat,cos_arr,sin_arr,beta_e1,
                                     kspdim);
