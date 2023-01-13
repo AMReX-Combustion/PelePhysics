@@ -2,7 +2,7 @@
 #include <ReactorBDF.H>
 #define NEQNS (NUM_SPECIES+1)
 #define NEQNS2 NEQNS*NEQNS
-#define KSPSIZE 5
+#define KSPSIZE NEQNS
 #define NOPC 0
 #define GJPC 1
 #define SGSPC 2
@@ -289,14 +289,13 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
                                                  amrex::Real kspvectors[KSPSIZE+1][NEQNS],
                                                  amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
                                                  int precond_type,
-                                                 int luckykspdim,
+                                                 amrex::Real tol,
                                                  bool &nanflag)
 {
     int i,n;
     amrex::Real Avj[NEQNS],vj[NEQNS],vi[NEQNS];
     amrex::Real wj[NEQNS],tempvec[NEQNS];
     amrex::Real MinvAvj[NEQNS];
-    luckykspdim = KSPSIZE;
     
 
     bool lucky; //when norm becomes 0,
@@ -330,7 +329,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
 
     Hessmat[j+1][j] = findnorm(wj);
 
-    if(Hessmat[j+1][j] > NEARZERO)
+    if(Hessmat[j+1][j] > tol)
     {
         for(int i=0;i<NEQNS;i++)
         {
@@ -346,7 +345,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
             amrex::Print()<<"lucky\n";
 #endif
             lucky=true;
-            luckykspdim=j+1;
         }
         else
         {
@@ -412,17 +410,16 @@ triangularize(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
 //========================================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
 uppertrisolve(amrex::Real Hessmat[KSPSIZE+1][KSPSIZE],
-         amrex::Real y[KSPSIZE+1],amrex::Real beta_e1[KSPSIZE+1],
+         amrex::Real y[KSPSIZE],amrex::Real beta_e1[KSPSIZE+1],
          int k)
 {
-    for(int i=k;i>=0;i--)	
+    for(int i=k-1;i>=0;i--)	
     {
         y[i] = beta_e1[i];
         for(int j=i+1;j<=k;j++)
         {
             y[i]=y[i] - Hessmat[i][j] * y[j];
         }
-
         y[i] = y[i]/Hessmat[i][i];
     }
 }
@@ -440,12 +437,11 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
     bool arnoldistopped;
     bool success;
     bool nanflag;
-    int luckykspdim;
 
     amrex::Real v1[NEQNS]={0.0};
     amrex::Real tempvec[NEQNS]={0.0};
     amrex::Real v[NEQNS]={0.0};
-    amrex::Real y[KSPSIZE+1]={0.0};
+    amrex::Real y[KSPSIZE]={0.0};
     amrex::Real r[NEQNS]={0.0};
     amrex::Real r0[NEQNS]={0.0};
     amrex::Real Ax0[NEQNS]={0.0};
@@ -470,6 +466,7 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
     //we are solving M^-1 A X = M^-1 b
     copyvector(r,r0);
     copyvector(x,x0); 
+
 #ifndef AMREX_USE_GPU
     if(printflag) amrex::Print()<<"initial norm of residual:"
         <<findnorm(r0)<<"\n";
@@ -493,17 +490,17 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
 
         setkspvector(v1,kspvectors,0);
         
-        int kspdim;
-        for(kspdim=0;kspdim<KSPSIZE;kspdim++)
+        int optkspsize=KSPSIZE;
+        for(int kspdim=0;kspdim<KSPSIZE;kspdim++)
         {
             copyvector(x,x0);
             // finds the ksp vector at kspdim+1
             arnoldistopped = arnoldi(kspdim,Mat,kspvectors,Hessmat,
-                                     precond_type,luckykspdim,nanflag);
+                                     precond_type,tol*0.01,nanflag);
 
             residnorm=triangularize(Hessmat,cos_arr,sin_arr,beta_e1,
                                     kspdim);
-
+            
             if(nanflag)
             {
                 success=!nanflag;
@@ -519,21 +516,23 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
 
             if(arnoldistopped) 
             {
+                optkspsize=kspdim+1;
 #ifndef AMREX_USE_GPU
                 if(printflag) amrex::Print()<<"lucky condition:"
-                    <<luckykspdim<<"\n";
+                    <<kspdim<<"\n";
 #endif
                 break;
             }
 
             if(residnorm <= tol)
             {
+                optkspsize=kspdim+1;
                 break;
             }
         }
 
-        uppertrisolve(Hessmat,y,beta_e1,kspdim);
-        for(int i=0;i<=kspdim;i++)
+        uppertrisolve(Hessmat,y,beta_e1,optkspsize);
+        for(int i=0;i<optkspsize;i++)
         {
             getkspvector(v,kspvectors,i);
             addvectors(x,v,tempvec,1.0,y[i]);
