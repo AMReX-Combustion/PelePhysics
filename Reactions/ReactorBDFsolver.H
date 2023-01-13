@@ -455,9 +455,6 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
     
     success = true;
 
-    printmat("matrix:",Mat);
-    printvec("rhs:",b);
-
     //finding r0
     findAX(Ax0,Mat,x0);
     addvectors(b,Ax0,r0,1.0,-1.0);  //b-Ax0

@@ -308,12 +308,12 @@ namespace pele::physics::reactions {
                     rho = 0.0;
                     for (int sp = 0; sp < NUM_SPECIES; sp++) 
                     {
-                        rho += soln(i, j, k, sp);
+                        rho += soln[sp];
                     }
                     rho_inv = 1.0 / rho;
                     for (int sp = 0; sp < NUM_SPECIES; sp++) 
                     {
-                        massfrac[sp] = soln(i, j, k, sp) * rho_inv;
+                        massfrac[sp] = soln[sp] * rho_inv;
                     }
                     amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
                     amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
@@ -340,19 +340,11 @@ namespace pele::physics::reactions {
                         rhs[ii]        = -(soln[ii]-soln_n[ii])/dt_bdf+ydot[ii];
                     }
                     
-                    amrex::Print()<<"rhs:";
-                    for (int ii = 0; ii < neq; ii++) 
-                    {
-                        amrex::Print()<<rhs[ii]<<"\t";
-                    }
-                    amrex::Print()<<"\n";
-
                     performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
                                  captured_gmres_restarts,captured_gmres_tol,printflag);
 
                     for (int ii = 0; ii < neq; ii++) 
                     {
-                        amrex::Print()<<"dsoln:"<<dsoln[ii]<<"\n";
                         soln[ii] += dsoln[ii];
                     }
                 }

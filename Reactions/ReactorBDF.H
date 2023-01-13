@@ -95,7 +95,7 @@ private:
   int m_reactor_type{0};
   bool m_clean_init_massfrac{false};
   utils::FlattenOps<Ordering> flatten_ops;
-  int bdf_gmres_precond{0};
+  int bdf_gmres_precond{2};
 };
 } // namespace pele::physics::reactions
 #endif
