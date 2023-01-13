@@ -3,16 +3,72 @@
 #include "ReactorBDFsolver.H"
 
 namespace pele::physics::reactions {
-    
+
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
+    get_bdf_matrix_and_rhs(amrex::Real soln[NUM_SPECIES+1],
+                           amrex::Real soln_n[NUM_SPECIES+1],
+                           amrex::Real mw[NUM_SPECIES],
+                           int reactor_type,int tstepscheme,amrex::Real dt_bdf,
+                           amrex::Real rhoe_init[1],amrex::Real rhoesrc_ext[1],
+                           amrex::Real rYsrc_ext[NUM_SPECIES],
+                           amrex::Real current_time, amrex::Real time_init,
+                           amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1],
+                           amrex::Real rhs[NUM_SPECIES+1])
+    {
+
+        const int consP = (reactor_type 
+                           == ReactorTypes::h_reactor_type);
+        amrex::Real rho = 0.0;
+        for (int sp = 0; sp < NUM_SPECIES; sp++) 
+        {
+            rho += soln[sp];
+        }
+        amrex::Real rho_inv = 1.0 / rho;
+        amrex::Real massfrac[NUM_SPECIES]={0.0};
+        for (int sp = 0; sp < NUM_SPECIES; sp++) 
+        {
+            massfrac[sp] = soln[sp] * rho_inv;
+        }
+
+        amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
+        auto eos = pele::physics::PhysicsType::eos();
+        eos.RTY2JAC(rho, soln[NUM_SPECIES], massfrac, Jmat1d, consP);
+        for (int ii = 0; ii < NUM_SPECIES; ii++) 
+        {
+            for (int jj = 0; jj < NUM_SPECIES; jj++) 
+            {
+                Jmat2d[ii][jj] = -Jmat1d[jj*(NUM_SPECIES+1) + ii] * mw[ii] / mw[jj];
+            }
+            Jmat2d[ii][NUM_SPECIES] = -Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+ii]*mw[ii];
+            Jmat2d[NUM_SPECIES][ii] = -Jmat1d[ii*(NUM_SPECIES+1)+NUM_SPECIES]/mw[ii];
+        }
+        Jmat2d[NUM_SPECIES][NUM_SPECIES] = -Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
+
+        amrex::Real ydot[NUM_SPECIES+1]={0.0};
+        utils::fKernelSpec<Ordering>(
+            0, 1, current_time - time_init, reactor_type, soln, ydot,
+            rhoe_init, rhoesrc_ext, rYsrc_ext);
+
+        for (int ii = 0; ii < (NUM_SPECIES+1); ii++) 
+        {
+            Jmat2d[ii][ii] += (1.0/dt_bdf);
+            rhs[ii]        = -(soln[ii]-soln_n[ii])/dt_bdf+ydot[ii];
+        }
+
+    }
+
     //The linear system for first order backward Euler 
     //is of the form
-    //[I/dt - df/du] du = (un-u)/dt + f(u)
+    //[I/dt - df/du] du = -(un-uk)/dt + f(u)
 
-    //The linear system for second order Crank Nicholson
+    //The linear system for trapezoidal scheme
     //is of the form
-    //[I/dt - 0.5*df/du] du = (un-u)/dt + 0.5*f(u) + 0.5*f(un)
+    //[I/dt - 0.5*df/du] du = (un-uk)/dt + 0.5*f(u) + 0.5*f(un)
+    //
+    //The linear system for BDF2
+    //(u - 4/3 u{n-1} + 1/3 u{n-2})/dt=2/3 f(u)
+    //[I/dt- 2/3 df/du] du = -(u-4/3 u{n-1} + 1/3u{n-2})/dt+f(u)
 
-    int
     ReactorBDF::init(int reactor_type, int /*ncells*/)
     {
         BL_PROFILE("Pele::ReactorBDF::init()");
@@ -27,6 +83,7 @@ namespace pele::physics::reactions {
         pp.query("bdf_gmres_tol",bdf_gmres_tol);
         pp.query("bdf_gmres_precond",bdf_gmres_precond);
         pp.query("clean_init_massfrac", m_clean_init_massfrac);
+        pp.query("bdf_scheme",bdf_scheme);
         return (0);
     }
 
@@ -225,6 +282,7 @@ namespace pele::physics::reactions {
         amrex::Real time_out = time + dt_react;
 
         // capture variables
+        const int captured_bdf_scheme=bdf_scheme;
         const int captured_reactor_type = m_reactor_type;
         const int captured_nsubsteps = bdf_nsubsteps;
         const amrex::Real captured_abstol = absTol;
@@ -293,6 +351,8 @@ namespace pele::physics::reactions {
             //begin timestepping================================================
             int nsteps = 0;
             int printflag=1;
+            amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
+            amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
             while (current_time < time_out) 
             {
                 amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
@@ -304,41 +364,11 @@ namespace pele::physics::reactions {
                     {
                         dsoln0[ii] = dsoln[ii];
                     }
-
-                    rho = 0.0;
-                    for (int sp = 0; sp < NUM_SPECIES; sp++) 
-                    {
-                        rho += soln[sp];
-                    }
-                    rho_inv = 1.0 / rho;
-                    for (int sp = 0; sp < NUM_SPECIES; sp++) 
-                    {
-                        massfrac[sp] = soln[sp] * rho_inv;
-                    }
-                    amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
-                    amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
-                    amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
-                    eos.RTY2JAC(rho, soln[NUM_SPECIES], massfrac, Jmat1d, consP);
-                    for (int ii = 0; ii < NUM_SPECIES; ii++) 
-                    {
-                        for (int jj = 0; jj < NUM_SPECIES; jj++) 
-                        {
-                            Jmat2d[ii][jj] = -Jmat1d[jj*(NUM_SPECIES+1) + ii] * mw[ii] / mw[jj];
-                        }
-                        Jmat2d[ii][NUM_SPECIES] = -Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+ii]*mw[ii];
-                        Jmat2d[NUM_SPECIES][ii] = -Jmat1d[ii*(NUM_SPECIES+1)+NUM_SPECIES]/mw[ii];
-                    }
-                    Jmat2d[NUM_SPECIES][NUM_SPECIES] = -Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
-
-                    utils::fKernelSpec<Ordering>(
-                        0, 1, current_time - time_init, captured_reactor_type, soln, ydot,
-                        rhoe_init, rhoesrc_ext, rYsrc_ext);
-
-                    for (int ii = 0; ii < neq; ii++) 
-                    {
-                        Jmat2d[ii][ii] += (1.0/dt_bdf);
-                        rhs[ii]        = -(soln[ii]-soln_n[ii])/dt_bdf+ydot[ii];
-                    }
+                    get_bdf_matrix_and_rhs(soln,soln_n,mw,captured_reactor_type,
+                                           captured_bdf_scheme,dt_bdf,
+                                           rhoe_init,rhoesrc_ext,rYsrc_ext,
+                                           current_time, time_init,
+                                           Jmat2d,rhs);
                     
                     performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
                                  captured_gmres_restarts,captured_gmres_tol,printflag);
