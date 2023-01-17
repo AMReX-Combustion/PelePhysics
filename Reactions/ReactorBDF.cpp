@@ -5,8 +5,26 @@
 namespace pele::physics::reactions {
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
+    get_rho_and_massfracs(amrex::Real soln[NUM_SPECIES+1],
+                          amrex::Real &rho, 
+                          amrex::Real massfrac[NUM_SPECIES])
+    {
+        rho = 0.0;
+        for (int sp = 0; sp < NUM_SPECIES; sp++) 
+        {
+            rho += soln[sp];
+        }
+        amrex::Real rho_inv = 1.0 / rho;
+        for (int sp = 0; sp < NUM_SPECIES; sp++) 
+        {
+            massfrac[sp] = soln[sp] * rho_inv;
+        }
+    
+    }
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE void 
     get_bdf_matrix_and_rhs(amrex::Real soln[NUM_SPECIES+1],
                            amrex::Real soln_n[NUM_SPECIES+1],
+                           amrex::Real soln_nm1[NUM_SPECIES+1],
                            amrex::Real mw[NUM_SPECIES],
                            int reactor_type,int tstepscheme,amrex::Real dt_bdf,
                            amrex::Real rhoe_init[1],amrex::Real rhoesrc_ext[1],
@@ -15,44 +33,57 @@ namespace pele::physics::reactions {
                            amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1],
                            amrex::Real rhs[NUM_SPECIES+1])
     {
+  
+        BDFParams bdfp;
 
         const int consP = (reactor_type 
                            == ReactorTypes::h_reactor_type);
-        amrex::Real rho = 0.0;
-        for (int sp = 0; sp < NUM_SPECIES; sp++) 
-        {
-            rho += soln[sp];
-        }
-        amrex::Real rho_inv = 1.0 / rho;
-        amrex::Real massfrac[NUM_SPECIES]={0.0};
-        for (int sp = 0; sp < NUM_SPECIES; sp++) 
-        {
-            massfrac[sp] = soln[sp] * rho_inv;
-        }
 
+        amrex::Real rho;
+        amrex::Real massfrac[NUM_SPECIES]={0.0};
+        amrex::Real dt_bdf_inv=1.0/dt_bdf;
+        amrex::Real ydot[NUM_SPECIES+1]={0.0};
+        amrex::Real ydot_n[NUM_SPECIES+1]={0.0};
         amrex::Real Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
         auto eos = pele::physics::PhysicsType::eos();
+
+        get_rho_and_massfracs(soln,rho,massfrac);
+
         eos.RTY2JAC(rho, soln[NUM_SPECIES], massfrac, Jmat1d, consP);
         for (int ii = 0; ii < NUM_SPECIES; ii++) 
         {
             for (int jj = 0; jj < NUM_SPECIES; jj++) 
             {
-                Jmat2d[ii][jj] = -Jmat1d[jj*(NUM_SPECIES+1) + ii] * mw[ii] / mw[jj];
+                Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0]*Jmat1d[jj*(NUM_SPECIES+1) + ii] * mw[ii] / mw[jj];
             }
-            Jmat2d[ii][NUM_SPECIES] = -Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+ii]*mw[ii];
-            Jmat2d[NUM_SPECIES][ii] = -Jmat1d[ii*(NUM_SPECIES+1)+NUM_SPECIES]/mw[ii];
+            Jmat2d[ii][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0]*Jmat1d[NUM_SPECIES*(NUM_SPECIES+1)+ii]*mw[ii];
+            Jmat2d[NUM_SPECIES][ii] = -bdfp.FCOEFFMAT[tstepscheme][0]*Jmat1d[ii*(NUM_SPECIES+1)+NUM_SPECIES]/mw[ii];
         }
-        Jmat2d[NUM_SPECIES][NUM_SPECIES] = -Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
+        Jmat2d[NUM_SPECIES][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0]*Jmat1d[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
 
-        amrex::Real ydot[NUM_SPECIES+1]={0.0};
-        utils::fKernelSpec<Ordering>(
+        
+        //FIXME: need to change this to Ordering
+        utils::fKernelSpec<utils::YCOrder>(
             0, 1, current_time - time_init, reactor_type, soln, ydot,
             rhoe_init, rhoesrc_ext, rYsrc_ext);
+        
+        if(tstepscheme==TRPZSCHEME)
+        {
+            utils::fKernelSpec<utils::YCOrder>(
+                0, 1, current_time - time_init, reactor_type, soln_n, ydot_n,
+                rhoe_init, rhoesrc_ext, rYsrc_ext);
+        }
 
         for (int ii = 0; ii < (NUM_SPECIES+1); ii++) 
         {
-            Jmat2d[ii][ii] += (1.0/dt_bdf);
-            rhs[ii]        = -(soln[ii]-soln_n[ii])/dt_bdf+ydot[ii];
+            Jmat2d[ii][ii] += bdfp.TCOEFFMAT[tstepscheme][0]*(1.0/dt_bdf);
+
+            rhs[ii] =  -bdfp.TCOEFFMAT[tstepscheme][0]*soln[ii]*dt_bdf_inv;
+            rhs[ii] += -bdfp.TCOEFFMAT[tstepscheme][1]*soln_n[ii]*dt_bdf_inv;
+            rhs[ii] += -bdfp.TCOEFFMAT[tstepscheme][2]*soln_nm1[ii]*dt_bdf_inv;
+
+            rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][0]*ydot[ii];
+            rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][1]*ydot_n[ii];
         }
 
     }
@@ -69,15 +100,15 @@ namespace pele::physics::reactions {
     //(u - 4/3 u{n-1} + 1/3 u{n-2})/dt=2/3 f(u)
     //[I/dt- 2/3 df/du] du = -(u-4/3 u{n-1} + 1/3u{n-2})/dt+f(u)
 
-    ReactorBDF::init(int reactor_type, int /*ncells*/)
+    int ReactorBDF::init(int reactor_type, int /*ncells*/)
     {
         BL_PROFILE("Pele::ReactorBDF::init()");
         m_reactor_type = reactor_type;
         ReactorTypes::check_reactor_type(m_reactor_type);
         amrex::ParmParse pp("ode");
         pp.query("verbose", verbose);
-        pp.query("atol", absTol);
-        pp.query("nonlinear_iters",bdf_nonlinear_iters);
+        pp.query("bdf_nonlinear_iters",bdf_nonlinear_iters);
+        pp.query("bdf_nonlinear_tol",bdf_nonlin_tol);
         pp.query("bdf_nsubsteps", bdf_nsubsteps);
         pp.query("bdf_gmres_restarts",bdf_gmres_restarts);
         pp.query("bdf_gmres_tol",bdf_gmres_tol);
@@ -128,7 +159,7 @@ namespace pele::physics::reactions {
         // capture variables
         const int captured_reactor_type = m_reactor_type;
         const int captured_nsubsteps = bdf_nsubsteps;
-        const amrex::Real captured_abstol = absTol;
+        const amrex::Real captured_nonlin_tol = bdf_nonlin_tol;
         const amrex::Real captured_gmres_tol = bdf_gmres_tol;
         const int captured_gmres_restarts=bdf_gmres_restarts;
         const int captured_nonlinear_iters=bdf_nonlinear_iters;
@@ -285,7 +316,7 @@ namespace pele::physics::reactions {
         const int captured_bdf_scheme=bdf_scheme;
         const int captured_reactor_type = m_reactor_type;
         const int captured_nsubsteps = bdf_nsubsteps;
-        const amrex::Real captured_abstol = absTol;
+        const amrex::Real captured_nonlin_tol = bdf_nonlin_tol;
         const amrex::Real captured_gmres_tol = bdf_gmres_tol;
         const int captured_gmres_restarts=bdf_gmres_restarts;
         const int captured_nonlinear_iters=bdf_nonlinear_iters;
@@ -299,7 +330,9 @@ namespace pele::physics::reactions {
         int* d_nsteps = v_nsteps.data();
 
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+
             amrex::Real soln_n[NUM_SPECIES + 1] = {0.0}; //at time level n
+            amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; //at time level n-1
             amrex::Real soln[NUM_SPECIES + 1] = {0.0};
             amrex::Real dsoln[NUM_SPECIES + 1] = {0.0};  //newton_soln_k+1 - newton_soln_k
             amrex::Real dsoln0[NUM_SPECIES + 1] = {0.0}; //initial newton_soln_k+1 -newton_soln_k
@@ -313,18 +346,14 @@ namespace pele::physics::reactions {
             amrex::Real current_time = time_init;
             amrex::Real dt_bdf = dt_react / amrex::Real(captured_nsubsteps);
             amrex::Real rho = 0.0;
-            for (int sp = 0; sp < NUM_SPECIES; sp++) {
-                soln_n[sp] = rY_in(i, j, k, sp);
-                rho += rY_in(i, j, k, sp);
-            }
-            amrex::Real rho_inv = 1.0 / rho;
             amrex::Real massfrac[NUM_SPECIES] = {0.0};
             for (int sp = 0; sp < NUM_SPECIES; sp++) {
-                massfrac[sp] = rY_in(i, j, k, sp) * rho_inv;
+                soln_n[sp] = rY_in(i, j, k, sp);
             }
+            get_rho_and_massfracs(soln_n,rho,massfrac);
+            
             amrex::Real temp = T_in(i, j, k, 0);
-
-            amrex::Real Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
+            amrex::Real Enrg_loc = rEner_in(i, j, k, 0)/rho;
             auto eos = pele::physics::PhysicsType::eos();
             if (captured_reactor_type == ReactorTypes::e_reactor_type) {
                 eos.REY2T(rho, Enrg_loc, massfrac, temp);
@@ -345,16 +374,23 @@ namespace pele::physics::reactions {
             for (int ii = 0; ii < neq; ii++) 
             {
                 soln[ii] = soln_n[ii];
+                soln_nm1[ii] = soln_n[ii];
             }
             //==================================================================
 
             //begin timestepping================================================
             int nsteps = 0;
             int printflag=1;
+            int tstepscheme=TRPZSCHEME;
             amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
             amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
             while (current_time < time_out) 
             {
+                if(nsteps > 0)
+                {
+                    tstepscheme=captured_bdf_scheme;
+                }
+
                 amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
                 //non-linear iterations for each timestep=======================
                 for(int nlit=0;nlit<captured_nonlinear_iters;nlit++)
@@ -364,7 +400,8 @@ namespace pele::physics::reactions {
                     {
                         dsoln0[ii] = dsoln[ii];
                     }
-                    get_bdf_matrix_and_rhs(soln,soln_n,mw,captured_reactor_type,
+                    get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,
+                                           mw,captured_reactor_type,
                                            captured_bdf_scheme,dt_bdf,
                                            rhoe_init,rhoesrc_ext,rYsrc_ext,
                                            current_time, time_init,
@@ -377,11 +414,25 @@ namespace pele::physics::reactions {
                     {
                         soln[ii] += dsoln[ii];
                     }
+
+                    amrex::Real norm=0.0;
+                    for(int ii=0;ii<neq;ii++)
+                    {
+                        norm += rhs[ii]*rhs[ii];
+                    }
+                    norm=std::sqrt(norm);
+                    amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
+                    if(norm <= captured_nonlin_tol)
+                    {
+                        break;
+                    }
                 }
 
-                //copy non-linear solution onto soln_n
+                //copy non-linear solution onto soln_n, 
+                //soln_n to soln_nm1
                 for (int ii = 0; ii < neq; ii++) 
                 {
+                    soln_nm1[ii] = soln_n[ii];
                     soln_n[ii] = soln[ii];
                 }
                 current_time += dt_bdf;
@@ -396,7 +447,8 @@ namespace pele::physics::reactions {
                 rY_in(i, j, k, sp) = soln_n[sp];
                 rho += rY_in(i, j, k, sp);
             }
-            rho_inv = 1.0 / rho;
+            //get_rho_and_massfracs(soln_n,rho,massfrac);
+            amrex::Real rho_inv = 1.0 / rho;
             for (int sp = 0; sp < NUM_SPECIES; sp++) {
                 massfrac[sp] = rY_in(i, j, k, sp) * rho_inv;
             }

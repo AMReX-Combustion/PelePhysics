@@ -4,32 +4,29 @@
 #define BDF1SCHEME 0
 #define TRPZSCHEME 1
 #define BDF2SCHEME 2
-#define BDF3SCHEME 3
 
-#define NBDFSCHEMES 4
-#define NBDFSTENCIL 4
+#define NBDFSCHEMES 3
+#define NBDFSTENCIL 3
 
 #include "ReactorBase.H"
 // stages and coefficients for rk64
 struct BDFParams
 {
-   //4 schemes are implemented
-   //BDF1, TRPZ, BDF2, BDF3
+   //3 schemes are implemented
+   //BDF1, TRPZ, BDF2
    
    //mass matrix multipliers
    const amrex::Real TCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL]
-    = { {1.0000,-1.0000, 0.0000, 0.0000},
-        {1.0000,-1.0000, 0.0000, 0.0000},
-        {1.0000,-1.3333, 0.3333, 0.0000},
-        {1.0000,-1.6363, 0.8181,-0.1818}
+    = { {1.0000,-1.0000, 0.0000},
+        {1.0000,-1.0000, 0.0000},
+        {1.0000,-1.3333, 0.3333}
       };
 
     //forcing multipliers
     const amrex::Real FCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL]
-     = { {1.0000, 0.0000,0.0000,0.0000},
-         {0.5000, 0.5000,0.0000,0.0000},
-         {0.6666, 0.0000,0.0000,0.0000},
-         {0.5454, 0.0000,0.0000,0.0000}
+     = { {1.0000, 0.0000,0.0000},
+         {0.5000, 0.5000,0.0000},
+         {0.6666, 0.0000,0.0000}
        };
 };
 
@@ -117,7 +114,7 @@ public:
   }
 
 private:
-  amrex::Real absTol{1e-10};
+  amrex::Real bdf_nonlin_tol{1e-6};
   int bdf_nsubsteps{10};
   int bdf_nonlinear_iters{1};
   int bdf_gmres_restarts{10};
