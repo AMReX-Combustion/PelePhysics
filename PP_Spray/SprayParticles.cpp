@@ -325,7 +325,14 @@ SprayParticleContainer::updateParticles(
             indx_array.data(), weights.data());
           // Solve for avg mw and pressure at droplet location
           gpv.define();
-          calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+          fdat->calcBoilT(gpv, cBoilT.data());
+          amrex::Real C_D = 0.;
+          if (is_film) {
+            calculateFilmSource(cur_dt, dx, gpv, *fdat, p, ltransparm);
+          } else {
+            C_D = calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+          }
+          amrex::Real num_ppp = p.rdata(SprayComps::pstateNumDens);
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cvol = inv_vol;
@@ -335,7 +342,7 @@ SprayParticleContainer::updateParticles(
             }
 #endif
             Real cur_coef =
-              -weights[aindx] * fdat->num_ppp * cvol * cur_dt / flow_dt;
+              -weights[aindx] * num_ppp * cvol * cur_dt / flow_dt;
             if (!src_box.contains(cur_indx)) {
               if (!isGhost) {
                 Abort("SprayParticleContainer::updateParticles() -- source "
@@ -367,13 +374,11 @@ SprayParticleContainer::updateParticles(
               const Real cvel = p.rdata(SprayComps::pstateVel + dir);
               p.pos(dir) += cur_dt * cvel;
             }
-            // Update indices
-            ijkc_prev = ijkc;
-            lx = (p.pos() - plo) * dxi + 0.5;
-            ijk = lx.floor();
-            lxc = (p.pos() - plo) * dxi;
-            ijkc = lxc.floor(); // New cell center
-            if (at_bounds || do_fe_interp) {
+            if (fdat->do_breakup) {
+              updateBreakup(
+                C_D, rem_dt, fdat->dtmod * cur_dt, pid, gpv, *fdat, p, N_SB, rf_d);
+            }
+            if ((at_bounds || do_fe_interp) && p.id() > 0.) {
               // First check if particle has exited the domain through a
               // Cartesian boundary
               bool left_dom =

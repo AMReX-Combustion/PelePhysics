@@ -28,6 +28,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   m_spreadAngle *= M_PI / 180.; // Assumes spread angle is in degrees
   ps.query("swirl_angle", m_swirlAngle);
   m_swirlAngle *= M_PI / 180.;
+  ps.query("inject_ppp", m_injectPPP);
   ps.get("T", m_jetT);
   if (SPRAY_FUEL_NUM == 1) {
     m_jetY[0] = 1.;
@@ -66,6 +67,7 @@ SprayJet::SprayJet(
   const amrex::Real jet_temp,
   const amrex::Real jet_Y[SPRAY_FUEL_NUM],
   const std::string& dist_type,
+  const amrex::Real inject_ppp,
   const amrex::Real start_time,
   const amrex::Real end_time,
   const amrex::Real phi_swirl,
@@ -79,6 +81,7 @@ SprayJet::SprayJet(
     m_jetVel(jet_vel),
     m_massFlow(mass_flow),
     m_jetT(jet_temp),
+    m_injectPPP(inject_ppp),
     m_startTime(start_time),
     m_endTime(end_time),
     m_hollowSpray(hollow_spray),

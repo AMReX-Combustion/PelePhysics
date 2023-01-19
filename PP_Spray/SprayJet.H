@@ -23,6 +23,7 @@ public:
     const amrex::Real jet_temp,
     const amrex::Real jet_Y[SPRAY_FUEL_NUM],
     const std::string& dist_type,
+    const amrex::Real inject_ppp = 5.,
     const amrex::Real start_time = 0.,
     const amrex::Real end_time = 1.E8,
     const amrex::Real phi_swirl = 0.,
@@ -44,6 +45,7 @@ public:
   inline const amrex::Real& T() const { return m_jetT; }
   inline const amrex::Real& start_time() const { return m_startTime; }
   inline const amrex::Real& end_time() const { return m_endTime; }
+  inline const amrex::Real& inject_ppp() const { return m_injectPPP; }
 
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
@@ -217,6 +219,7 @@ protected:
   amrex::Real m_jetY[SPRAY_FUEL_NUM] = {0.};
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
+  amrex::Real m_injectPPP = 5.; // Injection particles per parcel
   amrex::Real m_startTime = 0.;
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;

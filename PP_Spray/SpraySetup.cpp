@@ -98,14 +98,14 @@ SprayParticleContainer::readSprayParams(
     }
   }
 
-  Real parcel_size = 1;
+  Real max_parcel_size = 40.;
   Real spray_ref_T = 300.;
   bool splash_model = false;
   bool breakup_model = false;
   //
   // Set the number of particles per parcel
   //
-  pp.query("parcel_size", parcel_size);
+  pp.query("max_parcel_size", max_parcel_size);
   pp.query("use_splash_model", splash_model);
   pp.query("use_breakup_model", breakup_model);
   if (splash_model || breakup_model) {
@@ -162,7 +162,7 @@ SprayParticleContainer::readSprayParams(
   pp.query("min_eb_vfrac", sprayData.min_eb_vfrac);
 #endif
 
-  sprayData.num_ppp = parcel_size;
+  sprayData.max_num_ppp = max_parcel_size;
   sprayData.ref_T = spray_ref_T;
 
   // List of known derived spray quantities

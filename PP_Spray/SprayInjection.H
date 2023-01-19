@@ -49,7 +49,10 @@ SprayParticleContainer::sprayInjection(
   const amrex::Real Wec = 12.;
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
-  const amrex::Real num_ppp = fdat->num_ppp;
+  const amrex::Real num_ppp = spray_jet->inject_ppp();
+  if (num_ppp > fdat->max_num_ppp) {
+    amrex::Abort("Injection number density cannot exceed maximum number density");
+  }
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
@@ -145,6 +148,7 @@ SprayParticleContainer::sprayInjection(
       p.rdata(SprayComps::pstateTABY) = 0.;
       p.rdata(SprayComps::pstateTABYdot) = 0.;
       p.rdata(SprayComps::pstateFilmVol) = 0.;
+      p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
       bool where = Where(p, pld);
       if (!where) {
@@ -195,12 +199,13 @@ SprayParticleContainer::uniformSprayInit(
   const amrex::Real T_part,
   const amrex::Real* Y_part,
   const int level,
-  const int numRedist)
+  const int numRedist,
+  const amrex::Real num_ppp)
 {
   const int MyProc = amrex::ParallelDescriptor::MyProc();
   const int NProcs = amrex::ParallelDescriptor::NProcs();
   int NRedist = numRedist;
-  // TODO: This might be overkill but issues persisted at high Summit node
+  // This might be overkill but issues persisted at high Summit node
   // counts
   if (NRedist < 0) {
     NRedist = 1;
@@ -222,6 +227,10 @@ SprayParticleContainer::uniformSprayInit(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     part_vals[SprayComps::pstateY + spf] = Y_part[spf];
   }
+  part_vals[SprayComps::pstateNumDens] = num_ppp;
+  part_vals[SprayComps::pstateTABY] = 0.;
+  part_vals[SprayComps::pstateTABYdot] = 0.;
+  part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),
