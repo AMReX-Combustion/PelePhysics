@@ -1,9 +1,6 @@
 #include "ReactorCvodeJacobian.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 #ifdef AMREX_USE_GPU
 int
 cJac(
@@ -40,16 +37,19 @@ cJac(
       (SUNMatrix_cuSparse_NNZ(J) == ncells * NNZ));
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelComputeAJchem(
-            icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
-            Jdata);
-        }
-      });
+
+    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelComputeAJchem(
+              icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
+              Jdata);
+          }
+        });
     amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
@@ -60,14 +60,16 @@ cJac(
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
-        }
-      });
+    AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
+          }
+        });
     amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
@@ -342,7 +344,4 @@ cJac_KLU(
 }
 #endif
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

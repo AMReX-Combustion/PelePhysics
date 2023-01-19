@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorCvode::init(int reactor_type, int ncells)
@@ -79,13 +77,14 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (udata_g->solve_type == cvode::fixedPoint) {
     NLS = SUNNonlinSol_FixedPoint(
       y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(
-          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0)) {
+    if (static_cast<bool>(utils::check_flag(
+          static_cast<void*>(NLS), "SUNNonlinSol_FixedPoint", 0))) {
       return (1);
     }
 
     flag = CVodeSetNonlinearSolver(cvode_mem, NLS);
-    if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
+    if (static_cast<bool>(
+          utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1))) {
       return (1);
     }
 
@@ -378,8 +377,9 @@ ReactorCvode::checkCvodeOptions() const
   if (solve_type_str == "fixed_point") {
     solve_type = cvode::fixedPoint;
     analytical_jacobian = 0;
-    if (verbose > 0)
+    if (verbose > 0) {
       amrex::Print() << " Using a fixed-point nonlinear solver\n";
+    }
   } else if (solve_type_str == "dense_direct") {
     solve_type = cvode::denseFDDirect;
     if (verbose > 0) {
@@ -454,7 +454,7 @@ ReactorCvode::checkCvodeOptions() const
 
   // Print additionnal information
   if (precond_type == cvode::sparseSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -494,7 +494,7 @@ ReactorCvode::checkCvodeOptions() const
 #endif
 #ifndef AMREX_USE_GPU
   } else if (precond_type == cvode::customSimpleAJac) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
@@ -513,7 +513,7 @@ ReactorCvode::checkCvodeOptions() const
   }
 
   if (analytical_jacobian == 1) {
-    int nJdata;
+    int nJdata = 0;
     const int HP =
       static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     int ncells = 1; // Print the pattern of the diagonal block. ncells will
@@ -724,6 +724,7 @@ ReactorCvode::allocUserData(
   udata->maxOrder = 2;
   ppcv.query("max_order", udata->maxOrder);
   ppcv.query("solve_type", solve_type_str);
+
   // Defaults
   udata->solve_type = -1;
   udata->analytical_jacobian = 0;
@@ -816,7 +817,7 @@ ReactorCvode::allocUserData(
   udata->ncells = a_ncells;
   udata->verbose = verbose;
 #ifdef AMREX_USE_GPU
-  udata->nbThreads = 32;
+  udata->nbThreads = CVODE_NB_THREADS;
   udata->nbBlocks = std::max(1, a_ncells / udata->nbThreads);
   udata->stream = stream;
 #endif
@@ -1021,14 +1022,6 @@ ReactorCvode::allocUserData(
       udata->info);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    /*
-    size_t free_mem = 0;
-    size_t total_mem = 0;
-    cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
-    AMREX_ASSERT( cudaSuccess == cudaStat1 );
-    std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
-    */
-
     // allocate working space
     cusolver_status = cusolverSpDcsrqrBufferInfoBatched(
       udata->cusolverHandle,
@@ -1100,9 +1093,6 @@ ReactorCvode::allocUserData(
       udata->JSPSmat[i] =
         new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
       klu_defaults(&(udata->Common[i]));
-      // udata->Common.btf = 0;
-      //(udata->Common[i]).maxwork = 15;
-      // udata->Common.ordering = 1;
       udata->Symbolic[i] = klu_analyze(
         NUM_SPECIES + 1, udata->colPtrs[i], udata->rowVals[i],
         &(udata->Common[i]));
@@ -1166,7 +1156,6 @@ ReactorCvode::react(
   SUNProfiler sun_profiler = nullptr;
   SUNContext_GetProfiler(
     *amrex::sundials::The_Sundials_Context(), &sun_profiler);
-  // SUNProfiler_Reset(sun_profiler);
 #endif
 
   //----------------------------------------------------------
@@ -1927,7 +1916,7 @@ ReactorCvode::close()
 }
 
 void
-ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
+ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
 {
   long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
@@ -1991,6 +1980,4 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
   }
 }
 
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions

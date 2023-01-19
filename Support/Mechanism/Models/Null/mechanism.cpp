@@ -1,6 +1,3 @@
-#ifndef MECHANISM_CPP
-#define MECHANISM_CPP
-
 #include "mechanism.H"
 
 void
@@ -98,4 +95,3 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int /*base*/)
 {
 }
-#endif

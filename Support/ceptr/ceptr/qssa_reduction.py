@@ -86,7 +86,10 @@ def remove_quadratic_method_0(mechanism, qssa_species):
 def remove_quadratic_method_1(
     mechanism, reaction_info, candidates_for_removal
 ):
-    """Remove all reactions (forward and backward) that generate quadratic coupling."""
+    """Remove all reactions that generate quadratic coupling.
+
+    Method 1 removes forward and backwards reactions.
+    """
     reactions_to_keep = []
     for orig_idx, _ in reaction_info.idxmap.items():
         if orig_idx not in candidates_for_removal:
@@ -98,7 +101,10 @@ def remove_quadratic_method_1(
 def remove_quadratic_method_2(
     mechanism, reaction_info, candidates_for_removal
 ):
-    """Remove all reactions (forward, backward or both) that generate quadratic coupling."""
+    """Remove all reactions that generate quadratic coupling.
+
+    Method 2 removes forward, backward or both reactions.
+    """
     reactions_to_keep = []
     forward_to_remove = []
     for orig_idx, _ in reaction_info.idxmap.items():

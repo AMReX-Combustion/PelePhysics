@@ -3,9 +3,7 @@
 
 #include "TransportParams.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 struct SutherlandTransport
 {
   using transport_type = SutherlandTransport;
@@ -43,7 +41,7 @@ struct SutherlandTransport
                           (tparm->viscosity_T_ref + tparm->viscosity_S) /
                           (Tloc + tparm->viscosity_S);
 
-      amrex::Real Cpmix, Tloc_cpy = Tloc;
+      amrex::Real Cpmix = 0.0, Tloc_cpy = Tloc;
       CKCPBS(&Tloc_cpy, Yloc, &Cpmix);
       lam = muloc * Cpmix / tparm->Prandtl_number;
     }
@@ -123,7 +121,5 @@ struct SutherlandTransport
   }
 };
 
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

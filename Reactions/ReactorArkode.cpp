@@ -1,8 +1,6 @@
 #include "ReactorArkode.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorArkode::init(int reactor_type, int /*ncells*/)
@@ -148,7 +146,7 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
 
-  const int ncells = box.numPts();
+  const int ncells = static_cast<int>(box.numPts());
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
   const int neq = NUM_SPECIES + 1;
@@ -158,7 +156,6 @@ ReactorArkode::react(
   SUNProfiler sun_profiler = nullptr;
   SUNContext_GetProfiler(
     *amrex::sundials::The_Sundials_Context(), &sun_profiler);
-  // SUNProfiler_Reset(sun_profiler);
 #endif
 
   // Solution vector and execution policy
@@ -464,6 +461,4 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "   Error test fails = " << netf << "\n";
   amrex::Print() << "   Total RHS evals  = " << nfe << "\n";
 }
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions

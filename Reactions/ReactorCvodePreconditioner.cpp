@@ -1,9 +1,6 @@
 #include "ReactorCvodePreconditioner.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 #ifdef AMREX_USE_GPU
 #ifdef AMREX_USE_CUDA
 int
@@ -35,28 +32,31 @@ Precond(
   auto react_type = udata->reactor_type;
 
   BL_PROFILE_VAR("Pele::ReactorCvode::fKernelComputeAJ()", fKernelComputeAJ);
+  AMREX_ALWAYS_ASSERT(nbThreads == CVODE_NB_THREADS);
   if (jok) {
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelComputeAJsys(icell, NNZ, gamma, user_data, u_d, csr_val_d);
-        }
-      });
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelComputeAJsys(icell, NNZ, gamma, user_data, u_d, csr_val_d);
+          }
+        });
     *jcurPtr = SUNFALSE;
   } else {
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
-    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
-      [=] AMREX_GPU_DEVICE() noexcept {
-        for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-                 stride = blockDim.x * gridDim.x;
-             icell < ncells; icell += stride) {
-          fKernelComputeallAJ(
-            icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
-        }
-      });
+    amrex::launch_global<CVODE_NB_THREADS>
+      <<<nbBlocks, CVODE_NB_THREADS, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+                   stride = blockDim.x * gridDim.x;
+               icell < ncells; icell += stride) {
+            fKernelComputeallAJ(
+              icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
+          }
+        });
     *jcurPtr = SUNTRUE;
   }
   cudaError_t cuda_status = cudaStreamSynchronize(stream);
@@ -123,37 +123,6 @@ PSolve(
 
   N_VCopyFromDevice_Cuda(z);
   N_VCopyFromDevice_Cuda(r);
-
-  /*
-    // Checks
-    // if (udata->verbose > 4) {
-        for(int batchId = 0 ; batchId < ncells; batchId++){
-            // measure |bj - Aj*xj|
-            realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
-            amrex::Real *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId *
-            (NUM_SPECIES+1); amrex::Real *bj       =
-            N_VGetHostArrayPointer_Cuda(r) + batchId * (NUM_SPECIES+1);
-            // sup| bj - Aj*xj|
-            amrex::Real sup_res = 0;
-            for(int row = 0 ; row < (NUM_SPECIES+1) ; row++){
-                printf("\n     row %d: ", row);
-                const int start = udata->csr_row_count_d[row] - 1;
-                const int end = udata->csr_row_count_d[row +1] - 1;
-                amrex::Real Ax = 0.0; // Aj(row,:)*xj
-                for(int colidx = start ; colidx < end ; colidx++){
-                    const int col = udata->csr_col_index_d[colidx] - 1;
-                    const amrex::Real Areg = csrValAj[colidx];
-                    const amrex::Real xreg = xj[col];
-                    printf("  (%d, %14.8e, %14.8e, %14.8e) ",
-                    col,Areg,xreg,bj[row] ); Ax = Ax + Areg * xreg;
-                }
-                amrex::Real rresidi = bj[row] - Ax;
-                sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
-            }
-            printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
-        }
-    //}
-  */
 
   return (0);
 }
@@ -636,7 +605,4 @@ PSolve_custom(
 }
 
 #endif
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

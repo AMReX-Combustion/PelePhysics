@@ -20,10 +20,7 @@
 #include <nvector/nvector_cuda.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace utils {
+namespace pele::physics::reactions::utils {
 int check_flag(void* flagvalue, const char* funcname, int opt);
 
 struct YCOrder
@@ -203,7 +200,7 @@ box_unflatten(
     amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
   temperature(i, j, k, 0) = temp;
-  FC_in(i, j, k, 0) = FCunt;
+  FC_in(i, j, k, 0) = static_cast<amrex::Real>(FCunt);
 }
 
 template <typename OrderType>
@@ -335,8 +332,5 @@ fKernelSpec(
 N_Vector
 setNVectorGPU(int nvsize, int atomic_reduction, amrex::gpuStream_t stream);
 #endif
-} // namespace utils
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::utils
 #endif

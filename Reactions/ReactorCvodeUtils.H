@@ -19,9 +19,17 @@
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
+#define CVODE_NB_THREADS 32
+#elif defined(AMREX_USE_HIP)
+#define CVODE_NB_THREADS 64
+#else
+#define CVODE_NB_THREADS 32
+#endif
+#endif
+
+namespace pele::physics::reactions {
 
 struct CVODEUserData
 {
@@ -335,36 +343,7 @@ fKernelDenseAJchem(
   }
 }
 
-#ifdef AMREX_USE_CUDA
-/*
-__global__ void
-fKernelDenseSolve( int ncell,
-                   amrex::Real* x_d,
-                   amrex::Real* b_d,
-                   int subsys_size,
-                   int subsys_nnz,
-                   amrex::Real* csr_val)
-{
-  int stride = blockDim.x * gridDim.x;
-
-  for (int icell = blockDim.x * blockIdx.x + threadIdx.x; icell < ncell;
-       icell += stride) {
-    int offset = icell * subsys_size;
-    int offset_A = icell * subsys_nnz;
-
-    amrex::Real* csr_val_cell = csr_val + offset_A;
-    amrex::Real* x_cell = x_d + offset;
-    amrex::Real* b_cell = b_d + offset;
-
-    sgjsolve(csr_val_cell, x_cell, b_cell);
-  }
-}
-*/
-#endif
-
 #endif
 } // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

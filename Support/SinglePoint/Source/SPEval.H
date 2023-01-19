@@ -1,5 +1,5 @@
-#ifndef SPEval_H
-#define SPEval_H
+#ifndef SPEVAL_H
+#define SPEVAL_H
 
 #include <vector>
 #include <string>

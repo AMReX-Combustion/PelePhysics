@@ -1,9 +1,7 @@
 #include "AMReX_Reduce.H"
 #include "ReactorRK64.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 int
 ReactorRK64::init(int reactor_type, int /*ncells*/)
@@ -75,7 +73,7 @@ ReactorRK64::react(
     amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real carryover_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
-    amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
+    amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
     amrex::Real current_time = time_init;
     const int neq = (NUM_SPECIES + 1);
@@ -104,15 +102,15 @@ ReactorRK64::react(
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
-          0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
+          0, 1, current_time - time_init, captured_reactor_type, soln_reg, ydot,
           rhoe_init, rhoesrc_ext, rYsrc_ext);
 
         for (int sp = 0; sp < neq; sp++) {
-          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * rhs[sp];
+          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * ydot[sp];
           soln_reg[sp] =
-            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * rhs[sp];
+            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * ydot[sp];
           carryover_reg[sp] =
-            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * rhs[sp];
+            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * ydot[sp];
         }
       }
 
@@ -196,7 +194,7 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  int ncells = box.numPts();
+  int ncells = static_cast<int>(box.numPts());
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
 
@@ -207,7 +205,7 @@ ReactorRK64::react(
     amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real carryover_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
-    amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
+    amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
     amrex::Real current_time = time_init;
     const int neq = (NUM_SPECIES + 1);
@@ -256,15 +254,15 @@ ReactorRK64::react(
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
-          0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
+          0, 1, current_time - time_init, captured_reactor_type, soln_reg, ydot,
           rhoe_init, rhoesrc_ext, rYsrc_ext);
 
         for (int sp = 0; sp < neq; sp++) {
-          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * rhs[sp];
+          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * ydot[sp];
           soln_reg[sp] =
-            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * rhs[sp];
+            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * ydot[sp];
           carryover_reg[sp] =
-            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * rhs[sp];
+            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * ydot[sp];
         }
       }
 
@@ -326,6 +324,4 @@ ReactorRK64::react(
   return (int(avgsteps / amrex::Real(ncells)));
 }
 
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions

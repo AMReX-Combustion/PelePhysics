@@ -1,9 +1,6 @@
 #include "ReactorCvodeUtils.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
-namespace cvode {
+namespace pele::physics::reactions::cvode {
 
 // Error function for CVODE
 void
@@ -20,7 +17,4 @@ cvodeErrHandler(
   }
 }
 
-} // namespace cvode
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions::cvode

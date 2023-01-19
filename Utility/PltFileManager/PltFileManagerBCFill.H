@@ -1,9 +1,7 @@
 #include <AMReX_PhysBCFunct.H>
 #include <AMReX_Geometry.H>
 
-namespace pele {
-namespace physics {
-namespace pltfilemanager {
+namespace pele::physics::pltfilemanager {
 
 struct FillExtDirDummy
 {
@@ -26,6 +24,4 @@ struct FillExtDirDummy
   }
 };
 
-} // namespace pltfilemanager
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::pltfilemanager

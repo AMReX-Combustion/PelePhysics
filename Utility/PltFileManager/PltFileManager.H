@@ -5,9 +5,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Geometry.H>
 
-namespace pele {
-namespace physics {
-namespace pltfilemanager {
+namespace pele::physics::pltfilemanager {
 
 class PltFileManager
 {
@@ -28,6 +26,10 @@ public:
     amrex::MultiFab& a_mf);
 
   amrex::Vector<std::string> getVariableList() { return m_vars; }
+  int getNlev() const { return m_nlevels; }
+  amrex::Real getTime() const { return m_time; }
+  const amrex::BoxArray& getGrid(int a_lev) { return m_grids[a_lev]; }
+  const amrex::Geometry& getGeom(int a_lev) { return m_geoms[a_lev]; }
 
 protected:
   // MetaData
@@ -44,7 +46,5 @@ protected:
   amrex::Vector<amrex::MultiFab> m_data;
 };
 
-} // namespace pltfilemanager
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::pltfilemanager
 #endif

@@ -18,6 +18,7 @@
 
 #define NUM_ELEMENTS 4
 #define NUM_SPECIES 3
+#define NUM_IONS 0
 #define NUM_REACTIONS 0
 
 #define NUM_FIT 4
@@ -134,7 +135,6 @@ cv_R(amrex::Real* species, const amrex::Real* tc)
                  5.68476000e-07 * tc[2] + 1.00970380e-10 * tc[3] -
                  6.75335100e-15 * tc[4];
   }
-  return;
 }
 
 // compute Cp/R at the given temperature
@@ -179,7 +179,6 @@ cp_R(amrex::Real* species, const amrex::Real* tc)
                  5.68476000e-07 * tc[2] + 1.00970380e-10 * tc[3] -
                  6.75335100e-15 * tc[4];
   }
-  return;
 }
 
 // compute the g/(RT) at the given temperature
@@ -231,7 +230,6 @@ gibbs(amrex::Real* species, const amrex::Real* tc)
                  9.474600000000001e-08 * tc[2] - 8.414198333333333e-12 * tc[3] +
                  3.376675500000000e-16 * tc[4];
   }
-  return;
 }
 
 // compute the a/(RT) at the given temperature
@@ -283,7 +281,6 @@ helmholtz(amrex::Real* species, const amrex::Real* tc)
                  9.47460000e-08 * tc[2] - 8.41419833e-12 * tc[3] +
                  3.37667550e-16 * tc[4];
   }
-  return;
 }
 
 // compute the e/(RT) at the given temperature
@@ -329,7 +326,6 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
                  1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
                  1.35067020e-15 * tc[4] - 9.22797700e+02 * invT;
   }
-  return;
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
@@ -375,7 +371,6 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
                  1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
                  1.35067020e-15 * tc[4] - 9.22797700e+02 * invT;
   }
-  return;
 }
 
 // compute the S/R at the given temperature (Eq 21)
@@ -420,12 +415,11 @@ speciesEntropy(amrex::Real* species, const amrex::Real* tc)
                  2.84238000e-07 * tc[2] + 3.36567933e-11 * tc[3] -
                  1.68833775e-15 * tc[4] + 5.98052800e+00;
   }
-  return;
 }
 
 // Returns the mean specific heat at CP (Eq. 33)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCPBL(amrex::Real* T, amrex::Real* x, amrex::Real* cpbl)
+CKCPBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cpbl)
 {
   int id; // loop counter
   amrex::Real result = 0;
@@ -445,7 +439,7 @@ CKCPBL(amrex::Real* T, amrex::Real* x, amrex::Real* cpbl)
 
 // Returns the mean specific heat at CP (Eq. 34)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCPBS(amrex::Real* T, amrex::Real* y, amrex::Real* cpbs)
+CKCPBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cpbs)
 {
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
@@ -461,8 +455,8 @@ CKCPBS(amrex::Real* T, amrex::Real* y, amrex::Real* cpbs)
   for (int i = 0; i < 3; i++) {
     tresult[i] = cpor[i] * y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    result += tresult[i];
+  for (const auto& tr : tresult) {
+    result += tr;
   }
 
   *cpbs = result * 8.31446261815324e+07;
@@ -470,7 +464,7 @@ CKCPBS(amrex::Real* T, amrex::Real* y, amrex::Real* cpbs)
 
 // Returns the mean specific heat at CV (Eq. 35)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCVBL(amrex::Real* T, amrex::Real* x, amrex::Real* cvbl)
+CKCVBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cvbl)
 {
   int id; // loop counter
   amrex::Real result = 0;
@@ -490,7 +484,7 @@ CKCVBL(amrex::Real* T, amrex::Real* x, amrex::Real* cvbl)
 
 // Returns the mean specific heat at CV (Eq. 36)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCVBS(amrex::Real* T, amrex::Real* y, amrex::Real* cvbs)
+CKCVBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cvbs)
 {
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
@@ -513,7 +507,7 @@ CKCVBS(amrex::Real* T, amrex::Real* y, amrex::Real* cvbs)
 
 // Returns the mean enthalpy of the mixture in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKHBML(amrex::Real* T, amrex::Real* x, amrex::Real* hbml)
+CKHBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* hbml)
 {
   int id; // loop counter
   amrex::Real result = 0;
@@ -534,7 +528,7 @@ CKHBML(amrex::Real* T, amrex::Real* x, amrex::Real* hbml)
 
 // Returns mean enthalpy of mixture in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKHBMS(amrex::Real* T, amrex::Real* y, amrex::Real* hbms)
+CKHBMS(const amrex::Real* T, const amrex::Real* y, amrex::Real* hbms)
 {
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
@@ -561,7 +555,7 @@ CKHBMS(amrex::Real* T, amrex::Real* y, amrex::Real* hbms)
 
 // get mean internal energy in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKUBML(amrex::Real* T, amrex::Real* x, amrex::Real* ubml)
+CKUBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* ubml)
 {
   int id; // loop counter
   amrex::Real result = 0;
@@ -582,7 +576,7 @@ CKUBML(amrex::Real* T, amrex::Real* x, amrex::Real* ubml)
 
 // get mean internal energy in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKUBMS(amrex::Real* T, amrex::Real* y, amrex::Real* ubms)
+CKUBMS(const amrex::Real* T, const amrex::Real* y, amrex::Real* ubms)
 {
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
@@ -606,7 +600,11 @@ CKUBMS(amrex::Real* T, amrex::Real* y, amrex::Real* ubms)
 
 // get mixture entropy in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKSBML(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* sbml)
+CKSBML(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* sbml)
 {
   int id; // loop counter
   amrex::Real result = 0;
@@ -628,7 +626,11 @@ CKSBML(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* sbml)
 
 // get mixture entropy in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKSBMS(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* sbms)
+CKSBMS(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* sbms)
 {
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
@@ -662,7 +664,8 @@ CKSBMS(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* sbms)
 
 //  get temperature given internal energy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_EY(
+  const amrex::Real* e, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -704,20 +707,19 @@ GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr)
       dt = 100.;
     } else if (dt < -100.) {
       dt = -100.;
-    } else if (fabs(dt) < tol)
+    } else if (fabs(dt) < tol) {
       break;
-    else if (t1 + dt == t1)
-      break;
+    }
     t1 += dt;
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 //  get temperature given enthalpy in mass units and mass fracs
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
+GET_T_GIVEN_HY(
+  const amrex::Real* h, const amrex::Real* y, amrex::Real* t, int* ierr)
 {
 #ifdef CONVERGENCE
   const int maxiter = 5000;
@@ -759,33 +761,37 @@ GET_T_GIVEN_HY(amrex::Real* h, amrex::Real* y, amrex::Real* t, int* ierr)
       dt = 100.;
     } else if (dt < -100.) {
       dt = -100.;
-    } else if (fabs(dt) < tol)
+    } else if (fabs(dt) < tol) {
       break;
-    else if (t1 + dt == t1)
-      break;
+    }
     t1 += dt;
   }
   *t = t1;
   *ierr = 0;
-  return;
 }
 
 // Compute P = rhoRT/W(x)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKPX(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* P)
+CKPX(
+  const amrex::Real* rho,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* P)
 {
   amrex::Real XW = 0;                           //  To hold mean molecular wt
   XW += x[0] * 142.286000;                      // NC10H22
   XW += x[1] * 31.998000;                       // O2
   XW += x[2] * 28.014000;                       // N2
   *P = *rho * 8.31446261815324e+07 * (*T) / XW; // P = rho*R*T/W
-
-  return;
 }
 
 // Compute P = rhoRT/W(y)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKPY(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* P)
+CKPY(
+  const amrex::Real* rho,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* P)
 {
   amrex::Real YOW = 0; //  for computing mean MW
   amrex::Real imw[3];
@@ -796,13 +802,15 @@ CKPY(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* P)
   YOW += y[1] * imw[1];                          // O2
   YOW += y[2] * imw[2];                          // N2
   *P = *rho * 8.31446261815324e+07 * (*T) * YOW; // P = rho*R*T/W
-
-  return;
 }
 
 // Compute P = rhoRT/W(c)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKPC(amrex::Real* rho, amrex::Real* T, amrex::Real* c, amrex::Real* P)
+CKPC(
+  const amrex::Real* rho,
+  const amrex::Real* T,
+  const amrex::Real* c,
+  amrex::Real* P)
 {
   int id; // loop counter
   // See Eq 5 in CK Manual
@@ -816,26 +824,30 @@ CKPC(amrex::Real* rho, amrex::Real* T, amrex::Real* c, amrex::Real* P)
     sumC += c[id];
   }
   *P = *rho * 8.31446261815324e+07 * (*T) * sumC / W; // P = rho*R*T/W
-
-  return;
 }
 
 // Compute rho = PW(x)/RT
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKRHOX(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* rho)
+CKRHOX(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* rho)
 {
   amrex::Real XW = 0;                             //  To hold mean molecular wt
   XW += x[0] * 142.286000;                        // NC10H22
   XW += x[1] * 31.998000;                         // O2
   XW += x[2] * 28.014000;                         // N2
   *rho = *P * XW / (8.31446261815324e+07 * (*T)); // rho = P*W/(R*T)
-
-  return;
 }
 
 // Compute rho = P*W(y)/RT
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKRHOY(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* rho)
+CKRHOY(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* rho)
 {
   amrex::Real YOW = 0;
   amrex::Real tmp[3];
@@ -846,17 +858,20 @@ CKRHOY(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* rho)
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *rho = *P / (8.31446261815324e+07 * (*T) * YOW); // rho = P*W/(R*T)
-  return;
 }
 
 // Compute rho = P*W(c)/(R*T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKRHOC(amrex::Real* P, amrex::Real* T, amrex::Real* c, amrex::Real* rho)
+CKRHOC(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* c,
+  amrex::Real* rho)
 {
   int id; // loop counter
   // See Eq 5 in CK Manual
@@ -870,8 +885,6 @@ CKRHOC(amrex::Real* P, amrex::Real* T, amrex::Real* c, amrex::Real* rho)
     sumC += c[id];
   }
   *rho = *P * W / (sumC * (*T) * 8.31446261815324e+07); // rho = PW/(R*T)
-
-  return;
 }
 
 // get molecular weight for all species
@@ -884,7 +897,7 @@ CKWT(amrex::Real* wt)
 // given y[species]: mass fractions
 // s mean molecular weight (gm/mole)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKMMWY(amrex::Real* y, amrex::Real* wtm)
+CKMMWY(const amrex::Real* y, amrex::Real* wtm)
 {
   amrex::Real YOW = 0;
   amrex::Real tmp[3];
@@ -895,32 +908,29 @@ CKMMWY(amrex::Real* y, amrex::Real* wtm)
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   *wtm = 1.0 / YOW;
-  return;
 }
 
 // given x[species]: mole fractions
 // returns mean molecular weight (gm/mole)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKMMWX(amrex::Real* x, amrex::Real* wtm)
+CKMMWX(const amrex::Real* x, amrex::Real* wtm)
 {
   amrex::Real XW = 0;      //  see Eq 4 in CK Manual
   XW += x[0] * 142.286000; // NC10H22
   XW += x[1] * 31.998000;  // O2
   XW += x[2] * 28.014000;  // N2
   *wtm = XW;
-
-  return;
 }
 
 // given c[species]: molar concentration
 // returns mean molecular weight (gm/mole)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKMMWC(amrex::Real* c, amrex::Real* wtm)
+CKMMWC(const amrex::Real* c, amrex::Real* wtm)
 {
   int id; // loop counter
   // See Eq 5 in CK Manual
@@ -935,14 +945,12 @@ CKMMWC(amrex::Real* c, amrex::Real* wtm)
   }
   //  CK provides no guard against divison by zero
   *wtm = W / sumC;
-
-  return;
 }
 
 // get Cp/R as a function of T
 // for all species (Eq 19)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCPOR(amrex::Real* T, amrex::Real* cpor)
+CKCPOR(const amrex::Real* T, amrex::Real* cpor)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -953,7 +961,7 @@ CKCPOR(amrex::Real* T, amrex::Real* cpor)
 // get H/RT as a function of T
 // for all species (Eq 20)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKHORT(amrex::Real* T, amrex::Real* hort)
+CKHORT(const amrex::Real* T, amrex::Real* hort)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -964,7 +972,7 @@ CKHORT(amrex::Real* T, amrex::Real* hort)
 // get S/R as a function of T
 // for all species (Eq 21)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKSOR(amrex::Real* T, amrex::Real* sor)
+CKSOR(const amrex::Real* T, amrex::Real* sor)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -974,7 +982,7 @@ CKSOR(amrex::Real* T, amrex::Real* sor)
 
 // convert y[species] (mass fracs) to x[species] (mole fracs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKYTX(amrex::Real* y, amrex::Real* x)
+CKYTX(const amrex::Real* y, amrex::Real* x)
 {
   amrex::Real YOW = 0;
   amrex::Real tmp[3];
@@ -985,8 +993,8 @@ CKYTX(amrex::Real* y, amrex::Real* x)
   for (int i = 0; i < 3; i++) {
     tmp[i] = y[i] * imw[i];
   }
-  for (int i = 0; i < 3; i++) {
-    YOW += tmp[i];
+  for (const auto& tp : tmp) {
+    YOW += tp;
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
@@ -994,12 +1002,15 @@ CKYTX(amrex::Real* y, amrex::Real* x)
   for (int i = 0; i < 3; i++) {
     x[i] = y[i] * imw[i] * YOWINV;
   }
-  return;
 }
 
 // convert y[species] (mass fracs) to c[species] (molar conc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKYTCP(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* c)
+CKYTCP(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* c)
 {
   amrex::Real YOW = 0;
   amrex::Real PWORT;
@@ -1022,12 +1033,15 @@ CKYTCP(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* c)
   for (int i = 0; i < 3; i++) {
     c[i] = PWORT * y[i] * imw[i];
   }
-  return;
 }
 
 // convert y[species] (mass fracs) to c[species] (molar conc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKYTCR(amrex::Real* rho, amrex::Real* /*T*/, amrex::Real* y, amrex::Real* c)
+CKYTCR(
+  const amrex::Real* rho,
+  amrex::Real* /*T*/,
+  const amrex::Real* y,
+  amrex::Real* c)
 {
   amrex::Real imw[3];
 
@@ -1040,7 +1054,7 @@ CKYTCR(amrex::Real* rho, amrex::Real* /*T*/, amrex::Real* y, amrex::Real* c)
 
 // convert x[species] (mole fracs) to y[species] (mass fracs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKXTY(amrex::Real* x, amrex::Real* y)
+CKXTY(const amrex::Real* x, amrex::Real* y)
 {
   amrex::Real XW = 0; // See Eq 4, 9 in CK Manual
   // Compute mean molecular wt first
@@ -1052,13 +1066,15 @@ CKXTY(amrex::Real* x, amrex::Real* y)
   y[0] = x[0] * 142.286000 * XWinv;
   y[1] = x[1] * 31.998000 * XWinv;
   y[2] = x[2] * 28.014000 * XWinv;
-
-  return;
 }
 
 // convert x[species] (mole fracs) to c[species] (molar conc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKXTCP(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* c)
+CKXTCP(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* c)
 {
   int id;                                                  // loop counter
   amrex::Real PORT = (*P) / (8.31446261815324e+07 * (*T)); // P/RT
@@ -1067,13 +1083,15 @@ CKXTCP(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* c)
   for (id = 0; id < 3; ++id) {
     c[id] = x[id] * PORT;
   }
-
-  return;
 }
 
 // convert x[species] (mole fracs) to c[species] (molar conc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKXTCR(amrex::Real* rho, amrex::Real* /*T*/, amrex::Real* x, amrex::Real* c)
+CKXTCR(
+  const amrex::Real* rho,
+  const amrex::Real* /*T*/,
+  const amrex::Real* x,
+  amrex::Real* c)
 {
   int id;             // loop counter
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
@@ -1088,13 +1106,11 @@ CKXTCR(amrex::Real* rho, amrex::Real* /*T*/, amrex::Real* x, amrex::Real* c)
   for (id = 0; id < 3; ++id) {
     c[id] = x[id] * ROW;
   }
-
-  return;
 }
 
 // convert c[species] (molar conc) to x[species] (mole fracs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCTX(amrex::Real* c, amrex::Real* x)
+CKCTX(const amrex::Real* c, amrex::Real* x)
 {
   int id; // loop counter
   amrex::Real sumC = 0;
@@ -1109,13 +1125,11 @@ CKCTX(amrex::Real* c, amrex::Real* x)
   for (id = 0; id < 3; ++id) {
     x[id] = c[id] * sumCinv;
   }
-
-  return;
 }
 
 // convert c[species] (molar conc) to y[species] (mass fracs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCTY(amrex::Real* c, amrex::Real* y)
+CKCTY(const amrex::Real* c, amrex::Real* y)
 {
   amrex::Real CW = 0; // See Eq 12 in CK Manual
   // compute denominator in eq 12 first
@@ -1127,14 +1141,12 @@ CKCTY(amrex::Real* c, amrex::Real* y)
   y[0] = c[0] * 142.286000 * CWinv;
   y[1] = c[1] * 31.998000 * CWinv;
   y[2] = c[2] * 28.014000 * CWinv;
-
-  return;
 }
 
 // get specific heat at constant volume as a function
 // of T for all species (molar units)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCVML(amrex::Real* T, amrex::Real* cvml)
+CKCVML(const amrex::Real* T, amrex::Real* cvml)
 {
   int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
@@ -1151,7 +1163,7 @@ CKCVML(amrex::Real* T, amrex::Real* cvml)
 // get specific heat at constant pressure as a
 // function of T for all species (molar units)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCPML(amrex::Real* T, amrex::Real* cpml)
+CKCPML(const amrex::Real* T, amrex::Real* cpml)
 {
   int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
@@ -1168,7 +1180,7 @@ CKCPML(amrex::Real* T, amrex::Real* cpml)
 // get internal energy as a function
 // of T for all species (molar units)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKUML(amrex::Real* T, amrex::Real* uml)
+CKUML(const amrex::Real* T, amrex::Real* uml)
 {
   int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
@@ -1186,7 +1198,7 @@ CKUML(amrex::Real* T, amrex::Real* uml)
 // get enthalpy as a function
 // of T for all species (molar units)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKHML(amrex::Real* T, amrex::Real* hml)
+CKHML(const amrex::Real* T, amrex::Real* hml)
 {
   int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
@@ -1203,7 +1215,7 @@ CKHML(amrex::Real* T, amrex::Real* hml)
 
 // Returns the standard-state entropies in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKSML(amrex::Real* T, amrex::Real* sml)
+CKSML(const amrex::Real* T, amrex::Real* sml)
 {
   int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
@@ -1220,7 +1232,7 @@ CKSML(amrex::Real* T, amrex::Real* sml)
 // Returns the specific heats at constant volume
 // in mass units (Eq. 29)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCVMS(amrex::Real* T, amrex::Real* cvms)
+CKCVMS(const amrex::Real* T, amrex::Real* cvms)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1235,7 +1247,7 @@ CKCVMS(amrex::Real* T, amrex::Real* cvms)
 // Returns the specific heats at constant pressure
 // in mass units (Eq. 26)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKCPMS(amrex::Real* T, amrex::Real* cpms)
+CKCPMS(const amrex::Real* T, amrex::Real* cpms)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1249,7 +1261,7 @@ CKCPMS(amrex::Real* T, amrex::Real* cpms)
 
 // Returns internal energy in mass units (Eq 30.)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKUMS(amrex::Real* T, amrex::Real* ums)
+CKUMS(const amrex::Real* T, amrex::Real* ums)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1268,7 +1280,7 @@ CKUMS(amrex::Real* T, amrex::Real* ums)
 
 // Returns enthalpy in mass units (Eq 27.)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKHMS(amrex::Real* T, amrex::Real* hms)
+CKHMS(const amrex::Real* T, amrex::Real* hms)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1287,7 +1299,7 @@ CKHMS(amrex::Real* T, amrex::Real* hms)
 
 // Returns the entropies in mass units (Eq 28.)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKSMS(amrex::Real* T, amrex::Real* sms)
+CKSMS(const amrex::Real* T, amrex::Real* sms)
 {
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1302,34 +1314,28 @@ CKSMS(amrex::Real* T, amrex::Real* sms)
 // GPU version of productionRate: no more use of thermo namespace vectors
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 comp_qfqr(
-  amrex::Real* qf,
-  amrex::Real* qr,
-  amrex::Real* sc,
-  amrex::Real* sc_qss,
-  const amrex::Real* tc,
-  amrex::Real invT)
+  amrex::Real* /*qf*/,
+  amrex::Real* /*qr*/,
+  const amrex::Real* /*sc*/,
+  const amrex::Real* /*sc_qss*/,
+  const amrex::Real* /*tc*/,
+  const amrex::Real /*invT*/)
 {
-
-  return;
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
+productionRate(
+  amrex::Real* wdot, const amrex::Real* /*sc*/, const amrex::Real /*T*/)
 {
-  const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
-  const amrex::Real invT = 1.0 / tc[1];
 
   for (int i = 0; i < 3; ++i) {
     wdot[i] = 0.0;
   }
-
-  return;
 }
 
 // compute the production rate for each species
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKWC(amrex::Real* T, amrex::Real* C, amrex::Real* wdot)
+CKWC(const amrex::Real* T, amrex::Real* C, amrex::Real* wdot)
 {
   int id; // loop counter
 
@@ -1351,7 +1357,11 @@ CKWC(amrex::Real* T, amrex::Real* C, amrex::Real* wdot)
 // Returns the molar production rate of species
 // Given P, T, and mass fractions
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKWYP(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* wdot)
+CKWYP(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* wdot)
 {
   int id;           // loop counter
   amrex::Real c[3]; // temporary storage
@@ -1386,7 +1396,11 @@ CKWYP(amrex::Real* P, amrex::Real* T, amrex::Real* y, amrex::Real* wdot)
 // Returns the molar production rate of species
 // Given P, T, and mole fractions
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKWXP(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
+CKWXP(
+  const amrex::Real* P,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* wdot)
 {
   int id;           // loop counter
   amrex::Real c[3]; // temporary storage
@@ -1411,7 +1425,11 @@ CKWXP(amrex::Real* P, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
 // Returns the molar production rate of species
 // Given rho, T, and mass fractions
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKWYR(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* wdot)
+CKWYR(
+  const amrex::Real* rho,
+  const amrex::Real* T,
+  const amrex::Real* y,
+  amrex::Real* wdot)
 {
   int id;           // loop counter
   amrex::Real c[3]; // temporary storage
@@ -1436,7 +1454,11 @@ CKWYR(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* wdot)
 // Returns the molar production rate of species
 // Given rho, T, and mole fractions
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
+CKWXR(
+  const amrex::Real* rho,
+  const amrex::Real* T,
+  const amrex::Real* x,
+  amrex::Real* wdot)
 {
   int id;             // loop counter
   amrex::Real c[3];   // temporary storage
@@ -1460,6 +1482,30 @@ CKWXR(amrex::Real* rho, amrex::Real* T, amrex::Real* x, amrex::Real* wdot)
   // convert to chemkin units
   for (id = 0; id < 3; ++id) {
     wdot[id] *= 1.0e-6;
+  }
+}
+
+//  species unit charge number
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRG(int* kcharge)
+{
+  kcharge[0] = 0; // NC10H22
+  kcharge[1] = 0; // O2
+  kcharge[2] = 0; // N2
+}
+
+//  species charge per unit mass
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCHRGMASS(amrex::Real* zk)
+{
+  amrex::Real imw[3];
+  get_imw(imw);
+
+  int kchrg[3];
+  CKCHRG(kchrg);
+
+  for (int id = 0; id < 3; ++id) {
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
   }
 }
 
@@ -1499,98 +1545,30 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
     species[2] = +1.48797680e-03 - 1.13695200e-06 * tc[1] +
                  3.02911140e-10 * tc[2] - 2.70134040e-14 * tc[3];
   }
-  return;
 }
 
 // compute an approx to the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
+aJacobian_precond(
+  amrex::Real* J,
+  const amrex::Real* /*sc*/,
+  const amrex::Real /*T*/,
+  const int /*HP*/)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 16; i++) {
     J[i] = 0.0;
   }
-
-  amrex::Real wdot[3];
-  for (int k = 0; k < 3; k++) {
-    wdot[k] = 0.0;
-  }
-
-  const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
-  amrex::Real invT = 1.0 / tc[1];
-  amrex::Real invT2 = invT * invT;
-
-  // reference concentration: P_atm / (RT) in inverse mol/m^3
-  amrex::Real refC = 101325 / 8.31446 / T;
-  amrex::Real refCinv = 1.0 / refC;
-
-  // compute the mixture concentration
-  amrex::Real mixture = 0.0;
-  for (int k = 0; k < 3; ++k) {
-    mixture += sc[k];
-  }
-
-  // compute the Gibbs free energy
-  amrex::Real g_RT[3];
-  gibbs(g_RT, tc);
-
-  // compute the species enthalpy
-  amrex::Real h_RT[3];
-  speciesEnthalpy(h_RT, tc);
-
-  amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
-  amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
-  amrex::Real dqdci, dcdc_fac, dqdc[3];
-  amrex::Real Pr, fPr, F, k_0, logPr;
-  amrex::Real logFcent, troe_c, troe_n, troePr_den, troePr, troe;
-  amrex::Real Fcent1, Fcent2, Fcent3, Fcent;
-  amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;
-  amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;
-  const amrex::Real ln10 = log(10.0);
-  const amrex::Real log10e = 1.0 / log(10.0);
-  amrex::Real c_R[3], dcRdT[3], e_RT[3];
-  amrex::Real* eh_RT;
-  if (HP) {
-    cp_R(c_R, tc);
-    dcvpRdT(dcRdT, tc);
-    eh_RT = &h_RT[0];
-  } else {
-    cv_R(c_R, tc);
-    dcvpRdT(dcRdT, tc);
-    speciesInternalEnergy(e_RT, tc);
-    eh_RT = &e_RT[0];
-  }
-
-  amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT = 0.0, dehmixdT = 0.0;
-  for (int k = 0; k < 3; ++k) {
-    cmix += c_R[k] * sc[k];
-    dcmixdT += dcRdT[k] * sc[k];
-    ehmix += eh_RT[k] * wdot[k];
-    dehmixdT += invT * (c_R[k] - eh_RT[k]) * wdot[k] + eh_RT[k] * J[12 + k];
-  }
-
-  amrex::Real cmixinv = 1.0 / cmix;
-  amrex::Real tmp1 = ehmix * cmixinv;
-  amrex::Real tmp3 = cmixinv * T;
-  amrex::Real tmp2 = tmp1 * tmp3;
-  amrex::Real dehmixdc;
-  // dTdot/d[X]
-  for (int k = 0; k < 3; ++k) {
-    dehmixdc = 0.0;
-    for (int m = 0; m < 3; ++m) {
-      dehmixdc += eh_RT[m] * J[k * 4 + m];
-    }
-    J[k * 4 + 3] = tmp2 * c_R[k] - tmp3 * dehmixdc;
-  }
-  // dTdot/dT
-  J[15] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute an approx to the reaction Jacobian (for preconditioning)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 DWDOT_SIMPLIFIED(
-  amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* HP)
+  amrex::Real* J, const amrex::Real* sc, const amrex::Real* Tp, const int* HP)
 {
   amrex::Real c[3];
 
@@ -1606,98 +1584,33 @@ DWDOT_SIMPLIFIED(
     J[12 + k] *= 1.e-6;
     J[k * 4 + 3] *= 1.e6;
   }
-
-  return;
 }
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
+aJacobian(
+  amrex::Real* J,
+  const amrex::Real* /*sc*/,
+  const amrex::Real /*T*/,
+  const int /*consP*/)
 {
 
+#if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
   for (int i = 0; i < 16; i++) {
     J[i] = 0.0;
   }
-
-  amrex::Real wdot[3];
-  for (int k = 0; k < 3; k++) {
-    wdot[k] = 0.0;
-  }
-
-  const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
-  amrex::Real invT = 1.0 / tc[1];
-  amrex::Real invT2 = invT * invT;
-
-  // reference concentration: P_atm / (RT) in inverse mol/m^3
-  amrex::Real refC = 101325 / 8.31446 / T;
-  amrex::Real refCinv = 1.0 / refC;
-
-  // compute the mixture concentration
-  amrex::Real mixture = 0.0;
-  for (int k = 0; k < 3; ++k) {
-    mixture += sc[k];
-  }
-
-  // compute the Gibbs free energy
-  amrex::Real g_RT[3];
-  gibbs(g_RT, tc);
-
-  // compute the species enthalpy
-  amrex::Real h_RT[3];
-  speciesEnthalpy(h_RT, tc);
-
-  amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
-  amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
-  amrex::Real dqdci, dcdc_fac, dqdc[3];
-  amrex::Real Pr, fPr, F, k_0, logPr;
-  amrex::Real logFcent, troe_c, troe_n, troePr_den, troePr, troe;
-  amrex::Real Fcent1, Fcent2, Fcent3, Fcent;
-  amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;
-  amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;
-  const amrex::Real ln10 = log(10.0);
-  const amrex::Real log10e = 1.0 / log(10.0);
-  amrex::Real c_R[3], dcRdT[3], e_RT[3];
-  amrex::Real* eh_RT;
-  if (consP) {
-    cp_R(c_R, tc);
-    dcvpRdT(dcRdT, tc);
-    eh_RT = &h_RT[0];
-  } else {
-    cv_R(c_R, tc);
-    dcvpRdT(dcRdT, tc);
-    speciesInternalEnergy(e_RT, tc);
-    eh_RT = &e_RT[0];
-  }
-
-  amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT = 0.0, dehmixdT = 0.0;
-  for (int k = 0; k < 3; ++k) {
-    cmix += c_R[k] * sc[k];
-    dcmixdT += dcRdT[k] * sc[k];
-    ehmix += eh_RT[k] * wdot[k];
-    dehmixdT += invT * (c_R[k] - eh_RT[k]) * wdot[k] + eh_RT[k] * J[12 + k];
-  }
-
-  amrex::Real cmixinv = 1.0 / cmix;
-  amrex::Real tmp1 = ehmix * cmixinv;
-  amrex::Real tmp3 = cmixinv * T;
-  amrex::Real tmp2 = tmp1 * tmp3;
-  amrex::Real dehmixdc;
-  // dTdot/d[X]
-  for (int k = 0; k < 3; ++k) {
-    dehmixdc = 0.0;
-    for (int m = 0; m < 3; ++m) {
-      dehmixdc += eh_RT[m] * J[k * 4 + m];
-    }
-    J[k * 4 + 3] = tmp2 * c_R[k] - tmp3 * dehmixdc;
-  }
-  // dTdot/dT
-  J[15] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
+#else
+  amrex::Abort();
+#endif
 }
 
 // compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
+DWDOT(
+  amrex::Real* J,
+  const amrex::Real* sc,
+  const amrex::Real* Tp,
+  const int* consP)
 {
   amrex::Real c[3];
 
@@ -1713,8 +1626,6 @@ DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
     J[12 + k] *= 1.e-6;
     J[k * 4 + 3] *= 1.e6;
   }
-
-  return;
 }
 
 // Transport function declarations
@@ -1899,13 +1810,13 @@ egtransetCOFD(amrex::Real* COFD)
 
 // List of specs with small weight, dim NLITE
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-egtransetKTDIF(int* KTDIF)
+egtransetKTDIF(int* /*KTDIF*/)
 {
 }
 
 // Poly fits for thermal diff ratios, dim NO*NLITE*KK
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-egtransetCOFTD(amrex::Real* COFTD)
+egtransetCOFTD(amrex::Real* /*COFTD*/)
 {
 }
 
@@ -1918,9 +1829,9 @@ GET_CRITPARAMS(
   amrex::Real EPS[3];
   amrex::Real SIG[3];
   amrex::Real wt[3];
+  amrex::Real Rcst = 83.144598; // in bar [CGS] !
   amrex::Real avogadro = 6.02214199e23;
   amrex::Real boltzmann = 1.3806503e-16; // we work in CGS
-  amrex::Real Rcst = 83.144598;          // in bar [CGS] !
 
   egtransetEPS(EPS);
   egtransetSIG(SIG);
@@ -1928,10 +1839,10 @@ GET_CRITPARAMS(
 
   // species 0: NC10H22
   Tci[0] = 1.316 * EPS[0];
-  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann *
-           pow(1e-8 * SIG[0], 3.0)) /
+  ai[0] = (5.55 * avogadro * avogadro * EPS[0] * boltzmann * 1e-24 * SIG[0] *
+           SIG[0] * SIG[0]) /
           (wt[0] * wt[0]);
-  bi[0] = 0.855 * avogadro * pow(1e-8 * SIG[0], 3.0) / (wt[0]);
+  bi[0] = 0.855 * avogadro * 1e-24 * SIG[0] * SIG[0] * SIG[0] / (wt[0]);
   acentric_i[0] = 0.0;
 
   // species 1: O2
@@ -1949,8 +1860,6 @@ GET_CRITPARAMS(
           (28.013400 * 28.013400 * 33.958000);
   bi[2] = 0.08664 * Rcst * Tci[2] / (28.013400 * 33.958000);
   acentric_i[2] = 0.037200;
-
-  return;
 }
 
 // gauss-jordan solver external routine

@@ -3,9 +3,7 @@
 
 #include "ReactorBase.H"
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 // stages and coefficients for rk64
 struct RK64Params
@@ -131,7 +129,5 @@ private:
   int m_reactor_type{0};
   bool m_clean_init_massfrac{false};
 };
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions
 #endif

@@ -6,9 +6,7 @@
 #include "TransportTypes.H"
 #include "EOS.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 
 struct ConstTransport;
 struct SimpleTransport;
@@ -50,6 +48,19 @@ struct InitTransParm<EOSType, ConstTransport>
       "const_thermal_diffusion_ratio", tparm->const_thermal_diffusion_ratio);
     if (std::abs(tparm->const_thermal_diffusion_ratio) > 1e-24) {
       tparm->use_soret = true;
+    }
+    std::string units = "CGS";
+    pp.query("units", units);
+    if (units == "MKS") {
+      // If input in MKS, convert to CGS
+      tparm->const_viscosity *= amrex::Real(1.0e1);
+      tparm->const_bulk_viscosity *= amrex::Real(1.0e1);
+      tparm->const_diffusivity *= amrex::Real(1.0e1);
+      tparm->const_conductivity *= amrex::Real(1.0e5);
+    } else if (units != "CGS") {
+      amrex::Abort(
+        "Unable to initialize transport using unknown units " + units +
+        ". Use CGS (def) or MKS");
     }
   }
 };
@@ -279,7 +290,6 @@ struct InitTransParm<eos::SRK, SimpleTransport>
       for (int i = 0; i < NUM_SPECIES; i++) {
         if (spec_names_kappa[i] == "H2O") {
           tparm->Kappai[i] = 0.075908;
-          // tparm->Kappai[i] = 0.076;
         } else if (spec_names_kappa[i] == "CH3OH") {
           tparm->Kappai[i] = 0.215175;
         } else if (spec_names_kappa[i] == "CH3CH2OH") {
@@ -378,7 +388,5 @@ private:
   TransParm<EosType, TransportType>* m_d_trans_parm{nullptr};
   bool m_device_allocated{false};
 };
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

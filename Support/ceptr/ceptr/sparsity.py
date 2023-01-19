@@ -27,7 +27,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(fstream, "aJacobian(Jac.data(), conc.data(), 1500.0, *consP);")
     cw.writer(fstream)
 
     cw.writer(fstream, "int nJdata_tmp = 0;")
@@ -74,7 +74,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(fstream, "aJacobian(Jac.data(), conc.data(), 1500.0, *consP);")
     cw.writer(fstream)
 
     cw.writer(fstream, "int nJdata_tmp = 0;")
@@ -131,7 +131,9 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(
+        fstream, "aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);"
+    )
     cw.writer(fstream)
 
     cw.writer(fstream, "int nJdata_tmp = 0;")
@@ -188,7 +190,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(fstream, "aJacobian(Jac.data(), conc.data(), 1500.0, *consP);")
     cw.writer(fstream)
 
     cw.writer(fstream, "colPtrs[0] = 0;")
@@ -242,7 +244,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(fstream, "aJacobian(Jac.data(), conc.data(), 1500.0, *consP);")
     cw.writer(fstream)
 
     cw.writer(fstream, "if (base == 1) {")
@@ -322,7 +324,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(fstream, "aJacobian(Jac.data(), conc.data(), 1500.0, *consP);")
     cw.writer(fstream)
 
     cw.writer(fstream, "if (base == 1) {")
@@ -423,7 +425,9 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(
+        fstream, "aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);"
+    )
     cw.writer(fstream)
 
     cw.writer(fstream, "colPtrs[0] = 0;")
@@ -483,7 +487,9 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "for (int n=0; n<%d; n++) {" % (n_species))
     cw.writer(fstream, "    conc[n] = 1.0/ %f ;" % (n_species))
     cw.writer(fstream, "}")
-    cw.writer(fstream, "aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);")
+    cw.writer(
+        fstream, "aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);"
+    )
     cw.writer(fstream)
 
     cw.writer(fstream, "if (base == 1) {")

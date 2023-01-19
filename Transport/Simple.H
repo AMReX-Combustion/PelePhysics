@@ -4,9 +4,7 @@
 #include "TransportParams.H"
 #include "PhysicsConstants.H"
 
-namespace pele {
-namespace physics {
-namespace transport {
+namespace pele::physics::transport {
 
 template <typename EOSType>
 struct NonIdealChungCorrections
@@ -331,7 +329,7 @@ struct SimpleTransport
         mu += Xloc[i] *
               (muloc[i] * muloc[i] * muloc[i] * muloc[i] * muloc[i] * muloc[i]);
       }
-      mu = std::cbrt(std::sqrt(mu)); // mu = (sum[ Xloc_i * muloc_i^6])^(1/6)
+      mu = std::cbrt(std::sqrt(mu));
 
       //  assumption that we only get bulk viscosity if we are already getting
       //  shear viscosity
@@ -340,12 +338,10 @@ struct SimpleTransport
         comp_pure_bulk(Tloc, muloc, xiloc, tparm);
         xi = 0.0;
         for (int i = 0; i < NUM_SPECIES; ++i) {
-          xi += Xloc[i] * (std::sqrt(std::sqrt(
-                            xiloc[i] * xiloc[i] *
-                            xiloc[i]))); // xi = sum[Xloc_i*xiloc_i^(3/4)];
+          xi +=
+            Xloc[i] * (std::sqrt(std::sqrt(xiloc[i] * xiloc[i] * xiloc[i])));
         }
-        xi = std::cbrt(
-          xi * xi * xi * xi); // xi = (sum[Xloc_i*xiloc_i^(3/4)])^(4/3)
+        xi = std::cbrt(xi * xi * xi * xi);
       }
     }
 
@@ -360,10 +356,9 @@ struct SimpleTransport
 
       lam = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        lam += Xloc[i] * std::sqrt(std::sqrt(
-                           lamloc[i])); // lam = sum[Xloc_i * (lamloc_i)^(1/4)]
+        lam += Xloc[i] * std::sqrt(std::sqrt(lamloc[i]));
       }
-      lam = lam * lam * lam * lam; // lam = lam^4
+      lam = lam * lam * lam * lam;
     }
     // Add nonideal corrections if necessary
     NonIdealChungCorrections<EosType>()(
@@ -449,7 +444,5 @@ struct SimpleTransport
   {
   }
 };
-} // namespace transport
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::transport
 #endif

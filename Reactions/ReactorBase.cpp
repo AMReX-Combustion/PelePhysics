@@ -22,14 +22,12 @@
 #include <nvector/nvector_cuda.h>
 #endif
 
-namespace pele {
-namespace physics {
-namespace reactions {
+namespace pele::physics::reactions {
 
 void
 ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 {
-  const int size_ETV = ExtTypVals.size();
+  const int size_ETV = static_cast<int>(ExtTypVals.size());
   amrex::Vector<std::string> kname;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
   int omp_thread = 0;
@@ -143,6 +141,4 @@ ReactorBase::set_sundials_solver_tols(
   N_VDestroy(atol);
 }
 
-} // namespace reactions
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::reactions

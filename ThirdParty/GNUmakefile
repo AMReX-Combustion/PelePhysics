@@ -4,10 +4,10 @@ USE_CUDA        ?= FALSE
 PELE_USE_KLU    ?= FALSE
 PELE_USE_MAGMA  ?= FALSE
 CUDA_ARCH       ?= 70
-AMD_ARCH        ?= gfx908
+AMD_ARCH        ?= gfx90a
 
 SS_VERSION=5.4.0
-MAGMA_VERSION=2.6.2
+MAGMA_VERSION=2.7.0
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
@@ -74,13 +74,16 @@ endif
 ifeq ($(PELE_USE_MAGMA),TRUE)
   MAGMASuffix   := .MAGMA
   MAGMA_BUILD_PREFIX=$(PWD)/BUILD/MAGMA
-  MAGMA_DEFINES=-DENABLE_MAGMA:BOOL=ON -DMAGMA_DIR=${INSTALL_PREFIX}/
+  MAGMA_DEFINES=-DENABLE_MAGMA:BOOL=ON -DMAGMA_DIR=${INSTALL_PREFIX}/ -DMAGMA_WORKS=TRUE
 ifeq ($(USE_CUDA),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=CUDA
+  ifeq ($(which_computer),perlmutter)
+    MAGMA_DEFINES+=-DCMAKE_PREFIX_PATH="${CUDATOOLKIT_HOME}/../../math_libs/"
+  endif
 endif
 ifeq ($(USE_HIP),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
-  ifeq ($(which_computer),crusher)
+  ifeq ($(which_computer),$(filter $(which_computer),frontier crusher))
     MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
@@ -95,12 +98,14 @@ endif
   MAGMA_DIST_FILE=magma-$(MAGMA_VERSION).tar.gz
 
 ifeq ($(USE_CUDA),TRUE)
-  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_CUDA=ON -DGPU_TARGET=sm_$(CUDA_ARCH)
+  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_CUDA=ON -DGPU_TARGET=sm_$(CUDA_ARCH) -DCMAKE_CUDA_COMPILER:STRING=nvcc -DCMAKE_CUDA_HOST_COMPILER:STRING=$(CXXCOMPILER)
+  ifeq ($(which_computer),perlmutter)
+    MAGMA_COMPILER_OPT+=-DCMAKE_PREFIX_PATH="$(CUDATOOLKIT_HOME)/../../math_libs/"
+  endif
 endif
 ifeq ($(USE_HIP),TRUE)
-  ## For spock/crusher only at this point !
-  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_amd.so
-  ifeq ($(which_computer),crusher)
+  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH) -DAMDGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGET:STRING=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_cray.so
+  ifeq ($(which_computer),$(filter $(which_computer),frontier crusher))
     MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
     MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
@@ -131,12 +136,15 @@ endif
 ifeq ($(USE_CUDA),TRUE)
   CUDA_DEFINES=-DENABLE_CUDA:BOOL=ON -DCMAKE_CUDA_ARCHITECTURES:STRING=$(CUDA_ARCH) -DCMAKE_CUDA_COMPILER:STRING=nvcc -DCMAKE_CUDA_HOST_COMPILER:STRING=$(CXXCOMPILER)
   CUDASuffix=.CUDA
+  ifeq ($(which_computer),perlmutter)
+    CUDA_DEFINES+=-DCMAKE_PREFIX_PATH="$(CUDATOOLKIT_HOME)/../../math_libs/"
+  endif
 else
   CUDA_DEFINES=-DENABLE_CUDA:BOOL=OFF
   CUDASuffix=
 endif
 ifeq ($(USE_HIP),TRUE)
-  HIP_DEFINES=-DENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH)
+  HIP_DEFINES=-DENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH) -DAMDGPU_TARGETS:STRING=$(AMD_ARCH) -DGPU_TARGETS:STRING=$(AMD_ARCH)
   HIPSuffix=.HIP
 else
   HIP_DEFINES=-DENABLE_HIP:BOOL=OFF
@@ -150,7 +158,8 @@ else
   DPCPPSuffix=
 endif
 
-SUNDIALS_BRANCH ?= v6.2.0
+SUNDIALS_VERSION ?= 6.5.0
+SUNDIALS_DIST_FILE ?= v$(SUNDIALS_VERSION).tar.gz
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
@@ -191,14 +200,14 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
           -DSUNDIALS_INDEX_SIZE:INT=32 \
           $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
           $(KLU_DEFINES) $(MAGMA_DEFINES) \
-          $(SUNDIALS_SOURCE_DIR) && \
-        cmake --build $(SUNDIALS_BUILD_DIR) --parallel && \
+          $(SUNDIALS_SOURCE_DIR)/sundials-$(SUNDIALS_VERSION) && \
+        cmake --build $(SUNDIALS_BUILD_DIR) --parallel 16 && \
         cmake --install $(SUNDIALS_BUILD_DIR)
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
-	@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
-	@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
+	#@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
+	#@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
 	@echo ${CCOMPILER}
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
@@ -213,19 +222,19 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
           -DBUILD_SHARED_LIBS:BOOL=ON \
           $(MAGMA_COMPILER_OPT) \
           $(MAGMA_SOURCE_DIR) && \
-        cmake --build $(MAGMA_BUILD_DIR) --parallel && \
+        cmake --build $(MAGMA_BUILD_DIR) --parallel 10 && \
         cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
-	@cd $(MAGMA_DIST_DIR)/..; tar zxf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
+	@cd $(MAGMA_DIST_DIR)/..; tar xf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
-	@cd $(MAGMA_DIST_DIR); wget icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR); cp $(WORLDWORK)/cmb138/software/$(MAGMA_DIST_FILE) . || wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
+	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
