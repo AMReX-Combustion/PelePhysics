@@ -114,16 +114,16 @@ public:
   }
 
 private:
-  amrex::Real bdf_nonlin_tol{1e-6};
-  int bdf_nsubsteps{10};
-  int bdf_nonlinear_iters{1};
-  int bdf_gmres_restarts{10};
-  amrex::Real bdf_gmres_tol{1e-10};
+  amrex::Real m_nonlin_tol{1e-6};
+  int m_nsubsteps{10};
+  int m_nonlinear_iters{1};
+  int m_gmres_restarts{10};
+  amrex::Real m_gmres_tol{1e-10};
   int m_reactor_type{0};
   bool m_clean_init_massfrac{false};
   utils::FlattenOps<Ordering> flatten_ops;
-  int bdf_gmres_precond{2};
-  int bdf_scheme{BDF1SCHEME};
+  int m_gmres_precond{2};
+  int m_tstepscheme{BDF2SCHEME};
 };
 } // namespace pele::physics::reactions
 #endif
