@@ -314,6 +314,7 @@ calculateWallFilmSource(
   bool get_Ddiag = true;
   bool get_lambda = true;
   bool get_mu = true;
+  bool get_chi = false;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_vapor;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel;
@@ -381,8 +382,8 @@ calculateWallFilmSource(
   amrex::Real xi_skin = 0.;
   auto trans = pele::physics::PhysicsType::transport();
   trans.transport(
-    get_xi, get_mu, get_lambda, get_Ddiag, T_vapor, gpv.rho_fluid,
-    Y_skin.data(), Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
+    get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_vapor, gpv.rho_fluid,
+    Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin, trans_parm);
   mu_skin *= SPU.mu_conv;
   lambda_skin *= SPU.lambda_conv;
   amrex::Real dy_i = diff_cent - ht_film; // Distance from film surface to cell center
