@@ -30,6 +30,8 @@ struct TransParm<EOSType, ConstTransport>
   amrex::Real const_bulk_viscosity{0.0};
   amrex::Real const_diffusivity{0.0};
   amrex::Real const_conductivity{0.0};
+  amrex::Real const_thermal_diffusion_ratio{0.0};
+  bool use_soret = false;
 };
 
 template <typename EOSType>
@@ -42,6 +44,11 @@ struct InitTransParm<EOSType, ConstTransport>
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
     pp.query("const_conductivity", tparm->const_conductivity);
     pp.query("const_diffusivity", tparm->const_diffusivity);
+    pp.query(
+      "const_thermal_diffusion_ratio", tparm->const_thermal_diffusion_ratio);
+    if (std::abs(tparm->const_thermal_diffusion_ratio) > 1e-24) {
+      tparm->use_soret = true;
+    }
     std::string units = "CGS";
     pp.query("units", units);
     if (units == "MKS") {
@@ -67,6 +74,7 @@ struct TransParm<EOSType, SutherlandTransport>
   amrex::Real viscosity_S{110.4};
   amrex::Real const_bulk_viscosity{0.0};
   amrex::Real const_diffusivity{1.0};
+  bool use_soret = false;
 };
 
 template <typename EOSType>
@@ -98,6 +106,10 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
+  bool use_soret = false;
+  int numLite = 3;
+  amrex::GpuArray<int, 3> liteSpec = {0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 3> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
 };
 
@@ -116,7 +128,13 @@ struct InitTransParm<EOSType, SimpleTransport>
     egtransetCOFETA(tparm->fitmu.data());
     egtransetCOFLAM(tparm->fitlam.data());
     egtransetCOFD(tparm->fitdbin.data());
-
+    amrex::ParmParse pp("transport");
+    pp.query("use_soret", tparm->use_soret);
+    if (tparm->use_soret) {
+      egtransetNLITE(&tparm->numLite);
+      egtransetKTDIF(tparm->liteSpec.data());
+      egtransetCOFTD(tparm->fittdrat.data());
+    }
     for (int i = 0; i < NUM_SPECIES; ++i) {
       tparm->iwt[i] = 1. / tparm->wt[i];
     }
@@ -138,6 +156,9 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
+  int numLite = 10;
+  amrex::GpuArray<int, 10> liteSpec = {0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
   amrex::GpuArray<amrex::Real, 10 * 4> Afac = {0.0};
   amrex::GpuArray<amrex::Real, 7 * 4> Bfac = {0.0};
@@ -166,6 +187,9 @@ struct InitTransParm<eos::SRK, SimpleTransport>
     egtransetCOFETA(tparm->fitmu.data());
     egtransetCOFLAM(tparm->fitlam.data());
     egtransetCOFD(tparm->fitdbin.data());
+    egtransetNLITE(&tparm->numLite);
+    egtransetKTDIF(tparm->liteSpec.data());
+    egtransetCOFTD(tparm->fittdrat.data());
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       tparm->iwt[i] = 1. / tparm->wt[i];
