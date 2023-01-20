@@ -824,15 +824,23 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  static void TY2H(
+    const amrex::Real /*T*/,
+    const amrex::Real* /*Y[NUM_SPECIES]*/,
+    amrex::Real& /*H*/)
   {
-    amrex::Real hi[NUM_SPECIES];
-    CKHMS(&T, hi);
-    H = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++) {
-      H += Y[n] * hi[n];
-    }
+    amrex::Error("TY2H not physically possible for SRK EoS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void RTY2H(
+    amrex::Real R, amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  {
+    amrex::Real E, P;
+    RTY2E(R, T, Y, E);
+    RTY2P(R, T, Y, P);
+    H = E + P / R;
   }
 
   AMREX_GPU_HOST_DEVICE
