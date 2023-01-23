@@ -430,7 +430,9 @@ struct SimpleTransport
           //   mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {
             D_out(i, j, k, n) = Ddiag[n];
-            chi_out(i, j, k, n) = chi_mix[n];
+            if (wtr_get_chi) {
+              chi_out(i, j, k, n) = chi_mix[n];
+            }
           }
           mu_out(i, j, k) = muloc;
           xi_out(i, j, k) = xiloc;
