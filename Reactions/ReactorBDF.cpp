@@ -217,7 +217,7 @@ namespace pele::physics::reactions {
             ?TRPZSCHEME:captured_tstepscheme;
             amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
             amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
-            while (current_time < time_out) 
+            for(int nsteps=0;nsteps<captured_nsubsteps;nsteps++) 
             {
                 //shift to BDF2 after first step
                 int tstepscheme=(nsteps > 0)?captured_tstepscheme:first_tstepscheme;
@@ -237,7 +237,7 @@ namespace pele::physics::reactions {
                     }
                     get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,
                                            mw,captured_reactor_type,
-                                           captured_tstepscheme,dt,
+                                           tstepscheme,dt,
                                            rhoe_init,rhoesrc_ext,rYsrc_ext,
                                            current_time, time_init,
                                            Jmat2d,rhs);
@@ -271,11 +271,10 @@ namespace pele::physics::reactions {
                     soln_n[ii] = soln[ii];
                 }
                 current_time += dt;
-                nsteps++;
             }
 
             //ideally should be cost
-            d_nsteps[icell] = nsteps;
+            d_nsteps[icell] = captured_nsubsteps;
 
             // copy data back
             for (int sp = 0; sp < neq; sp++) {
@@ -395,14 +394,13 @@ namespace pele::physics::reactions {
             //==================================================================
 
             //begin timestepping================================================
-            int nsteps = 0;
             int printflag=0;
             //if BDF2 use trapz or BDF1 for first step
             int first_tstepscheme=(captured_tstepscheme==BDF2SCHEME)
             ?TRPZSCHEME:captured_tstepscheme;
             amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
             amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
-            while (current_time < time_out) 
+            for(int nsteps=0;nsteps<captured_nsubsteps;nsteps++)
             {
                 //shift to BDF2 after first step
                 int tstepscheme=(nsteps > 0)?captured_tstepscheme:first_tstepscheme;
@@ -422,7 +420,7 @@ namespace pele::physics::reactions {
                     }
                     get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,
                                            mw,captured_reactor_type,
-                                           captured_tstepscheme,dt,
+                                           tstepscheme,dt,
                                            rhoe_init,rhoesrc_ext,rYsrc_ext,
                                            current_time, time_init,
                                            Jmat2d,rhs);
@@ -456,12 +454,11 @@ namespace pele::physics::reactions {
                     soln_n[ii] = soln[ii];
                 }
                 current_time += dt;
-                nsteps++;
             }
 
             // copy data back
             int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
-            d_nsteps[icell] = nsteps;
+            d_nsteps[icell] = captured_nsubsteps;
 
             get_rho_and_massfracs(soln_n,rho,massfrac);
             for (int sp = 0; sp < NUM_SPECIES; sp++) {
@@ -480,7 +477,7 @@ namespace pele::physics::reactions {
                 amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
             }
             T_in(i, j, k, 0) = temp;
-            FC_in(i, j, k, 0) = nsteps;
+            FC_in(i, j, k, 0) = captured_nsubsteps;
         });
 
 #ifdef MOD_REACTOR
