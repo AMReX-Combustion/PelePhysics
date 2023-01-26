@@ -115,7 +115,7 @@ public:
 
 private:
   amrex::Real m_nonlin_tol{1e-6};
-  int m_nsubsteps{10};
+  int m_nsubsteps{1};
   int m_nonlinear_iters{1};
   int m_gmres_restarts{10};
   amrex::Real m_gmres_tol{1e-10};
@@ -123,7 +123,7 @@ private:
   bool m_clean_init_massfrac{false};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_gmres_precond{2};
-  int m_tstepscheme{BDF2SCHEME};
+  int m_tstepscheme{BDF1SCHEME};
 };
 } // namespace pele::physics::reactions
 #endif
