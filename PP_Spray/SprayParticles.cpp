@@ -339,10 +339,11 @@ SprayParticleContainer::updateParticles(
           fdat->calcBoilT(gpv, cBoilT.data());
           Real C_D = 0.;
           if (is_film) {
-            calculateFilmSource(sub_dt, dx, gpv, *fdat, p, cBoilT, ltransparm);
+            calculateFilmSource(
+              sub_dt, dx, gpv, *fdat, p, cBoilT.data(), ltransparm);
           } else {
-            C_D =
-              calculateSpraySource(sub_dt, gpv, *fdat, p, cBoilT, ltransparm);
+            C_D = calculateSpraySource(
+              sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
           }
           Real num_ppp = p.rdata(SprayComps::pstateNumDens);
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {

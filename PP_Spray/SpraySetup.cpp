@@ -197,7 +197,7 @@ SprayParticleContainer::readSprayParams(
       amrex::Print() << ", " << spray_fuel_names[i];
     }
     amrex::Print() << std::endl;
-    amrex::Print() << "Number of particles per parcel " << parcel_size
+    amrex::Print() << "Max particles per parcel " << max_parcel_size
                    << std::endl;
   }
   //

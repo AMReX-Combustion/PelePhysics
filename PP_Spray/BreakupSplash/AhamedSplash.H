@@ -144,7 +144,8 @@ droplet_splashing(
     }
     vel_part = amrex::RealVect::TheZeroVector();
     p.rdata(SprayComps::pstateFilmVol) = num_dens * dm / rho_part;
-    //p.rdata(SprayComps::pstateDia) = film_dia; // TODO: Figure out film diameter
+    // p.rdata(SprayComps::pstateDia) = film_dia; // TODO: Figure out film
+    // diameter
   }
 }
 
