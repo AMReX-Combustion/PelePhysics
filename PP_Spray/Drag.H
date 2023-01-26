@@ -230,7 +230,7 @@ calculateSpraySource(
     if (fdat.mass_trans) {
       calcVaporState(
         fdat, gpv, rule, T_part, C_eps, Y_part.data(), h_part.data(),
-        cp_n.data(), cBoilT.data(), Y_skin.data(), Psat.data(), L_fuel.data(),
+        cp_n.data(), cBoilT, Y_skin.data(), Psat.data(), L_fuel.data(),
         B_M, sumXVap, cp_skin, mw_skin);
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {

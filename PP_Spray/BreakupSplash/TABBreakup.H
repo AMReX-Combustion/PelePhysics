@@ -27,8 +27,6 @@ updateBreakup(
   const amrex::Real C_d = 10.;
   const amrex::Real C_b = 0.5;
   const amrex::Real C_F = 1. / 3.;
-  // K is used to determine the SMD of the resulting droplets
-  const amrex::Real K = 10. / 3.;
 
   // Retreive particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
@@ -86,8 +84,6 @@ updateBreakup(
       yn = ynp;
       ydotn = ydotnp;
     } else {
-      amrex::Real ytb = yn;
-      amrex::Real ydottb = ydotn;
       amrex::Real tbv = 0.;
       if (std::abs(yn) < 1.) {
         // This minimum value of tb comes from a maximum phi value
@@ -106,10 +102,6 @@ updateBreakup(
           theta += 2. * M_PI;
         }
         tbv = (theta - phi) / omega;
-        if (tbv < subdt && tbv >= 0.) {
-          ytb = 1.;
-          ydottb = -omega * Wer * std::sin(omega * tbv);
-        }
       }
       // Check if breakup occurs
       if (tbv < subdt) {
@@ -182,7 +174,7 @@ splitDroplet(
     rf.dtpp[pid] = rem_dt;
     rf.phi1[pid] = Utan_total;
     rf.phi2[pid] = p.rdata(SprayComps::pstateTABY);
-    rf.T0[pid] = T_part;
+    rf.T0[pid] = p.rdata(SprayComps::pstateT);
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);

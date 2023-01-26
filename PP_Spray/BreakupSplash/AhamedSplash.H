@@ -130,7 +130,7 @@ droplet_splashing(
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
-    rf.numDens0[pid] = num_dens;
+    rf.numDens[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);

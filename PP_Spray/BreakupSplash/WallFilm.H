@@ -159,7 +159,7 @@ calculateFilmSource(
     amrex::Real sumXVap = 0.; // Sum of Y_L Psat_f / mw_f
     calcVaporState(
       fdat, gpv, rule, T_film, C_eps, Y_film.data(), h_film.data(), cp_n.data(),
-      cBoilT.data(), Y_skin.data(), Psat.data(), L_fuel.data(), B_M, sumXVap,
+      cBoilT, Y_skin.data(), Psat.data(), L_fuel.data(), B_M, sumXVap,
       cp_skin, mw_skin);
     amrex::Real lambda_skin = 0.;
     amrex::Real mu_skin = 0.;

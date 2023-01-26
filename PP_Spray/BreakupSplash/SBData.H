@@ -13,7 +13,7 @@ struct SBPtrs
   amrex::Real* T0 = nullptr;
   amrex::Real* d0 = nullptr;
   amrex::Real* Y0 = nullptr;
-  amrex::Real* num_dens = nullptr;
+  amrex::Real* numDens = nullptr;
   amrex::Real* phi1 = nullptr;
   amrex::Real* phi2 = nullptr;
 };
