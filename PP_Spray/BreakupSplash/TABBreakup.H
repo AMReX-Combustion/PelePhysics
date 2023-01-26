@@ -65,7 +65,7 @@ updateBreakup(
   amrex::Real tbconst =
     2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
   amrex::Real tbest = rad_part * tbconst;
-  amrex::Real subdt = dt / (0.1 * tbest);
+  amrex::Real subdt = amrex::min(dt, 0.1 * tbest);
   amrex::Real curt = 0.;
   while (curt < dt) {
     amrex::Real A2 = std::pow(yn - Wer, 2) + ydotn * ydotn / omega2;
