@@ -3,21 +3,23 @@
 #define TABBREAKUP_H
 
 // This is the implementation of the TAB breakup model by O'Rourke and Amsden
-// (1987)
+// (1987) and the ETAB model by Tanner (1997)
+// This function subcycles based on a dt_breakup from large We
+// Continues looping until dt is reached in case multiple breakups occur within
+// a timestep Returns the total tangential velocity from all breakups occuring
+// over dt
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-void
+amrex::Real
 updateBreakup(
   const amrex::Real& C_D,
-  const amrex::Real& rem_dt,
+  const amrex::Real& cur_time,
   const amrex::Real& dt,
-  const int pid,
   const GasPhaseVals& gpv,
   const SprayData& fdat,
   SprayParticleContainer::ParticleType& p,
-  splash_breakup* N_SB,
-  const SBPtrs& rf)
+  amrex::Real& breakup_time)
 {
   // Model constants
   const amrex::Real C_k = 8.;
@@ -34,6 +36,7 @@ updateBreakup(
     p.rdata(SprayComps::pstateVel + 2)));
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
+  amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::Real rho_part = 0.;
   amrex::Real mu_part = 0.;
@@ -43,6 +46,7 @@ updateBreakup(
     mu_part += Y_part[spf] * fdat.muL(T_part, spf);
   }
   rho_part = 1. / rho_part;
+  amrex::Real Utan_total = 0.;
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
@@ -55,12 +59,14 @@ updateBreakup(
   if (omega2 <= 0.) {
     p.rdata(SprayComps::pstateTABY) = 0.;
     p.rdata(SprayComps::pstateTABYdot) = 0.;
-    return;
+    return 0.;
   }
   amrex::Real yn = p.rdata(SprayComps::pstateTABY);
   amrex::Real ydotn = p.rdata(SprayComps::pstateTABYdot);
   // Estimate breakup time assuming large We
-  amrex::Real tbest = std::sqrt(3. * rho_part / gpv.rho_fluid) * 0.5 * dia_part / diff_vel.vectorLength();
+  amrex::Real tbconst =
+    2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
+  amrex::Real tbest = rad_part * tbconst;
   amrex::Real subdt = dt / (0.1 * tbest);
   amrex::Real curt = 0.;
   while (curt < dt) {
@@ -68,14 +74,14 @@ updateBreakup(
     amrex::Real A = std::sqrt(A2);
     amrex::Real omega = std::sqrt(omega2);
     amrex::Real ynp =
-      Wer + std::exp(-subdt / td) *
-      ((yn - Wer) * std::cos(omega * subdt) +
-       1. / omega * (ydotn + (yn - Wer) / td) * std::sin(omega * subdt));
+      Wer + std::exp(-subdt / td) * ((yn - Wer) * std::cos(omega * subdt) +
+                                     1. / omega * (ydotn + (yn - Wer) / td) *
+                                       std::sin(omega * subdt));
     amrex::Real ydotnp =
       (Wer - ynp) / td +
       omega * std::exp(-subdt / td) *
-      (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * subdt) -
-       (yn - Wer) * std::sin(omega * subdt));
+        (1. / omega * (ydotn + (yn - Wer) / td) * std::cos(omega * subdt) -
+         (yn - Wer) * std::sin(omega * subdt));
     if (Wer + A <= 1.) {
       yn = ynp;
       ydotn = ydotnp;
@@ -100,66 +106,89 @@ updateBreakup(
           theta += 2. * M_PI;
         }
         tbv = (theta - phi) / omega;
-        if (tbv < subdt) {
+        if (tbv < subdt && tbv >= 0.) {
           ytb = 1.;
-          ydottb = -A * omega * std::sin(omega * tbv + phi);
+          ydottb = -omega * Wer * std::sin(omega * tbv);
         }
       }
       // Check if breakup occurs
       if (tbv < subdt) {
-        amrex::Real Utan, r32;
-        if (fdat.use_ETAB) {
-          const amrex::Real Wet = 80.;
-          const amrex::Real k2 = 2. / 9.;
-          const amrex::Real k1 =
-            k2 * ((std::sqrt(Wet) - 1.) * std::pow(We / Wet, 4) + 1.);
-          amrex::Real Kbr = k1 * omega;
-          if (We >= Wet) {
-            Kbr = k2 * omega * std::sqrt(We);
-          }
-          amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
-          amrex::Real etb = std::acos(etheta) / omega;
-          r32 = rad_part * std::exp(-Kbr * etb);
-          amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
-          amrex::Real AE2 = 3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) *
-            omega2 / (ydottb * ydottb);
-          amrex::Real AE = std::sqrt(AE2);
-          Utan = AE * C_b * rad_part * ydottb;
-        } else {
-          r32 = 3. * rad_part /
-            (1. + 8. * K / 20. +
-             denom * rad_part / sigma * ydottb * ydottb * (6. * K - 5.) / 120.);
-          Utan = C_b * rad_part * ydottb;
+        const amrex::Real Wet = 80.;
+        const amrex::Real k2 = 2. / 9.;
+        const amrex::Real k1 =
+          k2 * ((std::sqrt(Wet) - 1.) * std::pow(We / Wet, 4) + 1.);
+        amrex::Real Kbr = k1 * omega;
+        if (We >= Wet) {
+          Kbr = k2 * omega * std::sqrt(We);
         }
-        N_SB[pid] = splash_breakup::breakup;
-        amrex::Real velMag = vel_part.vectorLength();
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          // Save location of droplet at tb, which is between tb < dt
-          rf.loc[AMREX_SPACEDIM * pid + dir] =
-            p.pos(dir) + (tbv - dt) * vel_part[dir];
-          rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-          rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
+        amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
+        amrex::Real etb = std::acos(etheta) / omega;
+        amrex::Real r32 = rad_part * std::exp(-Kbr * etb);
+        amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (r32 * r32));
+        amrex::Real AE2 =
+          3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) * omega2;
+        amrex::Real AE = std::sqrt(AE2);
+        amrex::Real Utan = AE * C_b * rad_part;
+        Utan_total += Utan;
+        num_dens *= std::pow(rad_part / r32, 3);
+        rad_part = r32;
+        yn = 0.;
+        ydotn = 0.;
+        if (curt + tbv < breakup_time) {
+          breakup_time = curt + tbv;
         }
-        rf.d0[pid] = p.rdata(SprayComps::pstateDia);
-        rf.dtpp[pid] = curt + rem_dt - tbv;
-        rf.phi1[pid] = r32;
-        rf.phi2[pid] = Utan;
-        rf.T0[pid] = p.rdata(SprayComps::pstateT);
-#if SPRAY_FUEL_NUM > 1
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
-        }
-#endif
-        p.id() = -1;
-        return;
+        tbest = rad_part * tbconst;
+        subdt = dt / (0.1 * tbest);
       } else {
         yn = ynp;
         ydotn = ydotnp;
       }
     }
+    curt += subdt;
   }
+  p.rdata(SprayComps::pstateDia) = 2. * rad_part;
+  p.rdata(SprayComps::pstateNumDens) = num_dens;
   p.rdata(SprayComps::pstateTABY) = ynp;
   p.rdata(SprayComps::pstateTABYdot) = ydotnp;
-  return;
+  return Utan_total;
+}
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void
+splitDroplet(
+  const int pid,
+  SprayParticleContainer::ParticleType& p,
+  const SprayData& fdat,
+  splash_breakup* N_SB,
+  const SBPtrs& rf,
+  const amrex::Real rem_dt,
+  const amrex::Real Utan_total)
+{
+  amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
+  if (num_dens > fdat.max_num_ppp) {
+    N_SB[pid] = splash_breakup::breakup;
+    amrex::RealVect vel_part(AMREX_D_DECL(
+      p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
+      p.rdata(SprayComps::pstateVel + 2)));
+    amrex::Real velMag = vel_part.vectorLength();
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
+      rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
+      rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
+    }
+    rf.numDens[pid] = p.rdata(SprayComps::pstateNumDens);
+    rf.d0[pid] = p.rdata(SprayComps::pstateDia);
+    rf.dtpp[pid] = rem_dt;
+    rf.phi1[pid] = Utan_total;
+    rf.phi2[pid] = p.rdata(SprayComps::pstateTABY);
+    rf.T0[pid] = T_part;
+#if SPRAY_FUEL_NUM > 1
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
+    }
+#endif
+    p.id() = -1;
+  }
 }
 #endif

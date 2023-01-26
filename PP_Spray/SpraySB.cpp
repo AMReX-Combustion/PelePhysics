@@ -54,6 +54,7 @@ SprayParticleContainer::CreateSBDroplets(
       }
       Real d0 = rfh.d0[n];
       Real dtpp = rfh.dtpp[n];
+      Real numDens0 = rfh.numDens[n];
       Real phi1 = rfh.phi1[n];
       Real phi2 = rfh.phi2[n];
       Real T0 = rfh.T0[n];
@@ -128,6 +129,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SprayComps::pstateTABY) = 0.;
           p.rdata(SprayComps::pstateTABYdot) = 0.;
           p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateNumDens) = numDens0;
           bool where = Where(p, pld);
           if (!where) {
             amrex::Abort("Bad reflected particle");
@@ -156,6 +158,7 @@ SprayParticleContainer::CreateSBDroplets(
           // If droplet splashing is thermally breakup, center droplet also
           // reflects
           p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateNumDens) = numDens0;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             p.pos(dir) = loc0[dir] + dtpp * avg_vel[dir];
             p.rdata(SprayComps::pstateVel + dir) = avg_vel[dir];
@@ -167,21 +170,12 @@ SprayParticleContainer::CreateSBDroplets(
           host_particles[ind].push_back(p);
         }
       } else if (N_SB_h[n] == splash_breakup::breakup) {
-        // TODO: Add distribution for radii
-        Real r32 = phi1;
-        Real d32 = 2. * r32;
-        Real dummy = 0.;
-        Real dmean = d32;
-        if (!fdat->use_ETAB) {
-          ChiSquared csdist;
-          csdist.init(d32, dummy);
-          dmean = csdist.get_dia();
-        }
-        Real Utan = phi2;
-        Real bmass = M_PI / 6. * rho_part * std::pow(dmean, 3);
-        int Nsint = static_cast<int>(pmass / bmass);
-        auto newbmass = pmass / static_cast<Real>(Nsint);
-        Real newdmean = std::cbrt(6. * newbmass / (M_PI * rho_part));
+        Real Utan = phi1;
+        Real ytab = phi2;
+        Real dmean = d0;
+        // Number of newly created particles
+        int Nsint = static_cast<int>(numDens0);
+        Real new_num_dens = numDens0 / (static_cast<Real>(Nsint));
 #if AMREX_SPACEDIM == 3
         RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);
@@ -189,29 +183,36 @@ SprayParticleContainer::CreateSBDroplets(
 #else
         RealVect tanBeta(normal[1], normal[0]);
 #endif
+        // So the resulting velocity magnitude remains constant, reduce the
+        // initial velocity by a percentage
+        Real vp = std::sqrt(U0mag * U0mag - Utan * Utan) / U0mag;
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
           Real rand = amrex::Random();
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
-          p.rdata(SprayComps::pstateDia) = newdmean;
+          p.rdata(SprayComps::pstateDia) = dmean;
           p.rdata(SprayComps::pstateT) = T0;
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          p.rdata(SprayComps::pstateTABY) = 0.;
+          p.rdata(SprayComps::pstateTABY) = ytab;
           p.rdata(SprayComps::pstateTABYdot) = 0.;
           p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateNumDens) = new_num_dens;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;
-            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
-                                            std::cos(psi) * tanBeta[dir]);
+            Real pvel = vp * vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
+                                                 std::cos(psi) * tanBeta[dir]);
 #else
             Real sgn = std::copysign(1., 0.5 - rand);
-            Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
+            Real pvel = vp * vel0[dir] + sgn * Utan * tanBeta[dir];
 #endif
-            p.pos(dir) = loc0[dir] + dtpp * pvel;
+            // loc0 is location of droplet after full timestep
+            // From initial breakup to final flow_dt, droplet will have
+            // additional tangential velocity
+            p.pos(dir) = loc0[dir] + dtpp * (pvel - vel0[dir]);
             p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           bool where = Where(p, pld);

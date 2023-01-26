@@ -51,7 +51,8 @@ SprayParticleContainer::sprayInjection(
   // Number of particles per parcel
   const amrex::Real num_ppp = spray_jet->inject_ppp();
   if (num_ppp > fdat->max_num_ppp) {
-    amrex::Abort("Injection number density cannot exceed maximum number density");
+    amrex::Abort(
+      "Injection number density cannot exceed maximum number density");
   }
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();

@@ -111,7 +111,7 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   const auto dxi = Geom(level).InvCellSizeArray();
   {
     amrex::ReduceOps<amrex::ReduceOpMin> reduce_op;
-    amrex::ReduceData<amrex::Real> reduce_data(reduce_op);
+    amrex::ReduceData<Real> reduce_data(reduce_op);
     using ReduceTuple = typename decltype(reduce_data)::Type;
     for (MyParConstIter pti(*this, level); pti.isValid(); ++pti) {
       const AoS& pbox = pti.GetArrayOfStructs();
@@ -276,6 +276,9 @@ SprayParticleContainer::updateParticles(
         auto eos = pele::physics::PhysicsType::eos();
         SprayUnits SPU;
         GasPhaseVals gpv;
+        amrex::GpuArray<Real, SPRAY_FUEL_NUM>
+          cBoilT; // Boiling temperature at current pressure
+        bool isActive = !(isVirt || isGhost);
         eos.molecular_weight(gpv.mw_fluid.data());
         eos.inv_molecular_weight(gpv.invmw.data());
         for (int n = 0; n < NUM_SPECIES; ++n) {
@@ -300,10 +303,18 @@ SprayParticleContainer::updateParticles(
             Abort("Particle has incorrectly left the domain");
           }
         }
+        // Used for ETAB breakup model
+        Real Utan_total = 0.;
+        Real breakup_time = flow_dt;
+        Real cur_time = 0.; // Time from 0 to flow_dt
+        bool is_film = false;
+        // Gather wall film values
+        if (p.rdata(SprayComps::pstateFilmVol) > 0. && isActive) {
+          is_film = true;
+          getWallFilm(ijkc, wall_film, p, dx);
+        }
         // Subcycle loop
-        Real cur_dt = sub_dt;
-        int cur_iter = 0;
-        while (p.id() > 0 && cur_iter < num_iter) {
+        for (int cur_iter = 0; cur_iter < num_iter && p.id() > 0; ++cur_iter) {
           // Flag for whether we are near EB boundaries
           bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
@@ -326,13 +337,14 @@ SprayParticleContainer::updateParticles(
           // Solve for avg mw and pressure at droplet location
           gpv.define();
           fdat->calcBoilT(gpv, cBoilT.data());
-          amrex::Real C_D = 0.;
+          Real C_D = 0.;
           if (is_film) {
-            calculateFilmSource(cur_dt, dx, gpv, *fdat, p, ltransparm);
+            calculateFilmSource(sub_dt, dx, gpv, *fdat, p, cBoilT, ltransparm);
           } else {
-            C_D = calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+            C_D =
+              calculateSpraySource(sub_dt, gpv, *fdat, p, cBoilT, ltransparm);
           }
-          amrex::Real num_ppp = p.rdata(SprayComps::pstateNumDens);
+          Real num_ppp = p.rdata(SprayComps::pstateNumDens);
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cvol = inv_vol;
@@ -341,8 +353,7 @@ SprayParticleContainer::updateParticles(
               cvol *= 1. / (volfrac_fab(cur_indx));
             }
 #endif
-            Real cur_coef =
-              -weights[aindx] * num_ppp * cvol * cur_dt / flow_dt;
+            Real cur_coef = -weights[aindx] * num_ppp * cvol * sub_dt / flow_dt;
             if (!src_box.contains(cur_indx)) {
               if (!isGhost) {
                 Abort("SprayParticleContainer::updateParticles() -- source "
@@ -368,17 +379,16 @@ SprayParticleContainer::updateParticles(
             Gpu::Atomic::Add(
               &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
           }
+          Real new_time = static_cast<Real>(cur_iter + 1) * sub_dt;
           // Modify particle position by whole time step
-          if (do_move && !fdat->fixed_parts) {
+          if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
+            // Remaining time in current timestep
+            Real rem_dt = flow_dt - new_time;
             for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-              const Real cvel = p.rdata(SprayComps::pstateVel + dir);
-              p.pos(dir) += cur_dt * cvel;
+              const Real cvel = p.rdata(SPI.pstateVel + dir);
+              p.pos(dir) += sub_dt * cvel;
             }
-            if (fdat->do_breakup) {
-              updateBreakup(
-                C_D, rem_dt, fdat->dtmod * cur_dt, pid, gpv, *fdat, p, N_SB, rf_d);
-            }
-            if ((at_bounds || do_fe_interp) && p.id() > 0.) {
+            if (at_bounds || do_fe_interp) {
               // First check if particle has exited the domain through a
               // Cartesian boundary
               bool left_dom =
@@ -400,13 +410,45 @@ SprayParticleContainer::updateParticles(
                 ijkc = lxc.floor();
               }
             } // if (at_bounds || fe_interp)
-          }   // if (do_move)
-          cur_iter++;
+            // Update indices
+            lx = (p.pos() - plo) * dxi + 0.5;
+            ijk = lx.floor();
+            lxc = (p.pos() - plo) * dxi;
+            ijkc = lxc.floor(); // New cell center
+            // Update TAB breakup variables and determine if breakup occurs
+            if (fdat->do_breakup && p.id() > 0) {
+              Utan_total += updateBreakup(
+                C_D, sub_dt, cur_time, gpv, *fdat, p, breakup_time);
+            }
+          } // if (do_move)
           if (isGhost && !src_box.contains(ijkc)) {
             p.id() = -1;
           }
+          cur_time = new_time;
         } // End of subcycle loop
-      }   // End of p.id() > 0 check
-    });   // End of loop over particles
-  }       // for (int MyParIter pti..
+        // Determine if parcel must be split into multiple parcels
+        if (p.id() > 0 && fdat->do_breakup && do_move) {
+          Real rem_dt = flow_dt - breakup_time;
+          splitDroplet(pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
+        }
+      } // End of p.id() > 0 check
+    }); // End of loop over particles
+    if (isActive && do_splash_breakup) {
+      Gpu::copy(
+        Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
+      bool get_new_parts = false;
+      for (Long n = 0; n < Np; n++) {
+        if (N_SB_h[n] != splash_breakup::no_change) {
+          get_new_parts = true;
+        }
+      }
+      if (get_new_parts) {
+        refv.retrieve_data();
+        SBPtrs rfh;
+        refv.fillPtrs_h(rfh);
+        CreateSBDroplets(Np, N_SB_h.data(), rfh, level);
+      }
+    }
+  } // for (int MyParIter pti..
+  Gpu::streamSynchronize();
 }

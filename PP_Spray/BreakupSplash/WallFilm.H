@@ -86,6 +86,7 @@ calculateFilmSource(
   GasPhaseVals& gpv,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
+  amrex::Real* cBoilT,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
@@ -112,10 +113,7 @@ calculateFilmSource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
-    cBoilT; // Boiling temperature at current pressure
   amrex::Real T_film = p.rdata(SprayComps::pstateT);
-  fdat.calcBoilT(gpv, cBoilT.data());
   amrex::Real rho_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);

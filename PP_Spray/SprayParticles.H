@@ -335,7 +335,8 @@ public:
       sprayDot.SumBoundary(Geom(level).periodicity());
     }
     if (sprayDot.nComp() == extSrc.nComp()) {
-      amrex::MultiFab::Add(extSrc, sprayDot, 0, 0, extSrc.nComp(), nghost); // NOLINT
+      amrex::MultiFab::Add(
+        extSrc, sprayDot, 0, 0, extSrc.nComp(), nghost); // NOLINT
     } else {
       for (amrex::MFIter mfi(extSrc, amrex::TilingIfNotGPU()); mfi.isValid();
            ++mfi) {

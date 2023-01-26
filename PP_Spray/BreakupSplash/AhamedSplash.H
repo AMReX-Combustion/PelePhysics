@@ -61,6 +61,7 @@ droplet_splashing(
 {
   amrex::Real Nw_Vp = normal.dotProduct(vel_part);
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
+  amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
   amrex::Real mu_part = 0.;
   amrex::Real rho_part = 0.;
   // TODO: Determine correct method for handling multi-component liquids
@@ -129,6 +130,7 @@ droplet_splashing(
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
+    rf.numDens0[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
@@ -141,7 +143,8 @@ droplet_splashing(
       p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
     }
     vel_part = amrex::RealVect::TheZeroVector();
-    p.rdata(SprayComps::pstateFilmVol) = dm / rho_part;
+    p.rdata(SprayComps::pstateFilmVol) = num_dens * dm / rho_part;
+    //p.rdata(SprayComps::pstateDia) = film_dia; // TODO: Figure out film diameter
   }
 }
 

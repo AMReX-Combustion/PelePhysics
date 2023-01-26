@@ -118,7 +118,6 @@ struct SprayData
   bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
   bool do_breakup = false;
-  bool use_ETAB = true;
   bool do_splash = false;
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;

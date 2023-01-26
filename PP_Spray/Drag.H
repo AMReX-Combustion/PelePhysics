@@ -151,6 +151,7 @@ calculateSpraySource(
   GasPhaseVals& gpv,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
+  amrex::Real* cBoilT,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
@@ -178,8 +179,6 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
-    cBoilT; // Boiling temperature at current pressure
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
@@ -188,7 +187,6 @@ calculateSpraySource(
     vel_part = amrex::RealVect::TheZeroVector();
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
-  fdat.calcBoilT(gpv, cBoilT.data());
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
