@@ -140,8 +140,8 @@ updateBreakup(
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
-  p.rdata(SprayComps::pstateTABY) = ynp;
-  p.rdata(SprayComps::pstateTABYdot) = ydotnp;
+  p.rdata(SprayComps::pstateTABY) = yn;
+  p.rdata(SprayComps::pstateTABYdot) = ydotn;
   return Utan_total;
 }
 
