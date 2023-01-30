@@ -37,6 +37,7 @@ namespace pele::physics::reactions {
     get_bdf_matrix_and_rhs(amrex::Real soln[NUM_SPECIES+1],
                            amrex::Real soln_n[NUM_SPECIES+1],
                            amrex::Real soln_nm1[NUM_SPECIES+1],
+                           amrex::Real soln_nm2[NUM_SPECIES+1],
                            amrex::Real mw[NUM_SPECIES],
                            int reactor_type,int tstepscheme,amrex::Real dt,
                            amrex::Real rhoe_init[1],amrex::Real rhoesrc_ext[1],
@@ -93,6 +94,7 @@ namespace pele::physics::reactions {
             rhs[ii] =  -bdfp.TCOEFFMAT[tstepscheme][0]*soln[ii]*dt_inv;
             rhs[ii] += -bdfp.TCOEFFMAT[tstepscheme][1]*soln_n[ii]*dt_inv;
             rhs[ii] += -bdfp.TCOEFFMAT[tstepscheme][2]*soln_nm1[ii]*dt_inv;
+            rhs[ii] += -bdfp.TCOEFFMAT[tstepscheme][3]*soln_nm2[ii]*dt_inv;
 
             rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][0]*ydot[ii];
             rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][1]*ydot_n[ii];
@@ -172,7 +174,8 @@ namespace pele::physics::reactions {
 
         amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
             amrex::Real soln_n[NUM_SPECIES + 1] = {0.0}; //at time level n
-            amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; //at time level n
+            amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; //at time level n-1
+            amrex::Real soln_nm2[NUM_SPECIES + 1] = {0.0}; //at time level n-2
             amrex::Real soln[NUM_SPECIES + 1] = {0.0};
             amrex::Real dsoln[NUM_SPECIES + 1] = {0.0};  //newton_soln_k+1 - newton_soln_k
             amrex::Real dsoln0[NUM_SPECIES + 1] = {0.0}; //initial newton_soln_k+1 -newton_soln_k
@@ -207,22 +210,24 @@ namespace pele::physics::reactions {
             {
                 soln[ii] = soln_n[ii];
                 soln_nm1[ii] = soln_n[ii];
+                soln_nm2[ii] = soln_n[ii];
             }
             //==================================================================
             
             int nsteps = 0;
             int printflag=0;
             //if BDF2 use trapz or BDF1 for first step
-            int first_tstepscheme=(captured_tstepscheme==BDF2SCHEME)
+            int first_tstepscheme=(captured_tstepscheme>=BDF2SCHEME)
             ?TRPZSCHEME:captured_tstepscheme;
+            int schemechangestep=captured_tstepscheme-2; //0 for BDF2 and 1 for BDF3 
             amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
             amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
             for(int nsteps=0;nsteps<captured_nsubsteps;nsteps++) 
             {
                 //shift to BDF2 after first step
-                int tstepscheme=(nsteps > 0)?captured_tstepscheme:first_tstepscheme;
+                int tstepscheme=(nsteps > schemechangestep)?captured_tstepscheme:first_tstepscheme;
                 
-                amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
+                //amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
                 for (int ii = 0; ii < neq; ii++) 
                 {
                     dsoln0[ii] = 0.0;
@@ -230,16 +235,16 @@ namespace pele::physics::reactions {
                 //non-linear iterations for each timestep=======================
                 for(int nlit=0;nlit<captured_nonlinear_iters;nlit++)
                 {
-                    amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
+                    //amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
                     for (int ii = 0; ii < neq; ii++) 
                     {
                         dsoln0[ii] = dsoln[ii];
                     }
-                    get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,
+                    get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,soln_nm2,
                                            mw,captured_reactor_type,
                                            tstepscheme,dt,
                                            rhoe_init,rhoesrc_ext,rYsrc_ext,
-                                           current_time, time_init,
+                                           current_time,time_init,
                                            Jmat2d,rhs);
 
                     performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
@@ -256,7 +261,7 @@ namespace pele::physics::reactions {
                         norm += rhs[ii]*rhs[ii];
                     }
                     norm=std::sqrt(norm);
-                    amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
+                    //amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
                     if(norm <= captured_nonlin_tol)
                     {
                         break;
@@ -267,6 +272,7 @@ namespace pele::physics::reactions {
                 //soln_n to soln_nm1
                 for (int ii = 0; ii < neq; ii++) 
                 {
+                    soln_nm2[ii] = soln_nm1[ii];
                     soln_nm1[ii] = soln_n[ii];
                     soln_n[ii] = soln[ii];
                 }
@@ -346,9 +352,10 @@ namespace pele::physics::reactions {
 
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
 
+            amrex::Real soln[NUM_SPECIES + 1] = {0.0};
             amrex::Real soln_n[NUM_SPECIES + 1] = {0.0}; //at time level n
             amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; //at time level n-1
-            amrex::Real soln[NUM_SPECIES + 1] = {0.0};
+            amrex::Real soln_nm2[NUM_SPECIES + 1] = {0.0}; //at time level n-2
             amrex::Real dsoln[NUM_SPECIES + 1] = {0.0};  //newton_soln_k+1 - newton_soln_k
             amrex::Real dsoln0[NUM_SPECIES + 1] = {0.0}; //initial newton_soln_k+1 -newton_soln_k
             amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
@@ -390,22 +397,24 @@ namespace pele::physics::reactions {
             {
                 soln[ii] = soln_n[ii];
                 soln_nm1[ii] = soln_n[ii];
+                soln_nm2[ii] = soln_n[ii];
             }
             //==================================================================
 
             //begin timestepping================================================
             int printflag=0;
             //if BDF2 use trapz or BDF1 for first step
-            int first_tstepscheme=(captured_tstepscheme==BDF2SCHEME)
+            int first_tstepscheme=(captured_tstepscheme>=BDF2SCHEME)
             ?TRPZSCHEME:captured_tstepscheme;
+            int schemechangestep=captured_tstepscheme-2; //0 for BDF2 and 1 for BDF3 
             amrex::Real rhs[(NUM_SPECIES+1)]={0.0};
             amrex::Real Jmat2d[NUM_SPECIES+1][NUM_SPECIES+1]={0.0};
             for(int nsteps=0;nsteps<captured_nsubsteps;nsteps++)
             {
                 //shift to BDF2 after first step
-                int tstepscheme=(nsteps > 0)?captured_tstepscheme:first_tstepscheme;
+                int tstepscheme=(nsteps > schemechangestep)?captured_tstepscheme:first_tstepscheme;
 
-                amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
+                //amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
                 for (int ii = 0; ii < neq; ii++) 
                 {
                     dsoln0[ii] = 0.0;
@@ -413,12 +422,12 @@ namespace pele::physics::reactions {
                 //non-linear iterations for each timestep=======================
                 for(int nlit=0;nlit<captured_nonlinear_iters;nlit++)
                 {
-                    amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
+                    //amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
                     for (int ii = 0; ii < neq; ii++) 
                     {
                         dsoln0[ii] = dsoln[ii];
                     }
-                    get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,
+                    get_bdf_matrix_and_rhs(soln,soln_n,soln_nm1,soln_nm2,
                                            mw,captured_reactor_type,
                                            tstepscheme,dt,
                                            rhoe_init,rhoesrc_ext,rYsrc_ext,
@@ -439,7 +448,7 @@ namespace pele::physics::reactions {
                         norm += rhs[ii]*rhs[ii];
                     }
                     norm=std::sqrt(norm);
-                    amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
+                    //amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
                     if(norm <= captured_nonlin_tol)
                     {
                         break;
@@ -450,10 +459,13 @@ namespace pele::physics::reactions {
                 //soln_n to soln_nm1
                 for (int ii = 0; ii < neq; ii++) 
                 {
+                    soln_nm2[ii] = soln_nm1[ii];
                     soln_nm1[ii] = soln_n[ii];
                     soln_n[ii] = soln[ii];
                 }
+                //amrex::PrintToFile("tempsoln")<<current_time<<"\t"<<soln_n[NUM_SPECIES]<<"\n";
                 current_time += dt;
+
             }
 
             // copy data back

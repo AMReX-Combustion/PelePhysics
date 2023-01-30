@@ -342,7 +342,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
         if( !isit_NaN(Hessmat[j+1][j]) )
         {
 #ifndef AMREX_USE_GPU
-            amrex::Print()<<"lucky\n";
+            //amrex::Print()<<"lucky\n";
 #endif
             lucky=true;
         }
