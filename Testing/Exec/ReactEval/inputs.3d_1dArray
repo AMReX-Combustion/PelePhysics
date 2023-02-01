@@ -5,8 +5,8 @@ fuel_name = CH4
 reactFormat = 1dArray
 chem_integrator = "ReactorRK64"
 
-ode.dt  = 1.e-05
-ode.ndt = 1
+ode.dt  = 2.e-05
+ode.ndt = 30
 ode.ode_ncells = 1024
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
@@ -37,3 +37,5 @@ cvode.max_order = 4
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
 amrex.fpe_trap_overflow = 1
+
+ode.bdf_nsubsteps=40

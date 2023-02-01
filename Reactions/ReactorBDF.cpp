@@ -114,6 +114,7 @@ namespace pele::physics::reactions {
         pp.query("bdf_nonlinear_tol",m_nonlin_tol);
         pp.query("bdf_nsubsteps", m_nsubsteps);
         pp.query("bdf_gmres_restarts",m_gmres_restarts);
+        pp.query("bdf_gmres_kspiters",m_gmres_kspiters);
         pp.query("bdf_gmres_tol",m_gmres_tol);
         pp.query("bdf_gmres_precond",m_gmres_precond);
         pp.query("clean_init_massfrac", m_clean_init_massfrac);
@@ -166,6 +167,7 @@ namespace pele::physics::reactions {
         const amrex::Real captured_nonlin_tol = m_nonlin_tol;
         const amrex::Real captured_gmres_tol = m_gmres_tol;
         const int captured_gmres_restarts=m_gmres_restarts;
+        const int captured_gmres_kspiters=m_gmres_kspiters;
         const int captured_nonlinear_iters=m_nonlinear_iters;
         const int captured_gmres_precond=m_gmres_precond;
 
@@ -248,7 +250,8 @@ namespace pele::physics::reactions {
                                            Jmat2d,rhs);
 
                     performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
-                                 captured_gmres_restarts,captured_gmres_tol,printflag);
+                                 captured_gmres_restarts,captured_gmres_kspiters,
+                                 captured_gmres_tol,printflag);
 
 
                     for (int ii = 0; ii < neq; ii++) 
@@ -340,6 +343,7 @@ namespace pele::physics::reactions {
         const amrex::Real captured_nonlin_tol = m_nonlin_tol;
         const amrex::Real captured_gmres_tol = m_gmres_tol;
         const int captured_gmres_restarts=m_gmres_restarts;
+        const int captured_gmres_kspiters=m_gmres_kspiters;
         const int captured_nonlinear_iters=m_nonlinear_iters;
         const int captured_gmres_precond=m_gmres_precond;
 
@@ -435,7 +439,8 @@ namespace pele::physics::reactions {
                                            Jmat2d,rhs);
 
                     performgmres(Jmat2d,rhs,dsoln0,dsoln,captured_gmres_precond,
-                                 captured_gmres_restarts,captured_gmres_tol,printflag);
+                                 captured_gmres_restarts,captured_gmres_kspiters,
+                                 captured_gmres_tol,printflag);
 
                     for (int ii = 0; ii < neq; ii++) 
                     {

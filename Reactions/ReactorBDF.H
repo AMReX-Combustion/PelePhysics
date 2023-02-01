@@ -126,6 +126,7 @@ private:
   bool m_clean_init_massfrac{false};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_gmres_precond{2};
+  int m_gmres_kspiters{NUM_SPECIES+1};
   int m_tstepscheme{BDF3SCHEME};
 };
 } // namespace pele::physics::reactions

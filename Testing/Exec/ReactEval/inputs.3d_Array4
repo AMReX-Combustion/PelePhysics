@@ -38,4 +38,4 @@ amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
 amrex.fpe_trap_overflow = 1
 
-ode.bdf_nsubsteps=50
+ode.bdf_nsubsteps=40

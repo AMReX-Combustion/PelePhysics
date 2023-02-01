@@ -341,9 +341,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE bool arnoldi(int j,
     {
         if( !isit_NaN(Hessmat[j+1][j]) )
         {
-#ifndef AMREX_USE_GPU
-            //amrex::Print()<<"lucky\n";
-#endif
             lucky=true;
         }
         else
@@ -431,6 +428,7 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
                   amrex::Real x[NEQNS],   //current solution for GMRES
                   int precond_type,
                   int restart_it,
+                  int kspiters,
                   amrex::Real tol,int printflag)
 {
     amrex::Real beta;
@@ -490,7 +488,7 @@ bool performgmres(amrex::Real Mat[NEQNS][NEQNS],
         setkspvector(v1,kspvectors,0);
         
         int optkspsize=KSPSIZE;
-        for(int kspdim=0;kspdim<KSPSIZE;kspdim++)
+        for(int kspdim=0;kspdim<kspiters;kspdim++)
         {
             copyvector(x,x0);
             // finds the ksp vector at kspdim+1
