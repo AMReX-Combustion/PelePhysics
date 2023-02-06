@@ -229,7 +229,6 @@ namespace pele::physics::reactions {
                 //shift to BDF2 after first step
                 int tstepscheme=(nsteps > schemechangestep)?captured_tstepscheme:first_tstepscheme;
                 
-                //amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
                 for (int ii = 0; ii < neq; ii++) 
                 {
                     dsoln0[ii] = 0.0;
@@ -237,7 +236,6 @@ namespace pele::physics::reactions {
                 //non-linear iterations for each timestep=======================
                 for(int nlit=0;nlit<captured_nonlinear_iters;nlit++)
                 {
-                    //amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
                     for (int ii = 0; ii < neq; ii++) 
                     {
                         dsoln0[ii] = dsoln[ii];
@@ -264,7 +262,6 @@ namespace pele::physics::reactions {
                         norm += rhs[ii]*rhs[ii];
                     }
                     norm=std::sqrt(norm);
-                    //amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
                     if(norm <= captured_nonlin_tol)
                     {
                         break;
@@ -418,7 +415,6 @@ namespace pele::physics::reactions {
                 //shift to BDF2 after first step
                 int tstepscheme=(nsteps > schemechangestep)?captured_tstepscheme:first_tstepscheme;
 
-                //amrex::Print()<<"step,time:"<<nsteps<<"\t"<<current_time<<"\n";
                 for (int ii = 0; ii < neq; ii++) 
                 {
                     dsoln0[ii] = 0.0;
@@ -426,7 +422,6 @@ namespace pele::physics::reactions {
                 //non-linear iterations for each timestep=======================
                 for(int nlit=0;nlit<captured_nonlinear_iters;nlit++)
                 {
-                    //amrex::Print()<<"non-lin iter:"<<nlit<<"\n";
                     for (int ii = 0; ii < neq; ii++) 
                     {
                         dsoln0[ii] = dsoln[ii];
@@ -453,7 +448,6 @@ namespace pele::physics::reactions {
                         norm += rhs[ii]*rhs[ii];
                     }
                     norm=std::sqrt(norm);
-                    //amrex::Print()<<"Non linear residual:"<<norm<<"\t"<<captured_nonlin_tol<<"\n";
                     if(norm <= captured_nonlin_tol)
                     {
                         break;
@@ -468,7 +462,6 @@ namespace pele::physics::reactions {
                     soln_nm1[ii] = soln_n[ii];
                     soln_n[ii] = soln[ii];
                 }
-                //amrex::PrintToFile("tempsoln")<<current_time<<"\t"<<soln_n[NUM_SPECIES]<<"\n";
                 current_time += dt;
 
             }
