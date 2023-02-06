@@ -183,7 +183,7 @@ updateBreakupKHRT(
   }
   p.rdata(SprayComps::pstateDia) = rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
-  p.rdata(SprayComps::pstateBphi1) = rt_time;
+  p.rdata(SprayComps::pstateBphi2) = rt_time;
   return;
 }
 

@@ -402,7 +402,7 @@ SprayParticleContainer::updateParticles(
               dis += std::pow(sub_dt * cvel, 2);
             }
             if (fdat->do_breakup == 2) {
-              p.rdata(SprayComps::pstateBphi2) += std::sqrt(dis);
+              p.rdata(SprayComps::pstateBphi1) += std::sqrt(dis);
             }
             if (at_bounds || do_fe_interp) {
               // First check if particle has exited the domain through a
