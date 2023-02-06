@@ -109,17 +109,13 @@ SprayParticleContainer::readSprayParams(
   pp.query("use_splash_model", splash_model);
   std::string breakup_model_str = "None";
   pp.query("use_breakup_model", breakup_model_str);
-  switch (breakup_model_str) {
-  case "TAB":
+  if (breakup_model_str == "TAB") {
     breakup_model = 1;
-    break;
-  case "KHRT":
+  } else if (breakup_model_str == "KHRT") {
     breakup_model = 2;
-    break;
-  case "None":
+  } else if (breakup_model_str == "None") {
     breakup_model = 0;
-    break;
-  default:
+  } else {
     Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
           "'None'");
   }
