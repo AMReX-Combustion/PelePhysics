@@ -139,11 +139,11 @@ updateBreakupKHRT(
         // (1998). Solve a cubic equation by transforming it into a depressed
         // cubic
         amrex::Real nb = num_dens;
-        amrex::Real p = -rs2 / 3.;
-        amrex::Real q =
+        amrex::Real pv = -rs2 / 3.;
+        amrex::Real qv =
           -2. * rs2 * rs / 27. + num_mod * rad_mod2 * (rs - rad_mod) / nb;
-        amrex::Real R1 = std::sqrt(q * q / 4. + std::pow(p, 3) / 27.);
-        amrex::Real yt = std::cbrt(-q / 2. + R1) + std::cbrt(-q / 2. - R1);
+        amrex::Real R1 = std::sqrt(qv * qv / 4. + std::pow(pv, 3) / 27.);
+        amrex::Real yt = std::cbrt(-qv / 2. + R1) + std::cbrt(-qv / 2. - R1);
         // Radius of larger droplet after smaller droplets are stripped
         amrex::Real rb = yt + rs / 3.;
         // Number density of smaller stripped droplets
