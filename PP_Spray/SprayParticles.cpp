@@ -395,8 +395,8 @@ SprayParticleContainer::updateParticles(
           if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
             // Remaining time in current timestep
             Real rem_dt = flow_dt - new_time;
-            Real dis = 0. for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-            {
+            Real dis = 0.;
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
               const Real cvel = p.rdata(SprayComps::pstateVel + dir);
               p.pos(dir) += sub_dt * cvel;
               dis += std::pow(sub_dt * cvel, 2);
@@ -434,9 +434,6 @@ SprayParticleContainer::updateParticles(
             // Update breakup variables and determine if breakup occurs
             if (p.id() > 0 && fdat->do_breakup == 1) {
               Utan_total += updateBreakupTAB(
-                Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
-            } else if (fdat->do_breakup == 2) {
-              Utan_total += updateBreakupKHRT(
                 Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
             }
           }

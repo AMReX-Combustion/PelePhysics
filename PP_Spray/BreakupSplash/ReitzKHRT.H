@@ -23,7 +23,6 @@ updateBreakupKHRT(
   const amrex::Real B0 = 0.61; // Make this an input
   const amrex::Real B1 = 7.;   // Make this an input
   // RT model constants
-  const amrex::Real CRT = 1.;
   const amrex::Real A1 = 0.188;
   // Retreive particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
@@ -96,13 +95,13 @@ updateBreakupKHRT(
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
           rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-          rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
+          rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
         }
         rf.numDens[pid] = p.rdata(SprayComps::pstateNumDens);
         rf.d0[pid] = p.rdata(SprayComps::pstateDia);
         rf.dtpp[pid] = 0.;
         rf.phi1[pid] = Utan;
-        rf.phi2[pid] = p.rdata(SprayComps::pstateBphi1);
+        rf.phi2[pid] = dis;
         rf.T0[pid] = p.rdata(SprayComps::pstateT);
 #if SPRAY_FUEL_NUM > 1
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -128,7 +127,7 @@ updateBreakupKHRT(
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
       amrex::Real rad_mod =
-        (dt / tau_break * rs + rad_part) / (1. + dt / tau_break);
+        (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
       amrex::Real num_mod = num_dens * std::pow(rad_part / rad_mod, 3);
       // KH breakup occurs
       if (rs < rad_part && We_g > We_crit) {
@@ -139,16 +138,17 @@ updateBreakupKHRT(
         // droplets. This is the method outlined by Patterson and Reitz
         // (1998). Solve a cubic equation by transforming it into a depressed
         // cubic
+        amrex::Real nb = num_dens;
         amrex::Real p = -rs2 / 3.;
         amrex::Real q =
-          -2. * rs2 * rs / 27. + num_mod * rad_mod2 * (rs - rad_mod) / num_dens;
+          -2. * rs2 * rs / 27. + num_mod * rad_mod2 * (rs - rad_mod) / nb;
         amrex::Real R1 = std::sqrt(q * q / 4. + std::pow(p, 3) / 27.);
         amrex::Real yt = std::cbrt(-q / 2. + R1) + std::cbrt(-q / 2. - R1);
         // Radius of larger droplet after smaller droplets are stripped
         amrex::Real rb = yt + rs / 3.;
         // Number density of smaller stripped droplets
         amrex::Real ns =
-          (num_mod * rad_mod2 * rad_mod - num_dens * std::pow(rb, 3)) /
+          (num_mod * rad_mod2 * rad_mod - nb * std::pow(rb, 3)) /
           (rs2 * rs);
         amrex::Real removed_perc = 1. - rad_mod2 * rad_mod / r03;
         amrex::Real Utan = A1 * omega_KH * lam_KH;
