@@ -13,24 +13,22 @@
 // stages and coefficients for rk64
 struct BDFParams
 {
-   //3 schemes are implemented
-   //BDF1, TRPZ, BDF2
-   
-   //mass matrix multipliers
-   const amrex::Real TCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL]
-    = { {1.0000,-1.0000, 0.0000,  0.0000},
-        {1.0000,-1.0000, 0.0000,  0.0000},
-        {1.0000,-1.3333, 0.3333,  0.0000},
-        {1.0000,-1.6363, 0.8181, -0.1818}
-      };
+  // 3 schemes are implemented
+  // BDF1, TRPZ, BDF2
 
-    //forcing multipliers
-    const amrex::Real FCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL]
-     = { {1.0000, 0.0000, 0.0000, 0.0000},
-         {0.5000, 0.5000, 0.0000, 0.0000},
-         {0.6666, 0.0000, 0.0000, 0.0000},
-         {0.5454, 0.0000, 0.0000, 0.0000}
-       };
+  // mass matrix multipliers
+  const amrex::Real TCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL] = {
+    {1.0000, -1.0000, 0.0000, 0.0000},
+    {1.0000, -1.0000, 0.0000, 0.0000},
+    {1.0000, -1.3333, 0.3333, 0.0000},
+    {1.0000, -1.6363, 0.8181, -0.1818}};
+
+  // forcing multipliers
+  const amrex::Real FCOEFFMAT[NBDFSCHEMES][NBDFSTENCIL] = {
+    {1.0000, 0.0000, 0.0000, 0.0000},
+    {0.5000, 0.5000, 0.0000, 0.0000},
+    {0.6666, 0.0000, 0.0000, 0.0000},
+    {0.5454, 0.0000, 0.0000, 0.0000}};
 };
 
 namespace pele::physics::reactions {
@@ -126,7 +124,7 @@ private:
   bool m_clean_init_massfrac{false};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_gmres_precond{2};
-  int m_gmres_kspiters{NUM_SPECIES+1};
+  int m_gmres_kspiters{NUM_SPECIES + 1};
   int m_tstepscheme{BDF3SCHEME};
 };
 } // namespace pele::physics::reactions
