@@ -12,9 +12,11 @@ struct SprayComps
   static const int pstateDia = pstateT + 1;
   static const int pstateY = pstateDia + 1;
   static const int pstateNumDens = pstateY + SPRAY_FUEL_NUM;
-  static const int pstateTABY = pstateNumDens + 1;
-  static const int pstateTABYdot = pstateTABY + 1;
-  static const int pstateFilmVol = pstateTABYdot + 1;
+  static const int pstateBphi1 =
+    pstateNumDens + 1; // Variables for breakup modeling
+  static const int pstateBphi2 =
+    pstateBphi1 + 1; // Variables for breakup modeling
+  static const int pstateFilmVol = pstateBphi2 + 1;
   static const int pstateNum = pstateFilmVol + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
@@ -29,7 +31,9 @@ struct SprayComps
 
 enum splash_breakup {
   no_change = 0,
-  breakup,
+  breakup_KH,
+  breakup_RT,
+  breakup_TAB,
   splash_splash,
   splash_thermal_breakup
 };
@@ -117,8 +121,8 @@ struct SprayData
   bool mass_trans = true;   // If evaporation is on
   bool mom_trans = true;    // If momentum transfer is on
   bool fixed_parts = false; // If particles are fixed in place
-  bool do_breakup = false;
   bool do_splash = false;
+  int do_breakup = 0; // 0 - no breakup modeling, 1 - TAB model, 2 - KHRT model
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
   amrex::Real max_num_ppp; // Max parcel size

@@ -126,8 +126,16 @@ public:
         "spray_mf_" + spray_fuel_names[sp];
     }
     real_comp_names[SprayComps::pstateNumDens] = "number_density";
-    real_comp_names[SprayComps::pstateTABY] = "Y_TAB";
-    real_comp_names[SprayComps::pstateTABYdot] = "Ydot_TAB";
+    if (m_sprayData->do_breakup == 1) {
+      real_comp_names[SprayComps::pstateBphi1] = "Y_TAB";
+      real_comp_names[SprayComps::pstateBphi2] = "Ydot_TAB";
+    } else if (m_sprayData->do_breakup == 2) {
+      real_comp_names[SprayComps::pstateBphi1] = "distance";
+      real_comp_names[SprayComps::pstateBphi2] = "rt_time";
+    } else {
+      real_comp_names[SprayComps::pstateBphi1] = "unused1";
+      real_comp_names[SprayComps::pstateBphi2] = "unused2";
+    }
     real_comp_names[SprayComps::pstateFilmVol] = "film_vol";
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(

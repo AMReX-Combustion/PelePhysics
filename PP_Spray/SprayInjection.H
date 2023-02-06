@@ -146,8 +146,8 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) =
           part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      p.rdata(SprayComps::pstateTABY) = 0.;
-      p.rdata(SprayComps::pstateTABYdot) = 0.;
+      p.rdata(SprayComps::pstateBphi1) = 0.;
+      p.rdata(SprayComps::pstateBphi2) = 0.;
       p.rdata(SprayComps::pstateFilmVol) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
@@ -229,8 +229,8 @@ SprayParticleContainer::uniformSprayInit(
     part_vals[SprayComps::pstateY + spf] = Y_part[spf];
   }
   part_vals[SprayComps::pstateNumDens] = num_ppp;
-  part_vals[SprayComps::pstateTABY] = 0.;
-  part_vals[SprayComps::pstateTABYdot] = 0.;
+  part_vals[SprayComps::pstateBphi1] = 0.;
+  part_vals[SprayComps::pstateBphi2] = 0.;
   part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),

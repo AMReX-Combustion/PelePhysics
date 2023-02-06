@@ -5,6 +5,7 @@
 #include "Transport.H"
 #include "WallFunctions.H"
 #include "TABBreakup.H"
+#include "ReitzKHRT.H"
 #include "WallFilm.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
@@ -171,7 +172,8 @@ SprayParticleContainer::updateParticles(
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   bool isActive = !(isVirt || isGhost);
-  bool do_splash_breakup = (m_sprayData->do_breakup || m_sprayData->do_splash);
+  bool do_splash_breakup =
+    (m_sprayData->do_breakup > 0 || m_sprayData->do_splash);
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -218,6 +220,14 @@ SprayParticleContainer::updateParticles(
   if (do_move && spray_cfl_lev > sub_cfl) {
     num_iter = static_cast<int>(std::ceil(spray_cfl_lev / sub_cfl));
     sub_dt = flow_dt / static_cast<Real>(num_iter);
+  }
+  Real avg_inject_d3 = 0.;
+  if (m_sprayData->do_breakup == 2) {
+    int numJets = static_cast<int>(m_sprayJets.size());
+    for (int jindx = 0; jindx < numJets; ++jindx) {
+      Real injDia = m_sprayJets[jindx].get()->get_avg_dia();
+      avg_inject_d3 += std::pow(injDia, 3) / static_cast<Real>(numJets);
+    }
   }
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
@@ -337,12 +347,12 @@ SprayParticleContainer::updateParticles(
           // Solve for avg mw and pressure at droplet location
           gpv.define();
           fdat->calcBoilT(gpv, cBoilT.data());
-          Real C_D = 0.;
+          Real Reyn_d = 0.;
           if (is_film) {
             calculateFilmSource(
               sub_dt, dx, gpv, *fdat, p, cBoilT.data(), ltransparm);
           } else {
-            C_D = calculateSpraySource(
+            Reyn_d = calculateSpraySource(
               sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
           }
           Real num_ppp = p.rdata(SprayComps::pstateNumDens);
@@ -385,9 +395,14 @@ SprayParticleContainer::updateParticles(
           if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
             // Remaining time in current timestep
             Real rem_dt = flow_dt - new_time;
-            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-              const Real cvel = p.rdata(SPI.pstateVel + dir);
+            Real dis = 0. for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+            {
+              const Real cvel = p.rdata(SprayComps::pstateVel + dir);
               p.pos(dir) += sub_dt * cvel;
+              dis += std::pow(sub_dt * cvel, 2);
+            }
+            if (fdat->do_breakup == 2) {
+              p.rdata(SprayComps::pstateBphi2) += std::sqrt(dis);
             }
             if (at_bounds || do_fe_interp) {
               // First check if particle has exited the domain through a
@@ -416,21 +431,29 @@ SprayParticleContainer::updateParticles(
             ijk = lx.floor();
             lxc = (p.pos() - plo) * dxi;
             ijkc = lxc.floor(); // New cell center
-            // Update TAB breakup variables and determine if breakup occurs
-            if (fdat->do_breakup && p.id() > 0) {
-              Utan_total += updateBreakup(
-                C_D, sub_dt, cur_time, gpv, *fdat, p, breakup_time);
+            // Update breakup variables and determine if breakup occurs
+            if (p.id() > 0 && fdat->do_breakup == 1) {
+              Utan_total += updateBreakupTAB(
+                Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
+            } else if (fdat->do_breakup == 2) {
+              Utan_total += updateBreakupKHRT(
+                Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
             }
-          } // if (do_move)
-          if (isGhost && !src_box.contains(ijkc)) {
-            p.id() = -1;
           }
-          cur_time = new_time;
-        } // End of subcycle loop
-        // Determine if parcel must be split into multiple parcels
-        if (p.id() > 0 && fdat->do_breakup && do_move) {
+        } // if (do_move)
+        if (isGhost && !src_box.contains(ijkc)) {
+          p.id() = -1;
+        }
+        cur_time = new_time;
+      } // End of subcycle loop
+      // Determine if parcel must be split into multiple parcels
+      if (p.id() > 0 && fdat->do_breakup > 0 && do_move) {
+        if (fdat->do_breakup == 1) {
           Real rem_dt = flow_dt - breakup_time;
           splitDroplet(pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
+        } else {
+          updateBreakupKHRT(
+            pid, p, Reyn_d, flow_dt, avg_inject_d3, gpv, *fdat, N_SB, rf_d);
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles

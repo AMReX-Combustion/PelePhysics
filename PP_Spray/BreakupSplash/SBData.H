@@ -50,7 +50,9 @@ struct SBVects
   amrex::Gpu::DeviceVector<amrex::Real> phi1_d;
   // Variable
   // Splashing: ms, amount of mass that splashes
-  // Breakup: TABY value
+  // TAB Breakup: TABY value
+  // RT Breakup: distance from jet
+  // KH Breakup: unused
   amrex::Gpu::HostVector<amrex::Real> phi2_h;
   amrex::Gpu::DeviceVector<amrex::Real> phi2_d;
   // Droplet number density

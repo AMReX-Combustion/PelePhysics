@@ -55,7 +55,14 @@ SprayParticleContainer::CreateSBDroplets(
       Real d0 = rfh.d0[n];
       Real dtpp = rfh.dtpp[n];
       Real numDens0 = rfh.numDens[n];
+      // These values differ depending on breakup or splashing
+      // Splashing: Kv
+      // Breakup: Utan
       Real phi1 = rfh.phi1[n];
+      // Splashing: ms, splash amount
+      // TAB Breakup:TAB y value
+      // RT Breakup: distance from jet
+      // KH Breakup: unused
       Real phi2 = rfh.phi2[n];
       Real T0 = rfh.T0[n];
       Array<Real, SPRAY_FUEL_NUM> Y0;
@@ -126,8 +133,8 @@ SprayParticleContainer::CreateSBDroplets(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          p.rdata(SprayComps::pstateTABY) = 0.;
-          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateBphi1) = 0.;
+          p.rdata(SprayComps::pstateBphi2) = 0.;
           p.rdata(SprayComps::pstateFilmVol) = 0.;
           p.rdata(SprayComps::pstateNumDens) = numDens0;
           bool where = Where(p, pld);
@@ -151,8 +158,8 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           p.rdata(SprayComps::pstateT) = T0;
-          p.rdata(SprayComps::pstateTABY) = 0.;
-          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateBphi1) = 0.;
+          p.rdata(SprayComps::pstateBphi2) = 0.;
           Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
           p.rdata(SprayComps::pstateDia) = dia_rem;
           // If droplet splashing is thermally breakup, center droplet also
@@ -169,13 +176,21 @@ SprayParticleContainer::CreateSBDroplets(
           }
           host_particles[ind].push_back(p);
         }
-      } else if (N_SB_h[n] == splash_breakup::breakup) {
+      } else {
         Real Utan = phi1;
-        Real ytab = phi2;
         Real dmean = d0;
-        // Number of newly created particles
+        // For RT and TAB breakup, a single droplet breaks up based on number
+        // density
         int Nsint = static_cast<int>(numDens0);
         Real new_num_dens = numDens0 / (static_cast<Real>(Nsint));
+        // For KH breakup, particles are shed from larger droplets
+        // numDens0 is set to the ns value from KH breakup
+        if (N_SB_h[n] == splash_breakup::breakup_KH) {
+          Nsint = 1;
+          new_num_dens = numDens0;
+          // Ignore jet distance for KH stripped droplets
+          phi2 = 1.E5;
+        }
 #if AMREX_SPACEDIM == 3
         RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);
@@ -196,8 +211,8 @@ SprayParticleContainer::CreateSBDroplets(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          p.rdata(SprayComps::pstateTABY) = ytab;
-          p.rdata(SprayComps::pstateTABYdot) = 0.;
+          p.rdata(SprayComps::pstateBphi1) = phi2;
+          p.rdata(SprayComps::pstateBphi2) = 0.;
           p.rdata(SprayComps::pstateFilmVol) = 0.;
           p.rdata(SprayComps::pstateNumDens) = new_num_dens;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {

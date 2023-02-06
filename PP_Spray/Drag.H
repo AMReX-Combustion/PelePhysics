@@ -183,6 +183,11 @@ calculateSpraySource(
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
+  // TAB model distortion
+  amrex::Real y_tab = 0.;
+  if (fdat.do_breakup == 1) {
+    y_tab = p.rdata(SprayComps::pstateBphi1);
+  }
   // If particle is fixed in place, make velocity zero
   if (fdat.fixed_parts) {
     vel_part = amrex::RealVect::TheZeroVector();
@@ -201,7 +206,7 @@ calculateSpraySource(
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
   amrex::RealVect part_mom_src;
-  amrex::Real drag_coef;
+  amrex::Real Reyn;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
@@ -259,11 +264,11 @@ calculateSpraySource(
     amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
     amrex::Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
-    amrex::Real Reyn = rho_skin * diff_vel_mag * dia_part / mu_skin;
+    Reyn = rho_skin * diff_vel_mag * dia_part / mu_skin;
 
     // Solve momentum source terms
     const amrex::Real inv_pmass = 1. / pmass;
-    drag_coef = 0.;
+    amrex::Real drag_coef = 0.;
     if (Reyn > 1000.) {
       drag_coef = 0.424;
     } else if (Reyn > 1.) {
@@ -436,6 +441,7 @@ calculateSpraySource(
                , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
   p.rdata(SprayComps::pstateT) = T_part;
   p.rdata(SprayComps::pstateDia) = dia_part;
+  return Reyn;
 }
 
 #endif

@@ -101,14 +101,29 @@ SprayParticleContainer::readSprayParams(
   Real max_parcel_size = 40.;
   Real spray_ref_T = 300.;
   bool splash_model = false;
-  bool breakup_model = false;
+  int breakup_model = 0;
   //
   // Set the number of particles per parcel
   //
   pp.query("max_parcel_size", max_parcel_size);
   pp.query("use_splash_model", splash_model);
-  pp.query("use_breakup_model", breakup_model);
-  if (splash_model || breakup_model) {
+  std::string breakup_model_str = "None";
+  pp.query("use_breakup_model", breakup_model_str);
+  switch (breakup_model_str) {
+  case "TAB":
+    breakup_model = 1;
+    break;
+  case "KHRT":
+    breakup_model = 2;
+    break;
+  case "None":
+    breakup_model = 0;
+    break;
+  default:
+    Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
+          "'None'");
+  }
+  if (splash_model || (breakup_model > 0)) {
     bool wrong_data = false;
     for (int i = 0; i < nfuel; ++i) {
       std::string var_read = fuel_names[i] + "_mu";
