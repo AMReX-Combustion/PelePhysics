@@ -316,6 +316,7 @@ SprayParticleContainer::updateParticles(
         // Used for ETAB breakup model
         Real Utan_total = 0.;
         Real breakup_time = flow_dt;
+        Real Reyn_d = 0.;
         Real cur_time = 0.; // Time from 0 to flow_dt
         bool is_film = false;
         // Gather wall film values
@@ -347,7 +348,6 @@ SprayParticleContainer::updateParticles(
           // Solve for avg mw and pressure at droplet location
           gpv.define();
           fdat->calcBoilT(gpv, cBoilT.data());
-          Real Reyn_d = 0.;
           if (is_film) {
             calculateFilmSource(
               sub_dt, dx, gpv, *fdat, p, cBoilT.data(), ltransparm);
@@ -437,20 +437,21 @@ SprayParticleContainer::updateParticles(
                 Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
             }
           }
-        } // if (do_move)
-        if (isGhost && !src_box.contains(ijkc)) {
-          p.id() = -1;
-        }
-        cur_time = new_time;
-      } // End of subcycle loop
-      // Determine if parcel must be split into multiple parcels
-      if (p.id() > 0 && fdat->do_breakup > 0 && do_move) {
-        if (fdat->do_breakup == 1) {
-          Real rem_dt = flow_dt - breakup_time;
-          splitDroplet(pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
-        } else {
-          updateBreakupKHRT(
-            pid, p, Reyn_d, flow_dt, avg_inject_d3, gpv, *fdat, N_SB, rf_d);
+          if (isGhost && !src_box.contains(ijkc)) {
+            p.id() = -1;
+          }
+          cur_time = new_time;
+        } // End of subcycle loop
+        // Determine if parcel must be split into multiple parcels
+        if (p.id() > 0 && fdat->do_breakup > 0 && do_move) {
+          if (fdat->do_breakup == 1) {
+            Real rem_dt = flow_dt - breakup_time;
+            splitDropletTAB(
+              pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
+          } else {
+            updateBreakupKHRT(
+              pid, p, Reyn_d, flow_dt, avg_inject_d3, gpv, *fdat, N_SB, rf_d);
+          }
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles
