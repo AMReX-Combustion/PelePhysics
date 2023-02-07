@@ -158,7 +158,7 @@ private:
 #endif
   int max_nls_iters{3};
   int max_fp_accel{2};
-  int print_profiling{0};
+  int m_print_profiling{0};
   bool m_clean_init_massfrac{false};
 
 #ifndef AMREX_USE_GPU
