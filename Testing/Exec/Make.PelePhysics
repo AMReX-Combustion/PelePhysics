@@ -36,6 +36,10 @@ VPATH_LOCATIONS   += $(PP_SRC_HOME)
 Bpack             += $(PP_SRC_HOME)/Make.package
 Blocs             += $(PP_SRC_HOME)
 
+ifeq ($(PELE_COMPILE_AJACOBIAN), TRUE)
+  DEFINES += -DPELE_COMPILE_AJACOBIAN
+endif
+
 # EOS
 # Both Fortran and cpp can be loaded for EOS
 ifeq ($(Eos_Model),$(filter $(Eos_Model),GammaLaw))
