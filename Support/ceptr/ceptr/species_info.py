@@ -42,12 +42,14 @@ class SpeciesInfo:
         self.nonqssa_species = []
         # list of non QSSA species names
         self.nonqssa_species_list = []
+        self.nonqssa_species_formatted_list = []
         # number of non QSSA species
         self.n_species = 0
 
         # all Species
         self.all_species = []
         self.all_species_list = []
+        self.all_species_formatted_list = []
         self.n_all_species = 0
         # Ordered dict for matching species to indices
         self.ordered_idx_map = OrderedDict()
@@ -60,6 +62,7 @@ class SpeciesInfo:
         self.qssa_species = []
         # list of QSSA species names
         self.qssa_species_list = []
+        self.qssa_species_formatted_list = []
         # number of QSSA species
         self.n_qssa_species = 0
         self.qssa_info = cqi.QSSAInfo()
