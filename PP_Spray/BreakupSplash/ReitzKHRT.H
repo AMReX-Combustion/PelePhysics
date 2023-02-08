@@ -18,6 +18,8 @@ updateBreakupKHRT(
   splash_breakup* N_SB,
   const SBPtrs& rf)
 {
+  // Percent of mass lost before new parcel is formed
+  const amrex::Real massperc = 0.03;
   const amrex::Real We_crit = 6.;
   // Wave model constants
   const amrex::Real B0 = 0.61; // Make this an input
@@ -110,6 +112,7 @@ updateBreakupKHRT(
         }
 #endif
         p.id() = -1;
+        return;
       }
     }
   }
@@ -122,38 +125,36 @@ updateBreakupKHRT(
       (0.34 + 0.385 * We_g * std::sqrt(We_g)) /
       ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
       std::sqrt(sigma / (rho_part * std::pow(rad_part, 3)));
-    amrex::Real tau_KH = 3.276 * B1 * rad_part / (lam_KH * omega_KH);
+    amrex::Real tau_KH = 3.726 * B1 * rad_part / (lam_KH * omega_KH);
     amrex::Real rs = B0 * lam_KH;
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
-      amrex::Real rad_mod =
-        (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
+      amrex::Real rad_mod = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
       amrex::Real num_mod = num_dens * std::pow(rad_part / rad_mod, 3);
       // KH breakup occurs
       if (rs < rad_part && We_g > We_crit) {
         rt_time = 0.;
         amrex::Real rs2 = rs * rs;
-        amrex::Real rad_mod2 = rad_mod * rad_mod;
+        amrex::Real rp = rad_part;
+        amrex::Real rp2 = rp * rp;
+        amrex::Real np = num_dens;
         // Determine if new parcels should be formed to represent stripped
         // droplets. This is the method outlined by Patterson and Reitz
         // (1998). Solve a cubic equation by transforming it into a depressed
         // cubic
-        amrex::Real nb = num_dens;
+        amrex::Real nb = fdat.inj_num_ppp;
         amrex::Real pv = -rs2 / 3.;
-        amrex::Real qv =
-          -2. * rs2 * rs / 27. + num_mod * rad_mod2 * (rs - rad_mod) / nb;
+        amrex::Real qv = -2. * rs2 * rs / 27. + np * rp2 * (rs - rp) / nb;
         amrex::Real R1 = std::sqrt(qv * qv / 4. + std::pow(pv, 3) / 27.);
         amrex::Real yt = std::cbrt(-qv / 2. + R1) + std::cbrt(-qv / 2. - R1);
         // Radius of larger droplet after smaller droplets are stripped
         amrex::Real rb = yt + rs / 3.;
         // Number density of smaller stripped droplets
-        amrex::Real ns =
-          (num_mod * rad_mod2 * rad_mod - nb * std::pow(rb, 3)) /
-          (rs2 * rs);
-        amrex::Real removed_perc = 1. - rad_mod2 * rad_mod / r03;
+        amrex::Real ns = (np * rp2 * rp - nb * std::pow(rb, 3)) / (rs2 * rs);
+        amrex::Real removed_perc = (r03 - std::pow(rad_mod, 3)) / r03;
         amrex::Real Utan = A1 * omega_KH * lam_KH;
         // If removed mass is greater than 3%, break particle up
-        if (ns > num_dens && removed_perc > 0.03) {
+        if (ns > num_dens && removed_perc > massperc) {
           N_SB[pid] = splash_breakup::breakup_KH;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
@@ -181,7 +182,7 @@ updateBreakupKHRT(
       }
     }
   }
-  p.rdata(SprayComps::pstateDia) = rad_part;
+  p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
   p.rdata(SprayComps::pstateBphi2) = rt_time;
   return;

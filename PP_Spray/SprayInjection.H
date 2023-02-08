@@ -81,14 +81,7 @@ SprayParticleContainer::sprayInjection(
   std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
     host_particles;
   amrex::Real cur_mass = 0.;
-#if AMREX_SPACEDIM == 3
-  auto injProcs = static_cast<amrex::Real>(numInjProcs);
-  amrex::Real dphi = 2. * M_PI / injProcs;
-  amrex::Real phi_rad_lo = amrex::ParallelDescriptor::MyProc() * dphi;
-  amrex::Real mass_perc = inject_mass / injProcs;
-#else
   amrex::Real mass_perc = inject_mass;
-#endif
   while (cur_mass < mass_perc) {
     // Pick random percentage from 0 to 1
     amrex::Real radp = amrex::Random();
@@ -96,7 +89,7 @@ SprayParticleContainer::sprayInjection(
     if (spray_jet->hollow_spray()) {
       radp = 1.;
     }
-    amrex::Real phi_radial = phi_rad_lo + amrex::Random() * dphi;
+    amrex::Real phi_radial = amrex::Random() * 2. * M_PI;
     // This determines the radial location of the particle within the jet inlet
     amrex::Real cur_rad = radp * spray_jet->jet_dia() / 2.;
 #else
@@ -146,7 +139,12 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) =
           part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      p.rdata(SprayComps::pstateBphi1) = 0.;
+      // If KHRT breakup is used
+      if (m_sprayData->do_breakup == 2) {
+        p.rdata(SprayComps::pstateBphi1) = dt * pmov * umag;
+      } else {
+        p.rdata(SprayComps::pstateBphi1) = 0.;
+      }
       p.rdata(SprayComps::pstateBphi2) = 0.;
       p.rdata(SprayComps::pstateFilmVol) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
