@@ -1,8 +1,8 @@
 """Helper functions for CPP formatting."""
 
 
-def formatSpecies(species):
-    """Remove characters not allowed in preprocessor defines"""
+def format_species(species):
+    """Remove characters not allowed in preprocessor defines."""
     s = species.strip()
     # Ionic species
     if s[-1] == "-":

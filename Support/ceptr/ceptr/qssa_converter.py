@@ -8,9 +8,9 @@ import numpy as np
 import symengine as sme
 
 import ceptr.constants as cc
+import ceptr.formatter as cf
 import ceptr.utilities as cu
 import ceptr.writer as cw
-import ceptr.formatter as cf
 
 
 def set_qssa_reactions(mechanism, species_info, reaction_info):
@@ -2267,7 +2267,7 @@ def qssa_component_functions(
         # This case does not happen for dodecane_lu_qss, do later
         if symbol in list(species_info.qssa_info.needs.keys()):
             print("    Simple case, single group")
-            cpp_var_str_symbol = cf.formatSpecies(symbol)
+            cpp_var_str_symbol = cf.format_species(symbol)
             denominator = cpp_var_str_symbol + "_denom"
             numerator = cpp_var_str_symbol + "_num"
             cw.writer(
@@ -2400,7 +2400,7 @@ def qssa_component_functions(
                 )
                 cw.writer(fstream)
 
-                cpp_var_str_species = cf.formatSpecies(species)
+                cpp_var_str_species = cf.format_species(species)
                 denominator = cpp_var_str_species + "_denom"
                 numerator = cpp_var_str_species + "_num"
 
@@ -2519,7 +2519,7 @@ def qssa_component_functions(
                 cw.writer(
                     fstream,
                     "amrex::Real "
-                    + cf.formatSpecies(species)
+                    + cf.format_species(species)
                     + "_rhs = -"
                     + numerator
                     + "/"
@@ -2529,7 +2529,7 @@ def qssa_component_functions(
                 # species_rhs_smp = -numerator_smp / denominator_smp
 
                 syms.intermediate_terms_smp[
-                    cf.formatSpecies(species) + "_rhs"
+                    cf.format_species(species) + "_rhs"
                 ] = (-numerator_smp / denominator_smp)
                 cw.writer(fstream)
 
@@ -2545,17 +2545,17 @@ def qssa_component_functions(
                             != "0.0"
                         ):
                             coeff_submatrix[index][j] = (
-                                cf.formatSpecies(species)
+                                cf.format_species(species)
                                 + "_"
-                                + cf.formatSpecies(gr_species[j])
+                                + cf.format_species(gr_species[j])
                             )
                             # let us assume for now these lines are not too big
                             cw.writer(
                                 fstream,
                                 "amrex::Real "
-                                + cf.formatSpecies(species)
+                                + cf.format_species(species)
                                 + "_"
-                                + cf.formatSpecies(gr_species[j])
+                                + cf.format_species(gr_species[j])
                                 + " = (epsilon "
                                 + species_info.qssa_info.qssa_coeff[species][
                                     gr_species[j]
@@ -2566,9 +2566,9 @@ def qssa_component_functions(
                             )
 
                             syms.intermediate_terms_smp[
-                                cf.formatSpecies(species)
+                                cf.format_species(species)
                                 + "_"
-                                + cf.formatSpecies(gr_species[j])
+                                + cf.format_species(gr_species[j])
                             ] = (
                                 1e-12
                                 + species_info.qssa_info.qssa_coeff_smp[
@@ -2578,17 +2578,17 @@ def qssa_component_functions(
                             coeff_submatrix_smp[index][
                                 j
                             ] = syms.intermediate_terms_smp[
-                                cf.formatSpecies(species)
+                                cf.format_species(species)
                                 + "_"
-                                + cf.formatSpecies(gr_species[j])
+                                + cf.format_species(gr_species[j])
                             ]
                             # REMOVE IF NO DEBUG
                             # coeff_submatrix_smp[index][
                             #    j
                             # ] = sme.symbols(
-                            #    cf.formatSpecies(species)
+                            #    cf.format_species(species)
                             #    + "_"
-                            #    + cf.formatSpecies(gr_species[j])
+                            #    + cf.format_species(gr_species[j])
                             # )
 
                 # REMOVE IF NO DEBUG
@@ -2596,13 +2596,13 @@ def qssa_component_functions(
                 #    syms.intermediate_terms_smp[key] = sme.symbols(key)
 
                 cw.writer(fstream)
-                rhs_submatrix[index] = cf.formatSpecies(species) + "_rhs"
+                rhs_submatrix[index] = cf.format_species(species) + "_rhs"
                 rhs_submatrix_smp[index] = syms.intermediate_terms_smp[
-                    cf.formatSpecies(species) + "_rhs"
+                    cf.format_species(species) + "_rhs"
                 ]
                 # REMOVE IF NO DEBUG
                 # rhs_submatrix_smp[index] = sme.symbols(
-                #    cf.formatSpecies(species) + "_rhs"
+                #    cf.format_species(species) + "_rhs"
                 # )
 
             a, x, b, intermediate_helpers, x_smp = gauss_pivoting(
@@ -2754,7 +2754,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
     for member in range(len(b)):
         hold = str(b[member])
         hold = hold[:-4]
-        species[member] = cf.formatSpecies(hold)
+        species[member] = cf.format_species(hold)
 
     print("Species involved are: ", species)
     print()

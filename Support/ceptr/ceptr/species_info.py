@@ -165,14 +165,12 @@ class SpeciesInfo:
         self.dict_wdot_sc = {}
 
         for symbol in self.dict_nonqss_species:
-            symbolic_wdot = syms.wdot_smp[
-                self.dict_nonqss_species[symbol]
-            ]
-            if isinstance(symbolic_wdot,float):
+            symbolic_wdot = syms.wdot_smp[self.dict_nonqss_species[symbol]]
+            if isinstance(symbolic_wdot, float):
                 free_symb = []
             else:
                 free_symb = symbolic_wdot.free_symbols
-                
+
             qss_symb = []
             sc_symb = []
 
