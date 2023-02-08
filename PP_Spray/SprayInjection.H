@@ -19,23 +19,13 @@ SprayParticleContainer::sprayInjection(
   SprayJet* spray_jet,
   const amrex::Real sim_dt,
   const int level,
-  int startInjProc,
-  int numInjProcs,
-  const int min_parcel)
+  int injProc)
 {
   if (!spray_jet->jet_active(time)) {
     return;
   }
-  // Don't try to use more procs than we have
-  numInjProcs = amrex::min(amrex::ParallelDescriptor::NProcs(), numInjProcs);
-  startInjProc =
-    amrex::min(amrex::ParallelDescriptor::NProcs() - numInjProcs, startInjProc);
-#if AMREX_SPACEDIM == 2
-  // Do not parallelize injection for 2D
-  numInjProcs = 1;
-#endif
   int curProc = amrex::ParallelDescriptor::MyProc();
-  if (curProc < startInjProc || curProc >= startInjProc + numInjProcs) {
+  if (curProc != injProc) {
     return;
   }
   SprayUnits SPU;
@@ -63,7 +53,7 @@ SprayParticleContainer::sprayInjection(
       "Average droplet size too small, floating point issues expected");
   }
   // Minimum number of parcels we want injected at a time
-  const auto min_inj_parcel = static_cast<amrex::Real>(min_parcel);
+  const amrex::Real min_inj_parcel = spray_jet->m_minParcel;
   amrex::Real dt = sim_dt;
   amrex::Real inject_mass = spray_jet->mass_flow_rate() * sim_dt;
   // See if there is uninjected mass from previous time steps
@@ -81,8 +71,7 @@ SprayParticleContainer::sprayInjection(
   std::map<std::pair<int, int>, amrex::Gpu::HostVector<ParticleType>>
     host_particles;
   amrex::Real cur_mass = 0.;
-  amrex::Real mass_perc = inject_mass;
-  while (cur_mass < mass_perc) {
+  while (cur_mass < inject_mass) {
     // Pick random percentage from 0 to 1
     amrex::Real radp = amrex::Random();
 #if AMREX_SPACEDIM == 3
@@ -149,6 +138,11 @@ SprayParticleContainer::sprayInjection(
       p.rdata(SprayComps::pstateFilmVol) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
+      // Check if we exceed desired injected mass
+      if (cur_mass + num_ppp * pmass > inject_mass) {
+        // If so, increase the minimum parcels to avoid this in the future
+        spray_jet->m_minParcel += 1.;
+      }
       bool where = Where(p, pld);
       if (!where) {
         amrex::Abort("Bad injection particle");

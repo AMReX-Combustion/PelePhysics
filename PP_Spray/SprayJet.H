@@ -205,6 +205,8 @@ public:
 
   amrex::Real m_sumInjMass = -1.;
   amrex::Real m_sumInjTime = -1.;
+  // Minimum parcels to inject at a time
+  amrex::Real m_minParcel = 1.;
 
 protected:
   // Member data

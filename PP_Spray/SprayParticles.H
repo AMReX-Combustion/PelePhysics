@@ -72,10 +72,7 @@ public:
     SprayJet* spray_jet,
     const amrex::Real sim_dt,
     const int level,
-    int startInjProc = 0,
-    int numInjProcs = 1,
-    const int min_parcel =
-      1); // Minimum number of parcels added during injection
+    int injProc = 0)
 
   void uniformSprayInit(
     const amrex::IntVect num_part,
