@@ -36,14 +36,9 @@ SprayParticleContainer::sprayInjection(
       spray_jet->get_avg_Y(spf) / fdat->rhoL(spray_jet->get_avg_T(), spf);
   }
   rho_avg = 1. / rho_avg;
-  const amrex::Real Wec = 12.;
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
-  const amrex::Real num_ppp = spray_jet->inject_ppp();
-  if (num_ppp > fdat->max_num_ppp) {
-    amrex::Abort(
-      "Injection number density cannot exceed maximum number density");
-  }
+  const amrex::Real num_ppp = fdat->inj_num_ppp;
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
