@@ -3056,7 +3056,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         + "*"
                         + "sc_qss["
                         + str(
-                            species_info.qssa_species_list.index(
+                            species_info.qssa_species_formatted_list.index(
                                 species[n - j]
                             )
                         )
@@ -3065,7 +3065,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                     sumprod_smp += (
                         a_smp[n - i][n - j]
                         * syms.sc_qss_smp[
-                            species_info.qssa_species_list.index(
+                            species_info.qssa_species_formatted_list.index(
                                 species[n - j]
                             )
                         ]
