@@ -18,6 +18,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   pp.query("max_nls_iters", max_nls_iters);
   pp.query("max_fp_accel", max_fp_accel);
   pp.query("clean_init_massfrac", m_clean_init_massfrac);
+  pp.query("print_profiling", m_print_profiling);
   checkCvodeOptions();
 
   amrex::Print() << "Initializing CVODE:\n";
@@ -1442,7 +1443,9 @@ ReactorCvode::react(
 #endif
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
-  SUNProfiler_Print(sun_profiler, stdout);
+  if (m_print_profiling) {
+    SUNProfiler_Print(sun_profiler, stdout);
+  }
 #endif
 
   return static_cast<int>(nfe);
