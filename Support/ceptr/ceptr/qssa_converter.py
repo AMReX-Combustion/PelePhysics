@@ -2529,7 +2529,7 @@ def qssa_component_functions(
                 # species_rhs_smp = -numerator_smp / denominator_smp
 
                 syms.intermediate_terms_smp[
-                    species.replace("*", "D") + "_rhs"
+                    cf.formatSpecies(species) + "_rhs"
                 ] = (-numerator_smp / denominator_smp)
                 cw.writer(fstream)
 
@@ -2566,9 +2566,9 @@ def qssa_component_functions(
                             )
 
                             syms.intermediate_terms_smp[
-                                str(species.replace("*", "D"))
+                                cf.formatSpecies(species)
                                 + "_"
-                                + str(gr_species[j].replace("*", "D"))
+                                + cf.formatSpecies(gr_species[j])
                             ] = (
                                 1e-12
                                 + species_info.qssa_info.qssa_coeff_smp[
@@ -2578,17 +2578,17 @@ def qssa_component_functions(
                             coeff_submatrix_smp[index][
                                 j
                             ] = syms.intermediate_terms_smp[
-                                str(species).replace("*", "D")
+                                cf.formatSpecies(species)
                                 + "_"
-                                + str(gr_species[j]).replace("*", "D")
+                                + cf.formatSpecies(gr_species[j])
                             ]
                             # REMOVE IF NO DEBUG
                             # coeff_submatrix_smp[index][
                             #    j
                             # ] = sme.symbols(
-                            #    str(species).replace("*", "D")
+                            #    cf.formatSpecies(species)
                             #    + "_"
-                            #    + str(gr_species[j]).replace("*", "D")
+                            #    + cf.formatSpecies(gr_species[j])
                             # )
 
                 # REMOVE IF NO DEBUG
@@ -2598,11 +2598,11 @@ def qssa_component_functions(
                 cw.writer(fstream)
                 rhs_submatrix[index] = cf.formatSpecies(species) + "_rhs"
                 rhs_submatrix_smp[index] = syms.intermediate_terms_smp[
-                    str(species.replace("*", "D")) + "_rhs"
+                    cf.formatSpecies(species) + "_rhs"
                 ]
                 # REMOVE IF NO DEBUG
                 # rhs_submatrix_smp[index] = sme.symbols(
-                #    str(specie/s.replace("*", "D")) + "_rhs"
+                #    cf.formatSpecies(species) + "_rhs"
                 # )
 
             a, x, b, intermediate_helpers, x_smp = gauss_pivoting(
@@ -2754,7 +2754,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
     for member in range(len(b)):
         hold = str(b[member])
         hold = hold[:-4]
-        species[member] = hold.replace("D", "*")
+        species[member] = cf.formatSpecies(hold)
 
     print("Species involved are: ", species)
     print()
