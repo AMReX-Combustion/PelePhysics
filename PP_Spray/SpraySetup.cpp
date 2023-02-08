@@ -99,6 +99,7 @@ SprayParticleContainer::readSprayParams(
   }
 
   Real max_parcel_size = 40.;
+  Real inj_parcel_size = 0.5;
   Real spray_ref_T = 300.;
   bool splash_model = false;
   int breakup_model = 0;
@@ -106,6 +107,10 @@ SprayParticleContainer::readSprayParams(
   // Set the number of particles per parcel
   //
   pp.query("max_parcel_size", max_parcel_size);
+  pp.query("inj_parcel_size", inj_parcel_size);
+  if (inj_parcel_size > max_parcel_size) {
+    Abort("Injection number density cannot exceed maximum number density");
+  }
   pp.query("use_splash_model", splash_model);
   std::string breakup_model_str = "None";
   pp.query("use_breakup_model", breakup_model_str);
@@ -173,6 +178,7 @@ SprayParticleContainer::readSprayParams(
 #endif
 
   sprayData.max_num_ppp = max_parcel_size;
+  sprayData.inj_num_ppp = inj_parcel_size;
   sprayData.ref_T = spray_ref_T;
 
   // List of known derived spray quantities

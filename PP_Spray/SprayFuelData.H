@@ -126,6 +126,7 @@ struct SprayData
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
   amrex::Real max_num_ppp; // Max parcel size
+  amrex::Real inj_num_ppp; // Injection parcel size
   amrex::Real ref_T;
   amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
@@ -152,8 +153,8 @@ struct SprayData
     fixed_parts = fdat.fixed_parts;
     do_breakup = fdat.do_breakup;
     do_splash = fdat.do_splash;
-    // Convert input values from CGS to MKS for PeleLM
     max_num_ppp = fdat.max_num_ppp;
+    inj_num_ppp = fdat.inj_num_ppp;
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
     wall_T = fdat.wall_T;

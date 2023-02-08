@@ -138,8 +138,9 @@ SprayParticleContainer::sprayInjection(
       p.rdata(SprayComps::pstateFilmVol) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
+      amrex::Real new_mass = cur_mass + num_ppp * pmass;
       // Check if we exceed desired injected mass
-      if (cur_mass + num_ppp * pmass > inject_mass) {
+      if (new_mass > inject_mass) {
         // If so, increase the minimum parcels to avoid this in the future
         spray_jet->m_minParcel += 1.;
       }
@@ -149,7 +150,7 @@ SprayParticleContainer::sprayInjection(
       }
       std::pair<int, int> ind(pld.m_grid, pld.m_tile);
       host_particles[ind].push_back(p);
-      cur_mass += num_ppp * pmass;
+      cur_mass = new_mass;
     }
   }
   for (auto& kv : host_particles) {
