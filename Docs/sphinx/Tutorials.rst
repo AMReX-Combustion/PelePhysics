@@ -83,7 +83,7 @@ Generate ``mechanism.H`` and ``mechanism.cpp`` from ``qssa.yaml``::
   $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml
 
 Tutorial 3 - Generating NC12H26 Skeletal mechanism
--------------------------------------------------------------------------
+--------------------------------------------------
 .. _sec_tutskel3:
 
 Update ``poetry``::
