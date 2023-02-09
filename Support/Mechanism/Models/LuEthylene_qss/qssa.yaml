@@ -2,14 +2,14 @@ description: QSSA of gas
 generator: YamlWriter
 cantera-version: 2.6.0
 git-commit: 9573e6b
-date: Wed Feb  8 15:26:24 2023
+date: Wed Feb  8 17:39:06 2023
 phases:
-  - name: gas-qssa
+  - forward_to_remove_idx: [72, 73, 149, 180, 205]
     n_qssa_species: 10
-    qssa_species: [CH, H2CC, CH2, CH2*, CH3O, C2H3, CH2CHO, nC3H7, C2H5, HCO]
-    transport: mixture-averaged
-    forward_to_remove_idx: [72, 73, 149, 180, 205]
     kinetics: gas
+    transport: mixture-averaged
+    qssa_species: [CH2*, nC3H7, C2H5, CH3O, CH, C2H3, HCO, CH2, H2CC, CH2CHO]
+    name: gas-qssa
     thermo: ideal-gas
     elements: [H, O, C, N]
     species: [H2, H, O, O2, OH, H2O, HO2, H2O2, CH, CH2, CH2*, CH3, CH4, CO, CO2, HCO,
@@ -139,7 +139,6 @@ species:
       diameter: 3.458
       well-depth: 107.4
       rotational-relaxation: 1.0
-      note: "*"
   - name: H2O2
     composition: {H: 2.0, O: 2.0}
     thermo:
@@ -377,7 +376,6 @@ species:
       diameter: 4.1
       well-depth: 209.0
       rotational-relaxation: 1.0
-      note: "*"
   - name: C2H4
     composition: {C: 2.0, H: 4.0}
     thermo:
@@ -446,7 +444,6 @@ species:
       diameter: 2.5
       well-depth: 150.0
       rotational-relaxation: 1.0
-      note: "*"
   - name: CH2CO
     composition: {C: 2.0, H: 2.0, O: 1.0}
     thermo:
@@ -677,7 +674,7 @@ reactions:
     H2O: 6.0}
     note: |
       R115
-      96KNY/SLA, Zoran's Fc fit
+      96KNY/SLA, Zorans Fc fit
   - equation: CH2CO + H (+M) <=> CH2CHO (+M)
     type: falloff
     low-P-rate-constant: {A: 3.8e+35, b: -7.64, Ea: 4.97896e+07}
@@ -1040,7 +1037,7 @@ reactions:
     rate-constant: {A: 2.64e+09, b: 0.0, Ea: 6.276e+06}
     note: |
       R52
-      Wagner's CO/CO2 ratio, alpha = 0.2
+      Wagners CO/CO2 ratio, alpha = 0.2
   - equation: CH2 + OH <=> CH2O + H
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |

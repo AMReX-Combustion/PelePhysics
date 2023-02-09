@@ -4,8 +4,8 @@ description: |-
      A 32-Species Skeletal Mechanism for C2H4-air
 
      Z. Luo, C.S. Yoo, E.S. Richardson, J.H. Chen, C.K. Law, and T.F. Lu,
-     "Chemical explosive mode analysis for a turbulent lifted ethylene jet
-     flame in highly-heated coflow,"
+     Chemical explosive mode analysis for a turbulent lifted ethylene jet
+     flame in highly-heated coflow,
      Combustion and Flame,
      doi:10.1016/j.combustflame.2011.05.023, 2011.
 
@@ -14,7 +14,7 @@ description: |-
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 2.6.0
-date: Wed, 08 Feb 2023 12:34:49 -0700
+date: Wed, 11 May 2022 17:41:09 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -149,7 +149,6 @@ species:
     well-depth: 107.4
     diameter: 3.458
     rotational-relaxation: 1.0
-    note: '*'
 - name: H2O2
   composition: {H: 2, O: 2}
   thermo:
@@ -387,7 +386,6 @@ species:
     well-depth: 209.0
     diameter: 4.1
     rotational-relaxation: 1.0
-    note: '*'
 - name: C2H4
   composition: {C: 2, H: 4}
   thermo:
@@ -456,7 +454,6 @@ species:
     well-depth: 150.0
     diameter: 2.5
     rotational-relaxation: 1.0
-    note: '*'
 - name: CH2CO
   composition: {C: 2, H: 2, O: 1}
   thermo:
@@ -887,7 +884,7 @@ reactions:
   rate-constant: {A: 2.64e+12, b: 0.0, Ea: 1500.0}
   note: |-
     R52
-      Wagner's CO/CO2 ratio, alpha = 0.2
+      Wagners CO/CO2 ratio, alpha = 0.2
 - equation: CH2 + OH <=> CH2O + H  # Reaction 53
   rate-constant: {A: 2.0e+13, b: 0.0, Ea: 0.0}
   note: |-
@@ -1236,7 +1233,7 @@ reactions:
     C2H2: 3.0, C2H4: 3.0}
   note: |-
     R115
-      96KNY/SLA, Zoran's Fc fit
+      96KNY/SLA, Zorans Fc fit
 - equation: C2H2 + O <=> HCCO + H  # Reaction 116
   rate-constant: {A: 1.632e+07, b: 2.0, Ea: 1900.0}
   note: |-
