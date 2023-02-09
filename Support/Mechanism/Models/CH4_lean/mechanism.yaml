@@ -20,7 +20,7 @@ description: |-
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 2.6.0
-date: Tue, 07 Feb 2023 17:48:14 -0700
+date: Wed, 08 Feb 2023 12:34:08 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
