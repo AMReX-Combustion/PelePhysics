@@ -189,7 +189,7 @@ SprayParticleContainer::CreateSBDroplets(
         }
         // If number density exceeds max, make number density 10% of max
         if (numDens0 > fdat->max_num_ppp) {
-          Nsint = static_cast<int>(numDens0 / 0.1 * fdat->max_num_ppp);
+          Nsint = static_cast<int>(numDens0 / (0.1 * fdat->max_num_ppp));
         }
         Real new_num_dens = numDens0 / (static_cast<Real>(Nsint));
 #if AMREX_SPACEDIM == 3
