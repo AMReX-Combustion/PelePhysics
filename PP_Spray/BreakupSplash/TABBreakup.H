@@ -56,7 +56,8 @@ updateBreakupTAB(
   amrex::Real denom = rho_part * rad_part * rad_part;
   amrex::Real td = 2. * denom / (C_d * mu_part);
   amrex::Real omega2 = C_k * sigma / (denom * rad_part) - 1. / (td * td);
-  amrex::Real tbconst = 2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
+  amrex::Real tbconst =
+    2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
   if (omega2 <= 0.) {
     p.rdata(SprayComps::pstateBphi1) = 0.;
     p.rdata(SprayComps::pstateBphi2) = 0.;

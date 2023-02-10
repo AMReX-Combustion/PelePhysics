@@ -124,7 +124,6 @@ SprayParticleContainer::readSprayParams(
     pp.query("B0_KHRT", B0_KHRT);
     pp.query("B1_KHRT", B1_KHRT);
     pp.query("C3_KHRT", C3_KHRT);
-    
   } else if (breakup_model_str == "None") {
     breakup_model = 0;
   } else {

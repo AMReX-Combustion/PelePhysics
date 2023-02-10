@@ -174,6 +174,9 @@ SprayParticleContainer::updateParticles(
   bool isActive = !(isVirt || isGhost);
   bool do_splash_breakup =
     (m_sprayData->do_breakup > 0 || m_sprayData->do_splash);
+  Real B0 = B0_KHRT;
+  Real B1 = B1_KHRT;
+  Real C3 = C3_KHRT;
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -450,7 +453,8 @@ SprayParticleContainer::updateParticles(
               pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
           } else {
             updateBreakupKHRT(
-              pid, p, Reyn_d, flow_dt, avg_inject_d3, B0_KHRT, B1_KHRT, C3_KHRT, gpv, *fdat, N_SB, rf_d);
+              pid, p, Reyn_d, flow_dt, avg_inject_d3, B0, B1, C3, gpv, *fdat,
+              N_SB, rf_d);
           }
         }
       } // End of p.id() > 0 check
