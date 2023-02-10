@@ -408,6 +408,9 @@ public:
   static std::string spray_fuel_names[SPRAY_FUEL_NUM];
   static std::string spray_dep_names[SPRAY_FUEL_NUM];
   static amrex::Vector<std::string> spray_derive_vars;
+  static amrex::Real B0_KHRT;
+  static amrex::Real B1_KHRT;
+  static amrex::Real C3_KHRT;
 
 private:
   ///

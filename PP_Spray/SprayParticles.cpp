@@ -450,7 +450,7 @@ SprayParticleContainer::updateParticles(
               pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
           } else {
             updateBreakupKHRT(
-              pid, p, Reyn_d, flow_dt, avg_inject_d3, gpv, *fdat, N_SB, rf_d);
+              pid, p, Reyn_d, flow_dt, avg_inject_d3, B0_KHRT, B1_KHRT, C3_KHRT, gpv, *fdat, N_SB, rf_d);
           }
         }
       } // End of p.id() > 0 check

@@ -182,15 +182,16 @@ SprayParticleContainer::CreateSBDroplets(
         // For RT and TAB breakup, a single droplet breaks up based on number
         // density
         int Nsint = static_cast<int>(numDens0);
-        Real new_num_dens = numDens0 / (static_cast<Real>(Nsint));
         // For KH breakup, particles are shed from larger droplets
         // numDens0 is set to the ns value from KH breakup
         if (N_SB_h[n] == splash_breakup::breakup_KH) {
           Nsint = 1;
-          new_num_dens = numDens0;
-          // Ignore jet distance for KH stripped droplets
-          phi2 = 1.E5;
         }
+        // If number density exceeds max, make number density 10% of max
+        if (numDens0 > fdat->max_num_ppp) {
+          Nsint = static_cast<int>(numDens0 / 0.1 * fdat->max_num_ppp);
+        }
+        Real new_num_dens = numDens0 / (static_cast<Real>(Nsint));
 #if AMREX_SPACEDIM == 3
         RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);

@@ -6,6 +6,9 @@ using namespace amrex;
 std::string SprayParticleContainer::spray_fuel_names[SPRAY_FUEL_NUM];
 std::string SprayParticleContainer::spray_dep_names[SPRAY_FUEL_NUM];
 Vector<std::string> SprayParticleContainer::spray_derive_vars;
+Real SprayParticleContainer::B0_KHRT = 0.61;
+Real SprayParticleContainer::B1_KHRT = 7.;
+Real SprayParticleContainer::C3_KHRT = 1.;
 
 void
 getInpCoef(
@@ -118,6 +121,10 @@ SprayParticleContainer::readSprayParams(
     breakup_model = 1;
   } else if (breakup_model_str == "KHRT") {
     breakup_model = 2;
+    pp.query("B0_KHRT", B0_KHRT);
+    pp.query("B1_KHRT", B1_KHRT);
+    pp.query("C3_KHRT", C3_KHRT);
+    
   } else if (breakup_model_str == "None") {
     breakup_model = 0;
   } else {

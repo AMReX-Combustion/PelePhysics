@@ -13,6 +13,9 @@ updateBreakupKHRT(
   const amrex::Real& Reyn_d,
   const amrex::Real& dt,
   const amrex::Real& avg_inject_d3,
+  const amrex::Real B0,
+  const amrex::Real B1,
+  const amrex::Real C3,
   const GasPhaseVals& gpv,
   const SprayData& fdat,
   splash_breakup* N_SB,
@@ -21,9 +24,6 @@ updateBreakupKHRT(
   // Percent of mass lost before new parcel is formed
   const amrex::Real massperc = 0.03;
   const amrex::Real We_crit = 6.;
-  // Wave model constants
-  const amrex::Real B0 = 0.61; // Make this an input
-  const amrex::Real B1 = 7.;   // Make this an input
   // RT model constants
   const amrex::Real A1 = 0.188;
   // Retreive particle data
@@ -81,7 +81,7 @@ updateBreakupKHRT(
       2. / (3. * std::sqrt(3. * sigma)) * momdiff * std::sqrt(momdiff) /
       (rho_part + gpv.rho_fluid));
     amrex::Real KRT = std::sqrt(momdiff / (3. * sigma));
-    amrex::Real lam_RT = M_PI / KRT;
+    amrex::Real lam_RT = C3 * M_PI / KRT;
     if (rt_time > 0. || lam_RT < rad_part) {
       rt_time += dt;
     }
@@ -93,14 +93,15 @@ updateBreakupKHRT(
       rad_part = lam_RT;
       breakupRT = true;
       if (num_dens > fdat.max_num_ppp) {
+        N_SB[pid] = splash_breakup::breakup_RT;
         amrex::Real Utan = A1 * omega_RT * lam_RT;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
           rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
           rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
         }
-        rf.numDens[pid] = p.rdata(SprayComps::pstateNumDens);
-        rf.d0[pid] = p.rdata(SprayComps::pstateDia);
+        rf.numDens[pid] = num_dens;
+        rf.d0[pid] = 2. * rad_part;
         rf.dtpp[pid] = 0.;
         rf.phi1[pid] = Utan;
         rf.phi2[pid] = dis;
