@@ -32,6 +32,8 @@ amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
 amrex.fpe_trap_overflow = 1
 
+ode.bdf_nsubsteps=2000
+ode.bdf_scheme=3
 
 # 1013250.0 * patm
 hr.press = 5066250.0
