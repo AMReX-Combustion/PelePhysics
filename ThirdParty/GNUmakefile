@@ -57,7 +57,7 @@ ifeq ($(USE_HIP),TRUE)
   endif
 endif
 
-tp_suffix=$(COMP)$(PrecisionSuffix)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
+tp_suffix=$(COMP)$(PrecisionSuffix)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(SYCLSuffix)$(KLUSuffix)$(MAGMASuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
@@ -158,12 +158,12 @@ else
   HIP_DEFINES=-DENABLE_HIP:BOOL=OFF
   HIPSuffix=
 endif
-ifeq ($(USE_DPCPP),TRUE)
-  DPCPP_DEFINES=-DENABLE_SYCL:BOOL=ON
-  DPCPPSuffix=.DPCPP
+ifeq ($(USE_SYCL),TRUE)
+  SYCL_DEFINES=-DENABLE_SYCL:BOOL=ON
+  SYCLSuffix=.SYCL
 else
-  DPCPP_DEFINES=-DENABLE_SYCL:BOOL=OFF
-  DPCPPSuffix=
+  SYCL_DEFINES=-DENABLE_SYCL:BOOL=OFF
+  SYCLSuffix=
 endif
 
 SUNDIALS_VERSION ?= 6.5.0
@@ -206,7 +206,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
           -DBUILD_SHARED_LIBS:BOOL=ON \
           -DSUNDIALS_BUILD_WITH_PROFILING:BOOL=$(SUNDIALS_PROFILING) \
           -DSUNDIALS_INDEX_SIZE:INT=32 \
-          $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
+          $(CUDA_DEFINES) $(HIP_DEFINES) $(SYCL_DEFINES) \
           $(KLU_DEFINES) $(MAGMA_DEFINES) \
           $(SUNDIALS_SOURCE_DIR)/sundials-$(SUNDIALS_VERSION) && \
         cmake --build $(SUNDIALS_BUILD_DIR) --parallel 16 && \

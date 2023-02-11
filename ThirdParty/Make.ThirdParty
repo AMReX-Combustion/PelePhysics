@@ -7,7 +7,7 @@ ifeq ($(USE_CUDA),TRUE)
 else
   HOSTCC = $(COMP)
 endif
-configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; $(MAKE) tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_DPCPP=$(USE_DPCPP) PELE_USE_KLU=$(PELE_USE_KLU) PELE_USE_MAGMA=$(PELE_USE_MAGMA) PRECISION=$(PRECISION) DEBUG=$(DEBUG) COMP=$(COMP) NVCC=$(COMP) | tail -1)
+configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; $(MAKE) tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_SYCL=$(USE_SYCL) PELE_USE_KLU=$(PELE_USE_KLU) PELE_USE_MAGMA=$(PELE_USE_MAGMA) PRECISION=$(PRECISION) DEBUG=$(DEBUG) COMP=$(COMP) NVCC=$(COMP) | tail -1)
 REL_SUNDIALS_LIB_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
 SUNDIALS_LIB_DIR := $(abspath $(lastword $(REL_SUNDIALS_LIB_DIR)))
 INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
@@ -22,7 +22,7 @@ else
      LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
      LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvechip
   else
-    ifeq ($(USE_DPCPP),TRUE)
+    ifeq ($(USE_SYCL),TRUE)
        LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
        LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecsycl
     endif
