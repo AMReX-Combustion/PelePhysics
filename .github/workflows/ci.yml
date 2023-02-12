@@ -77,7 +77,7 @@ jobs:
             amrex_build_args: 'USE_HIP=TRUE AMD_ARCH=gfx908 LIBRARY_LOCATIONS=/opt/rocm/lib'
             dependency_cmds: '.github/workflows/dependencies/dependencies_hip.sh'
           - comp: dpcpp
-            amrex_build_args: 'USE_DPCPP=TRUE'
+            amrex_build_args: 'USE_SYCL=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
       - uses: actions/checkout@v2
