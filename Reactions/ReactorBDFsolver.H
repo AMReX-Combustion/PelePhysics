@@ -12,7 +12,7 @@
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 noprecond(
   amrex::Real MinvX[NEQNS],
-  amrex::Real** /*A[NEQNS][NEQNS]*/,
+  amrex::Real /*A*/[NEQNS][NEQNS],
   amrex::Real X[NEQNS])
 {
   for (int i = 0; i < NEQNS; i++) {
