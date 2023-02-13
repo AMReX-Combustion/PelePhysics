@@ -10,7 +10,7 @@
 #include "AMReX_SUNMemory.H"
 #endif
 
-#ifdef AMREX_USE_DPCPP
+#ifdef AMREX_USE_SYCL
 #include <nvector/nvector_sycl.h>
 #endif
 
@@ -78,7 +78,7 @@ ReactorBase::set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(), sunctx);
   amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
-#elif defined(AMREX_USE_DPCPP)
+#elif defined(AMREX_USE_SYCL)
   N_Vector atol = N_VNewWithMemHelp_Sycl(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
@@ -118,7 +118,7 @@ ReactorBase::set_sundials_solver_tols(
   N_VCopyToDevice_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_VCopyToDevice_Hip(atol);
-#elif defined(AMREX_USE_DPCPP)
+#elif defined(AMREX_USE_SYCL)
   N_VCopyToDevice_Sycl(atol);
 #endif
 

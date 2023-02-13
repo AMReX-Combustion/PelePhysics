@@ -7,7 +7,7 @@
 #include <arkode/arkode_erkstep.h>
 #include <nvector/nvector_serial.h>
 
-#ifdef AMREX_USE_DPCPP
+#ifdef AMREX_USE_SYCL
 #include <nvector/nvector_sycl.h>
 #endif
 

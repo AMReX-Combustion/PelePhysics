@@ -81,7 +81,7 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
     reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
   }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
-#elif defined(AMREX_USE_DPCPP)
+#elif defined(AMREX_USE_SYCL)
   N_Vector y = N_VNewWithMemHelp_Sycl(
     nvsize, false, *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(),
