@@ -242,7 +242,6 @@ $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	###@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || git clone --branch bugfix/update-sycl-header https://github.com/LLNL/sundials ./src/sundials-6.5.0
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
