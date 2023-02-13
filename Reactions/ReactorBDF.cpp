@@ -143,7 +143,6 @@ ReactorBDF::react(
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
-  amrex::Real time_out = time + dt_react;
 
   // Copy to device
   amrex::Gpu::DeviceVector<amrex::Real> rY(ncells * (NUM_SPECIES + 1), 0);
@@ -186,13 +185,12 @@ ReactorBDF::react(
       0.0}; // newton_soln_k+1 - newton_soln_k
     amrex::Real dsoln0[NUM_SPECIES + 1] = {
       0.0}; // initial newton_soln_k+1 -newton_soln_k
-    amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
     amrex::Real mw[NUM_SPECIES] = {0.0};
     const int neq = (NUM_SPECIES + 1);
     get_mw(mw);
 
-    // initialization of variables before timestepping=====================
+    // initialization of variables before timestepping
     amrex::Real current_time = time_init;
     amrex::Real dt = dt_react / amrex::Real(captured_nsubsteps);
 
@@ -202,7 +200,6 @@ ReactorBDF::react(
       soln_n[i] = d_rY[icell * neq + i];
     }
     get_rho_and_massfracs(soln_n, rho, massfrac);
-    amrex::Real temp = soln[NUM_SPECIES];
 
     amrex::Real rhoe_init[] = {d_rX[icell]};
     amrex::Real rhoesrc_ext[] = {d_rX_src[icell]};
@@ -211,15 +208,12 @@ ReactorBDF::react(
       rYsrc_ext[sp] = d_rYsrc[icell * NUM_SPECIES + sp];
     }
 
-    const int consP = (captured_reactor_type == ReactorTypes::h_reactor_type);
     for (int ii = 0; ii < neq; ii++) {
       soln[ii] = soln_n[ii];
       soln_nm1[ii] = soln_n[ii];
       soln_nm2[ii] = soln_n[ii];
     }
-    //==================================================================
 
-    int nsteps = 0;
     int printflag = 0;
     // if BDF2 use trapz or BDF1 for first step
     int first_tstepscheme =
@@ -236,7 +230,7 @@ ReactorBDF::react(
       for (int ii = 0; ii < neq; ii++) {
         dsoln0[ii] = 0.0;
       }
-      // non-linear iterations for each timestep=======================
+      // non-linear iterations for each timestep
       for (int nlit = 0; nlit < captured_nonlinear_iters; nlit++) {
         for (int ii = 0; ii < neq; ii++) {
           dsoln0[ii] = dsoln[ii];
@@ -326,7 +320,6 @@ ReactorBDF::react(
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
-  amrex::Real time_out = time + dt_react;
 
   // capture variables
   const int captured_tstepscheme = m_tstepscheme;
@@ -355,13 +348,12 @@ ReactorBDF::react(
       0.0}; // newton_soln_k+1 - newton_soln_k
     amrex::Real dsoln0[NUM_SPECIES + 1] = {
       0.0}; // initial newton_soln_k+1 -newton_soln_k
-    amrex::Real ydot[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
     amrex::Real mw[NUM_SPECIES] = {0.0};
     const int neq = (NUM_SPECIES + 1);
     get_mw(mw);
 
-    // initialization of variables before timestepping=====================
+    // initialization of variables before timestepping
     amrex::Real current_time = time_init;
     amrex::Real dt = dt_react / amrex::Real(captured_nsubsteps);
     amrex::Real rho = 0.0;
@@ -387,15 +379,13 @@ ReactorBDF::react(
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       rYsrc_ext[sp] = rYsrc_in(i, j, k, sp);
     }
-    const int consP = (captured_reactor_type == ReactorTypes::h_reactor_type);
     for (int ii = 0; ii < neq; ii++) {
       soln[ii] = soln_n[ii];
       soln_nm1[ii] = soln_n[ii];
       soln_nm2[ii] = soln_n[ii];
     }
-    //==================================================================
 
-    // begin timestepping================================================
+    // begin timestepping
     int printflag = 0;
     // if BDF2 use trapz or BDF1 for first step
     int first_tstepscheme =
@@ -412,7 +402,7 @@ ReactorBDF::react(
       for (int ii = 0; ii < neq; ii++) {
         dsoln0[ii] = 0.0;
       }
-      // non-linear iterations for each timestep=======================
+      // non-linear iterations for each timestep
       for (int nlit = 0; nlit < captured_nonlinear_iters; nlit++) {
         for (int ii = 0; ii < neq; ii++) {
           dsoln0[ii] = dsoln[ii];
