@@ -45,6 +45,7 @@ CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
 
 Converting CHEMKIN files
 ------------------------
+.. _sec_convertCK:
 
 We rely on Cantera's ``ck2yaml`` utility to convert CHEMKIN files to the Cantera yaml format (and proceed as above with CEPTR on the resulting yaml file)::
 
