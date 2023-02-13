@@ -39,7 +39,7 @@ else
         else
           ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),sycl))
              CCOMPILER = icx
-             CXXCOMPILER = icpx
+             CXXCOMPILER = dpcpp
 	  else
              $(error Unknown COMP setting)
 	  endif
