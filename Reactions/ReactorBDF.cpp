@@ -143,6 +143,9 @@ ReactorBDF::react(
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
+#ifdef MOD_REACTOR
+  amrex::Real time_out = time + dt_react;
+#endif
 
   // Copy to device
   amrex::Gpu::DeviceVector<amrex::Real> rY(ncells * (NUM_SPECIES + 1), 0);
@@ -320,6 +323,9 @@ ReactorBDF::react(
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
+#ifdef MOD_REACTOR
+  amrex::Real time_out = time + dt_react;
+#endif
 
   // capture variables
   const int captured_tstepscheme = m_tstepscheme;
