@@ -132,7 +132,9 @@ jobs:
           fi
           if [ "${{matrix.comp}}" == 'dpcpp' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
+            set +e
             source /opt/intel/oneapi/setvars.sh || true
+            set -e
             which dpcpp || echo "dpcpp not in PATH!"; \
           fi
           cmake --version
