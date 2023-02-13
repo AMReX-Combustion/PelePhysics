@@ -224,7 +224,7 @@ ReactorBDF::react(
     int schemechangestep = captured_tstepscheme - 2; // 0 for BDF2 and 1 for
                                                      // BDF3
     amrex::Real rhs[(NUM_SPECIES + 1)] = {0.0};
-    amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {0.0};
+    amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {{0.0}};
     for (int nsteps = 0; nsteps < captured_nsubsteps; nsteps++) {
       // shift to BDF2 after first step
       int tstepscheme =
@@ -399,7 +399,7 @@ ReactorBDF::react(
     int schemechangestep = captured_tstepscheme - 2; // 0 for BDF2 and 1 for
                                                      // BDF3
     amrex::Real rhs[(NUM_SPECIES + 1)] = {0.0};
-    amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {0.0};
+    amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {{0.0}};
     for (int nsteps = 0; nsteps < captured_nsubsteps; nsteps++) {
       // shift to BDF2 after first step
       int tstepscheme =

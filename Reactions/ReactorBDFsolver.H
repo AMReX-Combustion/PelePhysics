@@ -406,8 +406,8 @@ performgmres(
   amrex::Real r0[NEQNS] = {0.0};
   amrex::Real Ax0[NEQNS] = {0.0};
   amrex::Real Minvr[NEQNS] = {0.0};
-  amrex::Real kspvectors[KSPSIZE + 1][NEQNS] = {0.0};
-  amrex::Real Hessmat[KSPSIZE + 1][KSPSIZE] = {0.0};
+  amrex::Real kspvectors[KSPSIZE + 1][NEQNS] = {{0.0}};
+  amrex::Real Hessmat[KSPSIZE + 1][KSPSIZE] = {{0.0}};
   amrex::Real cos_arr[KSPSIZE] = {0.0};
   amrex::Real sin_arr[KSPSIZE] = {0.0};
   amrex::Real beta_e1[KSPSIZE + 1] = {0.0};
