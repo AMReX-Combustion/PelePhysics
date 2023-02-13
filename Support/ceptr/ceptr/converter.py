@@ -6,6 +6,7 @@ import subprocess as spr
 import numpy as np
 
 import ceptr.ck as cck
+import ceptr.formatter as cf
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
 import ceptr.production as cp
@@ -123,7 +124,13 @@ class Converter:
                 self.species_info.all_species.append(tempsp)
                 self.species_info.nonqssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
+                self.species_info.all_species_formatted_list.append(
+                    cf.format_species(species.name)
+                )
                 self.species_info.nonqssa_species_list.append(species.name)
+                self.species_info.nonqssa_species_formatted_list.append(
+                    cf.format_species(species.name)
+                )
                 self.species_info.ordered_idx_map[species.name] = sorted_idx
                 self.species_info.mech_idx_map[species.name] = id
                 sorted_idx += 1
@@ -141,7 +148,13 @@ class Converter:
                 self.species_info.all_species.append(tempsp)
                 self.species_info.qssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
+                self.species_info.all_species_formatted_list.append(
+                    cf.format_species(species.name)
+                )
                 self.species_info.qssa_species_list.append(species.name)
+                self.species_info.qssa_species_formatted_list.append(
+                    cf.format_species(species.name)
+                )
                 self.species_info.ordered_idx_map[species.name] = sorted_idx
                 self.species_info.mech_idx_map[species.name] = id
                 sorted_idx += 1
@@ -592,16 +605,7 @@ class Converter:
         cw.writer(fstream, cw.comment("Species"))
         nb_ions = 0
         for species in self.species_info.nonqssa_species_list:
-            s = species.strip()
-            # Ionic species
-            if s[-1] == "-":
-                s = s[:-1] + "n"
-            if s[-1] == "+":
-                s = s[:-1] + "p"
-            # Excited species
-            s = s.replace("*", "D")
-            # Remove other characters not allowed in preprocessor defines
-            s = s.replace("-", "").replace("(", "").replace(")", "")
+            s = cf.format_species(species)
             cw.writer(
                 fstream,
                 "#define %s_ID %d"

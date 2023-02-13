@@ -315,7 +315,18 @@ class SymbolicMath:
         cpp_str = str(cppcode)
 
         if self.remove_1:
-            cpp_str = cpp_str.replace("1.0*", "")
+            cpp_str = cpp_str.replace("(1.0*", "(")
+            cpp_str = cpp_str.replace(" 1.0*", " ")
+            cpp_str = cpp_str.replace("+1.0*", "+")
+            cpp_str = cpp_str.replace("-1.0*", "-")
+            cpp_str = cpp_str.replace("/1.0+", "+")
+            cpp_str = cpp_str.replace("/1.0*", "*")
+            cpp_str = cpp_str.replace("/1.0-", "-")
+            cpp_str = cpp_str.replace("*1.0+", "+")
+            cpp_str = cpp_str.replace("*1.0*", "*")
+            cpp_str = cpp_str.replace("*1.0-", "-")
+            if cpp_str.startswith("1.0*"):
+                cpp_str = cpp_str[4:]
 
         if self.round_decimals:
             cpp_str = self.round_in_string(cpp_str)
