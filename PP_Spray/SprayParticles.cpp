@@ -172,8 +172,8 @@ SprayParticleContainer::updateParticles(
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   bool isActive = !(isVirt || isGhost);
-  bool do_splash_breakup =
-    (m_sprayData->do_breakup > 0 || m_sprayData->do_splash);
+  bool do_splash = (m_sprayData->do_splash && isActive && do_move);
+  bool do_breakup = (m_sprayData->do_breakup > 0 && isActive && do_move);
   Real B0 = B0_KHRT;
   Real B1 = B1_KHRT;
   Real C3 = C3_KHRT;
@@ -225,7 +225,7 @@ SprayParticleContainer::updateParticles(
     sub_dt = flow_dt / static_cast<Real>(num_iter);
   }
   Real avg_inject_d3 = 0.;
-  if (m_sprayData->do_breakup == 2) {
+  if (isActive && m_sprayData->do_breakup == 2) {
     int numJets = static_cast<int>(m_sprayJets.size());
     for (int jindx = 0; jindx < numJets; ++jindx) {
       Real injDia = m_sprayJets[jindx].get()->get_avg_dia();
@@ -283,6 +283,33 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
+    // Data structures for wall films
+    FArrayBox wf_fab;
+    Elixir wf_eli;
+    Array4<Real> wall_film;
+    if ((eb_in_box || at_bounds) && do_splash) {
+      wf_fab.resize(src_box, WFIndx::wf_num);
+      wf_eli = wf_fab.elixir();
+      wf_fab.setVal<RunOn::Device>(0.);
+      wall_film = wf_fab.array();
+      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
+        ParticleType& p = pstruct[pid];
+        if (p.id() > 0 && p.rdata(SprayComps::pstateFilmVol) > 0.) {
+          fillFilmFab(wall_film, *fdat, p, plo, dx);
+        }
+      });
+    }
+    // Data structures for creating new particles during splashing/breakup
+    Gpu::HostVector<splash_breakup> N_SB_h(Np, splash_breakup::no_change);
+    Gpu::DeviceVector<splash_breakup> N_SB_d(Np);
+    Gpu::copyAsync(
+      Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
+    auto N_SB = N_SB_d.dataPtr();
+    SBVects refv(Np);
+    SBPtrs rf_d;
+    if (do_splash || do_breakup) {
+      refv.fillPtrs_d(rf_d);
+    }
     amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
@@ -430,7 +457,7 @@ SprayParticleContainer::updateParticles(
             lxc = (p.pos() - plo) * dxi;
             ijkc = lxc.floor(); // New cell center
             // Update breakup variables and determine if breakup occurs
-            if (p.id() > 0 && fdat->do_breakup == 1) {
+            if (p.id() > 0 && fdat->do_breakup == 1 && isActive) {
               Utan_total += updateBreakupTAB(
                 Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
             }
@@ -441,7 +468,7 @@ SprayParticleContainer::updateParticles(
           cur_time = new_time;
         } // End of subcycle loop
         // Determine if parcel must be split into multiple parcels
-        if (p.id() > 0 && fdat->do_breakup > 0 && do_move) {
+        if (p.id() > 0 && do_breakup) {
           if (fdat->do_breakup == 1) {
             Real rem_dt = flow_dt - breakup_time;
             splitDropletTAB(
@@ -454,7 +481,7 @@ SprayParticleContainer::updateParticles(
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles
-    if (isActive && do_splash_breakup) {
+    if (do_splash || do_breakup) {
       Gpu::copy(
         Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
       bool get_new_parts = false;
