@@ -172,7 +172,7 @@ SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
 SUNDIALS_BUILD_DIR=$(SUNDIALS_BUILD_PREFIX)/build/$(tp_suffix)
-ONE_SUNDIALS_SRC_FILE=$(SUNDIALS_SOURCE_DIR)/sundials-$(SUNDIALS_VERSION)/include/sundials/sundials_config.in
+ONE_SUNDIALS_SRC_FILE=$(SUNDIALS_SOURCE_DIR)/include/sundials/sundials_config.in
 ONE_SUNDIALS_LIB_FILE=$(INSTALL_PREFIX)/lib/libsundials_cvode.a
 
 sundials: $(ONE_SUNDIALS_LIB_FILE)
@@ -242,7 +242,7 @@ $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || git clone --branch bugfix/update-sycl-header https://github.com/LLNL/sundials ./src/sundials-6.5.0
+	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
