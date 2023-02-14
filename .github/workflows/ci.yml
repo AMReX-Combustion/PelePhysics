@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        comp: [gnu, llvm, cuda, hip, dpcpp]
+        comp: [gnu, llvm, cuda, hip, sycl]
         python-version: [3.8]
         poetry-version: [1.1.7]
         include:
@@ -76,7 +76,7 @@ jobs:
           - comp: hip
             amrex_build_args: 'USE_HIP=TRUE AMD_ARCH=gfx908 LIBRARY_LOCATIONS=/opt/rocm/lib'
             dependency_cmds: '.github/workflows/dependencies/dependencies_hip.sh'
-          - comp: dpcpp
+          - comp: sycl
             amrex_build_args: 'USE_SYCL=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
@@ -130,12 +130,10 @@ jobs:
             source /etc/profile.d/rocm.sh
             which hipcc || echo "hipcc not in PATH!"; \
           fi
-          if [ "${{matrix.comp}}" == 'dpcpp' ]; then \
+          if [ "${{matrix.comp}}" == 'sycl' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
-            set +e
             source /opt/intel/oneapi/setvars.sh || true
-            set -e
-            which dpcpp || echo "dpcpp not in PATH!"; \
+            which icpx || echo "icpx not in PATH!"; \
           fi
           cmake --version
           make TPL ${{matrix.amrex_build_args}};
@@ -149,7 +147,7 @@ jobs:
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
-          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
@@ -164,7 +162,7 @@ jobs:
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
-          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
@@ -180,7 +178,7 @@ jobs:
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
-          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
