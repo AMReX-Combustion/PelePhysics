@@ -56,10 +56,10 @@ struct SootReaction
   {
     // Number of surface reactions
     const int nsr = NUM_SOOT_REACT;
-    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> k_fwd;
-    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> k_bkwd;
-    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> w_fwd;
-    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> w_bkwd;
+    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> k_fwd = {0.0};
+    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> k_bkwd = {0.0};
+    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> w_fwd = {0.0};
+    amrex::GpuArray<amrex::Real, NUM_SOOT_REACT> w_bkwd = {0.0};
     const amrex::Real invT = 1. / T;
     // Loop over reactions
     for (int i = 0; i < nsr; ++i) {
@@ -86,7 +86,7 @@ struct SootReaction
     computeSurfRates(w_fwd.data(), w_bkwd.data(), fSootStar, k_sg, k_ox, k_o2);
     // Determine the concentration of hydrogenated and radical soot surface
     // sites Quasi-steady state for surface radical sites on soot
-    amrex::GpuArray<amrex::Real, SootIndx::numSootSpecs> C_Soot;
+    amrex::GpuArray<amrex::Real, SootIndx::numSootSpecs> C_Soot = {0.0};
     C_Soot[SootIndx::indxSootS] = fSootStar * SootDensityC * moments[2];
     C_Soot[SootIndx::indxSootH] = (1. - fSootStar) * SootDensityC * moments[2];
     // TODO: The last two reaction (6 and 7) are special
