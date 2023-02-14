@@ -398,14 +398,9 @@ SprayParticleContainer::updateParticles(
           if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
             // Remaining time in current timestep
             Real rem_dt = flow_dt - new_time;
-            Real dis = 0.;
             for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
               const Real cvel = p.rdata(SprayComps::pstateVel + dir);
               p.pos(dir) += sub_dt * cvel;
-              dis += std::pow(sub_dt * cvel, 2);
-            }
-            if (fdat->do_breakup == 2) {
-              p.rdata(SprayComps::pstateBphi1) += std::sqrt(dis);
             }
             if (at_bounds || do_fe_interp) {
               // First check if particle has exited the domain through a

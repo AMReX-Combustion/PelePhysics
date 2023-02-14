@@ -33,24 +33,21 @@ updateBreakupKHRT(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::Real rho_part = 0.;
   amrex::Real mu_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part[spf] / fdat.rhoL(T_part, spf);
-    mu_part += Y_part[spf] * fdat.muL(T_part, spf);
+    amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
+    rho_part += Y_part / fdat.rhoL(T_part, spf);
+    mu_part += Y_part * fdat.muL(T_part, spf);
   }
   rho_part = 1. / rho_part;
-  const amrex::Real r03 = avg_inject_d3 / 8.;
-  const amrex::Real r0 = std::cbrt(r03);
-  const amrex::Real L_break = B1 * r0 * std::sqrt(rho_part / gpv.rho_fluid);
-  amrex::Real dis = p.rdata(SprayComps::pstateBphi1);
+  const amrex::Real rjet3 = avg_inject_d3 / 8.;
+  const amrex::Real rjet = std::cbrt(r03);
+  const amrex::Real Njet = fdat.inj_num_ppp;
+  amrex::Real d0 = p.rdata(SprayComps::pstateBphi1);
+  amrex::Real r0 = 0.5 * d0;
+  amrex::Real N0 = num_dens * std::pow(dia_part / d0, 3);
   amrex::Real rt_time = p.rdata(SprayComps::pstateBphi2);
-  amrex::Real CTau = 9.;
-  if (dis > L_break) {
-    CTau = 1.;
-  }
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
@@ -82,17 +79,19 @@ updateBreakupKHRT(
       (rho_part + gpv.rho_fluid));
     amrex::Real KRT = std::sqrt(momdiff / (3. * sigma));
     amrex::Real lam_RT = C3 * M_PI / KRT;
-    if (rt_time > 0. || lam_RT < rad_part) {
+    if (rad_part < lam_RT) {
+      rt_time = 0.;
+    } else {
       rt_time += dt;
     }
-    amrex::Real tau_RT = CTau / omega_RT;
+    amrex::Real tau_RT = 1. / omega_RT;
     // RT breakup occurs
     if (rt_time > tau_RT && lam_RT < rad_part) {
       rt_time = 0.;
       num_dens *= std::pow(rad_part / lam_RT, 3);
       rad_part = lam_RT;
       breakupRT = true;
-      if (num_dens > fdat.max_num_ppp) {
+      if (num_dens > 1.) {
         N_SB[pid] = splash_breakup::breakup_RT;
         amrex::Real Utan = A1 * omega_RT * lam_RT;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -101,11 +100,11 @@ updateBreakupKHRT(
           rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
         }
         rf.numDens[pid] = num_dens;
-        rf.d0[pid] = 2. * rad_part;
+        rf.ref_dia[pid] = 2. * rad_part;
         rf.dtpp[pid] = 0.;
         rf.phi1[pid] = Utan;
-        rf.phi2[pid] = dis;
-        rf.T0[pid] = p.rdata(SprayComps::pstateT);
+        rf.phi2[pid] = 0.; // unused
+        rf.T0[pid] = T_part;
 #if SPRAY_FUEL_NUM > 1
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           rf.Y0[SPRAY_FUEL_NUM * pid + spf] =
@@ -130,29 +129,17 @@ updateBreakupKHRT(
     amrex::Real rs = B0 * lam_KH;
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
-      amrex::Real rad_mod = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
-      amrex::Real num_mod = num_dens * std::pow(rad_part / rad_mod, 3);
+      amrex::Real rp = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
+      amrex::Real np = num_dens * std::pow(rad_part / rp, 3);
       // KH breakup occurs
       if (rs < rad_part && We_g > We_crit) {
         rt_time = 0.;
-        amrex::Real rs2 = rs * rs;
-        amrex::Real rp = rad_part;
         amrex::Real rp2 = rp * rp;
-        amrex::Real np = num_dens;
-        // Determine if new parcels should be formed to represent stripped
-        // droplets. This is the method outlined by Patterson and Reitz
-        // (1998). Solve a cubic equation by transforming it into a depressed
-        // cubic
-        amrex::Real nb = fdat.inj_num_ppp;
-        amrex::Real pv = -rs2 / 3.;
-        amrex::Real qv = -2. * rs2 * rs / 27. + np * rp2 * (rs - rp) / nb;
-        amrex::Real R1 = std::sqrt(qv * qv / 4. + std::pow(pv, 3) / 27.);
-        amrex::Real yt = std::cbrt(-qv / 2. + R1) + std::cbrt(-qv / 2. - R1);
-        // Radius of larger droplet after smaller droplets are stripped
-        amrex::Real rb = yt + rs / 3.;
-        // Number density of smaller stripped droplets
-        amrex::Real ns = (np * rp2 * rp - nb * std::pow(rb, 3)) / (rs2 * rs);
-        amrex::Real removed_perc = (r03 - std::pow(rad_mod, 3)) / r03;
+        amrex::Real rs2 = rs * rs;
+        amrex::Real shed_mass = rp2 * (np - N0);
+        amrex::Real ns = shed_mass / (rs2 * rs);
+        amrex::Real removed_perc =
+          N0 * (std::pow(r0, 3) - rp2 * rp) / (Njet * rjet3);
         amrex::Real Utan = A1 * omega_KH * lam_KH;
         // If removed mass is greater than 3%, break particle up
         if (ns > num_dens && removed_perc > massperc) {
@@ -163,28 +150,30 @@ updateBreakupKHRT(
             rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
           }
           rf.numDens[pid] = ns;
-          rf.d0[pid] = 2. * rs;
+          rf.ref_dia[pid] = 2. * rs;
           rf.dtpp[pid] = 0.;
           rf.T0[pid] = T_part;
           rf.phi1[pid] = Utan;
-          rf.phi2[pid] = dis;
+          rf.phi2[pid] = 0.; // Unused
 #if SPRAY_FUEL_NUM > 1
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             rf.Y0[SPRAY_FUEL_NUM * pid + spf] =
               p.rdata(SprayComps::pstateY + spf);
           }
 #endif
-          rad_part = rb;
-          num_dens = nb;
+          rad_part = rp;
+          num_dens = (np * rp2 * rp - ns * rs2 * rs) / (rp2 * rp);
+          d0 = 2. * rp; // Reset original diameter
         } else {
-          rad_part = rad_mod;
-          num_dens = num_mod;
+          rad_part = rp;
+          num_dens = np;
         }
       }
     }
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
+  p.rdata(SprayComps::pstateBphi1) = d0;
   p.rdata(SprayComps::pstateBphi2) = rt_time;
   return;
 }

@@ -206,7 +206,7 @@ splitDropletTAB(
       rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / velMag;
     }
     rf.numDens[pid] = p.rdata(SprayComps::pstateNumDens);
-    rf.d0[pid] = p.rdata(SprayComps::pstateDia);
+    rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
     rf.dtpp[pid] = rem_dt;
     rf.phi1[pid] = Utan_total;
     rf.phi2[pid] = p.rdata(SprayComps::pstateBphi1);

@@ -125,7 +125,7 @@ droplet_splashing(
       rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
-    rf.d0[pid] = p.rdata(SprayComps::pstateDia);
+    rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
     rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;

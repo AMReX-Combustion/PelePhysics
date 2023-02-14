@@ -123,9 +123,9 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) =
           part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      // If KHRT breakup is used
+      // If KHRT breakup is used, Bphi1 is starting diameter
       if (m_sprayData->do_breakup == 2) {
-        p.rdata(SprayComps::pstateBphi1) = dt * pmov * umag;
+        p.rdata(SprayComps::pstateBphi1) = dia_part;
       } else {
         p.rdata(SprayComps::pstateBphi1) = 0.;
       }
@@ -217,7 +217,11 @@ SprayParticleContainer::uniformSprayInit(
     part_vals[SprayComps::pstateY + spf] = Y_part[spf];
   }
   part_vals[SprayComps::pstateNumDens] = num_ppp;
-  part_vals[SprayComps::pstateBphi1] = 0.;
+  if (m_sprayData->do_breakup == 2) {
+    part_vals[SprayComps::pstateBphi1] = dia_part;
+  } else {
+    part_vals[SprayComps::pstateBphi1] = 0.;
+  }
   part_vals[SprayComps::pstateBphi2] = 0.;
   part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(

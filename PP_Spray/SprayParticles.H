@@ -127,7 +127,7 @@ public:
       real_comp_names[SprayComps::pstateBphi1] = "Y_TAB";
       real_comp_names[SprayComps::pstateBphi2] = "Ydot_TAB";
     } else if (m_sprayData->do_breakup == 2) {
-      real_comp_names[SprayComps::pstateBphi1] = "distance";
+      real_comp_names[SprayComps::pstateBphi1] = "d0";
       real_comp_names[SprayComps::pstateBphi2] = "rt_time";
     } else {
       real_comp_names[SprayComps::pstateBphi1] = "unused1";
