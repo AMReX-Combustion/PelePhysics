@@ -475,10 +475,10 @@ ReactorCvode::checkCvodeOptions() const
     amrex::Abort(
       "\n--> precond_type sparse simplified_AJacobian not available with "
       "HIP \n");
-#elif defined(AMREX_USE_DPCPP)
+#elif defined(AMREX_USE_SYCL)
     amrex::Abort(
       "\n--> precond_type sparse simplified_AJacobian not available with "
-      "DPCPP \n");
+      "SYCL \n");
 #endif
 
 #else
@@ -535,8 +535,8 @@ ReactorCvode::checkCvodeOptions() const
 #elif defined(AMREX_USE_HIP)
       amrex::Abort("\n--> Analytical Jacobian not available with HIP. Change "
                    "solve_type.\n");
-#elif defined(AMREX_USE_DPCPP)
-      amrex::Abort("\n--> Analytical Jacobian not available with DPCPP. Change "
+#elif defined(AMREX_USE_SYCL)
+      amrex::Abort("\n--> Analytical Jacobian not available with SYCL. Change "
                    "solve_type.\n");
 #endif
     }
