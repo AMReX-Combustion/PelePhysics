@@ -42,7 +42,7 @@ updateBreakupKHRT(
   }
   rho_part = 1. / rho_part;
   const amrex::Real rjet3 = avg_inject_d3 / 8.;
-  const amrex::Real rjet = std::cbrt(r03);
+  const amrex::Real rjet = std::cbrt(rjet3);
   const amrex::Real Njet = fdat.inj_num_ppp;
   amrex::Real d0 = p.rdata(SprayComps::pstateBphi1);
   amrex::Real r0 = 0.5 * d0;
