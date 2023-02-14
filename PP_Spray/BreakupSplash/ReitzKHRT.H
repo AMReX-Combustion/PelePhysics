@@ -134,12 +134,12 @@ updateBreakupKHRT(
       // KH breakup occurs
       if (rs < rad_part && We_g > We_crit) {
         rt_time = 0.;
-        amrex::Real rp2 = rp * rp;
-        amrex::Real rs2 = rs * rs;
-        amrex::Real shed_mass = rp2 * (np - N0);
-        amrex::Real ns = shed_mass / (rs2 * rs);
+        amrex::Real rp3 = rp * rp * rp;
+        amrex::Real rs3 = rs * rs * rs;
+        amrex::Real shed_mass = rp3 * (np - N0);
+        amrex::Real ns = shed_mass / rs3;
         amrex::Real removed_perc =
-          N0 * (std::pow(r0, 3) - rp2 * rp) / (Njet * rjet3);
+          N0 * (std::pow(r0, 3) - rp3) / (Njet * rjet3);
         amrex::Real Utan = A1 * omega_KH * lam_KH;
         // If removed mass is greater than 3%, break particle up
         if (ns > num_dens && removed_perc > massperc) {
@@ -162,7 +162,7 @@ updateBreakupKHRT(
           }
 #endif
           rad_part = rp;
-          num_dens = (np * rp2 * rp - ns * rs2 * rs) / (rp2 * rp);
+          num_dens = (np * rp3 - ns * rs3) / rp3;
           d0 = 2. * rp; // Reset original diameter
         } else {
           rad_part = rp;
