@@ -39,7 +39,7 @@ else
         else
           ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),sycl))
              CCOMPILER = icx
-             CXXCOMPILER = dpcpp
+             CXXCOMPILER = icpx
 	  else
              $(error Unknown COMP setting)
 	  endif
@@ -159,7 +159,7 @@ else
   HIPSuffix=
 endif
 ifeq ($(USE_SYCL),TRUE)
-  SYCL_DEFINES=-DENABLE_SYCL:BOOL=ON
+  SYCL_DEFINES=-DENABLE_SYCL:BOOL=ON -DCMAKE_CXX_FLAGS=-fsycl
   SYCLSuffix=.SYCL
 else
   SYCL_DEFINES=-DENABLE_SYCL:BOOL=OFF
