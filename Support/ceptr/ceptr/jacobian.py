@@ -570,9 +570,9 @@ def ajac_symbolic(
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
             if syms.hformat == "cpu":
-                syms.write_symjac_to_cpp_cpu(species_info, cw, fstream)
+                syms.write_symjac_to_cpp_cpu(species_info, cw, fstream, roll_jacobian=roll_jacobian)
             else:
-                syms.write_symjac_to_cpp_gpu(species_info, cw, fstream)
+                syms.write_symjac_to_cpp_gpu(species_info, cw, fstream, roll_jacobian=roll_jacobian)
 
             cw.writer(fstream)
 
