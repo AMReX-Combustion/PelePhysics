@@ -27,12 +27,14 @@ class Converter:
         self,
         mechanism,
         jacobian=True,
+        roll_jacobian=False,
         qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
 
         self.jacobian = jacobian
+        self.roll_jacobian = roll_jacobian
 
         # Symbolic computations
         self.qss_symbolic_jacobian = qss_symbolic_jacobian
@@ -375,6 +377,7 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     jacobian=self.jacobian,
+                    roll_jacobian=self.roll_jacobian,
                     precond=True,
                     syms=self.syms,
                 )
@@ -383,6 +386,7 @@ class Converter:
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
+                    roll_jacobian=self.roll_jacobian,
                     precond=True,
                 )
                 # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
@@ -393,6 +397,7 @@ class Converter:
                         self.species_info,
                         self.reaction_info,
                         jacobian=self.jacobian,
+                        roll_jacobian=self.roll_jacobian,
                         syms=self.syms,
                     )
                 else:
@@ -402,9 +407,14 @@ class Converter:
                         self.species_info,
                         self.reaction_info,
                         jacobian=self.jacobian,
+                        roll_jacobian=self.roll_jacobian,
                     )
                 cj.dproduction_rate(
-                    hdr, self.mechanism, self.species_info, self.reaction_info
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    roll_jacobian=self.roll_jacobian,
                 )
 
             else:
@@ -430,6 +440,7 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     jacobian=self.jacobian,
+                    roll_jacobian=self.roll_jacobian,
                     precond=True,
                 )
                 cj.dproduction_rate(
@@ -437,6 +448,7 @@ class Converter:
                     self.mechanism,
                     self.species_info,
                     self.reaction_info,
+                    roll_jacobian=self.roll_jacobian,
                     precond=True,
                 )
                 # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
@@ -446,9 +458,14 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     jacobian=self.jacobian,
+                    roll_jacobian=self.roll_jacobian,
                 )
                 cj.dproduction_rate(
-                    hdr, self.mechanism, self.species_info, self.reaction_info
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    roll_jacobian=self.roll_jacobian,
                 )
 
             # Transport

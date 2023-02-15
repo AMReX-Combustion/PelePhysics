@@ -15,6 +15,7 @@ def ajac(
     species_info,
     reaction_info,
     jacobian=True,
+    roll_jacobian=False,
     precond=False,
     syms=None,
 ):
@@ -228,6 +229,7 @@ def ajac(
                     reaction_info,
                     reaction,
                     orig_idx,
+                    roll_jacobian=roll_jacobian,
                     precond=precond,
                     syms=syms,
                 )
@@ -316,6 +318,7 @@ def ajac_symbolic(
     species_info,
     reaction_info,
     jacobian=True,
+    roll_jacobian=False,
     syms=None,
 ):
     """Print the Jacobian obtained from symbolic recording."""
@@ -613,6 +616,7 @@ def ajac_reaction_d(
     reaction_info,
     reaction,
     orig_idx,
+    roll_jacobian=False,
     precond=False,
     syms=None,
 ):
@@ -1599,7 +1603,12 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
 
 
 def dproduction_rate(
-    fstream, mechanism, species_info, reaction_info, precond=False
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    roll_jacobian=False,
+    precond=False,
 ):
     """Write the reaction jacobian."""
     n_species = species_info.n_species

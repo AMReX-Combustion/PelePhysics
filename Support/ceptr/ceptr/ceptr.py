@@ -10,6 +10,7 @@ import ceptr.converter as converter
 def convert(
     fname,
     jacobian,
+    roll_jacobian,
     qss_format_input,
     qss_symbolic_jac,
 ):
@@ -18,6 +19,7 @@ def convert(
     conv = converter.Converter(
         mechanism,
         jacobian,
+        roll_jacobian,
         qss_format_input,
         qss_symbolic_jac,
     )
@@ -28,6 +30,7 @@ def convert(
 def convert_lst(
     lst,
     jacobian,
+    roll_jacobian,
     qss_format_input,
     qss_symbolic_jac,
 ):
@@ -41,6 +44,7 @@ def convert_lst(
                 convert(
                     mechname,
                     jacobian,
+                    roll_jacobian,
                     qss_format_input,
                     qss_symbolic_jac,
                 )
@@ -79,12 +83,20 @@ def main():
         help="Do not generate a jacobian",
     )
 
+    parser.add_argument(
+        "-rj",
+        "--roll_jacobian",
+        action="store_true",
+        help="Preroll the jacobian",
+    )
+
     args = parser.parse_args()
 
     if args.fname:
         convert(
             args.fname,
             not args.no_jacobian,
+            args.roll_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
@@ -92,6 +104,7 @@ def main():
         convert_lst(
             args.lst,
             not args.no_jacobian,
+            args.roll_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
         )
