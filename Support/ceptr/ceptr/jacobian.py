@@ -270,11 +270,19 @@ def ajac(
             cw.writer(fstream, "cmix += c_R[k]*sc[k];")
             cw.writer(fstream, "dcmixdT += dcRdT[k]*sc[k];")
             cw.writer(fstream, "ehmix += eh_RT[k]*wdot[k];")
-            cw.writer(
-                fstream,
-                "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
-                % (n_species * (n_species + 1)),
-            )
+            # Access dwdot[k]/dT
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
+                    % (n_species * (n_species + 1)),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[k*%d+%d];"
+                    % (n_species + 1, n_species),
+                )
             cw.writer(fstream, "}")
 
             cw.writer(fstream)
@@ -288,15 +296,29 @@ def ajac(
             cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
             cw.writer(fstream, "dehmixdc = 0.0;")
             cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
-            cw.writer(
-                fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1)
-            )
+            # Access dwdot[m]/dx[k]
+            if not roll_jacobian:
+                cw.writer(
+                    fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1)
+                )
+            else:
+                cw.writer(
+                    fstream, "dehmixdc += eh_RT[m]*J[m*%s+k];" % (n_species + 1)
+                )
             cw.writer(fstream, "}")
-            cw.writer(
-                fstream,
-                "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
-                % (n_species + 1, n_species),
-            )
+            # Access dTdot/dx[k]
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
+                    % (n_species + 1, n_species),
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "J[%d+k] = tmp2*c_R[k] - tmp3*dehmixdc;"
+                    % (n_species * (n_species + 1)),
+                )
             cw.writer(fstream, "}")
 
             cw.writer(fstream, cw.comment("dTdot/dT"))
@@ -522,11 +544,19 @@ def ajac_symbolic(
     # dwdotdT
     cw.writer(fstream)
     cw.writer(fstream, "for (int k = 0; k < %d ; k++) {" % n_species)
-    cw.writer(
-        fstream,
-        "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);"
-        % (n_species * (n_species + 1),),
-    )
+    # Access dwdot[k]/dT
+    if not roll_jacobian:
+        cw.writer(
+            fstream,
+            "J[%d + k] = (wdot_pert1[k] - wdot[k])/(pertT);"
+            % (n_species * (n_species + 1),),
+        )
+    else:
+        cw.writer(
+            fstream,
+            "J[k*%d + %d] = (wdot_pert1[k] - wdot[k])/(pertT);"
+            % (n_species + 1, n_species),
+        )
     cw.writer(fstream, "}")
 
     # depends on dwdotdT and dwdotdsc
@@ -567,11 +597,19 @@ def ajac_symbolic(
     cw.writer(fstream, "cmix += c_R[k]*sc[k];")
     cw.writer(fstream, "dcmixdT += dcRdT[k]*sc[k];")
     cw.writer(fstream, "ehmix += eh_RT[k]*wdot[k];")
-    cw.writer(
-        fstream,
-        "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
-        % (n_species * (n_species + 1)),
-    )
+    # Access dwdot[k]/dT
+    if not roll_jacobian:
+        cw.writer(
+            fstream,
+            "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];"
+            % (n_species * (n_species + 1)),
+        )
+    else:
+        cw.writer(
+            fstream,
+            "dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d*k+%d];"
+            % (n_species + 1, n_species),
+        )
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -585,13 +623,25 @@ def ajac_symbolic(
     cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
     cw.writer(fstream, "dehmixdc = 0.0;")
     cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
-    cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+    # Access dwdot[m]/dx[k]
+    if not roll_jacobian:
+        cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+    else:
+        cw.writer(fstream, "dehmixdc += eh_RT[m]*J[m*%s+k];" % (n_species + 1))
     cw.writer(fstream, "}")
-    cw.writer(
-        fstream,
-        "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
-        % (n_species + 1, n_species),
-    )
+    # Access dTdot/dx[k]
+    if not roll_jacobian:
+        cw.writer(
+            fstream,
+            "J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;"
+            % (n_species + 1, n_species),
+        )
+    else:
+        cw.writer(
+            fstream,
+            "J[%d+k] = tmp2*c_R[k] - tmp3*dehmixdc;"
+            % ((n_species + 1)*n_species),
+        )
     cw.writer(fstream, "}")
 
     cw.writer(fstream, cw.comment("dTdot/dT"))
@@ -1286,10 +1336,17 @@ def ajac_reaction_d(
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = "J[%d] += %.15g * dqdci;" % (
-                                k * (n_species + 1) + m,
-                                all_dict[m][1],
-                            )
+                            # Access dwdot[m]/dx[k]
+                            if not roll_jacobian:
+                                s1 = "J[%d] += %.15g * dqdci;" % (
+                                    k * (n_species + 1) + m,
+                                    all_dict[m][1],
+                                )
+                            else:
+                                s1 = "J[%d] += %.15g * dqdci;" % (
+                                    m * (n_species + 1) + k,
+                                    all_dict[m][1],
+                                )
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
@@ -1344,11 +1401,18 @@ def ajac_reaction_d(
         cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
-                s1 = "J[%d*k+%d] += %.15g * dqdc[k];" % (
-                    (n_species + 1),
-                    m,
-                    all_dict[m][1],
-                )
+                # Access dwdot[m]/dx[k]
+                if not roll_jacobian:
+                    s1 = "J[%d*k+%d] += %.15g * dqdc[k];" % (
+                        (n_species + 1),
+                        m,
+                        all_dict[m][1],
+                    )
+                else:
+                    s1 = "J[%d+k] += %.15g * dqdc[k];" % (
+                        (n_species + 1) * m,
+                        all_dict[m][1],
+                    )
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
         cw.writer(fstream, "}")
@@ -1358,10 +1422,17 @@ def ajac_reaction_d(
 
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
-                s1 = "J[%d] += %.15g * dqdT;" % (
-                    n_species * (n_species + 1) + m,
-                    all_dict[m][1],
-                ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
+                # Access dwdot[m]/dT
+                if not roll_jacobian:
+                    s1 = "J[%d] += %.15g * dqdT;" % (
+                        n_species * (n_species + 1) + m,
+                        all_dict[m][1],
+                    ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
+                else:
+                    s1 = "J[%d] += %.15g * dqdT;" % (
+                        m * (n_species + 1) + n_species,
+                        all_dict[m][1],
+                    ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
 
@@ -1390,10 +1461,17 @@ def ajac_reaction_d(
                 if reaction.reversible or k in rea_dict:
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = "J[%d] += %.15g * dqdci;" % (
-                                k * (n_species + 1) + m,
-                                all_wqss_dict[m][1],
-                            )
+                            # Access dwdot[m]/dx[k]
+                            if not roll_jacobian:
+                                s1 = "J[%d] += %.15g * dqdci;" % (
+                                    k * (n_species + 1) + m,
+                                    all_wqss_dict[m][1],
+                                )
+                            else:
+                                s1 = "J[%d] += %.15g * dqdci;" % (
+                                    m * (n_species + 1) + k,
+                                    all_wqss_dict[m][1],
+                                )
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
@@ -1408,10 +1486,17 @@ def ajac_reaction_d(
         cw.writer(fstream, cw.comment("d()/dT"))
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
-                s1 = "J[%d] += %.15g * dqdT;" % (
-                    n_species * (n_species + 1) + m,
-                    all_dict[m][1],
-                )
+                # Access dwdot[m]/dT
+                if not roll_jacobian:
+                    s1 = "J[%d] += %.15g * dqdT;" % (
+                        n_species * (n_species + 1) + m,
+                        all_dict[m][1],
+                    )
+                else:
+                    s1 = "J[%d] += %.15g * dqdT;" % (
+                        m * (n_species + 1) + n_species,
+                        all_dict[m][1],
+                    )
                 s1 = (
                     s1.replace("+= 1 *", "+=")
                     .replace("+= -1 *", "-=")
