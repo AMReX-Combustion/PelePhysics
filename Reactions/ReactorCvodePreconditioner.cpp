@@ -213,7 +213,11 @@ Precond(
     eos.RTY2C(rho, temp, massfrac, activity);
     int consP = static_cast<int>(reactor_type == ReactorTypes::h_reactor_type);
     amrex::Real Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
+#ifdef PELE_ROLL_JAC
+    DWDOT_SIMPLIFIED_ROLL(Jmat, activity, &temp, &consP);
+#else
     DWDOT_SIMPLIFIED(Jmat, activity, &temp, &consP);
+#endif
 
     // Scale Jacobian.  Load into P.
     SUNDlsMat_denseScale(0.0, Jbd[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
@@ -347,7 +351,11 @@ Precond_sparse(
       if (fabs(temp - temp_save_lcl) > 1.0) {
         // Formalism
         int consP = reactor_type == ReactorTypes::h_reactor_type;
+#ifdef PELE_ROLL_JAC
+        DWDOT_SIMPLIFIED_ROLL(JSPSmat[tid], activity, &temp, &consP);
+#else
         DWDOT_SIMPLIFIED(JSPSmat[tid], activity, &temp, &consP);
+#endif
 
         for (int i = 0; i < NUM_SPECIES; i++) {
           for (int k = 0; k < NUM_SPECIES; k++) {
@@ -518,7 +526,11 @@ Precond_custom(
         // Formalism
         int consP =
           static_cast<int>(reactor_type == ReactorTypes::h_reactor_type);
+#ifdef PELE_ROLL_JAC
+        DWDOT_SIMPLIFIED_ROLL(JSPSmat[tid], activity, &temp, &consP);
+#else
         DWDOT_SIMPLIFIED(JSPSmat[tid], activity, &temp, &consP);
+#endif
 
         for (int i = 0; i < NUM_SPECIES; i++) {
           for (int k = 0; k < NUM_SPECIES; k++) {

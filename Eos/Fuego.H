@@ -195,7 +195,11 @@ struct Fuego
   {
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);
+#ifdef PELE_ROLL_JAC
+    DWDOT_ROLL(JAC, C, &T, &HP);
+#else
     DWDOT(JAC, C, &T, &HP);
+#endif
   }
 
   AMREX_GPU_HOST_DEVICE
