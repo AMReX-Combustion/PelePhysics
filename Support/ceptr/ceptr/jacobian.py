@@ -36,26 +36,30 @@ def ajac(
             if not roll_jacobian:
                 cw.writer(
                     fstream,
-                    "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  sc,"
+                    "void aJacobian_precond"
+                    "(amrex::Real *  J, const amrex::Real *  sc,"
                     " const amrex::Real T, const int HP)",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "void aJacobian_precond_roll(amrex::Real *  J, const amrex::Real *  sc,"
+                    "void aJacobian_precond_roll"
+                    "(amrex::Real *  J, const amrex::Real *  sc,"
                     " const amrex::Real T, const int HP)",
                 )
         else:
             if not roll_jacobian:
                 cw.writer(
                     fstream,
-                    "void aJacobian(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
+                    "void aJacobian"
+                    "(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
                     " const int consP)",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "void aJacobian_roll(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
+                    "void aJacobian_roll"
+                    "(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
                     " const int consP)",
                 )
     else:
@@ -63,26 +67,30 @@ def ajac(
             if not roll_jacobian:
                 cw.writer(
                     fstream,
-                    "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  /*sc*/,"
+                    "void aJacobian_precond"
+                    "(amrex::Real *  J, const amrex::Real *  /*sc*/,"
                     " const amrex::Real /*T*/, const int /*HP*/)",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "void aJacobian_precond_roll(amrex::Real *  J, const amrex::Real *  /*sc*/,"
+                    "void aJacobian_precond_roll"
+                    "(amrex::Real *  J, const amrex::Real *  /*sc*/,"
                     " const amrex::Real /*T*/, const int /*HP*/)",
                 )
         else:
             if not roll_jacobian:
                 cw.writer(
                     fstream,
-                    "void aJacobian(amrex::Real * J, const amrex::Real * /*sc*/,"
+                    "void aJacobian"
+                    "(amrex::Real * J, const amrex::Real * /*sc*/,"
                     " const amrex::Real /*T*/, const int /*consP*/)",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "void aJacobian_roll(amrex::Real * J, const amrex::Real * /*sc*/,"
+                    "void aJacobian_roll"
+                    "(amrex::Real * J, const amrex::Real * /*sc*/,"
                     " const amrex::Real /*T*/, const int /*consP*/)",
                 )
     cw.writer(fstream, "{")
@@ -327,11 +335,13 @@ def ajac(
             # Access dwdot[m]/dx[k]
             if not roll_jacobian:
                 cw.writer(
-                    fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1)
+                    fstream,
+                    "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1),
                 )
             else:
                 cw.writer(
-                    fstream, "dehmixdc += eh_RT[m]*J[m*%s+k];" % (n_species + 1)
+                    fstream,
+                    "dehmixdc += eh_RT[m]*J[m*%s+k];" % (n_species + 1),
                 )
             cw.writer(fstream, "}")
             # Access dTdot/dx[k]
@@ -570,9 +580,13 @@ def ajac_symbolic(
             # Now write out the species jacobian terms
             cw.writer(fstream, cw.comment("Species terms"))
             if syms.hformat == "cpu":
-                syms.write_symjac_to_cpp_cpu(species_info, cw, fstream, roll_jacobian=roll_jacobian)
+                syms.write_symjac_to_cpp_cpu(
+                    species_info, cw, fstream, roll_jacobian=roll_jacobian
+                )
             else:
-                syms.write_symjac_to_cpp_gpu(species_info, cw, fstream, roll_jacobian=roll_jacobian)
+                syms.write_symjac_to_cpp_gpu(
+                    species_info, cw, fstream, roll_jacobian=roll_jacobian
+                )
 
             cw.writer(fstream)
 
@@ -675,7 +689,7 @@ def ajac_symbolic(
         cw.writer(
             fstream,
             "J[%d+k] = tmp2*c_R[k] - tmp3*dehmixdc;"
-            % ((n_species + 1)*n_species),
+            % ((n_species + 1) * n_species),
         )
     cw.writer(fstream, "}")
 

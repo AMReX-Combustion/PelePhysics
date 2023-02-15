@@ -966,7 +966,9 @@ class SymbolicMath:
                     ),
                 )
 
-    def write_symjac_to_cpp_cpu(self, species_info, cw, fstream, roll_jacobian=False):
+    def write_symjac_to_cpp_cpu(
+        self, species_info, cw, fstream, roll_jacobian=False
+    ):
         """Write species jacobian terms as functions of common subexpressions.
 
         Many variables are created to ensure readability.
@@ -1157,7 +1159,9 @@ class SymbolicMath:
                         ),
                     )
 
-    def write_symjac_to_cpp_gpu(self, species_info, cw, fstream, roll_jacobian=False):
+    def write_symjac_to_cpp_gpu(
+        self, species_info, cw, fstream, roll_jacobian=False
+    ):
         """Write species jacobian terms as functions of common subexpressions.
 
         As little as possible intermediate variables are declared which
