@@ -201,9 +201,9 @@ fKernelComputeallAJ(
           Jmat_pt[idx * neqs + idx];
       } else {
         csr_val_cell[csr_row_count_d[i - 1] + j - 1] =
-          -gamma * Jmat_pt[(i-1) * neqs + idx];
+          -gamma * Jmat_pt[(i - 1) * neqs + idx];
         csr_jac_cell[csr_row_count_d[i - 1] + j - 1] =
-          Jmat_pt[(i-1) * neqs + idx];
+          Jmat_pt[(i - 1) * neqs + idx];
       }
     }
   }

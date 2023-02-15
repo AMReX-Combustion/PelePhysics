@@ -249,7 +249,6 @@ Precond(
       Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1) - 1];
 #endif
 
-
     SUNDlsMat_denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
 
     *jcurPtr = SUNTRUE;
@@ -413,7 +412,6 @@ Precond_sparse(
         }
       }
 #endif
-
     }
 
     *jcurPtr = SUNTRUE;
