@@ -1138,14 +1138,24 @@ class SymbolicMath:
                 for ics in range(len(chain_string) - 1):
                     final_string += f" + {chain_string[ics+1]}"
 
-                cw.writer(
-                    fstream,
-                    "J[%s] = %s;"
-                    % (
-                        f"""{(species_info.n_species+1)*scnum + item["number"]}""",
-                        final_string,
-                    ),
-                )
+                if not roll_jacobian:
+                    cw.writer(
+                        fstream,
+                        "J[%s] = %s;"
+                        % (
+                            f"""{(species_info.n_species+1)*scnum + item["number"]}""",
+                            final_string,
+                        ),
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "J[%s] = %s;"
+                        % (
+                            f"""{(species_info.n_species+1)*item["number"] + scnum}""",
+                            final_string,
+                        ),
+                    )
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
         """Write species jacobian terms as functions of common subexpressions.
@@ -1340,14 +1350,24 @@ class SymbolicMath:
                 else:
                     final_string = start_string
 
-                cw.writer(
-                    fstream,
-                    "J[%s] = %s;"
-                    % (
-                        f"""{(species_info.n_species+1)*sc_item["number"]+wdot_item["number"]}""",
-                        final_string,
-                    ),
-                )
+                if not roll_jacobian:
+                    cw.writer(
+                        fstream,
+                        "J[%s] = %s;"
+                        % (
+                            f"""{(species_info.n_species+1)*sc_item["number"]+wdot_item["number"]}""",
+                            final_string,
+                        ),
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "J[%s] = %s;"
+                        % (
+                            f"""{(species_info.n_species+1)*wdot_item["number"]+sc_item["number"]}""",
+                            final_string,
+                        ),
+                    )
 
     def write_array_to_cpp_no_cse(
         self, list_smp, array_str, cw, fstream, index_list=None
