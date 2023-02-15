@@ -180,9 +180,6 @@ fKernelComputeallAJ(
   int consP = reactor_type == ReactorTypes::h_reactor_type;
 #ifdef PELE_ROLL_JAC
   DWDOT_SIMPLIFIED_ROLL(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
-#else
-  DWDOT_SIMPLIFIED(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
-#endif
   int jac_offset = ncell * NNZ;
   amrex::Real* csr_jac_cell = csr_jac_d + jac_offset;
   amrex::Real* csr_val_cell = csr_val_arg + jac_offset;
@@ -210,6 +207,36 @@ fKernelComputeallAJ(
       }
     }
   }
+#else
+  DWDOT_SIMPLIFIED(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
+  int jac_offset = ncell * NNZ;
+  amrex::Real* csr_jac_cell = csr_jac_d + jac_offset;
+  amrex::Real* csr_val_cell = csr_val_arg + jac_offset;
+  for (int i = 0; i < NUM_SPECIES; i++) {
+    for (int k = 0; k < NUM_SPECIES; k++) {
+      Jmat_pt[k * neqs + i] *= mw[i] / mw[k];
+    }
+    Jmat_pt[i * neqs + NUM_SPECIES] /= mw[i];
+    Jmat_pt[NUM_SPECIES * neqs + i] *= mw[i];
+  }
+  for (int i = 1; i < NUM_SPECIES + 2; i++) {
+    int nbVals = csr_row_count_d[i] - csr_row_count_d[i - 1];
+    for (int j = 0; j < nbVals; j++) {
+      int idx = csr_col_index_d[csr_row_count_d[i - 1] + j - 1] - 1;
+      if (idx == (i - 1)) {
+        csr_val_cell[csr_row_count_d[i - 1] + j - 1] =
+          1.0 - gamma * Jmat_pt[idx * neqs + idx];
+        csr_jac_cell[csr_row_count_d[i - 1] + j - 1] =
+          Jmat_pt[idx * neqs + idx];
+      } else {
+        csr_val_cell[csr_row_count_d[i - 1] + j - 1] =
+          -gamma * Jmat_pt[idx * neqs + i - 1];
+        csr_jac_cell[csr_row_count_d[i - 1] + j - 1] =
+          Jmat_pt[idx * neqs + i - 1];
+      }
+    }
+  }
+#endif
 }
 
 AMREX_GPU_DEVICE
@@ -279,6 +306,7 @@ fKernelComputeAJchem(
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
+#ifdef PELE_ROLL_JAC
   // Scale Jacobian
   amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
@@ -301,6 +329,30 @@ fKernelComputeAJchem(
       Jcurr[csr_row_count_d[i - 1] + j] = Jmat_pt[idx_cell * neqs + i - 1];
     }
   }
+#else
+  // Scale Jacobian
+  amrex::Real mw[NUM_SPECIES] = {0.0};
+  get_mw(mw);
+  for (int i = 0; i < NUM_SPECIES; i++) {
+    for (int k = 0; k < NUM_SPECIES; k++) {
+      Jmat_pt[k * neqs + i] *= mw[i] / mw[k];
+    }
+    Jmat_pt[i * neqs + NUM_SPECIES] /= mw[i];
+    Jmat_pt[NUM_SPECIES * neqs + i] *= mw[i];
+  }
+
+  // Fill the sparse outgoing Jacobian matrix
+  int jac_offset = icell * NNZ;
+  amrex::Real* Jcurr = Jdata + jac_offset;
+
+  for (int i = 1; i < NUM_SPECIES + 2; i++) {
+    int nbVals = csr_row_count_d[i] - csr_row_count_d[i - 1];
+    for (int j = 0; j < nbVals; j++) {
+      int idx_cell = csr_col_index_d[csr_row_count_d[i - 1] + j];
+      Jcurr[csr_row_count_d[i - 1] + j] = Jmat_pt[idx_cell * neqs + i - 1];
+    }
+  }
+#endif
 }
 
 AMREX_GPU_DEVICE
@@ -330,6 +382,7 @@ fKernelDenseAJchem(
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
+#ifdef PELE_ROLL_JAC
   // Scale Jacobian and pass into outgoing data ptr.
   amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
@@ -344,6 +397,22 @@ fKernelDenseAJchem(
     Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] / mw[i];
     Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * mw[i];
   }
+#else
+  // Scale Jacobian and pass into outgoing data ptr.
+  amrex::Real mw[NUM_SPECIES] = {0.0};
+  get_mw(mw);
+
+  int jac_offset = icell * (neqs * neqs);
+  amrex::Real* Jcurr = Jdata + jac_offset;
+
+  for (int i = 0; i < NUM_SPECIES; i++) {
+    for (int k = 0; k < NUM_SPECIES; k++) {
+      Jcurr[k * neqs + i] = Jmat_pt[k * neqs + i] * mw[i] / mw[k];
+    }
+    Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] / mw[i];
+    Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * mw[i];
+  }
+#endif
 }
 
 #endif

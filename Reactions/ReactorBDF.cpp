@@ -65,6 +65,7 @@ get_bdf_matrix_and_rhs(
   get_rho_and_massfracs(soln, rho, massfrac);
 
   eos.RTY2JAC(rho, soln[NUM_SPECIES], massfrac, Jmat1d, consP);
+#ifdef PELE_ROLL_JAC
   for (int ii = 0; ii < NUM_SPECIES; ii++) {
     for (int jj = 0; jj < NUM_SPECIES; jj++) {
       Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0] *
@@ -85,7 +86,28 @@ get_bdf_matrix_and_rhs(
   utils::fKernelSpec<utils::YCOrder>(
     0, 1, current_time - time_init, reactor_type, soln, ydot, rhoe_init,
     rhoesrc_ext, rYsrc_ext);
+#else
+  for (int ii = 0; ii < NUM_SPECIES; ii++) {
+    for (int jj = 0; jj < NUM_SPECIES; jj++) {
+      Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0] *
+                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * mw[ii] / mw[jj];
+    }
+    Jmat2d[ii][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0] *
+                              Jmat1d[NUM_SPECIES * (NUM_SPECIES + 1) + ii] *
+                              mw[ii];
+    Jmat2d[NUM_SPECIES][ii] = -bdfp.FCOEFFMAT[tstepscheme][0] *
+                              Jmat1d[ii * (NUM_SPECIES + 1) + NUM_SPECIES] /
+                              mw[ii];
+  }
+  Jmat2d[NUM_SPECIES][NUM_SPECIES] =
+    -bdfp.FCOEFFMAT[tstepscheme][0] *
+    Jmat1d[(NUM_SPECIES + 1) * (NUM_SPECIES + 1) - 1];
 
+  // FIXME: need to change this to Ordering
+  utils::fKernelSpec<utils::YCOrder>(
+    0, 1, current_time - time_init, reactor_type, soln, ydot, rhoe_init,
+    rhoesrc_ext, rYsrc_ext);
+#endif
   if (tstepscheme == TRPZSCHEME) {
     utils::fKernelSpec<utils::YCOrder>(
       0, 1, current_time - time_init, reactor_type, soln_n, ydot_n, rhoe_init,

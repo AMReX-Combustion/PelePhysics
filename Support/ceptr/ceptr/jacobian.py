@@ -1742,19 +1742,34 @@ def dproduction_rate(
                 " preconditioning)"
             ),
         )
-        cw.writer(
-            fstream,
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " DWDOT_SIMPLIFIED(amrex::Real *  J, const amrex::Real *  sc,"
-            " const amrex::Real *  Tp, const int * HP)",
-        )
+        if not roll_jacobian:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+                " DWDOT_SIMPLIFIED(amrex::Real *  J, const amrex::Real *  sc,"
+                " const amrex::Real *  Tp, const int * HP)",
+            )
+        else:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+                " DWDOT_SIMPLIFIED_ROLL(amrex::Real *  J, const amrex::Real *  sc,"
+                " const amrex::Real *  Tp, const int * HP)",
+            )
     else:
         cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
-        cw.writer(
-            fstream,
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *"
-            "  J, const amrex::Real *  sc, const amrex::Real *  Tp, const int * consP)",
-        )
+        if not roll_jacobian:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *"
+                "  J, const amrex::Real *  sc, const amrex::Real *  Tp, const int * consP)",
+            )
+        else:
+            cw.writer(
+                fstream,
+                "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_ROLL(amrex::Real *"
+                "  J, const amrex::Real *  sc, const amrex::Real *  Tp, const int * consP)",
+            )
 
     cw.writer(fstream, "{")
     cw.writer(fstream, "amrex::Real c[%d];" % (n_species))
