@@ -33,30 +33,58 @@ def ajac(
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     if n_reactions > 0:
         if precond:
-            cw.writer(
-                fstream,
-                "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  sc,"
-                " const amrex::Real T, const int HP)",
-            )
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  sc,"
+                    " const amrex::Real T, const int HP)",
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_precond_roll(amrex::Real *  J, const amrex::Real *  sc,"
+                    " const amrex::Real T, const int HP)",
+                )
         else:
-            cw.writer(
-                fstream,
-                "void aJacobian(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
-                " const int consP)",
-            )
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "void aJacobian(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
+                    " const int consP)",
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_roll(amrex::Real * J, const amrex::Real * sc, const amrex::Real T,"
+                    " const int consP)",
+                )
     else:
         if precond:
-            cw.writer(
-                fstream,
-                "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  /*sc*/,"
-                " const amrex::Real /*T*/, const int /*HP*/)",
-            )
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_precond(amrex::Real *  J, const amrex::Real *  /*sc*/,"
+                    " const amrex::Real /*T*/, const int /*HP*/)",
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_precond_roll(amrex::Real *  J, const amrex::Real *  /*sc*/,"
+                    " const amrex::Real /*T*/, const int /*HP*/)",
+                )
         else:
-            cw.writer(
-                fstream,
-                "void aJacobian(amrex::Real * J, const amrex::Real * /*sc*/,"
-                " const amrex::Real /*T*/, const int /*consP*/)",
-            )
+            if not roll_jacobian:
+                cw.writer(
+                    fstream,
+                    "void aJacobian(amrex::Real * J, const amrex::Real * /*sc*/,"
+                    " const amrex::Real /*T*/, const int /*consP*/)",
+                )
+            else:
+                cw.writer(
+                    fstream,
+                    "void aJacobian_roll(amrex::Real * J, const amrex::Real * /*sc*/,"
+                    " const amrex::Real /*T*/, const int /*consP*/)",
+                )
     cw.writer(fstream, "{")
 
     cw.writer(fstream)
@@ -351,11 +379,18 @@ def ajac_symbolic(
     cw.writer(fstream)
 
     # main
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  aJacobian(amrex::Real"
-        " * J, amrex::Real * sc, amrex::Real T, const int consP)",
-    )
+    if not roll_jacobian:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  aJacobian(amrex::Real"
+            " * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        )
+    else:
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  aJacobian_roll(amrex::Real"
+            " * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        )
     cw.writer(fstream, "{")
 
     if not jacobian:
@@ -1730,9 +1765,15 @@ def dproduction_rate(
 
     cw.writer(fstream)
     if precond:
-        cw.writer(fstream, "aJacobian_precond(J, c, *Tp, *HP);")
+        if not roll_jacobian:
+            cw.writer(fstream, "aJacobian_precond(J, c, *Tp, *HP);")
+        else:
+            cw.writer(fstream, "aJacobian_precond_roll(J, c, *Tp, *HP);")
     else:
-        cw.writer(fstream, "aJacobian(J, c, *Tp, *consP);")
+        if not roll_jacobian:
+            cw.writer(fstream, "aJacobian(J, c, *Tp, *consP);")
+        else:
+            cw.writer(fstream, "aJacobian_roll(J, c, *Tp, *consP);")
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("dwdot[k]/dT"))
