@@ -219,14 +219,14 @@ Precond(
     SUNDlsMat_denseScale(0.0, Jbd[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
     for (int i = 0; i < NUM_SPECIES; i++) {
       for (int k = 0; k < NUM_SPECIES; k++) {
-        (Jbd[0][0])[k][i] = Jmat[k * (NUM_SPECIES + 1) + i] * mw[i] / mw[k];
+        (Jbd[0][0])[k][i] = Jmat[i * (NUM_SPECIES + 1) + k] * mw[i] / mw[k];
       }
       (Jbd[0][0])[i][NUM_SPECIES] =
-        Jmat[i * (NUM_SPECIES + 1) + NUM_SPECIES] / mw[i];
+        Jmat[NUM_SPECIES * (NUM_SPECIES + 1) + i] / mw[i];
     }
     for (int i = 0; i < NUM_SPECIES; i++) {
       (Jbd[0][0])[NUM_SPECIES][i] =
-        Jmat[NUM_SPECIES * (NUM_SPECIES + 1) + i] * mw[i];
+        Jmat[i * (NUM_SPECIES + 1) + NUM_SPECIES] * mw[i];
     }
     (Jbd[0][0])[NUM_SPECIES][NUM_SPECIES] =
       Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1) - 1];
@@ -370,20 +370,20 @@ Precond_sparse(
         DWDOT_SIMPLIFIED_ROLL(JSPSmat[tid], activity, &temp, &consP);
         for (int i = 0; i < NUM_SPECIES; i++) {
           for (int k = 0; k < NUM_SPECIES; k++) {
-            (JSPSmat[tid])[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
+            (JSPSmat[tid])[i * (NUM_SPECIES + 1) + k] *= mw[i] / mw[k];
           }
-          (JSPSmat[tid])[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
+          (JSPSmat[tid])[NUM_SPECIES * (NUM_SPECIES + 1) + i] /= mw[i];
         }
         for (int i = 0; i < NUM_SPECIES; i++) {
-          (JSPSmat[tid])[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
+          (JSPSmat[tid])[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= mw[i];
         }
         temp_save_lcl = temp;
       } else {
         // if not: copy the one from prev cell
         for (int i = 0; i < NUM_SPECIES + 1; i++) {
           for (int k = 0; k < NUM_SPECIES + 1; k++) {
-            (JSPSmat[tid])[k * (NUM_SPECIES + 1) + i] =
-              (JSPSmat[tid - 1])[k * (NUM_SPECIES + 1) + i];
+            (JSPSmat[tid])[i * (NUM_SPECIES + 1) + k] =
+              (JSPSmat[tid - 1])[i * (NUM_SPECIES + 1) + k];
           }
         }
       }
@@ -568,20 +568,20 @@ Precond_custom(
         DWDOT_SIMPLIFIED_ROLL(JSPSmat[tid], activity, &temp, &consP);
         for (int i = 0; i < NUM_SPECIES; i++) {
           for (int k = 0; k < NUM_SPECIES; k++) {
-            (JSPSmat[tid])[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
+            (JSPSmat[tid])[i * (NUM_SPECIES + 1) + k] *= mw[i] / mw[k];
           }
-          (JSPSmat[tid])[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
+          (JSPSmat[tid])[NUM_SPECIES * (NUM_SPECIES + 1) + i] /= mw[i];
         }
         for (int i = 0; i < NUM_SPECIES; i++) {
-          (JSPSmat[tid])[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
+          (JSPSmat[tid])[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= mw[i];
         }
         temp_save_lcl = temp;
       } else {
         // if not: copy the one from prev cell
         for (int i = 0; i < NUM_SPECIES + 1; i++) {
           for (int k = 0; k < NUM_SPECIES + 1; k++) {
-            (JSPSmat[tid])[k * (NUM_SPECIES + 1) + i] =
-              (JSPSmat[tid - 1])[k * (NUM_SPECIES + 1) + i];
+            (JSPSmat[tid])[i * (NUM_SPECIES + 1) + k] =
+              (JSPSmat[tid - 1])[i * (NUM_SPECIES + 1) + k];
           }
         }
       }

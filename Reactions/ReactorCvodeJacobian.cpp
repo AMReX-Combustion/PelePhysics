@@ -138,15 +138,15 @@ cJac(
       // cppcheck-suppress cstyleCast
       amrex::Real* J_col = SM_COLUMN_D(J, offset + i);
       for (int k = 0; k < NUM_SPECIES; k++) {
-        J_col[offset + k] = Jmat_tmp[i * (NUM_SPECIES + 1) + k] * mw[k] / mw[i];
+        J_col[offset + k] = Jmat_tmp[k * (NUM_SPECIES + 1) + i] * mw[k] / mw[i];
       }
       J_col[offset + NUM_SPECIES] =
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] / mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] / mw[i];
     }
     // cppcheck-suppress cstyleCast
     amrex::Real* J_col = SM_COLUMN_D(J, offset + NUM_SPECIES);
     for (int i = 0; i < NUM_SPECIES; i++) {
-      J_col[offset + i] = Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] * mw[i];
+      J_col[offset + i] = Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] * mw[i];
     }
     // J_col = SM_COLUMN_D(J, offset); // Never read
 #else
@@ -245,12 +245,12 @@ cJac_sps(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
+          Jmat_tmp[i * (NUM_SPECIES + k) + i] *= mw[i] / mw[k];
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] /= mw[i];
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= mw[i];
       }
 #else
       temp_save_lcl = temp;
@@ -352,12 +352,12 @@ cJac_KLU(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
+          Jmat_tmp[i * (NUM_SPECIES + 1) + k] *= mw[i] / mw[k];
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] /= mw[i];
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= mw[i];
       }
 #else
       temp_save_lcl = temp;
