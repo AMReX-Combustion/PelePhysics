@@ -211,7 +211,7 @@ class Converter:
             cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
             cck.cksyms_str(cpp, self.mechanism, self.species_info)
-            csp.sparsity(cpp, self.species_info)
+            csp.sparsity(cpp, self.species_info, roll_jacobian=self.roll_jacobian)
 
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")
