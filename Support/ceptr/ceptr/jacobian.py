@@ -1779,8 +1779,16 @@ def dproduction_rate(
     cw.writer(fstream, cw.comment("dwdot[k]/dT"))
     cw.writer(fstream, cw.comment("dTdot/d[X]"))
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
-    cw.writer(fstream, "J[%d+k] *= 1.e-6;" % (n_species * (n_species + 1)))
-    cw.writer(fstream, "J[k*%d+%d] *= 1.e6;" % (n_species + 1, n_species))
+    # Access dwdot[k]/dT
+    if not roll_jacobian:
+        cw.writer(fstream, "J[%d+k] *= 1.e-6;" % (n_species * (n_species + 1)))
+    else:
+        cw.writer(fstream, "J[k*%d+%d] *= 1.e-6;" % (n_species + 1, n_species))
+    # Access dTdot/dx[k]
+    if not roll_jacobian:
+        cw.writer(fstream, "J[k*%d+%d] *= 1.e6;" % (n_species + 1, n_species))
+    else:
+        cw.writer(fstream, "J[%d+k] *= 1.e6;" % (n_species * (n_species + 1)))
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
