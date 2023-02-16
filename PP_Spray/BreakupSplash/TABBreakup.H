@@ -14,7 +14,6 @@ AMREX_FORCE_INLINE
 amrex::Real
 updateBreakupTAB(
   const amrex::Real& Reyn_d,
-  const amrex::Real& cur_time,
   const amrex::Real& dt,
   const GasPhaseVals& gpv,
   const SprayData& fdat,

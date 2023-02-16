@@ -42,7 +42,6 @@ updateBreakupKHRT(
   }
   rho_part = 1. / rho_part;
   const amrex::Real rjet3 = avg_inject_d3 / 8.;
-  const amrex::Real rjet = std::cbrt(rjet3);
   const amrex::Real Njet = fdat.inj_num_ppp;
   amrex::Real d0 = p.rdata(SprayComps::pstateBphi1);
   amrex::Real r0 = 0.5 * d0;
@@ -62,8 +61,6 @@ updateBreakupKHRT(
   } else if (Reyn > 0.) {
     C_D = 24. / Reyn;
   }
-  amrex::Real Re_L = rho_part * vel_mag * rad_part / mu_part;
-  amrex::Real We_L = rho_part * vel_sq * rad_part / sigma;
   amrex::Real We_g = gpv.rho_fluid * vel_sq * rad_part / sigma;
   amrex::Real Z = mu_part / std::sqrt(rho_part * rad_part * sigma);
   amrex::Real T = Z * std::sqrt(We_g);

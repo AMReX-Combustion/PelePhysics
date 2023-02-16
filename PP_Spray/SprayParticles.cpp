@@ -318,7 +318,6 @@ SprayParticleContainer::updateParticles(
         GasPhaseVals gpv;
         amrex::GpuArray<Real, SPRAY_FUEL_NUM>
           cBoilT; // Boiling temperature at current pressure
-        bool isActive = !(isVirt || isGhost);
         eos.molecular_weight(gpv.mw_fluid.data());
         eos.inv_molecular_weight(gpv.invmw.data());
         for (int n = 0; n < NUM_SPECIES; ++n) {
@@ -458,8 +457,8 @@ SprayParticleContainer::updateParticles(
             ijkc = lxc.floor(); // New cell center
             // Update breakup variables and determine if breakup occurs
             if (p.id() > 0 && fdat->do_breakup == 1 && isActive) {
-              Utan_total += updateBreakupTAB(
-                Reyn_d, cur_time, sub_dt, gpv, *fdat, p, breakup_time);
+              Utan_total +=
+                updateBreakupTAB(Reyn_d, sub_dt, gpv, *fdat, p, breakup_time);
             }
           }
           if (isGhost && !src_box.contains(ijkc)) {
@@ -470,7 +469,6 @@ SprayParticleContainer::updateParticles(
         // Determine if parcel must be split into multiple parcels
         if (p.id() > 0 && do_breakup) {
           if (fdat->do_breakup == 1) {
-            Real rem_dt = flow_dt - breakup_time;
             splitDropletTAB(
               pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
           } else {
