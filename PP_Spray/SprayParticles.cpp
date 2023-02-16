@@ -346,7 +346,6 @@ SprayParticleContainer::updateParticles(
         Real Utan_total = 0.;
         Real breakup_time = flow_dt;
         Real Reyn_d = 0.;
-        Real cur_time = 0.; // Time from 0 to flow_dt
         bool is_film = false;
         // Gather wall film values
         if (p.rdata(SprayComps::pstateFilmVol) > 0. && isActive) {
@@ -464,7 +463,6 @@ SprayParticleContainer::updateParticles(
           if (isGhost && !src_box.contains(ijkc)) {
             p.id() = -1;
           }
-          cur_time = new_time;
         } // End of subcycle loop
         // Determine if parcel must be split into multiple parcels
         if (p.id() > 0 && do_breakup) {
