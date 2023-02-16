@@ -209,15 +209,13 @@ impose_wall(
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
-  amrex::RealVect normphi;
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
-    p.pos(dir) = (p.pos(dir) - plo[dir]) / dx[dir];
-  }
-  amrex::IntVect ijkc = p.pos().floor();
+  // Normalize positions
+  amrex::RealVect normphi = (phi - plo) / dx;
+  amrex::RealVect normpos = (p.pos() - plo) / dx;
+  amrex::IntVect ijkc = normpos.floor();
   // Check if particle is behind a wall
   bool do_refl = check_wall(
-    p.pos(), bflags, ijkc,
+    normpos, bflags, ijkc,
 #ifdef AMREX_USE_EB
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
@@ -228,23 +226,11 @@ impose_wall(
   bool do_deposit = false;
   while (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    if (!use_EB) {
-      ijkc_prev = ijkc;
-    }
-#ifdef AMREX_USE_EB
-    else {
-      if (!flags(ijkc).isCovered()) {
-        ijkc_prev = ijkc;
-      }
-    }
-#endif
-    // Reflect particle position and velocity around the boundary
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= 2. * par_dot * normal[dir];
-      p.rdata(SprayComps::pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
-      vel_part[dir] = p.rdata(SprayComps::pstateVel + dir);
-      ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
-    }
+    // Reflect the particle to see if it interacts with another surface or
+    // leaves the domain
+    amrex::RealVect refl_pos = normpos - 1.8 * par_dot * normal;
+    amrex::RealVect refl_vel = vel_part - 1.8 * Nw_Vp * normal;
+    amrex::IntVect refl_ijkc = refl_pos.floor();
     bool left_dom =
       check_bounds_norm(refl_pos, normphi, bndry_lo, bndry_hi, bflags);
     if (left_dom) {
@@ -258,31 +244,54 @@ impose_wall(
 #ifdef AMREX_USE_EB
       refl_prev, refl_vel, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
 #endif
-      par_dot, normal);
-    bounce_counter++;
-    // If particle exceeds max bounces, place near wall and set normal velocity
-    // to zero
-    if (bounce_counter > max_bounce && do_refl) {
-      Nw_Vp = normal.dotProduct(vel_part);
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.pos(dir) +=
-          (0.5 * p.rdata(SprayComps::pstateDia) / dx[dir] - par_dot) *
-          normal[dir];
-        p.rdata(SprayComps::pstateVel + dir) -= Nw_Vp * normal[dir];
-        ijkc[dir] = static_cast<int>(amrex::Math::floor(p.pos(dir)));
+      refl_par_dot, refl_normal);
+    if (fdat.do_splash) {
+      // If it reflects again, deposit particle at wall
+      if (do_refl) {
+        do_deposit = true;
+        do_refl = false;
+      } else {
+        // If not bouncing and splash model is on
+        if (isActive) {
+          droplet_splashing(
+            p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal,
+            cBoilT, N_SB, rf, true, rem_dt);
+        } else {
+          // Otherwise, just reflect particle
+          normpos = refl_pos;
+          vel_part = refl_vel;
+        }
+      }
+    } else {
+      if (!use_EB) {
+        refl_prev = normpos.floor();
+      }
+#ifdef AMREX_USE_EB
+      else if (!flags(ijkc).isCovered()) {
+        refl_prev = normpos.floor();
+      }
+#endif
+      normpos = refl_pos;
+      vel_part = refl_vel;
+      normal = refl_normal;
+      par_dot = refl_par_dot;
+      if (do_refl) {
+        bounce++;
+        if (bounce >= max_bounce) {
+          do_deposit = true;
+          do_refl = false;
+        }
       }
     }
   } // while (do_refl)
   if (do_deposit) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
-    }
+    normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
     vel_part = amrex::RealVect::TheZeroVector();
   }
-  // Undo normalization and set new velocity
+  // Undo normalization and set new location and velocity
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    p.pos(dir) = p.pos(dir) * dx[dir] + plo[dir];
+    p.pos(dir) = normpos[dir] * dx[dir] + plo[dir];
     p.rdata(SprayComps::pstateVel + dir) = vel_part[dir];
   }
 }

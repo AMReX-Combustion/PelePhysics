@@ -50,6 +50,7 @@ droplet_splashing(
   const amrex::RealVect& plo,
   const SprayData& fdat,
   const amrex::Real p_gas,
+  amrex::RealVect& normpos,
   amrex::RealVect& vel_part,
   const amrex::Real par_dot,
   const amrex::RealVect normal,
@@ -99,7 +100,7 @@ droplet_splashing(
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= (1. + rbound) * par_dot * vel_part[dir] / Nw_Vp;
+      normpos[dir] -= (1. + rbound) * par_dot * vel_part[dir] / Nw_Vp;
       vel_part[dir] -= Nw_Vp * (1. + rbound) * normal[dir];
     }
   } else if (splash_flag == splash_type::deposit) {
@@ -121,7 +122,7 @@ droplet_splashing(
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       // Save location where droplet hit wall
       rf.loc[AMREX_SPACEDIM * pid + dir] =
-        (p.pos(dir) - par_dot * vel_part[dir] / Nw_Vp) * dx[dir] + plo[dir];
+        (normpos[dir] - par_dot * vel_part[dir] / Nw_Vp) * dx[dir] + plo[dir];
       rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
@@ -139,9 +140,7 @@ droplet_splashing(
   }
   if (dm > 0.) {
     // Convert parcel to wall film
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.pos(dir) -= 1.1 * par_dot * vel_part[dir] / Nw_Vp;
-    }
+    normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
     vel_part = amrex::RealVect::TheZeroVector();
     p.rdata(SprayComps::pstateFilmVol) = num_dens * dm / rho_part;
     // p.rdata(SprayComps::pstateDia) = film_dia; // TODO: Figure out film
