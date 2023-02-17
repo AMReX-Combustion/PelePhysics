@@ -228,7 +228,7 @@ struct SimpleTransport
     amrex::Real Fnorm[NUM_SPECIES] = {0.0};
     amrex::Real pi3_2 = std::pow(M_PI, 1.5);
 
-    CKCVMS(&Tloc, cvk);
+    CKCVMS(Tloc, cvk);
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       if (tparm->nlin[i] == 0) {

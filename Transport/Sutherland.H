@@ -42,7 +42,7 @@ struct SutherlandTransport
                           (Tloc + tparm->viscosity_S);
 
       amrex::Real Cpmix = 0.0, Tloc_cpy = Tloc;
-      CKCPBS(&Tloc_cpy, Yloc, &Cpmix);
+      CKCPBS(Tloc_cpy, Yloc, Cpmix);
       lam = muloc * Cpmix / tparm->Prandtl_number;
     }
 

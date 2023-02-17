@@ -18,7 +18,7 @@ GET_RMAP(int* _rmap)
 // Returns a count of species in a reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
-CKINU(const int* i, int* nspec, int* ki, int* nu)
+CKINU(const int i, int& nspec, int ki[], int nu[])
 {
   const int ns[84] = {3, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3,
                       3, 3, 3, 3, 4, 2, 2, 2, 2, 3, 4, 3, 3, 3, 4, 3, 4,
@@ -69,17 +69,17 @@ CKINU(const int* i, int* nspec, int* ki, int* nu)
     -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -2, 1,  0, 0, 0, -2, 1,  1, 0, 0,
     -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, 1,  1, 0, 0,
     -1, 1,  1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0};
-  if (*i < 1) {
+  if (i < 1) {
     // Return max num species per reaction
-    *nspec = 5;
+    nspec = 5;
   } else {
-    if (*i > 84) {
-      *nspec = -1;
+    if (i > 84) {
+      nspec = -1;
     } else {
-      *nspec = ns[*i - 1];
-      for (int j = 0; j < *nspec; ++j) {
-        ki[j] = kiv[(*i - 1) * 5 + j] + 1;
-        nu[j] = nuv[(*i - 1) * 5 + j];
+      nspec = ns[i - 1];
+      for (int j = 0; j < nspec; ++j) {
+        ki[j] = kiv[(i - 1) * 5 + j] + 1;
+        nu[j] = nuv[(i - 1) * 5 + j];
       }
     }
   }
@@ -89,17 +89,16 @@ CKINU(const int* i, int* nspec, int* ki, int* nu)
 // Given P, T, and mole fractions
 void
 CKKFKR(
-  const amrex::Real* P,
-  const amrex::Real* T,
-  const amrex::Real* x,
-  amrex::Real* q_f,
-  amrex::Real* q_r)
+  const amrex::Real P,
+  const amrex::Real T,
+  const amrex::Real x[],
+  amrex::Real q_f[],
+  amrex::Real q_r[])
 {
   int id;            // loop counter
   amrex::Real c[21]; // temporary storage
   amrex::Real PORT =
-    1e6 * (*P) /
-    (8.31446261815324e+07 * (*T)); // 1e6 * P/RT so c goes to SI units
+    1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
   for (id = 0; id < 21; ++id) {
@@ -107,7 +106,7 @@ CKKFKR(
   }
 
   // convert to chemkin units
-  progressRateFR(q_f, q_r, c, *T);
+  progressRateFR(q_f, q_r, c, T);
 
   // convert to chemkin units
   for (id = 0; id < 84; ++id) {

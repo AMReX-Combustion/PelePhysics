@@ -30,7 +30,7 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
-  TY2Cp(const amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
+  TY2Cp(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
   {
     CKCPBS(T, Y, Cp);
   }
@@ -67,7 +67,7 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Cpi(const amrex::Real T, const amrex::Real Cpi[NUM_SPECIES])
+  static void T2Cpi(const amrex::Real T, amrex::Real Cpi[NUM_SPECIES])
   {
     CKCPMS(T, Cpi);
   }
@@ -232,7 +232,7 @@ struct Fuego
   {
     amrex::Real C[NUM_SPECIES];
     CKYTCR(R, T, Y, C);
-    DWDOT(JAC, C, T, HP);
+    DWDOT(JAC, C, &T, &HP);
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -248,7 +248,7 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Ei(const amrex::Real T, const amrex::Real Ei[NUM_SPECIES])
+  static void T2Ei(const amrex::Real T, amrex::Real Ei[NUM_SPECIES])
   {
     CKUMS(T, Ei);
   }
@@ -352,7 +352,7 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Hi(const amrex::Real T, const amrex::Real Hi[NUM_SPECIES])
+  static void T2Hi(const amrex::Real T, amrex::Real Hi[NUM_SPECIES])
   {
     CKHMS(T, Hi);
   }
