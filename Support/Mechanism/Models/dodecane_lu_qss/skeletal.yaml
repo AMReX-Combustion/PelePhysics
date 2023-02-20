@@ -1,7 +1,7 @@
 generator: ck2yaml
-input-files: [skeletal.inp, therm.dat, tran.dat]
+input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 2.6.0
-date: Thu, 12 May 2022 09:06:59 -0600
+date: Wed, 11 May 2022 17:41:01 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
