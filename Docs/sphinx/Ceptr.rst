@@ -37,10 +37,15 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
      $ bash ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/converter.sh -f ./LiDryer/mechanism.yaml
 
 
-CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
+For non-reduced chemistries, CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
 
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
+
+For reduced chemistries, CEPTR can take a file with a list of ``qssa.yaml`` and ``qssa_input.toml`` to convert::
+
+  $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
+  $ poetry run convert -lq ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_qss_mech
 
 
 Converting CHEMKIN files
