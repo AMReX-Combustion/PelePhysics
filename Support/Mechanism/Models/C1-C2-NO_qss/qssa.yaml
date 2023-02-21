@@ -2,13 +2,13 @@ description: QSSA of gas
 generator: YamlWriter
 cantera-version: 2.6.0
 git-commit: 9573e6b
-date: Mon Feb 20 15:53:29 2023
+date: Tue Feb 21 08:27:51 2023
 phases:
   - forward_to_remove_idx: [83, 84, 254, 255, 256, 257, 258, 259, 260]
     n_qssa_species: 6
     kinetics: gas
     transport: mixture-averaged
-    qssa_species: [C, CH2*, CH2, H2CC, NO, CH]
+    qssa_species: [NO, CH2*, CH, H2CC, CH2, C]
     name: gas-qssa
     thermo: ideal-gas
     elements: [Ar, N, H, O, C]

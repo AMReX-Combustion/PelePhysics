@@ -57,13 +57,12 @@ CKKFKR(
   amrex::Real q_f[],
   amrex::Real q_r[])
 {
-  int id;           // loop counter
   amrex::Real c[9]; // temporary storage
   amrex::Real PORT =
     1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 9; ++id) {
+  for (int id = 0; id < 9; ++id) {
     c[id] = x[id] * PORT;
   }
 
@@ -71,7 +70,7 @@ CKKFKR(
   progressRateFR(q_f, q_r, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 27; ++id) {
+  for (int id = 0; id < 27; ++id) {
     q_f[id] *= 1.0e-6;
     q_r[id] *= 1.0e-6;
   }
@@ -115,10 +114,9 @@ CKAWT(amrex::Real* awt)
 void
 CKNCF(int* ncf)
 {
-  int id; // loop counter
   int kd = 3;
   // Zero ncf
-  for (id = 0; id < kd * 9; ++id) {
+  for (int id = 0; id < kd * 9; ++id) {
     ncf[id] = 0;
   }
 

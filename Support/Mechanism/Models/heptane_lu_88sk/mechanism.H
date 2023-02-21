@@ -155,94 +155,94 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_imw(amrex::Real* imw_new)
 {
-  imw_new[0] = 1.0 / 1.008000;    // h
-  imw_new[1] = 1.0 / 2.016000;    // h2
-  imw_new[2] = 1.0 / 15.999000;   // o
-  imw_new[3] = 1.0 / 31.998000;   // o2
-  imw_new[4] = 1.0 / 17.007000;   // oh
-  imw_new[5] = 1.0 / 18.015000;   // h2o
-  imw_new[6] = 1.0 / 28.010000;   // co
-  imw_new[7] = 1.0 / 29.018000;   // hco
-  imw_new[8] = 1.0 / 44.009000;   // co2
-  imw_new[9] = 1.0 / 15.035000;   // ch3
-  imw_new[10] = 1.0 / 16.043000;  // ch4
-  imw_new[11] = 1.0 / 33.006000;  // ho2
-  imw_new[12] = 1.0 / 34.014000;  // h2o2
-  imw_new[13] = 1.0 / 30.026000;  // ch2o
-  imw_new[14] = 1.0 / 31.034000;  // ch3o
-  imw_new[15] = 1.0 / 30.070000;  // c2h6
-  imw_new[16] = 1.0 / 28.054000;  // c2h4
-  imw_new[17] = 1.0 / 29.062000;  // c2h5
-  imw_new[18] = 1.0 / 26.038000;  // c2h2
-  imw_new[19] = 1.0 / 27.046000;  // c2h3
-  imw_new[20] = 1.0 / 42.037000;  // ch2co
-  imw_new[21] = 1.0 / 41.029000;  // hcco
-  imw_new[22] = 1.0 / 43.045000;  // ch3co
-  imw_new[23] = 1.0 / 43.045000;  // ch2cho
-  imw_new[24] = 1.0 / 44.053000;  // ch3cho
-  imw_new[25] = 1.0 / 40.065000;  // c3h4-a
-  imw_new[26] = 1.0 / 42.081000;  // c3h6
-  imw_new[27] = 1.0 / 54.092000;  // c4h6
-  imw_new[28] = 1.0 / 43.089000;  // nc3h7
-  imw_new[29] = 1.0 / 55.100000;  // c4h7
-  imw_new[30] = 1.0 / 56.108000;  // c4h8-1
-  imw_new[31] = 1.0 / 57.116000;  // pc4h9
-  imw_new[32] = 1.0 / 57.072000;  // ch3coch2
-  imw_new[33] = 1.0 / 58.080000;  // c2h5cho
-  imw_new[34] = 1.0 / 57.072000;  // c2h5co
-  imw_new[35] = 1.0 / 69.127000;  // c5h9
-  imw_new[36] = 1.0 / 70.135000;  // c5h10-1
-  imw_new[37] = 1.0 / 45.061000;  // c2h5o
-  imw_new[38] = 1.0 / 47.033000;  // ch3o2
-  imw_new[39] = 1.0 / 48.041000;  // ch3o2h
-  imw_new[40] = 1.0 / 55.056000;  // c2h3co
-  imw_new[41] = 1.0 / 56.064000;  // c2h3cho
-  imw_new[42] = 1.0 / 57.072000;  // c3h5o
-  imw_new[43] = 1.0 / 71.099000;  // c4h7o
-  imw_new[44] = 1.0 / 121.112000; // c4h8ooh1-3o2
-  imw_new[45] = 1.0 / 89.114000;  // c4h8ooh1-3
-  imw_new[46] = 1.0 / 89.114000;  // pc4h9o2
-  imw_new[47] = 1.0 / 41.073000;  // c3h5-a
-  imw_new[48] = 1.0 / 39.057000;  // c3h3
-  imw_new[49] = 1.0 / 38.049000;  // c3h2
-  imw_new[50] = 1.0 / 14.027000;  // ch2(s)
-  imw_new[51] = 1.0 / 104.105000; // nc4ket13
-  imw_new[52] = 1.0 / 72.107000;  // nc3h7cho
-  imw_new[53] = 1.0 / 71.099000;  // nc3h7co
-  imw_new[54] = 1.0 / 71.099000;  // c2h5coch2
-  imw_new[55] = 1.0 / 85.126000;  // nc3h7coch2
-  imw_new[56] = 1.0 / 86.134000;  // nc4h9cho
-  imw_new[57] = 1.0 / 85.126000;  // nc4h9co
-  imw_new[58] = 1.0 / 100.205000; // nc7h16
-  imw_new[59] = 1.0 / 99.197000;  // c7h15-1
-  imw_new[60] = 1.0 / 99.197000;  // c7h15-2
-  imw_new[61] = 1.0 / 99.197000;  // c7h15-3
-  imw_new[62] = 1.0 / 99.197000;  // c7h15-4
-  imw_new[63] = 1.0 / 98.189000;  // c7h14-2
-  imw_new[64] = 1.0 / 98.189000;  // c7h14-3
-  imw_new[65] = 1.0 / 131.195000; // c7h15o2-1
-  imw_new[66] = 1.0 / 131.195000; // c7h15o2-2
-  imw_new[67] = 1.0 / 131.195000; // c7h15o2-3
-  imw_new[68] = 1.0 / 131.195000; // c7h15o2-4
-  imw_new[69] = 1.0 / 131.195000; // c7h14ooh1-3
-  imw_new[70] = 1.0 / 131.195000; // c7h14ooh2-3
-  imw_new[71] = 1.0 / 131.195000; // c7h14ooh2-4
-  imw_new[72] = 1.0 / 131.195000; // c7h14ooh3-2
-  imw_new[73] = 1.0 / 131.195000; // c7h14ooh3-4
-  imw_new[74] = 1.0 / 131.195000; // c7h14ooh3-5
-  imw_new[75] = 1.0 / 131.195000; // c7h14ooh4-2
-  imw_new[76] = 1.0 / 131.195000; // c7h14ooh4-3
-  imw_new[77] = 1.0 / 163.193000; // c7h14ooh1-3o2
-  imw_new[78] = 1.0 / 163.193000; // c7h14ooh2-4o2
-  imw_new[79] = 1.0 / 163.193000; // c7h14ooh3-5o2
-  imw_new[80] = 1.0 / 163.193000; // c7h14ooh4-2o2
-  imw_new[81] = 1.0 / 114.188000; // c7h14o1-3
-  imw_new[82] = 1.0 / 114.188000; // c7h14o2-4
-  imw_new[83] = 1.0 / 146.186000; // nc7ket13
-  imw_new[84] = 1.0 / 146.186000; // nc7ket24
-  imw_new[85] = 1.0 / 146.186000; // nc7ket35
-  imw_new[86] = 1.0 / 146.186000; // nc7ket42
-  imw_new[87] = 1.0 / 28.014000;  // n2
+  imw_new[0] = 0.9920634920634921;  // h
+  imw_new[1] = 0.4960317460317460;  // h2
+  imw_new[2] = 0.0625039064941559;  // o
+  imw_new[3] = 0.0312519532470779;  // o2
+  imw_new[4] = 0.0587993179279120;  // oh
+  imw_new[5] = 0.0555092978073827;  // h2o
+  imw_new[6] = 0.0357015351660121;  // co
+  imw_new[7] = 0.0344613688055690;  // hco
+  imw_new[8] = 0.0227226249176305;  // co2
+  imw_new[9] = 0.0665114732291320;  // ch3
+  imw_new[10] = 0.0623324814560868; // ch4
+  imw_new[11] = 0.0302975216627280; // ho2
+  imw_new[12] = 0.0293996589639560; // h2o2
+  imw_new[13] = 0.0333044694598015; // ch2o
+  imw_new[14] = 0.0322227234645872; // ch3o
+  imw_new[15] = 0.0332557366145660; // c2h6
+  imw_new[16] = 0.0356455407428531; // c2h4
+  imw_new[17] = 0.0344091941366733; // c2h5
+  imw_new[18] = 0.0384054074813734; // c2h2
+  imw_new[19] = 0.0369740442209569; // c2h3
+  imw_new[20] = 0.0237885672145967; // ch2co
+  imw_new[21] = 0.0243730044602598; // hcco
+  imw_new[22] = 0.0232315019165989; // ch3co
+  imw_new[23] = 0.0232315019165989; // ch2cho
+  imw_new[24] = 0.0226999296302181; // ch3cho
+  imw_new[25] = 0.0249594409085237; // c3h4-a
+  imw_new[26] = 0.0237636938285687; // c3h6
+  imw_new[27] = 0.0184870221104784; // c4h6
+  imw_new[28] = 0.0232077792476038; // nc3h7
+  imw_new[29] = 0.0181488203266788; // c4h7
+  imw_new[30] = 0.0178227703714265; // c4h8-1
+  imw_new[31] = 0.0175082288675678; // pc4h9
+  imw_new[32] = 0.0175217269414073; // ch3coch2
+  imw_new[33] = 0.0172176308539945; // c2h5cho
+  imw_new[34] = 0.0175217269414073; // c2h5co
+  imw_new[35] = 0.0144661275623128; // c5h9
+  imw_new[36] = 0.0142582162971412; // c5h10-1
+  imw_new[37] = 0.0221921395441735; // c2h5o
+  imw_new[38] = 0.0212616673399528; // ch3o2
+  imw_new[39] = 0.0208155533814866; // ch3o2h
+  imw_new[40] = 0.0181633246149375; // c2h3co
+  imw_new[41] = 0.0178367579908676; // c2h3cho
+  imw_new[42] = 0.0175217269414073; // c3h5o
+  imw_new[43] = 0.0140648954275025; // c4h7o
+  imw_new[44] = 0.0082568201334302; // c4h8ooh1-3o2
+  imw_new[45] = 0.0112215813452432; // c4h8ooh1-3
+  imw_new[46] = 0.0112215813452432; // pc4h9o2
+  imw_new[47] = 0.0243468945535997; // c3h5-a
+  imw_new[48] = 0.0256036049875823; // c3h3
+  imw_new[49] = 0.0262818996557071; // c3h2
+  imw_new[50] = 0.0712910814857061; // ch2(s)
+  imw_new[51] = 0.0096056865664473; // nc4ket13
+  imw_new[52] = 0.0138682790852483; // nc3h7cho
+  imw_new[53] = 0.0140648954275025; // nc3h7co
+  imw_new[54] = 0.0140648954275025; // c2h5coch2
+  imw_new[55] = 0.0117472922491366; // nc3h7coch2
+  imw_new[56] = 0.0116098172614763; // nc4h9cho
+  imw_new[57] = 0.0117472922491366; // nc4h9co
+  imw_new[58] = 0.0099795419390250; // nc7h16
+  imw_new[59] = 0.0100809500287307; // c7h15-1
+  imw_new[60] = 0.0100809500287307; // c7h15-2
+  imw_new[61] = 0.0100809500287307; // c7h15-3
+  imw_new[62] = 0.0100809500287307; // c7h15-4
+  imw_new[63] = 0.0101844402122437; // c7h14-2
+  imw_new[64] = 0.0101844402122437; // c7h14-3
+  imw_new[65] = 0.0076222417012843; // c7h15o2-1
+  imw_new[66] = 0.0076222417012843; // c7h15o2-2
+  imw_new[67] = 0.0076222417012843; // c7h15o2-3
+  imw_new[68] = 0.0076222417012843; // c7h15o2-4
+  imw_new[69] = 0.0076222417012843; // c7h14ooh1-3
+  imw_new[70] = 0.0076222417012843; // c7h14ooh2-3
+  imw_new[71] = 0.0076222417012843; // c7h14ooh2-4
+  imw_new[72] = 0.0076222417012843; // c7h14ooh3-2
+  imw_new[73] = 0.0076222417012843; // c7h14ooh3-4
+  imw_new[74] = 0.0076222417012843; // c7h14ooh3-5
+  imw_new[75] = 0.0076222417012843; // c7h14ooh4-2
+  imw_new[76] = 0.0076222417012843; // c7h14ooh4-3
+  imw_new[77] = 0.0061277138112542; // c7h14ooh1-3o2
+  imw_new[78] = 0.0061277138112542; // c7h14ooh2-4o2
+  imw_new[79] = 0.0061277138112542; // c7h14ooh3-5o2
+  imw_new[80] = 0.0061277138112542; // c7h14ooh4-2o2
+  imw_new[81] = 0.0087574876519424; // c7h14o1-3
+  imw_new[82] = 0.0087574876519424; // c7h14o2-4
+  imw_new[83] = 0.0068406003310851; // nc7ket13
+  imw_new[84] = 0.0068406003310851; // nc7ket24
+  imw_new[85] = 0.0068406003310851; // nc7ket35
+  imw_new[86] = 0.0068406003310851; // nc7ket42
+  imw_new[87] = 0.0356964374955379; // n2
 }
 
 //  molecular weights
@@ -6737,7 +6737,6 @@ speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -6746,7 +6745,7 @@ CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
   cp_R(cpor, tc);
 
   // perform dot product
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     result += x[id] * cpor[id];
   }
 
@@ -6761,7 +6760,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cpor[88], tresult[88];                  //  temporary storage
+  amrex::Real cpor[88];                               //  temporary storage
   amrex::Real imw[88];
 
   get_imw(imw);
@@ -6769,10 +6768,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   cp_R(cpor, tc);
 
   for (int i = 0; i < 88; i++) {
-    tresult[i] = cpor[i] * y[i] * imw[i];
-  }
-  for (const auto& tr : tresult) {
-    result += tr;
+    result += cpor[i] * y[i] * imw[i];
   }
 
   cpbs = result * 8.31446261815324e+07;
@@ -6782,7 +6778,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -6791,7 +6786,7 @@ CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
   cv_R(cvor, tc);
 
   // perform dot product
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     result += x[id] * cvor[id];
   }
 
@@ -6814,94 +6809,9 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   cv_R(cvor, tc);
 
   // multiply by y/molecularweight
-  result += cvor[0] * y[0] * imw[0];    // h
-  result += cvor[1] * y[1] * imw[1];    // h2
-  result += cvor[2] * y[2] * imw[2];    // o
-  result += cvor[3] * y[3] * imw[3];    // o2
-  result += cvor[4] * y[4] * imw[4];    // oh
-  result += cvor[5] * y[5] * imw[5];    // h2o
-  result += cvor[6] * y[6] * imw[6];    // co
-  result += cvor[7] * y[7] * imw[7];    // hco
-  result += cvor[8] * y[8] * imw[8];    // co2
-  result += cvor[9] * y[9] * imw[9];    // ch3
-  result += cvor[10] * y[10] * imw[10]; // ch4
-  result += cvor[11] * y[11] * imw[11]; // ho2
-  result += cvor[12] * y[12] * imw[12]; // h2o2
-  result += cvor[13] * y[13] * imw[13]; // ch2o
-  result += cvor[14] * y[14] * imw[14]; // ch3o
-  result += cvor[15] * y[15] * imw[15]; // c2h6
-  result += cvor[16] * y[16] * imw[16]; // c2h4
-  result += cvor[17] * y[17] * imw[17]; // c2h5
-  result += cvor[18] * y[18] * imw[18]; // c2h2
-  result += cvor[19] * y[19] * imw[19]; // c2h3
-  result += cvor[20] * y[20] * imw[20]; // ch2co
-  result += cvor[21] * y[21] * imw[21]; // hcco
-  result += cvor[22] * y[22] * imw[22]; // ch3co
-  result += cvor[23] * y[23] * imw[23]; // ch2cho
-  result += cvor[24] * y[24] * imw[24]; // ch3cho
-  result += cvor[25] * y[25] * imw[25]; // c3h4-a
-  result += cvor[26] * y[26] * imw[26]; // c3h6
-  result += cvor[27] * y[27] * imw[27]; // c4h6
-  result += cvor[28] * y[28] * imw[28]; // nc3h7
-  result += cvor[29] * y[29] * imw[29]; // c4h7
-  result += cvor[30] * y[30] * imw[30]; // c4h8-1
-  result += cvor[31] * y[31] * imw[31]; // pc4h9
-  result += cvor[32] * y[32] * imw[32]; // ch3coch2
-  result += cvor[33] * y[33] * imw[33]; // c2h5cho
-  result += cvor[34] * y[34] * imw[34]; // c2h5co
-  result += cvor[35] * y[35] * imw[35]; // c5h9
-  result += cvor[36] * y[36] * imw[36]; // c5h10-1
-  result += cvor[37] * y[37] * imw[37]; // c2h5o
-  result += cvor[38] * y[38] * imw[38]; // ch3o2
-  result += cvor[39] * y[39] * imw[39]; // ch3o2h
-  result += cvor[40] * y[40] * imw[40]; // c2h3co
-  result += cvor[41] * y[41] * imw[41]; // c2h3cho
-  result += cvor[42] * y[42] * imw[42]; // c3h5o
-  result += cvor[43] * y[43] * imw[43]; // c4h7o
-  result += cvor[44] * y[44] * imw[44]; // c4h8ooh1-3o2
-  result += cvor[45] * y[45] * imw[45]; // c4h8ooh1-3
-  result += cvor[46] * y[46] * imw[46]; // pc4h9o2
-  result += cvor[47] * y[47] * imw[47]; // c3h5-a
-  result += cvor[48] * y[48] * imw[48]; // c3h3
-  result += cvor[49] * y[49] * imw[49]; // c3h2
-  result += cvor[50] * y[50] * imw[50]; // ch2(s)
-  result += cvor[51] * y[51] * imw[51]; // nc4ket13
-  result += cvor[52] * y[52] * imw[52]; // nc3h7cho
-  result += cvor[53] * y[53] * imw[53]; // nc3h7co
-  result += cvor[54] * y[54] * imw[54]; // c2h5coch2
-  result += cvor[55] * y[55] * imw[55]; // nc3h7coch2
-  result += cvor[56] * y[56] * imw[56]; // nc4h9cho
-  result += cvor[57] * y[57] * imw[57]; // nc4h9co
-  result += cvor[58] * y[58] * imw[58]; // nc7h16
-  result += cvor[59] * y[59] * imw[59]; // c7h15-1
-  result += cvor[60] * y[60] * imw[60]; // c7h15-2
-  result += cvor[61] * y[61] * imw[61]; // c7h15-3
-  result += cvor[62] * y[62] * imw[62]; // c7h15-4
-  result += cvor[63] * y[63] * imw[63]; // c7h14-2
-  result += cvor[64] * y[64] * imw[64]; // c7h14-3
-  result += cvor[65] * y[65] * imw[65]; // c7h15o2-1
-  result += cvor[66] * y[66] * imw[66]; // c7h15o2-2
-  result += cvor[67] * y[67] * imw[67]; // c7h15o2-3
-  result += cvor[68] * y[68] * imw[68]; // c7h15o2-4
-  result += cvor[69] * y[69] * imw[69]; // c7h14ooh1-3
-  result += cvor[70] * y[70] * imw[70]; // c7h14ooh2-3
-  result += cvor[71] * y[71] * imw[71]; // c7h14ooh2-4
-  result += cvor[72] * y[72] * imw[72]; // c7h14ooh3-2
-  result += cvor[73] * y[73] * imw[73]; // c7h14ooh3-4
-  result += cvor[74] * y[74] * imw[74]; // c7h14ooh3-5
-  result += cvor[75] * y[75] * imw[75]; // c7h14ooh4-2
-  result += cvor[76] * y[76] * imw[76]; // c7h14ooh4-3
-  result += cvor[77] * y[77] * imw[77]; // c7h14ooh1-3o2
-  result += cvor[78] * y[78] * imw[78]; // c7h14ooh2-4o2
-  result += cvor[79] * y[79] * imw[79]; // c7h14ooh3-5o2
-  result += cvor[80] * y[80] * imw[80]; // c7h14ooh4-2o2
-  result += cvor[81] * y[81] * imw[81]; // c7h14o1-3
-  result += cvor[82] * y[82] * imw[82]; // c7h14o2-4
-  result += cvor[83] * y[83] * imw[83]; // nc7ket13
-  result += cvor[84] * y[84] * imw[84]; // nc7ket24
-  result += cvor[85] * y[85] * imw[85]; // nc7ket35
-  result += cvor[86] * y[86] * imw[86]; // nc7ket42
-  result += cvor[87] * y[87] * imw[87]; // n2
+  for (int i = 0; i < 88; i++) {
+    result += cvor[i] * y[i] * imw[i];
+  }
 
   cvbs = result * 8.31446261815324e+07;
 }
@@ -6910,7 +6820,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -6920,7 +6829,7 @@ CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
   speciesEnthalpy(hml, tc);
 
   // perform dot product
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     result += x[id] * hml[id];
   }
 
@@ -6935,7 +6844,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real hml[88], tmp[88];                       //  temporary storage
+  amrex::Real hml[88];                                //  temporary storage
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
   amrex::Real imw[88];
 
@@ -6943,12 +6852,8 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 
   speciesEnthalpy(hml, tc);
 
-  int id;
-  for (id = 0; id < 88; ++id) {
-    tmp[id] = y[id] * hml[id] * imw[id];
-  }
-  for (id = 0; id < 88; ++id) {
-    result += tmp[id];
+  for (int id = 0; id < 88; ++id) {
+    result += y[id] * hml[id] * imw[id];
   }
 
   hbms = result * RT;
@@ -6958,7 +6863,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -6968,7 +6872,7 @@ CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
   speciesInternalEnergy(uml, tc);
 
   // perform dot product
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     result += x[id] * uml[id];
   }
 
@@ -6992,94 +6896,9 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   speciesInternalEnergy(ums, tc);
 
   // perform dot product + scaling by wt
-  result += y[0] * ums[0] * imw[0];    // h
-  result += y[1] * ums[1] * imw[1];    // h2
-  result += y[2] * ums[2] * imw[2];    // o
-  result += y[3] * ums[3] * imw[3];    // o2
-  result += y[4] * ums[4] * imw[4];    // oh
-  result += y[5] * ums[5] * imw[5];    // h2o
-  result += y[6] * ums[6] * imw[6];    // co
-  result += y[7] * ums[7] * imw[7];    // hco
-  result += y[8] * ums[8] * imw[8];    // co2
-  result += y[9] * ums[9] * imw[9];    // ch3
-  result += y[10] * ums[10] * imw[10]; // ch4
-  result += y[11] * ums[11] * imw[11]; // ho2
-  result += y[12] * ums[12] * imw[12]; // h2o2
-  result += y[13] * ums[13] * imw[13]; // ch2o
-  result += y[14] * ums[14] * imw[14]; // ch3o
-  result += y[15] * ums[15] * imw[15]; // c2h6
-  result += y[16] * ums[16] * imw[16]; // c2h4
-  result += y[17] * ums[17] * imw[17]; // c2h5
-  result += y[18] * ums[18] * imw[18]; // c2h2
-  result += y[19] * ums[19] * imw[19]; // c2h3
-  result += y[20] * ums[20] * imw[20]; // ch2co
-  result += y[21] * ums[21] * imw[21]; // hcco
-  result += y[22] * ums[22] * imw[22]; // ch3co
-  result += y[23] * ums[23] * imw[23]; // ch2cho
-  result += y[24] * ums[24] * imw[24]; // ch3cho
-  result += y[25] * ums[25] * imw[25]; // c3h4-a
-  result += y[26] * ums[26] * imw[26]; // c3h6
-  result += y[27] * ums[27] * imw[27]; // c4h6
-  result += y[28] * ums[28] * imw[28]; // nc3h7
-  result += y[29] * ums[29] * imw[29]; // c4h7
-  result += y[30] * ums[30] * imw[30]; // c4h8-1
-  result += y[31] * ums[31] * imw[31]; // pc4h9
-  result += y[32] * ums[32] * imw[32]; // ch3coch2
-  result += y[33] * ums[33] * imw[33]; // c2h5cho
-  result += y[34] * ums[34] * imw[34]; // c2h5co
-  result += y[35] * ums[35] * imw[35]; // c5h9
-  result += y[36] * ums[36] * imw[36]; // c5h10-1
-  result += y[37] * ums[37] * imw[37]; // c2h5o
-  result += y[38] * ums[38] * imw[38]; // ch3o2
-  result += y[39] * ums[39] * imw[39]; // ch3o2h
-  result += y[40] * ums[40] * imw[40]; // c2h3co
-  result += y[41] * ums[41] * imw[41]; // c2h3cho
-  result += y[42] * ums[42] * imw[42]; // c3h5o
-  result += y[43] * ums[43] * imw[43]; // c4h7o
-  result += y[44] * ums[44] * imw[44]; // c4h8ooh1-3o2
-  result += y[45] * ums[45] * imw[45]; // c4h8ooh1-3
-  result += y[46] * ums[46] * imw[46]; // pc4h9o2
-  result += y[47] * ums[47] * imw[47]; // c3h5-a
-  result += y[48] * ums[48] * imw[48]; // c3h3
-  result += y[49] * ums[49] * imw[49]; // c3h2
-  result += y[50] * ums[50] * imw[50]; // ch2(s)
-  result += y[51] * ums[51] * imw[51]; // nc4ket13
-  result += y[52] * ums[52] * imw[52]; // nc3h7cho
-  result += y[53] * ums[53] * imw[53]; // nc3h7co
-  result += y[54] * ums[54] * imw[54]; // c2h5coch2
-  result += y[55] * ums[55] * imw[55]; // nc3h7coch2
-  result += y[56] * ums[56] * imw[56]; // nc4h9cho
-  result += y[57] * ums[57] * imw[57]; // nc4h9co
-  result += y[58] * ums[58] * imw[58]; // nc7h16
-  result += y[59] * ums[59] * imw[59]; // c7h15-1
-  result += y[60] * ums[60] * imw[60]; // c7h15-2
-  result += y[61] * ums[61] * imw[61]; // c7h15-3
-  result += y[62] * ums[62] * imw[62]; // c7h15-4
-  result += y[63] * ums[63] * imw[63]; // c7h14-2
-  result += y[64] * ums[64] * imw[64]; // c7h14-3
-  result += y[65] * ums[65] * imw[65]; // c7h15o2-1
-  result += y[66] * ums[66] * imw[66]; // c7h15o2-2
-  result += y[67] * ums[67] * imw[67]; // c7h15o2-3
-  result += y[68] * ums[68] * imw[68]; // c7h15o2-4
-  result += y[69] * ums[69] * imw[69]; // c7h14ooh1-3
-  result += y[70] * ums[70] * imw[70]; // c7h14ooh2-3
-  result += y[71] * ums[71] * imw[71]; // c7h14ooh2-4
-  result += y[72] * ums[72] * imw[72]; // c7h14ooh3-2
-  result += y[73] * ums[73] * imw[73]; // c7h14ooh3-4
-  result += y[74] * ums[74] * imw[74]; // c7h14ooh3-5
-  result += y[75] * ums[75] * imw[75]; // c7h14ooh4-2
-  result += y[76] * ums[76] * imw[76]; // c7h14ooh4-3
-  result += y[77] * ums[77] * imw[77]; // c7h14ooh1-3o2
-  result += y[78] * ums[78] * imw[78]; // c7h14ooh2-4o2
-  result += y[79] * ums[79] * imw[79]; // c7h14ooh3-5o2
-  result += y[80] * ums[80] * imw[80]; // c7h14ooh4-2o2
-  result += y[81] * ums[81] * imw[81]; // c7h14o1-3
-  result += y[82] * ums[82] * imw[82]; // c7h14o2-4
-  result += y[83] * ums[83] * imw[83]; // nc7ket13
-  result += y[84] * ums[84] * imw[84]; // nc7ket24
-  result += y[85] * ums[85] * imw[85]; // nc7ket35
-  result += y[86] * ums[86] * imw[86]; // nc7ket42
-  result += y[87] * ums[87] * imw[87]; // n2
+  for (int i = 0; i < 88; i++) {
+    result += y[i] * ums[i] * imw[i];
+  }
 
   ubms = result * RT;
 }
@@ -7092,7 +6911,6 @@ CKSBML(
   const amrex::Real x[],
   amrex::Real& sbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
   amrex::Real logPratio = log(P / 1013250.0);
@@ -7103,7 +6921,7 @@ CKSBML(
   speciesEntropy(sor, tc);
 
   // Compute Eq 42
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     result += x[id] * (sor[id] - log((x[id] + 1e-100)) - logPratio);
   }
 
@@ -7132,94 +6950,9 @@ CKSBMS(
   get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // h
-  YOW += y[1] * imw[1];   // h2
-  YOW += y[2] * imw[2];   // o
-  YOW += y[3] * imw[3];   // o2
-  YOW += y[4] * imw[4];   // oh
-  YOW += y[5] * imw[5];   // h2o
-  YOW += y[6] * imw[6];   // co
-  YOW += y[7] * imw[7];   // hco
-  YOW += y[8] * imw[8];   // co2
-  YOW += y[9] * imw[9];   // ch3
-  YOW += y[10] * imw[10]; // ch4
-  YOW += y[11] * imw[11]; // ho2
-  YOW += y[12] * imw[12]; // h2o2
-  YOW += y[13] * imw[13]; // ch2o
-  YOW += y[14] * imw[14]; // ch3o
-  YOW += y[15] * imw[15]; // c2h6
-  YOW += y[16] * imw[16]; // c2h4
-  YOW += y[17] * imw[17]; // c2h5
-  YOW += y[18] * imw[18]; // c2h2
-  YOW += y[19] * imw[19]; // c2h3
-  YOW += y[20] * imw[20]; // ch2co
-  YOW += y[21] * imw[21]; // hcco
-  YOW += y[22] * imw[22]; // ch3co
-  YOW += y[23] * imw[23]; // ch2cho
-  YOW += y[24] * imw[24]; // ch3cho
-  YOW += y[25] * imw[25]; // c3h4-a
-  YOW += y[26] * imw[26]; // c3h6
-  YOW += y[27] * imw[27]; // c4h6
-  YOW += y[28] * imw[28]; // nc3h7
-  YOW += y[29] * imw[29]; // c4h7
-  YOW += y[30] * imw[30]; // c4h8-1
-  YOW += y[31] * imw[31]; // pc4h9
-  YOW += y[32] * imw[32]; // ch3coch2
-  YOW += y[33] * imw[33]; // c2h5cho
-  YOW += y[34] * imw[34]; // c2h5co
-  YOW += y[35] * imw[35]; // c5h9
-  YOW += y[36] * imw[36]; // c5h10-1
-  YOW += y[37] * imw[37]; // c2h5o
-  YOW += y[38] * imw[38]; // ch3o2
-  YOW += y[39] * imw[39]; // ch3o2h
-  YOW += y[40] * imw[40]; // c2h3co
-  YOW += y[41] * imw[41]; // c2h3cho
-  YOW += y[42] * imw[42]; // c3h5o
-  YOW += y[43] * imw[43]; // c4h7o
-  YOW += y[44] * imw[44]; // c4h8ooh1-3o2
-  YOW += y[45] * imw[45]; // c4h8ooh1-3
-  YOW += y[46] * imw[46]; // pc4h9o2
-  YOW += y[47] * imw[47]; // c3h5-a
-  YOW += y[48] * imw[48]; // c3h3
-  YOW += y[49] * imw[49]; // c3h2
-  YOW += y[50] * imw[50]; // ch2(s)
-  YOW += y[51] * imw[51]; // nc4ket13
-  YOW += y[52] * imw[52]; // nc3h7cho
-  YOW += y[53] * imw[53]; // nc3h7co
-  YOW += y[54] * imw[54]; // c2h5coch2
-  YOW += y[55] * imw[55]; // nc3h7coch2
-  YOW += y[56] * imw[56]; // nc4h9cho
-  YOW += y[57] * imw[57]; // nc4h9co
-  YOW += y[58] * imw[58]; // nc7h16
-  YOW += y[59] * imw[59]; // c7h15-1
-  YOW += y[60] * imw[60]; // c7h15-2
-  YOW += y[61] * imw[61]; // c7h15-3
-  YOW += y[62] * imw[62]; // c7h15-4
-  YOW += y[63] * imw[63]; // c7h14-2
-  YOW += y[64] * imw[64]; // c7h14-3
-  YOW += y[65] * imw[65]; // c7h15o2-1
-  YOW += y[66] * imw[66]; // c7h15o2-2
-  YOW += y[67] * imw[67]; // c7h15o2-3
-  YOW += y[68] * imw[68]; // c7h15o2-4
-  YOW += y[69] * imw[69]; // c7h14ooh1-3
-  YOW += y[70] * imw[70]; // c7h14ooh2-3
-  YOW += y[71] * imw[71]; // c7h14ooh2-4
-  YOW += y[72] * imw[72]; // c7h14ooh3-2
-  YOW += y[73] * imw[73]; // c7h14ooh3-4
-  YOW += y[74] * imw[74]; // c7h14ooh3-5
-  YOW += y[75] * imw[75]; // c7h14ooh4-2
-  YOW += y[76] * imw[76]; // c7h14ooh4-3
-  YOW += y[77] * imw[77]; // c7h14ooh1-3o2
-  YOW += y[78] * imw[78]; // c7h14ooh2-4o2
-  YOW += y[79] * imw[79]; // c7h14ooh3-5o2
-  YOW += y[80] * imw[80]; // c7h14ooh4-2o2
-  YOW += y[81] * imw[81]; // c7h14o1-3
-  YOW += y[82] * imw[82]; // c7h14o2-4
-  YOW += y[83] * imw[83]; // nc7ket13
-  YOW += y[84] * imw[84]; // nc7ket24
-  YOW += y[85] * imw[85]; // nc7ket35
-  YOW += y[86] * imw[86]; // nc7ket42
-  YOW += y[87] * imw[87]; // n2
+  for (int i = 0; i < 88; i++) {
+    YOW += y[i] * imw[i];
+  }
   // Now compute y to x conversion
   x[0] = y[0] / (1.008000 * YOW);
   x[1] = y[1] / (2.016000 * YOW);
@@ -7311,94 +7044,9 @@ CKSBMS(
   x[87] = y[87] / (28.014000 * YOW);
   speciesEntropy(sor, tc);
   // Perform computation in Eq 42 and 43
-  result += x[0] * (sor[0] - log((x[0] + 1e-100)) - logPratio);
-  result += x[1] * (sor[1] - log((x[1] + 1e-100)) - logPratio);
-  result += x[2] * (sor[2] - log((x[2] + 1e-100)) - logPratio);
-  result += x[3] * (sor[3] - log((x[3] + 1e-100)) - logPratio);
-  result += x[4] * (sor[4] - log((x[4] + 1e-100)) - logPratio);
-  result += x[5] * (sor[5] - log((x[5] + 1e-100)) - logPratio);
-  result += x[6] * (sor[6] - log((x[6] + 1e-100)) - logPratio);
-  result += x[7] * (sor[7] - log((x[7] + 1e-100)) - logPratio);
-  result += x[8] * (sor[8] - log((x[8] + 1e-100)) - logPratio);
-  result += x[9] * (sor[9] - log((x[9] + 1e-100)) - logPratio);
-  result += x[10] * (sor[10] - log((x[10] + 1e-100)) - logPratio);
-  result += x[11] * (sor[11] - log((x[11] + 1e-100)) - logPratio);
-  result += x[12] * (sor[12] - log((x[12] + 1e-100)) - logPratio);
-  result += x[13] * (sor[13] - log((x[13] + 1e-100)) - logPratio);
-  result += x[14] * (sor[14] - log((x[14] + 1e-100)) - logPratio);
-  result += x[15] * (sor[15] - log((x[15] + 1e-100)) - logPratio);
-  result += x[16] * (sor[16] - log((x[16] + 1e-100)) - logPratio);
-  result += x[17] * (sor[17] - log((x[17] + 1e-100)) - logPratio);
-  result += x[18] * (sor[18] - log((x[18] + 1e-100)) - logPratio);
-  result += x[19] * (sor[19] - log((x[19] + 1e-100)) - logPratio);
-  result += x[20] * (sor[20] - log((x[20] + 1e-100)) - logPratio);
-  result += x[21] * (sor[21] - log((x[21] + 1e-100)) - logPratio);
-  result += x[22] * (sor[22] - log((x[22] + 1e-100)) - logPratio);
-  result += x[23] * (sor[23] - log((x[23] + 1e-100)) - logPratio);
-  result += x[24] * (sor[24] - log((x[24] + 1e-100)) - logPratio);
-  result += x[25] * (sor[25] - log((x[25] + 1e-100)) - logPratio);
-  result += x[26] * (sor[26] - log((x[26] + 1e-100)) - logPratio);
-  result += x[27] * (sor[27] - log((x[27] + 1e-100)) - logPratio);
-  result += x[28] * (sor[28] - log((x[28] + 1e-100)) - logPratio);
-  result += x[29] * (sor[29] - log((x[29] + 1e-100)) - logPratio);
-  result += x[30] * (sor[30] - log((x[30] + 1e-100)) - logPratio);
-  result += x[31] * (sor[31] - log((x[31] + 1e-100)) - logPratio);
-  result += x[32] * (sor[32] - log((x[32] + 1e-100)) - logPratio);
-  result += x[33] * (sor[33] - log((x[33] + 1e-100)) - logPratio);
-  result += x[34] * (sor[34] - log((x[34] + 1e-100)) - logPratio);
-  result += x[35] * (sor[35] - log((x[35] + 1e-100)) - logPratio);
-  result += x[36] * (sor[36] - log((x[36] + 1e-100)) - logPratio);
-  result += x[37] * (sor[37] - log((x[37] + 1e-100)) - logPratio);
-  result += x[38] * (sor[38] - log((x[38] + 1e-100)) - logPratio);
-  result += x[39] * (sor[39] - log((x[39] + 1e-100)) - logPratio);
-  result += x[40] * (sor[40] - log((x[40] + 1e-100)) - logPratio);
-  result += x[41] * (sor[41] - log((x[41] + 1e-100)) - logPratio);
-  result += x[42] * (sor[42] - log((x[42] + 1e-100)) - logPratio);
-  result += x[43] * (sor[43] - log((x[43] + 1e-100)) - logPratio);
-  result += x[44] * (sor[44] - log((x[44] + 1e-100)) - logPratio);
-  result += x[45] * (sor[45] - log((x[45] + 1e-100)) - logPratio);
-  result += x[46] * (sor[46] - log((x[46] + 1e-100)) - logPratio);
-  result += x[47] * (sor[47] - log((x[47] + 1e-100)) - logPratio);
-  result += x[48] * (sor[48] - log((x[48] + 1e-100)) - logPratio);
-  result += x[49] * (sor[49] - log((x[49] + 1e-100)) - logPratio);
-  result += x[50] * (sor[50] - log((x[50] + 1e-100)) - logPratio);
-  result += x[51] * (sor[51] - log((x[51] + 1e-100)) - logPratio);
-  result += x[52] * (sor[52] - log((x[52] + 1e-100)) - logPratio);
-  result += x[53] * (sor[53] - log((x[53] + 1e-100)) - logPratio);
-  result += x[54] * (sor[54] - log((x[54] + 1e-100)) - logPratio);
-  result += x[55] * (sor[55] - log((x[55] + 1e-100)) - logPratio);
-  result += x[56] * (sor[56] - log((x[56] + 1e-100)) - logPratio);
-  result += x[57] * (sor[57] - log((x[57] + 1e-100)) - logPratio);
-  result += x[58] * (sor[58] - log((x[58] + 1e-100)) - logPratio);
-  result += x[59] * (sor[59] - log((x[59] + 1e-100)) - logPratio);
-  result += x[60] * (sor[60] - log((x[60] + 1e-100)) - logPratio);
-  result += x[61] * (sor[61] - log((x[61] + 1e-100)) - logPratio);
-  result += x[62] * (sor[62] - log((x[62] + 1e-100)) - logPratio);
-  result += x[63] * (sor[63] - log((x[63] + 1e-100)) - logPratio);
-  result += x[64] * (sor[64] - log((x[64] + 1e-100)) - logPratio);
-  result += x[65] * (sor[65] - log((x[65] + 1e-100)) - logPratio);
-  result += x[66] * (sor[66] - log((x[66] + 1e-100)) - logPratio);
-  result += x[67] * (sor[67] - log((x[67] + 1e-100)) - logPratio);
-  result += x[68] * (sor[68] - log((x[68] + 1e-100)) - logPratio);
-  result += x[69] * (sor[69] - log((x[69] + 1e-100)) - logPratio);
-  result += x[70] * (sor[70] - log((x[70] + 1e-100)) - logPratio);
-  result += x[71] * (sor[71] - log((x[71] + 1e-100)) - logPratio);
-  result += x[72] * (sor[72] - log((x[72] + 1e-100)) - logPratio);
-  result += x[73] * (sor[73] - log((x[73] + 1e-100)) - logPratio);
-  result += x[74] * (sor[74] - log((x[74] + 1e-100)) - logPratio);
-  result += x[75] * (sor[75] - log((x[75] + 1e-100)) - logPratio);
-  result += x[76] * (sor[76] - log((x[76] + 1e-100)) - logPratio);
-  result += x[77] * (sor[77] - log((x[77] + 1e-100)) - logPratio);
-  result += x[78] * (sor[78] - log((x[78] + 1e-100)) - logPratio);
-  result += x[79] * (sor[79] - log((x[79] + 1e-100)) - logPratio);
-  result += x[80] * (sor[80] - log((x[80] + 1e-100)) - logPratio);
-  result += x[81] * (sor[81] - log((x[81] + 1e-100)) - logPratio);
-  result += x[82] * (sor[82] - log((x[82] + 1e-100)) - logPratio);
-  result += x[83] * (sor[83] - log((x[83] + 1e-100)) - logPratio);
-  result += x[84] * (sor[84] - log((x[84] + 1e-100)) - logPratio);
-  result += x[85] * (sor[85] - log((x[85] + 1e-100)) - logPratio);
-  result += x[86] * (sor[86] - log((x[86] + 1e-100)) - logPratio);
-  result += x[87] * (sor[87] - log((x[87] + 1e-100)) - logPratio);
+  for (int i = 0; i < 88; i++) {
+    result += x[i] * (sor[i] - log((x[i] + 1e-100)) - logPratio);
+  }
   // Scale by R/W
   sbms = result * 8.31446261815324e+07 * YOW;
 }
@@ -7418,7 +7066,6 @@ GET_T_GIVEN_EY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
-  int i; //  loop counter
   CKUBMS(tmin, y, emin);
   CKUBMS(tmax, y, emax);
   if (e < emin) {
@@ -7439,7 +7086,7 @@ GET_T_GIVEN_EY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (emax - emin) * (e - emin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKUBMS(t1, y, e1);
     CKCVBS(t1, y, cv);
     dt = (e - e1) / cv;
@@ -7471,7 +7118,6 @@ GET_T_GIVEN_HY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
-  int i; //  loop counter
   CKHBMS(tmin, y, hmin);
   CKHBMS(tmax, y, hmax);
   if (h < hmin) {
@@ -7492,7 +7138,7 @@ GET_T_GIVEN_HY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (hmax - hmin) * (h - hmin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKHBMS(t1, y, h1);
     CKCPBS(t1, y, cp);
     dt = (h - h1) / cp;
@@ -7622,94 +7268,9 @@ CKPY(
 
   get_imw(imw);
 
-  YOW += y[0] * imw[0];                     // h
-  YOW += y[1] * imw[1];                     // h2
-  YOW += y[2] * imw[2];                     // o
-  YOW += y[3] * imw[3];                     // o2
-  YOW += y[4] * imw[4];                     // oh
-  YOW += y[5] * imw[5];                     // h2o
-  YOW += y[6] * imw[6];                     // co
-  YOW += y[7] * imw[7];                     // hco
-  YOW += y[8] * imw[8];                     // co2
-  YOW += y[9] * imw[9];                     // ch3
-  YOW += y[10] * imw[10];                   // ch4
-  YOW += y[11] * imw[11];                   // ho2
-  YOW += y[12] * imw[12];                   // h2o2
-  YOW += y[13] * imw[13];                   // ch2o
-  YOW += y[14] * imw[14];                   // ch3o
-  YOW += y[15] * imw[15];                   // c2h6
-  YOW += y[16] * imw[16];                   // c2h4
-  YOW += y[17] * imw[17];                   // c2h5
-  YOW += y[18] * imw[18];                   // c2h2
-  YOW += y[19] * imw[19];                   // c2h3
-  YOW += y[20] * imw[20];                   // ch2co
-  YOW += y[21] * imw[21];                   // hcco
-  YOW += y[22] * imw[22];                   // ch3co
-  YOW += y[23] * imw[23];                   // ch2cho
-  YOW += y[24] * imw[24];                   // ch3cho
-  YOW += y[25] * imw[25];                   // c3h4-a
-  YOW += y[26] * imw[26];                   // c3h6
-  YOW += y[27] * imw[27];                   // c4h6
-  YOW += y[28] * imw[28];                   // nc3h7
-  YOW += y[29] * imw[29];                   // c4h7
-  YOW += y[30] * imw[30];                   // c4h8-1
-  YOW += y[31] * imw[31];                   // pc4h9
-  YOW += y[32] * imw[32];                   // ch3coch2
-  YOW += y[33] * imw[33];                   // c2h5cho
-  YOW += y[34] * imw[34];                   // c2h5co
-  YOW += y[35] * imw[35];                   // c5h9
-  YOW += y[36] * imw[36];                   // c5h10-1
-  YOW += y[37] * imw[37];                   // c2h5o
-  YOW += y[38] * imw[38];                   // ch3o2
-  YOW += y[39] * imw[39];                   // ch3o2h
-  YOW += y[40] * imw[40];                   // c2h3co
-  YOW += y[41] * imw[41];                   // c2h3cho
-  YOW += y[42] * imw[42];                   // c3h5o
-  YOW += y[43] * imw[43];                   // c4h7o
-  YOW += y[44] * imw[44];                   // c4h8ooh1-3o2
-  YOW += y[45] * imw[45];                   // c4h8ooh1-3
-  YOW += y[46] * imw[46];                   // pc4h9o2
-  YOW += y[47] * imw[47];                   // c3h5-a
-  YOW += y[48] * imw[48];                   // c3h3
-  YOW += y[49] * imw[49];                   // c3h2
-  YOW += y[50] * imw[50];                   // ch2(s)
-  YOW += y[51] * imw[51];                   // nc4ket13
-  YOW += y[52] * imw[52];                   // nc3h7cho
-  YOW += y[53] * imw[53];                   // nc3h7co
-  YOW += y[54] * imw[54];                   // c2h5coch2
-  YOW += y[55] * imw[55];                   // nc3h7coch2
-  YOW += y[56] * imw[56];                   // nc4h9cho
-  YOW += y[57] * imw[57];                   // nc4h9co
-  YOW += y[58] * imw[58];                   // nc7h16
-  YOW += y[59] * imw[59];                   // c7h15-1
-  YOW += y[60] * imw[60];                   // c7h15-2
-  YOW += y[61] * imw[61];                   // c7h15-3
-  YOW += y[62] * imw[62];                   // c7h15-4
-  YOW += y[63] * imw[63];                   // c7h14-2
-  YOW += y[64] * imw[64];                   // c7h14-3
-  YOW += y[65] * imw[65];                   // c7h15o2-1
-  YOW += y[66] * imw[66];                   // c7h15o2-2
-  YOW += y[67] * imw[67];                   // c7h15o2-3
-  YOW += y[68] * imw[68];                   // c7h15o2-4
-  YOW += y[69] * imw[69];                   // c7h14ooh1-3
-  YOW += y[70] * imw[70];                   // c7h14ooh2-3
-  YOW += y[71] * imw[71];                   // c7h14ooh2-4
-  YOW += y[72] * imw[72];                   // c7h14ooh3-2
-  YOW += y[73] * imw[73];                   // c7h14ooh3-4
-  YOW += y[74] * imw[74];                   // c7h14ooh3-5
-  YOW += y[75] * imw[75];                   // c7h14ooh4-2
-  YOW += y[76] * imw[76];                   // c7h14ooh4-3
-  YOW += y[77] * imw[77];                   // c7h14ooh1-3o2
-  YOW += y[78] * imw[78];                   // c7h14ooh2-4o2
-  YOW += y[79] * imw[79];                   // c7h14ooh3-5o2
-  YOW += y[80] * imw[80];                   // c7h14ooh4-2o2
-  YOW += y[81] * imw[81];                   // c7h14o1-3
-  YOW += y[82] * imw[82];                   // c7h14o2-4
-  YOW += y[83] * imw[83];                   // nc7ket13
-  YOW += y[84] * imw[84];                   // nc7ket24
-  YOW += y[85] * imw[85];                   // nc7ket35
-  YOW += y[86] * imw[86];                   // nc7ket42
-  YOW += y[87] * imw[87];                   // n2
+  for (int i = 0; i < 88; i++) {
+    YOW += y[i] * imw[i];
+  }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
 
@@ -7721,7 +7282,6 @@ CKPC(
   const amrex::Real c[],
   amrex::Real& P)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -7814,7 +7374,7 @@ CKPC(
   W += c[86] * 146.186000; // nc7ket42
   W += c[87] * 28.014000;  // n2
 
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     sumC += c[id];
   }
   P = rho * 8.31446261815324e+07 * T * sumC / W; // P = rho*R*T/W
@@ -7929,16 +7489,12 @@ CKRHOY(
   amrex::Real& rho)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[88];
   amrex::Real imw[88];
 
   get_imw(imw);
 
   for (int i = 0; i < 88; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -7952,7 +7508,6 @@ CKRHOC(
   const amrex::Real c[],
   amrex::Real& rho)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -8045,7 +7600,7 @@ CKRHOC(
   W += c[86] * 146.186000; // nc7ket42
   W += c[87] * 28.014000;  // n2
 
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     sumC += c[id];
   }
   rho = P * W / (sumC * T * 8.31446261815324e+07); // rho = PW/(R*T)
@@ -8064,16 +7619,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWY(const amrex::Real y[], amrex::Real& wtm)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[88];
   amrex::Real imw[88];
 
   get_imw(imw);
 
   for (int i = 0; i < 88; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   wtm = 1.0 / YOW;
@@ -8181,7 +7732,6 @@ CKMMWX(const amrex::Real x[], amrex::Real& wtm)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWC(const amrex::Real c[], amrex::Real& wtm)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -8274,7 +7824,7 @@ CKMMWC(const amrex::Real c[], amrex::Real& wtm)
   W += c[86] * 146.186000; // nc7ket42
   W += c[87] * 28.014000;  // n2
 
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     sumC += c[id];
   }
   //  CK provides no guard against divison by zero
@@ -8319,16 +7869,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real y[], amrex::Real x[])
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[88];
   amrex::Real imw[88];
 
   get_imw(imw);
 
   for (int i = 0; i < 88; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
@@ -8580,11 +8126,10 @@ CKXTCP(
   const amrex::Real x[],
   amrex::Real c[])
 {
-  int id;                                            // loop counter
   amrex::Real PORT = P / (8.31446261815324e+07 * T); // P/RT
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     c[id] = x[id] * PORT;
   }
 }
@@ -8597,7 +8142,6 @@ CKXTCR(
   const amrex::Real x[],
   amrex::Real c[])
 {
-  int id;             // loop counter
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
   // Compute mean molecular wt first
@@ -8692,7 +8236,7 @@ CKXTCR(
   ROW = rho / XW;
 
   // Compute conversion, see Eq 11
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     c[id] = x[id] * ROW;
   }
 }
@@ -8701,17 +8245,16 @@ CKXTCR(
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCTX(const amrex::Real c[], amrex::Real x[])
 {
-  int id; // loop counter
   amrex::Real sumC = 0;
 
   // compute sum of c
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     sumC += c[id];
   }
 
   //  See Eq 13
   amrex::Real sumCinv = 1.0 / sumC;
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     x[id] = c[id] * sumCinv;
   }
 }
@@ -8907,14 +8450,13 @@ CKCTY(const amrex::Real c[], amrex::Real y[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVML(const amrex::Real T, amrex::Real cvml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cv_R(cvml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     cvml[id] *= 8.31446261815324e+07;
   }
 }
@@ -8924,14 +8466,13 @@ CKCVML(const amrex::Real T, amrex::Real cvml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPML(const amrex::Real T, amrex::Real cpml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cp_R(cpml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     cpml[id] *= 8.31446261815324e+07;
   }
 }
@@ -8941,7 +8482,6 @@ CKCPML(const amrex::Real T, amrex::Real cpml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUML(const amrex::Real T, amrex::Real uml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -8949,7 +8489,7 @@ CKUML(const amrex::Real T, amrex::Real uml[])
   speciesInternalEnergy(uml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     uml[id] *= RT;
   }
 }
@@ -8959,7 +8499,6 @@ CKUML(const amrex::Real T, amrex::Real uml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHML(const amrex::Real T, amrex::Real hml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -8967,7 +8506,7 @@ CKHML(const amrex::Real T, amrex::Real hml[])
   speciesEnthalpy(hml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     hml[id] *= RT;
   }
 }
@@ -8976,14 +8515,13 @@ CKHML(const amrex::Real T, amrex::Real hml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSML(const amrex::Real T, amrex::Real sml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   speciesEntropy(sml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     sml[id] *= 8.31446261815324e+07;
   }
 }
@@ -24390,10 +23928,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKWC(const amrex::Real T, amrex::Real C[], amrex::Real wdot[])
 {
-  int id; // loop counter
 
   // convert to SI
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     C[id] *= 1.0e6;
   }
 
@@ -24401,7 +23938,7 @@ CKWC(const amrex::Real T, amrex::Real C[], amrex::Real wdot[])
   productionRate(wdot, C, T);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     C[id] *= 1.0e-6;
     wdot[id] *= 1.0e-6;
   }
@@ -24416,7 +23953,6 @@ CKWYP(
   const amrex::Real y[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[88]; // temporary storage
   amrex::Real YOW = 0;
   amrex::Real PWORT;
@@ -24425,193 +23961,23 @@ CKWYP(
   get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // h
-  YOW += y[1] * imw[1];   // h2
-  YOW += y[2] * imw[2];   // o
-  YOW += y[3] * imw[3];   // o2
-  YOW += y[4] * imw[4];   // oh
-  YOW += y[5] * imw[5];   // h2o
-  YOW += y[6] * imw[6];   // co
-  YOW += y[7] * imw[7];   // hco
-  YOW += y[8] * imw[8];   // co2
-  YOW += y[9] * imw[9];   // ch3
-  YOW += y[10] * imw[10]; // ch4
-  YOW += y[11] * imw[11]; // ho2
-  YOW += y[12] * imw[12]; // h2o2
-  YOW += y[13] * imw[13]; // ch2o
-  YOW += y[14] * imw[14]; // ch3o
-  YOW += y[15] * imw[15]; // c2h6
-  YOW += y[16] * imw[16]; // c2h4
-  YOW += y[17] * imw[17]; // c2h5
-  YOW += y[18] * imw[18]; // c2h2
-  YOW += y[19] * imw[19]; // c2h3
-  YOW += y[20] * imw[20]; // ch2co
-  YOW += y[21] * imw[21]; // hcco
-  YOW += y[22] * imw[22]; // ch3co
-  YOW += y[23] * imw[23]; // ch2cho
-  YOW += y[24] * imw[24]; // ch3cho
-  YOW += y[25] * imw[25]; // c3h4-a
-  YOW += y[26] * imw[26]; // c3h6
-  YOW += y[27] * imw[27]; // c4h6
-  YOW += y[28] * imw[28]; // nc3h7
-  YOW += y[29] * imw[29]; // c4h7
-  YOW += y[30] * imw[30]; // c4h8-1
-  YOW += y[31] * imw[31]; // pc4h9
-  YOW += y[32] * imw[32]; // ch3coch2
-  YOW += y[33] * imw[33]; // c2h5cho
-  YOW += y[34] * imw[34]; // c2h5co
-  YOW += y[35] * imw[35]; // c5h9
-  YOW += y[36] * imw[36]; // c5h10-1
-  YOW += y[37] * imw[37]; // c2h5o
-  YOW += y[38] * imw[38]; // ch3o2
-  YOW += y[39] * imw[39]; // ch3o2h
-  YOW += y[40] * imw[40]; // c2h3co
-  YOW += y[41] * imw[41]; // c2h3cho
-  YOW += y[42] * imw[42]; // c3h5o
-  YOW += y[43] * imw[43]; // c4h7o
-  YOW += y[44] * imw[44]; // c4h8ooh1-3o2
-  YOW += y[45] * imw[45]; // c4h8ooh1-3
-  YOW += y[46] * imw[46]; // pc4h9o2
-  YOW += y[47] * imw[47]; // c3h5-a
-  YOW += y[48] * imw[48]; // c3h3
-  YOW += y[49] * imw[49]; // c3h2
-  YOW += y[50] * imw[50]; // ch2(s)
-  YOW += y[51] * imw[51]; // nc4ket13
-  YOW += y[52] * imw[52]; // nc3h7cho
-  YOW += y[53] * imw[53]; // nc3h7co
-  YOW += y[54] * imw[54]; // c2h5coch2
-  YOW += y[55] * imw[55]; // nc3h7coch2
-  YOW += y[56] * imw[56]; // nc4h9cho
-  YOW += y[57] * imw[57]; // nc4h9co
-  YOW += y[58] * imw[58]; // nc7h16
-  YOW += y[59] * imw[59]; // c7h15-1
-  YOW += y[60] * imw[60]; // c7h15-2
-  YOW += y[61] * imw[61]; // c7h15-3
-  YOW += y[62] * imw[62]; // c7h15-4
-  YOW += y[63] * imw[63]; // c7h14-2
-  YOW += y[64] * imw[64]; // c7h14-3
-  YOW += y[65] * imw[65]; // c7h15o2-1
-  YOW += y[66] * imw[66]; // c7h15o2-2
-  YOW += y[67] * imw[67]; // c7h15o2-3
-  YOW += y[68] * imw[68]; // c7h15o2-4
-  YOW += y[69] * imw[69]; // c7h14ooh1-3
-  YOW += y[70] * imw[70]; // c7h14ooh2-3
-  YOW += y[71] * imw[71]; // c7h14ooh2-4
-  YOW += y[72] * imw[72]; // c7h14ooh3-2
-  YOW += y[73] * imw[73]; // c7h14ooh3-4
-  YOW += y[74] * imw[74]; // c7h14ooh3-5
-  YOW += y[75] * imw[75]; // c7h14ooh4-2
-  YOW += y[76] * imw[76]; // c7h14ooh4-3
-  YOW += y[77] * imw[77]; // c7h14ooh1-3o2
-  YOW += y[78] * imw[78]; // c7h14ooh2-4o2
-  YOW += y[79] * imw[79]; // c7h14ooh3-5o2
-  YOW += y[80] * imw[80]; // c7h14ooh4-2o2
-  YOW += y[81] * imw[81]; // c7h14o1-3
-  YOW += y[82] * imw[82]; // c7h14o2-4
-  YOW += y[83] * imw[83]; // nc7ket13
-  YOW += y[84] * imw[84]; // nc7ket24
-  YOW += y[85] * imw[85]; // nc7ket35
-  YOW += y[86] * imw[86]; // nc7ket42
-  YOW += y[87] * imw[87]; // n2
+  for (int i = 0; i < 88; i++) {
+    YOW += y[i] * imw[i];
+  }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
   // multiply by 1e6 so c goes to SI
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
-  c[0] = PWORT * y[0] * imw[0];
-  c[1] = PWORT * y[1] * imw[1];
-  c[2] = PWORT * y[2] * imw[2];
-  c[3] = PWORT * y[3] * imw[3];
-  c[4] = PWORT * y[4] * imw[4];
-  c[5] = PWORT * y[5] * imw[5];
-  c[6] = PWORT * y[6] * imw[6];
-  c[7] = PWORT * y[7] * imw[7];
-  c[8] = PWORT * y[8] * imw[8];
-  c[9] = PWORT * y[9] * imw[9];
-  c[10] = PWORT * y[10] * imw[10];
-  c[11] = PWORT * y[11] * imw[11];
-  c[12] = PWORT * y[12] * imw[12];
-  c[13] = PWORT * y[13] * imw[13];
-  c[14] = PWORT * y[14] * imw[14];
-  c[15] = PWORT * y[15] * imw[15];
-  c[16] = PWORT * y[16] * imw[16];
-  c[17] = PWORT * y[17] * imw[17];
-  c[18] = PWORT * y[18] * imw[18];
-  c[19] = PWORT * y[19] * imw[19];
-  c[20] = PWORT * y[20] * imw[20];
-  c[21] = PWORT * y[21] * imw[21];
-  c[22] = PWORT * y[22] * imw[22];
-  c[23] = PWORT * y[23] * imw[23];
-  c[24] = PWORT * y[24] * imw[24];
-  c[25] = PWORT * y[25] * imw[25];
-  c[26] = PWORT * y[26] * imw[26];
-  c[27] = PWORT * y[27] * imw[27];
-  c[28] = PWORT * y[28] * imw[28];
-  c[29] = PWORT * y[29] * imw[29];
-  c[30] = PWORT * y[30] * imw[30];
-  c[31] = PWORT * y[31] * imw[31];
-  c[32] = PWORT * y[32] * imw[32];
-  c[33] = PWORT * y[33] * imw[33];
-  c[34] = PWORT * y[34] * imw[34];
-  c[35] = PWORT * y[35] * imw[35];
-  c[36] = PWORT * y[36] * imw[36];
-  c[37] = PWORT * y[37] * imw[37];
-  c[38] = PWORT * y[38] * imw[38];
-  c[39] = PWORT * y[39] * imw[39];
-  c[40] = PWORT * y[40] * imw[40];
-  c[41] = PWORT * y[41] * imw[41];
-  c[42] = PWORT * y[42] * imw[42];
-  c[43] = PWORT * y[43] * imw[43];
-  c[44] = PWORT * y[44] * imw[44];
-  c[45] = PWORT * y[45] * imw[45];
-  c[46] = PWORT * y[46] * imw[46];
-  c[47] = PWORT * y[47] * imw[47];
-  c[48] = PWORT * y[48] * imw[48];
-  c[49] = PWORT * y[49] * imw[49];
-  c[50] = PWORT * y[50] * imw[50];
-  c[51] = PWORT * y[51] * imw[51];
-  c[52] = PWORT * y[52] * imw[52];
-  c[53] = PWORT * y[53] * imw[53];
-  c[54] = PWORT * y[54] * imw[54];
-  c[55] = PWORT * y[55] * imw[55];
-  c[56] = PWORT * y[56] * imw[56];
-  c[57] = PWORT * y[57] * imw[57];
-  c[58] = PWORT * y[58] * imw[58];
-  c[59] = PWORT * y[59] * imw[59];
-  c[60] = PWORT * y[60] * imw[60];
-  c[61] = PWORT * y[61] * imw[61];
-  c[62] = PWORT * y[62] * imw[62];
-  c[63] = PWORT * y[63] * imw[63];
-  c[64] = PWORT * y[64] * imw[64];
-  c[65] = PWORT * y[65] * imw[65];
-  c[66] = PWORT * y[66] * imw[66];
-  c[67] = PWORT * y[67] * imw[67];
-  c[68] = PWORT * y[68] * imw[68];
-  c[69] = PWORT * y[69] * imw[69];
-  c[70] = PWORT * y[70] * imw[70];
-  c[71] = PWORT * y[71] * imw[71];
-  c[72] = PWORT * y[72] * imw[72];
-  c[73] = PWORT * y[73] * imw[73];
-  c[74] = PWORT * y[74] * imw[74];
-  c[75] = PWORT * y[75] * imw[75];
-  c[76] = PWORT * y[76] * imw[76];
-  c[77] = PWORT * y[77] * imw[77];
-  c[78] = PWORT * y[78] * imw[78];
-  c[79] = PWORT * y[79] * imw[79];
-  c[80] = PWORT * y[80] * imw[80];
-  c[81] = PWORT * y[81] * imw[81];
-  c[82] = PWORT * y[82] * imw[82];
-  c[83] = PWORT * y[83] * imw[83];
-  c[84] = PWORT * y[84] * imw[84];
-  c[85] = PWORT * y[85] * imw[85];
-  c[86] = PWORT * y[86] * imw[86];
-  c[87] = PWORT * y[87] * imw[87];
+  for (int i = 0; i < 88; i++) {
+    c[i] = PWORT * y[i] * imw[i];
+  }
 
   // convert to chemkin units
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -24625,13 +23991,12 @@ CKWXP(
   const amrex::Real x[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[88]; // temporary storage
   amrex::Real PORT =
     1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     c[id] = x[id] * PORT;
   }
 
@@ -24639,7 +24004,7 @@ CKWXP(
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -24653,107 +24018,21 @@ CKWYR(
   const amrex::Real y[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[88]; // temporary storage
   amrex::Real imw[88];
 
   get_imw(imw);
 
   // See Eq 8 with an extra 1e6 so c goes to SI
-  c[0] = 1e6 * rho * y[0] * imw[0];
-  c[1] = 1e6 * rho * y[1] * imw[1];
-  c[2] = 1e6 * rho * y[2] * imw[2];
-  c[3] = 1e6 * rho * y[3] * imw[3];
-  c[4] = 1e6 * rho * y[4] * imw[4];
-  c[5] = 1e6 * rho * y[5] * imw[5];
-  c[6] = 1e6 * rho * y[6] * imw[6];
-  c[7] = 1e6 * rho * y[7] * imw[7];
-  c[8] = 1e6 * rho * y[8] * imw[8];
-  c[9] = 1e6 * rho * y[9] * imw[9];
-  c[10] = 1e6 * rho * y[10] * imw[10];
-  c[11] = 1e6 * rho * y[11] * imw[11];
-  c[12] = 1e6 * rho * y[12] * imw[12];
-  c[13] = 1e6 * rho * y[13] * imw[13];
-  c[14] = 1e6 * rho * y[14] * imw[14];
-  c[15] = 1e6 * rho * y[15] * imw[15];
-  c[16] = 1e6 * rho * y[16] * imw[16];
-  c[17] = 1e6 * rho * y[17] * imw[17];
-  c[18] = 1e6 * rho * y[18] * imw[18];
-  c[19] = 1e6 * rho * y[19] * imw[19];
-  c[20] = 1e6 * rho * y[20] * imw[20];
-  c[21] = 1e6 * rho * y[21] * imw[21];
-  c[22] = 1e6 * rho * y[22] * imw[22];
-  c[23] = 1e6 * rho * y[23] * imw[23];
-  c[24] = 1e6 * rho * y[24] * imw[24];
-  c[25] = 1e6 * rho * y[25] * imw[25];
-  c[26] = 1e6 * rho * y[26] * imw[26];
-  c[27] = 1e6 * rho * y[27] * imw[27];
-  c[28] = 1e6 * rho * y[28] * imw[28];
-  c[29] = 1e6 * rho * y[29] * imw[29];
-  c[30] = 1e6 * rho * y[30] * imw[30];
-  c[31] = 1e6 * rho * y[31] * imw[31];
-  c[32] = 1e6 * rho * y[32] * imw[32];
-  c[33] = 1e6 * rho * y[33] * imw[33];
-  c[34] = 1e6 * rho * y[34] * imw[34];
-  c[35] = 1e6 * rho * y[35] * imw[35];
-  c[36] = 1e6 * rho * y[36] * imw[36];
-  c[37] = 1e6 * rho * y[37] * imw[37];
-  c[38] = 1e6 * rho * y[38] * imw[38];
-  c[39] = 1e6 * rho * y[39] * imw[39];
-  c[40] = 1e6 * rho * y[40] * imw[40];
-  c[41] = 1e6 * rho * y[41] * imw[41];
-  c[42] = 1e6 * rho * y[42] * imw[42];
-  c[43] = 1e6 * rho * y[43] * imw[43];
-  c[44] = 1e6 * rho * y[44] * imw[44];
-  c[45] = 1e6 * rho * y[45] * imw[45];
-  c[46] = 1e6 * rho * y[46] * imw[46];
-  c[47] = 1e6 * rho * y[47] * imw[47];
-  c[48] = 1e6 * rho * y[48] * imw[48];
-  c[49] = 1e6 * rho * y[49] * imw[49];
-  c[50] = 1e6 * rho * y[50] * imw[50];
-  c[51] = 1e6 * rho * y[51] * imw[51];
-  c[52] = 1e6 * rho * y[52] * imw[52];
-  c[53] = 1e6 * rho * y[53] * imw[53];
-  c[54] = 1e6 * rho * y[54] * imw[54];
-  c[55] = 1e6 * rho * y[55] * imw[55];
-  c[56] = 1e6 * rho * y[56] * imw[56];
-  c[57] = 1e6 * rho * y[57] * imw[57];
-  c[58] = 1e6 * rho * y[58] * imw[58];
-  c[59] = 1e6 * rho * y[59] * imw[59];
-  c[60] = 1e6 * rho * y[60] * imw[60];
-  c[61] = 1e6 * rho * y[61] * imw[61];
-  c[62] = 1e6 * rho * y[62] * imw[62];
-  c[63] = 1e6 * rho * y[63] * imw[63];
-  c[64] = 1e6 * rho * y[64] * imw[64];
-  c[65] = 1e6 * rho * y[65] * imw[65];
-  c[66] = 1e6 * rho * y[66] * imw[66];
-  c[67] = 1e6 * rho * y[67] * imw[67];
-  c[68] = 1e6 * rho * y[68] * imw[68];
-  c[69] = 1e6 * rho * y[69] * imw[69];
-  c[70] = 1e6 * rho * y[70] * imw[70];
-  c[71] = 1e6 * rho * y[71] * imw[71];
-  c[72] = 1e6 * rho * y[72] * imw[72];
-  c[73] = 1e6 * rho * y[73] * imw[73];
-  c[74] = 1e6 * rho * y[74] * imw[74];
-  c[75] = 1e6 * rho * y[75] * imw[75];
-  c[76] = 1e6 * rho * y[76] * imw[76];
-  c[77] = 1e6 * rho * y[77] * imw[77];
-  c[78] = 1e6 * rho * y[78] * imw[78];
-  c[79] = 1e6 * rho * y[79] * imw[79];
-  c[80] = 1e6 * rho * y[80] * imw[80];
-  c[81] = 1e6 * rho * y[81] * imw[81];
-  c[82] = 1e6 * rho * y[82] * imw[82];
-  c[83] = 1e6 * rho * y[83] * imw[83];
-  c[84] = 1e6 * rho * y[84] * imw[84];
-  c[85] = 1e6 * rho * y[85] * imw[85];
-  c[86] = 1e6 * rho * y[86] * imw[86];
-  c[87] = 1e6 * rho * y[87] * imw[87];
+  for (int i = 0; i < 88; i++) {
+    c[i] = 1e6 * rho * y[i] * imw[i];
+  }
 
   // call productionRate
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -24767,7 +24046,6 @@ CKWXR(
   const amrex::Real x[],
   amrex::Real wdot[])
 {
-  int id;             // loop counter
   amrex::Real c[88];  // temporary storage
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
@@ -24864,7 +24142,7 @@ CKWXR(
   ROW = 1e6 * rho / XW;
 
   // Compute conversion, see Eq 11
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     c[id] = x[id] * ROW;
   }
 
@@ -24872,7 +24150,7 @@ CKWXR(
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 88; ++id) {
+  for (int id = 0; id < 88; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
