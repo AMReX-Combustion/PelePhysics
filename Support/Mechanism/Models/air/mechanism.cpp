@@ -18,15 +18,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     // Return max num species per reaction
     nspec = 0;
   } else {
-    if (i > 0) {
-      nspec = -1;
-    } else {
-      nspec = ns[i - 1];
-      for (int j = 0; j < nspec; ++j) {
-        ki[j] = kiv[(i - 1) * 0 + j] + 1;
-        nu[j] = nuv[(i - 1) * 0 + j];
-      }
-    }
+    nspec = -1;
   }
 }
 
@@ -40,13 +32,12 @@ CKKFKR(
   amrex::Real q_f[],
   amrex::Real q_r[])
 {
-  int id;           // loop counter
   amrex::Real c[2]; // temporary storage
   amrex::Real PORT =
     1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 2; ++id) {
+  for (int id = 0; id < 2; ++id) {
     c[id] = x[id] * PORT;
   }
 
@@ -82,10 +73,9 @@ CKAWT(amrex::Real* awt)
 void
 CKNCF(int* ncf)
 {
-  int id; // loop counter
   int kd = 2;
   // Zero ncf
-  for (id = 0; id < kd * 2; ++id) {
+  for (int id = 0; id < kd * 2; ++id) {
     ncf[id] = 0;
   }
 

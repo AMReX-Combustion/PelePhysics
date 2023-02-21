@@ -80,19 +80,19 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_imw(amrex::Real* imw_new)
 {
-  imw_new[0] = 1.0 / 2.016000;   // H2
-  imw_new[1] = 1.0 / 1.008000;   // H
-  imw_new[2] = 1.0 / 15.999000;  // O
-  imw_new[3] = 1.0 / 31.998000;  // O2
-  imw_new[4] = 1.0 / 17.007000;  // OH
-  imw_new[5] = 1.0 / 18.015000;  // H2O
-  imw_new[6] = 1.0 / 33.006000;  // HO2
-  imw_new[7] = 1.0 / 15.035000;  // CH3
-  imw_new[8] = 1.0 / 16.043000;  // CH4
-  imw_new[9] = 1.0 / 28.010000;  // CO
-  imw_new[10] = 1.0 / 44.009000; // CO2
-  imw_new[11] = 1.0 / 30.026000; // CH2O
-  imw_new[12] = 1.0 / 28.014000; // N2
+  imw_new[0] = 0.4960317460317460;  // H2
+  imw_new[1] = 0.9920634920634921;  // H
+  imw_new[2] = 0.0625039064941559;  // O
+  imw_new[3] = 0.0312519532470779;  // O2
+  imw_new[4] = 0.0587993179279120;  // OH
+  imw_new[5] = 0.0555092978073827;  // H2O
+  imw_new[6] = 0.0302975216627280;  // HO2
+  imw_new[7] = 0.0665114732291320;  // CH3
+  imw_new[8] = 0.0623324814560868;  // CH4
+  imw_new[9] = 0.0357015351660121;  // CO
+  imw_new[10] = 0.0227226249176305; // CO2
+  imw_new[11] = 0.0333044694598015; // CH2O
+  imw_new[12] = 0.0356964374955379; // N2
 }
 
 //  molecular weights
@@ -1126,7 +1126,6 @@ speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1135,7 +1134,7 @@ CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
   cp_R(cpor, tc);
 
   // perform dot product
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     result += x[id] * cpor[id];
   }
 
@@ -1150,7 +1149,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cpor[13], tresult[13];                  //  temporary storage
+  amrex::Real cpor[13];                               //  temporary storage
   amrex::Real imw[13];
 
   get_imw(imw);
@@ -1158,10 +1157,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   cp_R(cpor, tc);
 
   for (int i = 0; i < 13; i++) {
-    tresult[i] = cpor[i] * y[i] * imw[i];
-  }
-  for (const auto& tr : tresult) {
-    result += tr;
+    result += cpor[i] * y[i] * imw[i];
   }
 
   cpbs = result * 8.31446261815324e+07;
@@ -1171,7 +1167,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1180,7 +1175,7 @@ CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
   cv_R(cvor, tc);
 
   // perform dot product
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     result += x[id] * cvor[id];
   }
 
@@ -1203,19 +1198,9 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   cv_R(cvor, tc);
 
   // multiply by y/molecularweight
-  result += cvor[0] * y[0] * imw[0];    // H2
-  result += cvor[1] * y[1] * imw[1];    // H
-  result += cvor[2] * y[2] * imw[2];    // O
-  result += cvor[3] * y[3] * imw[3];    // O2
-  result += cvor[4] * y[4] * imw[4];    // OH
-  result += cvor[5] * y[5] * imw[5];    // H2O
-  result += cvor[6] * y[6] * imw[6];    // HO2
-  result += cvor[7] * y[7] * imw[7];    // CH3
-  result += cvor[8] * y[8] * imw[8];    // CH4
-  result += cvor[9] * y[9] * imw[9];    // CO
-  result += cvor[10] * y[10] * imw[10]; // CO2
-  result += cvor[11] * y[11] * imw[11]; // CH2O
-  result += cvor[12] * y[12] * imw[12]; // N2
+  for (int i = 0; i < 13; i++) {
+    result += cvor[i] * y[i] * imw[i];
+  }
 
   cvbs = result * 8.31446261815324e+07;
 }
@@ -1224,7 +1209,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1234,7 +1218,7 @@ CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
   speciesEnthalpy(hml, tc);
 
   // perform dot product
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     result += x[id] * hml[id];
   }
 
@@ -1249,7 +1233,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real hml[13], tmp[13];                       //  temporary storage
+  amrex::Real hml[13];                                //  temporary storage
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
   amrex::Real imw[13];
 
@@ -1257,12 +1241,8 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 
   speciesEnthalpy(hml, tc);
 
-  int id;
-  for (id = 0; id < 13; ++id) {
-    tmp[id] = y[id] * hml[id] * imw[id];
-  }
-  for (id = 0; id < 13; ++id) {
-    result += tmp[id];
+  for (int id = 0; id < 13; ++id) {
+    result += y[id] * hml[id] * imw[id];
   }
 
   hbms = result * RT;
@@ -1272,7 +1252,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1282,7 +1261,7 @@ CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
   speciesInternalEnergy(uml, tc);
 
   // perform dot product
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     result += x[id] * uml[id];
   }
 
@@ -1306,19 +1285,9 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   speciesInternalEnergy(ums, tc);
 
   // perform dot product + scaling by wt
-  result += y[0] * ums[0] * imw[0];    // H2
-  result += y[1] * ums[1] * imw[1];    // H
-  result += y[2] * ums[2] * imw[2];    // O
-  result += y[3] * ums[3] * imw[3];    // O2
-  result += y[4] * ums[4] * imw[4];    // OH
-  result += y[5] * ums[5] * imw[5];    // H2O
-  result += y[6] * ums[6] * imw[6];    // HO2
-  result += y[7] * ums[7] * imw[7];    // CH3
-  result += y[8] * ums[8] * imw[8];    // CH4
-  result += y[9] * ums[9] * imw[9];    // CO
-  result += y[10] * ums[10] * imw[10]; // CO2
-  result += y[11] * ums[11] * imw[11]; // CH2O
-  result += y[12] * ums[12] * imw[12]; // N2
+  for (int i = 0; i < 13; i++) {
+    result += y[i] * ums[i] * imw[i];
+  }
 
   ubms = result * RT;
 }
@@ -1331,7 +1300,6 @@ CKSBML(
   const amrex::Real x[],
   amrex::Real& sbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
   amrex::Real logPratio = log(P / 1013250.0);
@@ -1342,7 +1310,7 @@ CKSBML(
   speciesEntropy(sor, tc);
 
   // Compute Eq 42
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     result += x[id] * (sor[id] - log((x[id] + 1e-100)) - logPratio);
   }
 
@@ -1371,19 +1339,9 @@ CKSBMS(
   get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // H2
-  YOW += y[1] * imw[1];   // H
-  YOW += y[2] * imw[2];   // O
-  YOW += y[3] * imw[3];   // O2
-  YOW += y[4] * imw[4];   // OH
-  YOW += y[5] * imw[5];   // H2O
-  YOW += y[6] * imw[6];   // HO2
-  YOW += y[7] * imw[7];   // CH3
-  YOW += y[8] * imw[8];   // CH4
-  YOW += y[9] * imw[9];   // CO
-  YOW += y[10] * imw[10]; // CO2
-  YOW += y[11] * imw[11]; // CH2O
-  YOW += y[12] * imw[12]; // N2
+  for (int i = 0; i < 13; i++) {
+    YOW += y[i] * imw[i];
+  }
   // Now compute y to x conversion
   x[0] = y[0] / (2.016000 * YOW);
   x[1] = y[1] / (1.008000 * YOW);
@@ -1400,19 +1358,9 @@ CKSBMS(
   x[12] = y[12] / (28.014000 * YOW);
   speciesEntropy(sor, tc);
   // Perform computation in Eq 42 and 43
-  result += x[0] * (sor[0] - log((x[0] + 1e-100)) - logPratio);
-  result += x[1] * (sor[1] - log((x[1] + 1e-100)) - logPratio);
-  result += x[2] * (sor[2] - log((x[2] + 1e-100)) - logPratio);
-  result += x[3] * (sor[3] - log((x[3] + 1e-100)) - logPratio);
-  result += x[4] * (sor[4] - log((x[4] + 1e-100)) - logPratio);
-  result += x[5] * (sor[5] - log((x[5] + 1e-100)) - logPratio);
-  result += x[6] * (sor[6] - log((x[6] + 1e-100)) - logPratio);
-  result += x[7] * (sor[7] - log((x[7] + 1e-100)) - logPratio);
-  result += x[8] * (sor[8] - log((x[8] + 1e-100)) - logPratio);
-  result += x[9] * (sor[9] - log((x[9] + 1e-100)) - logPratio);
-  result += x[10] * (sor[10] - log((x[10] + 1e-100)) - logPratio);
-  result += x[11] * (sor[11] - log((x[11] + 1e-100)) - logPratio);
-  result += x[12] * (sor[12] - log((x[12] + 1e-100)) - logPratio);
+  for (int i = 0; i < 13; i++) {
+    result += x[i] * (sor[i] - log((x[i] + 1e-100)) - logPratio);
+  }
   // Scale by R/W
   sbms = result * 8.31446261815324e+07 * YOW;
 }
@@ -1432,7 +1380,6 @@ GET_T_GIVEN_EY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
-  int i; //  loop counter
   CKUBMS(tmin, y, emin);
   CKUBMS(tmax, y, emax);
   if (e < emin) {
@@ -1453,7 +1400,7 @@ GET_T_GIVEN_EY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (emax - emin) * (e - emin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKUBMS(t1, y, e1);
     CKCVBS(t1, y, cv);
     dt = (e - e1) / cv;
@@ -1485,7 +1432,6 @@ GET_T_GIVEN_HY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
-  int i; //  loop counter
   CKHBMS(tmin, y, hmin);
   CKHBMS(tmax, y, hmax);
   if (h < hmin) {
@@ -1506,7 +1452,7 @@ GET_T_GIVEN_HY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (hmax - hmin) * (h - hmin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKHBMS(t1, y, h1);
     CKCPBS(t1, y, cp);
     dt = (h - h1) / cp;
@@ -1561,19 +1507,9 @@ CKPY(
 
   get_imw(imw);
 
-  YOW += y[0] * imw[0];                     // H2
-  YOW += y[1] * imw[1];                     // H
-  YOW += y[2] * imw[2];                     // O
-  YOW += y[3] * imw[3];                     // O2
-  YOW += y[4] * imw[4];                     // OH
-  YOW += y[5] * imw[5];                     // H2O
-  YOW += y[6] * imw[6];                     // HO2
-  YOW += y[7] * imw[7];                     // CH3
-  YOW += y[8] * imw[8];                     // CH4
-  YOW += y[9] * imw[9];                     // CO
-  YOW += y[10] * imw[10];                   // CO2
-  YOW += y[11] * imw[11];                   // CH2O
-  YOW += y[12] * imw[12];                   // N2
+  for (int i = 0; i < 13; i++) {
+    YOW += y[i] * imw[i];
+  }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
 
@@ -1585,7 +1521,6 @@ CKPC(
   const amrex::Real c[],
   amrex::Real& P)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -1603,7 +1538,7 @@ CKPC(
   W += c[11] * 30.026000; // CH2O
   W += c[12] * 28.014000; // N2
 
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     sumC += c[id];
   }
   P = rho * 8.31446261815324e+07 * T * sumC / W; // P = rho*R*T/W
@@ -1643,16 +1578,12 @@ CKRHOY(
   amrex::Real& rho)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[13];
   amrex::Real imw[13];
 
   get_imw(imw);
 
   for (int i = 0; i < 13; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -1666,7 +1597,6 @@ CKRHOC(
   const amrex::Real c[],
   amrex::Real& rho)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -1684,7 +1614,7 @@ CKRHOC(
   W += c[11] * 30.026000; // CH2O
   W += c[12] * 28.014000; // N2
 
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     sumC += c[id];
   }
   rho = P * W / (sumC * T * 8.31446261815324e+07); // rho = PW/(R*T)
@@ -1703,16 +1633,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWY(const amrex::Real y[], amrex::Real& wtm)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[13];
   amrex::Real imw[13];
 
   get_imw(imw);
 
   for (int i = 0; i < 13; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   wtm = 1.0 / YOW;
@@ -1745,7 +1671,6 @@ CKMMWX(const amrex::Real x[], amrex::Real& wtm)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWC(const amrex::Real c[], amrex::Real& wtm)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -1763,7 +1688,7 @@ CKMMWC(const amrex::Real c[], amrex::Real& wtm)
   W += c[11] * 30.026000; // CH2O
   W += c[12] * 28.014000; // N2
 
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     sumC += c[id];
   }
   //  CK provides no guard against divison by zero
@@ -1808,16 +1733,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real y[], amrex::Real x[])
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[13];
   amrex::Real imw[13];
 
   get_imw(imw);
 
   for (int i = 0; i < 13; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * imw[i];
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
@@ -1919,11 +1840,10 @@ CKXTCP(
   const amrex::Real x[],
   amrex::Real c[])
 {
-  int id;                                            // loop counter
   amrex::Real PORT = P / (8.31446261815324e+07 * T); // P/RT
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     c[id] = x[id] * PORT;
   }
 }
@@ -1936,7 +1856,6 @@ CKXTCR(
   const amrex::Real x[],
   amrex::Real c[])
 {
-  int id;             // loop counter
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
   // Compute mean molecular wt first
@@ -1956,7 +1875,7 @@ CKXTCR(
   ROW = rho / XW;
 
   // Compute conversion, see Eq 11
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     c[id] = x[id] * ROW;
   }
 }
@@ -1965,17 +1884,16 @@ CKXTCR(
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCTX(const amrex::Real c[], amrex::Real x[])
 {
-  int id; // loop counter
   amrex::Real sumC = 0;
 
   // compute sum of c
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     sumC += c[id];
   }
 
   //  See Eq 13
   amrex::Real sumCinv = 1.0 / sumC;
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     x[id] = c[id] * sumCinv;
   }
 }
@@ -2021,14 +1939,13 @@ CKCTY(const amrex::Real c[], amrex::Real y[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVML(const amrex::Real T, amrex::Real cvml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cv_R(cvml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     cvml[id] *= 8.31446261815324e+07;
   }
 }
@@ -2038,14 +1955,13 @@ CKCVML(const amrex::Real T, amrex::Real cvml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPML(const amrex::Real T, amrex::Real cpml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cp_R(cpml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     cpml[id] *= 8.31446261815324e+07;
   }
 }
@@ -2055,7 +1971,6 @@ CKCPML(const amrex::Real T, amrex::Real cpml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUML(const amrex::Real T, amrex::Real uml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -2063,7 +1978,7 @@ CKUML(const amrex::Real T, amrex::Real uml[])
   speciesInternalEnergy(uml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     uml[id] *= RT;
   }
 }
@@ -2073,7 +1988,6 @@ CKUML(const amrex::Real T, amrex::Real uml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHML(const amrex::Real T, amrex::Real hml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -2081,7 +1995,7 @@ CKHML(const amrex::Real T, amrex::Real hml[])
   speciesEnthalpy(hml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     hml[id] *= RT;
   }
 }
@@ -2090,14 +2004,13 @@ CKHML(const amrex::Real T, amrex::Real hml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSML(const amrex::Real T, amrex::Real sml[])
 {
-  int id;             // loop counter
   amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   speciesEntropy(sml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     sml[id] *= 8.31446261815324e+07;
   }
 }
@@ -5532,10 +5445,9 @@ productionRate_light(
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKWC(const amrex::Real T, amrex::Real C[], amrex::Real wdot[])
 {
-  int id; // loop counter
 
   // convert to SI
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     C[id] *= 1.0e6;
   }
 
@@ -5543,7 +5455,7 @@ CKWC(const amrex::Real T, amrex::Real C[], amrex::Real wdot[])
   productionRate(wdot, C, T);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     C[id] *= 1.0e-6;
     wdot[id] *= 1.0e-6;
   }
@@ -5558,7 +5470,6 @@ CKWYP(
   const amrex::Real y[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[13]; // temporary storage
   amrex::Real YOW = 0;
   amrex::Real PWORT;
@@ -5567,43 +5478,23 @@ CKWYP(
   get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // H2
-  YOW += y[1] * imw[1];   // H
-  YOW += y[2] * imw[2];   // O
-  YOW += y[3] * imw[3];   // O2
-  YOW += y[4] * imw[4];   // OH
-  YOW += y[5] * imw[5];   // H2O
-  YOW += y[6] * imw[6];   // HO2
-  YOW += y[7] * imw[7];   // CH3
-  YOW += y[8] * imw[8];   // CH4
-  YOW += y[9] * imw[9];   // CO
-  YOW += y[10] * imw[10]; // CO2
-  YOW += y[11] * imw[11]; // CH2O
-  YOW += y[12] * imw[12]; // N2
+  for (int i = 0; i < 13; i++) {
+    YOW += y[i] * imw[i];
+  }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
   // multiply by 1e6 so c goes to SI
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
-  c[0] = PWORT * y[0] * imw[0];
-  c[1] = PWORT * y[1] * imw[1];
-  c[2] = PWORT * y[2] * imw[2];
-  c[3] = PWORT * y[3] * imw[3];
-  c[4] = PWORT * y[4] * imw[4];
-  c[5] = PWORT * y[5] * imw[5];
-  c[6] = PWORT * y[6] * imw[6];
-  c[7] = PWORT * y[7] * imw[7];
-  c[8] = PWORT * y[8] * imw[8];
-  c[9] = PWORT * y[9] * imw[9];
-  c[10] = PWORT * y[10] * imw[10];
-  c[11] = PWORT * y[11] * imw[11];
-  c[12] = PWORT * y[12] * imw[12];
+  for (int i = 0; i < 13; i++) {
+    c[i] = PWORT * y[i] * imw[i];
+  }
 
   // convert to chemkin units
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -5617,13 +5508,12 @@ CKWXP(
   const amrex::Real x[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[13]; // temporary storage
   amrex::Real PORT =
     1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     c[id] = x[id] * PORT;
   }
 
@@ -5631,7 +5521,7 @@ CKWXP(
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -5645,32 +5535,21 @@ CKWYR(
   const amrex::Real y[],
   amrex::Real wdot[])
 {
-  int id;            // loop counter
   amrex::Real c[13]; // temporary storage
   amrex::Real imw[13];
 
   get_imw(imw);
 
   // See Eq 8 with an extra 1e6 so c goes to SI
-  c[0] = 1e6 * rho * y[0] * imw[0];
-  c[1] = 1e6 * rho * y[1] * imw[1];
-  c[2] = 1e6 * rho * y[2] * imw[2];
-  c[3] = 1e6 * rho * y[3] * imw[3];
-  c[4] = 1e6 * rho * y[4] * imw[4];
-  c[5] = 1e6 * rho * y[5] * imw[5];
-  c[6] = 1e6 * rho * y[6] * imw[6];
-  c[7] = 1e6 * rho * y[7] * imw[7];
-  c[8] = 1e6 * rho * y[8] * imw[8];
-  c[9] = 1e6 * rho * y[9] * imw[9];
-  c[10] = 1e6 * rho * y[10] * imw[10];
-  c[11] = 1e6 * rho * y[11] * imw[11];
-  c[12] = 1e6 * rho * y[12] * imw[12];
+  for (int i = 0; i < 13; i++) {
+    c[i] = 1e6 * rho * y[i] * imw[i];
+  }
 
   // call productionRate
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -5684,7 +5563,6 @@ CKWXR(
   const amrex::Real x[],
   amrex::Real wdot[])
 {
-  int id;             // loop counter
   amrex::Real c[13];  // temporary storage
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
@@ -5706,7 +5584,7 @@ CKWXR(
   ROW = 1e6 * rho / XW;
 
   // Compute conversion, see Eq 11
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     c[id] = x[id] * ROW;
   }
 
@@ -5714,7 +5592,7 @@ CKWXR(
   productionRate(wdot, c, T);
 
   // convert to chemkin units
-  for (id = 0; id < 13; ++id) {
+  for (int id = 0; id < 13; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }

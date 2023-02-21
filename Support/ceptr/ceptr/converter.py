@@ -498,7 +498,7 @@ class Converter:
         cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = "imw_new[%d] = 1.0/%f;" % (i, species.weight)
+            text = "imw_new[%d] = %.16f;" % (i, 1.0 / species.weight)
             cw.writer(fstream, text + cw.comment("%s" % species.name))
         cw.writer(fstream, "}")
         cw.writer(fstream)
