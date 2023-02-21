@@ -2980,34 +2980,43 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
         ),
     )
     cw.writer(fstream, cw.comment("and stoichiometric coefficients. (Eq 50)"))
-    cw.writer(
-        fstream,
-        "void CKINU"
-        + cc.sym
-        + "(const int i, int& nspec, int ki[], int nu[])",
-    )
+    if n_reactions == 0:
+        cw.writer(
+            fstream,
+            "void CKINU"
+            + cc.sym
+            + "(const int i, int& nspec, int* /*ki*/, int* /*nu*/)",
+        )
+    else:
+        cw.writer(
+            fstream,
+            "void CKINU"
+            + cc.sym
+            + "(const int i, int& nspec, int ki[], int nu[])",
+        )
     cw.writer(fstream, "{")
 
-    str_ns = ",".join(str(x) for x in ns)
-    cw.writer(
-        fstream, "const int ns[%d] =\n     {%s};" % (n_reactions, str_ns)
-    )
+    if n_reactions > 0:
+        str_ns = ",".join(str(x) for x in ns)
+        cw.writer(
+            fstream, "const int ns[%d] =\n     {%s};" % (n_reactions, str_ns)
+        )
 
-    str_ki = ",".join(
-        ",".join(str(x) for x in ki[j]) for j in range(n_reactions)
-    )
-    cw.writer(
-        fstream,
-        "const int kiv[%d] =\n     {%s};" % (n_reactions * maxsp, str_ki),
-    )
+        str_ki = ",".join(
+            ",".join(str(x) for x in ki[j]) for j in range(n_reactions)
+        )
+        cw.writer(
+            fstream,
+            "const int kiv[%d] =\n     {%s};" % (n_reactions * maxsp, str_ki),
+        )
 
-    str_nu = ",".join(
-        ",".join(str(x) for x in nu[j]) for j in range(n_reactions)
-    )
-    cw.writer(
-        fstream,
-        "const int nuv[%d] =\n     {%s};" % (n_reactions * maxsp, str_nu),
-    )
+        str_nu = ",".join(
+            ",".join(str(x) for x in nu[j]) for j in range(n_reactions)
+        )
+        cw.writer(
+            fstream,
+            "const int nuv[%d] =\n     {%s};" % (n_reactions * maxsp, str_nu),
+        )
 
     cw.writer(fstream, "if (i < 1) {")
 
