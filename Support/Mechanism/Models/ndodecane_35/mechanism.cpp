@@ -9,24 +9,13 @@ GET_RMAP(int* /*_rmap*/)
 // Returns a count of species in a reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
-CKINU(const int i, int& nspec, int ki[], int nu[])
+CKINU(const int i, int& nspec, int* /*ki*/, int* /*nu*/)
 {
-  const int ns[0] = {};
-  const int kiv[0] = {};
-  const int nuv[0] = {};
   if (i < 1) {
     // Return max num species per reaction
     nspec = 0;
   } else {
-    if (i > 0) {
-      nspec = -1;
-    } else {
-      nspec = ns[i - 1];
-      for (int j = 0; j < nspec; ++j) {
-        ki[j] = kiv[(i - 1) * 0 + j] + 1;
-        nu[j] = nuv[(i - 1) * 0 + j];
-      }
-    }
+    nspec = -1;
   }
 }
 
