@@ -18,56 +18,73 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void molecular_weight(amrex::Real mw[]) { get_mw(mw); }
+  static void molecular_weight(amrex::Real mw[NUM_SPECIES]) { get_mw(mw); }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void inv_molecular_weight(amrex::Real imw[]) { get_imw(imw); }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  static void TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  static void inv_molecular_weight(amrex::Real imw[NUM_SPECIES])
   {
-    CKCPBS(&T, Y, &Cp);
+    get_imw(imw);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
-  RTY2Cp(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  TY2Cp(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
+  {
+    CKCPBS(T, Y, Cp);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RTY2Cp(
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cp)
   {
     TY2Cp(T, Y, Cp);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
+  static void
+  TY2Cv(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cv)
   {
-    CKCVBS(&T, Y, &Cv);
+    CKCVBS(T, Y, Cv);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Cv(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
+  static void RTY2Cv(
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cv)
   {
     TY2Cv(T, Y, Cv);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Cpi(amrex::Real T, amrex::Real Cpi[]) { CKCPMS(&T, Cpi); }
+  static void T2Cpi(const amrex::Real T, amrex::Real Cpi[NUM_SPECIES])
+  {
+    CKCPMS(T, Cpi);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
+  static void RPY2Cs(
+    const amrex::Real R,
+    const amrex::Real P,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cs)
   {
     amrex::Real tmp[NUM_SPECIES];
     amrex::Real wbar = 0.0;
-    CKMMWY(&Y[0], &wbar);
+    CKMMWY(Y, wbar);
     amrex::Real T = P * wbar / (R * Constants::RU);
-    CKCVMS(&T, tmp);
+    CKCVMS(T, tmp);
     amrex::Real Cv = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
       Cv += Y[i] * tmp[i];
@@ -78,55 +95,66 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
+  static void RTY2Cs(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cs)
   {
     amrex::Real tmp[NUM_SPECIES];
     amrex::Real P = 0.0;
-    CKPY(&R, &T, Y, &P);
-    CKCVMS(&T, tmp);
+    CKPY(R, T, Y, P);
+    CKCVMS(T, tmp);
     amrex::Real Cv = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       Cv += Y[i] * tmp[i];
     }
     amrex::Real wbar = 0.0;
-    CKMMWY(&Y[0], &wbar);
+    CKMMWY(Y, wbar);
     amrex::Real G = (wbar * Cv + Constants::RU) / (wbar * Cv);
     Cs = std::sqrt(G * P / R);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
+  static void
+  EY2T(const amrex::Real E, const amrex::Real Y[NUM_SPECIES], amrex::Real& T)
   {
     // For Fuego this function is really just a wrapper for GET_T_GIVEN_EY
     // In SRK this will be different probably
     int lierr = 0;
-    GET_T_GIVEN_EY(&E, Y, &T, &lierr);
+    GET_T_GIVEN_EY(E, Y, T, lierr);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  REY2T(amrex::Real /*R*/, amrex::Real E, amrex::Real Y[], amrex::Real& T)
+  static void REY2T(
+    const amrex::Real /*R*/,
+    const amrex::Real E,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& T)
   {
     EY2T(E, Y, T);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void HY2T(amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  static void
+  HY2T(const amrex::Real H, const amrex::Real Y[NUM_SPECIES], amrex::Real& T)
   {
     // For Fuego this function is really just a wrapper for GET_T_GIVEN_HY
     // In SRK this will be different probably
     int lierr = 0;
-    GET_T_GIVEN_HY(&H, Y, &T, &lierr);
+    GET_T_GIVEN_HY(H, Y, T, lierr);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RHY2T(amrex::Real /*R*/, amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  static void RHY2T(
+    const amrex::Real /*R*/,
+    const amrex::Real H,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& T)
   {
     HY2T(H, Y, T);
   }
@@ -134,43 +162,52 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RYET2P(
-    amrex::Real R,
-    amrex::Real Y[],
-    amrex::Real& E,
+    const amrex::Real R,
+    const amrex::Real Y[NUM_SPECIES],
+    const amrex::Real E,
     amrex::Real& T,
     amrex::Real& P)
   {
     int lierr = 0;
-    GET_T_GIVEN_EY(&E, Y, &T, &lierr);
-    CKPY(&R, &T, Y, &P);
+    GET_T_GIVEN_EY(E, Y, T, lierr);
+    CKPY(R, T, Y, P);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+  static void RTY2P(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& P)
   {
-    CKPY(&R, &T, Y, &P);
+    CKPY(R, T, Y, P);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
+  static void RYP2T(
+    const amrex::Real R,
+    const amrex::Real Y[NUM_SPECIES],
+    const amrex::Real P,
+    amrex::Real& T)
   {
     amrex::Real wbar = 0.0;
-    CKMMWY(&Y[0], &wbar);
+    CKMMWY(Y, wbar);
     T = P * wbar / (R * Constants::RU);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
+  static void RTY2WDOT(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real WDOT[NUM_SPECIES])
   {
     amrex::Real C[NUM_SPECIES];
-    CKYTCR(&R, &T, Y, C);
-    CKWC(&T, C, WDOT);
+    CKYTCR(R, T, Y, C);
+    CKWC(T, C, WDOT);
 
     amrex::Real mw[NUM_SPECIES];
     get_mw(mw);
@@ -187,57 +224,72 @@ struct Fuego
 #endif
   AMREX_GPU_HOST_DEVICE static void
   RTY2JAC(
-    amrex::Real R,
-    amrex::Real T,
-    amrex::Real Y[],
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
     amrex::Real JAC[],
     const int HP)
   {
     amrex::Real C[NUM_SPECIES];
-    CKYTCR(&R, &T, Y, C);
+    CKYTCR(R, T, Y, C);
     DWDOT(JAC, C, &T, &HP);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
+  static void RTY2C(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real acti[])
   {
-    CKYTCR(&R, &T, Y, acti);
+    CKYTCR(R, T, Y, acti);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Ei(amrex::Real T, amrex::Real Ei[]) { CKUMS(&T, Ei); }
+  static void T2Ei(const amrex::Real T, amrex::Real Ei[NUM_SPECIES])
+  {
+    CKUMS(T, Ei);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RTY2Ei(
-    amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Ei[])
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real* /*Y[]*/,
+    amrex::Real Ei[NUM_SPECIES])
   {
     T2Ei(T, Ei);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void Y2X(amrex::Real Y[], amrex::Real X[]) { CKYTX(Y, X); }
+  static void Y2X(const amrex::Real Y[NUM_SPECIES], amrex::Real X[NUM_SPECIES])
+  {
+    CKYTX(Y, X);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void X2Y(amrex::Real X[], amrex::Real Y[]) { CKXTY(X, Y); }
+  static void X2Y(const amrex::Real X[NUM_SPECIES], amrex::Real Y[NUM_SPECIES])
+  {
+    CKXTY(X, Y);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void PYT2RE(
-    amrex::Real P,
-    amrex::Real Y[],
-    amrex::Real T,
+    const amrex::Real P,
+    const amrex::Real Y[NUM_SPECIES],
+    const amrex::Real T,
     amrex::Real& R,
     amrex::Real& E)
   {
-    CKRHOY(&P, &T, Y, &R);
+    CKRHOY(P, T, Y, R);
     amrex::Real ei[NUM_SPECIES];
-    CKUMS(&T, ei);
+    CKUMS(T, ei);
     E = 0.0;
     for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
@@ -246,22 +298,28 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R)
+  static void PYT2R(
+    const amrex::Real P,
+    const amrex::Real Y[NUM_SPECIES],
+    const amrex::Real T,
+    amrex::Real& R)
   {
-    CKRHOY(&P, &T, Y, &R);
+    CKRHOY(P, T, Y, R);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
+  static void RYP2E(
+    const amrex::Real R,
+    const amrex::Real Y[NUM_SPECIES],
+    const amrex::Real P,
+    amrex::Real& E)
   {
     amrex::Real wbar = 0.0;
-    CKMMWY(&Y[0], &wbar);
+    CKMMWY(Y, wbar);
     amrex::Real T = P * wbar / (R * Constants::RU);
     amrex::Real ei[NUM_SPECIES];
-    CKUMS(&T, ei);
+    CKUMS(T, ei);
     E = 0.0;
     for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
@@ -270,7 +328,8 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void TY2E(amrex::Real T, const amrex::Real Y[], amrex::Real& E)
+  static void
+  TY2E(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& E)
   {
     amrex::Real ei[NUM_SPECIES];
     T2Ei(T, ei);
@@ -282,20 +341,29 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2E(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& E)
+  static void RTY2E(
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& E)
   {
     TY2E(T, Y, E);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void T2Hi(amrex::Real T, amrex::Real Hi[]) { CKHMS(&T, Hi); }
+  static void T2Hi(const amrex::Real T, amrex::Real Hi[NUM_SPECIES])
+  {
+    CKHMS(T, Hi);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RTY2Hi(
-    amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Hi[])
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real* /*Y[]*/,
+    amrex::Real Hi[NUM_SPECIES])
   {
     T2Hi(T, Hi);
   }
@@ -306,11 +374,12 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
+  static void
+  TY2G(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   {
     amrex::Real wbar = 0.0, Cv, Cvx;
     TY2Cv(T, Y, Cv);
-    CKMMWY(&Y[0], &wbar);
+    CKMMWY(Y, wbar);
     Cvx = wbar * Cv;
     G = (Cvx + Constants::RU) / Cvx;
   }
@@ -318,9 +387,9 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RTY2G(
-    amrex::Real /*R*/,
-    amrex::Real T,
-    amrex::Real Y[NUM_SPECIES],
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
     amrex::Real& G)
   {
     TY2G(T, Y, G);
@@ -329,10 +398,10 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
-  TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  TY2H(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
   {
     amrex::Real hi[NUM_SPECIES];
-    CKHMS(&T, hi);
+    CKHMS(T, hi);
     H = 0.0;
     for (int n = 0; n < NUM_SPECIES; n++) {
       H += Y[n] * hi[n];
@@ -343,7 +412,7 @@ struct Fuego
   AMREX_FORCE_INLINE
   static void RTY2H(
     const amrex::Real /*R*/,
-    amrex::Real T,
+    const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real& H)
   {
@@ -352,7 +421,7 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void Y2WBAR(const amrex::Real Y[], amrex::Real& WBAR)
+  static void Y2WBAR(const amrex::Real Y[NUM_SPECIES], amrex::Real& WBAR)
   {
     amrex::Real tmp[NUM_SPECIES];
     get_imw(tmp);
@@ -366,14 +435,18 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RPE2dpdr_e(
-    amrex::Real R, amrex::Real P, amrex::Real /* E */, amrex::Real& dpdr_e)
+    const amrex::Real R,
+    const amrex::Real P,
+    const amrex::Real /* E */,
+    amrex::Real& dpdr_e)
   {
     dpdr_e = P / R;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
+  static void
+  RG2dpde(const amrex::Real R, const amrex::Real G, amrex::Real& dpde)
   {
     dpde = (G - 1.0) * R;
   }
@@ -381,9 +454,9 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void RTY2dpde_dpdre(
-    amrex::Real R,
-    amrex::Real T,
-    amrex::Real Y[],
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
     amrex::Real& dpde,
     amrex::Real& dpdr_e)
   {
