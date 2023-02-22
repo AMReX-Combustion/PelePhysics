@@ -46,6 +46,27 @@ def convert_lst(
                 )
 
 
+def convert_lst_qss(
+    lst,
+    jacobian,
+):
+    """Convert QSS mechanisms from a file of directories and format input."""
+    lpath = pathlib.Path(lst)
+    with open(lst, "r") as f:
+        for line in f:
+            if not line.startswith("#"):
+                mech_file, format_file = line.split()
+                mechname = lpath.parents[0] / mech_file.strip()
+                qss_format_input = lpath.parents[0] / format_file.strip()
+                print(f"""Converting file {mechname}""")
+                convert(
+                    mechname,
+                    jacobian,
+                    qss_format_input,
+                    True,
+                )
+
+
 def main():
     """Convert cantera mechanisms to C++ files."""
     parser = argparse.ArgumentParser(
@@ -55,6 +76,9 @@ def main():
     group.add_argument("-f", "--fname", help="Mechanism file", type=str)
     group.add_argument(
         "-l", "--lst", help="Mechanism directory file list", type=str
+    )
+    group.add_argument(
+        "-lq", "--lst_qss", help="QSS mechanism directory file list", type=str
     )
 
     parser.add_argument(
@@ -94,6 +118,11 @@ def main():
             not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
+        )
+    elif args.lst_qss:
+        convert_lst_qss(
+            args.lst_qss,
+            not args.no_jacobian,
         )
 
 

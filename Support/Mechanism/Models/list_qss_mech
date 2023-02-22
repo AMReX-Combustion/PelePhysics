@@ -1,0 +1,5 @@
+C1-C2-NO_qss/qssa.yaml		C1-C2-NO_qss/qssa_input.toml
+CH4_lean_qss/qssa.yaml		CH4_lean_qss/qssa_input.toml
+LuEthylene_qss/qssa.yaml	LuEthylene_qss/qssa_input.toml
+dodecane_lu_qss/qssa.yaml	dodecane_lu_qss/qssa_input.toml
+heptane_lu_qss/qssa.yaml	heptane_lu_qss/qssa_input.toml
