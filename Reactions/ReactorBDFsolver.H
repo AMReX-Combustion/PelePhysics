@@ -360,7 +360,7 @@ triangularize(
   beta_e1[k + 1] = -sin * beta_e1[k];
   beta_e1[k] = cos * beta_e1[k];
 
-  amrex::Real error = amrex::Math::abs(beta_e1[k + 1]);
+  amrex::Real error = std::abs(beta_e1[k + 1]);
 
   return (error);
 }

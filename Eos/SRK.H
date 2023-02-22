@@ -218,7 +218,7 @@ struct SRK
       Z = std::max(Z1, Z2);
       Z = std::max(Z, Z3);
     } else {
-      Z = -amrex::Math::copysign(1.0, R) *
+      Z = -std::copysign(1.0, R) *
             (std::pow((std::sqrt(R * R - Q * Q * Q) + std::abs(R)), third) +
              Q / (pow(std::sqrt(R * R - Q * Q * Q) + std::abs(R), third))) -
           alpha * third;
@@ -433,7 +433,7 @@ struct SRK
     Tn = T;
     AMREX_ASSERT(Tn > 0.0);
 
-    while (amrex::Math::abs(fzero) > convCrit && nIter < maxIter) {
+    while (std::abs(fzero) > convCrit && nIter < maxIter) {
       nIter++;
       Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
       // ideal gas internal energy
@@ -543,7 +543,7 @@ struct SRK
     nIter = 0;
 
     // Newton Iteration loop
-    while (amrex::Math::abs(P - Pnp1) > convCrit && nIter < maxIter) {
+    while (std::abs(P - Pnp1) > convCrit && nIter < maxIter) {
       nIter += 1;
       Calc_dAmdT(T, Y, dAmdT);
       amrex::Real dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
