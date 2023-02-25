@@ -198,6 +198,7 @@ SprayParticleContainer::readSprayParams(
     "d32",             // SMD
     "wall_film_hght",  // Wall film height
     "spray_temp",      // Mass-weighted average temperature
+    "num_parcels",     // Number of parcels in a cell
     AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
   int derive_plot_vars = 1;
   pp.query("derive_plot_vars", derive_plot_vars);
