@@ -12,6 +12,8 @@
 #include "prob_parm.H"
 #endif
 
+// Need components for velocity, diameter, temperature, mass fractions,
+// breakup model variables, and wall film volume
 #define NSR_SPR (SprayComps::pstateNum)
 #define NSI_SPR 0
 #define NAR_SPR 0
@@ -124,14 +126,14 @@ public:
     }
     real_comp_names[SprayComps::pstateNumDens] = "number_density";
     if (m_sprayData->do_breakup == 1) {
-      real_comp_names[SprayComps::pstateBphi1] = "Y_TAB";
-      real_comp_names[SprayComps::pstateBphi2] = "Ydot_TAB";
+      real_comp_names[SprayComps::pstateBM1] = "Y_TAB";
+      real_comp_names[SprayComps::pstateBM2] = "Ydot_TAB";
     } else if (m_sprayData->do_breakup == 2) {
-      real_comp_names[SprayComps::pstateBphi1] = "d0";
-      real_comp_names[SprayComps::pstateBphi2] = "rt_time";
+      real_comp_names[SprayComps::pstateBM1] = "d0";
+      real_comp_names[SprayComps::pstateBM2] = "rt_time";
     } else {
-      real_comp_names[SprayComps::pstateBphi1] = "unused1";
-      real_comp_names[SprayComps::pstateBphi2] = "unused2";
+      real_comp_names[SprayComps::pstateBM1] = "unused1";
+      real_comp_names[SprayComps::pstateBM2] = "unused2";
     }
     real_comp_names[SprayComps::pstateFilmVol] = "film_vol";
     amrex::Vector<std::string> int_comp_names;
@@ -408,6 +410,11 @@ public:
   static std::string spray_fuel_names[SPRAY_FUEL_NUM];
   static std::string spray_dep_names[SPRAY_FUEL_NUM];
   static amrex::Vector<std::string> spray_derive_vars;
+  static amrex::Real max_num_ppp;
+  static amrex::Real inj_num_ppp;
+  // The number density of a parcel formed from breakup is equal to
+  // breakup_ppp_fact * parent parcel number density
+  static amrex::Real breakup_ppp_fact;
   static amrex::Real B0_KHRT;
   static amrex::Real B1_KHRT;
   static amrex::Real C3_KHRT;

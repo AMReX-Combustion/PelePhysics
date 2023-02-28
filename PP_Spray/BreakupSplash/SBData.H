@@ -9,13 +9,13 @@ struct SBPtrs
   amrex::Real* norm = nullptr;
   amrex::Real* vel = nullptr;
   amrex::Real* loc = nullptr;
-  amrex::Real* dtpp = nullptr;
   amrex::Real* T0 = nullptr;
   amrex::Real* ref_dia = nullptr;
   amrex::Real* Y0 = nullptr;
   amrex::Real* numDens = nullptr;
   amrex::Real* phi1 = nullptr;
   amrex::Real* phi2 = nullptr;
+  amrex::Real* phi3 = nullptr;
 };
 
 struct SBVects
@@ -29,9 +29,6 @@ struct SBVects
   // Location of droplet (placed at wall for splashing)
   amrex::Gpu::HostVector<amrex::Real> loc_h;
   amrex::Gpu::DeviceVector<amrex::Real> loc_d;
-  // Dt fraction remaining after splashing/breakup
-  amrex::Gpu::HostVector<amrex::Real> dtpp_h;
-  amrex::Gpu::DeviceVector<amrex::Real> dtpp_d;
   // Droplet temperature
   amrex::Gpu::HostVector<amrex::Real> T0_h;
   amrex::Gpu::DeviceVector<amrex::Real> T0_d;
@@ -51,10 +48,15 @@ struct SBVects
   // Variable
   // Splashing: ms, amount of mass that splashes
   // TAB Breakup: TABY value
-  // RT Breakup: distance from jet
-  // KH Breakup: unused
+  // KH-RT Breakup: parent droplet original number density
   amrex::Gpu::HostVector<amrex::Real> phi2_h;
   amrex::Gpu::DeviceVector<amrex::Real> phi2_d;
+  // Variable
+  // Splashing: Remaining dt after splashing
+  // TAB Breakup: TABY_dot value
+  // KH-RT Breakup: Unused
+  amrex::Gpu::HostVector<amrex::Real> phi3_h;
+  amrex::Gpu::DeviceVector<amrex::Real> phi3_d;
   // Droplet number density
   amrex::Gpu::HostVector<amrex::Real> numDens_h;
   amrex::Gpu::DeviceVector<amrex::Real> numDens_d;
@@ -63,22 +65,22 @@ struct SBVects
     norm_h.assign(AMREX_SPACEDIM * Np, 0.);
     vel_h.assign(AMREX_SPACEDIM * Np, 0.);
     loc_h.assign(AMREX_SPACEDIM * Np, 0.);
-    dtpp_h.assign(Np, 0.);
     T0_h.assign(Np, 0.);
     ref_dia_h.assign(Np, 0.);
     numDens_h.assign(Np, 0.);
     phi1_h.assign(Np, 0.);
     phi2_h.assign(Np, 0.);
+    phi3_h.assign(Np, 0.);
 
     norm_d.resize(AMREX_SPACEDIM * Np);
     vel_d.resize(AMREX_SPACEDIM * Np);
     loc_d.resize(AMREX_SPACEDIM * Np);
-    dtpp_d.resize(Np);
     T0_d.resize(Np);
     numDens_d.resize(Np);
     ref_dia_d.resize(Np);
     phi1_d.resize(Np);
     phi2_d.resize(Np);
+    phi3_d.resize(Np);
 #if SPRAY_FUEL_NUM > 1
     Y0_h.assign(SPRAY_FUEL_NUM * Np, 0.);
     Y0_d.resize(SPRAY_FUEL_NUM * Np);
@@ -91,8 +93,6 @@ struct SBVects
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, loc_h.begin(), loc_h.end(), loc_d.begin());
     amrex::Gpu::copyAsync(
-      amrex::Gpu::hostToDevice, dtpp_h.begin(), dtpp_h.end(), dtpp_d.begin());
-    amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, T0_h.begin(), T0_h.end(), T0_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, numDens_h.begin(), numDens_h.end(),
@@ -104,6 +104,8 @@ struct SBVects
       amrex::Gpu::hostToDevice, phi1_h.begin(), phi1_h.end(), phi1_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, phi2_h.begin(), phi2_h.end(), phi2_d.begin());
+    amrex::Gpu::copyAsync(
+      amrex::Gpu::hostToDevice, phi3_h.begin(), phi3_h.end(), phi3_d.begin());
   }
   SBVects() = delete;
   SBVects(const SBVects&) = delete;
@@ -111,29 +113,30 @@ struct SBVects
   void retrieve_data()
   {
 #if SPRAY_FUEL_NUM > 1
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, Y0_d.begin(), Y0_d.end(), Y0_h.begin());
 #endif
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, norm_d.begin(), norm_d.end(), norm_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, vel_d.begin(), vel_d.end(), vel_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, loc_d.begin(), loc_d.end(), loc_h.begin());
-    amrex::Gpu::copy(
-      amrex::Gpu::deviceToHost, dtpp_d.begin(), dtpp_d.end(), dtpp_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, T0_d.begin(), T0_d.end(), T0_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, numDens_d.begin(), numDens_d.end(),
       numDens_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, ref_dia_d.begin(), ref_dia_d.end(),
       ref_dia_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, phi1_d.begin(), phi1_d.end(), phi1_h.begin());
-    amrex::Gpu::copy(
+    amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, phi2_d.begin(), phi2_d.end(), phi2_h.begin());
+    amrex::Gpu::copyAsync(
+      amrex::Gpu::deviceToHost, phi3_d.begin(), phi3_d.end(), phi3_h.begin());
+    amrex::Gpu::Device::streamSynchronize();
   }
 
   void fillPtrs_d(SBPtrs& rf)
@@ -141,26 +144,26 @@ struct SBVects
     rf.norm = norm_d.data();
     rf.vel = vel_d.data();
     rf.loc = loc_d.data();
-    rf.dtpp = dtpp_d.data();
     rf.T0 = T0_d.data();
     rf.numDens = numDens_d.data();
     rf.ref_dia = ref_dia_d.data();
     rf.Y0 = Y0_d.data();
     rf.phi1 = phi1_d.data();
     rf.phi2 = phi2_d.data();
+    rf.phi3 = phi3_d.data();
   }
   void fillPtrs_h(SBPtrs& rf)
   {
     rf.norm = norm_h.data();
     rf.vel = vel_h.data();
     rf.loc = loc_h.data();
-    rf.dtpp = dtpp_h.data();
     rf.T0 = T0_h.data();
     rf.numDens = numDens_h.data();
     rf.ref_dia = ref_dia_h.data();
     rf.Y0 = Y0_h.data();
     rf.phi1 = phi1_h.data();
     rf.phi2 = phi2_h.data();
+    rf.phi3 = phi3_h.data();
   }
 };
 

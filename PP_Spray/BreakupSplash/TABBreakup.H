@@ -17,8 +17,7 @@ updateBreakupTAB(
   const amrex::Real& dt,
   const GasPhaseVals& gpv,
   const SprayData& fdat,
-  SprayParticleContainer::ParticleType& p,
-  amrex::Real& breakup_time)
+  SprayParticleContainer::ParticleType& p)
 {
   // Model constants
   const amrex::Real C_k = 8.;
@@ -58,13 +57,13 @@ updateBreakupTAB(
   amrex::Real tbconst =
     2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
   if (omega2 <= 0.) {
-    p.rdata(SprayComps::pstateBphi1) = 0.;
-    p.rdata(SprayComps::pstateBphi2) = 0.;
+    p.rdata(SprayComps::pstateBM1) = 0.;
+    p.rdata(SprayComps::pstateBM2) = 0.;
     return 0.;
   }
   amrex::Real omega = std::sqrt(omega2);
-  amrex::Real yn = p.rdata(SprayComps::pstateBphi1);
-  amrex::Real ydotn = p.rdata(SprayComps::pstateBphi2);
+  amrex::Real yn = p.rdata(SprayComps::pstateBM1);
+  amrex::Real ydotn = p.rdata(SprayComps::pstateBM2);
   amrex::Real Reyn = Reyn_d;
   amrex::Real C_D = 0.;
   if (Reyn > 1000.) {
@@ -147,9 +146,6 @@ updateBreakupTAB(
         rad_part = rchild;
         yn = 0.;
         ydotn = 0.;
-        if (curt + tbv < breakup_time) {
-          breakup_time = curt + tbv;
-        }
         tb_est = rad_part * tbconst;
         subdt = amrex::min(dt, 0.1 * tb_est);
         denom = rho_part * rad_part * rad_part;
@@ -158,8 +154,8 @@ updateBreakupTAB(
         if (omega2 <= 0.) {
           p.rdata(SprayComps::pstateDia) = 2. * rad_part;
           p.rdata(SprayComps::pstateNumDens) = num_dens;
-          p.rdata(SprayComps::pstateBphi1) = 0.;
-          p.rdata(SprayComps::pstateBphi2) = 0.;
+          p.rdata(SprayComps::pstateBM1) = 0.;
+          p.rdata(SprayComps::pstateBM2) = 0.;
           return Utan_total;
         }
         omega = std::sqrt(omega2);
@@ -175,8 +171,8 @@ updateBreakupTAB(
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
-  p.rdata(SprayComps::pstateBphi1) = yn;
-  p.rdata(SprayComps::pstateBphi2) = ydotn;
+  p.rdata(SprayComps::pstateBM1) = yn;
+  p.rdata(SprayComps::pstateBM2) = ydotn;
   return Utan_total;
 }
 
@@ -186,14 +182,13 @@ void
 splitDropletTAB(
   const int pid,
   SprayParticleContainer::ParticleType& p,
-  const SprayData& fdat,
+  const Real max_num_ppp,
   splash_breakup* N_SB,
   const SBPtrs& rf,
-  const amrex::Real rem_dt,
   const amrex::Real Utan_total)
 {
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
-  if (num_dens > fdat.max_num_ppp) {
+  if (num_dens > max_num_ppp) {
     N_SB[pid] = splash_breakup::breakup_TAB;
     amrex::RealVect vel_part(AMREX_D_DECL(
       p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
@@ -206,9 +201,9 @@ splitDropletTAB(
     }
     rf.numDens[pid] = p.rdata(SprayComps::pstateNumDens);
     rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
-    rf.dtpp[pid] = rem_dt;
     rf.phi1[pid] = Utan_total;
-    rf.phi2[pid] = p.rdata(SprayComps::pstateBphi1);
+    rf.phi2[pid] = p.rdata(SprayComps::pstateBM1);
+    rf.phi3[pid] = p.rdata(SprayComps::pstateBM2);
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

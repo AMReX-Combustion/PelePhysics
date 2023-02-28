@@ -53,7 +53,7 @@ SprayParticleContainer::CreateSBDroplets(
         vel0[dir] = rfh.vel[vn + dir];
       }
       Real ref_dia = rfh.ref_dia[n];
-      Real dtpp = rfh.dtpp[n];
+
       Real numDens0 = rfh.numDens[n];
       // These values differ depending on breakup or splashing
       // Splashing: Kv
@@ -62,8 +62,13 @@ SprayParticleContainer::CreateSBDroplets(
 
       // Splashing: ms, splash amount
       // TAB Breakup: TAB y value
-      // KH-RT Breakup: Unused
+      // KH-RT Breakup: Parent parcel number density
       Real phi2 = rfh.phi2[n];
+
+      // Splashing: dtpp, remaining time after splashing
+      // TAB Breakup: TAB y dot value
+      // KH-RT Breakup: Unused
+      Real phi3 = rfh.phi3[n];
       Real T0 = rfh.T0[n];
       Array<Real, SPRAY_FUEL_NUM> Y0 = {{0.0}};
 #if SPRAY_FUEL_NUM > 1
@@ -85,6 +90,7 @@ SprayParticleContainer::CreateSBDroplets(
       Real pmass = M_PI / 6. * rho_part * std::pow(ref_dia, 3);
       Real U0mag = vel0.vectorLength();
 
+      // Splashing
       if (
         N_SB_h[n] == splash_breakup::splash_splash ||
         N_SB_h[n] == splash_breakup::splash_thermal_breakup) {
@@ -99,6 +105,7 @@ SprayParticleContainer::CreateSBDroplets(
         Real U0tan = std::sqrt(U0mag * U0mag - U0norm * U0norm);
         Real Unmag = 0.0028 * Kv * std::exp(-0.0062 * Kv) * std::abs(U0norm);
         Real Utmag = 0.0065 * Kv * std::exp(-0.004 * Kv) * std::abs(U0norm);
+        Real dtpp = phi3;
 
         // Number of splashed droplets from the Marmanis-Thoroddsen model
         Real Nsdrops = std::ceil(
@@ -134,11 +141,11 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBphi1) = dia_part;
+            p.rdata(SprayComps::pstateBM1) = dia_part;
           } else {
-            p.rdata(SprayComps::pstateBphi1) = 0.;
+            p.rdata(SprayComps::pstateBM1) = 0.;
           }
-          p.rdata(SprayComps::pstateBphi2) = 0.;
+          p.rdata(SprayComps::pstateBM2) = 0.;
           p.rdata(SprayComps::pstateFilmVol) = 0.;
           p.rdata(SprayComps::pstateNumDens) = numDens0;
           bool where = Where(p, pld);
@@ -165,10 +172,11 @@ SprayParticleContainer::CreateSBDroplets(
           Real dia_rem = std::cbrt(6. * rem_mass / (M_PI * rho_part));
           p.rdata(SprayComps::pstateDia) = dia_rem;
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBphi1) = dia_rem;
+            p.rdata(SprayComps::pstateBM1) = dia_rem;
           } else {
-            p.rdata(SprayComps::pstateBphi2) = 0.;
+            p.rdata(SprayComps::pstateBM1) = 0.;
           }
+          p.rdata(SprayComps::pstateBM2) = 0.;
           // If droplet splashing is thermally breakup, center droplet also
           // reflects
           p.rdata(SprayComps::pstateFilmVol) = 0.;
@@ -183,14 +191,22 @@ SprayParticleContainer::CreateSBDroplets(
           }
           host_particles[ind].push_back(p);
         }
+        // Breakup
       } else {
         Real Utan = phi1;
         Real dmean = ref_dia;
         // numDens0 = N_s N_d, where N_d - number of newly created parcels and
         // N_s - number density of newly created parcels There is no one way to
         // do this
-        int N_d = amrex::max(1, static_cast<int>(numDens0));
-        Real N_s = numDens0 / static_cast<Real>(N_d);
+        Real N_s = 1.;
+        if (N_SB_h[n] == splash_breakup::breakup_TAB) {
+          N_s = 0.5 * max_num_ppp;
+        } else {
+          Real N0 = phi2;
+          N_s = amrex::min(max_num_ppp, breakup_ppp_fact * N0);
+        }
+        int N_d = amrex::max(1, static_cast<int>(numDens0 / N_s));
+        N_s = numDens0 / static_cast<Real>(N_d);
 #if AMREX_SPACEDIM == 3
         RealVect testvec(normal[1], normal[2], normal[0]);
         RealVect tanPsi = testvec.crossProduct(normal);
@@ -212,11 +228,13 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBphi1) = dmean;
+            p.rdata(SprayComps::pstateBM1) = dmean;
+            p.rdata(SprayComps::pstateBM2) = 0.;
           } else {
-            p.rdata(SprayComps::pstateBphi1) = 0.;
+            p.rdata(SprayComps::pstateBM1) = phi2;
+            p.rdata(SprayComps::pstateBM2) = phi3;
           }
-          p.rdata(SprayComps::pstateBphi2) = 0.;
+
           p.rdata(SprayComps::pstateFilmVol) = 0.;
           p.rdata(SprayComps::pstateNumDens) = N_s;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {

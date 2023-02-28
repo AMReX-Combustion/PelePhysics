@@ -177,6 +177,7 @@ SprayParticleContainer::updateParticles(
   Real B0 = B0_KHRT;
   Real B1 = B1_KHRT;
   Real C3 = C3_KHRT;
+  Real max_ppp = max_num_ppp;
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -344,7 +345,6 @@ SprayParticleContainer::updateParticles(
         }
         // Used for ETAB breakup model
         Real Utan_total = 0.;
-        Real breakup_time = flow_dt;
         Real Reyn_d = 0.;
         bool is_film = false;
         // Gather wall film values
@@ -456,20 +456,19 @@ SprayParticleContainer::updateParticles(
             ijkc = lxc.floor(); // New cell center
             // Update breakup variables and determine if breakup occurs
             if (p.id() > 0 && fdat->do_breakup == 1 && isActive) {
-              Utan_total +=
-                updateBreakupTAB(Reyn_d, sub_dt, gpv, *fdat, p, breakup_time);
+              Utan_total += updateBreakupTAB(Reyn_d, sub_dt, gpv, *fdat, p);
             }
           }
           if (isGhost && !src_box.contains(ijkc)) {
             p.id() = -1;
           }
         } // End of subcycle loop
-        // Determine if parcel must be split into multiple parcels
         if (p.id() > 0 && do_breakup) {
           if (fdat->do_breakup == 1) {
-            splitDropletTAB(
-              pid, p, *fdat, N_SB, rf_d, breakup_time, Utan_total);
+            // Determine if parcel must be split into multiple parcels
+            splitDropletTAB(pid, p, max_ppp, N_SB, rf_d, Utan_total);
           } else {
+            // Update breakup for KH-RT model
             updateBreakupKHRT(
               pid, p, Reyn_d, flow_dt, avg_inject_d3, B0, B1, C3, gpv, *fdat,
               N_SB, rf_d);

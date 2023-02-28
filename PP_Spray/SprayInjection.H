@@ -38,7 +38,7 @@ SprayParticleContainer::sprayInjection(
   rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
-  const amrex::Real num_ppp = fdat->inj_num_ppp;
+  const amrex::Real num_ppp = inj_num_ppp;
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
@@ -123,13 +123,16 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) =
           part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      // If KHRT breakup is used, Bphi1 is starting diameter
+      // If KHRT breakup is used, BM1 is starting diameter
       if (m_sprayData->do_breakup == 2) {
-        p.rdata(SprayComps::pstateBphi1) = dia_part;
+        p.rdata(SprayComps::pstateBM1) = dia_part;
       } else {
-        p.rdata(SprayComps::pstateBphi1) = 0.;
+        // If TAB is used, BM1 is y
+        p.rdata(SprayComps::pstateBM1) = 0.;
       }
-      p.rdata(SprayComps::pstateBphi2) = 0.;
+      // If KHRT is used, BM2 is RT time
+      // If TAB is used, BM2 is y dot
+      p.rdata(SprayComps::pstateBM2) = 0.;
       p.rdata(SprayComps::pstateFilmVol) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
@@ -218,11 +221,11 @@ SprayParticleContainer::uniformSprayInit(
   }
   part_vals[SprayComps::pstateNumDens] = num_ppp;
   if (m_sprayData->do_breakup == 2) {
-    part_vals[SprayComps::pstateBphi1] = dia_part;
+    part_vals[SprayComps::pstateBM1] = dia_part;
   } else {
-    part_vals[SprayComps::pstateBphi1] = 0.;
+    part_vals[SprayComps::pstateBM1] = 0.;
   }
-  part_vals[SprayComps::pstateBphi2] = 0.;
+  part_vals[SprayComps::pstateBM2] = 0.;
   part_vals[SprayComps::pstateFilmVol] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),

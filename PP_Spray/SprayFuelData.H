@@ -12,11 +12,10 @@ struct SprayComps
   static const int pstateDia = pstateT + 1;
   static const int pstateY = pstateDia + 1;
   static const int pstateNumDens = pstateY + SPRAY_FUEL_NUM;
-  static const int pstateBphi1 =
-    pstateNumDens + 1; // Variables for breakup modeling
-  static const int pstateBphi2 =
-    pstateBphi1 + 1; // Variables for breakup modeling
-  static const int pstateFilmVol = pstateBphi2 + 1;
+  static const int pstateBM1 =
+    pstateNumDens + 1;                        // Variables for breakup modeling
+  static const int pstateBM2 = pstateBM1 + 1; // Variables for breakup modeling
+  static const int pstateFilmVol = pstateBM2 + 1;
   static const int pstateNum = pstateFilmVol + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
@@ -125,8 +124,6 @@ struct SprayData
   int do_breakup = 0; // 0 - no breakup modeling, 1 - TAB model, 2 - KHRT model
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
-  amrex::Real max_num_ppp; // Max parcel size
-  amrex::Real inj_num_ppp; // Injection parcel size
   amrex::Real ref_T;
   amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
@@ -153,8 +150,6 @@ struct SprayData
     fixed_parts = fdat.fixed_parts;
     do_breakup = fdat.do_breakup;
     do_splash = fdat.do_splash;
-    max_num_ppp = fdat.max_num_ppp;
-    inj_num_ppp = fdat.inj_num_ppp;
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
     wall_T = fdat.wall_T;

@@ -186,7 +186,7 @@ calculateSpraySource(
   // TAB model distortion
   amrex::Real y_tab = 0.;
   if (fdat.do_breakup == 1) {
-    y_tab = p.rdata(SprayComps::pstateBphi1);
+    y_tab = p.rdata(SprayComps::pstateBM1);
   }
   // If particle is fixed in place, make velocity zero
   if (fdat.fixed_parts) {

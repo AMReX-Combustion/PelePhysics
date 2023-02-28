@@ -127,9 +127,9 @@ droplet_splashing(
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
     rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
-    rf.dtpp[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = ms;
+    rf.phi3[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
     rf.numDens[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1
