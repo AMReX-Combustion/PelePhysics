@@ -6,6 +6,9 @@ using namespace amrex;
 std::string SprayParticleContainer::spray_fuel_names[SPRAY_FUEL_NUM];
 std::string SprayParticleContainer::spray_dep_names[SPRAY_FUEL_NUM];
 Vector<std::string> SprayParticleContainer::spray_derive_vars;
+Real SprayParticleContainer::max_num_ppp = 40.;
+Real SprayParticleContainer::inj_num_ppp = 0.2;
+Real SprayParticleContainer::breakup_ppp_fact = 6.;
 Real SprayParticleContainer::B0_KHRT = 0.61;
 Real SprayParticleContainer::B1_KHRT = 7.;
 Real SprayParticleContainer::C3_KHRT = 1.;
@@ -101,9 +104,6 @@ SprayParticleContainer::readSprayParams(
     }
   }
 
-  Real max_parcel_size = 40.;
-  Real inj_parcel_size = 0.5;
-  Real breakup_ppp_fact = 6.;
   Real spray_ref_T = 300.;
   bool splash_model = false;
   int breakup_model = 0;
@@ -112,7 +112,7 @@ SprayParticleContainer::readSprayParams(
   //
   pp.query("max_parcel_size", max_num_ppp);
   pp.query("inj_parcel_size", inj_num_ppp);
-  if (inj_parcel_size > max_parcel_size) {
+  if (inj_num_ppp > max_num_ppp) {
     Abort("Injection number density cannot exceed maximum number density");
   }
   pp.query("use_splash_model", splash_model);
@@ -223,7 +223,7 @@ SprayParticleContainer::readSprayParams(
     }
     amrex::Print() << std::endl;
 #endif
-    amrex::Print() << "Number of particles per parcel " << parcel_size
+    amrex::Print() << "Max particles per parcel " << max_num_ppp
                    << std::endl;
   }
   //
