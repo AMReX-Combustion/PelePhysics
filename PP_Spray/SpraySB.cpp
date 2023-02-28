@@ -249,7 +249,7 @@ SprayParticleContainer::CreateSBDroplets(
             // loc0 is location of droplet after full timestep
             // From initial breakup to final flow_dt, droplet will have
             // additional tangential velocity
-            p.pos(dir) = loc0[dir] + dtpp * (pvel - vel0[dir]);
+            p.pos(dir) = loc0[dir];
             p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           bool where = Where(p, pld);

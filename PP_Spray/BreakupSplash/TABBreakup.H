@@ -182,7 +182,7 @@ void
 splitDropletTAB(
   const int pid,
   SprayParticleContainer::ParticleType& p,
-  const Real max_num_ppp,
+  const amrex::Real max_num_ppp,
   splash_breakup* N_SB,
   const SBPtrs& rf,
   const amrex::Real Utan_total)
