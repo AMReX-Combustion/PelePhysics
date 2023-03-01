@@ -1601,6 +1601,7 @@ def qssa_coeff_functions(
             # ae = (
             # reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
             # ).to(aeuc)
+            beta = syms.convert_number_to_int(beta)
         elif not falloff:
             # Case 2 !PD, TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
@@ -1609,6 +1610,7 @@ def qssa_coeff_functions(
             # ae = (
             # reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
             # ).to(aeuc)
+            beta = syms.convert_number_to_int(beta)
         else:
             # Case 2 !PD, TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
@@ -1646,8 +1648,8 @@ def qssa_coeff_functions(
                 print(f"Unrecognized reaction rate type: {reaction.equation}")
                 sys.exit(1)
 
-        beta = syms.convert_number_to_int(beta)
-        low_beta = syms.convert_number_to_int(low_beta)
+            beta = syms.convert_number_to_int(beta)
+            low_beta = syms.convert_number_to_int(low_beta)
 
         cw.writer(fstream, "{")
         cw.writer(
