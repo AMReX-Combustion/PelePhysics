@@ -44,10 +44,15 @@ def main():
     # Species
     with open(args.nqssa) as f:
         f_non_qssa_species = yaml.safe_load(f)
+        # Avoid interpreting NO as False
+        try: 
+            indBool = f_non_qssa_species['species'].index(False)
+            f_non_qssa_species['species'][indBool] = 'NO'
+        except ValueError:
+            pass
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
     qssa_species = list(set(all_species) - set(non_qssa_species))
-
     # Visualize
     if args.visualize:
         cqr.visualize_qssa(mechanism, reaction_info, qssa_species)
