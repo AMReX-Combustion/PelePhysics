@@ -96,7 +96,11 @@ def main():
             for idx, reaction in enumerate(qssa.reactions()):
                 if fr.equation == reaction.equation:
                     forward_to_remove_idx.append(idx)
-                    break
+                    if not fr.duplicate:
+                        break
+        # Remove duplicates
+        forward_to_remove_idx = list(set(forward_to_remove_idx))
+        forward_to_remove_idx.sort()
         qssa.update_user_data({"forward_to_remove_idx": forward_to_remove_idx})
     qssa.write_yaml(qssaname, header=True)
 
