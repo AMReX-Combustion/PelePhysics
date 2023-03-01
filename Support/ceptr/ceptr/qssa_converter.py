@@ -181,7 +181,6 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                 count = 0
                 for r in species_info.qssa_info.sr_rj[species_info.sr_si == j]:
                     reaction = mechanism.reaction(r)
-
                     remove_forward = cu.is_remove_forward(reaction_info, r)
 
                     # put forth any pathological case
@@ -221,15 +220,15 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 for reactant, _ in reaction.reactants.items()
                             ):
                                 is_coupling = True
-                                if reaction.id not in list_coupling_reactions:
+                                if r not in list_coupling_reactions:
                                     coupling_reactions += (
                                         "R"
-                                        + str(reaction.orig_id)
+                                        + str(r)
                                         + " "
                                         + reaction.equation
                                         + "\n"
                                     )
-                                    list_coupling_reactions.append(reaction.id)
+                                    list_coupling_reactions.append(r)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -254,15 +253,15 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 for product, _ in reaction.products.items()
                             ):
                                 is_coupling = True
-                                if reaction.id not in list_coupling_reactions:
+                                if r not in list_coupling_reactions:
                                     coupling_reactions += (
                                         "R"
-                                        + str(reaction.orig_id)
+                                        + str(r)
                                         + " "
                                         + reaction.equation
                                         + "\n"
                                     )
-                                    list_coupling_reactions.append(reaction.id)
+                                    list_coupling_reactions.append(r)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -291,15 +290,15 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 for reactant, _ in reaction.reactants.items()
                             ):
                                 is_coupling = True
-                                if reaction.id not in list_coupling_reactions:
+                                if r not in list_coupling_reactions:
                                     coupling_reactions += (
                                         "R"
-                                        + str(reaction.orig_id)
+                                        + str(r)
                                         + " "
                                         + reaction.equation
                                         + "\n"
                                     )
-                                    list_coupling_reactions.append(reaction.id)
+                                    list_coupling_reactions.append(r)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -356,18 +355,18 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     ):
                                         is_coupling = True
                                         if (
-                                            reaction.id
+                                            r
                                             not in list_coupling_reactions
                                         ):
                                             coupling_reactions += (
                                                 "R"
-                                                + str(reaction.orig_id)
+                                                + str(r)
                                                 + " "
                                                 + reaction.equation
                                                 + "\n"
                                             )
                                             list_coupling_reactions.append(
-                                                reaction.id
+                                                r
                                             )
                                         print(
                                             "Quadratic coupling of "
@@ -386,18 +385,18 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     ):
                                         is_coupling = True
                                         if (
-                                            reaction.id
+                                            r
                                             not in list_coupling_reactions
                                         ):
                                             coupling_reactions += (
                                                 "R"
-                                                + str(reaction.orig_id)
+                                                + str(r)
                                                 + " "
                                                 + reaction.equation
                                                 + "\n"
                                             )
                                             list_coupling_reactions.append(
-                                                reaction.id
+                                                r
                                             )
                                         print(
                                             "Quadratic coupling of "
@@ -420,18 +419,18 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     ):
                                         is_coupling = True
                                         if (
-                                            reaction.id
+                                            r
                                             not in list_coupling_reactions
                                         ):
                                             coupling_reactions += (
                                                 "R"
-                                                + str(reaction.orig_id)
+                                                + str(r)
                                                 + " "
                                                 + reaction.equation
                                                 + "\n"
                                             )
                                             list_coupling_reactions.append(
-                                                reaction.id
+                                                r
                                             )
                                         print(
                                             "Quadratic coupling of "
