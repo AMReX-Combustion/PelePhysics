@@ -2,16 +2,14 @@ description: QSSA of gas
 generator: YamlWriter
 cantera-version: 2.6.0
 git-commit: 9573e6b
-date: Tue Feb 21 12:51:23 2023
+date: Fri Mar  3 16:06:03 2023
 phases:
-  - forward_to_remove_idx: [95, 96, 97, 164, 165, 166, 196, 197, 200, 286, 380, 390, 422, 466, 484,
-    485, 486, 488, 493, 494, 495, 496, 497, 499, 501, 502, 504, 504, 506,
-    513, 517, 520, 521, 522, 524, 556]
-    n_qssa_species: 22
+  - forward_to_remove_idx: [95, 96, 97, 164, 165, 166, 196, 197, 200, 286, 484, 494, 501, 523, 559]
+    n_qssa_species: 21
     kinetics: gas
     transport: mixture-averaged
-    qssa_species: [CH3CO, CH3CCH2, C2O, CN, CH2CHO, NNH, CH, iC4H7-1, H2CN, N, NO, C2H,
-    C2H3, iC3H7, HCO, HCCO, C, CH2*, C6H5, CH2OH, CH2, CH3O]
+    qssa_species: [CH2OH, HCO, N, iC3H7, C6H5, CH2, iC4H7-1, C2H3, NNH, C, CH3CO, CH2CHO,
+    C2H, CH3O, C2O, CH, HCCO, CN, H2CN, CH2*, CH3CCH2]
     name: gas-qssa
     thermo: ideal-gas
     elements: [C, H, O, N]
@@ -2097,11 +2095,11 @@ reactions:
     rate-constant: {A: 1.3e+11, b: 0.0, Ea: 1.514608e+06}
   - equation: NO2 + O <=> NO + O2
     rate-constant: {A: 1.1e+11, b: -0.52, Ea: 0.0}
-  - equation: 2 NO2 => 2 NO + O2
+  - equation: 2 NO2 <=> 2 NO + O2
     rate-constant: {A: 4.5e+09, b: 0.0, Ea: 1.15474216e+08}
   - equation: H + N2O <=> N2 + OH
     rate-constant: {A: 6.4e+04, b: 1.835, Ea: 5.6450528e+07}
-  - equation: N2O + O => 2 NO
+  - equation: N2O + O <=> 2 NO
     rate-constant: {A: 9.2e+10, b: 0.0, Ea: 1.15808936e+08}
   - equation: N2O + O <=> N2 + O2
     rate-constant: {A: 9.2e+10, b: 0.0, Ea: 1.15808936e+08}
@@ -2183,7 +2181,7 @@ reactions:
     rate-constant: {A: 4.2e+31, b: -6.12, Ea: 2.5610264e+08}
   - equation: H + HCNO <=> HCN + OH
     rate-constant: {A: 7.2e+07, b: 0.841, Ea: 3.6032608e+07}
-  - equation: HCNO + O => HCO + NO
+  - equation: HCNO + O <=> HCO + NO
     rate-constant: {A: 6.3e+10, b: 0.0, Ea: 0.0}
   - equation: HCNO + O <=> NCO + OH
     rate-constant: {A: 7.0e+09, b: 0.0, Ea: 0.0}
@@ -2207,7 +2205,7 @@ reactions:
     rate-constant: {A: 4.0e+16, b: -2.19, Ea: 7.292712e+06}
   - equation: NCO + NO <=> CO2 + N2
     rate-constant: {A: 1.5e+18, b: -2.74, Ea: 7.631616e+06}
-  - equation: NCO + NO2 => CO + 2 NO
+  - equation: NCO + NO2 <=> CO + 2 NO
     rate-constant: {A: 2.5e+08, b: 0.0, Ea: -2.958088e+06}
   - equation: NCO + NO2 <=> CO2 + N2O
     rate-constant: {A: 3.0e+09, b: 0.0, Ea: -2.958088e+06}
@@ -2263,7 +2261,7 @@ reactions:
     rate-constant: {A: 1.5e-04, b: 3.52, Ea: 1.65268e+07}
   - equation: CH3 + NO <=> H2CN + OH
     rate-constant: {A: 1.5e-04, b: 3.52, Ea: 1.65268e+07}
-  - equation: CH3 + NO2 => CH3O + NO
+  - equation: CH3 + NO2 <=> CH3O + NO
     rate-constant: {A: 1.1e+10, b: 0.0, Ea: 0.0}
   - equation: CH2 + N2 <=> HCN + NH
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 3.09616e+08}
@@ -2277,6 +2275,8 @@ reactions:
     rate-constant: {A: 5.9e+10, b: 0.0, Ea: 0.0}
   - equation: CH2* + NO <=> HCN + OH
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
+  - equation: CH2* + NO <=> CH2 + NO
+    rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
   - equation: CH2* + N2O <=> CH2O + N2
     rate-constant: {A: 3.8e+10, b: 0.0, Ea: 0.0}
   - equation: CH + N2 <=> H + NCN
@@ -2295,7 +2295,9 @@ reactions:
     rate-constant: {A: 7.9e+10, b: 0.0, Ea: 0.0}
   - equation: CH + NO <=> CN + OH
     rate-constant: {A: 1.1e+09, b: 0.0, Ea: 0.0}
-  - equation: CH + NO2 => HCO + NO
+  - equation: CH + NO => HCO + N
+    rate-constant: {A: 6.8e+09, b: 0.0, Ea: 0.0}
+  - equation: CH + NO2 <=> HCO + NO
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
   - equation: CN + N <=> C + N2
     rate-constant: {A: 5.9e+11, b: -0.4, Ea: 0.0}
@@ -2305,7 +2307,7 @@ reactions:
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
   - equation: C + NO <=> CO + N
     rate-constant: {A: 2.8e+10, b: 0.0, Ea: 0.0}
-  - equation: C + N2O => CN + NO
+  - equation: C + N2O <=> CN + NO
     rate-constant: {A: 4.8e+09, b: 0.0, Ea: 0.0}
   - equation: CH3O + NO <=> CH2O + HNO
     rate-constant: {A: 7.5e+09, b: 0.0, Ea: 8.439128e+06}
@@ -2329,7 +2331,7 @@ reactions:
     rate-constant: {A: 5.3e+09, b: 0.0, Ea: 4.2986416e+07}
   - equation: C2H3 + NO <=> CH2O + HCN
     rate-constant: {A: 7.0e+18, b: -3.382, Ea: 4.2886e+06}
-  - equation: C2H3 + NO2 => CH2CHO + NO
+  - equation: C2H3 + NO2 <=> CH2CHO + NO
     rate-constant: {A: 7.7e+11, b: -0.6, Ea: 0.0}
   - equation: C2H2 + NCO <=> HCCO + HCN
     rate-constant: {A: 1.4e+09, b: 0.0, Ea: 7.59396e+06}
@@ -2337,7 +2339,9 @@ reactions:
     rate-constant: {A: 7.2e+09, b: 0.0, Ea: -3.07524e+06}
   - equation: C2H + NO <=> CO + HCN
     rate-constant: {A: 4.6e+10, b: 0.0, Ea: 2.38488e+06}
-  - equation: C2H + NO2 => HCCO + NO
+  - equation: C2H + NO => CN + HCO
+    rate-constant: {A: 1.4e+10, b: 0.0, Ea: 2.38488e+06}
+  - equation: C2H + NO2 <=> HCCO + NO
     rate-constant: {A: 4.6e+10, b: 0.0, Ea: -1.079472e+06}
   - equation: CH3CO + NO2 => CH3 + CO2 + NO
     rate-constant: {A: 1.5e+10, b: 0.0, Ea: 0.0}
@@ -2359,7 +2363,7 @@ reactions:
     rate-constant: {A: 2.2e+08, b: 0.71, Ea: 2.2263064e+07}
   - equation: H + NCN <=> HNC + N
     rate-constant: {A: 4.3e-07, b: 4.69, Ea: 1.0183856e+07}
-  - equation: NCN + O => CN + NO
+  - equation: NCN + O <=> CN + NO
     rate-constant: {A: 2.5e+10, b: 0.17, Ea: -1.42256e+05}
   - equation: NCN + OH <=> NCO + NH
     rate-constant: {A: 1.7e+15, b: -1.83, Ea: 1.7334312e+07}
