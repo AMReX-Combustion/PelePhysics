@@ -139,7 +139,7 @@ public:
     amrex::Vector<std::string> int_comp_names;
     Checkpoint(
       dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
-    // Here we write ascii information every time we write a checkpoint file
+    // Here we write ascii information every time we write a plot file
     if (level == 0 && write_ascii == 1) {
       // TODO: Would be nice to be able to use file_name_digits
       // instead of doing this
