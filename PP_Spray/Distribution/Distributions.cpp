@@ -129,10 +129,12 @@ ChiSquared::init(const amrex::Real& d32, const amrex::Real& /*dummy*/)
   m_d32 = d32;
   amrex::Real xiend = 12.;
   amrex::Real dxi = xiend / 100.;
-  amrex::Real rend = 1. - std::exp(-xiend) * (1. + xiend * (1. + xiend * (0.5 + xiend / 6.)));
+  amrex::Real rend =
+    1. - std::exp(-xiend) * (1. + xiend * (1. + xiend * (0.5 + xiend / 6.)));
   for (int i = 0; i < 100; i++) {
     amrex::Real xi = dxi * (i + 1);
-    amrex::Real rval = 1. - std::exp(-xi) * (1. + xi * (1. + xi * (0.5 + xi / 6.)));
+    amrex::Real rval =
+      1. - std::exp(-xi) * (1. + xi * (1. + xi * (0.5 + xi / 6.)));
     rvals[i] = rval / rend;
   }
 }
