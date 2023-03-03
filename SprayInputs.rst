@@ -121,10 +121,11 @@ If an injector is constructed using only a name and geometry, the injection para
    +--------------------+--------------------------------+--------------------+
    |``jet_dia``         |Jet diameter                    |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``spread_angle``    |Full spread angle in degrees    |Yes                 |
-   |                    |from the jet normal direction;  |                    |
-   |                    |droplets vary from              |                    |
-   |                    |:math:`[-\theta/2,\theta/2]`    |                    |
+   |``spread_angle``    |:math:`\theta_J`; Full spread   |Yes                 |
+   |                    |angle in degrees from the jet   |                    |
+   |                    |normal direction; droplets vary |                    |
+   |                    |from                            |                    |
+   |                    |:math:`[-\theta_J/2,\theta_J/2]`|                    |
    +--------------------+--------------------------------+--------------------+
    |``T``               |Temperature of the injected     |Yes                 |
    |                    |liquid                          |                    |
@@ -135,12 +136,29 @@ If an injector is constructed using only a name and geometry, the injection para
    +--------------------+--------------------------------+--------------------+
    |``mass_flow_rate``  |Mass flow rate of the jet       |Yes                 |
    +--------------------+--------------------------------+--------------------+
-   |``hollow_spray``    |Sets hollow cone injection      |No (Default: 0)     |
+   |``hollow_spray``    |Sets hollow cone injection with |No (Default: 0)     |
+   |                    |angle :math:`\theta_j/2`        |                    |
+   +--------------------+--------------------------------+--------------------+
+   |``hollow_spread``   |:math:`\theta_h`; Adds spread to|No (Default: 0)     |
+   |                    |hollow cone :math:`\theta_j/2\pm|                    |
+   |                    |\theta_h`                       |                    |
+   +--------------------+--------------------------------+--------------------+
+   |``swirl_angle``     |:math:`\phi_S`; Adds a swirling |No (Default: 0)     |
+   |                    |component along azimuthal       |                    |
+   |                    |direction                       |                    |
    +--------------------+--------------------------------+--------------------+
    |``start_time`` and  |Beginning and end time for jet  |No                  |
    |``end_time``        |                                |                    |
    +--------------------+--------------------------------+--------------------+
    |``dist_type``       |Droplet diameter distribution   |Yes                 |
    |                    |type: ``Uniform``, ``Normal``,  |                    |
-   |                    |``LogNormal``, ``Weibull``      |                    |
+   |                    |``LogNormal``, ``Weibull``,     |                    |
+   |                    |``ChiSquared``                  |                    |
    +--------------------+--------------------------------+--------------------+
+
+
+.. figure:: /images/inject_transform.png
+   :align: center
+   :figwidth: 40%
+
+   Demonstration of injection angles. :math:`\phi_J` varies uniformly from :math:`[0, 2 \pi]`
