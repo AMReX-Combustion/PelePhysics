@@ -159,6 +159,6 @@ If an injector is constructed using only a name and geometry, the injection para
 
 .. figure:: /images/inject_transform.png
    :align: center
-   :figwidth: 40%
+   :figwidth: 60%
 
    Demonstration of injection angles. :math:`\phi_J` varies uniformly from :math:`[0, 2 \pi]`
