@@ -154,6 +154,31 @@ public:
       std::string fname = part_dir_path + "spray" + numstring + ".p3d";
       WriteAsciiFile(fname);
     }
+    // Since injection can occur over multiple time steps, we must write the
+    // current status of each jet in a checkpoint to ensure injection isn't
+    // interrupted during restart
+    if (
+      is_checkpoint && m_sprayJets.size() > 0 &&
+      amrex::ParallelDescriptor::IOProcessor()) {
+      std::string filename = dir + "/particles/injection_data.log";
+      std::ofstream file;
+      file.open(filename.c_str(), std::ios::out | std::ios::trunc);
+      if (!file.good()) {
+        amrex::FileOpenFailed(filename);
+      }
+      int numjets = static_cast<int>(m_sprayJets.size());
+      file << numjets << "\n";
+      for (int jindx = 0; jindx < numjets; ++jindx) {
+        SprayJet* js = m_sprayJets[jindx].get();
+        file << js->m_sumInjMass << " " << js->m_sumInjTime << " "
+             << js->m_minParcel << "\n";
+      }
+      file.flush();
+      file.close();
+      if (!file.good()) {
+        amrex::Abort("Problem writing injection file");
+      }
+    }
   }
 
   ///
