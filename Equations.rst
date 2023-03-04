@@ -8,8 +8,10 @@ Equations
 Spray Equations
 ---------------
 The following equations pertain to the spray modeling algorithm in `PeleMP`.
-The evaporation models follow the work by Abramzon and Sirignano[#f1]_.
+The evaporation models follow the work by Abramzon and Sirignano. [#f1]_
+
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`s` relates to the reference surface state, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase.
+
 The reference surface state is the state used to approximate the thermophysical and transport properties.
 This state is approximated using the one-third rule.
 Additional nomenclature: :math:`M_n` is the molar mass of species :math:`n`, :math:`\overline{M}` is the average molar mass of a mixture, :math:`\mathcal{R}` is the universal gas constant, :math:`N_L` is the number of liquid species, and :math:`N_s` is the number of gas phase species.
