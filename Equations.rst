@@ -8,7 +8,7 @@ Equations
 Spray Equations
 ---------------
 The following equations pertain to the spray modeling algorithm in `PeleMP`.
-The evaporation models follow the work by Abramzon and Sirignano[^1]
+The evaporation models follow the work by Abramzon and Sirignano[#f1]_.
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`s` relates to the reference surface state, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase.
 The reference surface state is the state used to approximate the thermophysical and transport properties.
 This state is approximated using the one-third rule.
@@ -199,5 +199,4 @@ The procedure is as follows for updating the spray droplet:
 
     and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on if an EB is present.
 
-
-[^1]: "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. SirignanoInt. J. Heat Mass Transfer Vol32, No. 9. pp 1605-1618, 1989
+.. [#f1] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. SirignanoInt. J. Heat Mass Transfer Vol32, No. 9. pp 1605-1618, 1989
