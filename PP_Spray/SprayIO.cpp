@@ -4,7 +4,7 @@
 using namespace amrex;
 
 void
-SprayContainer::SprayParticleIO(
+SprayParticleContainer::SprayParticleIO(
   const int level,
   const bool is_checkpoint,
   const int write_ascii,
@@ -87,8 +87,8 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
     }
   }
   std::string JetDataFileName = dir + "/particles/injection_data.log";
-  if (Exists(JetDataFileName)) {
-    if (numjets == 0 && ParallelDescripter::IOProcessor()) {
+  if (FileSystem::Exists(JetDataFileName)) {
+    if (numjets == 0 && ParallelDescriptor::IOProcessor()) {
       Print() << "Warning: Restart file contains jet information but no "
                  "SprayJets have been initialized"
               << std::endl;
@@ -100,7 +100,7 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
     std::istringstream JetDataFile(fileCharPtrString, std::istringstream::in);
     int in_numjets;
     JetDataFile >> in_numjets;
-    Vector<std::strings> in_jet_names(in_numjets);
+    Vector<std::string> in_jet_names(in_numjets);
     Vector<Real> in_inj_mass(in_numjets);
     Vector<Real> in_inj_time(in_numjets);
     Vector<Real> in_min_parcel(in_numjets);
@@ -111,7 +111,7 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
     for (int ijets = 0; ijets < in_numjets; ++ijets) {
       std::string in_name = in_jet_names[ijets];
       for (int mjets = 0; mjets < numjets; ++mjets) {
-        SprayJets* js = m_sprayJets[mjets].get();
+        SprayJet* js = m_sprayJets[mjets].get();
         if (js->jet_name() == in_name) {
           js->m_sumInjMass = in_inj_mass[ijets];
           js->m_sumInjTime = in_inj_time[ijets];

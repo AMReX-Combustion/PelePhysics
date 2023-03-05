@@ -350,7 +350,7 @@ public:
   /// injection data files if they are present. Checks to ensure all jet names
   /// are unique
   /// @param dir Name of restart directory
-  void PostInitRestart(const std::string& dir);
+  void PostInitRestart(const std::string& dir = "");
 
   static std::string spray_fuel_names[SPRAY_FUEL_NUM];
   static std::string spray_dep_names[SPRAY_FUEL_NUM];
