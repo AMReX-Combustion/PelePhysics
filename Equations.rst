@@ -8,7 +8,7 @@ Equations
 Spray Equations
 ---------------
 The following equations pertain to the spray modeling algorithm in `PeleMP`.
-The evaporation models follow the work by Abramzon and Sirignano. [abram]_
+The evaporation models follow the work by Abramzon and Sirignano [#abram]_ and the multicomponent evaporation is based on work by Tonini. [#ton]_
 
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`s` relates to the reference surface state, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase.
 
@@ -201,4 +201,6 @@ The procedure is as follows for updating the spray droplet:
 
     and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on if an EB is present.
 
-.. [abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol 32, No. 9, pp 1605-1618 (1989)
+.. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol 32, No. 9, pp 1605-1618 (1989)
+
+.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline enginers", S. Tonini, Dissertation, City University London (2006)
