@@ -11,6 +11,7 @@ CEXE_sources += SprayParticlesInitInsert.cpp
 CEXE_sources += SpraySetup.cpp
 CEXE_sources += SpraySB.cpp
 CEXE_sources += SprayJet.cpp
+CEXE_sources += SprayIO.cpp
 
 CEXE_headers += Drag.H
 CEXE_headers += WallFunctions.H

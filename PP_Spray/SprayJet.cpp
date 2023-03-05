@@ -5,6 +5,7 @@
 // Constructor where parameters are set from inputfile
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 {
+  m_jetName = jet_name;
   std::string ppspray = "spray." + jet_name;
   amrex::ParmParse ps(ppspray);
   std::string dist_type;
@@ -56,6 +57,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 
 // Constructor for assigning parameters directly
 SprayJet::SprayJet(
+  const std::string& jet_name,
   const amrex::Geometry& geom,
   const amrex::RealVect jet_cent,
   const amrex::RealVect jet_norm,
@@ -71,7 +73,8 @@ SprayJet::SprayJet(
   const amrex::Real phi_swirl,
   bool hollow_spray,
   const amrex::Real hollow_spread)
-  : m_norm(jet_norm),
+  : m_jetName(jet_name),
+    m_norm(jet_norm),
     m_cent(jet_cent),
     m_spreadAngle(spread_angle * M_PI / 180.),
     m_swirlAngle(phi_swirl * M_PI / 180.),
