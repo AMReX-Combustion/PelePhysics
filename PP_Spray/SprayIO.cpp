@@ -82,7 +82,7 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
     }
     int count = std::distance(
       jet_names.begin(), std::unique(jet_names.begin(), jet_names.end()));
-    if (count > 0) {
+    if (count != numjets) {
       Abort("Duplicate jet names detected");
     }
   }
