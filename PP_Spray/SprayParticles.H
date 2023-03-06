@@ -74,8 +74,7 @@ public:
     const amrex::Real time,
     SprayJet* spray_jet,
     const amrex::Real sim_dt,
-    const int level,
-    int injProc = 0);
+    const int level);
 
   /// \brief General initialization routine for uniformly distributed droplets
   void uniformSprayInit(

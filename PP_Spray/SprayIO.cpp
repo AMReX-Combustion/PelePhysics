@@ -43,27 +43,46 @@ SprayParticleContainer::SprayParticleIO(
   // File line 0: Number of jets.
   // Each line after lists the jet name then the oustanding mass and injection
   // time, then the minimum injection parcel
-  if (
-    is_checkpoint && m_sprayJets.size() > 0 &&
-    ParallelDescriptor::IOProcessor()) {
-    std::string filename = dir + "/particles/injection_data.log";
-    std::ofstream file;
-    file.open(filename.c_str(), std::ios::out | std::ios::trunc);
-    if (!file.good()) {
-      FileOpenFailed(filename);
-    }
+  if (is_checkpoint && m_sprayJets.size() > 0) {
     int numjets = static_cast<int>(m_sprayJets.size());
-    file << numjets << "\n";
+    std::string filename = dir + "/particles/injection_data.log";
+    if (ParallelDescriptor::IOProcessor()) {
+      std::ofstream file;
+      file.open(filename.c_str(), std::ios::out | std::ios::trunc);
+      if (!file.good()) {
+        FileOpenFailed(filename);
+      }
+      file << numjets << "\n";
+      file.flush();
+      file.close();
+      if (!file.good()) {
+        Abort("Problem writing injection file");
+      }
+    }
+    ParallelDescriptor::Barrier();
+    // Each jet contains name, injection number density, outstanding mass and
+    // time, and minimum parcels for injection
     for (int jindx = 0; jindx < numjets; ++jindx) {
       SprayJet* js = m_sprayJets[jindx].get();
-      file << js->jet_name() << " " << js->num_ppp() << " "
-           << js->m_sumInjMass << " " << js->m_sumInjTime << " "
-           << js->m_minParcel << "\n";
-    }
-    file.flush();
-    file.close();
-    if (!file.good()) {
-      Abort("Problem writing injection file");
+      int jet_proc = js->Proc();
+      if (ParallelDescriptor::MyProc() == jet_proc) {
+        VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
+        std::ofstream file;
+        file.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+        file.open(filename.c_str(), std::ios::out | std::ios::app);
+        file.precision(15);
+        if (!file.good()) {
+          FileOpenFailed(filename);
+        }
+        file << js->jet_name() << " " << js->m_sumInjMass << " "
+             << js->m_sumInjTime << " " << js->m_minParcel << "\n";
+        file.flush();
+        file.close();
+        if (!file.good()) {
+          Abort("Problem writing injection file");
+        }
+      }
+      ParallelDescriptor::Barrier();
     }
   }
 }

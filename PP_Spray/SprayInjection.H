@@ -18,13 +18,13 @@ SprayParticleContainer::sprayInjection(
   const amrex::Real time,
   SprayJet* spray_jet,
   const amrex::Real sim_dt,
-  const int level,
-  int injProc)
+  const int level)
 {
-  if (!spray_jet->jet_active(time)) {
+  if (!spray_jet->jet_active(time) || sim_dt <= 0.) {
     return;
   }
   int curProc = amrex::ParallelDescriptor::MyProc();
+  int injProc = spray_jet->Proc();
   if (curProc != injProc) {
     return;
   }

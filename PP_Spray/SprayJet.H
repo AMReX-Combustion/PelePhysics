@@ -46,6 +46,7 @@ public:
   inline const amrex::Real& start_time() const { return m_startTime; }
   inline const amrex::Real& end_time() const { return m_endTime; }
   inline const std::string& jet_name() const { return m_jetName; }
+  inline int Proc() const { return m_proc; }
 
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
@@ -84,6 +85,14 @@ public:
     m_norm = jet_norm;
     amrex::Real mag = m_norm.vectorLength();
     m_norm /= mag;
+  }
+
+  void set_inj_proc(int inj_proc)
+  {
+    m_proc = inj_proc;
+    if (m_proc < 0 || m_proc > amrex::ParallelDescriptor::NProcs()) {
+      amrex::Abort("SprayJet proc not valid");
+    }
   }
 
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
@@ -227,7 +236,7 @@ protected:
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
   amrex::Real m_hollowSpread = 0.;
-  amrex::Real m_numPPP = -1.;
+  int m_proc = 0;
 };
 
 #endif
