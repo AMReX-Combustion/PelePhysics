@@ -38,7 +38,8 @@ SprayParticleContainer::sprayInjection(
   rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;
   // Number of particles per parcel
-  const amrex::Real num_ppp = inj_num_ppp;
+  amrex::Real num_ppp = spray_jet->num_ppp();
+  const amrex::Real min_ppp = 0.01;
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
@@ -48,14 +49,30 @@ SprayParticleContainer::sprayInjection(
       "Average droplet size too small, floating point issues expected");
   }
   // Minimum number of parcels we want injected at a time
-  const amrex::Real min_inj_parcel = spray_jet->m_minParcel;
+  amrex::Real min_inj_parcel = spray_jet->m_minParcel;
   amrex::Real dt = sim_dt;
   amrex::Real inject_mass = spray_jet->mass_flow_rate() * sim_dt;
+  // Set initial injection number density
+  if (num_ppp < 0.) {
+    num_ppp = amrex::max(min_ppp, inject_mass / avg_mass);
+    spray_jet->set_num_ppp(num_ppp);
+  }
+  // If we are injecting too much mass, we can increase the min_inj_parcel or
+  // decrease the number density
+  if (min_inj_parcel > 2. && num_ppp > min_ppp) {
+    // Try decreasing number density to lower minimum parcel injection
+    num_ppp = amrex::max(min_ppp, inject_mass / avg_mass);
+    spray_jet->set_num_ppp(num_ppp);
+    min_inj_parcel = inject_mass / (num_ppp * avg_mass);
+    spray_jet->m_minParcel = min_inj_parcel;
+  }
   // See if there is uninjected mass from previous time steps
   if (spray_jet->m_sumInjMass > 0.) {
     dt += spray_jet->m_sumInjTime;
     inject_mass += spray_jet->m_sumInjMass;
   }
+  // If we can't get enough mass to create the desired minimum parcel injection,
+  // accumulate mass injection over more time steps
   if (inject_mass / (num_ppp * avg_mass) < min_inj_parcel) {
     spray_jet->m_sumInjMass = inject_mass;
     spray_jet->m_sumInjTime = dt;

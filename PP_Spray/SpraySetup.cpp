@@ -7,7 +7,6 @@ std::string SprayParticleContainer::spray_fuel_names[SPRAY_FUEL_NUM];
 std::string SprayParticleContainer::spray_dep_names[SPRAY_FUEL_NUM];
 Vector<std::string> SprayParticleContainer::spray_derive_vars;
 Real SprayParticleContainer::max_num_ppp = 40.;
-Real SprayParticleContainer::inj_num_ppp = 0.2;
 Real SprayParticleContainer::breakup_ppp_fact = 6.;
 Real SprayParticleContainer::B0_KHRT = 0.61;
 Real SprayParticleContainer::B1_KHRT = 7.;
@@ -111,10 +110,6 @@ SprayParticleContainer::readSprayParams(
   // Set the number of particles per parcel
   //
   pp.query("max_parcel_size", max_num_ppp);
-  pp.query("inj_parcel_size", inj_num_ppp);
-  if (inj_num_ppp > max_num_ppp) {
-    Abort("Injection number density cannot exceed maximum number density");
-  }
   pp.query("use_splash_model", splash_model);
   std::string breakup_model_str = "None";
   pp.query("use_breakup_model", breakup_model_str);
@@ -223,8 +218,7 @@ SprayParticleContainer::readSprayParams(
     }
     amrex::Print() << std::endl;
 #endif
-    amrex::Print() << "Max particles per parcel " << max_num_ppp
-                   << std::endl;
+    amrex::Print() << "Max particles per parcel " << max_num_ppp << std::endl;
   }
   //
   // Force other processors to wait till directory is built.

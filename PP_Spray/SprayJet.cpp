@@ -29,8 +29,10 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.query("swirl_angle", m_swirlAngle);
   m_swirlAngle *= M_PI / 180.;
   ps.get("T", m_jetT);
+  amrex::Real rho_avg = 0.;
   if (SPRAY_FUEL_NUM == 1) {
     m_jetY[0] = 1.;
+    rho_avg = m_sprayData->rhoL(m_jetT, 0);
   } else {
     std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
     ps.getarr("Y", in_Y_jet);
@@ -38,7 +40,9 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       m_jetY[spf] = in_Y_jet[spf];
       sumY += in_Y_jet[spf];
+      rho_avg += m_jetY[spf] / m_sprayData->rhoL(m_jetT, spf);
     }
+    rho_avg = 1. / rho_avg;
     if (amrex::Math::abs(sumY - 1.) > 1.E-8) {
       amrex::Abort(ppspray + ".Y must sum to 1");
     }

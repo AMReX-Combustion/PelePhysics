@@ -44,6 +44,7 @@ public:
   inline const amrex::Real& T() const { return m_jetT; }
   inline const amrex::Real& start_time() const { return m_startTime; }
   inline const amrex::Real& end_time() const { return m_endTime; }
+  inline const amrex::Real& num_ppp() const { return m_numPPP; }
 
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
@@ -113,6 +114,7 @@ public:
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
+  void set_num_ppp(amrex::Real num_ppp) { m_numPPP = num_ppp; }
 
   void reset_sum()
   {
@@ -223,6 +225,7 @@ protected:
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
   amrex::Real m_hollowSpread = 0.;
+  amrex::Real m_numPPP = -1.;
 };
 
 #endif
