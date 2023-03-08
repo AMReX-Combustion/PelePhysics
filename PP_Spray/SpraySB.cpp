@@ -18,7 +18,7 @@ find_tangents(
   // Check if directions of norm and velocity are the same
   if (testvec.crossProduct(norm).vectorLength() < 1.E-5) {
     // If so, pick an arbitrary direction
-    testvec = {norm[1], norm[2], norm[0]};
+    testvec = {0., 1., 0.};
   }
   tanPsi = testvec.crossProduct(norm);
   tanPsi /= tanPsi.vectorLength();
@@ -210,7 +210,7 @@ SprayParticleContainer::CreateSBDroplets(
 #if AMREX_SPACEDIM == 3
         RealVect testvec(1., 0., 0.);
         if (testvec.crossProduct(normal).vectorLength() < 1.E-5) {
-          testvec = {normal[1], normal[2], normal[0]};
+          testvec = {0., 1., 0.};
         }
         RealVect tanPsi = testvec.crossProduct(normal);
         tanPsi /= tanPsi.vectorLength();
