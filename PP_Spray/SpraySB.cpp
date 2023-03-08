@@ -209,7 +209,7 @@ SprayParticleContainer::CreateSBDroplets(
         N_s = numDens0 / static_cast<Real>(N_d);
 #if AMREX_SPACEDIM == 3
         RealVect testvec(1., 0., 0.);
-        if (testvec.cross(normal).vectorLength() < 1.E-5) {
+        if (testvec.crossProduct(normal).vectorLength() < 1.E-5) {
           testvec = {normal[1], normal[2], normal[0]};
         }
         RealVect tanPsi = testvec.crossProduct(normal);
