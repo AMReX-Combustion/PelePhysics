@@ -242,7 +242,7 @@ SprayParticleContainer::CreateSBDroplets(
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;
             Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
-                                                 std::cos(psi) * tanBeta[dir]);
+                                            std::cos(psi) * tanBeta[dir]);
 #else
             Real sgn = std::copysign(1., 0.5 - rand);
             Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
