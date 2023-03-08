@@ -14,9 +14,9 @@ find_tangents(
   RealVect& tanBeta)
 {
 #if AMREX_SPACEDIM == 3
-  RealVect testvec = -pvel;
+  RealVect testvec(1., 0., 0.);
   // Check if directions of norm and velocity are the same
-  if (testvec.crossProduct(norm) == RealVect::TheZeroVector()) {
+  if (testvec.crossProduct(norm).vectorLength() < 1.E-5) {
     // If so, pick an arbitrary direction
     testvec = {norm[1], norm[2], norm[0]};
   }
@@ -208,15 +208,16 @@ SprayParticleContainer::CreateSBDroplets(
         int N_d = amrex::max(1, static_cast<int>(numDens0 / N_s));
         N_s = numDens0 / static_cast<Real>(N_d);
 #if AMREX_SPACEDIM == 3
-        RealVect testvec(normal[1], normal[2], normal[0]);
+        RealVect testvec(1., 0., 0.);
+        if (testvec.cross(normal).vectorLength() < 1.E-5) {
+          testvec = {normal[1], normal[2], normal[0]};
+        }
         RealVect tanPsi = testvec.crossProduct(normal);
+        tanPsi /= tanPsi.vectorLength();
         RealVect tanBeta = tanPsi.crossProduct(normal);
 #else
         RealVect tanBeta(normal[1], normal[0]);
 #endif
-        // So the resulting velocity magnitude remains constant, reduce the
-        // initial velocity by a percentage
-        Real vp = std::sqrt(U0mag * U0mag - Utan * Utan) / U0mag;
         for (int new_parts = 0; new_parts < N_d; ++new_parts) {
           Real rand = amrex::Random();
           ParticleType p;
@@ -240,11 +241,11 @@ SprayParticleContainer::CreateSBDroplets(
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;
-            Real pvel = vp * vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
+            Real pvel = vel0[dir] + Utan * (std::sin(psi) * tanPsi[dir] +
                                                  std::cos(psi) * tanBeta[dir]);
 #else
             Real sgn = std::copysign(1., 0.5 - rand);
-            Real pvel = vp * vel0[dir] + sgn * Utan * tanBeta[dir];
+            Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
 #endif
             // loc0 is location of droplet after full timestep
             // From initial breakup to final flow_dt, droplet will have
