@@ -1,0 +1,39 @@
+ncells = 1 1 1
+max_grid_size  = 1
+fuel_name = POSF11498
+reactFormat = Array4
+#reactFormat = 1dArray
+chem_integrator = "ReactorCvode"
+
+ode.dt  = 3
+ode.ndt = 1000
+ode.ode_ncells = 1
+ode.reactor_type  = 1 # 1=full e, 2=full h
+ode.verbose = 0
+ode.use_typ_vals = 0
+ode.rtol = 1e-10
+ode.atol = 1e-10
+
+# Select Linear solver for CVODE Newton direction
+# Options are [CPU] dense_direct / denseAJ_direct / sparse_direct / custom_direct / GMRES / precGMRES
+#             [GPU] sparse_direct / magma_direct / GMRES / precGMRES
+cvode.solve_type = denseAJ_direct
+
+# If solve_type = precGMRES -> select preconditioner
+cvode.precond_type = dense_simplified_AJacobian
+cvode.max_order = 4
+
+ode.implicit_solve = 1
+ode.use_erkstep    = 0
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
+
+
+# 1013250.0 * patm
+hr.press = 1418550.0
+hr.t0 = 900
+hr.equiv_ratio = 7.928571428571429
+hr.outputFolderHR = ./
+
