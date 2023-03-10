@@ -153,6 +153,11 @@ if (SUNDIALS_HOME)  # SUPERBUILD MODE
   set(BUILD_TESTING        OFF                      CACHE INTERNAL "")
   set(EXAMPLES_ENABLE_C    OFF                      CACHE INTERNAL "")
   set(EXAMPLES_ENABLE_CXX  OFF                      CACHE INTERNAL "")
+  set(EXAMPLES_INSTALL     OFF                      CACHE INTERNAL "")
+  set(ENABLE_CUDA          ${PELEPHYSICS_CUDA}      CACHE INTERNAL "")
+  set(ENABLE_HIP           ${PELEPHYSICS_HIP}       CACHE INTERNAL "")
+  set(ENABLE_SYCL          ${PELEPHYSICS_SYCL}      CACHE INTERNAL "")
+  set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
   add_subdirectory(${SUNDIALS_HOME} ${SUNDIALS_BINARY_DIR})
 
