@@ -216,9 +216,10 @@ SprayParticleContainer::readSprayParams(
     for (int i = 1; i < SPRAY_FUEL_NUM; ++i) {
       amrex::Print() << ", " << spray_fuel_names[i];
     }
-    amrex::Print() << std::endl;
 #endif
-    amrex::Print() << "Max particles per parcel " << max_num_ppp << std::endl;
+    amrex::Print() << std::endl;
+    amrex::Print() << "Number of particles per parcel " << parcel_size
+                   << std::endl;
   }
   //
   // Force other processors to wait till directory is built.
