@@ -486,7 +486,7 @@ class Converter:
             idx = self.mechanism.element_index(elem)
             aw = self.mechanism.atomic_weight(elem)
             cw.writer(
-                fstream, "awt[%d] = %f; " % (idx, aw) + cw.comment("%s" % elem)
+                fstream, "awt[%d] = %f; " % (idx, aw) + cw.comment(f"{elem}")
             )
         cw.writer(fstream, "}")
 
@@ -499,7 +499,7 @@ class Converter:
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
             text = "imw_new[%d] = %.16f;" % (i, 1.0 / species.weight)
-            cw.writer(fstream, text + cw.comment("%s" % species.name))
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
         cw.writer(fstream)
 
@@ -509,7 +509,7 @@ class Converter:
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
             text = "mw_new[%d] = %f;" % (i, species.weight)
-            cw.writer(fstream, text + cw.comment("%s" % species.name))
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
 
     def mechanism_cpp_declarations(self, fstream):
@@ -621,7 +621,7 @@ class Converter:
         cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
         cw.writer(
             fstream,
-            "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),
+            f"#define NUM_REACTIONS {len(self.mechanism.reactions())}",
         )
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_FIT 4")

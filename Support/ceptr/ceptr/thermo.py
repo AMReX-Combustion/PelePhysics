@@ -98,8 +98,7 @@ def generate_thermo_routine(
 
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real *"
-        " species, const amrex::Real *  tc)" % name,
+        f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real * species, const amrex::Real *  tc)",
     )
 
     syms_g_rt = False
@@ -280,7 +279,7 @@ def generate_thermo_routine(
         else:
             cw.writer(
                 fstream,
-                cw.comment("species with midpoint at T=%g kelvin" % mid_temp),
+                cw.comment(f"species with midpoint at T={mid_temp:g} kelvin"),
             )
             cw.writer(
                 fstream,

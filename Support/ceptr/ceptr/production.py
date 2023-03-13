@@ -171,11 +171,7 @@ def production_rate(
         )
         cw.writer(
             fstream,
-            "amrex::Real refC = %g / %g * invT;"
-            % (
-                cc.Patm_pa,
-                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
-            ),
+            f"amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} * invT;",
         )
         cw.writer(fstream, "amrex::Real refCinv = 1 / refC;")
 
@@ -277,25 +273,23 @@ def production_rate(
                 fstream,
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
-            cw.writer(fstream, "k_f = %.15g" % (pef.m))
+            cw.writer(fstream, f"k_f = {pef.m:.15g}")
             if (beta == 0) and (ae == 0):
                 cw.writer(fstream, "           ;")
             else:
                 if ae == 0:
                     cw.writer(
-                        fstream, "           * exp((%.15g) * tc[0]);" % (beta)
+                        fstream, f"           * exp(({beta:.15g}) * tc[0]);"
                     )
                 elif beta == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(-(%.15g) * invT);"
-                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                        f"           * exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                        % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                        f"           * exp(({beta:.15g}) * tc[0] - ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
 
             alpha = None
@@ -311,17 +305,16 @@ def production_rate(
                 alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
-                cw.writer(fstream, "Corr  = %s;" % (alpha))
+                cw.writer(fstream, f"Corr  = {alpha};")
                 cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
             else:
                 alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
-                cw.writer(fstream, "Corr  = %s;" % (alpha))
+                cw.writer(fstream, f"Corr  = {alpha};")
                 cw.writer(
                     fstream,
-                    "redP = Corr / k_f * %.15g "
-                    % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
+                    f"redP = Corr / k_f * {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
                 )
                 if (low_beta == 0) and (low_ae.m == 0):
                     cw.writer(
@@ -331,24 +324,17 @@ def production_rate(
                 elif low_ae.m == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(%.15g  * tc[0]);" % (low_beta),
+                        f"           * exp({low_beta:.15g}  * tc[0]);",
                     )
                 elif low_beta == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(- (%.15g)"
-                        " *invT);"
-                        % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,),
+                        f"           * exp(- ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) *invT);",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp(%.15g  * tc[0] - (%.15g)"
-                        " *invT);"
-                        % (
-                            low_beta,
-                            (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
-                        ),
+                        f"           * exp({low_beta:.15g}  * tc[0] - ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) *invT);",
                     )
                 if is_troe:
                     cw.writer(fstream, "F = redP / (1.0 + redP);")
@@ -358,8 +344,7 @@ def production_rate(
                         if 1.0 - troe[0] != 0:
                             cw.writer(
                                 fstream,
-                                "    (%.15g)*exp(-tc[1] * %.15g)"
-                                % (1.0 - troe[0], (1 / troe[1])),
+                                f"    ({1.0 - troe[0]:.15g})*exp(-tc[1] * {1 / troe[1]:.15g})",
                             )
                     else:
                         cw.writer(fstream, "     0.0 ")
@@ -367,13 +352,12 @@ def production_rate(
                         if troe[0] == 1:
                             cw.writer(
                                 fstream,
-                                "    + exp(-tc[1] * %.15g)" % ((1 / troe[2])),
+                                f"    + exp(-tc[1] * {1 / troe[2]:.15g})",
                             )
                         else:
                             cw.writer(
                                 fstream,
-                                "    + %.15g * exp(-tc[1] * %.15g)"
-                                % (troe[0], (1 / troe[2])),
+                                f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
                             )
                     else:
                         cw.writer(fstream, "    + 0.0 ")
@@ -384,7 +368,7 @@ def production_rate(
                             )
                         else:
                             cw.writer(
-                                fstream, "    + exp(-%.15g * invT));" % troe[3]
+                                fstream, f"    + exp(-{troe[3]:.15g} * invT));"
                             )
                     else:
                         cw.writer(fstream, "    + 0.0);")
@@ -408,17 +392,15 @@ def production_rate(
                     if sri[1] < 0:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(%.15g*invT)"
-                            % (sri[0], -sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp({-sri[1]:.15g}*invT)",
                         )
                     else:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(-%.15g*invT)"
-                            % (sri[0], sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp(-{sri[1]:.15g}*invT)",
                         )
                     if sri[2] > 1.0e-100:
-                        cw.writer(fstream, "   +  exp(tc[0]/%.15g) " % sri[2])
+                        cw.writer(fstream, f"   +  exp(tc[0]/{sri[2]:.15g}) ")
                     else:
                         cw.writer(fstream, "   +  0. ")
                     cw.writer(
@@ -499,11 +481,7 @@ def production_rate(
         )
         cw.writer(
             fstream,
-            "const amrex::Real refC = %g / %g * invT;"
-            % (
-                cc.Patm_pa,
-                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
-            ),
+            f"const amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} * invT;",
         )
         cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
 
@@ -677,7 +655,7 @@ def production_rate(
                 fstream,
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
-            cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
+            cw.writer(fstream, f"const amrex::Real k_f = {pef.m:.15g}")
 
             k_f_smp = pef.m
 
@@ -686,22 +664,20 @@ def production_rate(
             else:
                 if ae == 0:
                     cw.writer(
-                        fstream, "           * exp((%.15g) * tc[0]);" % (beta)
+                        fstream, f"           * exp(({beta:.15g}) * tc[0]);"
                     )
                     k_f_smp *= sme.exp(beta * syms.tc_smp[0])
                 elif beta == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(-(%.15g) * invT);"
-                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                        f"           * exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
                     coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                     k_f_smp *= sme.exp(-coeff * syms.invT_smp)
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                        % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
+                        f"           * exp(({beta:.15g}) * tc[0] - ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
                     coeff = ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae
                     k_f_smp *= sme.exp(
@@ -712,7 +688,7 @@ def production_rate(
             if not third_body and not falloff:
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = k_f * ({forward_sc});",
                 )
                 qf_smp = k_f_smp * forward_sc_smp
             elif (
@@ -722,30 +698,29 @@ def production_rate(
             ):
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = k_f * ({forward_sc});",
                 )
                 qf_smp = k_f_smp * forward_sc_smp
             elif not falloff:
                 alpha, alpha_smp = enhancement_d_with_qss(
                     mechanism, species_info, reaction, syms
                 )
-                cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
+                cw.writer(fstream, f"const amrex::Real Corr = {alpha};")
                 corr_smp = alpha_smp
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                 )
                 qf_smp = corr_smp * k_f_smp * forward_sc_smp
             else:
                 alpha, alpha_smp = enhancement_d_with_qss(
                     mechanism, species_info, reaction, syms
                 )
-                cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
+                cw.writer(fstream, f"amrex::Real Corr = {alpha};")
                 corr_smp = alpha_smp
                 cw.writer(
                     fstream,
-                    "const amrex::Real redP = Corr / k_f * %.15g "
-                    % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
+                    f"const amrex::Real redP = Corr / k_f * {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
                 )
                 redp_smp = (
                     corr_smp
@@ -760,19 +735,17 @@ def production_rate(
                 elif low_ae.m == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(%.15g * tc[0]);" % (low_beta),
+                        f"           * exp({low_beta:.15g} * tc[0]);",
                     )
                 elif low_beta == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(- %.15g * invT);"
-                        % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
+                        f"           * exp(- {1.0 / cc.Rc / cc.ureg.kelvin * low_ae:.15g} * invT);",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp(%.15g * tc[0] - %.15g * invT);"
-                        % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
+                        f"           * exp({low_beta:.15g} * tc[0] - {1.0 / cc.Rc / cc.ureg.kelvin * low_ae:.15g} * invT);",
                     )
                 coeff = (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).magnitude
                 redp_smp *= sme.exp(
@@ -793,8 +766,7 @@ def production_rate(
                         if 1.0 - troe[0] != 0:
                             cw.writer(
                                 fstream,
-                                "    %.15g * exp(-tc[1] * %.15g)"
-                                % (1.0 - troe[0], (1 / troe[1])),
+                                f"    {1.0 - troe[0]:.15g} * exp(-tc[1] * {1 / troe[1]:.15g})",
                             )
                             first_factor = syms.convert_number_to_int(
                                 1.0 - troe[0]
@@ -811,8 +783,7 @@ def production_rate(
                         if troe[0] != 0:
                             cw.writer(
                                 fstream,
-                                "    + %.15g * exp(-tc[1] * %.15g)"
-                                % (troe[0], (1 / troe[2])),
+                                f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
                             )
                             first_factor = syms.convert_number_to_int(troe[0])
                             second_factor = syms.convert_number_to_int(
@@ -832,7 +803,7 @@ def production_rate(
                             int_smp += sme.exp(first_factor * syms.invT_smp)
                         else:
                             cw.writer(
-                                fstream, "    + exp(-%.15g * invT));" % troe[3]
+                                fstream, f"    + exp(-{troe[3]:.15g} * invT));"
                             )
                             first_factor = syms.convert_number_to_int(-troe[3])
                             int_smp += sme.exp(first_factor * syms.invT_smp)
@@ -869,8 +840,7 @@ def production_rate(
                     corr_smp = f_smp * f_troe_smp
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
                     qf_smp = corr_smp * k_f_smp * forward_sc_smp
                 elif is_sri:
@@ -887,22 +857,20 @@ def production_rate(
                     if sri[1] < 0:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(%.15g * invT)"
-                            % (sri[0], -sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp({-sri[1]:.15g} * invT)",
                         )
                         if syms is not None:
                             sys.exit("Not done for now")
                     else:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(-%.15g * invT)"
-                            % (sri[0], sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp(-{sri[1]:.15g} * invT)",
                         )
                         if syms is not None:
                             sys.exit("Not done for now")
                     if sri[2] > 1.0e-100:
                         cw.writer(
-                            fstream, "   +  exp(tc[0] / %.15g) " % sri[2]
+                            fstream, f"   +  exp(tc[0] / {sri[2]:.15g}) "
                         )
                         if syms is not None:
                             sys.exit("Not done for now")
@@ -920,16 +888,14 @@ def production_rate(
                     cw.writer(fstream, "Corr = F * F_sri;")
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
                 elif nlindemann > 0:
                     cw.writer(fstream, "Corr = redP / (1.0 + redP);")
                     corr_smp = redp_smp / (1.0 + redp_smp)
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
                     qf_smp = corr_smp * k_f_smp * forward_sc_smp
             if kc_conv_inv:
@@ -942,8 +908,7 @@ def production_rate(
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
-                            " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                            f"const amrex::Real qr = k_f * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                         )
                     qr_smp = (
                         k_f_smp
@@ -954,8 +919,7 @@ def production_rate(
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s)"
-                        " * (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                        f"const amrex::Real qr = Corr * k_f * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                     )
                     qr_smp = (
                         corr_smp
@@ -974,8 +938,7 @@ def production_rate(
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
-                            % (kc_exp_arg, reverse_sc),
+                            f"const amrex::Real qr = k_f * exp(-({kc_exp_arg})) * ({reverse_sc});",
                         )
                     qr_smp = (
                         k_f_smp * sme.exp(-(kc_exp_arg_smp)) * reverse_sc_smp
@@ -983,8 +946,7 @@ def production_rate(
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                        " (%s);" % (kc_exp_arg, reverse_sc),
+                        f"const amrex::Real qr = Corr * k_f * exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
                     qr_smp = (
                         corr_smp
@@ -1151,11 +1113,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
         )
         cw.writer(
             fstream,
-            "const amrex::Real refC = %g / %g * invT;"
-            % (
-                cc.Patm_pa,
-                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
-            ),
+            f"const amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} * invT;",
         )
         cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
 
@@ -1295,33 +1253,31 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
-            cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
+            cw.writer(fstream, f"const amrex::Real k_f = {pef.m:.15g}")
 
             if (beta == 0) and (ae == 0):
                 cw.writer(fstream, "           ;")
             else:
                 if ae == 0:
                     cw.writer(
-                        fstream, "           * exp((%.15g) * tc[0]);" % (beta)
+                        fstream, f"           * exp(({beta:.15g}) * tc[0]);"
                     )
                 elif beta == 0:
                     cw.writer(
                         fstream,
-                        "           * exp(-(%.15g) * invT);"
-                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                        f"           * exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                        % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
+                        f"           * exp(({beta:.15g}) * tc[0] - ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
                     )
 
             alpha = None
             if not third_body and not falloff:
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = k_f * ({forward_sc});",
                 )
             elif (
                 not falloff
@@ -1330,31 +1286,29 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             ):
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = k_f * ({forward_sc});",
                 )
             elif not falloff:
                 alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
-                cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
+                cw.writer(fstream, f"const amrex::Real Corr = {alpha};")
                 cw.writer(
                     fstream,
-                    "const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc),
+                    f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                 )
             else:
                 alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
-                cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
+                cw.writer(fstream, f"amrex::Real Corr = {alpha};")
                 cw.writer(
                     fstream,
-                    "const amrex::Real redP = Corr / k_f * %.15g "
-                    % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
+                    f"const amrex::Real redP = Corr / k_f * {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
                 )
                 cw.writer(
                     fstream,
-                    "           * exp(%.15g * tc[0] - %.15g * invT);"
-                    % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
+                    f"           * exp({low_beta:.15g} * tc[0] - {1.0 / cc.Rc / cc.ureg.kelvin * low_ae:.15g} * invT);",
                 )
                 if is_troe:
                     cw.writer(
@@ -1368,8 +1322,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                         if 1.0 - troe[0] != 0:
                             cw.writer(
                                 fstream,
-                                "    %.15g * exp(-tc[1] * %.15g)"
-                                % (1.0 - troe[0], (1 / troe[1])),
+                                f"    {1.0 - troe[0]:.15g} * exp(-tc[1] * {1 / troe[1]:.15g})",
                             )
                     else:
                         cw.writer(fstream, "     0.0 ")
@@ -1377,8 +1330,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                         if troe[0] != 0:
                             cw.writer(
                                 fstream,
-                                "    + %.15g * exp(-tc[1] * %.15g)"
-                                % (troe[0], (1 / troe[2])),
+                                f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
                             )
                     else:
                         cw.writer(fstream, "    + 0.0 ")
@@ -1389,7 +1341,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                             )
                         else:
                             cw.writer(
-                                fstream, "    + exp(-%.15g * invT));" % troe[3]
+                                fstream, f"    + exp(-{troe[3]:.15g} * invT));"
                             )
                     else:
                         cw.writer(fstream, "    + 0.0);")
@@ -1414,8 +1366,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "Corr = F * F_troe;")
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
                 elif is_sri:
                     cw.writer(
@@ -1428,18 +1379,16 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     if sri[1] < 0:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(%.15g * invT)"
-                            % (sri[0], -sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp({-sri[1]:.15g} * invT)",
                         )
                     else:
                         cw.writer(
                             fstream,
-                            "F_sri = exp(X * log(%.15g * exp(-%.15g * invT)"
-                            % (sri[0], sri[1]),
+                            f"F_sri = exp(X * log({sri[0]:.15g} * exp(-{sri[1]:.15g} * invT)",
                         )
                     if sri[2] > 1.0e-100:
                         cw.writer(
-                            fstream, "   +  exp(tc[0] / %.15g) " % sri[2]
+                            fstream, f"   +  exp(tc[0] / {sri[2]:.15g}) "
                         )
                     else:
                         cw.writer(fstream, "   +  0. ")
@@ -1451,15 +1400,13 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "Corr = F * F_sri;")
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
                 elif nlindemann > 0:
                     cw.writer(fstream, "Corr = redP / (1.0 + redP);")
                     cw.writer(
                         fstream,
-                        "const amrex::Real qf = Corr * k_f * (%s);"
-                        % (forward_sc),
+                        f"const amrex::Real qf = Corr * k_f * ({forward_sc});",
                     )
             if kc_conv_inv:
                 if alpha is None:
@@ -1471,14 +1418,12 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
-                            " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                            f"const amrex::Real qr = k_f * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                         )
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s)"
-                        " * (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
+                        f"const amrex::Real qr = Corr * k_f * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                     )
             else:
                 if alpha is None:
@@ -1490,14 +1435,12 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
-                            % (kc_exp_arg, reverse_sc),
+                            f"const amrex::Real qr = k_f * exp(-({kc_exp_arg})) * ({reverse_sc});",
                         )
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                        " (%s);" % (kc_exp_arg, reverse_sc),
+                        f"const amrex::Real qr = Corr * k_f * exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
@@ -1696,7 +1639,7 @@ def enhancement_d_with_qss(mechanism, species_info, reaction, syms=None):
     for symbol in sorted_efficiencies:
         efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
-            factor = "(%.15g)" % (efficiency - 1)
+            factor = f"({efficiency - 1:.15g})"
             if record_symbolic_operations:
                 factor_smp = efficiency - 1
             if (efficiency - 1) != 0:
@@ -1706,15 +1649,15 @@ def enhancement_d_with_qss(mechanism, species_info, reaction, syms=None):
                         species_info.ordered_idx_map[symbol]
                     ]
                 if (efficiency - 1) == 1:
-                    alpha.append("%s" % (conc))
+                    alpha.append(f"{conc}")
                     if record_symbolic_operations:
                         alpha_smp.append(conc_smp)
                 else:
-                    alpha.append("%s*%s" % (factor, conc))
+                    alpha.append(f"{factor}*{conc}")
                     if record_symbolic_operations:
                         alpha_smp.append(factor_smp * conc_smp)
         else:
-            factor = "(%.15g)" % (efficiency - 1)
+            factor = f"({efficiency - 1:.15g})"
             if record_symbolic_operations:
                 factor_smp = efficiency - 1
             if (efficiency - 1) != 0:
@@ -1728,11 +1671,11 @@ def enhancement_d_with_qss(mechanism, species_info, reaction, syms=None):
                         - species_info.n_species
                     ]
                 if (efficiency - 1) == 1:
-                    alpha.append("%s" % (conc))
+                    alpha.append(f"{conc}")
                     if record_symbolic_operations:
                         alpha_smp.append(conc_smp)
                 else:
-                    alpha.append("%s*%s" % (factor, conc))
+                    alpha.append(f"{factor}*{conc}")
                     if record_symbolic_operations:
                         alpha_smp.append(factor_smp * conc_smp)
 

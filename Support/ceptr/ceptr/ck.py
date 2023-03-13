@@ -33,7 +33,7 @@ def ckncf(fstream, mechanism, species_info):
     for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         species = species_info.nonqssa_species[spec_idx]
-        cw.writer(fstream, cw.comment("%s" % species.name))
+        cw.writer(fstream, cw.comment(f"{species.name}"))
         for elem, coef in mechanism.species(sp).composition.items():
             cw.writer(
                 fstream,
@@ -43,7 +43,7 @@ def ckncf(fstream, mechanism, species_info):
                     mechanism.element_index(elem),
                     coef,
                 )
-                + cw.comment("%s" % elem),
+                + cw.comment(f"{elem}"),
             )
         cw.writer(fstream)
     cw.writer(fstream, "}")
@@ -126,15 +126,13 @@ def ckrp(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(
         fstream,
-        " ru  = %1.14e; "
-        % ((cc.R * cc.ureg.mole * cc.ureg.kelvin / cc.ureg.erg)).m,
+        f" ru  = {(cc.R * cc.ureg.mole * cc.ureg.kelvin / cc.ureg.erg).m:1.14e}; ",
     )
     cw.writer(
         fstream,
-        " ruc = %.20f; "
-        % (cc.Rc * (cc.ureg.mole * cc.ureg.kelvin / cc.ureg.cal)),
+        f" ruc = {cc.Rc * (cc.ureg.mole * cc.ureg.kelvin / cc.ureg.cal):.20f}; ",
     )
-    cw.writer(fstream, " pa  = %g; " % (cc.Patm))
+    cw.writer(fstream, f" pa  = {cc.Patm:g}; ")
     cw.writer(fstream, "}")
 
 
@@ -185,8 +183,7 @@ def ckcpbl(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "cpbl = result * %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cpbl = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -242,8 +239,7 @@ def ckcpbs(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "cpbs = result * %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cpbs = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -295,8 +291,7 @@ def ckcvbl(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "cvbl = result * %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cvbl = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -346,8 +341,7 @@ def ckcvbs(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "result += cvor[i]*y[i]*imw[i];")
@@ -356,8 +350,7 @@ def ckcvbs(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "cvbs = result * %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cvbs = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -395,8 +388,7 @@ def ckhbml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -451,8 +443,7 @@ def ckhbms(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -505,8 +496,7 @@ def ckubml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -556,8 +546,7 @@ def ckubms(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -573,8 +562,7 @@ def ckubms(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("perform dot product + scaling by wt"))
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "result += y[i]*ums[i]*imw[i];")
@@ -633,7 +621,7 @@ def cksbml(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "result += x[id]*(sor[id]-log((x[id]+%g))-logPratio);" % cc.smallnum,
+        f"result += x[id]*(sor[id]-log((x[id]+{cc.smallnum:g}))-logPratio);",
     )
 
     cw.writer(fstream, "}")
@@ -642,8 +630,7 @@ def cksbml(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "sbml = result * %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"sbml = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -705,8 +692,7 @@ def cksbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "YOW += y[i]*imw[i];")
@@ -729,21 +715,19 @@ def cksbms(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("Perform computation in Eq 42 and 43"))
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(
         fstream,
-        "result += x[i]*(sor[i]-log((x[i]+%g))-logPratio);" % (cc.smallnum),
+        f"result += x[i]*(sor[i]-log((x[i]+{cc.smallnum:g}))-logPratio);",
     )
     cw.writer(fstream, "}")
 
     cw.writer(fstream, cw.comment("Scale by R/W"))
     cw.writer(
         fstream,
-        "sbms = result * %1.14e * YOW;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"sbms = result * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * YOW;",
     )
     cw.writer(fstream, "}")
 
@@ -784,8 +768,7 @@ def ckgbml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(
@@ -804,7 +787,7 @@ def ckgbml(fstream, mechanism, species_info):
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(
         fstream,
-        "result += x[id]*(gort[id]+log((x[id]+%g))+logPratio);" % cc.smallnum,
+        f"result += x[id]*(gort[id]+log((x[id]+{cc.smallnum:g}))+logPratio);",
     )
     cw.writer(fstream, "}")
     cw.writer(fstream)
@@ -848,8 +831,7 @@ def ckgbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(
@@ -882,7 +864,7 @@ def ckgbms(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now to ytx
@@ -950,8 +932,7 @@ def ckabml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(
@@ -971,7 +952,7 @@ def ckabml(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "result += x[id]*(aort[id]+log((x[id]+%g))+logPratio);" % cc.smallnum,
+        f"result += x[id]*(aort[id]+log((x[id]+{cc.smallnum:g}))+logPratio);",
     )
 
     cw.writer(fstream, "}")
@@ -1017,8 +998,7 @@ def ckabms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(
@@ -1051,7 +1031,7 @@ def ckabms(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now to ytx
@@ -1108,13 +1088,12 @@ def ckpx(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(
         fstream,
-        "P = rho * %1.14e * T / XW; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"P = rho * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T / XW; "
         + cw.comment("P = rho*R*T/W"),
     )
 
@@ -1148,8 +1127,7 @@ def ckpy(fstream, mechanism, species_info):
     # molecular weights of all species
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "YOW += y[i]*imw[i];")
@@ -1158,8 +1136,7 @@ def ckpy(fstream, mechanism, species_info):
     cw.comment("YOW holds the reciprocal of the mean molecular wt")
     cw.writer(
         fstream,
-        "P = rho * %1.14e * T * YOW; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"P = rho * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T * YOW; "
         + cw.comment("P = rho*R*T/W"),
     )
 
@@ -1194,7 +1171,7 @@ def ckpc(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream)
@@ -1205,8 +1182,7 @@ def ckpc(fstream, mechanism, species_info):
     cw.comment("W/sumC holds the mean molecular wt")
     cw.writer(
         fstream,
-        "P = rho * %1.14e * T * sumC / W; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"P = rho * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T * sumC / W; "
         + cw.comment("P = rho*R*T/W"),
     )
 
@@ -1240,13 +1216,12 @@ def ckrhox(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(
         fstream,
-        "rho = P * XW / (%1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"rho = P * XW / ({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); "
         + cw.comment("rho = P*W/(R*T)"),
     )
 
@@ -1280,8 +1255,7 @@ def ckrhoy(fstream, mechanism, species_info):
     cw.writer(fstream, "")
     cw.writer(
         fstream,
-        "rho = P / (%1.14e * T * YOW);"
-        % ((cc.R * cc.ureg.mole * cc.ureg.kelvin / cc.ureg.erg)).m
+        f"rho = P / ({(cc.R * cc.ureg.mole * cc.ureg.kelvin / cc.ureg.erg).m:1.14e} * T * YOW);"
         + cw.comment("rho = P*W/(R*T)"),
     )
 
@@ -1314,7 +1288,7 @@ def ckrhoc(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream)
@@ -1325,8 +1299,7 @@ def ckrhoc(fstream, mechanism, species_info):
     cw.comment("W/sumC holds the mean molecular wt")
     cw.writer(
         fstream,
-        "rho = P * W / (sumC * T * %1.14e); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m)
+        f"rho = P * W / (sumC * T * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}); "
         + cw.comment("rho = PW/(R*T)"),
     )
 
@@ -1401,7 +1374,7 @@ def ckmmwx(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
     cw.writer(fstream, "wtm = XW;")
     cw.writer(fstream)
@@ -1432,7 +1405,7 @@ def ckmmwc(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
     cw.writer(fstream)
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
@@ -1609,8 +1582,7 @@ def ckytcp(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("PW/RT (see Eq. 7)"))
     cw.writer(
         fstream,
-        "PWORT = P/(YOW * %1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"PWORT = P/(YOW * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); ",
     )
 
     # now compute conversion
@@ -1683,7 +1655,7 @@ def ckxty(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now compute conversion
@@ -1723,8 +1695,7 @@ def ckxtcp(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "amrex::Real PORT = P/(%1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real PORT = P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); "
         + cw.comment("P/RT"),
     )
     # now compute conversion
@@ -1771,7 +1742,7 @@ def ckxtcr(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (species.idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now compute conversion
@@ -1855,7 +1826,7 @@ def ckcty(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "CW += c[%d]*%f; " % (species.idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now compute conversion
@@ -1910,8 +1881,7 @@ def ckcvml(fstream, mechanism, species_info):
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(
         fstream,
-        "cvml[id] *= %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cvml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -1955,8 +1925,7 @@ def ckcpml(fstream, mechanism, species_info):
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(
         fstream,
-        "cpml[id] *= %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"cpml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
 
@@ -1988,8 +1957,7 @@ def ckuml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -2030,8 +1998,7 @@ def ckhml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -2074,8 +2041,7 @@ def ckgml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -2120,8 +2086,7 @@ def ckaml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
 
@@ -2172,8 +2137,7 @@ def cksml(fstream, mechanism, species_info):
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(
         fstream,
-        "sml[id] *= %1.14e;"
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"sml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
     )
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2218,7 +2182,7 @@ def ckcvms(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "cvms[%d] *= %20.15e; " % (spec_idx, row)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream, "}")
@@ -2263,7 +2227,7 @@ def ckcpms(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "cpms[%d] *= %20.15e; " % (spec_idx, row)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream, "}")
@@ -2295,8 +2259,7 @@ def ckums(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -2339,8 +2302,7 @@ def ckhms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -2383,8 +2345,7 @@ def ckgms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -2427,8 +2388,7 @@ def ckams(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real RT = %1.14e*tT; "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real RT = {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
@@ -2484,7 +2444,7 @@ def cksms(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "sms[%d] *= %20.15e; " % (spec_idx, row)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream, "}")
@@ -2562,8 +2522,7 @@ def ckwyp(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "YOW += y[i]*imw[i];")
@@ -2572,8 +2531,7 @@ def ckwyp(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("PW/RT (see Eq. 7)"))
     cw.writer(
         fstream,
-        "PWORT = P/(YOW * %1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m,
+        f"PWORT = P/(YOW * {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); ",
     )
 
     cw.writer(fstream, cw.comment("multiply by 1e6 so c goes to SI"))
@@ -2583,8 +2541,7 @@ def ckwyp(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("Now compute conversion (and go to SI)"))
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "c[i] = PWORT * y[i]*imw[i];")
@@ -2628,8 +2585,7 @@ def ckwxp(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        "amrex::Real PORT = 1e6 * P/(%1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real PORT = 1e6 * P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); "
         + cw.comment("1e6 * P/RT so c goes to SI units"),
     )
 
@@ -2686,8 +2642,7 @@ def ckwyr(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "for (int i = 0; i < %d; i++)"
-        % (len(species_info.nonqssa_species_list)),
+        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "c[i] = 1e6 * rho * y[i]*imw[i];")
@@ -2742,7 +2697,7 @@ def ckwxr(fstream, mechanism, species_info):
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (species.idx, species.weight)
-            + cw.comment("%s" % species.name),
+            + cw.comment(f"{species.name}"),
         )
 
     # now compute conversion
@@ -2778,7 +2733,7 @@ def ckchrg(fstream, self):
     for i in range(0, self.species_info.n_species):
         species = self.species_info.nonqssa_species[i]
         text = "kcharge[%d] = %d;" % (i, species.charge)
-        cw.writer(fstream, text + cw.comment("%s" % species.name))
+        cw.writer(fstream, text + cw.comment(f"{species.name}"))
     cw.writer(fstream, "}")
 
 
@@ -2798,7 +2753,7 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream)
     cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
     cw.writer(
-        fstream, "zk[id] = %.8e * %.8e * kchrg[id] * imw[id];" % (cc.Na, cc.qc)
+        fstream, f"zk[id] = {cc.Na:.8e} * {cc.qc:.8e} * kchrg[id] * imw[id];"
     )
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -3066,8 +3021,7 @@ def ckkfkr(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real PORT = 1e6 * P/(%1.14e * T); "
-        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        f"amrex::Real PORT = 1e6 * P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T); "
         + cw.comment("1e6 * P/RT so c goes to SI units"),
     )
 

@@ -117,11 +117,7 @@ def ajac(
             )
             cw.writer(
                 fstream,
-                "amrex::Real refC = %g / %g / T;"
-                % (
-                    cc.Patm_pa,
-                    cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
-                ),
+                f"amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} / T;",
             )
             cw.writer(fstream, "amrex::Real refCinv = 1.0 / refC;")
 
@@ -287,7 +283,7 @@ def ajac(
             cw.writer(fstream, "dehmixdc = 0.0;")
             cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
             cw.writer(
-                fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1)
+                fstream, f"dehmixdc += eh_RT[m]*J[k*{n_species + 1}+m];"
             )
             cw.writer(fstream, "}")
             cw.writer(
@@ -380,11 +376,7 @@ def ajac_symbolic(
         )
         cw.writer(
             fstream,
-            "const amrex::Real refC = %g / %g * invT;"
-            % (
-                cc.Patm_pa,
-                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
-            ),
+            f"const amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} * invT;",
         )
         cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
 
@@ -582,7 +574,7 @@ def ajac_symbolic(
     cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
     cw.writer(fstream, "dehmixdc = 0.0;")
     cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
-    cw.writer(fstream, "dehmixdc += eh_RT[m]*J[k*%s+m];" % (n_species + 1))
+    cw.writer(fstream, f"dehmixdc += eh_RT[m]*J[k*{n_species + 1}+m];")
     cw.writer(fstream, "}")
     cw.writer(
         fstream,
@@ -819,44 +811,38 @@ def ajac_reaction_d(
             reaction,
             syms=None,
         )
-        cw.writer(fstream, "alpha = %s;" % enhancement_d)
+        cw.writer(fstream, f"alpha = {enhancement_d};")
 
     # forward
     cw.writer(fstream, cw.comment("forward"))
     cw.writer(
         fstream,
-        "phi_f = %s;"
-        % cu.qss_sorted_phase_space(
-            mechanism, species_info, reaction, reaction.reactants
-        ),
+        f"phi_f = {cu.qss_sorted_phase_space(mechanism, species_info, reaction, reaction.reactants)};",
     )
-    cw.writer(fstream, "k_f = %.15g" % (pef.m))
+    cw.writer(fstream, f"k_f = {pef.m:.15g}")
     if (ae.m == 0) and (beta == 0):
         cw.writer(fstream, "           ;")
     elif ae.m == 0:
         cw.writer(
             fstream,
-            "            * exp(%.15g * tc[0]);" % (beta),
+            f"            * exp({beta:.15g} * tc[0]);",
         )
     elif beta == 0:
         cw.writer(
             fstream,
-            "            * exp(- (%.15g) * invT);"
-            % ((1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
+            f"            * exp(- ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
         )
     else:
         cw.writer(
             fstream,
-            "            * exp(%.15g * tc[0] - (%.15g) * invT);"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
+            f"            * exp({beta:.15g} * tc[0] - ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
         )
     if remove_forward:
         cw.writer(fstream, cw.comment("Remove forward reaction"))
         cw.writer(
             fstream,
             cw.comment(
-                "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
-                % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m)
+                f"dlnkfdT = {beta:.15g} * invT + ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT2;"
             ),
         )
         cw.writer(fstream, "dlnkfdT = 0.0;")
@@ -869,19 +855,17 @@ def ajac_reaction_d(
         elif ae.m == 0:
             cw.writer(
                 fstream,
-                "dlnkfdT = %.15g * invT;" % (beta),
+                f"dlnkfdT = {beta:.15g} * invT;",
             )
         elif beta == 0:
             cw.writer(
                 fstream,
-                "dlnkfdT = (%.15g) * invT2;"
-                % ((1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
+                f"dlnkfdT = ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT2;",
             )
         else:
             cw.writer(
                 fstream,
-                "dlnkfdT = %.15g * invT + (%.15g) * invT2;"
-                % (beta, (1.0 / cc.Rc / cc.ureg.kelvin * ae).m),
+                f"dlnkfdT = {beta:.15g} * invT + ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT2;",
             )
 
     if falloff:
@@ -889,35 +873,22 @@ def ajac_reaction_d(
         if low_beta == 0 and low_ae.m == 0:
             cw.writer(
                 fstream,
-                "k_0 = %.15g;" % (low_pef.m * 10 ** (3**dim),),
+                f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g};",
             )
         elif low_ae.m == 0:
             cw.writer(
                 fstream,
-                "k_0 = %.15g * exp(%.15g * tc[0]);"
-                % (
-                    low_pef.m * 10 ** (3**dim),
-                    low_beta,
-                ),
+                f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g} * exp({low_beta:.15g} * tc[0]);",
             )
         elif low_beta == 0:
             cw.writer(
                 fstream,
-                "k_0 = %.15g * exp(-(%.15g) * invT);"
-                % (
-                    low_pef.m * 10 ** (3**dim),
-                    (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
-                ),
+                f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g} * exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) * invT);",
             )
         else:
             cw.writer(
                 fstream,
-                "k_0 = %.15g * exp(%.15g * tc[0] - (%.15g) * invT);"
-                % (
-                    low_pef.m * 10 ** (3**dim),
-                    low_beta,
-                    (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m,
-                ),
+                f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g} * exp({low_beta:.15g} * tc[0] - ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) * invT);",
             )
         cw.writer(fstream, "Pr = 1e-%d * alpha / k_f * k_0;" % (dim * 6))
         cw.writer(fstream, "fPr = Pr / (1.0+Pr);")
@@ -929,19 +900,17 @@ def ajac_reaction_d(
         elif low_ae.m == 0:
             cw.writer(
                 fstream,
-                "dlnk0dT = %.15g * invT;" % (low_beta),
+                f"dlnk0dT = {low_beta:.15g} * invT;",
             )
         elif low_beta == 0:
             cw.writer(
                 fstream,
-                "dlnk0dT = (%.15g) * invT2;"
-                % ((1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m),
+                f"dlnk0dT = ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) * invT2;",
             )
         else:
             cw.writer(
                 fstream,
-                "dlnk0dT = %.15g * invT + (%.15g) * invT2;"
-                % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m),
+                f"dlnk0dT = {low_beta:.15g} * invT + ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) * invT2;",
             )
         cw.writer(fstream, "dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
@@ -959,21 +928,19 @@ def ajac_reaction_d(
                 if troe[0] < 0:
                     cw.writer(
                         fstream,
-                        "Fcent1 = (1.+%.15g)*exp(-T/%.15g);"
-                        % (-troe[0], troe[1]),
+                        f"Fcent1 = (1.+{-troe[0]:.15g})*exp(-T/{troe[1]:.15g});",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "Fcent1 = (1.-%.15g)*exp(-T/%.15g);"
-                        % (troe[0], troe[1]),
+                        f"Fcent1 = (1.-{troe[0]:.15g})*exp(-T/{troe[1]:.15g});",
                     )
             else:
                 cw.writer(fstream, "Fcent1 = 0.;")
             if abs(troe[2]) > 1.0e-100:
                 cw.writer(
                     fstream,
-                    "Fcent2 = %.15g * exp(-T/%.15g);" % (troe[0], troe[2]),
+                    f"Fcent2 = {troe[0]:.15g} * exp(-T/{troe[2]:.15g});",
                 )
             else:
                 cw.writer(fstream, "Fcent2 = 0.;")
@@ -984,7 +951,7 @@ def ajac_reaction_d(
                     )
                 else:
                     cw.writer(
-                        fstream, "Fcent3 = exp(-%.15g * invT);" % troe[3]
+                        fstream, f"Fcent3 = exp(-{troe[3]:.15g} * invT);"
                     )
             else:
                 cw.writer(fstream, "Fcent3 = 0.;")
@@ -1001,12 +968,12 @@ def ajac_reaction_d(
 
             cw.writer(fstream, "dlogFcentdT = log10e/Fcent*( ")
             if abs(troe[1]) > 1.0e-100:
-                cw.writer(fstream, "    -Fcent1/%.15g" % troe[1])
+                cw.writer(fstream, f"    -Fcent1/{troe[1]:.15g}")
             if abs(troe[2]) > 1.0e-100:
-                cw.writer(fstream, "    -Fcent2/%.15g" % troe[2])
+                cw.writer(fstream, f"    -Fcent2/{troe[2]:.15g}")
             if ntroe == 4:
                 if abs(troe[3]) > 1.0e-100:
-                    cw.writer(fstream, "    + Fcent3*%.15g*invT2" % troe[3])
+                    cw.writer(fstream, f"    + Fcent3*{troe[3]:.15g}*invT2")
             cw.writer(fstream, ");")
 
             cw.writer(
@@ -1064,36 +1031,33 @@ def ajac_reaction_d(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                        f"dqdT = {corr_s}dlnkfdT*k_f*phi_f + dlnCorrdT*q;",
                     ),
                 )
                 cw.writer(fstream, "dqdT = dlnCorrdT*q;")
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                    f"dqdT = {corr_s}dlnkfdT*k_f*phi_f + dlnCorrdT*q;",
                 )
         else:
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
-                    fstream, cw.comment("dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                    fstream, cw.comment(f"dqdT = {corr_s}dlnkfdT*k_f*phi_f;")
                 )
                 cw.writer(fstream, "dqdT = 0;")
             else:
-                cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                cw.writer(fstream, f"dqdT = {corr_s}dlnkfdT*k_f*phi_f;")
     else:
         cw.writer(fstream, cw.comment("reverse"))
         cw.writer(
             fstream,
-            "phi_r = %s;"
-            % cu.qss_sorted_phase_space(
-                mechanism, species_info, reaction, reaction.products
-            ),
+            f"phi_r = {cu.qss_sorted_phase_space(mechanism, species_info, reaction, reaction.products)};",
         )
         cw.writer(
             fstream,
-            "Kc = %s;" % cu.sorted_kc(mechanism, species_info, reaction),
+            f"Kc = {cu.sorted_kc(mechanism, species_info, reaction)};",
         )
         cw.writer(fstream, "k_r = k_f / Kc;")
 
@@ -1135,11 +1099,11 @@ def ajac_reaction_d(
                     )
         dlnkcdt_s += " + (" + " + ".join(terms) + ")"
         if sum_nuk > 0:
-            dlnkcdt_s += " - %f" % sum_nuk
+            dlnkcdt_s += f" - {sum_nuk:f}"
         elif sum_nuk < 0:
             dlnkcdt_s += " + %f" % (-sum_nuk)
         dlnkcdt_s += ")"
-        cw.writer(fstream, "dlnKcdT = %s;" % dlnkcdt_s)
+        cw.writer(fstream, f"dlnKcdT = {dlnkcdt_s};")
 
         cw.writer(fstream, "dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
@@ -1173,18 +1137,16 @@ def ajac_reaction_d(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
-                        " dlnCorrdT*q;" % corr_s,
+                        f"dqdT = {corr_s}(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;",
                     ),
                 )
                 cw.writer(
-                    fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % corr_s
+                    fstream, f"dqdT = {corr_s}(- dkrdT*phi_r) + dlnCorrdT*q;"
                 )
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;"
-                    % corr_s,
+                    f"dqdT = {corr_s}(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;",
                 )
         else:
             if remove_forward:
@@ -1192,32 +1154,32 @@ def ajac_reaction_d(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
+                        f"dqdT = {corr_s}(dlnkfdT*k_f*phi_f - dkrdT*phi_r);",
                     ),
                 )
-                cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
+                cw.writer(fstream, f"dqdT = {corr_s}( - dkrdT*phi_r);")
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
+                    f"dqdT = {corr_s}(dlnkfdT*k_f*phi_f - dkrdT*phi_r);",
                 )
 
     cw.writer(fstream, cw.comment("update wdot"))
     for k in sorted(all_dict.keys()):
         s, nu = all_dict[k]
         if nu == 1:
-            cw.writer(fstream, "wdot[%d] += q;" % (k) + cw.comment("%s" % (s)))
+            cw.writer(fstream, "wdot[%d] += q;" % (k) + cw.comment(f"{s}"))
         elif nu == -1:
-            cw.writer(fstream, "wdot[%d] -= q;" % (k) + cw.comment("%s" % (s)))
+            cw.writer(fstream, "wdot[%d] -= q;" % (k) + cw.comment(f"{s}"))
         elif nu > 0:
             cw.writer(
                 fstream,
-                "wdot[%d] += %.15g * q;" % (k, nu) + cw.comment("%s" % (s)),
+                "wdot[%d] += %.15g * q;" % (k, nu) + cw.comment(f"{s}"),
             )
         elif nu < 0:
             cw.writer(
                 fstream,
-                "wdot[%d] -= %.15g * q;" % (k, -nu) + cw.comment("%s" % (s)),
+                "wdot[%d] -= %.15g * q;" % (k, -nu) + cw.comment(f"{s}"),
             )
 
     if falloff:
@@ -1277,8 +1239,8 @@ def ajac_reaction_d(
                 )
                 if dqdc_s:
                     symb_k = species_info.all_species_list[k]
-                    cw.writer(fstream, cw.comment("d()/d[%s]" % symb_k))
-                    cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
+                    cw.writer(fstream, cw.comment(f"d()/d[{symb_k}]"))
+                    cw.writer(fstream, f"dqdci = {dqdc_s};")
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
@@ -1290,11 +1252,7 @@ def ajac_reaction_d(
                                 "+= -1 *", "-="
                             )
                             s2 = cw.comment(
-                                "dwdot[%s]/d[%s]"
-                                % (
-                                    all_dict[m][0],
-                                    symb_k,
-                                )
+                                f"dwdot[{all_dict[m][0]}]/d[{symb_k}]"
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
 
@@ -1357,7 +1315,7 @@ def ajac_reaction_d(
                 s1 = "J[%d] += %.15g * dqdT;" % (
                     n_species * (n_species + 1) + m,
                     all_dict[m][1],
-                ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
+                ) + cw.comment(f"dwdot[{all_dict[m][0]}]/dT")
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
 
@@ -1380,9 +1338,9 @@ def ajac_reaction_d(
 
             if dqdc_s:
                 cw.writer(
-                    fstream, cw.comment("d()/d[%s]" % all_wqss_dict[k][0])
+                    fstream, cw.comment(f"d()/d[{all_wqss_dict[k][0]}]")
                 )
-                cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
+                cw.writer(fstream, f"dqdci = {dqdc_s};")
                 if reaction.reversible or k in rea_dict:
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
@@ -1394,11 +1352,7 @@ def ajac_reaction_d(
                                 "+= -1 *", "-="
                             )
                             s2 = cw.comment(
-                                "dwdot[%s]/d[%s]"
-                                % (
-                                    all_wqss_dict[m][0],
-                                    all_wqss_dict[k][0],
-                                )
+                                f"dwdot[{all_wqss_dict[m][0]}]/d[{all_wqss_dict[k][0]}]"
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
         cw.writer(fstream, cw.comment("d()/dT"))
@@ -1413,7 +1367,7 @@ def ajac_reaction_d(
                     .replace("+= -1 *", "-=")
                     .replace("+= -1 *", "-=")
                 )
-                s2 = cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
+                s2 = cw.comment(f"dwdot[{all_dict[m][0]}]/dT")
                 cw.writer(fstream, s1.ljust(30) + s2)
 
 
@@ -1450,7 +1404,7 @@ def dqdc_d(
             cw.writer(fstream, cw.comment("Remove forward reaction"))
             dqdc_s += ""
         else:
-            dqdc_s += " + k_f%s" % dps_s
+            dqdc_s += f" + k_f{dps_s}"
     if reaction.reversible:
         if k in sorted(pro_dict.keys()):
             dps = dphase_space(
@@ -1464,7 +1418,7 @@ def dqdc_d(
                 dps_s = ""
             else:
                 dps_s = "*" + dps
-            dqdc_s += " - k_r%s" % dps_s
+            dqdc_s += f" - k_r{dps_s}"
     return dqdc_s
 
 
@@ -1494,12 +1448,12 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
         if cons_p:
             for _, (symbol, efficiency) in enumerate(efficiencies.items()):
                 if species_info.ordered_idx_map[symbol] == kid:
-                    return "(%.15g - 1)" % (efficiency)
+                    return f"({efficiency:.15g} - 1)"
             return "0"
         else:
             for _, (symbol, efficiency) in enumerate(efficiencies.items()):
                 if species_info.ordered_idx_map[symbol] == kid:
-                    return "%.15g" % (efficiency)
+                    return f"{efficiency:.15g}"
             return "1"
 
 
@@ -1515,7 +1469,7 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
         if symbol not in species_info.qssa_species_list:
             if symbol == r:
                 if coefficient > 1:
-                    phi += ["%f" % coefficient]
+                    phi += [f"{coefficient:f}"]
                     if (coefficient - 1) == 1.0:
                         conc = "sc[%d]" % (
                             species_info.ordered_idx_map[symbol]
@@ -1552,7 +1506,7 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
         else:
             if symbol == r:
                 if coefficient > 1:
-                    phi += ["%f" % coefficient]
+                    phi += [f"{coefficient:f}"]
                     if (coefficient - 1) == 1.0:
                         conc = "sc_qss[%d]" % (
                             species_info.ordered_idx_map[symbol]

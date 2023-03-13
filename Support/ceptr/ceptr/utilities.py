@@ -175,7 +175,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp * syms.refCinv_smp
             else:
-                conversion = "*".join(["pow(refCinv, %f)" % dim])
+                conversion = "*".join([f"pow(refCinv, {dim:f})"])
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp**dim
     else:
@@ -184,7 +184,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             if record_symbolic_operations:
                 conversion_smp *= syms.refC_smp
         else:
-            conversion = "*".join(["pow(refC, %f)" % abs(dim)])
+            conversion = "*".join([f"pow(refC, {abs(dim):f})"])
             if record_symbolic_operations:
                 conversion_smp *= syms.refC_smp**dim
 
@@ -213,12 +213,12 @@ def kc_conv(mechanism, reaction):
             if dim == 2.0:
                 conversion = "*".join(["(refC * refC)"])
             else:
-                conversion = "*".join(["pow(refC,%f)" % dim])
+                conversion = "*".join([f"pow(refC,{dim:f})"])
     else:
         if dim == -1.0:
             conversion = "*".join(["refCinv"])
         else:
-            conversion = "*".join(["pow(refCinv,%f)" % abs(dim)])
+            conversion = "*".join([f"pow(refCinv,{abs(dim):f})"])
 
     return conversion
 
@@ -259,7 +259,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
             if record_symbolic_operations:
                 factor_smp = 1.0
         else:
-            factor = " + %f*" % coefficient
+            factor = f" + {coefficient:f}*"
             if record_symbolic_operations:
                 factor_smp = coefficient
 
@@ -282,7 +282,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
             if record_symbolic_operations:
                 factor_smp = -1.0
         else:
-            factor = " - %f*" % coefficient
+            factor = f" - {coefficient:f}*"
             if record_symbolic_operations:
                 factor_smp = -coefficient
 
@@ -371,7 +371,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
     for symbol in sorted_efficiencies:
         efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
-            factor = "( %.15g - 1)" % (efficiency)
+            factor = f"( {efficiency:.15g} - 1)"
             if record_symbolic_operations:
                 factor_smp = efficiency - 1
             if (efficiency - 1) != 0:
@@ -381,11 +381,11 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
                         species_info.ordered_idx_map[symbol]
                     ]
                 if (efficiency - 1) == 1:
-                    alpha.append("%s" % (conc))
+                    alpha.append(f"{conc}")
                     if record_symbolic_operations:
                         alpha_smp.append(conc_smp)
                 else:
-                    alpha.append("%s*%s" % (factor, conc))
+                    alpha.append(f"{factor}*{conc}")
                     if record_symbolic_operations:
                         factor_smp = syms.convert_symb_to_int(factor_smp)
                         alpha_smp.append(factor_smp * conc_smp)
