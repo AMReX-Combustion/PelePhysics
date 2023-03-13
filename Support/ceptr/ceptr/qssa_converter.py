@@ -1664,7 +1664,7 @@ def qssa_coeff_functions(
         cw.writer(fstream, "{")
         cw.writer(
             fstream,
-            cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
+            cw.comment(f"reaction {orig_idx}: {reaction.equation}"),
         )
         if bool(reaction.orders):
             forward_sc, forward_sc_smp = qssa_return_coeff(
@@ -1696,15 +1696,15 @@ def qssa_coeff_functions(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
+                        f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"
                     ),
                 )
-                cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc),
+                    f"qf[{idx}] = k_f[{idx}] * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
@@ -1718,15 +1718,15 @@ def qssa_coeff_functions(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
+                        f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"
                     ),
                 )
-                cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc),
+                    f"qf[{idx}] = k_f[{idx}] * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
@@ -1741,16 +1741,15 @@ def qssa_coeff_functions(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "qf[%d] = Corr * k_f[%d] * (%s);"
-                        % (idx, idx, forward_sc)
+                        f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"
                     ),
                 )
-                cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    "qf[%d] = Corr * k_f[%d] * (%s);" % (idx, idx, forward_sc),
+                    f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = (
                     corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
@@ -1763,8 +1762,7 @@ def qssa_coeff_functions(
             corr_smp = alpha_smp
             cw.writer(
                 fstream,
-                "const amrex::Real redP = Corr / k_f[%d] * %.15g "
-                % (idx, 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
+                f"const amrex::Real redP = Corr / k_f[{idx}] * {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
             )
             coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
             redp_smp = corr_smp / syms.kf_qss_smp[idx] * coeff
@@ -1872,17 +1870,15 @@ def qssa_coeff_functions(
                     cw.writer(
                         fstream,
                         cw.comment(
-                            "qf[%d]  = Corr * k_f[%d] * (%s);"
-                            % (idx, idx, forward_sc)
+                            f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});"
                         ),
                     )
-                    cw.writer(fstream, "qf[%d]  = 0.0;" % (idx))
+                    cw.writer(fstream, f"qf[{idx}]  = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
-                        "qf[%d]  = Corr * k_f[%d] * (%s);"
-                        % (idx, idx, forward_sc),
+                        f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});",
                     )
                     syms.qf_qss_smp[idx] = (
                         corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
@@ -1895,17 +1891,15 @@ def qssa_coeff_functions(
                     cw.writer(
                         fstream,
                         cw.comment(
-                            "qf[%d] = Corr * k_f[%d] * (%s);"
-                            % (idx, idx, forward_sc)
+                            f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"
                         ),
                     )
-                    cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                    cw.writer(fstream, f"qf[{idx}] = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
-                        "qf[%d] = Corr * k_f[%d] * (%s);"
-                        % (idx, idx, forward_sc),
+                        f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});",
                     )
                     syms.qf_qss_smp[idx] = (
                         corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
@@ -1916,13 +1910,12 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;" % (idx),
+                        f"qr[{idx}] = 0.0;",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "qr[%d] = k_f[%d] * exp(-(%s)) * (%s) * (%s);"
-                        % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
+                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
@@ -1934,13 +1927,12 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;" % (idx),
+                        f"qr[{idx}] = 0.0;",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s) * (%s);"
-                        % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
+                        f"qr[{idx}] = Corr * k_f[{idx}] * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -1954,13 +1946,12 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;" % (idx),
+                        f"qr[{idx}] = 0.0;",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "qr[%d] = k_f[%d] * exp(-(%s)) * (%s);"
-                        % (idx, idx, kc_exp_arg, reverse_sc),
+                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
@@ -1971,13 +1962,12 @@ def qssa_coeff_functions(
                 if reverse_sc_smp == 0.0:
                     cw.writer(
                         fstream,
-                        "qr[%d] = 0.0;" % (idx),
+                        f"qr[{idx}] = 0.0;",
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s);"
-                        % (idx, idx, kc_exp_arg, reverse_sc),
+                        f"qr[{idx}] = Corr * k_f[{idx}] * exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -2128,7 +2118,7 @@ def qssa_component_functions(
         reaction = mechanism.reaction(qssa_reac)
         cw.writer(
             fstream,
-            cw.comment("reaction %d: %s" % (qssa_reac, reaction.equation)),
+            cw.comment(f"reaction {qssa_reac}: {reaction.equation}"),
         )
 
         dim = cu.phase_space_units(reaction.reactants)
@@ -2191,7 +2181,7 @@ def qssa_component_functions(
                 print(f"Unrecognized reaction rate type: {reaction.equation}")
                 sys.exit(1)
 
-        cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
+        cw.writer(fstream, f"k_f[{index}] = {pef.m:.15g}")
         syms.kf_qss_smp_tmp[index] = pef.m
 
         if (beta == 0) and (ae == 0):
@@ -3068,7 +3058,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
         coefficient = reagents[symbol]
         if symbol not in species_info.qssa_species_list:
             if float(coefficient) == 1.0:
-                conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                 conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
                 if coefficient.is_integer():
@@ -3077,10 +3067,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
                         * int(coefficient)
                     )
                 else:
-                    conc = "pow(sc[%d], %f)" % (
-                        species_info.ordered_idx_map[symbol],
-                        float(coefficient),
-                    )
+                    conc = f"pow(sc[{species_info.ordered_idx_map[symbol]}], {float(coefficient):f})"
                 conc_smp = syms.sc_smp[
                     species_info.ordered_idx_map[symbol]
                 ] ** float(coefficient)

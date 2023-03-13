@@ -88,7 +88,7 @@ def main():
 
     qssa.update_user_header({"description": f"QSSA of {mechanism.name}"})
     qssa.update_user_data(
-        {"qssa_species": qssa_species, "n_qssa_species": len(qssa_species)}
+        {"qssa_species": qssa_species, "n_qssa_species": len(qssa_species}
     )
     forward_to_remove_idx = []
     if forward_to_remove:
@@ -102,7 +102,7 @@ def main():
 
     # Summarize
     for idx in forward_to_remove_idx:
-        print(f"Forward reaction to be removed: {qssa.reaction(idx)}")
+        print(f"Forward reaction to be removed: {qssa.reaction(idx}")
 
     mechanism = ct.Solution(args.fname)  # reread
     for reaction in mechanism.reactions():

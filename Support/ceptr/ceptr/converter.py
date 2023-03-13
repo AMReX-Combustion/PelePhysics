@@ -486,7 +486,7 @@ class Converter:
             idx = self.mechanism.element_index(elem)
             aw = self.mechanism.atomic_weight(elem)
             cw.writer(
-                fstream, "awt[%d] = %f; " % (idx, aw) + cw.comment(f"{elem}")
+                fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}")
             )
         cw.writer(fstream, "}")
 
@@ -498,7 +498,7 @@ class Converter:
         cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = "imw_new[%d] = %.16f;" % (i, 1.0 / species.weight)
+            text = f"imw_new[{i}] = {1.0 / species.weight:.16f};"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
         cw.writer(fstream)
@@ -508,7 +508,7 @@ class Converter:
         cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = "mw_new[%d] = %f;" % (i, species.weight)
+            text = f"mw_new[{i}] = {species.weight:f};"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
 
@@ -608,17 +608,16 @@ class Converter:
             s = cf.format_species(species)
             cw.writer(
                 fstream,
-                "#define %s_ID %d"
-                % (s, self.species_info.ordered_idx_map[species]),
+                f"#define {s}_ID {self.species_info.ordered_idx_map[species]}",
             )
             if s[-1] == "n" or s[-1] == "p" or s == "E":
                 nb_ions += 1
         cw.writer(fstream)
-        cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
+        cw.writer(fstream, f"#define NUM_ELEMENTS {nb_elem}")
         cw.writer(
-            fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
+            fstream, f"#define NUM_SPECIES {self.species_info.n_species}"
         )
-        cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
+        cw.writer(fstream, f"#define NUM_IONS {nb_ions}")
         cw.writer(
             fstream,
             f"#define NUM_REACTIONS {len(self.mechanism.reactions())}",

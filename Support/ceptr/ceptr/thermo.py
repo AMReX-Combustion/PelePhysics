@@ -137,37 +137,23 @@ def generate_thermo_routine(
                 cw.writer(
                     lostream,
                     cw.comment(
-                        "species %d: %s"
-                        % (
-                            species_info.ordered_idx_map[species.name]
-                            - species_info.n_species,
-                            species.name,
-                        )
+                        f"species {species_info.ordered_idx_map[species.name] - species_info.n_species}: {species.name}"
                     ),
                 )
                 cw.writer(
                     lostream,
-                    "species[%d] ="
-                    % (
-                        species_info.ordered_idx_map[species.name]
-                        - species_info.n_species
-                    ),
+                    f"species[{species_info.ordered_idx_map[species.name] - species_info.n_species}] =",
                 )
             else:
                 cw.writer(
                     lostream,
                     cw.comment(
-                        "species %d: %s"
-                        % (
-                            species_info.ordered_idx_map[species.name],
-                            species.name,
-                        )
+                        f"species {species_info.ordered_idx_map[species.name]}: {species.name}"
                     ),
                 )
                 cw.writer(
                     lostream,
-                    "species[%d] ="
-                    % (species_info.ordered_idx_map[species.name]),
+                    f"species[{species_info.ordered_idx_map[species.name]}] =",
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
@@ -204,37 +190,23 @@ def generate_thermo_routine(
                 cw.writer(
                     histream,
                     cw.comment(
-                        "species %d: %s"
-                        % (
-                            species_info.ordered_idx_map[species.name]
-                            - species_info.n_species,
-                            species.name,
-                        )
+                        f"species {species_info.ordered_idx_map[species.name] - species_info.n_species}: {species.name}"
                     ),
                 )
                 cw.writer(
                     histream,
-                    "species[%d] ="
-                    % (
-                        species_info.ordered_idx_map[species.name]
-                        - species_info.n_species
-                    ),
+                    f"species[{species_info.ordered_idx_map[species.name] - species_info.n_species}] =",
                 )
             else:
                 cw.writer(
                     histream,
                     cw.comment(
-                        "species %d: %s"
-                        % (
-                            species_info.ordered_idx_map[species.name],
-                            species.name,
-                        )
+                        f"species {species_info.ordered_idx_map[species.name]}: {species.name}"
                     ),
                 )
                 cw.writer(
                     histream,
-                    "species[%d] ="
-                    % (species_info.ordered_idx_map[species.name]),
+                    f"species[{species_info.ordered_idx_map[species.name]}] =",
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]

@@ -197,8 +197,8 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "int nJdata_tmp = 0;")
     cw.writer(fstream, "for (int nc=0; nc<NCELLS; nc++) {")
 
-    cw.writer(fstream, "int offset_row = nc * %d;" % (n_species + 1))
-    cw.writer(fstream, "int offset_col = nc * %d;" % (n_species + 1))
+    cw.writer(fstream, f"int offset_row = nc * {n_species + 1};")
+    cw.writer(fstream, f"int offset_col = nc * {n_species + 1};")
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species + 1))
 
     cw.writer(fstream, "for (int l=0; l<%d; l++) {" % (n_species + 1))
@@ -253,7 +253,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "int nJdata_tmp = 1;")
     cw.writer(fstream, "for (int nc=0; nc<NCELLS; nc++) {")
 
-    cw.writer(fstream, "int offset = nc * %d;" % (n_species + 1))
+    cw.writer(fstream, f"int offset = nc * {n_species + 1};")
     cw.writer(fstream, "for (int l=0; l<%d; l++) {" % (n_species + 1))
 
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species + 1))
@@ -278,7 +278,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "int nJdata_tmp = 0;")
     cw.writer(fstream, "for (int nc=0; nc<NCELLS; nc++) {")
 
-    cw.writer(fstream, "int offset = nc * %d;" % (n_species + 1))
+    cw.writer(fstream, f"int offset = nc * {n_species + 1};")
     cw.writer(fstream, "for (int l=0; l<%d; l++) {" % (n_species + 1))
 
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species + 1))
@@ -333,7 +333,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "int nJdata_tmp = 1;")
     cw.writer(fstream, "for (int nc=0; nc<NCELLS; nc++) {")
 
-    cw.writer(fstream, "int offset = nc * %d;" % (n_species + 1))
+    cw.writer(fstream, f"int offset = nc * {n_species + 1};")
     cw.writer(fstream, "for (int l=0; l<%d; l++) {" % (n_species + 1))
 
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species + 1))
@@ -367,7 +367,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "int nJdata_tmp = 0;")
     cw.writer(fstream, "for (int nc=0; nc<NCELLS; nc++) {")
 
-    cw.writer(fstream, "int offset = nc * %d;" % (n_species + 1))
+    cw.writer(fstream, f"int offset = nc * {n_species + 1};")
     cw.writer(fstream, "for (int l=0; l<%d; l++) {" % (n_species + 1))
 
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % (n_species + 1))
@@ -439,7 +439,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "if (k == l) {")
 
     cw.writer(fstream, "rowVals[nJdata_tmp] = l; ")
-    cw.writer(fstream, "indx[nJdata_tmp] = %d*k + l;" % (n_species + 1))
+    cw.writer(fstream, f"indx[nJdata_tmp] = {n_species + 1}*k + l;")
     cw.writer(fstream, "nJdata_tmp = nJdata_tmp + 1; ")
 
     cw.writer(fstream, "} else {")
@@ -447,7 +447,7 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, "if(Jac[%d*k + l] != 0.0) {" % (n_species + 1))
 
     cw.writer(fstream, "rowVals[nJdata_tmp] = l; ")
-    cw.writer(fstream, "indx[nJdata_tmp] = %d*k + l;" % (n_species + 1))
+    cw.writer(fstream, f"indx[nJdata_tmp] = {n_species + 1}*k + l;")
     cw.writer(fstream, "nJdata_tmp = nJdata_tmp + 1; ")
 
     cw.writer(fstream, "}")
