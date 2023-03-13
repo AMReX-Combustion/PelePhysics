@@ -75,17 +75,6 @@ if (AMREX_HOME)  # SUPERBUILD MODE
   set(AMReX_AMRLEVEL          OFF                        CACHE INTERNAL "")
   set(AMReX_BUILD_TUTORIALS   OFF                        CACHE INTERNAL "")
 
-  # If CUDA is required, enable the language BEFORE adding the AMReX directory
-  # Since AMReX_SetupCUDA has an include guard, it will be included only once here.
-  # The reason for enabling CUDA before adding the AMReX subdirectory is that
-  # the top-most directory needs to setup the CUDA language before a CUDA-enabled target
-  # from a sub-project is included via add_subdirectory.
-  # IMPORTANT: if you don't do this, AMReX will perform this step in a sub-scope and therefore
-  # it will not setup CUDA here!
-  if(PELEPHYSICS_CUDA)
-     include(AMReX_SetupCUDA)
-  endif ()
-
   # Add AMReX as a sub-project: incflo inherits all AMReX options
   add_subdirectory(${AMREX_HOME} ${AMREX_BINARY_DIR})
 
@@ -155,6 +144,13 @@ else ()
     find_package(SUNDIALS)
   endif ()
 
+endif ()
+
+#
+# Enable CUDA if requested
+#
+if (PELEPHYSICS_GPU_BACKEND STREQUAL "CUDA")
+   include(AMReXTargetHelpers)
 endif ()
 
 #
