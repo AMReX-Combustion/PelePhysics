@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.23)
 
 project( PelePhysics
     DESCRIPTION "A respository of physics databases and implementation code for use with the Pele suite of of codes"
@@ -7,18 +7,6 @@ project( PelePhysics
     )
 
 message(STATUS "CMake version: ${CMAKE_VERSION}")
-
-#
-# Check if CMAKE_BUILD_TYPE is given. If not, use default
-#
-if ( NOT CMAKE_BUILD_TYPE )
-   set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
-   set(CMAKE_BUILD_TYPE Release
-       CACHE STRING
-       "Choose the build type, e.g. Release or Debug" FORCE)
-else ()
-   message(STATUS "Build type set by user to '${CMAKE_BUILD_TYPE}'.")
-endif()
 
 #
 # Options for model selection
@@ -50,11 +38,6 @@ set(PELEPHYSICS_GPU_BACKEND NONE)
 if (PELEPHYSICS_CUDA)
    enable_language(CUDA)
    set(PELEPHYSICS_GPU_BACKEND CUDA)
-
-   if (CMAKE_VERSION GREATER_EQUAL 3.17)
-      #The CUDAToolkit was added with version 3.17
-      find_package(CUDAToolkit REQUIRED)
-   endif()
 endif ()
 
 if (PELEPHYSICS_HIP)
@@ -175,20 +158,6 @@ else ()
 endif ()
 
 #
-# Enable CUDA if requested
-#
-if (PELEPHYSICS_GPU_BACKEND STREQUAL "CUDA")
-   # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
-   # https://cmake.org/cmake/help/latest/policy/CMP0104.html
-   if(POLICY CMP0104)
-      cmake_policy(SET CMP0104 OLD)
-   endif()
-   include(AMReX_SetupCUDA)
-   include(AMReXTargetHelpers)
-endif ()
-
-
-#
 # Define the object library to compile
 #
 set(pelephysics_lib_name PelePhysics-${PELEPHYSICS_CHEMISTRY_MODEL}-${PELEPHYSICS_EOS_MODEL}-${PELEPHYSICS_TRANSPORT_MODEL})
@@ -243,10 +212,7 @@ message( STATUS "   C++ include paths        = ${_cxx_includes}")
 message( STATUS "   CMake target             = ${pelephysics_lib_name}_api")
 
 # Create non-object library for use as external target
-add_library(${pelephysics_lib_name}_api STATIC)
-if (BUILD_SHARED_LIBS)
-  set_target_properties(${pelephysics_lib_name}_api PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
+add_library(${pelephysics_lib_name}_api)
 target_link_libraries(${pelephysics_lib_name}_api PUBLIC ${pelephysics_lib_name})
 add_library(${PROJECT_NAME}::${pelephysics_lib_name}_api ALIAS ${pelephysics_lib_name})
 
