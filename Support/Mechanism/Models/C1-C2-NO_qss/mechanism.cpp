@@ -46,74 +46,74 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
   const int kiv[1345] = {
-    2,  9,  5,  0,  0, 4,  8,  0,  0,  0, 16, 6,  13, 0,  0,  39, 16, 23, 0,  0,
-    2,  12, 13, 0,  0, 40, 2,  10, 0,  0, 40, 16, 24, 0,  0,  41, 7,  15, 0,  0,
+    2,  9,  5,  0,  0, 4,  8,  0,  0,  0, 16, 6,  13, 0,  0,  40, 16, 23, 0,  0,
+    2,  12, 13, 0,  0, 41, 2,  10, 0,  0, 41, 16, 24, 0,  0,  42, 7,  15, 0,  0,
     13, 2,  14, 0,  0, 10, 2,  11, 0,  0, 10, 4,  15, 0,  0,  10, 22, 0,  0,  0,
     14, 2,  15, 0,  0, 19, 18, 2,  0,  0, 24, 2,  25, 0,  0,  19, 2,  20, 0,  0,
-    19, 10, 29, 0,  0, 20, 6,  42, 0,  0, 20, 2,  21, 0,  0,  21, 2,  22, 0,  0,
-    19, 21, 31, 0,  0, 10, 9,  37, 0,  0, 2,  28, 29, 0,  0,  10, 28, 31, 0,  0,
-    29, 2,  30, 0,  0, 16, 3,  17, 0,  0, 18, 42, 0,  0,  0,  2,  6,  0,  0,  0,
+    19, 10, 29, 0,  0, 20, 6,  43, 0,  0, 20, 2,  21, 0,  0,  21, 2,  22, 0,  0,
+    19, 21, 31, 0,  0, 10, 9,  38, 0,  0, 2,  28, 29, 0,  0,  10, 28, 31, 0,  0,
+    29, 2,  30, 0,  0, 16, 3,  17, 0,  0, 18, 43, 0,  0,  0,  2,  6,  0,  0,  0,
     2,  6,  0,  0,  0, 2,  6,  0,  0,  0, 2,  6,  0,  0,  0,  2,  4,  7,  0,  0,
     2,  3,  4,  0,  0, 3,  9,  0,  0,  0, 12, 16, 2,  0,  0,  12, 16, 2,  0,  0,
-    43, 3,  33, 0,  0, 36, 16, 32, 0,  0, 2,  9,  3,  4,  0,  6,  3,  2,  4,  0,
+    33, 3,  34, 0,  0, 37, 16, 32, 0,  0, 2,  9,  3,  4,  0,  6,  3,  2,  4,  0,
     6,  4,  2,  7,  0, 4,  7,  3,  0,  0, 6,  9,  2,  5,  0,  2,  5,  7,  3,  0,
     2,  5,  4,  0,  0, 5,  3,  9,  4,  0, 5,  8,  9,  0,  0,  5,  8,  9,  0,  0,
     5,  4,  7,  9,  0, 5,  4,  7,  9,  0, 5,  4,  7,  9,  0,  5,  4,  7,  9,  0,
     5,  4,  7,  9,  0, 2,  8,  6,  5,  0, 2,  8,  7,  4,  0,  8,  3,  5,  4,  0,
     8,  4,  7,  5,  0, 8,  4,  7,  5,  0, 16, 4,  17, 2,  0,  16, 4,  17, 2,  0,
     16, 9,  17, 3,  0, 16, 5,  17, 4,  0, 2,  12, 16, 6,  0,  12, 3,  16, 4,  0,
-    12, 3,  17, 2,  0, 12, 4,  16, 7,  0, 12, 9,  16, 5,  0,  38, 4,  16, 2,  0,
-    38, 9,  16, 3,  0, 39, 2,  38, 6,  0, 39, 3,  16, 2,  0,  39, 4,  2,  12, 0,
-    39, 6,  40, 2,  0, 39, 7,  13, 2,  0, 39, 9,  12, 3,  0,  39, 17, 16, 12, 0,
-    40, 3,  2,  12, 0, 40, 4,  13, 2,  0, 40, 4,  39, 7,  0,  40, 6,  10, 2,  0,
-    40, 9,  12, 4,  0, 40, 9,  17, 2,  0, 40, 5,  13, 4,  0,  39, 40, 18, 2,  0,
-    40, 18, 6,  0,  0, 41, 1,  40, 1,  0, 0,  41, 0,  40, 0,  41, 2,  39, 6,  0,
-    41, 3,  16, 6,  0, 41, 3,  2,  12, 0, 41, 4,  13, 2,  0,  41, 6,  10, 2,  0,
-    41, 9,  16, 2,  4, 41, 9,  16, 7,  0, 41, 7,  40, 7,  0,  41, 16, 40, 16, 0,
-    41, 17, 40, 17, 0, 41, 17, 13, 16, 0, 13, 2,  6,  12, 0,  13, 3,  12, 4,  0,
-    13, 4,  7,  12, 0, 13, 9,  12, 5,  0, 13, 5,  8,  12, 0,  39, 13, 24, 2,  0,
-    10, 3,  13, 2,  0, 10, 4,  40, 7,  0, 10, 4,  41, 7,  0,  10, 9,  14, 3,  0,
+    12, 3,  17, 2,  0, 12, 4,  16, 7,  0, 12, 9,  16, 5,  0,  39, 4,  16, 2,  0,
+    39, 9,  16, 3,  0, 40, 2,  39, 6,  0, 40, 3,  16, 2,  0,  40, 4,  2,  12, 0,
+    40, 6,  41, 2,  0, 40, 7,  13, 2,  0, 40, 9,  12, 3,  0,  40, 17, 16, 12, 0,
+    41, 3,  2,  12, 0, 41, 4,  13, 2,  0, 41, 4,  40, 7,  0,  41, 6,  10, 2,  0,
+    41, 9,  12, 4,  0, 41, 9,  17, 2,  0, 41, 5,  13, 4,  0,  40, 41, 18, 2,  0,
+    41, 18, 6,  0,  0, 42, 1,  41, 1,  0, 0,  42, 0,  41, 0,  42, 2,  40, 6,  0,
+    42, 3,  16, 6,  0, 42, 3,  2,  12, 0, 42, 4,  13, 2,  0,  42, 6,  10, 2,  0,
+    42, 9,  16, 2,  4, 42, 9,  16, 7,  0, 42, 7,  41, 7,  0,  42, 16, 41, 16, 0,
+    42, 17, 41, 17, 0, 42, 17, 13, 16, 0, 13, 2,  6,  12, 0,  13, 3,  12, 4,  0,
+    13, 4,  7,  12, 0, 13, 9,  12, 5,  0, 13, 5,  8,  12, 0,  40, 13, 24, 2,  0,
+    10, 3,  13, 2,  0, 10, 4,  41, 7,  0, 10, 4,  42, 7,  0,  10, 9,  14, 3,  0,
     10, 9,  13, 4,  0, 10, 5,  11, 9,  0, 10, 5,  14, 4,  0,  10, 8,  11, 5,  0,
-    38, 10, 18, 2,  0, 39, 10, 19, 2,  0, 10, 12, 11, 16, 0,  13, 10, 11, 12, 0,
-    40, 10, 20, 2,  0, 41, 10, 20, 2,  0, 10, 21, 2,  0,  0,  10, 23, 20, 16, 0,
-    14, 2,  13, 6,  0, 14, 2,  10, 4,  0, 14, 2,  41, 7,  0,  14, 3,  13, 4,  0,
+    39, 10, 18, 2,  0, 40, 10, 19, 2,  0, 10, 12, 11, 16, 0,  13, 10, 11, 12, 0,
+    41, 10, 20, 2,  0, 42, 10, 20, 2,  0, 10, 21, 2,  0,  0,  10, 23, 20, 16, 0,
+    14, 2,  13, 6,  0, 14, 2,  10, 4,  0, 14, 2,  42, 7,  0,  14, 3,  13, 4,  0,
     14, 4,  13, 7,  0, 14, 9,  13, 5,  0, 11, 2,  10, 6,  0,  11, 3,  10, 4,  0,
-    11, 4,  10, 7,  0, 39, 11, 20, 2,  0, 40, 11, 10, 0,  0,  41, 11, 10, 0,  0,
+    11, 4,  10, 7,  0, 40, 11, 20, 2,  0, 41, 11, 10, 0,  0,  42, 11, 10, 0,  0,
     15, 2,  14, 6,  0, 15, 3,  14, 4,  0, 15, 4,  14, 7,  0,  10, 15, 14, 11, 0,
-    2,  23, 41, 16, 0, 23, 3,  16, 2,  0, 23, 9,  16, 4,  0,  39, 23, 18, 16, 0,
-    40, 23, 19, 16, 0, 23, 18, 16, 0,  0, 18, 3,  40, 16, 0,  18, 3,  2,  23, 0,
+    2,  23, 42, 16, 0, 23, 3,  16, 2,  0, 23, 9,  16, 4,  0,  40, 23, 18, 16, 0,
+    41, 23, 19, 16, 0, 23, 18, 16, 0,  0, 18, 3,  41, 16, 0,  18, 3,  2,  23, 0,
     18, 4,  24, 2,  0, 18, 4,  10, 16, 0, 18, 12, 19, 16, 0,  18, 10, 2,  27, 0,
-    18, 10, 28, 0,  0, 2,  42, 18, 2,  0, 42, 4,  24, 2,  0,  42, 9,  12, 0,  0,
-    24, 2,  6,  23, 0, 24, 2,  10, 16, 0, 24, 3,  23, 4,  0,  24, 3,  40, 17, 0,
-    24, 4,  7,  23, 0, 19, 2,  18, 6,  0, 19, 2,  6,  42, 0,  19, 3,  24, 2,  0,
+    18, 10, 28, 0,  0, 2,  43, 18, 2,  0, 43, 4,  24, 2,  0,  43, 9,  12, 0,  0,
+    24, 2,  6,  23, 0, 24, 2,  10, 16, 0, 24, 3,  23, 4,  0,  24, 3,  41, 17, 0,
+    24, 4,  7,  23, 0, 19, 2,  18, 6,  0, 19, 2,  6,  43, 0,  19, 3,  24, 2,  0,
     19, 3,  10, 16, 0, 19, 4,  18, 7,  0, 19, 9,  18, 5,  0,  19, 9,  25, 3,  0,
     19, 9,  13, 12, 0, 19, 5,  25, 4,  0, 19, 8,  20, 5,  0,  19, 12, 20, 16, 0,
     19, 10, 18, 11, 0, 19, 10, 2,  28, 0, 19, 18, 20, 0,  0,  25, 10, 16, 0,  0,
     25, 2,  10, 12, 0, 25, 2,  24, 6,  0, 25, 3,  24, 4,  0,  25, 4,  24, 7,  0,
     25, 9,  24, 5,  0, 25, 9,  13, 16, 4, 26, 10, 12, 0,  0,  26, 11, 16, 0,  0,
     26, 2,  19, 7,  0, 26, 2,  20, 4,  0, 20, 2,  19, 6,  0,  20, 3,  19, 4,  0,
-    20, 3,  10, 12, 0, 20, 3,  40, 13, 0, 20, 4,  19, 7,  0,  20, 12, 21, 16, 0,
-    20, 39, 2,  27, 0, 20, 40, 2,  28, 0, 20, 41, 11, 42, 0,  20, 41, 2,  28, 0,
+    20, 3,  10, 12, 0, 20, 3,  41, 13, 0, 20, 4,  19, 7,  0,  20, 12, 21, 16, 0,
+    20, 40, 2,  27, 0, 20, 41, 2,  28, 0, 20, 42, 11, 43, 0,  20, 42, 2,  28, 0,
     20, 10, 19, 11, 0, 20, 10, 30, 0,  0, 20, 9,  19, 5,  0,  20, 5,  26, 4,  0,
     21, 2,  20, 6,  0, 21, 3,  13, 10, 0, 21, 9,  20, 5,  0,  21, 5,  22, 9,  0,
     21, 5,  20, 8,  0, 21, 5,  13, 10, 4, 21, 8,  22, 5,  0,  19, 21, 10, 28, 0,
-    22, 2,  21, 6,  0, 22, 3,  21, 4,  0, 22, 4,  21, 7,  0,  22, 41, 21, 10, 0,
-    22, 10, 21, 11, 0, 37, 5,  13, 7,  9, 37, 13, 15, 9,  0,  37, 14, 9,  0,  0,
-    10, 37, 14, 0,  0, 37, 4,  15, 9,  0, 37, 2,  14, 4,  0,  37, 3,  14, 9,  0,
+    22, 2,  21, 6,  0, 22, 3,  21, 4,  0, 22, 4,  21, 7,  0,  22, 42, 21, 10, 0,
+    22, 10, 21, 11, 0, 38, 5,  13, 7,  9, 38, 13, 15, 9,  0,  38, 14, 9,  0,  0,
+    10, 38, 14, 0,  0, 38, 4,  15, 9,  0, 38, 2,  14, 4,  0,  38, 3,  14, 9,  0,
     2,  27, 28, 0,  0, 3,  27, 20, 16, 0, 2,  28, 6,  27, 0,  4,  28, 7,  27, 0,
     9,  28, 5,  27, 0, 5,  28, 29, 9,  0, 5,  28, 19, 13, 4,  12, 28, 29, 16, 0,
     10, 28, 11, 27, 0, 29, 2,  20, 10, 0, 29, 2,  6,  28, 0,  29, 3,  24, 10, 2,
     29, 3,  21, 12, 0, 29, 3,  4,  28, 0, 29, 4,  7,  28, 0,  29, 5,  8,  28, 0,
     29, 10, 11, 28, 0, 2,  30, 21, 10, 0, 2,  30, 29, 6,  0,  3,  30, 21, 13, 0,
     4,  30, 29, 7,  0, 9,  30, 29, 5,  0, 5,  30, 21, 13, 4,  10, 30, 29, 11, 0,
-    31, 2,  20, 21, 0, 31, 2,  29, 10, 0, 31, 3,  12, 30, 0,  32, 43, 1,  3,  0,
-    32, 9,  43, 3,  0, 32, 4,  2,  43, 0, 5,  43, 33, 4,  0,  33, 3,  43, 9,  0,
-    2,  33, 43, 4,  0, 36, 3,  16, 43, 0, 36, 4,  16, 2,  43, 32, 36, 16, 1,  0,
-    36, 9,  17, 43, 0, 36, 43, 17, 1,  0, 38, 43, 16, 32, 0,  39, 43, 2,  36, 0,
-    39, 43, 12, 32, 0, 40, 43, 2,  35, 0, 40, 43, 2,  34, 0,  41, 43, 2,  35, 0,
-    41, 43, 2,  34, 0, 35, 3,  36, 4,  0, 2,  35, 6,  36, 0,  35, 4,  7,  36, 0,
-    2,  34, 2,  35, 0, 23, 43, 16, 34, 0, 17, 32, 16, 43, 0,  10, 33, 14, 43, 0,
-    37, 43, 14, 33, 0};
+    31, 2,  20, 21, 0, 31, 2,  29, 10, 0, 31, 3,  12, 30, 0,  32, 33, 1,  3,  0,
+    32, 9,  33, 3,  0, 32, 4,  2,  33, 0, 5,  33, 34, 4,  0,  34, 3,  33, 9,  0,
+    2,  34, 33, 4,  0, 37, 3,  16, 33, 0, 37, 4,  16, 2,  33, 32, 37, 16, 1,  0,
+    37, 9,  17, 33, 0, 37, 33, 17, 1,  0, 39, 33, 16, 32, 0,  40, 33, 2,  37, 0,
+    40, 33, 12, 32, 0, 41, 33, 2,  36, 0, 41, 33, 2,  35, 0,  42, 33, 2,  36, 0,
+    42, 33, 2,  35, 0, 36, 3,  37, 4,  0, 2,  36, 6,  37, 0,  36, 4,  7,  37, 0,
+    2,  35, 2,  36, 0, 23, 33, 16, 35, 0, 17, 32, 16, 33, 0,  10, 34, 14, 33, 0,
+    38, 33, 14, 34, 0};
   const int nuv[1345] = {
     -1, -1, 1, 0, 0, -2, 1,  0, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0,
     -1, -1, 1, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0,
@@ -209,12 +209,12 @@ CKKFKR(
   amrex::Real q_f[],
   amrex::Real q_r[])
 {
-  amrex::Real c[38]; // temporary storage
+  amrex::Real c[39]; // temporary storage
   amrex::Real PORT =
     1e6 * P / (8.31446261815324e+07 * T); // 1e6 * P/RT so c goes to SI units
 
   // Compute conversion, see Eq 10
-  for (int id = 0; id < 38; ++id) {
+  for (int id = 0; id < 39; ++id) {
     c[id] = x[id] * PORT;
   }
 
@@ -238,14 +238,14 @@ progressRateFR(
     log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
   amrex::Real invT = 1.0 / tc[1];
   // compute the Gibbs free energy
-  amrex::Real g_RT[38];
+  amrex::Real g_RT[39];
   gibbs(g_RT, tc);
-  amrex::Real g_RT_qss[6];
+  amrex::Real g_RT_qss[5];
   gibbs_qss(g_RT_qss, tc);
 
-  amrex::Real sc_qss[6];
+  amrex::Real sc_qss[5];
   // Fill sc_qss here
-  amrex::Real kf_qss[85], qf_qss[85], qr_qss[85];
+  amrex::Real kf_qss[70], qf_qss[70], qr_qss[70];
   comp_k_f_qss(tc, invT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
   comp_sc_qss(sc_qss, qf_qss, qr_qss);
@@ -277,7 +277,7 @@ CKNCF(int* ncf)
 {
   int kd = 5;
   // Zero ncf
-  for (int id = 0; id < kd * 38; ++id) {
+  for (int id = 0; id < kd * 39; ++id) {
     ncf[id] = 0;
   }
 
@@ -414,31 +414,35 @@ CKNCF(int* ncf)
   // N
   ncf[32 * kd + 1] = 1; // N
 
-  // NO2
+  // NO
   ncf[33 * kd + 1] = 1; // N
-  ncf[33 * kd + 3] = 2; // O
+  ncf[33 * kd + 3] = 1; // O
+
+  // NO2
+  ncf[34 * kd + 1] = 1; // N
+  ncf[34 * kd + 3] = 2; // O
 
   // HCNO
-  ncf[34 * kd + 4] = 1; // C
-  ncf[34 * kd + 2] = 1; // H
-  ncf[34 * kd + 1] = 1; // N
-  ncf[34 * kd + 3] = 1; // O
-
-  // HNCO
   ncf[35 * kd + 4] = 1; // C
   ncf[35 * kd + 2] = 1; // H
   ncf[35 * kd + 1] = 1; // N
   ncf[35 * kd + 3] = 1; // O
 
-  // NCO
+  // HNCO
   ncf[36 * kd + 4] = 1; // C
+  ncf[36 * kd + 2] = 1; // H
   ncf[36 * kd + 1] = 1; // N
   ncf[36 * kd + 3] = 1; // O
 
-  // CH3O2
+  // NCO
   ncf[37 * kd + 4] = 1; // C
-  ncf[37 * kd + 2] = 3; // H
-  ncf[37 * kd + 3] = 2; // O
+  ncf[37 * kd + 1] = 1; // N
+  ncf[37 * kd + 3] = 1; // O
+
+  // CH3O2
+  ncf[38 * kd + 4] = 1; // C
+  ncf[38 * kd + 2] = 3; // H
+  ncf[38 * kd + 3] = 2; // O
 }
 
 // Returns the vector of strings of element names
@@ -457,7 +461,7 @@ CKSYME_STR(amrex::Vector<std::string>& ename)
 void
 CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
-  kname.resize(38);
+  kname.resize(39);
   kname[0] = "AR";
   kname[1] = "N2";
   kname[2] = "H";
@@ -491,28 +495,29 @@ CKSYMS_STR(amrex::Vector<std::string>& kname)
   kname[30] = "nC3H7";
   kname[31] = "C4H81";
   kname[32] = "N";
-  kname[33] = "NO2";
-  kname[34] = "HCNO";
-  kname[35] = "HNCO";
-  kname[36] = "NCO";
-  kname[37] = "CH3O2";
+  kname[33] = "NO";
+  kname[34] = "NO2";
+  kname[35] = "HCNO";
+  kname[36] = "HNCO";
+  kname[37] = "NCO";
+  kname[38] = "CH3O2";
 }
 
 // compute the sparsity pattern of the chemistry Jacobian
 void
 SPARSITY_INFO(int* nJdata, const int* consP, int NCELLS)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian(Jac.data(), conc.data(), 1500.0, *consP);
 
   int nJdata_tmp = 0;
-  for (int k = 0; k < 39; k++) {
-    for (int l = 0; l < 39; l++) {
-      if (Jac[39 * k + l] != 0.0) {
+  for (int k = 0; k < 40; k++) {
+    for (int l = 0; l < 40; l++) {
+      if (Jac[40 * k + l] != 0.0) {
         nJdata_tmp = nJdata_tmp + 1;
       }
     }
@@ -525,20 +530,20 @@ SPARSITY_INFO(int* nJdata, const int* consP, int NCELLS)
 void
 SPARSITY_INFO_SYST(int* nJdata, const int* consP, int NCELLS)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian(Jac.data(), conc.data(), 1500.0, *consP);
 
   int nJdata_tmp = 0;
-  for (int k = 0; k < 39; k++) {
-    for (int l = 0; l < 39; l++) {
+  for (int k = 0; k < 40; k++) {
+    for (int l = 0; l < 40; l++) {
       if (k == l) {
         nJdata_tmp = nJdata_tmp + 1;
       } else {
-        if (Jac[39 * k + l] != 0.0) {
+        if (Jac[40 * k + l] != 0.0) {
           nJdata_tmp = nJdata_tmp + 1;
         }
       }
@@ -553,20 +558,20 @@ SPARSITY_INFO_SYST(int* nJdata, const int* consP, int NCELLS)
 void
 SPARSITY_INFO_SYST_SIMPLIFIED(int* nJdata, const int* consP)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);
 
   int nJdata_tmp = 0;
-  for (int k = 0; k < 39; k++) {
-    for (int l = 0; l < 39; l++) {
+  for (int k = 0; k < 40; k++) {
+    for (int l = 0; l < 40; l++) {
       if (k == l) {
         nJdata_tmp = nJdata_tmp + 1;
       } else {
-        if (Jac[39 * k + l] != 0.0) {
+        if (Jac[40 * k + l] != 0.0) {
           nJdata_tmp = nJdata_tmp + 1;
         }
       }
@@ -581,21 +586,21 @@ SPARSITY_INFO_SYST_SIMPLIFIED(int* nJdata, const int* consP)
 void
 SPARSITY_PREPROC_CSC(int* rowVals, int* colPtrs, const int* consP, int NCELLS)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian(Jac.data(), conc.data(), 1500.0, *consP);
 
   colPtrs[0] = 0;
   int nJdata_tmp = 0;
   for (int nc = 0; nc < NCELLS; nc++) {
-    int offset_row = nc * 39;
-    int offset_col = nc * 39;
-    for (int k = 0; k < 39; k++) {
-      for (int l = 0; l < 39; l++) {
-        if (Jac[39 * k + l] != 0.0) {
+    int offset_row = nc * 40;
+    int offset_col = nc * 40;
+    for (int k = 0; k < 40; k++) {
+      for (int l = 0; l < 40; l++) {
+        if (Jac[40 * k + l] != 0.0) {
           rowVals[nJdata_tmp] = l + offset_row;
           nJdata_tmp = nJdata_tmp + 1;
         }
@@ -611,10 +616,10 @@ void
 SPARSITY_PREPROC_CSR(
   int* colVals, int* rowPtrs, const int* consP, int NCELLS, int base)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian(Jac.data(), conc.data(), 1500.0, *consP);
 
@@ -622,10 +627,10 @@ SPARSITY_PREPROC_CSR(
     rowPtrs[0] = 1;
     int nJdata_tmp = 1;
     for (int nc = 0; nc < NCELLS; nc++) {
-      int offset = nc * 39;
-      for (int l = 0; l < 39; l++) {
-        for (int k = 0; k < 39; k++) {
-          if (Jac[39 * k + l] != 0.0) {
+      int offset = nc * 40;
+      for (int l = 0; l < 40; l++) {
+        for (int k = 0; k < 40; k++) {
+          if (Jac[40 * k + l] != 0.0) {
             colVals[nJdata_tmp - 1] = k + 1 + offset;
             nJdata_tmp = nJdata_tmp + 1;
           }
@@ -637,10 +642,10 @@ SPARSITY_PREPROC_CSR(
     rowPtrs[0] = 0;
     int nJdata_tmp = 0;
     for (int nc = 0; nc < NCELLS; nc++) {
-      int offset = nc * 39;
-      for (int l = 0; l < 39; l++) {
-        for (int k = 0; k < 39; k++) {
-          if (Jac[39 * k + l] != 0.0) {
+      int offset = nc * 40;
+      for (int l = 0; l < 40; l++) {
+        for (int k = 0; k < 40; k++) {
+          if (Jac[40 * k + l] != 0.0) {
             colVals[nJdata_tmp] = k + offset;
             nJdata_tmp = nJdata_tmp + 1;
           }
@@ -657,10 +662,10 @@ void
 SPARSITY_PREPROC_SYST_CSR(
   int* colVals, int* rowPtr, const int* consP, int NCELLS, int base)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian(Jac.data(), conc.data(), 1500.0, *consP);
 
@@ -668,14 +673,14 @@ SPARSITY_PREPROC_SYST_CSR(
     rowPtr[0] = 1;
     int nJdata_tmp = 1;
     for (int nc = 0; nc < NCELLS; nc++) {
-      int offset = nc * 39;
-      for (int l = 0; l < 39; l++) {
-        for (int k = 0; k < 39; k++) {
+      int offset = nc * 40;
+      for (int l = 0; l < 40; l++) {
+        for (int k = 0; k < 40; k++) {
           if (k == l) {
             colVals[nJdata_tmp - 1] = l + 1 + offset;
             nJdata_tmp = nJdata_tmp + 1;
           } else {
-            if (Jac[39 * k + l] != 0.0) {
+            if (Jac[40 * k + l] != 0.0) {
               colVals[nJdata_tmp - 1] = k + 1 + offset;
               nJdata_tmp = nJdata_tmp + 1;
             }
@@ -688,14 +693,14 @@ SPARSITY_PREPROC_SYST_CSR(
     rowPtr[0] = 0;
     int nJdata_tmp = 0;
     for (int nc = 0; nc < NCELLS; nc++) {
-      int offset = nc * 39;
-      for (int l = 0; l < 39; l++) {
-        for (int k = 0; k < 39; k++) {
+      int offset = nc * 40;
+      for (int l = 0; l < 40; l++) {
+        for (int k = 0; k < 40; k++) {
           if (k == l) {
             colVals[nJdata_tmp] = l + offset;
             nJdata_tmp = nJdata_tmp + 1;
           } else {
-            if (Jac[39 * k + l] != 0.0) {
+            if (Jac[40 * k + l] != 0.0) {
               colVals[nJdata_tmp] = k + offset;
               nJdata_tmp = nJdata_tmp + 1;
             }
@@ -713,25 +718,25 @@ void
 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
   int* rowVals, int* colPtrs, int* indx, const int* consP)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);
 
   colPtrs[0] = 0;
   int nJdata_tmp = 0;
-  for (int k = 0; k < 39; k++) {
-    for (int l = 0; l < 39; l++) {
+  for (int k = 0; k < 40; k++) {
+    for (int l = 0; l < 40; l++) {
       if (k == l) {
         rowVals[nJdata_tmp] = l;
-        indx[nJdata_tmp] = 39 * k + l;
+        indx[nJdata_tmp] = 40 * k + l;
         nJdata_tmp = nJdata_tmp + 1;
       } else {
-        if (Jac[39 * k + l] != 0.0) {
+        if (Jac[40 * k + l] != 0.0) {
           rowVals[nJdata_tmp] = l;
-          indx[nJdata_tmp] = 39 * k + l;
+          indx[nJdata_tmp] = 40 * k + l;
           nJdata_tmp = nJdata_tmp + 1;
         }
       }
@@ -746,23 +751,23 @@ void
 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* colVals, int* rowPtr, const int* consP, int base)
 {
-  amrex::GpuArray<amrex::Real, 1521> Jac = {0.0};
-  amrex::GpuArray<amrex::Real, 38> conc = {0.0};
-  for (int n = 0; n < 38; n++) {
-    conc[n] = 1.0 / 38.000000;
+  amrex::GpuArray<amrex::Real, 1600> Jac = {0.0};
+  amrex::GpuArray<amrex::Real, 39> conc = {0.0};
+  for (int n = 0; n < 39; n++) {
+    conc[n] = 1.0 / 39.000000;
   }
   aJacobian_precond(Jac.data(), conc.data(), 1500.0, *consP);
 
   if (base == 1) {
     rowPtr[0] = 1;
     int nJdata_tmp = 1;
-    for (int l = 0; l < 39; l++) {
-      for (int k = 0; k < 39; k++) {
+    for (int l = 0; l < 40; l++) {
+      for (int k = 0; k < 40; k++) {
         if (k == l) {
           colVals[nJdata_tmp - 1] = l + 1;
           nJdata_tmp = nJdata_tmp + 1;
         } else {
-          if (Jac[39 * k + l] != 0.0) {
+          if (Jac[40 * k + l] != 0.0) {
             colVals[nJdata_tmp - 1] = k + 1;
             nJdata_tmp = nJdata_tmp + 1;
           }
@@ -773,13 +778,13 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   } else {
     rowPtr[0] = 0;
     int nJdata_tmp = 0;
-    for (int l = 0; l < 39; l++) {
-      for (int k = 0; k < 39; k++) {
+    for (int l = 0; l < 40; l++) {
+      for (int k = 0; k < 40; k++) {
         if (k == l) {
           colVals[nJdata_tmp] = l;
           nJdata_tmp = nJdata_tmp + 1;
         } else {
-          if (Jac[39 * k + l] != 0.0) {
+          if (Jac[40 * k + l] != 0.0) {
             colVals[nJdata_tmp] = k;
             nJdata_tmp = nJdata_tmp + 1;
           }
