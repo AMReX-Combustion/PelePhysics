@@ -26,7 +26,7 @@ calcHeatCoeff(
   amrex::Real Nu_num = 2. + NU2 * invFT;
   phi = ratio / Nu_num;
   amrex::Real B_T = std::pow(BM1, phi) - 1.;
-  amrex::Real error = amrex::Math::abs(B_T - B_T_old);
+  amrex::Real error = std::abs(B_T - B_T_old);
   int k = 0;
   while (k < maxIter && error > B_eps) {
     B_T_old = B_T;
@@ -35,7 +35,7 @@ calcHeatCoeff(
     Nu_num = 2. + NU2 * invFT;
     phi = ratio / Nu_num;
     B_T = std::pow(BM1, phi) - 1.;
-    error = amrex::Math::abs(B_T - B_T_old);
+    error = std::abs(B_T - B_T_old);
     k++;
   }
   logB = std::log1p(B_T);

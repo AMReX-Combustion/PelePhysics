@@ -40,7 +40,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
       m_jetY[spf] = in_Y_jet[spf];
       sumY += in_Y_jet[spf];
     }
-    if (amrex::Math::abs(sumY - 1.) > 1.E-8) {
+    if (std::abs(sumY - 1.) > 1.E-8) {
       amrex::Abort(ppspray + ".Y must sum to 1");
     }
   }

@@ -39,7 +39,7 @@ SprayParticleContainer::readSprayParams(
   SprayData& sprayData,
   const Real& max_cfl)
 {
-  amrex::ParmParse pp("particles");
+  ParmParse pp("particles");
   //
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
@@ -49,16 +49,13 @@ SprayParticleContainer::readSprayParams(
   pp.query("fixed_parts", sprayData.fixed_parts);
   pp.query("cfl", particle_cfl);
   if (particle_cfl > max_cfl) {
-    std::string errorstr =
-      "particles.cfl must be <= " + std::to_string(max_cfl);
-    Abort(errorstr);
+    Abort("particles.cfl must be <= " + std::to_string(max_cfl));
   }
   // Number of fuel species in spray droplets
   // Must match the number specified at compile time
   const int nfuel = pp.countval("fuel_species");
   if (nfuel != SPRAY_FUEL_NUM) {
-    amrex::Abort(
-      "Number of fuel species in input file must match SPRAY_FUEL_NUM");
+    Abort("Number of fuel species in input file must match SPRAY_FUEL_NUM");
   }
 
   std::vector<std::string> fuel_names;
@@ -111,44 +108,8 @@ SprayParticleContainer::readSprayParams(
   //
   pp.query("max_parcel_size", max_num_ppp);
   pp.query("use_splash_model", splash_model);
-  std::string breakup_model_str = "None";
-  pp.query("use_breakup_model", breakup_model_str);
-  if (breakup_model_str == "TAB") {
-    breakup_model = 1;
-  } else if (breakup_model_str == "KHRT") {
-    breakup_model = 2;
-    pp.query("B0_KHRT", B0_KHRT);
-    pp.query("B1_KHRT", B1_KHRT);
-    pp.query("C3_KHRT", C3_KHRT);
-  } else if (breakup_model_str == "None") {
-    breakup_model = 0;
-  } else {
-    Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
-          "'None'");
-  }
-  if (splash_model || (breakup_model > 0)) {
-    pp.query("breakup_parcel_factor", breakup_ppp_fact);
-    bool wrong_data = false;
-    for (int i = 0; i < nfuel; ++i) {
-      std::string var_read = fuel_names[i] + "_mu";
-      if (!pp.contains(var_read.c_str())) {
-        wrong_data = true;
-      }
-    }
-    if (wrong_data || !pp.contains("fuel_sigma")) {
-      Print()
-        << "fuel_sigma and mu coeffs must be set for splash or breakup model. "
-        << std::endl;
-      Abort();
-    }
-    if (splash_model) {
-      // TODO: Have this retrieved from proper boundary data
-      pp.get("wall_temp", sprayData.wall_T);
-    }
-    // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", sprayData.sigma);
-    sprayData.do_splash = splash_model;
-    sprayData.do_breakup = breakup_model;
+  if (splash_model) {
+    Abort("Splash model is not fully implemented");
   }
 
   // Must use same reference temperature for all fuels
@@ -212,15 +173,14 @@ SprayParticleContainer::readSprayParams(
   }
 
   if (particle_verbose >= 1 && ParallelDescriptor::IOProcessor()) {
-    amrex::Print() << "Spray fuel species " << spray_fuel_names[0];
+    Print() << "Spray fuel species " << spray_fuel_names[0];
 #if SPRAY_FUEL_NUM > 1
     for (int i = 1; i < SPRAY_FUEL_NUM; ++i) {
-      amrex::Print() << ", " << spray_fuel_names[i];
+      Print() << ", " << spray_fuel_names[i];
     }
 #endif
-    amrex::Print() << std::endl;
-    amrex::Print() << "Number of particles per parcel " << parcel_size
-                   << std::endl;
+    Print() << std::endl;
+    Print() << "Number of particles per parcel " << parcel_size << std::endl;
   }
   //
   // Force other processors to wait till directory is built.
@@ -246,14 +206,10 @@ SprayParticleContainer::spraySetup(SprayData& sprayData)
       }
     }
     if (sprayData.indx[i] < 0) {
-      amrex::Print() << "Fuel " << spray_fuel_names[i]
-                     << " not found in species list" << std::endl;
-      amrex::Abort();
+      Abort("Fuel " + spray_fuel_names[i] + " not found in species list");
     }
     if (sprayData.dep_indx[i] < 0) {
-      amrex::Print() << "Fuel " << spray_dep_names[i]
-                     << " not found in species list" << std::endl;
-      amrex::Abort();
+      Abort("Fuel " + spray_dep_names[i] + " not found in species list");
     }
   }
 #else
