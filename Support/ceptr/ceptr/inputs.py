@@ -56,14 +56,16 @@ class Input:
             "Readability": {
                 "hformat": Parameter(
                     "cpu",
-                    "Style format for .H file output\nCPU: will print"
-                    " intermediate variables used for chainruling. This gives"
-                    " a readable version of the Jacobian entries, albeit"
-                    " memory consuming.\nGPU: will not print intermediate"
-                    " variables used for chainruling, and instead will replace"
-                    " them directly in the Jacobian entries. This gives a less"
-                    " readable version of the Jacobian, but more memory"
-                    " efficient.",
+                    (
+                        "Style format for .H file output\nCPU: will print"
+                        " intermediate variables used for chainruling. This"
+                        " gives a readable version of the Jacobian entries,"
+                        " albeit memory consuming.\nGPU: will not print"
+                        " intermediate variables used for chainruling, and"
+                        " instead will replace them directly in the Jacobian"
+                        " entries. This gives a less readable version of the"
+                        " Jacobian, but more memory efficient."
+                    ),
                     str,
                     choices=["gpu", "cpu"],
                 )
@@ -74,56 +76,71 @@ class Input:
                 ),
                 "remove_pow": Parameter(
                     False,
-                    "Replace pow(...,n) with multiplications or divisions if"
-                    " n<=3 and n>=-3 in printed expressions.",
+                    (
+                        "Replace pow(...,n) with multiplications or divisions"
+                        " if n<=3 and n>=-3 in printed expressions."
+                    ),
                     bool,
                 ),
                 "remove_pow10": Parameter(
                     False,
-                    "Remove pow(10,x) in printed expressions and replace with"
-                    " exp(ln(10)*x).",
+                    (
+                        "Remove pow(10,x) in printed expressions and replace"
+                        " with exp(ln(10)*x)."
+                    ),
                     bool,
                 ),
             },
             "Replacement": {
                 "min_op_count": Parameter(
                     0,
-                    "Counts number operations used to construct each common"
-                    " subexpression and replace the common subexpression if"
-                    " the number of operations is less or equal to the value",
+                    (
+                        "Counts number operations used to construct each"
+                        " common subexpression and replace the common"
+                        " subexpression if the number of operations is less or"
+                        " equal to the value"
+                    ),
                     int,
                 ),
                 "min_op_count_all": Parameter(
                     0,
-                    "Similar to --min_op_count but also counts how many times"
-                    " that common subexpression is used later.\nThe meaning of"
-                    " the value passed is how many more operations will be"
-                    " done if the common subexpression is eliminated.\nThis"
-                    " option only marginally increase the file size (therefore"
-                    " compile time), while still being memory efficient.",
+                    (
+                        "Similar to --min_op_count but also counts how many"
+                        " times that common subexpression is used later.\nThe"
+                        " meaning of the value passed is how many more"
+                        " operations will be done if the common subexpression"
+                        " is eliminated.\nThis option only marginally increase"
+                        " the file size (therefore compile time), while still"
+                        " being memory efficient."
+                    ),
                     int,
                 ),
                 "gradual_op_count": Parameter(
                     False,
-                    "Gradual elimination of common subexpressions.\nUseful if"
-                    " --min_op_count or --min_op_count_all are active.\nLoops"
-                    " from 1 to the min_op_count and min_op_count_all values"
-                    " and gradually eliminate the common subexpressions.\nThis"
-                    " has the advantage of ensuring that the memory footprint"
-                    " is strictly monotonically decreasing as min_op_count and"
-                    " min_op_count_all are increased.",
+                    (
+                        "Gradual elimination of common subexpressions.\nUseful"
+                        " if --min_op_count or --min_op_count_all are"
+                        " active.\nLoops from 1 to the min_op_count and"
+                        " min_op_count_all values and gradually eliminate the"
+                        " common subexpressions.\nThis has the advantage of"
+                        " ensuring that the memory footprint is strictly"
+                        " monotonically decreasing as min_op_count and"
+                        " min_op_count_all are increased."
+                    ),
                     bool,
                 ),
                 "remove_single_symbols_cse": Parameter(
                     False,
-                    "Remove common subexpressions that are made of 1"
-                    " symbol.\nThose common subexpressions are typically"
-                    " `-xxx` and may not appear as worth replacing because"
-                    " they save 1 operations and are reused multiple"
-                    " times.\nHowever, when replaced in the later expressions,"
-                    " the `-` operations typically disappear or is merged into"
-                    " another operations which actually does not increase the"
-                    " total number of operations.",
+                    (
+                        "Remove common subexpressions that are made of 1"
+                        " symbol.\nThose common subexpressions are typically"
+                        " `-xxx` and may not appear as worth replacing because"
+                        " they save 1 operations and are reused multiple"
+                        " times.\nHowever, when replaced in the later"
+                        " expressions, the `-` operations typically disappear"
+                        " or is merged into another operations which actually"
+                        " does not increase the total number of operations."
+                    ),
                     bool,
                 ),
             },
@@ -145,16 +162,20 @@ class Input:
                 ),
                 "recycle_cse": Parameter(
                     False,
-                    "Reuse common subexpressions that are not used later to"
-                    " avoid declaring new temporary reals",
+                    (
+                        "Reuse common subexpressions that are not used later"
+                        " to avoid declaring new temporary reals"
+                    ),
                     bool,
                 ),
             },
             "Characters": {
                 "round_decimals": Parameter(
                     False,
-                    "Round decimal numbers when possible to minimize character"
-                    " count",
+                    (
+                        "Round decimal numbers when possible to minimize"
+                        " character count"
+                    ),
                     bool,
                 ),
             },

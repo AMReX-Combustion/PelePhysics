@@ -1,6 +1,7 @@
 """Convert cantera mechanism to C++ files."""
 import argparse
 import pathlib
+import time
 
 import cantera as ct
 
@@ -69,6 +70,7 @@ def convert_lst_qss(
 
 def main():
     """Convert cantera mechanisms to C++ files."""
+    start = time.time()
     parser = argparse.ArgumentParser(
         description="Mechanism converter",
     )
@@ -124,6 +126,8 @@ def main():
             args.lst_qss,
             not args.no_jacobian,
         )
+    end = time.time()
+    print(f"CEPTR run time: {end-start:.2f} s")
 
 
 if __name__ == "__main__":

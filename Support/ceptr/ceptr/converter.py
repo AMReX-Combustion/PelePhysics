@@ -486,7 +486,7 @@ class Converter:
             idx = self.mechanism.element_index(elem)
             aw = self.mechanism.atomic_weight(elem)
             cw.writer(
-                fstream, "awt[%d] = %f; " % (idx, aw) + cw.comment("%s" % elem)
+                fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}")
             )
         cw.writer(fstream, "}")
 
@@ -498,8 +498,8 @@ class Converter:
         cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = "imw_new[%d] = %.16f;" % (i, 1.0 / species.weight)
-            cw.writer(fstream, text + cw.comment("%s" % species.name))
+            text = f"imw_new[{i}] = {1.0 / species.weight:.16f};"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
         cw.writer(fstream)
 
@@ -508,8 +508,8 @@ class Converter:
         cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = "mw_new[%d] = %f;" % (i, species.weight)
-            cw.writer(fstream, text + cw.comment("%s" % species.name))
+            text = f"mw_new[{i}] = {species.weight:f};"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
 
     def mechanism_cpp_declarations(self, fstream):
@@ -553,38 +553,52 @@ class Converter:
         )
         cw.writer(
             fstream,
-            "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int"
-            " NCELLS);",
+            (
+                "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int"
+                " NCELLS);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int *"
-            " consP);",
+            (
+                "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int *"
+                " consP);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const int"
-            " * consP, int NCELLS);",
+            (
+                "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const"
+                " int * consP, int NCELLS);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int"
-            " * consP, int NCELLS, int base);",
+            (
+                "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const"
+                " int * consP, int NCELLS, int base);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
-            " const int * consP, int NCELLS, int base);",
+            (
+                "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
+                " const int * consP, int NCELLS, int base);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int *"
-            " colPtrs, int * indx, const int * consP);",
+            (
+                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int"
+                " * colPtrs, int * indx, const int * consP);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int *"
-            " rowPtr, const int * consP, int base);",
+            (
+                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int"
+                " * rowPtr, const int * consP, int base);"
+            ),
         )
 
     def mechanism_header_includes(self, fstream):
@@ -596,9 +610,7 @@ class Converter:
         cw.writer(fstream, "/* Elements")
         nb_elem = 0
         for elem in self.mechanism.element_names:
-            cw.writer(
-                fstream, "%d  %s" % (self.mechanism.element_index(elem), elem)
-            )
+            cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
             nb_elem += 1
         cw.writer(fstream, "*/")
         cw.writer(fstream)
@@ -608,20 +620,19 @@ class Converter:
             s = cf.format_species(species)
             cw.writer(
                 fstream,
-                "#define %s_ID %d"
-                % (s, self.species_info.ordered_idx_map[species]),
+                f"#define {s}_ID {self.species_info.ordered_idx_map[species]}",
             )
             if s[-1] == "n" or s[-1] == "p" or s == "E":
                 nb_ions += 1
         cw.writer(fstream)
-        cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
+        cw.writer(fstream, f"#define NUM_ELEMENTS {nb_elem}")
         cw.writer(
-            fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
+            fstream, f"#define NUM_SPECIES {self.species_info.n_species}"
         )
-        cw.writer(fstream, "#define NUM_IONS %d" % (nb_ions))
+        cw.writer(fstream, f"#define NUM_IONS {nb_ions}")
         cw.writer(
             fstream,
-            "#define NUM_REACTIONS %d" % (len(self.mechanism.reactions())),
+            f"#define NUM_REACTIONS {len(self.mechanism.reactions())}",
         )
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_FIT 4")

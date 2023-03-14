@@ -99,9 +99,7 @@ def rmap(fstream, mechanism, reaction_info):
     n_reactions = mechanism.n_reactions
     str_rmap = ",".join(str(x) for x in rmap)
     if n_reactions > 0:
-        cw.writer(
-            fstream, "const int rmap[%d] = {%s};" % (n_reactions, str_rmap)
-        )
+        cw.writer(fstream, f"const int rmap[{n_reactions}] = {{{str_rmap}}};")
 
 
 def get_rmap(fstream, mechanism):
@@ -119,7 +117,8 @@ def get_rmap(fstream, mechanism):
     cw.writer(fstream, "{")
 
     if n_reactions > 0:
-        cw.writer(fstream, "for (int j=0; j<%d; ++j) {" % (n_reactions))
+        cw.writer(fstream, f"for (int j=0; j<{n_reactions}; ++j)")
+        cw.writer(fstream, "{")
         cw.writer(fstream, "_rmap[j] = rmap[j];")
         cw.writer(fstream, "}")
 

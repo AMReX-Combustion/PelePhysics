@@ -835,16 +835,12 @@ class SymbolicMath:
             right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
             cw.writer(
                 fstream,
-                "const amrex::Real %s = %s;"
-                % (
-                    left_cse,
-                    right_cse,
-                ),
+                f"const amrex::Real {left_cse} = {right_cse};",
             )
             # Debugging prints in mechanism.H...
             # cw.writer(
             #     fstream,
-            #     """std::cout << "%s = " << %s << std::endl;""" % (left_cse, left_cse),
+            #     f"""std::cout << "{left_cse} = " << {left_cse} << std::endl;""",
             # )
 
         print("Done!", flush=True)
@@ -856,22 +852,12 @@ class SymbolicMath:
             if index_list is None:
                 cw.writer(
                     fstream,
-                    "%s[%s] = %s;"
-                    % (
-                        array_str,
-                        str(i),
-                        cpp_str,
-                    ),
+                    f"{array_str}[{str(i)}] = {cpp_str};",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "%s[%s] = %s;"
-                    % (
-                        array_str,
-                        str(index_list[i]),
-                        cpp_str,
-                    ),
+                    f"{array_str}[{str(index_list[i])}] = {cpp_str};",
                 )
 
     def write_dscqss_to_cpp(self, species_info, cw, fstream):
@@ -899,11 +885,7 @@ class SymbolicMath:
             right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
             cw.writer(
                 fstream,
-                "const amrex::Real %s = %s;"
-                % (
-                    left_cse,
-                    right_cse,
-                ),
+                f"const amrex::Real {left_cse} = {right_cse};",
             )
         print("Done!", flush=True)
 
@@ -920,19 +902,17 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        f"dscqss{num_idx}dscqss{den_idx}",
-                        cpp_str,
+                    (
+                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
                     ),
                 )
             else:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        f"dscqss{num_idx}dsc{den_idx}",
-                        cpp_str,
+                    (
+                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
                     ),
                 )
 
@@ -959,10 +939,9 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    "dscqss_dsc[%s] = %s;"
-                    % (
-                        f"""{species_info.n_species*item["number"] + scnum}""",
-                        final_string,
+                    (
+                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                        f" = {final_string};"
                     ),
                 )
 
@@ -1015,33 +994,21 @@ class SymbolicMath:
                 if not left_cse == right_cse:
                     cw.writer(
                         fstream,
-                        "%s = %s;"
-                        % (
-                            left_cse,
-                            right_cse,
-                        ),
+                        f"{left_cse} = {right_cse};",
                     )
             elif common_expr_lhs[cse_idx] in replace_with:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "amrex::Real %s = %s;"
-                    % (
-                        left_cse,
-                        right_cse,
-                    ),
+                    f"amrex::Real {left_cse} = {right_cse};",
                 )
             else:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        left_cse,
-                        right_cse,
-                    ),
+                    f"const amrex::Real {left_cse} = {right_cse};",
                 )
 
         cw.writer(
@@ -1063,32 +1030,34 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        f"dscqss{num_idx}dscqss{den_idx}",
-                        cpp_str,
+                    (
+                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
                     ),
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        f"dscqss{num_idx}dsc{den_idx}",
-                        cpp_str,
+                    (
+                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
                     ),
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc + n_dwdotdscqss:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (f"dwdot{num_idx}dscqss{den_idx}", cpp_str),
+                    (
+                        f"const amrex::Real dwdot{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
             else:
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (f"dwdot{num_idx}dsc{den_idx}", cpp_str),
+                    (
+                        f"const amrex::Real dwdot{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
 
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
@@ -1114,10 +1083,9 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    "dscqss_dsc[%s] = %s;"
-                    % (
-                        f"""{species_info.n_species*item["number"] + scnum}""",
-                        final_string,
+                    (
+                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                        f" = {final_string};"
                     ),
                 )
 
@@ -1140,10 +1108,9 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    "J[%s] = %s;"
-                    % (
-                        f"""{(species_info.n_species+1)*scnum + item["number"]}""",
-                        final_string,
+                    (
+                        f"J[{(species_info.n_species + 1) * scnum + item['number']}]"
+                        f" = {final_string};"
                     ),
                 )
 
@@ -1205,33 +1172,21 @@ class SymbolicMath:
                 if not left_cse == right_cse:
                     cw.writer(
                         fstream,
-                        "%s = %s;"
-                        % (
-                            left_cse,
-                            right_cse,
-                        ),
+                        f"{left_cse} = {right_cse};",
                     )
             elif common_expr_lhs[cse_idx] in replace_with:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "amrex::Real %s = %s;"
-                    % (
-                        left_cse,
-                        right_cse,
-                    ),
+                    f"amrex::Real {left_cse} = {right_cse};",
                 )
             else:
                 left_cse = self.convert_to_cpp(common_expr_lhs[cse_idx])
                 right_cse = self.convert_to_cpp(common_expr_rhs[cse_idx])
                 cw.writer(
                     fstream,
-                    "const amrex::Real %s = %s;"
-                    % (
-                        left_cse,
-                        right_cse,
-                    ),
+                    f"const amrex::Real {left_cse} = {right_cse};",
                 )
 
         # Compute dscqss_dsc strings from CSEs
@@ -1340,13 +1295,12 @@ class SymbolicMath:
                 else:
                     final_string = start_string
 
+                idx = (species_info.n_species + 1) * sc_item[
+                    "number"
+                ] + wdot_item["number"]
                 cw.writer(
                     fstream,
-                    "J[%s] = %s;"
-                    % (
-                        f"""{(species_info.n_species+1)*sc_item["number"]+wdot_item["number"]}""",
-                        final_string,
-                    ),
+                    (f"J[{idx}]" f" = {final_string};"),
                 )
 
     def write_array_to_cpp_no_cse(
@@ -1369,22 +1323,12 @@ class SymbolicMath:
             if index_list is None:
                 cw.writer(
                     fstream,
-                    "%s[%s] = %s;"
-                    % (
-                        array_str,
-                        str(i),
-                        cpp_str,
-                    ),
+                    f"{array_str}[{str(i)}] = {cpp_str};",
                 )
             else:
                 cw.writer(
                     fstream,
-                    "%s[%s] = %s;"
-                    % (
-                        array_str,
-                        str(index_list[i]),
-                        cpp_str,
-                    ),
+                    f"{array_str}[{str(index_list[i])}] = {cpp_str};",
                 )
 
     def get_cse_idx(self, df, type_name, tuple_val):
