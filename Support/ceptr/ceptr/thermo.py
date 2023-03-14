@@ -244,7 +244,7 @@ def generate_thermo_routine(
             cw.writer(
                 fstream,
                 cw.comment(
-                    "species with no change at a midpoint T" % mid_temp
+                    "species with no change at a midpoint T" 
                 ),
             )
             cw.writer(fstream, lostr)

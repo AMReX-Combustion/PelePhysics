@@ -37,12 +37,7 @@ def ckncf(fstream, mechanism, species_info):
         for elem, coef in mechanism.species(sp).composition.items():
             cw.writer(
                 fstream,
-                "ncf[ %d * kd + %d ] = %d; "
-                % (
-                    species_info.ordered_idx_map[sp],
-                    mechanism.element_index(elem),
-                    coef,
-                )
+                f"ncf[ {species_info.ordered_idx_map[sp]} * kd + {mechanism.element_index(elem)} ] = {int(coef)}; "
                 + cw.comment(f"{elem}"),
             )
         cw.writer(fstream)
@@ -65,7 +60,7 @@ def cksyme_str(fstream, mechanism, species_info):
     for elem in mechanism.element_names:
         cw.writer(
             fstream,
-            'ename[%d] = "%s";' % (mechanism.element_index(elem), elem),
+            f'ename[{mechanism.element_index(elem)}] = "{elem}";',
         )
     cw.writer(fstream, "}")
 
