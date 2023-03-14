@@ -1375,7 +1375,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                         fstream,
                         (
                             "           *"
-                            f" exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g})"
+                            f" exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g})"
                             " * invT);"
                         ),
                     )
@@ -1384,7 +1384,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                         fstream,
                         (
                             f"           * exp(({beta:.15g}) * tc[0] -"
-                            f" ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) *"
+                            f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) *"
                             " invT);"
                         ),
                     )
@@ -1429,7 +1429,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     fstream,
                     (
                         f"           * exp({low_beta:.15g} * tc[0] -"
-                        f" {1.0 / cc.Rc / cc.ureg.kelvin * low_ae:.15g} *"
+                        f" {(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g} *"
                         " invT);"
                     ),
                 )

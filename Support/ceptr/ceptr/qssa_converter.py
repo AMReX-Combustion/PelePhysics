@@ -2229,7 +2229,7 @@ def qssa_component_functions(
                     fstream,
                     (
                         "           *"
-                        f" exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) *"
+                        f" exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) *"
                         " invT);"
                     ),
                 )
@@ -2241,7 +2241,7 @@ def qssa_component_functions(
                     fstream,
                     (
                         f"           * exp(({beta:.15g}) * tc[0] -"
-                        f" ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);"
+                        f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);"
                     ),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
