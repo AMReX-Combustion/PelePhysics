@@ -1249,7 +1249,7 @@ def ajac_reaction_d(
             elif precond:
                 cw.writer(fstream, f"dqdc[{k}] = 0.0;")
 
-        cw.writer(fstream, f"for (int k=0; k<{n_species}; k++) {{" )
+        cw.writer(fstream, f"for (int k=0; k<{n_species}; k++) {{")
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
                 s1 = f"J[{n_species + 1}*k+{m}] += {all_dict[m][1]:.15g} * dqdc[k];"
@@ -1504,7 +1504,7 @@ def dproduction_rate(
     cw.writer(fstream, "{")
     cw.writer(fstream, f"amrex::Real c[{n_species}];")
     cw.writer(fstream)
-    cw.writer(fstream, f"for (int k=0; k<{n_species}; k++) {{" )
+    cw.writer(fstream, f"for (int k=0; k<{n_species}; k++) {{")
     cw.writer(fstream, "c[k] = 1.e6 * sc[k];")
     cw.writer(fstream, "}")
 

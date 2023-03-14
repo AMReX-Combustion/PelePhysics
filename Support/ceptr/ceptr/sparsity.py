@@ -35,7 +35,7 @@ def sparsity(fstream, species_info):
 
     cw.writer(fstream, f"for (int l=0; l<{n_species+1}; l++) {{")
 
-    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{" )
+    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{")
 
     cw.writer(fstream, "nJdata_tmp = nJdata_tmp + 1;")
 
@@ -88,7 +88,7 @@ def sparsity(fstream, species_info):
 
     cw.writer(fstream, "} else {")
 
-    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{" )
+    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{")
 
     cw.writer(fstream, "nJdata_tmp = nJdata_tmp + 1;")
 
@@ -147,7 +147,7 @@ def sparsity(fstream, species_info):
 
     cw.writer(fstream, "} else {")
 
-    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{" )
+    cw.writer(fstream, f"if(Jac[ {n_species+1} * k + l] != 0.0){{")
 
     cw.writer(fstream, "nJdata_tmp = nJdata_tmp + 1;")
 
