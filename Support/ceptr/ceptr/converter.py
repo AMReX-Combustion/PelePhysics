@@ -177,8 +177,8 @@ class Converter:
             ],
             "d",
         )
-
-        print("Full species list with transported first and QSSA last:")
+        if self.species_info.n_qssa_species > 0:
+            print("Full species list with transported first and QSSA last:")
         for all_species in self.species_info.all_species:
             print(
                 all_species.name,
