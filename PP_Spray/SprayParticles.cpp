@@ -402,7 +402,7 @@ SprayParticleContainer::updateParticles(
             cvol *= 1. / (volfrac_fab(cur_indx));
           }
 #endif
-          Real cur_coef = -fdat->num_ppp * cvol * cur_dt / flow_dt;
+          Real cur_coef = -num_ppp * cvol * sub_dt / flow_dt;
           if (!src_box.contains(cur_indx)) {
             if (!isGhost) {
               Abort("SprayParticleContainer::updateParticles() -- source box "
