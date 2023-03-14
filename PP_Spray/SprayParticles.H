@@ -134,7 +134,7 @@ public:
     const int finest_level,
     const int amr_ncycle,
     const amrex::Real& cfl = 0.5,
-    const int depos_width = 1)
+    const int depos_width = 0)
   {
     if (level - 1 < finest_level) {
       return depos_width + static_cast<int>(std::round(
@@ -160,7 +160,7 @@ public:
     const int amr_ncycle,
     const amrex::Real& cfl = 0.5,
     const int interp_width = 1,
-    const int depos_width = 1)
+    const int depos_width = 0)
   {
     int ghost_state = interp_width + static_cast<int>(std::round(cfl));
     if (level > 0) {
@@ -186,7 +186,7 @@ public:
     const int finest_level,
     const int amr_ncycle,
     const amrex::Real& cfl = 0.5,
-    const int depos_width = 1)
+    const int depos_width = 0)
   {
     int ghost_source = depos_width + static_cast<int>(std::round(cfl));
     if (level > 0) {

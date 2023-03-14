@@ -444,7 +444,7 @@ eb_interp(
                , const amrex::Real cdist_z =
                    pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];)
 
-  // Distance between particle and cell centoid.
+  // Distance between particle and cell centroid.
   const amrex::Real cdist = std::sqrt(
     AMREX_D_TERM(cdist_x * cdist_x, +cdist_y * cdist_y, +cdist_z * cdist_z));
 

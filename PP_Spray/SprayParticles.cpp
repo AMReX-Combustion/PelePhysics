@@ -375,50 +375,55 @@ SprayParticleContainer::updateParticles(
             indx_array.data(), weights.data());
           // Solve for avg mw and pressure at droplet location
           gpv.define();
-          fdat->calcBoilT(gpv, cBoilT.data());
-          if (is_film) {
-            calculateFilmSource(
-              sub_dt, dx, gpv, *fdat, p, cBoilT.data(), ltransparm);
-          } else {
-            Reyn_d = calculateSpraySource(
-              sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
-          }
-          Real num_ppp = p.rdata(SprayComps::pstateNumDens);
-          for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-            IntVect cur_indx = indx_array[aindx];
-            Real cvol = inv_vol;
+          calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+          IntVect cur_indx = ijkc;
+          Real cvol = inv_vol;
 #ifdef AMREX_USE_EB
-            if (flags_array(cur_indx).isSingleValued()) {
-              cvol *= 1. / (volfrac_fab(cur_indx));
-            }
-#endif
-            Real cur_coef = -weights[aindx] * num_ppp * cvol * sub_dt / flow_dt;
-            if (!src_box.contains(cur_indx)) {
-              if (!isGhost) {
-                Abort("SprayParticleContainer::updateParticles() -- source "
-                      "box too small");
-              } else {
-                continue;
+          if (flags_array(cur_indx).isSingleValued()) {
+            if (volfrac_fab(cur_indx) < fdat->min_eb_vfrac) {
+              Real min_dis = 1.E12;
+              for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+                IntVect cindx = indx_array[aindx];
+                if (volfrac_fab(cindx) > fdat->min_eb_vfrac) {
+                  Real dis = 0.;
+                  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                    dis += std::pow(
+                      p.pos(dir) - plo[dir] -
+                        static_cast<Real>(cindx[dir]) * dx[dir],
+                      2);
+                  }
+                  if (dis < min_dis) {
+                    min_dis = dis;
+                    cur_indx = cindx;
+                  }
+                }
               }
             }
-            if (fdat->mom_trans) {
-              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                Gpu::Atomic::Add(
-                  &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
-              }
-            }
-            if (fdat->mass_trans) {
-              Gpu::Atomic::Add(
-                &rhoSrcarr(cur_indx), cur_coef * gpv.fluid_mass_src);
-              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-                Gpu::Atomic::Add(
-                  &rhoYSrcarr(cur_indx, spf), cur_coef * gpv.fluid_Y_dot[spf]);
-              }
-            }
-            Gpu::Atomic::Add(
-              &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
+            cvol *= 1. / (volfrac_fab(cur_indx));
           }
-          Real new_time = static_cast<Real>(cur_iter + 1) * sub_dt;
+#endif
+          Real cur_coef = -fdat->num_ppp * cvol * cur_dt / flow_dt;
+          if (!src_box.contains(cur_indx)) {
+            if (!isGhost) {
+              Abort("SprayParticleContainer::updateParticles() -- source box "
+                    "too small");
+            }
+          }
+          if (fdat->mom_trans) {
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+              Gpu::Atomic::Add(
+                &momSrcarr(cur_indx, dir), cur_coef * gpv.fluid_mom_src[dir]);
+            }
+          }
+          if (fdat->mass_trans) {
+            Gpu::Atomic::Add(
+              &rhoSrcarr(cur_indx), cur_coef * gpv.fluid_mass_src);
+            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+              Gpu::Atomic::Add(
+                &rhoYSrcarr(cur_indx, spf), cur_coef * gpv.fluid_Y_dot[spf]);
+            }
+          }
+          Gpu::Atomic::Add(&engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
           // Modify particle position by whole time step
           if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
             // Remaining time in current timestep
