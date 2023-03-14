@@ -2945,7 +2945,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     if n_reactions > 0:
         str_ns = ",".join(str(x) for x in ns)
         cw.writer(
-            fstream, "const int ns[%d] =\n     {%s};" % (n_reactions, str_ns)
+            fstream, f"const int ns[{n_reactions}] =\n     {{{str_ns:s}}};"
         )
 
         str_ki = ",".join(
@@ -2953,7 +2953,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
         )
         cw.writer(
             fstream,
-            "const int kiv[%d] =\n     {%s};" % (n_reactions * maxsp, str_ki),
+            f"const int kiv[{n_reactions * maxsp}] =\n     {{{str_ki:s}}};"
         )
 
         str_nu = ",".join(
@@ -2961,7 +2961,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
         )
         cw.writer(
             fstream,
-            "const int nuv[%d] =\n     {%s};" % (n_reactions * maxsp, str_nu),
+            f"const int nuv[{n_reactions * maxsp}] =\n     {{{str_nu:s}}};",
         )
 
     cw.writer(fstream, "if (i < 1) {")
@@ -2973,7 +2973,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     if n_reactions == 0:
         cw.writer(fstream, "nspec = -1;")
     else:
-        cw.writer(fstream, "if (i > %d) {" % (n_reactions))
+        cw.writer(fstream, f"if (i > {n_reactions}) {{")
         cw.writer(fstream, "nspec = -1;")
         cw.writer(fstream, "} else {")
 
@@ -3032,7 +3032,7 @@ def ckkfkr(fstream, mechanism, species_info):
     cw.writer(fstream)
     if n_reactions > 0:
         cw.writer(fstream, cw.comment("convert to chemkin units"))
-        cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_reactions)
+        cw.writer(fstream, f"for (int id = 0; id < {n_reactions}; ++id) {{" )
         cw.writer(fstream, "q_f[id] *= 1.0e-6;")
         cw.writer(fstream, "q_r[id] *= 1.0e-6;")
         cw.writer(fstream, "}")
