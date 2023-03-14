@@ -185,6 +185,7 @@ SprayParticleContainer::readSprayParams(
   // List of known derived spray quantities
   std::vector<std::string> derive_names = {
     "spray_mass",      // Total liquid mass in a cell
+    "spray_density",   // Liquid mass divided by cell volume
     "spray_num",       // Number of spray droplets in a cell
     "spray_vol",       // Total liquid volume in a cell
     "spray_surf_area", // Total liquid surface area in a cell
