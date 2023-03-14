@@ -57,7 +57,10 @@ def qss_sorted_phase_space(
                         * int(coefficient)
                     )
                 else:
-                    conc = f"pow(sc_qss[{species_info.ordered_idx_map[symbol] - n_species}], {float(coefficient):f})"
+                    conc = (
+                        f"pow(sc_qss[{species_info.ordered_idx_map[symbol] - n_species}],"
+                        f" {float(coefficient):f})"
+                    )
                 if record_symbolic_operations:
                     conc_smp = pow(
                         syms.sc_qss_smp[
@@ -77,14 +80,20 @@ def qss_sorted_phase_space(
                     ]
             else:
                 if float(coefficient) == 2.0:
-                    conc = f"(sc[{species_info.ordered_idx_map[symbol]}] * sc[{species_info.ordered_idx_map[symbol]}])"
+                    conc = (
+                        f"(sc[{species_info.ordered_idx_map[symbol]}] *"
+                        f" sc[{species_info.ordered_idx_map[symbol]}])"
+                    )
                     if record_symbolic_operations:
                         conc_smp = (
                             syms.sc_smp[species_info.ordered_idx_map[symbol]]
                             * syms.sc_smp[species_info.ordered_idx_map[symbol]]
                         )
                 else:
-                    conc = f"pow(sc[{species_info.ordered_idx_map[symbol]}], {float(coefficient):f})"
+                    conc = (
+                        f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
+                        f" {float(coefficient):f})"
+                    )
                     if record_symbolic_operations:
                         conc_smp = pow(
                             syms.sc_smp[species_info.ordered_idx_map[symbol]],

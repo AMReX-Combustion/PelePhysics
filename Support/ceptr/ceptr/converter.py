@@ -553,38 +553,52 @@ class Converter:
         )
         cw.writer(
             fstream,
-            "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int"
-            " NCELLS);",
+            (
+                "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int"
+                " NCELLS);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int *"
-            " consP);",
+            (
+                "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int *"
+                " consP);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const int"
-            " * consP, int NCELLS);",
+            (
+                "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const"
+                " int * consP, int NCELLS);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int"
-            " * consP, int NCELLS, int base);",
+            (
+                "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const"
+                " int * consP, int NCELLS, int base);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
-            " const int * consP, int NCELLS, int base);",
+            (
+                "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
+                " const int * consP, int NCELLS, int base);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int *"
-            " colPtrs, int * indx, const int * consP);",
+            (
+                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int"
+                " * colPtrs, int * indx, const int * consP);"
+            ),
         )
         cw.writer(
             fstream,
-            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int *"
-            " rowPtr, const int * consP, int base);",
+            (
+                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int"
+                " * rowPtr, const int * consP, int base);"
+            ),
         )
 
     def mechanism_header_includes(self, fstream):

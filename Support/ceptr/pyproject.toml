@@ -20,7 +20,7 @@ toml = ">=0.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^5.2"
-black = {version = "^22.3"}
+black = {version = "^23.1"}
 isort = "^5.9.3"
 ipython = "^8.2.0"
 flake8 = "^4.0.1"

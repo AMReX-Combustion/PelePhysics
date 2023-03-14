@@ -172,7 +172,10 @@ def generate_trans_routine_simple(
     for spec in species_info.nonqssa_species:
         cw.writer(
             fstream,
-            f"{nametab[4]}[{spec.idx}] = {float(species_transport[spec][idx]):.8E};",
+            (
+                f"{nametab[4]}[{spec.idx}] ="
+                f" {float(species_transport[spec][idx]):.8E};"
+            ),
         )
     cw.writer(fstream, "}")
 
@@ -456,7 +459,10 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
         for i in range(4):
             cw.writer(
                 fstream,
-                f"{'COFETA'}[{spec.idx * 4 + i}] = {cofeta[spec.idx][3 - i]:.8E};",
+                (
+                    f"{'COFETA'}[{spec.idx * 4 + i}] ="
+                    f" {cofeta[spec.idx][3 - i]:.8E};"
+                ),
             )
 
     cw.writer(fstream, "}")
@@ -476,7 +482,10 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
         for i in range(4):
             cw.writer(
                 fstream,
-                f"{'COFLAM'}[{spec.idx * 4 + i}] = {coflam[spec.idx][3 - i]:.8E};",
+                (
+                    f"{'COFLAM'}[{spec.idx * 4 + i}] ="
+                    f" {coflam[spec.idx][3 - i]:.8E};"
+                ),
             )
 
     cw.writer(fstream, "}")
@@ -596,13 +605,19 @@ def diffcoefs(fstream, species_info, species_transport, ntfit):
             for k in range(4):
                 cw.writer(
                     fstream,
-                    f"{'COFD'}[{i * n_species * 4 + j * 4 + k}] = {cofd[i][j][3 - k]:.8E};",
+                    (
+                        f"{'COFD'}[{i * n_species * 4 + j * 4 + k}] ="
+                        f" {cofd[i][j][3 - k]:.8E};"
+                    ),
                 )
         for j, _ in enumerate(spec_ordered[i + 1 :]):
             for k in range(4):
                 cw.writer(
                     fstream,
-                    f"{'COFD'}[{i * n_species * 4 + (j + i + 1) * 4 + k}] = {cofd[j + i + 1][i][3 - k]:.8E};",
+                    (
+                        f"{'COFD'}[{i * n_species * 4 + (j + i + 1) * 4 + k}]"
+                        f" = {cofd[j + i + 1][i][3 - k]:.8E};"
+                    ),
                 )
 
     cw.writer(fstream, "}")
@@ -742,7 +757,10 @@ def thermaldiffratios(
             for k in range(4):
                 cw.writer(
                     fstream,
-                    f"{'COFTD'}[{i * 4 * n_species + j * 4 + k}] = {coftd[i][j][3 - k]:.8E};",
+                    (
+                        f"{'COFTD'}[{i * 4 * n_species + j * 4 + k}] ="
+                        f" {coftd[i][j][3 - k]:.8E};"
+                    ),
                 )
 
     cw.writer(fstream, "}")
@@ -1842,9 +1860,11 @@ def critical_parameters(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-        " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real * "
-        " bi, amrex::Real *  acentric_i)",
+        (
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+            " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai,"
+            " amrex::Real *  bi, amrex::Real *  acentric_i)"
+        ),
     )
     cw.writer(fstream, "{")
     cw.writer(fstream)
@@ -1882,19 +1902,35 @@ def critical_parameters(fstream, mechanism, species_info):
             cw.writer(fstream, cw.comment("Imported from NIST"))
             cw.writer(
                 fstream,
-                f"Tci[{species.idx}] = {tabulated_critical_params[species.name]['Tci']:f} ; ",
+                (
+                    f"Tci[{species.idx}] ="
+                    f" {tabulated_critical_params[species.name]['Tci']:f} ; "
+                ),
             )
             cw.writer(
                 fstream,
-                f"ai[{species.idx}] = 1e6 * 0.42748 * Rcst * Rcst * Tci[{species.idx}] * Tci[{species.idx}] / ({tabulated_critical_params[species.name]['wt']:f} * {tabulated_critical_params[species.name]['wt']:f} * {tabulated_critical_params[species.name]['Pci']:f}); ",
+                (
+                    f"ai[{species.idx}] = 1e6 * 0.42748 * Rcst * Rcst *"
+                    f" Tci[{species.idx}] * Tci[{species.idx}] /"
+                    f" ({tabulated_critical_params[species.name]['wt']:f} *"
+                    f" {tabulated_critical_params[species.name]['wt']:f} *"
+                    f" {tabulated_critical_params[species.name]['Pci']:f}); "
+                ),
             )
             cw.writer(
                 fstream,
-                f"bi[{species.idx}] = 0.08664 * Rcst * Tci[{species.idx}] / ({tabulated_critical_params[species.name]['wt']:f} * {tabulated_critical_params[species.name]['Pci']:f}); ",
+                (
+                    f"bi[{species.idx}] = 0.08664 * Rcst * Tci[{species.idx}]"
+                    f" / ({tabulated_critical_params[species.name]['wt']:f} *"
+                    f" {tabulated_critical_params[species.name]['Pci']:f}); "
+                ),
             )
             cw.writer(
                 fstream,
-                f"acentric_i[{species.idx}] = {tabulated_critical_params[species.name]['acentric_factor']:f} ;",
+                (
+                    f"acentric_i[{species.idx}] ="
+                    f" {tabulated_critical_params[species.name]['acentric_factor']:f} ;"
+                ),
             )
         else:
             cw.writer(fstream)
@@ -1908,11 +1944,21 @@ def critical_parameters(fstream, mechanism, species_info):
             )
             cw.writer(
                 fstream,
-                f"ai[{species.idx}] = (5.55 * avogadro * avogadro * EPS[{species.idx}]*boltzmann * 1e-24 * SIG[{species.idx}] * SIG[{species.idx}] * SIG[{species.idx}] ) / (wt[{species.idx}] * wt[{species.idx}]); ",
+                (
+                    f"ai[{species.idx}] = (5.55 * avogadro * avogadro *"
+                    f" EPS[{species.idx}]*boltzmann * 1e-24 *"
+                    f" SIG[{species.idx}] * SIG[{species.idx}] *"
+                    f" SIG[{species.idx}] ) / (wt[{species.idx}] *"
+                    f" wt[{species.idx}]); "
+                ),
             )
             cw.writer(
                 fstream,
-                f"bi[{species.idx}] = 0.855 * avogadro * 1e-24 * SIG[{species.idx}] * SIG[{species.idx}] * SIG[{species.idx}] / (wt[{species.idx}]); ",
+                (
+                    f"bi[{species.idx}] = 0.855 * avogadro * 1e-24 *"
+                    f" SIG[{species.idx}] * SIG[{species.idx}] *"
+                    f" SIG[{species.idx}] / (wt[{species.idx}]); "
+                ),
             )
             cw.writer(fstream, f"acentric_i[{species.idx}] = 0.0 ;")
 

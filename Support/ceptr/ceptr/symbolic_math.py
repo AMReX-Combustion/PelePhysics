@@ -902,12 +902,18 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dscqss{num_idx}dscqss{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
             else:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dscqss{num_idx}dsc{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
 
         cw.writer(fstream, cw.comment("Write chain rule terms..."))
@@ -933,7 +939,10 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}] = {final_string};",
+                    (
+                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                        f" = {final_string};"
+                    ),
                 )
 
     def write_symjac_to_cpp_cpu(self, species_info, cw, fstream):
@@ -1021,22 +1030,34 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dscqss{num_idx}dscqss{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dscqss{num_idx}dsc{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc + n_dwdotdscqss:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dwdot{num_idx}dscqss{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dwdot{num_idx}dscqss{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
             else:
                 cw.writer(
                     fstream,
-                    f"const amrex::Real dwdot{num_idx}dsc{den_idx} = {cpp_str};",
+                    (
+                        f"const amrex::Real dwdot{num_idx}dsc{den_idx} ="
+                        f" {cpp_str};"
+                    ),
                 )
 
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
@@ -1062,7 +1083,10 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}] = {final_string};",
+                    (
+                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                        f" = {final_string};"
+                    ),
                 )
 
         # Now write the full jacobian expression
@@ -1084,7 +1108,10 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    f"J[{(species_info.n_species + 1) * scnum + item['number']}] = {final_string};",
+                    (
+                        f"J[{(species_info.n_species + 1) * scnum + item['number']}]"
+                        f" = {final_string};"
+                    ),
                 )
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
@@ -1268,9 +1295,12 @@ class SymbolicMath:
                 else:
                     final_string = start_string
 
+                idx = (species_info.n_species + 1) * sc_item[
+                    "number"
+                ] + wdot_item["number"]
                 cw.writer(
                     fstream,
-                    f"J[{(species_info.n_species + 1) * sc_item['number'] + wdot_item['number']}] = {final_string};",
+                    (f"J[{idx}]" f" = {final_string};"),
                 )
 
     def write_array_to_cpp_no_cse(

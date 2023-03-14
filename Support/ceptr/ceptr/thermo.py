@@ -98,7 +98,10 @@ def generate_thermo_routine(
 
     cw.writer(
         fstream,
-        f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real * species, const amrex::Real *  tc)",
+        (
+            f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real"
+            " * species, const amrex::Real *  tc)"
+        ),
     )
 
     syms_g_rt = False
@@ -134,21 +137,25 @@ def generate_thermo_routine(
         lostream = io.StringIO()
         for species, low_range, _ in species_list:
             if qss_flag:
-                cw.writer(
-                    lostream,
-                    cw.comment(
-                        f"species {species_info.ordered_idx_map[species.name] - species_info.n_species}: {species.name}"
-                    ),
+                idx = (
+                    species_info.ordered_idx_map[species.name]
+                    - species_info.n_species
                 )
                 cw.writer(
                     lostream,
-                    f"species[{species_info.ordered_idx_map[species.name] - species_info.n_species}] =",
+                    cw.comment("species" f" {idx}:" f" {species.name}"),
+                )
+                cw.writer(
+                    lostream,
+                    (f"species[{idx}] ="),
                 )
             else:
                 cw.writer(
                     lostream,
                     cw.comment(
-                        f"species {species_info.ordered_idx_map[species.name]}: {species.name}"
+                        "species"
+                        f" {species_info.ordered_idx_map[species.name]}:"
+                        f" {species.name}"
                     ),
                 )
                 cw.writer(
@@ -187,21 +194,25 @@ def generate_thermo_routine(
         histream = io.StringIO()
         for species, _, high_range in species_list:
             if qss_flag:
-                cw.writer(
-                    histream,
-                    cw.comment(
-                        f"species {species_info.ordered_idx_map[species.name] - species_info.n_species}: {species.name}"
-                    ),
+                idx = (
+                    species_info.ordered_idx_map[species.name]
+                    - species_info.n_species
                 )
                 cw.writer(
                     histream,
-                    f"species[{species_info.ordered_idx_map[species.name] - species_info.n_species}] =",
+                    cw.comment("species" f" {idx}:" f" {species.name}"),
+                )
+                cw.writer(
+                    histream,
+                    (f"species[{idx}] ="),
                 )
             else:
                 cw.writer(
                     histream,
                     cw.comment(
-                        f"species {species_info.ordered_idx_map[species.name]}: {species.name}"
+                        "species"
+                        f" {species_info.ordered_idx_map[species.name]}:"
+                        f" {species.name}"
                     ),
                 )
                 cw.writer(

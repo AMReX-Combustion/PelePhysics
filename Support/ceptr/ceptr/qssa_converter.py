@@ -602,8 +602,10 @@ def find_closed_cycle(mechanism, species_info, species):
             find_closed_cycle(mechanism, species_info, child)
 
             print(
-                "         xx We've finished a recursion! The child that was"
-                " passed in was: ",
+                (
+                    "         xx We've finished a recursion! The child that"
+                    " was passed in was: "
+                ),
                 child,
                 " with parent ",
                 parent,
@@ -632,8 +634,10 @@ def find_closed_cycle(mechanism, species_info, species):
                 )
 
             print(
-                "         ** Therefore, the lowest link value of the parent"
-                " then becomes: ",
+                (
+                    "         ** Therefore, the lowest link value of the"
+                    " parent then becomes: "
+                ),
                 species_info.qssa_info.lowest_link[parent],
             )
             print(
@@ -671,8 +675,10 @@ def find_closed_cycle(mechanism, species_info, species):
 
             print()
             print(
-                "         **** Therefore, the lowest link value of the parent"
-                " then becomes: ",
+                (
+                    "         **** Therefore, the lowest link value of the"
+                    " parent then becomes: "
+                ),
                 species_info.qssa_info.lowest_link[parent],
             )
             print(
@@ -1555,8 +1561,9 @@ def qssa_coeff_functions(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
-        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const amrex::Real"
-        " * sc," + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
+        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const"
+        " amrex::Real * sc,"
+        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
         " g_RT_qss)",
     )
     cw.writer(fstream, "{")
@@ -1575,7 +1582,11 @@ def qssa_coeff_functions(
         )
         cw.writer(
             fstream,
-            f"const amrex::Real refC = {cc.Patm_pa:g} / {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} * invT;",
+            (
+                f"const amrex::Real refC = {cc.Patm_pa:g} /"
+                f" {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} *"
+                " invT;"
+            ),
         )
         # coeff1 = cc.Patm_pa
         # coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
@@ -1757,13 +1768,20 @@ def qssa_coeff_functions(
             corr_smp = alpha_smp
             cw.writer(
                 fstream,
-                f"const amrex::Real redP = Corr / k_f[{idx}] * {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
+                (
+                    f"const amrex::Real redP = Corr / k_f[{idx}] *"
+                    f" {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} "
+                ),
             )
             coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
             redp_smp = corr_smp / syms.kf_qss_smp[idx] * coeff
             cw.writer(
                 fstream,
-                f"           * exp({low_beta:.15g}  * tc[0] - {(1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m:.15g} * invT);",
+                (
+                    f"           * exp({low_beta:.15g}  * tc[0] -"
+                    f" {(1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m:.15g} *"
+                    " invT);"
+                ),
             )
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
             redp_smp *= sme.exp(
@@ -1782,7 +1800,10 @@ def qssa_coeff_functions(
                     if 1.0 - troe[0] != 0:
                         cw.writer(
                             fstream,
-                            f"    {1.0 - troe[0]:.15g} * exp(-tc[1] * {1 / troe[1]:.15g})",
+                            (
+                                f"    {1.0 - troe[0]:.15g} * exp(-tc[1] *"
+                                f" {1 / troe[1]:.15g})"
+                            ),
                         )
                         first_factor = syms.convert_number_to_int(
                             1.0 - troe[0]
@@ -1800,7 +1821,10 @@ def qssa_coeff_functions(
                     if troe[0] != 0:
                         cw.writer(
                             fstream,
-                            f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
+                            (
+                                f"    + {troe[0]:.15g} * exp(-tc[1] *"
+                                f" {1 / troe[2]:.15g})"
+                            ),
                         )
                         first_factor = syms.convert_number_to_int(troe[0])
                         second_factor = syms.convert_number_to_int(
@@ -1852,8 +1876,10 @@ def qssa_coeff_functions(
                 )
                 cw.writer(
                     fstream,
-                    "const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe"
-                    " * troe));",
+                    (
+                        "const amrex::Real F_troe = exp(M_LN10 * logFcent /"
+                        " (1.0 + troe * troe));"
+                    ),
                 )
                 f_troe_smp = 10 ** (
                     log_fcent_smp / (1.0 + troe_smp * troe_smp)
@@ -1910,7 +1936,10 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
+                        (
+                            f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                            f" ({kc_conv_inv}) * ({reverse_sc});"
+                        ),
                     )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
@@ -1927,7 +1956,11 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = Corr * k_f[{idx}] * exp(-({kc_exp_arg})) * ({kc_conv_inv}) * ({reverse_sc});",
+                        (
+                            f"qr[{idx}] = Corr * k_f[{idx}] *"
+                            f" exp(-({kc_exp_arg})) * ({kc_conv_inv}) *"
+                            f" ({reverse_sc});"
+                        ),
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -1946,7 +1979,10 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) * ({reverse_sc});",
+                        (
+                            f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                            f" ({reverse_sc});"
+                        ),
                     )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
@@ -1962,7 +1998,10 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = Corr * k_f[{idx}] * exp(-({kc_exp_arg})) * ({reverse_sc});",
+                        (
+                            f"qr[{idx}] = Corr * k_f[{idx}] *"
+                            f" exp(-({kc_exp_arg})) * ({reverse_sc});"
+                        ),
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -2188,7 +2227,11 @@ def qssa_component_functions(
             elif beta == 0:
                 cw.writer(
                     fstream,
-                    f"           * exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
+                    (
+                        "           *"
+                        f" exp(-({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) *"
+                        " invT);"
+                    ),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                 syms.kf_qss_smp_tmp[index] *= sme.exp(-coeff * syms.invT_smp)
@@ -2196,7 +2239,10 @@ def qssa_component_functions(
             else:
                 cw.writer(
                     fstream,
-                    f"           * exp(({beta:.15g}) * tc[0] - ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);",
+                    (
+                        f"           * exp(({beta:.15g}) * tc[0] -"
+                        f" ({1.0 / cc.Rc / cc.ureg.kelvin * ae:.15g}) * invT);"
+                    ),
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                 syms.kf_qss_smp_tmp[index] *= sme.exp(
@@ -2262,7 +2308,10 @@ def qssa_component_functions(
                 # treat first line separately with the epsilon
                 cw.writer(
                     fstream,
-                    f"amrex::Real {numerator} = epsilon {' '.join(long_line_elements[0:7])}",
+                    (
+                        f"amrex::Real {numerator} = epsilon"
+                        f" {' '.join(long_line_elements[0:7])}"
+                    ),
                 )
                 # proceed by strides of 7
                 for kk in range(7, len_long_line, 7):
@@ -2270,7 +2319,10 @@ def qssa_component_functions(
                     if len(long_line_elements[kk : kk + 7]) < 7:
                         cw.writer(
                             fstream,
-                            f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                            (
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 7])};"
+                            ),
                         )
                     # if there are 7 elems we are ...
                     else:
@@ -2278,24 +2330,36 @@ def qssa_component_functions(
                         if len(long_line_elements[kk:]) > 7:
                             cw.writer(
                                 fstream,
-                                f"                    {' '.join(long_line_elements[kk:kk + 7])}",
+                                (
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])}"
+                                ),
                             )
                         # or at the end but list number was a multiple of 7
                         else:
                             cw.writer(
                                 fstream,
-                                f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                                (
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
+                                ),
                             )
             # if we have less than 7 elements just write them
             else:
                 cw.writer(
                     fstream,
-                    f"amrex::Real {numerator} = epsilon {species_info.qssa_info.rhs[symbol]};",
+                    (
+                        f"amrex::Real {numerator} = epsilon"
+                        f" {species_info.qssa_info.rhs[symbol]};"
+                    ),
                 )
             # COEFF
             cw.writer(
                 fstream,
-                f"amrex::Real {denominator} = epsilon {species_info.qssa_info.coeff[symbol]};",
+                (
+                    f"amrex::Real {denominator} = epsilon"
+                    f" {species_info.qssa_info.coeff[symbol]};"
+                ),
             )
             denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[symbol]
             syms.intermediate_terms_smp[
@@ -2304,7 +2368,10 @@ def qssa_component_functions(
             cw.writer(fstream)
             cw.writer(
                 fstream,
-                f"sc_qss[{species_info.qssa_species_list.index(symbol)}] = - {numerator}/{denominator};",
+                (
+                    f"sc_qss[{species_info.qssa_species_list.index(symbol)}] ="
+                    f" - {numerator}/{denominator};"
+                ),
             )
             syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = (
                 -numerator_smp / denominator_smp
@@ -2377,7 +2444,10 @@ def qssa_component_functions(
                     # treat first line separately with the epsilon
                     cw.writer(
                         fstream,
-                        f"amrex::Real {numerator} = epsilon {' '.join(long_line_elements[0:7])}",
+                        (
+                            f"amrex::Real {numerator} = epsilon"
+                            f" {' '.join(long_line_elements[0:7])}"
+                        ),
                     )
                     # proceed by strides of 7
                     for kk in range(7, len_long_line, 7):
@@ -2385,7 +2455,10 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 7]) < 7:
                             cw.writer(
                                 fstream,
-                                f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                                (
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
+                                ),
                             )
                         # if there are 7 elems we are ...
                         else:
@@ -2393,19 +2466,28 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 7:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 7])}",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 7])}"
+                                    ),
                                 )
                             # or at the end but list number was a multiple of 7
                             else:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 7])};"
+                                    ),
                                 )
                 # if we have less than 7 elements just write them
                 else:
                     cw.writer(
                         fstream,
-                        f"amrex::Real {numerator} = epsilon {species_info.qssa_info.rhs[species]};",
+                        (
+                            f"amrex::Real {numerator} = epsilon"
+                            f" {species_info.qssa_info.rhs[species]};"
+                        ),
                     )
                 # COEFF
                 # cut line if too big !
@@ -2424,7 +2506,10 @@ def qssa_component_functions(
                     # treat first line separately with the epsilon
                     cw.writer(
                         fstream,
-                        f"amrex::Real {denominator} = epsilon {' '.join(long_line_elements[0:7])}",
+                        (
+                            f"amrex::Real {denominator} = epsilon"
+                            f" {' '.join(long_line_elements[0:7])}"
+                        ),
                     )
                     # proceed by strides of 7
                     for kk in range(7, len_long_line, 7):
@@ -2432,7 +2517,10 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 7]) < 7:
                             cw.writer(
                                 fstream,
-                                f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                                (
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
+                                ),
                             )
                         # if there are 7 elems we are ...
                         else:
@@ -2440,19 +2528,28 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 7:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 7])}",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 7])}"
+                                    ),
                                 )
                             # or at the end but list number was a multiple of 7
                             else:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 7])};",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 7])};"
+                                    ),
                                 )
                 # if we have less than 7 elements just write them
                 else:
                     cw.writer(
                         fstream,
-                        f"amrex::Real {denominator} = epsilon {species_info.qssa_info.coeff[species]};",
+                        (
+                            f"amrex::Real {denominator} = epsilon"
+                            f" {species_info.qssa_info.coeff[species]};"
+                        ),
                     )
                 # RHS
                 cw.writer(
@@ -2570,7 +2667,10 @@ def qssa_component_functions(
                 else:
                     cw.writer(
                         fstream,
-                        f"amrex::Real {helper} = {intermediate_helpers[helper]};",
+                        (
+                            f"amrex::Real {helper} ="
+                            f" {intermediate_helpers[helper]};"
+                        ),
                     )
                     # print(helper  + "  ->  " +intermediate_helpers[helper])
                     # print(intermediate_helpers[helper])
@@ -2606,7 +2706,10 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 4]) < 4:
                             cw.writer(
                                 fstream,
-                                f"                    {' '.join(long_line_elements[kk:kk + 4])};",
+                                (
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 4])};"
+                                ),
                             )
                         # if there are 4 elems we are ...
                         else:
@@ -2614,13 +2717,19 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 4:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 4])}",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 4])}"
+                                    ),
                                 )
                             # or at the end but list number was a multiple of 4
                             else:
                                 cw.writer(
                                     fstream,
-                                    f"                    {' '.join(long_line_elements[kk:kk + 4])};",
+                                    (
+                                        "                   "
+                                        f" {' '.join(long_line_elements[kk:kk + 4])};"
+                                    ),
                                 )
                 # if we have less than 4 elements just write them
                 else:
@@ -3041,7 +3150,10 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
                         * int(coefficient)
                     )
                 else:
-                    conc = f"pow(sc[{species_info.ordered_idx_map[symbol]}], {float(coefficient):f})"
+                    conc = (
+                        f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
+                        f" {float(coefficient):f})"
+                    )
                 conc_smp = syms.sc_smp[
                     species_info.ordered_idx_map[symbol]
                 ] ** float(coefficient)
