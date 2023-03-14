@@ -1586,8 +1586,9 @@ def qssa_coeff_functions(
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")
     cw.writer(
-        fstream, "for (int i = 0; i < %d; ++i) {" % species_info.n_species
+        fstream, f"for (int i = 0; i < {species_info.n_species}; ++i)"
     )
+    cw.writer(fstream, "{")
     cw.writer(fstream, "mixture += sc[i];")
     cw.writer(fstream, "}")
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
@@ -1821,7 +1822,7 @@ def qssa_coeff_functions(
                     if troe[3] < 0:
                         cw.writer(
                             fstream,
-                            "    + exp(%.15g * invT));" % -troe[3],
+                            f"    + exp({-troe[3]:.15g} * invT));",
                         )
                         first_factor = syms.convert_number_to_int(-troe[3])
                         int_smp += sme.exp(first_factor * syms.invT_smp)
@@ -2640,25 +2641,6 @@ def qssa_component_functions(
                         + ";",
                     )
                 cw.writer(fstream)
-
-    # for name in helper_names_to_print:
-    #     cw.writer(
-    #                 fstream,
-    #                 'std::cout << "  %s = " << %s << "\\n";'
-    #                 % (
-    #                     name,
-    #                     name
-    #                 ),
-    #             )
-    # for name in intermediate_names_to_print:
-    #     cw.writer(
-    #                 fstream,
-    #                 'std::cout << "  %s = " << %s << "\\n";'
-    #                 % (
-    #                     name,
-    #                     name
-    #                 ),
-    #             )
 
     cw.writer(fstream)
     cw.writer(fstream, "return;")

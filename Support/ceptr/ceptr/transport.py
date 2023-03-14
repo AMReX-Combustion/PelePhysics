@@ -158,9 +158,8 @@ def misc_trans_info(fstream, kk, n_lite, no=4):
 def generate_trans_routine_integer(fstream, nametab, expression):
     """Write generic integer transport routine."""
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(fstream, "void %s(int* %s ) {" % (nametab[0], nametab[4]))
-
-    cw.writer(fstream, "*%s = %d;}" % (nametab[4], expression))
+    cw.writer(fstream, f"void {nametab[0]:s}(int* {nametab[4]:s} ) {{" )
+    cw.writer(fstream, f"*{nametab[4]:s} = {expression:d};}}")
 
 
 def generate_trans_routine_simple(
@@ -169,7 +168,7 @@ def generate_trans_routine_simple(
     """Write generic transport routine."""
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(
-        fstream, "void %s(amrex::Real* %s ) {" % (nametab[0], nametab[4])
+        fstream, f"void {nametab[0]:s}(amrex::Real* {nametab[4]:s} ) {{"
     )
 
     for spec in species_info.nonqssa_species:
@@ -186,7 +185,7 @@ def wt(fstream, species_info):
     cw.writer(fstream, cw.comment("the molecular weights in g/mol"))
 
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(fstream, "void %s(amrex::Real* %s ) {" % ("egtransetWT", "WT"))
+    cw.writer(fstream, "void egtransetWT(amrex::Real* WT ) {")
 
     n_species = species_info.n_species
     for sp in range(n_species):

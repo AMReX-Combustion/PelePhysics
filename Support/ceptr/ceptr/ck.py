@@ -25,7 +25,7 @@ def ckncf(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(fstream, f"int kd = {n_elements}; ")
     cw.writer(fstream, cw.comment("Zero ncf"))
-    cw.writer(fstream, "for (int id = 0; id < kd * %d; ++ id) {" % (n_species))
+    cw.writer(fstream, f"for (int id = 0; id < kd * {n_species}; ++ id) {{")
     cw.writer(fstream, " ncf[id] = 0; ")
     cw.writer(fstream, "}")
 
@@ -168,7 +168,7 @@ def ckcpbl(fstream, mechanism, species_info):
     # dot product
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("perform dot product"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
 
     cw.writer(fstream, "result += x[id]*cpor[id];")
 
@@ -276,7 +276,7 @@ def ckcvbl(fstream, mechanism, species_info):
     # dot product
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("perform dot product"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
 
     cw.writer(fstream, "result += x[id]*cvor[id];")
 
@@ -392,7 +392,7 @@ def ckhbml(fstream, mechanism, species_info):
     # dot product
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("perform dot product"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
 
     cw.writer(fstream, "result += x[id]*hml[id];")
 
@@ -449,7 +449,7 @@ def ckhbms(fstream, mechanism, species_info):
     cw.writer(fstream, "speciesEnthalpy(hml, tc);")
     cw.writer(fstream)
 
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "result += y[id]*hml[id]*imw[id];")
     cw.writer(fstream, "}")
 
@@ -500,7 +500,7 @@ def ckubml(fstream, mechanism, species_info):
     # dot product
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("perform dot product"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "result += x[id]*uml[id];")
     cw.writer(fstream, "}")
     cw.writer(fstream)
@@ -611,7 +611,7 @@ def cksbml(fstream, mechanism, species_info):
     # Equation 42
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute Eq 42"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
 
     cw.writer(
         fstream,
@@ -778,7 +778,7 @@ def ckgbml(fstream, mechanism, species_info):
     # Equation 44
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute Eq 44"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream,
         f"result += x[id]*(gort[id]+log((x[id]+{cc.smallnum:g}))+logPratio);",
@@ -941,7 +941,7 @@ def ckabml(fstream, mechanism, species_info):
     # Equation 44
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute Eq 44"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
 
     cw.writer(
         fstream,
@@ -1167,7 +1167,7 @@ def ckpc(fstream, mechanism, species_info):
         )
 
     cw.writer(fstream)
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "sumC += c[id];")
     cw.writer(fstream, "}")
 
@@ -1284,7 +1284,7 @@ def ckrhoc(fstream, mechanism, species_info):
         )
 
     cw.writer(fstream)
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "sumC += c[id];")
     cw.writer(fstream, "}")
 
@@ -1400,7 +1400,7 @@ def ckmmwc(fstream, mechanism, species_info):
             + cw.comment(f"{species.name}"),
         )
     cw.writer(fstream)
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "sumC += c[id];")
     cw.writer(fstream, "}")
     cw.writer(
@@ -1693,7 +1693,7 @@ def ckxtcp(fstream, mechanism, species_info):
     # now compute conversion
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 10"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "c[id] = x[id]*PORT;")
     cw.writer(fstream, "}")
 
@@ -1741,7 +1741,7 @@ def ckxtcr(fstream, mechanism, species_info):
     cw.writer(fstream, "ROW = rho / XW;")
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 11"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "c[id] = x[id]*ROW;")
     cw.writer(fstream, "}")
 
@@ -1772,7 +1772,7 @@ def ckctx(fstream, mechanism, species_info):
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute sum of c "))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "sumC += c[id];")
     cw.writer(fstream, "}")
 
@@ -1780,7 +1780,7 @@ def ckctx(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment(" See Eq 13 "))
     cw.writer(fstream, "amrex::Real sumCinv = 1.0/sumC;")
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "x[id] = c[id]*sumCinv;")
     cw.writer(fstream, "}")
 
@@ -1869,7 +1869,7 @@ def ckcvml(fstream, mechanism, species_info):
     # convert cv/R to cv
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream,
         f"cvml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
@@ -1913,7 +1913,7 @@ def ckcpml(fstream, mechanism, species_info):
     # convert cp/R to cp
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream,
         f"cpml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
@@ -1958,7 +1958,7 @@ def ckuml(fstream, mechanism, species_info):
     # convert e/RT to e with molar units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "uml[id] *= RT;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -1999,7 +1999,7 @@ def ckhml(fstream, mechanism, species_info):
     # convert h/RT to h with molar units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "hml[id] *= RT;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2042,7 +2042,7 @@ def ckgml(fstream, mechanism, species_info):
     # convert g/RT to g with molar units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "gml[id] *= RT;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2087,7 +2087,7 @@ def ckaml(fstream, mechanism, species_info):
     # convert A/RT to A with molar units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "aml[id] *= RT;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2125,7 +2125,7 @@ def cksml(fstream, mechanism, species_info):
     # convert s/R to s
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream,
         f"sml[id] *= {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e};",
@@ -2459,7 +2459,7 @@ def ckwc(fstream, mechanism, species_info):
     # convert C to SI units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to SI"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "C[id] *= 1.0e6;")
     cw.writer(fstream, "}")
 
@@ -2471,7 +2471,7 @@ def ckwc(fstream, mechanism, species_info):
     # convert C and wdot to chemkin units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "C[id] *= 1.0e-6;")
     cw.writer(fstream, "wdot[id] *= 1.0e-6;")
     cw.writer(fstream, "}")
@@ -2546,7 +2546,7 @@ def ckwyp(fstream, mechanism, species_info):
     # convert wdot to chemkin units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "wdot[id] *= 1.0e-6;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2583,7 +2583,7 @@ def ckwxp(fstream, mechanism, species_info):
     # now compute conversion
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 10"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "c[id] = x[id]*PORT;")
     cw.writer(fstream, "}")
 
@@ -2595,7 +2595,7 @@ def ckwxp(fstream, mechanism, species_info):
     # convert wdot to chemkin units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "wdot[id] *= 1.0e-6;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2647,7 +2647,7 @@ def ckwyr(fstream, mechanism, species_info):
     # convert wdot to chemkin units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "wdot[id] *= 1.0e-6;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2696,7 +2696,7 @@ def ckwxr(fstream, mechanism, species_info):
     cw.writer(fstream, "ROW = 1e6*rho / XW;")
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 11"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "c[id] = x[id]*ROW;")
     cw.writer(fstream, "}")
 
@@ -2708,7 +2708,7 @@ def ckwxr(fstream, mechanism, species_info):
     # convert wdot to chemkin units
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("convert to chemkin units"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "wdot[id] *= 1.0e-6;")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
@@ -2742,7 +2742,7 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream, f"int kchrg[{n_species}];")
     cw.writer(fstream, "CKCHRG(kchrg);")
     cw.writer(fstream)
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream, f"zk[id] = {cc.Na:.8e} * {cc.qc:.8e} * kchrg[id] * imw[id];"
     )
@@ -3019,7 +3019,7 @@ def ckkfkr(fstream, mechanism, species_info):
     # now compute conversion
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 10"))
-    cw.writer(fstream, "for (int id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "c[id] = x[id]*PORT;")
     cw.writer(fstream, "}")
 

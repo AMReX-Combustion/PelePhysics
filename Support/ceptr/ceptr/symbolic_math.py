@@ -840,7 +840,7 @@ class SymbolicMath:
             # Debugging prints in mechanism.H...
             # cw.writer(
             #     fstream,
-            #     """std::cout << "%s = " << %s << std::endl;""" % (left_cse, left_cse),
+            #     f"""std::cout << "{left_cse} = " << {left_cse} << std::endl;""",
             # )
 
         print("Done!", flush=True)
