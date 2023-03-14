@@ -109,10 +109,12 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
   }
   std::string JetDataFileName = dir + "/particles/injection_data.log";
   if (FileSystem::Exists(JetDataFileName)) {
-    if (numjets == 0 && ParallelDescriptor::IOProcessor()) {
-      Print() << "Warning: Restart file contains jet information but no "
-                 "SprayJets have been initialized"
-              << std::endl;
+    if (numjets == 0) {
+      if (ParallelDescriptor::IOProcessor()) {
+        Print() << "Warning: Restart file contains jet information but no "
+                   "SprayJets have been initialized"
+                << std::endl;
+      }
       return;
     }
     Vector<char> fileCharPtr;
