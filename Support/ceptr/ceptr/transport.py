@@ -158,7 +158,7 @@ def misc_trans_info(fstream, kk, n_lite, no=4):
 def generate_trans_routine_integer(fstream, nametab, expression):
     """Write generic integer transport routine."""
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(fstream, f"void {nametab[0]:s}(int* {nametab[4]:s} ) {{" )
+    cw.writer(fstream, f"void {nametab[0]:s}(int* {nametab[4]:s} ) {{")
     cw.writer(fstream, f"*{nametab[4]:s} = {expression:d};}}")
 
 
@@ -167,9 +167,7 @@ def generate_trans_routine_simple(
 ):
     """Write generic transport routine."""
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-    cw.writer(
-        fstream, f"void {nametab[0]:s}(amrex::Real* {nametab[4]:s} ) {{"
-    )
+    cw.writer(fstream, f"void {nametab[0]:s}(amrex::Real* {nametab[4]:s} ) {{")
 
     for spec in species_info.nonqssa_species:
         cw.writer(

@@ -596,9 +596,7 @@ class Converter:
         cw.writer(fstream, "/* Elements")
         nb_elem = 0
         for elem in self.mechanism.element_names:
-            cw.writer(
-                fstream, f"{self.mechanism.element_index(elem)}  {elem}"
-            )
+            cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
             nb_elem += 1
         cw.writer(fstream, "*/")
         cw.writer(fstream)

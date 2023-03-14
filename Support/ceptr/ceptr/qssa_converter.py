@@ -1585,9 +1585,7 @@ def qssa_coeff_functions(
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")
-    cw.writer(
-        fstream, f"for (int i = 0; i < {species_info.n_species}; ++i)"
-    )
+    cw.writer(fstream, f"for (int i = 0; i < {species_info.n_species}; ++i)")
     cw.writer(fstream, "{")
     cw.writer(fstream, "mixture += sc[i];")
     cw.writer(fstream, "}")
@@ -1696,9 +1694,7 @@ def qssa_coeff_functions(
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(
-                        f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"
-                    ),
+                    cw.comment(f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
@@ -1718,9 +1714,7 @@ def qssa_coeff_functions(
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(
-                        f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"
-                    ),
+                    cw.comment(f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
@@ -2189,9 +2183,7 @@ def qssa_component_functions(
             cw.writer(fstream, "           ;")
         else:
             if ae == 0:
-                cw.writer(
-                    fstream, f"           * exp(({beta:.15g}) * tc[0]);"
-                )
+                cw.writer(fstream, f"           * exp(({beta:.15g}) * tc[0]);")
                 syms.kf_qss_smp_tmp[index] *= sme.exp(beta * syms.tc_smp[0])
             elif beta == 0:
                 cw.writer(

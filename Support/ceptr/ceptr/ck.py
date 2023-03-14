@@ -158,8 +158,7 @@ def ckcpbl(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real cpor[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real cpor[{n_species}]; " + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -210,8 +209,7 @@ def ckcpbs(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real cpor[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real cpor[{n_species}]; " + cw.comment(" temporary storage"),
     )
     cw.writer(fstream, f"amrex::Real imw[{n_species}];")
     cw.writer(fstream)
@@ -266,8 +264,7 @@ def ckcvbl(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real cvor[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real cvor[{n_species}]; " + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -318,8 +315,7 @@ def ckcvbs(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real cvor[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real cvor[{n_species}]; " + cw.comment(" temporary storage"),
     )
     cw.writer(fstream, f"amrex::Real imw[{n_species}];")
     cw.writer(fstream)
@@ -431,8 +427,7 @@ def ckhbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real hml[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real hml[{n_species}]; " + cw.comment(" temporary storage"),
     )
 
     cw.writer(
@@ -667,8 +662,7 @@ def cksbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real x[{n_species}]; "
-        + cw.comment(" need a ytx conversion"),
+        f"amrex::Real x[{n_species}]; " + cw.comment(" need a ytx conversion"),
     )
 
     cw.writer(
@@ -767,8 +761,7 @@ def ckgbml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real gort[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real gort[{n_species}]; " + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -830,13 +823,11 @@ def ckgbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real gort[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real gort[{n_species}]; " + cw.comment(" temporary storage"),
     )
     cw.writer(
         fstream,
-        f"amrex::Real x[{n_species}]; "
-        + cw.comment(" need a ytx conversion"),
+        f"amrex::Real x[{n_species}]; " + cw.comment(" need a ytx conversion"),
     )
 
     cw.writer(
@@ -930,8 +921,7 @@ def ckabml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real aort[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real aort[{n_species}]; " + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -996,13 +986,11 @@ def ckabms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        f"amrex::Real aort[{n_species}]; "
-        + cw.comment(" temporary storage"),
+        f"amrex::Real aort[{n_species}]; " + cw.comment(" temporary storage"),
     )
     cw.writer(
         fstream,
-        f"amrex::Real x[{n_species}]; "
-        + cw.comment(" need a ytx conversion"),
+        f"amrex::Real x[{n_species}]; " + cw.comment(" need a ytx conversion"),
     )
 
     cw.writer(
@@ -2953,7 +2941,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
         )
         cw.writer(
             fstream,
-            f"const int kiv[{n_reactions * maxsp}] =\n     {{{str_ki:s}}};"
+            f"const int kiv[{n_reactions * maxsp}] =\n     {{{str_ki:s}}};",
         )
 
         str_nu = ",".join(
@@ -3032,7 +3020,7 @@ def ckkfkr(fstream, mechanism, species_info):
     cw.writer(fstream)
     if n_reactions > 0:
         cw.writer(fstream, cw.comment("convert to chemkin units"))
-        cw.writer(fstream, f"for (int id = 0; id < {n_reactions}; ++id) {{" )
+        cw.writer(fstream, f"for (int id = 0; id < {n_reactions}; ++id) {{")
         cw.writer(fstream, "q_f[id] *= 1.0e-6;")
         cw.writer(fstream, "q_r[id] *= 1.0e-6;")
         cw.writer(fstream, "}")
