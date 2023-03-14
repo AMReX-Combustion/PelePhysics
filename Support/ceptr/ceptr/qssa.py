@@ -44,12 +44,11 @@ def main():
     # Species
     with open(args.nqssa) as f:
         f_non_qssa_species = yaml.safe_load(f)
-        # Avoid interpreting NO as False
-        try: 
-            indBool = f_non_qssa_species['species'].index(False)
-            f_non_qssa_species['species'][indBool] = 'NO'
-        except ValueError:
-            pass
+        # Make sure the species are not interepreted as boolean
+        if False in f_non_qssa_species['species'] or True in f_non_qssa_species['species']:
+            print("One of the species in non qssa list was interpreted as Boolean.")
+            print("Use quotation marks to avoid this issue.")
+            sys.exit(1)
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
     qssa_species = list(set(all_species) - set(non_qssa_species))
