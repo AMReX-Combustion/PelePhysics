@@ -1517,7 +1517,7 @@ def dproduction_rate(
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("dwdot[k]/dT"))
     cw.writer(fstream, cw.comment("dTdot/d[X]"))
-    cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
+    cw.writer(fstream, f"for (int k=0; k<{n_species}; k++) {{")
     cw.writer(fstream, f"J[{n_species * (n_species + 1)}+k] *= 1.e-6;")
     cw.writer(fstream, f"J[k*{n_species + 1}+{n_species}] *= 1.e6;")
     cw.writer(fstream, "}")

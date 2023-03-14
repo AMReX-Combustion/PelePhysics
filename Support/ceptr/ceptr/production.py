@@ -125,14 +125,14 @@ def production_rate(
         # Mixt concentration for PD & TB
         cw.writer(fstream, cw.comment("compute the mixture concentration"))
         cw.writer(fstream, "amrex::Real mixture = 0.0;")
-        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
+        cw.writer(fstream, f"for (int i = 0; i < {n_species}; ++i) {{")
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
         if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "for (int i = 0; i < %d; ++i) {" % species_info.n_qssa_species,
+                f"for (int i = 0; i < {n_qssa_species}; ++i) {{",
             )
             cw.writer(fstream, "mixture += sc_qss[i];")
             cw.writer(fstream, "}")
@@ -167,8 +167,6 @@ def production_rate(
 
         # kfs
         cw.writer(fstream, cw.comment("Evaluate the kfs"))
-        # cw.writer(fstream,"amrex::Real k_f[%d];"% nclassd)
-        # cw.writer(fstream,"amrex::Real Corr[%d];" % nclassd)
         cw.writer(fstream, "amrex::Real k_f, Corr;")
         if ntroe > 0:
             cw.writer(
@@ -352,7 +350,7 @@ def production_rate(
                     if ntroe == 4:
                         if troe[3] < 0:
                             cw.writer(
-                                fstream, "    + exp(%.15g * invT));" % -troe[3]
+                                fstream, f"    + exp({-troe[3]:.15g} * invT));"
                             )
                         else:
                             cw.writer(
@@ -473,7 +471,7 @@ def production_rate(
             cw.writer(fstream, "amrex::Real X, F_sri;")
 
     cw.writer(fstream)
-    cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
+    cw.writer(fstream, f"for (int i = 0; i < {n_species}; ++i) {{")
     cw.writer(fstream, "wdot[i] = 0.0;")
     cw.writer(fstream, "}")
     cw.writer(fstream)
@@ -493,7 +491,7 @@ def production_rate(
         # Mixt concentration for PD & TB
         cw.writer(fstream, cw.comment("compute the mixture concentration"))
         cw.writer(fstream, "amrex::Real mixture = 0.0;")
-        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
+        cw.writer(fstream, f"for (int i = 0; i < {n_species}; ++i) {{")
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
@@ -775,7 +773,7 @@ def production_rate(
                     if ntroe == 4:
                         if troe[3] < 0:
                             cw.writer(
-                                fstream, "    + exp(%.15g * invT));" % -troe[3]
+                                fstream, f"    + exp({-troe[3]:.15g} * invT));"
                             )
                             first_factor = syms.convert_number_to_int(-troe[3])
                             int_smp += sme.exp(first_factor * syms.invT_smp)
@@ -1088,7 +1086,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             cw.writer(fstream, "amrex::Real X, F_sri;")
 
     cw.writer(fstream)
-    cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
+    cw.writer(fstream, f"for (int i = 0; i < {n_species}; ++i) {{")
     cw.writer(fstream, "wdot[i] = 0.0;")
     cw.writer(fstream, "}")
     cw.writer(fstream)
@@ -1100,7 +1098,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
         # Mixt concentration for PD & TB
         cw.writer(fstream, cw.comment("compute the mixture concentration"))
         cw.writer(fstream, "amrex::Real mixture = 0.0;")
-        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
+        cw.writer(fstream, f"for (int i = 0; i < {n_species}; ++i) {{")
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
@@ -1304,7 +1302,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                     if ntroe == 4:
                         if troe[3] < 0:
                             cw.writer(
-                                fstream, "    + exp(%.15g * invT));" % -troe[3]
+                                fstream, f"    + exp({-troe[3]:.15g} * invT));"
                             )
                         else:
                             cw.writer(
