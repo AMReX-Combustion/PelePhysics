@@ -158,9 +158,6 @@ endif ()
 #
 set(pelephysics_lib_name PelePhysics-${PELEPHYSICS_CHEMISTRY_MODEL}-${PELEPHYSICS_EOS_MODEL}-${PELEPHYSICS_TRANSPORT_MODEL})
 add_library(${pelephysics_lib_name} OBJECT)
-if (BUILD_SHARED_LIBS)
-  set_target_properties(${pelephysics_lib_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
 target_link_libraries(${pelephysics_lib_name} PUBLIC AMReX::amrex)
 target_link_libraries(${pelephysics_lib_name} PUBLIC SUNDIALS::cvode SUNDIALS::arkode)
 
@@ -168,7 +165,6 @@ add_subdirectory(Source)
 
 set(PELEPHYSICS_MECH_DIR "Support/Mechanism/")
 add_subdirectory(${PELEPHYSICS_MECH_DIR})
-###target_include_directories(${pelephysics_lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/Support/Mechanism/Model/${PELEPHYSICS_CHEMISTRY_MODEL}>)
 
 if (PELEPHYSICS_UTILS)
   add_subdirectory(Utility/PMF)
@@ -203,14 +199,7 @@ include(GNUInstallDirs)
 message( STATUS "PelePhysics configuration summary: ")
 message( STATUS "   Build type               = ${CMAKE_BUILD_TYPE}")
 message( STATUS "   Install directory        = ${CMAKE_INSTALL_PREFIX}")
-message( STATUS "   C++ compiler             = ${CMAKE_CXX_COMPILER}")
-message( STATUS "   C++ include paths        = ${_cxx_includes}")
-message( STATUS "   CMake target             = ${pelephysics_lib_name}_api")
-
-# Create non-object library for use as external target
-add_library(${pelephysics_lib_name}_api)
-target_link_libraries(${pelephysics_lib_name}_api PUBLIC ${pelephysics_lib_name})
-add_library(${PROJECT_NAME}::${pelephysics_lib_name}_api ALIAS ${pelephysics_lib_name})
+message( STATUS "   CMake target             = ${pelephysics_lib_name}")
 
 # Collect all headers and make them installable with the target
 get_target_property(PELEPHYSICS_INCLUDES ${pelephysics_lib_name} SOURCES)
@@ -220,7 +209,7 @@ set_target_properties(
 
 # Install PelePhysics
 install(
-  TARGETS ${pelephysics_lib_name}_api ${pelephysics_lib_name}
+  TARGETS ${pelephysics_lib_name}
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin
   ARCHIVE       DESTINATION lib
