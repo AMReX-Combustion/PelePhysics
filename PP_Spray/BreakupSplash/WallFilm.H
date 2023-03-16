@@ -161,8 +161,7 @@ calculateFilmSource(
       if (SPRAY_FUEL_NUM > 1) {
         rho_film = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          Y_film[spf] =
-            (Y_film[spf] * film_mass + mi_dot[spf] * film_dt) / new_mass;
+          Y_film[spf] = (Y_film[spf] * film_mass + mi_dot[spf] * dt) / new_mass;
           rho_film += Y_film[spf] / fdat.rhoL(T_film, spf);
         }
         rho_film = 1. / rho_film;
@@ -172,14 +171,8 @@ calculateFilmSource(
     } else {
       new_mass = 0.;
       p.id() = -1;
-      nsub = isub;
-      isub = nsub + 1;
     }
     film_mass = new_mass;
-    isub++;
-  }
-  if (nsub > 1) {
-    gpv.fluid_eng_src /= static_cast<amrex::Real>(nsub);
   }
   p.rdata(SprayComps::pstateT) = T_film;
   amrex::Real mdot_total = (film_mass - start_mass) / dt;
