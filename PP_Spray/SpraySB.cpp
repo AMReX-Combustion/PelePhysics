@@ -146,7 +146,7 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateBM1) = 0.;
           }
           p.rdata(SprayComps::pstateBM2) = 0.;
-          p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateFilmHght) = 0.;
           p.rdata(SprayComps::pstateNumDens) = numDens0;
           bool where = Where(p, pld);
           if (!where) {
@@ -179,7 +179,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SprayComps::pstateBM2) = 0.;
           // If droplet splashing is thermally breakup, center droplet also
           // reflects
-          p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateFilmHght) = 0.;
           p.rdata(SprayComps::pstateNumDens) = numDens0;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             p.pos(dir) = loc0[dir] + dtpp * avg_vel[dir];
@@ -236,7 +236,7 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateBM2) = phi3;
           }
 
-          p.rdata(SprayComps::pstateFilmVol) = 0.;
+          p.rdata(SprayComps::pstateFilmHght) = 0.;
           p.rdata(SprayComps::pstateNumDens) = N_s;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3

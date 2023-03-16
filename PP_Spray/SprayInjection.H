@@ -137,7 +137,7 @@ SprayParticleContainer::sprayInjection(
       // If KHRT is used, BM2 is RT time
       // If TAB is used, BM2 is y dot
       p.rdata(SprayComps::pstateBM2) = 0.;
-      p.rdata(SprayComps::pstateFilmVol) = 0.;
+      p.rdata(SprayComps::pstateFilmHght) = 0.;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
       amrex::Real new_mass = cur_mass + num_ppp * pmass;
@@ -237,7 +237,7 @@ SprayParticleContainer::uniformSprayInit(
     part_vals[SprayComps::pstateBM1] = 0.;
   }
   part_vals[SprayComps::pstateBM2] = 0.;
-  part_vals[SprayComps::pstateFilmVol] = 0.;
+  part_vals[SprayComps::pstateFilmHght] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),

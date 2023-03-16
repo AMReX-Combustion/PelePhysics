@@ -79,8 +79,7 @@ droplet_splashing(
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
   const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
-  const amrex::Real Re_L =
-    amrex::Math::abs(Nw_Vp) * dia_part * rho_part / mu_part;
+  const amrex::Real Re_L = std::abs(Nw_Vp) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   amrex::Real umag = vel_part.vectorLength();
   // Inclination of on-coming particle to surface in radians
@@ -142,9 +141,26 @@ droplet_splashing(
     // Convert parcel to wall film
     normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
     vel_part = amrex::RealVect::TheZeroVector();
-    p.rdata(SprayComps::pstateFilmVol) = num_dens * dm / rho_part;
-    // p.rdata(SprayComps::pstateDia) = film_dia; // TODO: Figure out film
-    // diameter
+    // Assume all droplets in parcel coalesce when forming the wall film
+    amrex::Real film_vol = num_dens * dm / rho_part;
+    // Combined droplet diameter
+    amrex::Real comb_dia = std::cbrt(film_vol * 6. / M_PI);
+    amrex::Real comb_We = We * comb_dia / dia_part;
+    amrex::Real comb_Re = Re_L * comb_dia / dia_part;
+    // Contact angle
+    // TODO: Determine a better way to estimate this
+    // Film is assumed to a spherical cap with contact angle
+    amrex::Real theta_c = fdat.theta_c;
+    // Find the maximum diameter of the wall film using a modified version of
+    // the formula from Pasandideh-Fard et al. 1996 See documentation for more
+    // info
+    amrex::Real film_dia = std::sqrt(
+      (12. + comb_We) /
+      (6. * (1. - std::cos(theta_c)) / std::pow(std::sin(theta_c), 2) +
+       4. * comb_We / std::sqrt(comb_Re)));
+    p.rdata(SprayComps::pstateDia) = film_dia;
+    p.rdata(SprayComps::pstateFilmHght) = 0.5 * film_dia * std::tan(theta_c);
+    p.rdata(SprayComps::pstateNumDens) = 1.;
   }
 }
 

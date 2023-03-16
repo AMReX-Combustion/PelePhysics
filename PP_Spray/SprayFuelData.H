@@ -15,8 +15,8 @@ struct SprayComps
   static const int pstateBM1 =
     pstateNumDens + 1;                        // Variables for breakup modeling
   static const int pstateBM2 = pstateBM1 + 1; // Variables for breakup modeling
-  static const int pstateFilmVol = pstateBM2 + 1;
-  static const int pstateNum = pstateFilmVol + 1;
+  static const int pstateFilmHght = pstateBM2 + 1;
+  static const int pstateNum = pstateFilmHght + 1;
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
@@ -127,6 +127,7 @@ struct SprayData
   amrex::Real ref_T;
   amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
+  amrex::Real theta_c = -1.; // Contact angle for wall film
   // If particle is updated half dt or whole dt
   amrex::Real dtmod = 0.5;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
@@ -153,6 +154,7 @@ struct SprayData
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
     wall_T = fdat.wall_T;
+    theta_c = fdat.theta_c;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       critT[spf] = fdat.critT[spf];
       boilT[spf] = fdat.boilT[spf];

@@ -108,8 +108,52 @@ SprayParticleContainer::readSprayParams(
   //
   pp.query("max_parcel_size", max_num_ppp);
   pp.query("use_splash_model", splash_model);
-  if (splash_model) {
-    Abort("Splash model is not fully implemented");
+  std::string breakup_model_str = "None";
+  pp.query("use_breakup_model", breakup_model_str);
+  if (breakup_model_str == "TAB") {
+    breakup_model = 1;
+    pp.query("max_parcel_size", max_num_ppp);
+  } else if (breakup_model_str == "KHRT") {
+    breakup_model = 2;
+    pp.query("B0_KHRT", B0_KHRT);
+    pp.query("B1_KHRT", B1_KHRT);
+    pp.query("C3_KHRT", C3_KHRT);
+  } else if (breakup_model_str == "None") {
+    breakup_model = 0;
+  } else {
+    Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
+          "'None'");
+  }
+  if (splash_model || (breakup_model > 0)) {
+    pp.query("breakup_parcel_factor", breakup_ppp_fact);
+    if (breakup_ppp_fact > 1. || breakup_ppp_fact < 0.) {
+      Abort("'breakup_parcel_factor' must be between 0 and 1");
+    }
+    bool wrong_data = false;
+    for (int i = 0; i < nfuel; ++i) {
+      std::string var_read = fuel_names[i] + "_mu";
+      if (!pp.contains(var_read.c_str())) {
+        wrong_data = true;
+      }
+    }
+    if (wrong_data || !pp.contains("fuel_sigma")) {
+      Abort(
+        "fuel_sigma and mu coeffs must be set for splash or breakup model.");
+    }
+    if (splash_model) {
+      // TODO: Have this retrieved from proper boundary data
+      pp.get("wall_temp", sprayData.wall_T);
+      Real theta_c_deg = -1.;
+      pp.get("contact_angle", theta_c_deg);
+      if (theta_c_deg < 0. || theta_c_deg > 180.) {
+        Abort("'contact_angle' must be between 0 and 180");
+      }
+      sprayData.theta_c = theta_c_deg * M_PI / 180.;
+    }
+    // Set the fuel surface tension and contact angle
+    pp.get("fuel_sigma", sprayData.sigma);
+    sprayData.do_splash = splash_model;
+    sprayData.do_breakup = breakup_model;
   }
 
   // Must use same reference temperature for all fuels

@@ -20,6 +20,18 @@ SprayParticleContainer::SprayParticleIO(
     real_comp_names[SprayComps::pstateY + sp] =
       "spray_mf_" + spray_fuel_names[sp];
   }
+  real_comp_names[SprayComps::pstateNumDens] = "number_density";
+  if (m_sprayData->do_breakup == 1) {
+    real_comp_names[SprayComps::pstateBM1] = "Y_TAB";
+    real_comp_names[SprayComps::pstateBM2] = "Ydot_TAB";
+  } else if (m_sprayData->do_breakup == 2) {
+    real_comp_names[SprayComps::pstateBM1] = "d0";
+    real_comp_names[SprayComps::pstateBM2] = "rt_time";
+  } else {
+    real_comp_names[SprayComps::pstateBM1] = "unused1";
+    real_comp_names[SprayComps::pstateBM2] = "unused2";
+  }
+  real_comp_names[SprayComps::pstateFilmHght] = "wall_film_height";
   Vector<std::string> int_comp_names;
   Checkpoint(dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
   // Here we write ascii information every time we write a plot file
