@@ -118,7 +118,7 @@ SprayParticleContainer::computeDerivedVars(
         } else {
           Real rad2 = std::pow(0.5 * dia_part, 2);
           Real cur_vol =
-            M_PI / 6. * film_hght * (3. rad2 + film_hght * film_hght);
+            M_PI / 6. * film_hght * (3. * rad2 + film_hght * film_hght);
           Gpu::Atomic::Add(&vararr(ijkc, wfh_indx), cur_vol / face_area);
         }
       }
