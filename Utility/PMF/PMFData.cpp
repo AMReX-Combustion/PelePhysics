@@ -31,10 +31,6 @@ namespace PMF {
 void
 PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 {
-  std::string firstline, secondline, remaininglines;
-  unsigned long pos1, pos2;
-  int variable_count, line_count;
-
   std::ifstream infile(fname);
   if (!infile.is_open()) {
     amrex::Abort("Unable to open pmf input file " + fname);
@@ -43,14 +39,16 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   infile.close();
   std::istringstream iss(memfile);
 
+  std::string firstline{""};
   std::getline(iss, firstline);
   if (!checkQuotes(firstline)) {
     amrex::Abort("PMF file variable quotes unbalanced");
   }
+  std::string secondline{""};
   std::getline(iss, secondline);
-  pos1 = 0;
-  pos2 = 0;
-  variable_count = 0;
+  unsigned long pos1 = 0;
+  unsigned long pos2 = 0;
+  int variable_count = 0;
   while ((pos1 < firstline.length() - 1) && (pos2 < firstline.length() - 1)) {
     pos1 = firstline.find('"', pos1);
     pos2 = firstline.find('"', pos1 + 1);
@@ -76,7 +74,8 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   //  amrex::Print() << "Variable found: " << PMF::pmf_names[i] <<
   //  std::endl;
 
-  line_count = 0;
+  int line_count = 0;
+  std::string remaininglines{""};
   while (std::getline(iss, remaininglines)) {
     line_count++;
   }
@@ -84,11 +83,12 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 
   m_data_h.m_nPoint = line_count;
   m_data_h.m_nVar = variable_count - 1;
+  int sizeYvec = line_count * (variable_count - 1); 
   m_data_h.m_doAverage = a_doAverage;
   m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
     line_count * sizeof(amrex::Real));
   m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
-    line_count * (variable_count - 1) * sizeof(amrex::Real));
+    sizeYvec * sizeof(amrex::Real));
   m_host_allocated = true;
 
   iss.clear();
