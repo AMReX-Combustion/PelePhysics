@@ -19,25 +19,24 @@ pmf(
   amrex::Real xhi,
   amrex::GpuArray<amrex::Real, NUM_SPECIES + 4>& y_vector)
 {
-  amrex::Real sum = 0.0, xmid = 0.0;
-  int lo_loside = -1, lo_hiside = -1;
-  int hi_loside = -1, hi_hiside = -1;
-  int loside = -1, hiside = -1;
-  amrex::Real ylo = 0.0, yhi = 0.0, x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0,
-              dydx = 0.0;
-
+  // Average the PMF data between xlo and xhi
+  // to get a true Finite Volume, cell-centered value
   if (pmf_data->m_doAverage) {
+    int lo_loside = -1;
+    int lo_hiside = -1;
     if (xlo < pmf_data->pmf_X[0]) {
       lo_loside = 0;
       lo_hiside = 0;
     }
-    if (xhi < pmf_data->pmf_X[0]) {
-      hi_loside = 0;
-      hi_hiside = 0;
-    }
     if (xlo > pmf_data->pmf_X[pmf_data->m_nPoint - 1]) {
       lo_loside = pmf_data->m_nPoint - 1;
       lo_hiside = pmf_data->m_nPoint - 1;
+    }
+    int hi_loside = -1;
+    int hi_hiside = -1;
+    if (xhi < pmf_data->pmf_X[0]) {
+      hi_loside = 0;
+      hi_hiside = 0;
     }
     if (xhi > pmf_data->pmf_X[pmf_data->m_nPoint - 1]) {
       hi_loside = pmf_data->m_nPoint - 1;
@@ -60,36 +59,46 @@ pmf(
       }
     }
     for (unsigned int j = 0; j < pmf_data->m_nVar; j++) {
-      x1 = pmf_data->pmf_X[lo_loside];
-      y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_loside];
-      x2 = pmf_data->pmf_X[lo_hiside];
-      y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_hiside];
-      dydx = lo_loside == lo_hiside ? 0 : (y2 - y1) / (x2 - x1);
-      ylo = y1 + dydx * (xlo - x1);
+      amrex::Real x1 = pmf_data->pmf_X[lo_loside];
+      amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_loside];
+      amrex::Real x2 = pmf_data->pmf_X[lo_hiside];
+      amrex::Real y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_hiside];
+      amrex::Real dydx{0.0}
+      if (lo_loside != lo_hiside) {
+        dydx = (y2 - y1) / (x2 - x1);
+      }
+      amrex::Real ylo = y1 + dydx * (xlo - x1);
       if (lo_loside == hi_loside) {
         yhi = y1 + dydx * (xhi - x1);
         y_vector[j] = 0.5 * (ylo + yhi);
       } else {
-        sum = (x2 - xlo) * 0.5 * (ylo + y2);
+        amrex::Real sum = (x2 - xlo) * 0.5 * (ylo + y2);
         x1 = pmf_data->pmf_X[hi_loside];
         y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hi_loside];
         x2 = pmf_data->pmf_X[hi_hiside];
         y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hi_hiside];
-        dydx = hi_loside == hi_hiside ? 0.0 : (y2 - y1) / (x2 - x1);
+        if (lo_loside == lo_hiside) {
+          dydx = 0.0;
+        } else {
+          dydx = (y2 - y1) / (x2 - x1);
+        }
         yhi = y1 + dydx * (xhi - x1);
-        sum = sum + (xhi - x1) * 0.5 * (yhi + y1);
+        sum += (xhi - x1) * 0.5 * (yhi + y1);
         for (int k = lo_hiside; k <= hi_loside - 1; k++) {
-          sum = sum + (pmf_data->pmf_X[k + 1] - pmf_data->pmf_X[k]) * 0.5 *
-                        (pmf_data->pmf_Y[pmf_data->m_nPoint * j + k] +
-                         pmf_data->pmf_Y[pmf_data->m_nPoint * j + k + 1]);
+          sum += (pmf_data->pmf_X[k + 1] - pmf_data->pmf_X[k]) * 0.5 *
+                   (pmf_data->pmf_Y[pmf_data->m_nPoint * j + k] +
+                    pmf_data->pmf_Y[pmf_data->m_nPoint * j + k + 1]);
         }
         y_vector[j] = sum / (xhi - xlo);
       }
     }
+
+  // Get the data from interpolating PMF data
+  // to the center of [xlo:xli]
   } else {
-    xmid = 0.5 * (xlo + xhi);
-    loside = -1;
-    hiside = -1;
+    amrex::Real xmid = 0.5 * (xlo + xhi);
+    int loside = -1;
+    int hiside = -1;
     if (xmid < pmf_data->pmf_X[0]) {
       loside = 0;
       hiside = 0;
@@ -107,11 +116,14 @@ pmf(
       }
     }
     for (unsigned int j = 0; j < pmf_data->m_nVar; j++) {
-      x1 = pmf_data->pmf_X[loside];
-      y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + loside];
-      x2 = pmf_data->pmf_X[hiside];
-      y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hiside];
-      dydx = loside == hiside ? 0.0 : (y2 - y1) / (x2 - x1);
+      amrex::Real x1 = pmf_data->pmf_X[loside];
+      amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + loside];
+      amrex::Real x2 = pmf_data->pmf_X[hiside];
+      amrex::Real y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hiside];
+      amrex::Real dydx{0.0};
+      if (loside != hiside) {
+        dydx = (y2 - y1) / (x2 - x1);
+      }
       y_vector[j] = y1 + dydx * (xlo - x1);
     }
   }
