@@ -141,25 +141,26 @@ droplet_splashing(
     // Convert parcel to wall film
     normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
     vel_part = amrex::RealVect::TheZeroVector();
-    // Assume all droplets in parcel coalesce when forming the wall film
+    // Assume all remaining droplets in parcel coalesce to form the wall film
     amrex::Real film_vol = num_dens * dm / rho_part;
     // Combined droplet diameter
     amrex::Real comb_dia = std::cbrt(film_vol * 6. / M_PI);
     amrex::Real comb_We = We * comb_dia / dia_part;
     amrex::Real comb_Re = Re_L * comb_dia / dia_part;
     // Contact angle
-    // TODO: Determine a better way to estimate this
-    // Film is assumed to a spherical cap with contact angle
     amrex::Real theta_c = fdat.theta_c;
     // Find the maximum diameter of the wall film using a modified version of
     // the formula from Pasandideh-Fard et al. 1996 See documentation for more
     // info
-    amrex::Real film_dia = std::sqrt(
-      (12. + comb_We) /
-      (6. * (1. - std::cos(theta_c)) / std::pow(std::sin(theta_c), 2) +
-       4. * comb_We / std::sqrt(comb_Re)));
+    amrex::Real film_dia =
+      comb_dia * std::sqrt(
+                   (12. + comb_We) / (6. * (1. - std::cos(theta_c)) /
+                                        std::pow(std::sin(theta_c), 2) +
+                                      4. * comb_We / std::sqrt(comb_Re)));
     p.rdata(SprayComps::pstateDia) = film_dia;
-    p.rdata(SprayComps::pstateFilmHght) = 0.5 * film_dia * std::tan(theta_c);
+    // Assume film is a cylinder
+    p.rdata(SprayComps::pstateFilmHght) =
+      film_vol / (0.25 * M_PI * film_dia * film_dia);
     p.rdata(SprayComps::pstateNumDens) = 1.;
   }
 }

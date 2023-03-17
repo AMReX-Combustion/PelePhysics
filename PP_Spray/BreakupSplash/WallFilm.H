@@ -47,18 +47,13 @@ calculateFilmSource(
     rho_film += Y_film[spf] / fdat.rhoL(amrex::min(T_film, cBoilT[spf]), spf);
   }
   rho_film = 1. / rho_film;
-  amrex::Real theta_c = fdat.theta_c;
-  amrex::Real tanthc = std::tan(theta_c);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
   amrex::Real rad2 = std::pow(0.5 * film_dia, 2);
-  amrex::Real hght2 = std::pow(film_height, 2);
-  amrex::Real film_mass =
-    M_PI / 6. * rho_film * film_height * (3. * rad2 + hght2);
-  // Film surface area exposed to gas
-  amrex::Real top_area = M_PI * (rad2 + hght2);
-  // Film area exposed to the wall
-  amrex::Real bottom_area = M_PI * rad2;
+  // Assume film is a cylinder
+  // Film surface area exposed to gas/wall
+  amrex::Real film_area = M_PI * rad2;
+  amrex::Real film_mass = rho_film * film_height * film_area;
   amrex::Real start_mass = film_mass;
   amrex::Real Tcrit = 0.;
   amrex::Real cp_film = 0.;
@@ -128,10 +123,10 @@ calculateFilmSource(
       rhoDtotal += Ddiag[fspec];
     }
     amrex::Real Sc_skin = mu_skin / rhoDtotal;
-    amrex::Real q_conv = top_area * h_conv * (gpv.T_fluid - T_film);
+    amrex::Real q_conv = film_area * h_conv * (gpv.T_fluid - T_film);
     amrex::Real q_cond =
-      -bottom_area * lambda_film * 2. * (T_film - fdat.wall_T) / film_height;
-    amrex::Real gstar_coeff = top_area * h_conv / lambda_skin *
+      -film_area * lambda_film * 2. * (T_film - fdat.wall_T) / film_height;
+    amrex::Real gstar_coeff = film_area * h_conv / lambda_skin *
                               std::pow(Sc_skin / Pr_skin, 0.6) *
                               std::log1p(B_M);
     amrex::Real sumL = 0.;
@@ -153,10 +148,9 @@ calculateFilmSource(
     gpv.fluid_eng_src += q_conv;
     T_film += dt * part_temp_src;
     amrex::Real new_mass = film_mass + dt * m_dot;
-    // Compute the new height assuming H = 0.5 * dia * tan(theta_c)
-    film_height = std::cbrt(
-      6. * new_mass / (rho_film * M_PI * (3. / (tanthc * tanthc) + 1.)));
-    film_dia = 2. * film_height / tanthc;
+    // Assumes mass is only lost in the wall normal direction and the diameter
+    // remains constant; this is not physically correct
+    film_height = new_mass / (rho_film * film_area);
     if (film_height > min_height) {
       if (SPRAY_FUEL_NUM > 1) {
         rho_film = 0.;
