@@ -63,7 +63,7 @@ pmf(
       amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_loside];
       amrex::Real x2 = pmf_data->pmf_X[lo_hiside];
       amrex::Real y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_hiside];
-      amrex::Real dydx { 0.0 }
+      amrex::Real dydx = 0.0;
       if (lo_loside != lo_hiside) {
         dydx = (y2 - y1) / (x2 - x1);
       }
@@ -120,7 +120,7 @@ pmf(
       amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + loside];
       amrex::Real x2 = pmf_data->pmf_X[hiside];
       amrex::Real y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hiside];
-      amrex::Real dydx{0.0};
+      amrex::Real dydx = 0.0;
       if (loside != hiside) {
         dydx = (y2 - y1) / (x2 - x1);
       }
