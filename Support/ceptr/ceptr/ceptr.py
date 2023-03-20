@@ -56,7 +56,7 @@ def convert_lst_qss(
     with open(lst, "r") as f:
         for line in f:
             if not line.startswith("#"):
-                mech_file, format_file = line.split()
+                mech_file, format_file, _, _ = line.split()
                 mechname = lpath.parents[0] / mech_file.strip()
                 qss_format_input = lpath.parents[0] / format_file.strip()
                 print(f"""Converting file {mechname}""")
