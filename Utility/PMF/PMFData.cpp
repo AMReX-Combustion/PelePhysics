@@ -83,7 +83,7 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 
   m_data_h.m_nPoint = line_count;
   m_data_h.m_nVar = variable_count - 1;
-  int sizeYvec = line_count * (variable_count - 1);
+  const int sizeYvec = line_count * (variable_count - 1);
   m_data_h.m_doAverage = a_doAverage;
   m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
     line_count * sizeof(amrex::Real));
