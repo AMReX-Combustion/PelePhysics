@@ -22,10 +22,17 @@ def process_qss(fname, nqssa, visualize, method):
     # Species
     with open(nqssa) as f:
         f_non_qssa_species = yaml.safe_load(f)
+        # Make sure the species are not interepreted as boolean
+        if (
+            False in f_non_qssa_species["species"]
+            or True in f_non_qssa_species["species"]
+        ):
+            print("Some species in non qssa list interpreted as Boolean.")
+            print("Use quotation marks to avoid this issue.")
+            sys.exit(1)
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
     qssa_species = list(set(all_species) - set(non_qssa_species))
-
     # Visualize
     if visualize:
         cqr.visualize_qssa(mechanism, reaction_info, qssa_species)
@@ -74,7 +81,11 @@ def process_qss(fname, nqssa, visualize, method):
             for idx, reaction in enumerate(qssa.reactions()):
                 if fr.equation == reaction.equation:
                     forward_to_remove_idx.append(idx)
-                    break
+                    if not fr.duplicate:
+                        break
+        # Remove duplicates
+        forward_to_remove_idx = list(set(forward_to_remove_idx))
+        forward_to_remove_idx.sort()
         qssa.update_user_data({"forward_to_remove_idx": forward_to_remove_idx})
     qssa.write_yaml(qssaname, header=True)
 
