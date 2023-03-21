@@ -2,6 +2,7 @@
 #define REACTORBASE_H
 
 #include <AMReX_ParmParse.H>
+#include <AMReX_Gpu.H>
 #include <sundials/sundials_context.h>
 #include "Factory.H"
 #include "PelePhysics.H"
@@ -88,12 +89,18 @@ public:
     const amrex::Real absTol,
     const std::string& solvername);
 
+#ifdef AMREX_USE_HIP
   ~ReactorBase() { amrex::The_Arena()->free(m_typ_vals_gpu); }
+#else
+  ~ReactorBase() override = default;
+#endif
 
 protected:
   int verbose{0};
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
+#if defined(AMREX_USE_GPU)
   amrex::Real* m_typ_vals_gpu = nullptr;
+#endif
 };
 } // namespace pele::physics::reactions
 #endif

@@ -49,11 +49,13 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     }
     amrex::Print() << "Temp : " << m_typ_vals[size_ETV - 1] << std::endl;
   }
+#if defined(AMREX_USE_GPU)
   m_typ_vals_gpu =
     (amrex::Real*)amrex::The_Arena()->alloc(size_ETV * sizeof(amrex::Real));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, &(m_typ_vals[0]), &(m_typ_vals[0]) + size_ETV,
     m_typ_vals_gpu);
+#endif
 }
 
 void
@@ -104,16 +106,26 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances with TypVals rtol = " << relTol
                      << " atolfact = " << absTol << " in PelePhysics \n";
     }
+#if defined(AMREX_USE_GPU)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
     auto arr = m_typ_vals_gpu;
     amrex::launch_global<256>
       <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
-        int icell = blockDim.x * blockIdx.x + threadIdx.x;
+        const int icell = blockDim.x * blockIdx.x + threadIdx.x;
         if (icell < neq_tot) {
           ratol[icell] = arr[icell / ncells] * absTol;
         }
       });
+#else
+    for (int k = 0; k < NUM_SPECIES + 1; k++) {
+      amrex::Real T = m_typ_vals[k] * absTol;
+      for (int i = 0; i < ncells; i++) {
+        const int offset = k * ncells + i;
+        ratol[offset] = T;
+      }
+    }
+#endif
   } else {
     // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
@@ -121,6 +133,7 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances rtol = " << relTol << " atol = " << absTol
                      << " in PelePhysics \n";
     }
+#if defined(AMREX_USE_GPU)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
     amrex::launch_global<256>
@@ -130,6 +143,11 @@ ReactorBase::set_sundials_solver_tols(
           ratol[icell] = absTol;
         }
       });
+#else
+    for (int i = 0; i < neq_tot; i++) {
+      ratol[i] = absTol;
+    }
+#endif
   }
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
