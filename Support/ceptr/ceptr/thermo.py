@@ -97,7 +97,7 @@ def generate_thermo_routine(
     """Write a thermodynamics routine."""
     low_temp, high_temp, midpoints = species_coeffs
 
-    if inline == False:
+    if not inline:
         cw.writer(
             fstream,
             (
@@ -119,7 +119,7 @@ def generate_thermo_routine(
     if name == "speciesEnthalpy_qss" and not (syms is None):
         syms_h_rt_qss = True
 
-    if inline == False:
+    if not inline:
         cw.writer(fstream, "{")
         # declarations
         cw.writer(fstream)
@@ -287,15 +287,15 @@ def generate_thermo_routine(
                 fstream,
                 cw.comment(f"species with midpoint at T={mid_temp:g} kelvin"),
             )
-            Tvar = "tT" if inline else "T"
+            tvar = "tT" if inline else "T"
             cw.writer(
                 fstream,
-                f"""if ({Tvar} < {mid_temp:g}) {{\n{lostr}}} else {{\n{histr}}}""",
+                f"""if ({tvar} < {mid_temp:g}) {{\n{lostr}}} else {{\n{histr}}}""",
             )
         lostream.close()
         histream.close()
 
-    if inline == False:
+    if not inline:
         cw.writer(fstream, "}")
 
 

@@ -306,7 +306,6 @@ def ckcvbl(fstream, mechanism, species_info):
 
 def ckcvbs(fstream, mechanism, species_info):
     """Write ckcvbs."""
-    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the mean specific heat at CV (Eq. 36)")
@@ -520,7 +519,6 @@ def ckubml(fstream, mechanism, species_info):
 
 def ckubms(fstream, mechanism, species_info):
     """Write ckubms."""
-    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get mean internal energy in mass units"))
     cw.writer(
