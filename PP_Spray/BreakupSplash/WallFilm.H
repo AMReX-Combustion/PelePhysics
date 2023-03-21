@@ -104,6 +104,8 @@ calculateFilmSource(
   // Local Reynolds number
   amrex::Real vel_mag = gpv.vel_fluid.vectorLength();
   amrex::Real Reyn = rho_skin * vel_mag * film_height / mu_skin;
+  // These relations are from "A one-dimensional unsteady wall film evaporation
+  // model" by Yan et al. (2015)
   amrex::Real Nu =
     amrex::max(1., 0.0287 * std::pow(Pr_skin, 0.6) * std::pow(Reyn, 0.8));
   // If gas phase is not saturated
