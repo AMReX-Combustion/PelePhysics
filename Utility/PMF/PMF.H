@@ -69,7 +69,7 @@ pmf(
       }
       amrex::Real ylo = y1 + dydx * (xlo - x1);
       if (lo_loside == hi_loside) {
-        yhi = y1 + dydx * (xhi - x1);
+        amrex::Real yhi = y1 + dydx * (xhi - x1);
         y_vector[j] = 0.5 * (ylo + yhi);
       } else {
         amrex::Real sum = (x2 - xlo) * 0.5 * (ylo + y2);
@@ -82,7 +82,7 @@ pmf(
         } else {
           dydx = (y2 - y1) / (x2 - x1);
         }
-        yhi = y1 + dydx * (xhi - x1);
+        amrex::Real yhi = y1 + dydx * (xhi - x1);
         sum += (xhi - x1) * 0.5 * (yhi + y1);
         for (int k = lo_hiside; k <= hi_loside - 1; k++) {
           sum += (pmf_data->pmf_X[k + 1] - pmf_data->pmf_X[k]) * 0.5 *
