@@ -474,20 +474,56 @@ CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cvor[3];                                //  temporary storage
-  amrex::Real imw[3];
+  // compute Cv/R at the given temperature
 
-  get_imw(imw);
+  // species with midpoint at T=1391 kelvin
+  if (tT < 1391) {
+    // species 0: NC10H22
+    result +=
+      y[0] *
+      (-3.08416969e+00 + 1.22535012e-01 * tc[1] - 7.76815739e-05 * tc[2] +
+       2.49834877e-08 * tc[3] - 3.23548038e-12 * tc[4]) *
+      0.0070280983371519;
+  } else {
+    // species 0: NC10H22
+    result +=
+      y[0] *
+      (+3.09882239e+01 + 4.77244922e-02 * tc[1] - 1.62276391e-05 * tc[2] +
+       2.50963259e-09 * tc[3] - 1.45215772e-13 * tc[4]) *
+      0.0070280983371519;
+  }
 
-  cv_R(cvor, tc);
-
-  // multiply by y/molecularweight
-  for (int i = 0; i < 3; i++) {
-    result += cvor[i] * y[i] * imw[i];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 1: O2
+    result +=
+      y[1] *
+      (+2.78245636e+00 - 2.99673416e-03 * tc[1] + 9.84730201e-06 * tc[2] -
+       9.68129509e-09 * tc[3] + 3.24372837e-12 * tc[4]) *
+      0.0312519532470779;
+    // species 2: N2
+    result +=
+      y[2] *
+      (+2.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
+      0.0356964374955379;
+  } else {
+    // species 1: O2
+    result +=
+      y[1] *
+      (+2.28253784e+00 + 1.48308754e-03 * tc[1] - 7.57966669e-07 * tc[2] +
+       2.09470555e-10 * tc[3] - 2.16717794e-14 * tc[4]) *
+      0.0312519532470779;
+    // species 2: N2
+    result +=
+      y[2] *
+      (+1.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
+       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
   }
 
   cvbs = result * 8.31446261815324e+07;

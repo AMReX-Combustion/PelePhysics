@@ -537,20 +537,68 @@ CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cvor[4];                                //  temporary storage
-  amrex::Real imw[4];
+  // compute Cv/R at the given temperature
 
-  get_imw(imw);
+  // species with midpoint at T=1391 kelvin
+  if (tT < 1391) {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (-3.62181594e+00 + 1.47237711e-01 * tc[1] - 9.43970271e-05 * tc[2] +
+       3.07441268e-08 * tc[3] - 4.03602230e-12 * tc[4]) *
+      0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (+3.75095037e+01 + 5.63550048e-02 * tc[1] - 1.91493200e-05 * tc[2] +
+       2.96024862e-09 * tc[3] - 1.71244150e-13 * tc[4]) *
+      0.0058706117177410;
+  }
 
-  cv_R(cvor, tc);
-
-  // multiply by y/molecularweight
-  for (int i = 0; i < 4; i++) {
-    result += cvor[i] * y[i] * imw[i];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 1: CH4
+    result +=
+      y[1] *
+      (+4.14987613e+00 - 1.36709788e-02 * tc[1] + 4.91800599e-05 * tc[2] -
+       4.84743026e-08 * tc[3] + 1.66693956e-11 * tc[4]) *
+      0.0623324814560868;
+    // species 2: O2
+    result +=
+      y[2] *
+      (+2.78245636e+00 - 2.99673416e-03 * tc[1] + 9.84730201e-06 * tc[2] -
+       9.68129509e-09 * tc[3] + 3.24372837e-12 * tc[4]) *
+      0.0312519532470779;
+    // species 3: N2
+    result +=
+      y[3] *
+      (+2.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
+      0.0356964374955379;
+  } else {
+    // species 1: CH4
+    result +=
+      y[1] *
+      (-9.25148505e-01 + 1.33909467e-02 * tc[1] - 5.73285809e-06 * tc[2] +
+       1.22292535e-09 * tc[3] - 1.01815230e-13 * tc[4]) *
+      0.0623324814560868;
+    // species 2: O2
+    result +=
+      y[2] *
+      (+2.28253784e+00 + 1.48308754e-03 * tc[1] - 7.57966669e-07 * tc[2] +
+       2.09470555e-10 * tc[3] - 2.16717794e-14 * tc[4]) *
+      0.0312519532470779;
+    // species 3: N2
+    result +=
+      y[3] *
+      (+1.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
+       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
   }
 
   cvbs = result * 8.31446261815324e+07;

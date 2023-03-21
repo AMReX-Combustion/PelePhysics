@@ -374,20 +374,39 @@ CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cvor[2];                                //  temporary storage
-  amrex::Real imw[2];
+  // compute Cv/R at the given temperature
 
-  get_imw(imw);
-
-  cv_R(cvor, tc);
-
-  // multiply by y/molecularweight
-  for (int i = 0; i < 2; i++) {
-    result += cvor[i] * y[i] * imw[i];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: O2
+    result +=
+      y[0] *
+      (+2.21293640e+00 + 1.12748635e-03 * tc[1] - 5.75615047e-07 * tc[2] +
+       1.31387723e-09 * tc[3] - 8.76855392e-13 * tc[4]) *
+      0.0312519532470779;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+2.29867700e+00 + 1.40824000e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485500e-12 * tc[4]) *
+      0.0356964374955379;
+  } else {
+    // species 0: O2
+    result +=
+      y[0] *
+      (+2.69757819e+00 + 6.13519689e-04 * tc[1] - 1.25884199e-07 * tc[2] +
+       1.77528148e-11 * tc[3] - 1.13643531e-15 * tc[4]) *
+      0.0312519532470779;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+1.92664000e+00 + 1.48797700e-03 * tc[1] - 5.68476100e-07 * tc[2] +
+       1.00970400e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
   }
 
   cvbs = result * 8.31446261815324e+07;

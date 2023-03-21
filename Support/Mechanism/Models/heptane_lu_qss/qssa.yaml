@@ -4,7 +4,8 @@ cantera-version: 2.6.0
 git-commit: 9573e6b
 date: Wed Mar 22 11:55:09 2023
 phases:
-  - n_qssa_species: 33
+  - name: gas-qssa
+    n_qssa_species: 33
     kinetics: gas
     transport: mixture-averaged
     qssa_species: [c2h5co, c2h5o, c3h2, c3h5o, c4h7o, c4h8ooh1-3, c7h14-2, c7h14-3,
