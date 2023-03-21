@@ -2,16 +2,16 @@ description: QSSA of gas
 generator: YamlWriter
 cantera-version: 2.6.0
 git-commit: 9573e6b
-date: Tue Feb 21 08:36:30 2023
+date: Tue Mar 14 11:55:34 2023
 phases:
-  - n_qssa_species: 34
+  - n_qssa_species: 33
     kinetics: gas
     transport: mixture-averaged
-    qssa_species: [c7h15-3, c7h14ooh3-5o2, c7h14ooh4-2o2, c3h2, nc7ket42, c2h5co,
-    c7h14ooh3-4, ch2cho, c7h15-4, c7h14ooh2-4, ch2(s), c4h7o, nc7ket13,
-    c7h14ooh1-3o2, c7h15-2, c7h14ooh2-4o2, nc7ket35, pc4h9, c7h14ooh1-3,
-    c2h5o, nc3h7co, nc7ket24, ch3o, c7h14-3, c3h5o, c7h14ooh2-3, c7h14ooh3-2,
-    ch3co, hco, c4h8ooh1-3, c7h15-1, c7h14ooh3-5, c7h14-2, c7h14ooh4-2]
+    qssa_species: [pc4h9, ch2(s), c7h14ooh3-2, c7h14ooh2-4, ch2cho, nc7ket13, c4h8ooh1-3,
+    nc3h7co, c7h15-4, c7h14ooh4-2, nc7ket24, c7h14ooh2-3, c7h14ooh4-2o2,
+    nc7ket35, c7h14-3, c7h14ooh1-3, c7h14ooh2-4o2, ch3co, c7h15-3,
+    c7h14ooh3-4, hco, c2h5o, nc7ket42, c4h7o, c7h14-2, c3h2, c3h5o, c2h5co,
+    c7h15-1, ch3o, c7h14ooh3-5, c7h15-2, c7h14ooh3-5o2]
     name: gas-qssa
     thermo: ideal-gas
     elements: [H, O, C, N]
