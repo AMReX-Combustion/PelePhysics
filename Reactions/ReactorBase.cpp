@@ -49,6 +49,11 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     }
     amrex::Print() << "Temp : " << m_typ_vals[size_ETV - 1] << std::endl;
   }
+  m_typ_vals_gpu =
+    (amrex::Real*)amrex::The_Arena()->alloc(size_ETV * sizeof(amrex::Real));
+  amrex::Gpu::copy(
+    amrex::Gpu::hostToDevice, &(m_typ_vals[0]), &(m_typ_vals[0]) + size_ETV,
+    m_typ_vals_gpu);
 }
 
 void
@@ -73,17 +78,20 @@ ReactorBase::set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(), sunctx);
   amrex::Real* ratol = N_VGetHostArrayPointer_Cuda(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_Vector atol = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(), sunctx);
   amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Hip(atol);
 #elif defined(AMREX_USE_SYCL)
   N_Vector atol = N_VNewWithMemHelp_Sycl(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
   amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -96,12 +104,16 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances with TypVals rtol = " << relTol
                      << " atolfact = " << absTol << " in PelePhysics \n";
     }
-    for (int i = 0; i < ncells; i++) {
-      const int offset = i * (NUM_SPECIES + 1);
-      for (int k = 0; k < NUM_SPECIES + 1; k++) {
-        ratol[offset + k] = m_typ_vals[k] * absTol;
-      }
-    }
+    const int nbThreads = 256;
+    const int nbBlocks = std::max(1, neq_tot / nbThreads);
+    auto arr = m_typ_vals_gpu;
+    amrex::launch_global<256>
+      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
+        int icell = blockDim.x * blockIdx.x + threadIdx.x;
+        if (icell < neq_tot) {
+          ratol[icell] = arr[icell / ncells] * absTol;
+        }
+      });
   } else {
     // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
@@ -109,18 +121,16 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances rtol = " << relTol << " atol = " << absTol
                      << " in PelePhysics \n";
     }
-    for (int i = 0; i < neq_tot; i++) {
-      ratol[i] = absTol;
-    }
+    const int nbThreads = 256;
+    const int nbBlocks = std::max(1, neq_tot / nbThreads);
+    amrex::launch_global<256>
+      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
+        int icell = blockDim.x * blockIdx.x + threadIdx.x;
+        if (icell < neq_tot) {
+          ratol[icell] = absTol;
+        }
+      });
   }
-
-#if defined(AMREX_USE_CUDA)
-  N_VCopyToDevice_Cuda(atol);
-#elif defined(AMREX_USE_HIP)
-  N_VCopyToDevice_Hip(atol);
-#elif defined(AMREX_USE_SYCL)
-  N_VCopyToDevice_Sycl(atol);
-#endif
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances
