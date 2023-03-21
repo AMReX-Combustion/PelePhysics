@@ -393,10 +393,10 @@ performgmres(
   amrex::Real tol,
   int printflag)
 {
-  amrex::Real beta;
-  bool arnoldistopped;
-  bool success;
-  bool nanflag;
+  amrex::Real beta{0.0};
+  bool arnoldistopped{false};
+  bool success{false};
+  bool nanflag{false};
 
   amrex::Real v1[NEQNS] = {0.0};
   amrex::Real tempvec[NEQNS] = {0.0};
@@ -411,7 +411,7 @@ performgmres(
   amrex::Real cos_arr[KSPSIZE] = {0.0};
   amrex::Real sin_arr[KSPSIZE] = {0.0};
   amrex::Real beta_e1[KSPSIZE + 1] = {0.0};
-  amrex::Real residnorm;
+  amrex::Real residnorm{0.0};
 
   success = true;
 
