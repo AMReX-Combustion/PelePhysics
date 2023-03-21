@@ -79,20 +79,17 @@ ReactorBase::set_sundials_solver_tols(
   N_Vector atol = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(), sunctx);
-  amrex::Real* ratol = N_VGetHostArrayPointer_Cuda(atol);
   amrex::Real* ratol = N_VGetDeviceArrayPointer_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_Vector atol = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(), sunctx);
-  amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
   amrex::Real* ratol = N_VGetDeviceArrayPointer_Hip(atol);
 #elif defined(AMREX_USE_SYCL)
   N_Vector atol = N_VNewWithMemHelp_Sycl(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
-  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
   amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
