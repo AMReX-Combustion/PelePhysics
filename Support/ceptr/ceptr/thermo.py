@@ -146,26 +146,29 @@ def generate_thermo_routine(
                     - species_info.n_species
                 )
                 cw.writer(
-                    lostream,
-                    cw.comment(
-                        f"species {idx}: {species.name}"
-                    )
+                    lostream, cw.comment(f"species {idx}: {species.name}")
                 )
                 cw.writer(
                     lostream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] =")
+                    (
+                        f"result += y[{idx}] * ("
+                        if inline
+                        else f"species[{idx}] ="
+                    ),
                 )
             else:
                 idx = species_info.ordered_idx_map[species.name]
                 cw.writer(
                     lostream,
-                    cw.comment(
-                        f"species {idx}: {species.name}"
-                    ),
+                    cw.comment(f"species {idx}: {species.name}"),
                 )
                 cw.writer(
                     lostream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] =")
+                    (
+                        f"result += y[{idx}] * ("
+                        if inline
+                        else f"species[{idx}] ="
+                    ),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
@@ -199,10 +202,7 @@ def generate_thermo_routine(
                 spec_idx = species_info.ordered_idx_map[species.name]
                 sp = species_info.nonqssa_species[spec_idx]
                 imw = 1.0 / sp.weight
-                cw.writer(
-                    lostream,
-                    f")* {imw:.16f}"
-                )
+                cw.writer(lostream, f")* {imw:.16f}")
             cw.writer(lostream, ";")
 
         histream = io.StringIO()
@@ -214,25 +214,29 @@ def generate_thermo_routine(
                 )
                 cw.writer(
                     histream,
-                    cw.comment(
-                        f"species {idx}: {species.name}"
-                    ),
+                    cw.comment(f"species {idx}: {species.name}"),
                 )
                 cw.writer(
                     histream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] =")
+                    (
+                        f"result += y[{idx}] * ("
+                        if inline
+                        else f"species[{idx}] ="
+                    ),
                 )
             else:
                 idx = species_info.ordered_idx_map[species.name]
                 cw.writer(
                     histream,
-                    cw.comment(
-                        f"species {idx}: {species.name}"
-                    ),
+                    cw.comment(f"species {idx}: {species.name}"),
                 )
                 cw.writer(
                     histream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] =")
+                    (
+                        f"result += y[{idx}] * ("
+                        if inline
+                        else f"species[{idx}] ="
+                    ),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
@@ -266,10 +270,7 @@ def generate_thermo_routine(
                 spec_idx = species_info.ordered_idx_map[species.name]
                 sp = species_info.nonqssa_species[spec_idx]
                 imw = 1.0 / sp.weight
-                cw.writer(
-                    histream,
-                    f")* {imw:.16f}"
-                )
+                cw.writer(histream, f")* {imw:.16f}")
             cw.writer(histream, ";")
 
         lostr = lostream.getvalue().rstrip("\n")

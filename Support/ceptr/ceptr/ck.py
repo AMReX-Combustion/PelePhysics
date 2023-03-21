@@ -322,7 +322,8 @@ def ckcvbs(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real result = 0.0; ")
 
     cw.writer(
-        fstream, "const amrex::Real tT = T; " + cw.comment("temporary temperature")
+        fstream,
+        "const amrex::Real tT = T; " + cw.comment("temporary temperature"),
     )
     cw.writer(
         fstream,
@@ -333,7 +334,15 @@ def ckcvbs(fstream, mechanism, species_info):
     species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
     cth.generate_thermo_routine(
-        fstream, species_info, "cv_R", cth.cv_nasa, species_coeffs, 0, 0, None, True
+        fstream,
+        species_info,
+        "cv_R",
+        cth.cv_nasa,
+        species_coeffs,
+        0,
+        0,
+        None,
+        True,
     )
     cw.writer(fstream)
 
@@ -525,7 +534,8 @@ def ckubms(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real result = 0.0;")
 
     cw.writer(
-        fstream, "const amrex::Real tT = T; " + cw.comment("temporary temperature")
+        fstream,
+        "const amrex::Real tT = T; " + cw.comment("temporary temperature"),
     )
     cw.writer(
         fstream,
