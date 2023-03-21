@@ -32,7 +32,7 @@ def process_qss(fname, nqssa, visualize, method):
             sys.exit(1)
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
-    qssa_species = list(set(all_species) - set(non_qssa_species))
+    qssa_species = sorted(list(set(all_species) - set(non_qssa_species)))
     # Visualize
     if visualize:
         cqr.visualize_qssa(mechanism, reaction_info, qssa_species)
