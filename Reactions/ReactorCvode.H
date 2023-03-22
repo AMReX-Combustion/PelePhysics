@@ -51,7 +51,7 @@ class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 public:
   static std::string identifier() { return "ReactorCvode"; }
 
-  using Ordering = utils::YCOrder;
+  using Ordering = utils::CYOrder;
 
   int init(int reactor_type, int ncells) override;
 
