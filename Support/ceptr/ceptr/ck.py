@@ -194,7 +194,6 @@ def ckcpbl(fstream, mechanism, species_info):
 
 def ckcpbs(fstream, mechanism, species_info):
     """Write ckpbs."""
-    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the mean specific heat at CP (Eq. 34)")
