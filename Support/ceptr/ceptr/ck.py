@@ -1,6 +1,7 @@
 """CK routines."""
 import ceptr.constants as cc
 import ceptr.writer as cw
+import ceptr.thermo as cth
 
 
 def ckawt(fstream, mechanism):
@@ -538,50 +539,39 @@ def ckubms(fstream, mechanism, species_info):
     )
     cw.writer(fstream, "{")
 
-    cw.writer(fstream, "amrex::Real result = 0;")
+    cw.writer(fstream, "amrex::Real result = 0.0;")
 
-    # get temperature cache
     cw.writer(
-        fstream, "amrex::Real tT = T; " + cw.comment("temporary temperature")
+        fstream, "const amrex::Real tT = T; " + cw.comment("temporary temperature")
     )
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; "
         + cw.comment("temperature cache"),
     )
-    cw.writer(
+
+    species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+    cth.generate_thermo_routine(
         fstream,
-        f"amrex::Real ums[{n_species}]; "
-        + cw.comment(" temporary energy array"),
+        species_info,
+        "speciesInternalEnergy",
+        cth.internal_energy,
+        species_coeffs,
+        0,
+        1,
+        None,
+        True,
     )
+    cw.writer(fstream)
 
     cw.writer(
         fstream,
-        "amrex::Real RT ="
+        "const amrex::Real RT ="
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
-    cw.writer(fstream, f"amrex::Real imw[{n_species}];")
-    cw.writer(fstream)
-    cw.writer(fstream, "get_imw(imw);")
-    cw.writer(fstream)
-
-    # call routine
-    cw.writer(fstream, "speciesInternalEnergy(ums, tc);")
-    cw.writer(fstream)
-
-    # convert e/RT to e with mass units
-    cw.writer(fstream, cw.comment("perform dot product + scaling by wt"))
-    cw.writer(
-        fstream,
-        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
-    )
-    cw.writer(fstream, "{")
-    cw.writer(fstream, "result += y[i]*ums[i]*imw[i];")
-    cw.writer(fstream, "}")
 
     cw.writer(fstream)
-    # finally, multiply by RT
     cw.writer(fstream, "ubms = result * RT;")
     cw.writer(fstream, "}")
 

@@ -137,7 +137,6 @@ CKRP(amrex::Real& ru, amrex::Real& ruc, amrex::Real& pa)
 }
 
 // compute Cv/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cv_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -288,7 +287,6 @@ cv_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute Cp/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cp_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -439,14 +437,13 @@ cp_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the g/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 gibbs(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -639,14 +636,13 @@ gibbs(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the a/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 helmholtz(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -825,14 +821,13 @@ helmholtz(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the e/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -977,14 +972,13 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1129,7 +1123,6 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the S/R at the given temperature (Eq 21)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 {
@@ -1429,22 +1422,222 @@ CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real ums[17];                                //  temporary energy array
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[17];
+  const amrex::Real invT = 1.0 / T;
 
-  get_imw(imw);
-
-  speciesInternalEnergy(ums, tc);
-
-  // perform dot product + scaling by wt
-  for (int i = 0; i < 17; i++) {
-    result += y[i] * ums[i] * imw[i];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result += y[0] *
+              (+1.34433112e+00 + 3.99026037e-03 * tc[1] -
+               6.49271700e-06 * tc[2] + 5.03930235e-09 * tc[3] -
+               1.47522352e-12 * tc[4] - 9.17935173e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+1.50000000e+00 + 3.52666409e-13 * tc[1] -
+               6.65306547e-16 * tc[2] + 5.75204080e-19 * tc[3] -
+               1.85546466e-22 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+2.16826710e+00 - 1.63965942e-03 * tc[1] +
+               2.21435465e-06 * tc[2] - 1.53201656e-09 * tc[3] +
+               4.22531942e-13 * tc[4] + 2.91222592e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+2.78245636e+00 - 1.49836708e-03 * tc[1] +
+               3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+               6.48745674e-13 * tc[4] - 1.06394356e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+2.99201543e+00 - 1.20065876e-03 * tc[1] +
+               1.53931280e-06 * tc[2] - 9.70283332e-10 * tc[3] +
+               2.72822940e-13 * tc[4] + 3.61508056e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+3.19864056e+00 - 1.01821705e-03 * tc[1] +
+               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
+               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+3.30179801e+00 - 2.37456025e-03 * tc[1] +
+               7.05276303e-06 * tc[2] - 6.06909735e-09 * tc[3] +
+               1.85845025e-12 * tc[4] + 2.94808040e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+2.76267867e+00 + 4.84436072e-04 * tc[1] +
+               9.31632803e-07 * tc[2] - 9.62727883e-10 * tc[3] +
+               3.37483438e-13 * tc[4] + 4.60040401e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+3.19860411e+00 - 1.18330710e-03 * tc[1] +
+               2.74432073e-06 * tc[2] - 1.67203995e-09 * tc[3] +
+               3.88629474e-13 * tc[4] + 5.04968163e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+2.67359040e+00 + 1.00547588e-03 * tc[1] +
+               1.91007285e-06 * tc[2] - 1.71779356e-09 * tc[3] +
+               5.08771468e-13 * tc[4] + 1.64449988e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (+4.14987613e+00 - 6.83548940e-03 * tc[1] +
+               1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+               3.33387912e-12 * tc[4] - 1.02466476e+04 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+2.57953347e+00 - 3.05176840e-04 * tc[1] +
+               3.38938110e-07 * tc[2] + 2.26751471e-10 * tc[3] -
+               1.80884900e-13 * tc[4] - 1.43440860e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+1.35677352e+00 + 4.49229839e-03 * tc[1] -
+               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
+               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+3.22118584e+00 - 1.62196266e-03 * tc[1] +
+               4.59331487e-06 * tc[2] - 3.32860233e-09 * tc[3] +
+               8.67537730e-13 * tc[4] + 3.83956496e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+3.79372315e+00 - 4.95416684e-03 * tc[1] +
+               1.24406669e-05 * tc[2] - 9.48213152e-09 * tc[3] +
+               2.63545304e-12 * tc[4] - 1.43089567e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH2OH
+    result += y[15] *
+              (+2.86388918e+00 + 2.79836152e-03 * tc[1] +
+               1.97757264e-06 * tc[2] - 2.61330030e-09 * tc[3] +
+               8.73934556e-13 * tc[4] - 3.19391367e+03 * invT) *
+              0.0322227234645872;
+    // species 16: N2
+    result += y[16] *
+              (+2.29867700e+00 + 7.04120200e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
+              0.0356964374955379;
+  } else {
+    // species 0: H2
+    result += y[0] *
+              (+2.33727920e+00 - 2.47012365e-05 * tc[1] +
+               1.66485593e-07 * tc[2] - 4.48915985e-11 * tc[3] +
+               4.00510752e-15 * tc[4] - 9.50158922e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+1.50000001e+00 - 1.15421486e-11 * tc[1] +
+               5.38539827e-15 * tc[2] - 1.18378809e-18 * tc[3] +
+               9.96394714e-23 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+1.56942078e+00 - 4.29870569e-05 * tc[1] +
+               1.39828196e-08 * tc[2] - 2.50444497e-12 * tc[3] +
+               2.45667382e-16 * tc[4] + 2.92175791e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+2.28253784e+00 + 7.41543770e-04 * tc[1] -
+               2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+               4.33435588e-15 * tc[4] - 1.08845772e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+2.09288767e+00 + 2.74214858e-04 * tc[1] +
+               4.21684093e-08 * tc[2] - 2.19865389e-11 * tc[3] +
+               2.34824752e-15 * tc[4] + 3.85865700e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+2.03399249e+00 + 1.08845902e-03 * tc[1] -
+               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
+               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+3.01721090e+00 + 1.11991006e-03 * tc[1] -
+               2.11219383e-07 * tc[2] + 2.85615925e-11 * tc[3] -
+               2.15817070e-15 * tc[4] + 1.11856713e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+1.87410113e+00 + 1.82819646e-03 * tc[1] -
+               4.69648657e-07 * tc[2] + 6.50448872e-11 * tc[3] -
+               3.75455134e-15 * tc[4] + 4.62636040e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+1.29203842e+00 + 2.32794318e-03 * tc[1] -
+               6.70639823e-07 * tc[2] + 1.04476500e-10 * tc[3] -
+               6.79432730e-15 * tc[4] + 5.09259997e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+1.28571772e+00 + 3.61995018e-03 * tc[1] -
+               9.95714493e-07 * tc[2] + 1.48921161e-10 * tc[3] -
+               9.34308788e-15 * tc[4] + 1.67755843e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (-9.25148505e-01 + 6.69547335e-03 * tc[1] -
+               1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+               2.03630460e-14 * tc[4] - 9.46834459e+03 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+1.71518561e+00 + 1.03126372e-03 * tc[1] -
+               3.32941924e-07 * tc[2] + 5.75132520e-11 * tc[3] -
+               4.07295432e-15 * tc[4] - 1.41518724e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+2.85746029e+00 + 2.20718513e-03 * tc[1] -
+               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
+               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+1.77217438e+00 + 2.47847763e-03 * tc[1] -
+               8.28152043e-07 * tc[2] + 1.47290445e-10 * tc[3] -
+               1.06701742e-14 * tc[4] + 4.01191815e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+7.60690080e-01 + 4.60000041e-03 * tc[1] -
+               1.47419604e-06 * tc[2] + 2.51603030e-10 * tc[3] -
+               1.76771128e-14 * tc[4] - 1.39958323e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH2OH
+    result += y[15] *
+              (+2.69266569e+00 + 4.32288399e-03 * tc[1] -
+               1.25033707e-06 * tc[2] + 1.96808659e-10 * tc[3] -
+               1.29710840e-14 * tc[4] - 3.24250627e+03 * invT) *
+              0.0322227234645872;
+    // species 16: N2
+    result += y[16] *
+              (+1.92664000e+00 + 7.43988400e-04 * tc[1] -
+               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
+              0.0356964374955379;
   }
+
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
 
   ubms = result * RT;
 }
@@ -4287,7 +4480,6 @@ CKCHRGMASS(amrex::Real zk[])
 }
 
 // compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 {

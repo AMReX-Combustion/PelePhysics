@@ -97,7 +97,6 @@ CKRP(amrex::Real& ru, amrex::Real& ruc, amrex::Real& pa)
 }
 
 // compute Cv/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cv_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -149,7 +148,6 @@ cv_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute Cp/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cp_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -201,14 +199,13 @@ cp_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the g/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 gibbs(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
@@ -262,14 +259,13 @@ gibbs(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the a/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 helmholtz(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
@@ -323,14 +319,13 @@ helmholtz(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the e/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
@@ -376,14 +371,13 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
@@ -429,7 +423,6 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the S/R at the given temperature (Eq 21)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 {
@@ -630,22 +623,71 @@ CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real ums[4];                                 //  temporary energy array
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[4];
+  const amrex::Real invT = 1.0 / T;
 
-  get_imw(imw);
-
-  speciesInternalEnergy(ums, tc);
-
-  // perform dot product + scaling by wt
-  for (int i = 0; i < 4; i++) {
-    result += y[i] * ums[i] * imw[i];
+  // species with midpoint at T=1391 kelvin
+  if (tT < 1391) {
+    // species 0: NC12H26
+    result += y[0] *
+              (-3.62181594e+00 + 7.36188555e-02 * tc[1] -
+               3.14656757e-05 * tc[2] + 7.68603170e-09 * tc[3] -
+               8.07204460e-13 * tc[4] - 4.00654253e+04 * invT) *
+              0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result += y[0] *
+              (+3.75095037e+01 + 2.81775024e-02 * tc[1] -
+               6.38310667e-06 * tc[2] + 7.40062155e-10 * tc[3] -
+               3.42488300e-14 * tc[4] - 5.48843465e+04 * invT) *
+              0.0058706117177410;
   }
+
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 1: CH4
+    result += y[1] *
+              (+4.14987613e+00 - 6.83548940e-03 * tc[1] +
+               1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+               3.33387912e-12 * tc[4] - 1.02466476e+04 * invT) *
+              0.0623324814560868;
+    // species 2: O2
+    result += y[2] *
+              (+2.78245636e+00 - 1.49836708e-03 * tc[1] +
+               3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+               6.48745674e-13 * tc[4] - 1.06394356e+03 * invT) *
+              0.0312519532470779;
+    // species 3: N2
+    result += y[3] *
+              (+2.29867700e+00 + 7.04120200e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
+              0.0356964374955379;
+  } else {
+    // species 1: CH4
+    result += y[1] *
+              (-9.25148505e-01 + 6.69547335e-03 * tc[1] -
+               1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+               2.03630460e-14 * tc[4] - 9.46834459e+03 * invT) *
+              0.0623324814560868;
+    // species 2: O2
+    result += y[2] *
+              (+2.28253784e+00 + 7.41543770e-04 * tc[1] -
+               2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+               4.33435588e-15 * tc[4] - 1.08845772e+03 * invT) *
+              0.0312519532470779;
+    // species 3: N2
+    result += y[3] *
+              (+1.92664000e+00 + 7.43988400e-04 * tc[1] -
+               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
+              0.0356964374955379;
+  }
+
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
 
   ubms = result * RT;
 }
@@ -1545,7 +1587,6 @@ CKCHRGMASS(amrex::Real zk[])
 }
 
 // compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 {
