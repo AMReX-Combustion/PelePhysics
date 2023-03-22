@@ -49,7 +49,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     }
     amrex::Print() << "Temp : " << m_typ_vals[size_ETV - 1] << std::endl;
   }
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
   m_typ_vals_gpu =
     (amrex::Real*)amrex::The_Arena()->alloc(size_ETV * sizeof(amrex::Real));
   amrex::Gpu::copy(
@@ -90,7 +90,7 @@ ReactorBase::set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
-  amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
+  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -103,7 +103,7 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances with TypVals rtol = " << relTol
                      << " atolfact = " << absTol << " in PelePhysics \n";
     }
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
     auto arr = m_typ_vals_gpu;
@@ -130,7 +130,7 @@ ReactorBase::set_sundials_solver_tols(
                      << " tolerances rtol = " << relTol << " atol = " << absTol
                      << " in PelePhysics \n";
     }
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
     amrex::launch_global<256>
@@ -146,6 +146,10 @@ ReactorBase::set_sundials_solver_tols(
     }
 #endif
   }
+
+#if defined(AMREX_USE_SYCL)
+  N_VCopyToDevice_Sycl(atol);
+#endif
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances

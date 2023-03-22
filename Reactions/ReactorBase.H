@@ -89,7 +89,7 @@ public:
     const amrex::Real absTol,
     const std::string& solvername);
 
-#ifdef AMREX_USE_HIP
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
   ~ReactorBase() { amrex::The_Arena()->free(m_typ_vals_gpu); }
 #else
   ~ReactorBase() override = default;
@@ -98,7 +98,7 @@ public:
 protected:
   int verbose{0};
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
   amrex::Real* m_typ_vals_gpu = nullptr;
 #endif
 };
