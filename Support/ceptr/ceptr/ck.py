@@ -210,7 +210,8 @@ def ckcpbs(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real result = 0.0; ")
 
     cw.writer(
-        fstream, "const amrex::Real tT = T; " + cw.comment("temporary temperature")
+        fstream,
+        "const amrex::Real tT = T; " + cw.comment("temporary temperature"),
     )
     cw.writer(
         fstream,
@@ -424,7 +425,8 @@ def ckhbms(fstream, mechanism, species_info):
 
     # get temperature cache
     cw.writer(
-        fstream, "const amrex::Real tT = T; " + cw.comment("temporary temperature")
+        fstream,
+        "const amrex::Real tT = T; " + cw.comment("temporary temperature"),
     )
     cw.writer(
         fstream,
