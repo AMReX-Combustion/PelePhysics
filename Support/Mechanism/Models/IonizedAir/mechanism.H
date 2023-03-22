@@ -507,20 +507,72 @@ CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cpor[5];                                //  temporary storage
-  amrex::Real imw[5];
 
-  get_imw(imw);
+  // compute Cp/R at the given temperature
 
-  cp_R(cpor, tc);
-
-  for (int i = 0; i < 5; i++) {
-    result += cpor[i] * y[i] * imw[i];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: O2
+    result +=
+      y[0] *
+      (+3.21293640e+00 + 1.12748635e-03 * tc[1] - 5.75615047e-07 * tc[2] +
+       1.31387723e-09 * tc[3] - 8.76855392e-13 * tc[4]) *
+      0.0312519532470779;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+3.29867700e+00 + 1.40824000e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485500e-12 * tc[4]) *
+      0.0356964374955379;
+    // species 3: On
+    result +=
+      y[3] *
+      (+2.90805921e+00 - 1.69804907e-03 * tc[1] + 2.98069955e-06 * tc[2] -
+       2.43835127e-09 * tc[3] + 7.61229311e-13 * tc[4]) *
+      0.0625017634094834;
+    // species 4: O2n
+    result +=
+      y[4] *
+      (+3.66442522e+00 - 9.28741138e-04 * tc[1] + 6.45477082e-06 * tc[2] -
+       7.74703380e-09 * tc[3] + 2.93332662e-12 * tc[4]) *
+      0.0312514174667246;
+  } else {
+    // species 0: O2
+    result +=
+      y[0] *
+      (+3.69757819e+00 + 6.13519689e-04 * tc[1] - 1.25884199e-07 * tc[2] +
+       1.77528148e-11 * tc[3] - 1.13643531e-15 * tc[4]) *
+      0.0312519532470779;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+2.92664000e+00 + 1.48797700e-03 * tc[1] - 5.68476100e-07 * tc[2] +
+       1.00970400e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
+    // species 3: On
+    result +=
+      y[3] *
+      (+2.54474869e+00 - 4.66695513e-05 * tc[1] + 1.84912357e-08 * tc[2] -
+       3.18159223e-12 * tc[3] + 1.98962956e-16 * tc[4]) *
+      0.0625017634094834;
+    // species 4: O2n
+    result +=
+      y[4] *
+      (+3.95666294e+00 + 5.98141823e-04 * tc[1] - 2.12133905e-07 * tc[2] +
+       3.63267581e-11 * tc[3] - 2.24989228e-15 * tc[4]) *
+      0.0312514174667246;
   }
+
+  // species with no change at a midpoint T
+  // species 2: E
+  result += y[2] *
+            (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]) *
+            1822.8884868472639482;
 
   cpbs = result * 8.31446261815324e+07;
 }
@@ -641,21 +693,74 @@ CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real hml[5];                                 //  temporary storage
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[5];
+  const amrex::Real invT = 1.0 / T;
 
-  get_imw(imw);
-
-  speciesEnthalpy(hml, tc);
-
-  for (int id = 0; id < 5; ++id) {
-    result += y[id] * hml[id] * imw[id];
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: O2
+    result += y[0] *
+              (+3.21293640e+00 + 5.63743175e-04 * tc[1] -
+               1.91871682e-07 * tc[2] + 3.28469308e-10 * tc[3] -
+               1.75371078e-13 * tc[4] - 1.00524902e+03 * invT) *
+              0.0312519532470779;
+    // species 1: N2
+    result += y[1] *
+              (+3.29867700e+00 + 7.04120000e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88971000e-13 * tc[4] - 1.02090000e+03 * invT) *
+              0.0356964374955379;
+    // species 3: On
+    result += y[3] *
+              (+2.90805921e+00 - 8.49024535e-04 * tc[1] +
+               9.93566517e-07 * tc[2] - 6.09587818e-10 * tc[3] +
+               1.52245862e-13 * tc[4] + 1.14357717e+04 * invT) *
+              0.0625017634094834;
+    // species 4: O2n
+    result += y[4] *
+              (+3.66442522e+00 - 4.64370569e-04 * tc[1] +
+               2.15159027e-06 * tc[2] - 1.93675845e-09 * tc[3] +
+               5.86665324e-13 * tc[4] - 6.87076983e+03 * invT) *
+              0.0312514174667246;
+  } else {
+    // species 0: O2
+    result += y[0] *
+              (+3.69757819e+00 + 3.06759845e-04 * tc[1] -
+               4.19613997e-08 * tc[2] + 4.43820370e-12 * tc[3] -
+               2.27287062e-16 * tc[4] - 1.23393018e+03 * invT) *
+              0.0312519532470779;
+    // species 1: N2
+    result += y[1] *
+              (+2.92664000e+00 + 7.43988500e-04 * tc[1] -
+               1.89492033e-07 * tc[2] + 2.52426000e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
+              0.0356964374955379;
+    // species 3: On
+    result += y[3] *
+              (+2.54474869e+00 - 2.33347756e-05 * tc[1] +
+               6.16374523e-09 * tc[2] - 7.95398057e-13 * tc[3] +
+               3.97925912e-17 * tc[4] + 1.15042089e+04 * invT) *
+              0.0625017634094834;
+    // species 4: O2n
+    result += y[4] *
+              (+3.95666294e+00 + 2.99070912e-04 * tc[1] -
+               7.07113017e-08 * tc[2] + 9.08168952e-12 * tc[3] -
+               4.49978456e-16 * tc[4] - 7.06287229e+03 * invT) *
+              0.0312514174667246;
   }
+
+  // species with no change at a midpoint T
+  // species 2: E
+  result +=
+    y[2] *
+    (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT) *
+    1822.8884868472639482;
+
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
 
   hbms = result * RT;
 }
