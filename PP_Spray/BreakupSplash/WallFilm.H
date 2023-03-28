@@ -4,6 +4,57 @@
 
 #include "Drag.H"
 
+#ifdef AMREX_USE_EB
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+amrex::Real
+interpolateFilm(
+  SprayParticleContainer::ParticleType& p,
+  amrex::IntVect& ijkc,
+  const amrex::RealVect& dx,
+  const amrex::RealVect& plo,
+#ifdef AMREX_USE_EB
+  bool eb_in_box,
+  amrex::Array4<const amrex::EBCellFlag> const& flags,
+  amrex::Array4<const amrex::Real> const& ccent,
+  bool& do_fe_interp,
+#endif
+  amrex::IntVect* indx_array,
+  amrex::Real* weights)
+{
+  const amrex::Real film_hght = p.rdata(SprayComps::pstateFilmHght);
+  // Find distance from cell center to center of wall film
+  amrex::Real dis = 0.;
+#ifdef AMREX_USE_EB
+  if (eb_in_box) {
+    if (flags(ijkc).isSingleValued()) {
+      do_fe_interp = true;
+    }
+  }
+  if (do_fe_interp) {
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      auto cent_loc =
+        (static_cast<amrex::Real>(ijkc[dir]) + 0.5 + ccent(ijkc, dir)) *
+        dx[dir];
+      dis += std::pow(p.pos(dir) - cent_loc - plo[dir], 2);
+    }
+  } else
+#endif
+  {
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      auto cent_loc = (static_cast<amrex::Real>(ijkc[dir]) + 0.5) * dx[dir];
+      dis += std::pow(p.pos(dir) - cent_loc - plo[dir], 2);
+    }
+  }
+  dis = std::sqrt(dis);
+  for (int aindx = 0; aindx < indx_array.size(); ++aindx) {
+    indx_array[aindx] = ijkc;
+    weights[aindx] = 0.;
+  }
+  weights[0] = 1.;
+  return dis - 0.5 * film_hght;
+}
+
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -12,6 +63,7 @@ calculateFilmSource(
   GasPhaseVals& gpv,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
+  amrex::Real film_dis,
   amrex::Real* cBoilT,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
@@ -101,18 +153,9 @@ calculateFilmSource(
   mu_skin *= SPU.mu_conv;
   lambda_skin *= SPU.lambda_conv;
   amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
-  // Local Reynolds number
   amrex::Real vel_mag = gpv.vel_fluid.vectorLength();
-  amrex::Real Reyn = rho_skin * vel_mag * film_height / mu_skin;
-  // These relations are from "A one-dimensional unsteady wall film evaporation
-  // model" by Yan et al. (2015)
-  amrex::Real Nu =
-    amrex::max(1., 0.0287 * std::pow(Pr_skin, 0.6) * std::pow(Reyn, 0.8));
   // If gas phase is not saturated
   if (sumXVap > 0.) {
-    // TODO: Determine a better way to estimate convective heat transfer
-    amrex::Real refL = 0.5 * film_height;
-    amrex::Real h_conv = Nu * lambda_skin / refL;
     amrex::Real rhoDtotal = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = fdat.indx[spf];
@@ -124,13 +167,16 @@ calculateFilmSource(
       Ddiag[fspec] *= X_norm;
       rhoDtotal += Ddiag[fspec];
     }
-    amrex::Real Sc_skin = mu_skin / rhoDtotal;
+    // Estimate convective heat transfer
+    // TODO: This is very rudimentary and should be improved to account for gas
+    // phase velocity
+    amrex::Real h_conv = lambda_skin / film_dis;
     amrex::Real q_conv = film_area * h_conv * (gpv.T_fluid - T_film);
+    amrex::Real Sc_skin = mu_skin / rhoDtotal;
     amrex::Real q_cond =
       -film_area * lambda_film * 2. * (T_film - fdat.wall_T) / film_height;
     amrex::Real gstar_coeff = film_area * h_conv / lambda_skin *
-                              std::pow(Sc_skin / Pr_skin, 0.6) *
-                              std::log1p(B_M);
+                              std::cbrt(Sc_skin / Pr_skin) * std::log1p(B_M);
     amrex::Real sumL = 0.;
     amrex::Real m_dot = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

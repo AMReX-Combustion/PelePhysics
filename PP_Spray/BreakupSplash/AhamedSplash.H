@@ -139,7 +139,6 @@ droplet_splashing(
   }
   if (dm > 0.) {
     // Convert parcel to wall film
-    normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
     vel_part = amrex::RealVect::TheZeroVector();
     // Assume all remaining droplets in parcel coalesce to form the wall film
     amrex::Real film_vol = num_dens * dm / rho_part;
@@ -159,9 +158,10 @@ droplet_splashing(
                                       4. * comb_We / std::sqrt(comb_Re)));
     p.rdata(SprayComps::pstateDia) = film_dia;
     // Assume film is a cylinder
-    p.rdata(SprayComps::pstateFilmHght) =
-      film_vol / (0.25 * M_PI * film_dia * film_dia);
+    amrex::Real film_hght = film_vol / (0.25 * M_PI * film_dia * film_dia);
+    p.rdata(SprayComps::pstateFilmHght) = film_hght;
     p.rdata(SprayComps::pstateNumDens) = 1.;
+    normpos -= (1. + film_hght / dx[0]) * par_dot * vel_part / Nw_Vp;
   }
 }
 
