@@ -331,7 +331,6 @@ SprayParticleContainer::updateParticles(
         Real Utan_total = 0.;
         Real Reyn_d = 0.;
         bool is_film = false;
-        Real film_dis = 0.;
         // Gather wall film values
         if (p.rdata(SprayComps::pstateFilmHght) > 0.) {
           is_film = true;
@@ -342,10 +341,10 @@ SprayParticleContainer::updateParticles(
           // Flag for whether we are near EB boundaries
           bool do_fe_interp = false;
           if (is_film) {
-            film_dis = interpolateFilm(
+            do_fe_interp = interpolateFilm(
               p, ijkc, dx, plo,
 #ifdef AMREX_USE_EB
-              eb_in_box, flags_array, ccent_fab, do_fe_interp,
+              eb_in_box, flags_array,
 #endif
               indx_array.data(), weights.data());
           }
@@ -371,7 +370,7 @@ SprayParticleContainer::updateParticles(
           fdat->calcBoilT(gpv, cBoilT.data());
           if (is_film) {
             calculateFilmSource(
-              sub_dt, gpv, *fdat, p, film_dis, cBoilT.data(), ltransparm);
+              sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
           } else {
             Reyn_d = calculateSpraySource(
               sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);

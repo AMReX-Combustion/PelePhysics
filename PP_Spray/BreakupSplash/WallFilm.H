@@ -6,7 +6,7 @@
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-amrex::Real
+bool
 interpolateFilm(
   SprayParticleContainer::ParticleType& p,
   amrex::IntVect& ijkc,
@@ -15,43 +15,25 @@ interpolateFilm(
 #ifdef AMREX_USE_EB
   bool eb_in_box,
   amrex::Array4<const amrex::EBCellFlag> const& flags,
-  amrex::Array4<const amrex::Real> const& ccent,
-  bool& do_fe_interp,
 #endif
   amrex::IntVect* indx_array,
   amrex::Real* weights)
 {
   const amrex::Real film_hght = p.rdata(SprayComps::pstateFilmHght);
-  // Find distance from cell center to center of wall film
-  amrex::Real dis = 0.;
+  bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
   if (eb_in_box) {
     if (flags(ijkc).isSingleValued()) {
       do_fe_interp = true;
     }
   }
-  if (do_fe_interp) {
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      auto cent_loc =
-        (static_cast<amrex::Real>(ijkc[dir]) + 0.5 + ccent(ijkc, dir)) *
-        dx[dir];
-      dis += std::pow(p.pos(dir) - cent_loc - plo[dir], 2);
-    }
-  } else
 #endif
-  {
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      auto cent_loc = (static_cast<amrex::Real>(ijkc[dir]) + 0.5) * dx[dir];
-      dis += std::pow(p.pos(dir) - cent_loc - plo[dir], 2);
-    }
-  }
-  dis = std::sqrt(dis);
   for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
     indx_array[aindx] = ijkc;
     weights[aindx] = 0.;
   }
   weights[0] = 1.;
-  return dis - 0.5 * film_hght;
+  return do_fe_interp;
 }
 
 AMREX_GPU_DEVICE
@@ -62,7 +44,6 @@ calculateFilmSource(
   GasPhaseVals& gpv,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
-  amrex::Real film_dis,
   amrex::Real* cBoilT,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
@@ -79,10 +60,6 @@ calculateFilmSource(
   bool get_lambda = true;
   bool get_mu = true;
   bool get_chi = false;
-  if (!fdat.mass_trans) {
-    get_Ddiag = false;
-    get_lambda = false;
-  }
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> h_film;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cp_n;
@@ -117,10 +94,7 @@ calculateFilmSource(
   T_film = amrex::min(0.999 * Tcrit, T_film);
   // Model the fuel vapor using the one-third rule
   amrex::Real delT = amrex::max(gpv.T_fluid - T_film, 0.);
-  amrex::Real T_skin = gpv.T_fluid;
-  if (fdat.mass_trans) {
-    T_skin = T_film + rule * delT;
-  }
+  amrex::Real T_skin = T_film + rule * delT;
 
   // Calculate the C_p at the skin temperature for each species
   eos.T2Cpi(T_skin, cp_n.data());
@@ -166,10 +140,11 @@ calculateFilmSource(
       Ddiag[fspec] *= X_norm;
       rhoDtotal += Ddiag[fspec];
     }
-    // Estimate convective heat transfer
+    // Estimate convective heat transfer using O'Rourke and Amsden 1996 assuming
+    // y+ < y+c
     // TODO: This is very rudimentary and should be improved to account for gas
     // phase velocity
-    amrex::Real h_conv = lambda_skin / film_dis;
+    amrex::Real h_conv = mu_skin * cp_skin / (Pr_skin * film_height);
     amrex::Real q_conv = film_area * h_conv * (gpv.T_fluid - T_film);
     amrex::Real Sc_skin = mu_skin / rhoDtotal;
     amrex::Real q_cond =
