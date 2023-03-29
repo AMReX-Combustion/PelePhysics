@@ -1633,7 +1633,9 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             # Check for duplicates
             if len(agents) != len(set(agents)):
                 message = f"Reaction {reaction} contains duplicate agents\n"
-                message += "This will create an issue for productionRate_light\n"
+                message += (
+                    "This will create an issue for productionRate_light\n"
+                )
                 print(message)
                 sys.exit(1)
             # note that a species might appear as both reactant and product
