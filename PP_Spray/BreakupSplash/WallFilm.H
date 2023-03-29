@@ -8,26 +8,39 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 bool
 interpolateFilm(
-  SprayParticleContainer::ParticleType& p,
-  amrex::IntVect& ijkc,
-  const amrex::RealVect& dx,
-  const amrex::RealVect& plo,
+  const amrex::IntVect& ijkc,
+  const amrex::IntVect& bflags,
+  amrex::RealVect& normal,
 #ifdef AMREX_USE_EB
   bool eb_in_box,
   amrex::Array4<const amrex::EBCellFlag> const& flags,
+  amrex::Array4<const amrex::Real> const& bnorm,
 #endif
   amrex::IntVect* indx_array,
   amrex::Real* weights)
 {
-  const amrex::Real film_hght = p.rdata(SprayComps::pstateFilmHght);
   bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
   if (eb_in_box) {
     if (flags(ijkc).isSingleValued()) {
       do_fe_interp = true;
+      normal = {AMREX_D_DECL(bnorm(ijkc, 0), bnorm(ijkc, 1), bnorm(ijkc, 2))};
     }
-  }
+  } else
 #endif
+  {
+    amrex::Real magsum = 0.;
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      if (bflags[dir] < 0) {
+        normal[dir] = 1.;
+        magsum += 1.;
+      } else if (bflags[dir] > 0) {
+        normal[dir] = -1.;
+        magsum += 1.;
+      }
+    }
+    normal /= std::sqrt(magsum);
+  }
   for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
     indx_array[aindx] = ijkc;
     weights[aindx] = 0.;
@@ -45,6 +58,7 @@ calculateFilmSource(
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
   amrex::Real* cBoilT,
+  const amrex::RealVect& normal,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
@@ -144,7 +158,7 @@ calculateFilmSource(
     // y+ < y+c
     // TODO: This is very rudimentary and should be improved to account for gas
     // phase velocity
-    amrex::Real h_conv = mu_skin * cp_skin / (Pr_skin * film_height);
+    amrex::Real h_conv = lambda_skin / film_height;
     amrex::Real q_conv = film_area * h_conv * (gpv.T_fluid - T_film);
     amrex::Real Sc_skin = mu_skin / rhoDtotal;
     amrex::Real q_cond =
@@ -193,6 +207,11 @@ calculateFilmSource(
   p.rdata(SprayComps::pstateT) = T_film;
   amrex::Real mdot_total = (film_mass - start_mass) / dt;
   gpv.fluid_mass_src = mdot_total;
+  // Velocity from evaporation
+  amrex::Real evap_vel = mdot_total / (rho_film * film_area);
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    gpv.fluid_mom_src[dir] = evap_vel * mdot_total * normal[dir];
+  }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fdspec = fdat.dep_indx[spf];
     amrex::Real oldY = p.rdata(SprayComps::pstateY + spf);
