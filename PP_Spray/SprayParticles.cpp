@@ -345,7 +345,7 @@ SprayParticleContainer::updateParticles(
             film_dis = interpolateFilm(
               p, ijkc, dx, plo,
 #ifdef AMREX_USE_EB
-              eb_in_box, flags_array, ccent_array, do_fe_interp,
+              eb_in_box, flags_array, ccent_fab, do_fe_interp,
 #endif
               indx_array.data(), weights.data());
           }

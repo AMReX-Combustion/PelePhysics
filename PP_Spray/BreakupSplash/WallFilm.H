@@ -4,7 +4,6 @@
 
 #include "Drag.H"
 
-#ifdef AMREX_USE_EB
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 amrex::Real
@@ -47,7 +46,7 @@ interpolateFilm(
     }
   }
   dis = std::sqrt(dis);
-  for (int aindx = 0; aindx < indx_array.size(); ++aindx) {
+  for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
     indx_array[aindx] = ijkc;
     weights[aindx] = 0.;
   }
