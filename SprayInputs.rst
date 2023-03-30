@@ -55,7 +55,7 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+-------------------+
    |``fixed_parts``        |Fix particles in space         |No           |``0``              |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``parcel_size``        |:math:`N_{ppp}`; Number of     |No           |``1.``             |
+   |``parcel_size``        |:math:`N_{d}`; Number of       |No           |``1.``             |
    |                       |droplets per parcel            |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``write_ascii_files``  |Output ascii files of spray    |No           |``0``              |
@@ -135,7 +135,8 @@ No two jets may have the same name. If an injector is constructed using only a n
    |                    |liquid based on                 |``SPRAY_FUEL_NUM`` >|
    |                    |``particles.fuel_species``      |1                   |
    +--------------------+--------------------------------+--------------------+
-   |``mass_flow_rate``  |Mass flow rate of the jet       |Yes                 |
+   |``mass_flow_rate``  |:math:`\dot{m}_{\rm{inj}}`; Mass|Yes                 |
+   |                    |flow rate of the jet            |                    |
    +--------------------+--------------------------------+--------------------+
    |``hollow_spray``    |Sets hollow cone injection with |No (Default: 0)     |
    |                    |angle :math:`\theta_j/2`        |                    |
@@ -158,7 +159,14 @@ No two jets may have the same name. If an injector is constructed using only a n
    +--------------------+--------------------------------+--------------------+
 
 
-Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue in `PeleMP`, each jet relies on three values over the course of injection: :math:`N_{P,\min}`, :math:`m_{\rm{acc}}`, :math:`t_{\rm{acc}}` (labelled in the code as ``m_minParcel``), ``m_sumInjMass``, and ``m_sumInjTime``, respectively). :math:`N_{P,\min}` is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. :math:`m_{\rm{acc}}` is the amount of uninjected mass accumulated over the time period :math:`t_{\rm{acc}}`. The injection routine follows the steps:
+.. figure:: /images/inject_transform.png
+   :align: center
+   :figwidth: 60%
+
+   Demonstration of injection angles. :math:`\phi_J` varies uniformly from :math:`[0, 2 \pi]`
+
+
+Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue, each jet accounts for three values: :math:`N_{P,\min}`, :math:`m_{\rm{acc}}`, and :math:`t_{\rm{acc}}` (labeled in the code as ``m_minParcel``, ``m_sumInjMass``, and ``m_sumInjTime``, respectively). :math:`N_{P,\min}` is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. :math:`m_{\rm{acc}}` is the amount of uninjected mass accumulated over the time period :math:`t_{\rm{acc}}`. The injection routine follows the steps:
 
 #. The injected mass for the current time step is computed using the desired mass flow rate, :math:`\dot{m}_{\rm{inj}}` and the current time step
 
@@ -170,19 +178,13 @@ Care must be taken to ensure the amount of mass injected during a time step matc
    .. math::
       t_{\rm{inj}} = \Delta t + t_{\rm{acc}}
 
-#. Using the average mass of an injected parcel, :math:`N_{ppp} m_{d,\rm{avg}}`, the estimated number of injected parcels is computed
+#. Using the average mass of an injected parcel, :math:`N_{d} m_{d,\rm{avg}}`, the estimated number of injected parcels is computed
 
    .. math::
-      N_{P, \rm{inj}} = m_{\rm{inj}} / (N_{ppp} m_{d, \rm{avg}})
+      N_{P, \rm{inj}} = m_{\rm{inj}} / (N_{d} m_{d, \rm{avg}})
 
-#. If :math:`N_{P, \rm{inj}} < N_{P, \min}`, the mass and time is accumulated as :math:`m_{\rm{acc}} = m_{\rm{inj}}` and :math:`t_{\rm{acc}} = t_{\rm{inj}}` and no injection occurs this time step
+  * If :math:`N_{P, \rm{inj}} < N_{P, \min}`, the mass and time is accumulated as :math:`m_{\rm{acc}} = m_{\rm{inj}}` and :math:`t_{\rm{acc}} = t_{\rm{inj}}` and no injection occurs this time step
 
-#. Otherwise, :math:`m_{\rm{inj}}` mass is injected and convected over time :math:`t_{\rm{inj}}`
+  * Otherwise, :math:`m_{\rm{inj}}` mass is injected and convected over time :math:`t_{\rm{inj}}` and :math:`m_{\rm{acc}}` and :math:`t_{\rm{acc}}` are reset.
 
-#. Assuming a droplet diameter distribution is provided to the jet, the amount of actually injected mass, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}}` is greater than 5 percent of the desired mass flow rate, :math:`N_{P,\min}` is increased by one to reduce the liklihood of over-injecting in the future. A balance is necessary: the higher the minium number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
-
-.. figure:: /images/inject_transform.png
-   :align: center
-   :figwidth: 60%
-
-   Demonstration of injection angles. :math:`\phi_J` varies uniformly from :math:`[0, 2 \pi]`
+#. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the liklihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
