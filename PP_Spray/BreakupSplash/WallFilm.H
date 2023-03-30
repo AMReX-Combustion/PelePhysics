@@ -137,20 +137,8 @@ calculateFilmSource(
     Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin,
     trans_parm);
   lambda_skin *= SPU.lambda_conv;
-  amrex::Real vel_mag = gpv.vel_fluid.vectorLength();
   // If gas phase is not saturated
   if (sumXVap > 0.) {
-    amrex::Real rhoDtotal = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      const int fspec = fdat.indx[spf];
-      // Convert mass diffusion coefficient from mixture average
-      // to binary for fuel only, not concerned with other species
-      Ddiag[fspec] *= mw_skin * gpv.invmw[fspec] * SPU.rhod_conv;
-      // Get normalized vapor molar fraction
-      amrex::Real X_norm = Y_film[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
-      Ddiag[fspec] *= X_norm;
-      rhoDtotal += Ddiag[fspec];
-    }
     // Estimate convective heat transfer using O'Rourke and Amsden 1996 assuming
     // y+ < y+c
     // TODO: This is very rudimentary and should be improved to account for gas
@@ -160,8 +148,8 @@ calculateFilmSource(
     amrex::Real q_cond =
       -film_area * lambda_film * 2. * (T_film - fdat.wall_T) / film_height;
     // Use Chilton-Colburn analogy to find the convective mass transfer
-    // coefficient Like the droplet evaporation, this uses mixture averaged
-    // values for lambda, cp, and B_M but uses normalized species specific mass
+    // coefficient; like droplet evaporation, this uses mixture averaged
+    // values for lambda, cp, and B_M but uses normalized species mass
     // diffusivity
     amrex::Real h_mass = film_area * h_heat * std::cbrt(lambda_skin / cp_skin) *
                          std::log1p(B_M) / lambda_skin;
@@ -172,9 +160,15 @@ calculateFilmSource(
       const int fspec = fdat.indx[spf];
       // Gas species index, might be the same
       const int fdspec = fdat.dep_indx[spf];
+      // Convert mass diffusion coefficient from mixture average
+      // to binary for fuel only, not concerned with other species
+      Ddiag[fspec] *= mw_skin * gpv.invmw[fspec] * SPU.rhod_conv;
       if (
         Y_film[spf] > 1.E-12 && Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
-        mi_dot[spf] = -amrex::max(h_mass * std::pow(Ddiag[fspec], 2. / 3.), 0.);
+        // Normalize mass diffusivity by fuel vapor molar fraction
+        amrex::Real cur_rhoD =
+          Ddiag[fspec] * Y_film[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
+        mi_dot[spf] = -amrex::max(h_mass * std::pow(cur_rhoD, 2. / 3.), 0.);
         m_dot += mi_dot[spf];
         sumL += mi_dot[spf] * L_fuel[spf];
       }
