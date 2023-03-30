@@ -174,8 +174,8 @@ calculateFilmSource(
       const int fdspec = fdat.dep_indx[spf];
       if (
         Y_film[spf] > 1.E-12 && Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
-        mi_dot[spf] = -amrex::max(h_mass * std::pow(Ddiag[fspec], 2. / 3.), 0.)
-                        m_dot += mi_dot[spf];
+        mi_dot[spf] = -amrex::max(h_mass * std::pow(Ddiag[fspec], 2. / 3.), 0.);
+        m_dot += mi_dot[spf];
         sumL += mi_dot[spf] * L_fuel[spf];
       }
     }
