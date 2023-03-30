@@ -139,10 +139,10 @@ No two jets may have the same name. If an injector is constructed using only a n
    |                    |flow rate of the jet            |                    |
    +--------------------+--------------------------------+--------------------+
    |``hollow_spray``    |Sets hollow cone injection with |No (Default: 0)     |
-   |                    |angle :math:`\theta_j/2`        |                    |
+   |                    |angle :math:`\theta_J/2`        |                    |
    +--------------------+--------------------------------+--------------------+
    |``hollow_spread``   |:math:`\theta_h`; Adds spread to|No (Default: 0)     |
-   |                    |hollow cone :math:`\theta_j/2\pm|                    |
+   |                    |hollow cone :math:`\theta_J/2\pm|                    |
    |                    |\theta_h`                       |                    |
    +--------------------+--------------------------------+--------------------+
    |``swirl_angle``     |:math:`\phi_S`; Adds a swirling |No (Default: 0)     |
@@ -166,7 +166,7 @@ No two jets may have the same name. If an injector is constructed using only a n
    Demonstration of injection angles. :math:`\phi_J` varies uniformly from :math:`[0, 2 \pi]`
 
 
-Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue, each jet accounts for three values: :math:`N_{P,\min}`, :math:`m_{\rm{acc}}`, and :math:`t_{\rm{acc}}` (labeled in the code as ``m_minParcel``, ``m_sumInjMass``, and ``m_sumInjTime``, respectively). :math:`N_{P,\min}` is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. :math:`m_{\rm{acc}}` is the amount of uninjected mass accumulated over the time period :math:`t_{\rm{acc}}`. The injection routine follows the steps:
+Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue, each jet accounts for three values: :math:`N_{P,\min}`, :math:`m_{\rm{acc}}`, and :math:`t_{\rm{acc}}` (labeled in the code as ``m_minParcel``, ``m_sumInjMass``, and ``m_sumInjTime``, respectively). :math:`N_{P,\min}` is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. :math:`m_{\rm{acc}}` is the amount of uninjected mass accumulated over the time period :math:`t_{\rm{acc}}`. The injection routine steps are as follows:
 
 #. The injected mass for the current time step is computed using the desired mass flow rate, :math:`\dot{m}_{\rm{inj}}` and the current time step
 
