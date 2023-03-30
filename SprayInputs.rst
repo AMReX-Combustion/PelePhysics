@@ -55,7 +55,8 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+-------------------+
    |``fixed_parts``        |Fix particles in space         |No           |``0``              |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``parcel_size``        |Number of droplets per parcel  |No           |``1.``             |
+   |``parcel_size``        |:math:`N_{ppp}`; Number of     |No           |``1.``             |
+   |                       |droplets per parcel            |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``write_ascii_files``  |Output ascii files of spray    |No           |``0``              |
    |                       |data                           |             |                   |
@@ -80,10 +81,10 @@ Spray Flags and Inputs
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
 
-Spray Injection Inputs
+Spray Injection
 ----------------------
 
-Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` file. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles()`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
+Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` files. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles()`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
 
   void
   SprayParticleContainer::InitSprayParticles(
@@ -104,7 +105,7 @@ This creates a single jet that is named ``jet1``. This name will be used in the 
 
   spray.jet1.jet_cent = 0. 0. 0.
 
-If an injector is constructed using only a name and geometry, the injection parameters are read from the input file. Here is a list of injection related inputs:
+No two jets may have the same name. If an injector is constructed using only a name and geometry, the injection parameters are read from the input file. Here is a list of injection related inputs:
 
 .. table::
    :widths: 20 40 20
@@ -156,6 +157,29 @@ If an injector is constructed using only a name and geometry, the injection para
    |                    |``ChiSquared``                  |                    |
    +--------------------+--------------------------------+--------------------+
 
+
+Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue in `PeleMP`, each jet relies on three values over the course of injection: :math:`N_{P,\min}`, :math:`m_{\rm{acc}}`, :math:`t_{\rm{acc}}` (labelled in the code as ``m_minParcel``), ``m_sumInjMass``, and ``m_sumInjTime``, respectively). :math:`N_{P,\min}` is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. :math:`m_{\rm{acc}}` is the amount of uninjected mass accumulated over the time period :math:`t_{\rm{acc}}`. The injection routine follows the steps:
+
+#. The injected mass for the current time step is computed using the desired mass flow rate, :math:`\dot{m}_{\rm{inj}}` and the current time step
+
+   .. math::
+      m_{\rm{inj}} = \dot{m}_{\rm{inj}} \Delta t + m_{\rm{acc}}
+
+#. The time period for the current injection event is computed using
+
+   .. math::
+      t_{\rm{inj}} = \Delta t + t_{\rm{acc}}
+
+#. Using the average mass of an injected parcel, :math:`N_{ppp} m_{d,\rm{avg}}`, the estimated number of injected parcels is computed
+
+   .. math::
+      N_{P, \rm{inj}} = m_{\rm{inj}} / (N_{ppp} m_{d, \rm{avg}})
+
+#. If :math:`N_{P, \rm{inj}} < N_{P, \min}`, the mass and time is accumulated as :math:`m_{\rm{acc}} = m_{\rm{inj}}` and :math:`t_{\rm{acc}} = t_{\rm{inj}}` and no injection occurs this time step
+
+#. Otherwise, :math:`m_{\rm{inj}}` mass is injected and convected over time :math:`t_{\rm{inj}}`
+
+#. Assuming a droplet diameter distribution is provided to the jet, the amount of actually injected mass, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}}` is greater than 5 percent of the desired mass flow rate, :math:`N_{P,\min}` is increased by one to reduce the liklihood of over-injecting in the future. A balance is necessary: the higher the minium number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
 .. figure:: /images/inject_transform.png
    :align: center
