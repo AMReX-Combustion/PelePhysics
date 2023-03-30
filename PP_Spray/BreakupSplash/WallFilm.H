@@ -72,7 +72,7 @@ calculateFilmSource(
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
-  bool get_mu = true;
+  bool get_mu = false;
   bool get_chi = false;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> h_film;
@@ -92,8 +92,7 @@ calculateFilmSource(
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
   amrex::Real rad2 = std::pow(0.5 * film_dia, 2);
-  // Assume film is a cylinder
-  // Film surface area exposed to gas/wall
+  // Surface area assuming film is a cylinder
   amrex::Real film_area = M_PI * rad2;
   amrex::Real film_mass = rho_film * film_height * film_area;
   amrex::Real start_mass = film_mass;
@@ -137,9 +136,7 @@ calculateFilmSource(
     get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,
     Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin,
     trans_parm);
-  mu_skin *= SPU.mu_conv;
   lambda_skin *= SPU.lambda_conv;
-  amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
   amrex::Real vel_mag = gpv.vel_fluid.vectorLength();
   // If gas phase is not saturated
   if (sumXVap > 0.) {
@@ -158,13 +155,16 @@ calculateFilmSource(
     // y+ < y+c
     // TODO: This is very rudimentary and should be improved to account for gas
     // phase velocity
-    amrex::Real h_conv = lambda_skin / film_height;
-    amrex::Real q_conv = film_area * h_conv * (gpv.T_fluid - T_film);
-    amrex::Real Sc_skin = mu_skin / rhoDtotal;
+    amrex::Real h_heat = lambda_skin / film_height;
+    amrex::Real q_conv = film_area * h_heat * (gpv.T_fluid - T_film);
     amrex::Real q_cond =
       -film_area * lambda_film * 2. * (T_film - fdat.wall_T) / film_height;
-    amrex::Real gstar_coeff = film_area * h_conv / lambda_skin *
-                              std::cbrt(Sc_skin / Pr_skin) * std::log1p(B_M);
+    // Use Chilton-Colburn analogy to find the convective mass transfer
+    // coefficient Like the droplet evaporation, this uses mixture averaged
+    // values for lambda, cp, and B_M but uses normalized species specific mass
+    // diffusivity
+    amrex::Real h_mass = film_area * h_heat * std::cbrt(lambda_skin / cp_skin) *
+                         std::log1p(B_M) / lambda_skin;
     amrex::Real sumL = 0.;
     amrex::Real m_dot = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -174,8 +174,8 @@ calculateFilmSource(
       const int fdspec = fdat.dep_indx[spf];
       if (
         Y_film[spf] > 1.E-12 && Psat[spf] > gpv.X_fluid[fdspec] * gpv.p_fluid) {
-        mi_dot[spf] = -amrex::max(gstar_coeff * Ddiag[fspec], 0.);
-        m_dot += mi_dot[spf];
+        mi_dot[spf] = -amrex::max(h_mass * std::pow(Ddiag[fspec], 2. / 3.), 0.)
+                        m_dot += mi_dot[spf];
         sumL += mi_dot[spf] * L_fuel[spf];
       }
     }
@@ -191,7 +191,12 @@ calculateFilmSource(
       if (SPRAY_FUEL_NUM > 1) {
         rho_film = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          Y_film[spf] = (Y_film[spf] * film_mass + mi_dot[spf] * dt) / new_mass;
+          Y_film[spf] = amrex::min(
+            1., amrex::min(
+                  (Y_film[spf] * film_mass + mi_dot[spf] * dt) / new_mass, 0.));
+          if (Y_film[spf] < 1.E-12) {
+            Y_film[spf] = 0.;
+          }
           rho_film += Y_film[spf] / fdat.rhoL(T_film, spf);
         }
         rho_film = 1. / rho_film;
@@ -199,6 +204,7 @@ calculateFilmSource(
         rho_film = fdat.rhoL(T_film, 0);
       }
     } else {
+      film_height = 0.;
       new_mass = 0.;
       p.id() = -1;
     }
