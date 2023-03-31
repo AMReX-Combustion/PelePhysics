@@ -832,8 +832,6 @@ ReactorCvode::allocUserData(
     amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
   udata->mask =
     static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
-  udata->mfTemp = static_cast<amrex::Real*>(
-    amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real)));
 
 #ifndef AMREX_USE_GPU
   udata->FCunt =
@@ -1778,11 +1776,10 @@ ReactorCvode::cF_RHS(
   auto* rhoe_init = udata->rhoe_init;
   auto* rhoesrc_ext = udata->rhoesrc_ext;
   auto* rYsrc_ext = udata->rYsrc_ext;
-  auto* mfTemp = udata->mfTemp;
   amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     utils::fKernelSpec<Ordering>(
       icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
-      rhoesrc_ext, rYsrc_ext, mfTemp);
+      rhoesrc_ext, rYsrc_ext);
   });
   amrex::Gpu::Device::streamSynchronize();
   return 0;
@@ -1794,7 +1791,6 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
   amrex::The_Arena()->free(data_wk->rYsrc_ext);
   amrex::The_Arena()->free(data_wk->rhoe_init);
   amrex::The_Arena()->free(data_wk->rhoesrc_ext);
-  amrex::The_Arena()->free(data_wk->mfTemp);
   amrex::The_Arena()->free(data_wk->mask);
 
 #ifdef AMREX_USE_GPU
