@@ -45,7 +45,6 @@ struct CVODEUserData
   amrex::Real* rhoe_init = nullptr; // Initial energy (rhoE for C, rhoH for LM)
   amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
   amrex::Real* rYsrc_ext = nullptr;   // External species forcing
-  amrex::Real* mfTemp = nullptr;  // Temporary holder for mf
   int* mask =
     nullptr; // Masking tagging cells where integration should not be perfomed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
@@ -329,10 +328,13 @@ fKernelDenseAJchem(
 
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
-      Jcurr[k * neqs + i] = Jmat_pt[k * neqs + i] * global_mw[i] * global_imw[k];
+      Jcurr[k * neqs + i] =
+        Jmat_pt[k * neqs + i] * global_mw[i] * global_imw[k];
     }
-    Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] * global_imw[i];
-    Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * global_mw[i];
+    Jcurr[i * neqs + NUM_SPECIES] =
+      Jmat_pt[i * neqs + NUM_SPECIES] * global_imw[i];
+    Jcurr[NUM_SPECIES * neqs + i] =
+      Jmat_pt[NUM_SPECIES * neqs + i] * global_mw[i];
   }
 }
 

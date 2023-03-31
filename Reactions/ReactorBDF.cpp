@@ -67,7 +67,8 @@ get_bdf_matrix_and_rhs(
   for (int ii = 0; ii < NUM_SPECIES; ii++) {
     for (int jj = 0; jj < NUM_SPECIES; jj++) {
       Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0] *
-                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * global_mw[ii] * global_imw[jj];
+                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * global_mw[ii] *
+                       global_imw[jj];
     }
     Jmat2d[ii][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0] *
                               Jmat1d[NUM_SPECIES * (NUM_SPECIES + 1) + ii] *
@@ -236,9 +237,9 @@ ReactorBDF::react(
           dsoln0[ii] = dsoln[ii];
         }
         get_bdf_matrix_and_rhs(
-          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type,
-          tstepscheme, dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time,
-          time_init, Jmat2d, rhs);
+          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type, tstepscheme,
+          dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time, time_init,
+          Jmat2d, rhs);
 
         performgmres(
           Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
@@ -409,9 +410,9 @@ ReactorBDF::react(
           dsoln0[ii] = dsoln[ii];
         }
         get_bdf_matrix_and_rhs(
-          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type,
-          tstepscheme, dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time,
-          time_init, Jmat2d, rhs);
+          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type, tstepscheme,
+          dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time, time_init,
+          Jmat2d, rhs);
 
         performgmres(
           Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
