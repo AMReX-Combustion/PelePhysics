@@ -512,6 +512,32 @@ class Converter:
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
 
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment(" inverse molecular weights "))
+        cw.writer(
+            fstream,
+            "AMREX_GPU_CONSTANT const amrex::Real "
+            f"global_imw[{self.species_info.n_species}]={{",
+        )
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"{1.0 / species.weight:.16f},"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "};")
+        cw.writer(fstream)
+
+        cw.writer(fstream, cw.comment(" molecular weights "))
+        cw.writer(
+            fstream,
+            "AMREX_GPU_CONSTANT const amrex::Real "
+            f"global_mw[{self.species_info.n_species}]={{",
+        )
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"{species.weight:f},"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "};")
+
     def mechanism_cpp_declarations(self, fstream):
         """Write the chemistry function declarations."""
         cw.writer(fstream)
