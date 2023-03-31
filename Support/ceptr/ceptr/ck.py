@@ -1086,7 +1086,6 @@ def ckpx(fstream, mechanism, species_info):
 
 def ckpy(fstream, mechanism, species_info):
     """Write ckpy."""
-    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute P = rhoRT/W(y)"))
     cw.writer(
