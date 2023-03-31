@@ -240,6 +240,124 @@ get_mw(amrex::Real* mw_new)
   mw_new[54] = 28.014000;  // n2
 }
 
+//  inverse molecular weights
+AMREX_GPU_CONSTANT amrex::Real global_imw[55] = {
+  0.9920634920634921, // h
+  0.4960317460317460, // h2
+  0.0625039064941559, // o
+  0.0312519532470779, // o2
+  0.0587993179279120, // oh
+  0.0555092978073827, // h2o
+  0.0357015351660121, // co
+  0.0227226249176305, // co2
+  0.0665114732291320, // ch3
+  0.0623324814560868, // ch4
+  0.0302975216627280, // ho2
+  0.0293996589639560, // h2o2
+  0.0333044694598015, // ch2o
+  0.0332557366145660, // c2h6
+  0.0356455407428531, // c2h4
+  0.0344091941366733, // c2h5
+  0.0384054074813734, // c2h2
+  0.0369740442209569, // c2h3
+  0.0237885672145967, // ch2co
+  0.0243730044602598, // hcco
+  0.0226999296302181, // ch3cho
+  0.0249594409085237, // c3h4-a
+  0.0237636938285687, // c3h6
+  0.0184870221104784, // c4h6
+  0.0232077792476038, // nc3h7
+  0.0181488203266788, // c4h7
+  0.0178227703714265, // c4h8-1
+  0.0175217269414073, // ch3coch2
+  0.0172176308539945, // c2h5cho
+  0.0144661275623128, // c5h9
+  0.0142582162971412, // c5h10-1
+  0.0212616673399528, // ch3o2
+  0.0208155533814866, // ch3o2h
+  0.0181633246149375, // c2h3co
+  0.0178367579908676, // c2h3cho
+  0.0082568201334302, // c4h8ooh1-3o2
+  0.0112215813452432, // pc4h9o2
+  0.0243468945535997, // c3h5-a
+  0.0256036049875823, // c3h3
+  0.0096056865664473, // nc4ket13
+  0.0138682790852483, // nc3h7cho
+  0.0140648954275025, // c2h5coch2
+  0.0117472922491366, // nc3h7coch2
+  0.0116098172614763, // nc4h9cho
+  0.0117472922491366, // nc4h9co
+  0.0099795419390250, // nc7h16
+  0.0076222417012843, // c7h15o2-1
+  0.0076222417012843, // c7h15o2-2
+  0.0076222417012843, // c7h15o2-3
+  0.0076222417012843, // c7h15o2-4
+  0.0076222417012843, // c7h14ooh4-3
+  0.0061277138112542, // c7h14ooh1-3o2
+  0.0087574876519424, // c7h14o1-3
+  0.0087574876519424, // c7h14o2-4
+  0.0356964374955379, // n2
+};
+
+//  molecular weights
+AMREX_GPU_CONSTANT amrex::Real global_mw[55] = {
+  1.008000,   // h
+  2.016000,   // h2
+  15.999000,  // o
+  31.998000,  // o2
+  17.007000,  // oh
+  18.015000,  // h2o
+  28.010000,  // co
+  44.009000,  // co2
+  15.035000,  // ch3
+  16.043000,  // ch4
+  33.006000,  // ho2
+  34.014000,  // h2o2
+  30.026000,  // ch2o
+  30.070000,  // c2h6
+  28.054000,  // c2h4
+  29.062000,  // c2h5
+  26.038000,  // c2h2
+  27.046000,  // c2h3
+  42.037000,  // ch2co
+  41.029000,  // hcco
+  44.053000,  // ch3cho
+  40.065000,  // c3h4-a
+  42.081000,  // c3h6
+  54.092000,  // c4h6
+  43.089000,  // nc3h7
+  55.100000,  // c4h7
+  56.108000,  // c4h8-1
+  57.072000,  // ch3coch2
+  58.080000,  // c2h5cho
+  69.127000,  // c5h9
+  70.135000,  // c5h10-1
+  47.033000,  // ch3o2
+  48.041000,  // ch3o2h
+  55.056000,  // c2h3co
+  56.064000,  // c2h3cho
+  121.112000, // c4h8ooh1-3o2
+  89.114000,  // pc4h9o2
+  41.073000,  // c3h5-a
+  39.057000,  // c3h3
+  104.105000, // nc4ket13
+  72.107000,  // nc3h7cho
+  71.099000,  // c2h5coch2
+  85.126000,  // nc3h7coch2
+  86.134000,  // nc4h9cho
+  85.126000,  // nc4h9co
+  100.205000, // nc7h16
+  131.195000, // c7h15o2-1
+  131.195000, // c7h15o2-2
+  131.195000, // c7h15o2-3
+  131.195000, // c7h15o2-4
+  131.195000, // c7h14ooh4-3
+  163.193000, // c7h14ooh1-3o2
+  114.188000, // c7h14o1-3
+  114.188000, // c7h14o2-4
+  28.014000,  // n2
+};
+
 //  Returns R, Rc, Patm
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKRP(amrex::Real& ru, amrex::Real& ruc, amrex::Real& pa)
@@ -5293,8 +5411,12 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+<<<<<<< Updated upstream
 
   // compute Cp/R at the given temperature
+=======
+  amrex::Real cpor[55];                               //  temporary storage
+>>>>>>> Stashed changes
 
   // species with midpoint at T=1000 kelvin
   if (tT < 1000) {
@@ -5553,6 +5675,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
       0.0356964374955379;
   }
 
+<<<<<<< Updated upstream
   // species with midpoint at T=1357 kelvin
   if (tT < 1357) {
     // species 4: oh
@@ -6064,6 +6187,10 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
       (+2.32692731e+01 + 3.25585391e-02 * tc[1] - 1.11624906e-05 * tc[2] +
        1.73573658e-09 * tc[3] - 1.00813215e-13 * tc[4]) *
       0.0087574876519424;
+=======
+  for (int i = 0; i < 55; i++) {
+    result += cpor[i] * y[i] * global_imw[i];
+>>>>>>> Stashed changes
   }
 
   cpbs = result * 8.31446261815324e+07;
@@ -6096,6 +6223,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+<<<<<<< Updated upstream
   // compute Cv/R at the given temperature
 
   // species with midpoint at T=1000 kelvin
@@ -6354,6 +6482,9 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
        1.00970400e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
       0.0356964374955379;
   }
+=======
+  amrex::Real cvor[55];                               //  temporary storage
+>>>>>>> Stashed changes
 
   // species with midpoint at T=1357 kelvin
   if (tT < 1357) {
@@ -6372,6 +6503,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
       0.0587993179279120;
   }
 
+<<<<<<< Updated upstream
   // species with midpoint at T=1390 kelvin
   if (tT < 1390) {
     // species 10: ho2
@@ -6866,6 +6998,11 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
       (+2.22692731e+01 + 3.25585391e-02 * tc[1] - 1.11624906e-05 * tc[2] +
        1.73573658e-09 * tc[3] - 1.00813215e-13 * tc[4]) *
       0.0087574876519424;
+=======
+  // multiply by y/molecularweight
+  for (int i = 0; i < 55; i++) {
+    result += cvor[i] * y[i] * global_imw[i];
+>>>>>>> Stashed changes
   }
 
   cvbs = result * 8.31446261815324e+07;
@@ -6899,6 +7036,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+<<<<<<< Updated upstream
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -7156,6 +7294,15 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
                1.89492033e-07 * tc[2] + 2.52426000e-11 * tc[3] -
                1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
               0.0356964374955379;
+=======
+  amrex::Real hml[55];                                //  temporary storage
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+
+  speciesEnthalpy(hml, tc);
+
+  for (int id = 0; id < 55; ++id) {
+    result += y[id] * hml[id] * global_imw[id];
+>>>>>>> Stashed changes
   }
 
   // species with midpoint at T=1357 kelvin
@@ -7704,6 +7851,7 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+<<<<<<< Updated upstream
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -7961,6 +8109,16 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
                1.89492033e-07 * tc[2] + 2.52426000e-11 * tc[3] -
                1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
               0.0356964374955379;
+=======
+  amrex::Real ums[55];                                //  temporary energy array
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+
+  speciesInternalEnergy(ums, tc);
+
+  // perform dot product + scaling by wt
+  for (int i = 0; i < 55; i++) {
+    result += y[i] * ums[i] * global_imw[i];
+>>>>>>> Stashed changes
   }
 
   // species with midpoint at T=1357 kelvin
@@ -8523,13 +8681,10 @@ CKSBMS(
   amrex::Real sor[55]; //  temporary storage
   amrex::Real x[55];   //  need a ytx conversion
   amrex::Real YOW = 0; // See Eq 4, 6 in CK Manual
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
   // Now compute y to x conversion
   x[0] = y[0] / (1.008000 * YOW);
@@ -8776,12 +8931,9 @@ CKPY(
   amrex::Real& P)
 {
   amrex::Real YOW = 0; //  for computing mean MW
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
@@ -8935,12 +9087,9 @@ CKRHOY(
   amrex::Real& rho)
 {
   amrex::Real YOW = 0;
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -9032,12 +9181,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWY(const amrex::Real y[], amrex::Real& wtm)
 {
   amrex::Real YOW = 0;
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
 
   wtm = 1.0 / YOW;
@@ -9216,18 +9362,15 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real y[], amrex::Real x[])
 {
   amrex::Real YOW = 0;
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 55; i++) {
-    x[i] = y[i] * imw[i] * YOWINV;
+    x[i] = y[i] * global_imw[i] * YOWINV;
   }
 }
 
@@ -9241,13 +9384,10 @@ CKYTCP(
 {
   amrex::Real YOW = 0;
   amrex::Real PWORT;
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 55; i++) {
-    c[i] = y[i] * imw[i];
+    c[i] = y[i] * global_imw[i];
   }
   for (int i = 0; i < 55; i++) {
     YOW += c[i];
@@ -9258,7 +9398,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 55; i++) {
-    c[i] = PWORT * y[i] * imw[i];
+    c[i] = PWORT * y[i] * global_imw[i];
   }
 }
 
@@ -9270,12 +9410,9 @@ CKYTCR(
   const amrex::Real y[],
   amrex::Real c[])
 {
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   for (int i = 0; i < 55; i++) {
-    c[i] = rho * y[i] * imw[i];
+    c[i] = rho * y[i] * global_imw[i];
   }
 }
 
@@ -9850,14 +9987,11 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   speciesInternalEnergy(ums, tc);
 
   for (int i = 0; i < 55; i++) {
-    ums[i] *= RT * imw[i];
+    ums[i] *= RT * global_imw[i];
   }
 }
 
@@ -9869,14 +10003,11 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   speciesEnthalpy(hms, tc);
 
   for (int i = 0; i < 55; i++) {
-    hms[i] *= RT * imw[i];
+    hms[i] *= RT * global_imw[i];
   }
 }
 
@@ -36848,13 +36979,10 @@ CKWYP(
   amrex::Real c[55]; // temporary storage
   amrex::Real YOW = 0;
   amrex::Real PWORT;
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 55; i++) {
-    YOW += y[i] * imw[i];
+    YOW += y[i] * global_imw[i];
   }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
@@ -36862,7 +36990,7 @@ CKWYP(
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
   for (int i = 0; i < 55; i++) {
-    c[i] = PWORT * y[i] * imw[i];
+    c[i] = PWORT * y[i] * global_imw[i];
   }
 
   // convert to chemkin units
@@ -36911,13 +37039,10 @@ CKWYR(
   amrex::Real wdot[])
 {
   amrex::Real c[55]; // temporary storage
-  amrex::Real imw[55];
-
-  get_imw(imw);
 
   // See Eq 8 with an extra 1e6 so c goes to SI
   for (int i = 0; i < 55; i++) {
-    c[i] = 1e6 * rho * y[i] * imw[i];
+    c[i] = 1e6 * rho * y[i] * global_imw[i];
   }
 
   // call productionRate
@@ -37079,14 +37204,12 @@ CKCHRG(int kcharge[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCHRGMASS(amrex::Real zk[])
 {
-  amrex::Real imw[55];
-  get_imw(imw);
 
   int kchrg[55];
   CKCHRG(kchrg);
 
   for (int id = 0; id < 55; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
   }
 }
 

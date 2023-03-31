@@ -52,6 +52,12 @@ For generating ``qssa.yaml`` for reduced chemistries, CEPTR can take a file with
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry run qssa -lq ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_qss_mech
 
+To generate all mechanisms::
+
+  $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
+  $ poetry run qssa -lq ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_qss_mech
+  $ poetry run convert -lq ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_qss_mech
+
 
 Converting CHEMKIN files
 ------------------------
