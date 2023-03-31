@@ -1109,7 +1109,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-<<<<<<< Updated upstream
 
   // compute Cp/R at the given temperature
 
@@ -1260,14 +1259,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
       (+3.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
        5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
       0.0227226249176305;
-=======
-  amrex::Real cpor[14];                               //  temporary storage
-
-  cp_R(cpor, tc);
-
-  for (int i = 0; i < 14; i++) {
-    result += cpor[i] * y[i] * global_imw[i];
->>>>>>> Stashed changes
   }
 
   // species with no change at a midpoint T
@@ -1314,7 +1305,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-<<<<<<< Updated upstream
   // compute Cv/R at the given temperature
 
   // species with midpoint at T=1000 kelvin
@@ -1464,15 +1454,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
       (+2.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
        5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
       0.0227226249176305;
-=======
-  amrex::Real cvor[14];                               //  temporary storage
-
-  cv_R(cvor, tc);
-
-  // multiply by y/molecularweight
-  for (int i = 0; i < 14; i++) {
-    result += cvor[i] * y[i] * global_imw[i];
->>>>>>> Stashed changes
   }
 
   // species with no change at a midpoint T
@@ -1520,7 +1501,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-<<<<<<< Updated upstream
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -1670,15 +1650,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
                7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
                9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
               0.0227226249176305;
-=======
-  amrex::Real hml[14];                                //  temporary storage
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-
-  speciesEnthalpy(hml, tc);
-
-  for (int id = 0; id < 14; ++id) {
-    result += y[id] * hml[id] * global_imw[id];
->>>>>>> Stashed changes
   }
 
   // species with no change at a midpoint T
@@ -1730,7 +1701,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   const amrex::Real tT = T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-<<<<<<< Updated upstream
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -1880,16 +1850,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
                7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
                9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
               0.0227226249176305;
-=======
-  amrex::Real ums[14];                                //  temporary energy array
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-
-  speciesInternalEnergy(ums, tc);
-
-  // perform dot product + scaling by wt
-  for (int i = 0; i < 14; i++) {
-    result += y[i] * ums[i] * global_imw[i];
->>>>>>> Stashed changes
   }
 
   // species with no change at a midpoint T

@@ -232,24 +232,6 @@ def ckcpbs(fstream, mechanism, species_info):
         None,
         True,
     )
-<<<<<<< Updated upstream
-    cw.writer(fstream)
-=======
-
-    # call routine
-    cw.writer(fstream)
-    cw.writer(fstream, "cp_R(cpor, tc);")
-    cw.writer(fstream)
-
-    cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
-    cw.writer(fstream, "{")
-
-    cw.writer(fstream, "result += cpor[i]*y[i]*global_imw[i];")
-
-    cw.writer(fstream, "")
-    cw.writer(fstream, "}")
->>>>>>> Stashed changes
-
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -354,26 +336,6 @@ def ckcvbs(fstream, mechanism, species_info):
         None,
         True,
     )
-<<<<<<< Updated upstream
-    cw.writer(fstream)
-=======
-
-    # call routine
-    cw.writer(fstream)
-    cw.writer(fstream, "cv_R(cvor, tc);")
-    cw.writer(fstream)
-
-    # do dot product
-    cw.writer(fstream, cw.comment("multiply by y/molecularweight"))
-
-    cw.writer(
-        fstream,
-        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
-    )
-    cw.writer(fstream, "{")
-    cw.writer(fstream, "result += cvor[i]*y[i]*global_imw[i];")
-    cw.writer(fstream, "}")
->>>>>>> Stashed changes
 
     cw.writer(fstream)
     cw.writer(
@@ -488,18 +450,6 @@ def ckhbms(fstream, mechanism, species_info):
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
-<<<<<<< Updated upstream
-=======
-
-    # call routine
-    cw.writer(fstream)
-    cw.writer(fstream, "speciesEnthalpy(hml, tc);")
-    cw.writer(fstream)
-
-    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
-    cw.writer(fstream, "result += y[id]*hml[id]*global_imw[id];")
-    cw.writer(fstream, "}")
->>>>>>> Stashed changes
 
     cw.writer(fstream)
     cw.writer(fstream, "hbms = result * RT;")
@@ -600,24 +550,6 @@ def ckubms(fstream, mechanism, species_info):
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e}*tT; "
         + cw.comment("R*T"),
     )
-<<<<<<< Updated upstream
-=======
-
-    # call routine
-    cw.writer(fstream)
-    cw.writer(fstream, "speciesInternalEnergy(ums, tc);")
-    cw.writer(fstream)
-
-    # convert e/RT to e with mass units
-    cw.writer(fstream, cw.comment("perform dot product + scaling by wt"))
-    cw.writer(
-        fstream,
-        f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
-    )
-    cw.writer(fstream, "{")
-    cw.writer(fstream, "result += y[i]*ums[i]*global_imw[i];")
-    cw.writer(fstream, "}")
->>>>>>> Stashed changes
 
     cw.writer(fstream)
     cw.writer(fstream, "ubms = result * RT;")
