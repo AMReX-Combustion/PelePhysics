@@ -51,7 +51,11 @@ class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 public:
   static std::string identifier() { return "ReactorCvode"; }
 
+#if defined(AMREX_USE_GPU) && !defined(PELE_USE_MAGMA)
   using Ordering = utils::CYOrder;
+#else
+  using Ordering = utils::YCOrder;
+#endif
 
   int init(int reactor_type, int ncells) override;
 
