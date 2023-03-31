@@ -4,17 +4,14 @@ C1-C2-NO/mechanism.yaml
 CH4_lean/mechanism.yaml
 Davis/mechanism.yaml
 FFCM1_Red/mechanism.yaml
-# BROKEN FORD JL4/mechanism.yaml
 Kolla/mechanism.yaml
 IonizedAir/mechanism.yaml
 LiDryer/mechanism.yaml
 LuDME/mechanism.yaml
-# BROKEN plog HP_DME/mechanism.yaml
 LuEthylene/mechanism.yaml
 NUIGalway/mechanism.yaml
 air/mechanism.yaml
 alzeta/mechanism.yaml
-# BROKEN FORD chem-CH4-2step/mechanism.yaml
 chem-H/mechanism.yaml
 decane_3sp/mechanism.yaml
 dodecane_lu/mechanism.yaml

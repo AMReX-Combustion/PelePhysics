@@ -193,7 +193,7 @@ get_mw(amrex::Real* mw_new)
 }
 
 //  inverse molecular weights
-AMREX_GPU_CONSTANT amrex::Real global_imw[39] = {
+AMREX_GPU_CONSTANT const amrex::Real global_imw[39] = {
   0.9920634920634921, // H
   0.4960317460317460, // H2
   0.0712910814857061, // CH2
@@ -236,7 +236,7 @@ AMREX_GPU_CONSTANT amrex::Real global_imw[39] = {
 };
 
 //  molecular weights
-AMREX_GPU_CONSTANT amrex::Real global_mw[39] = {
+AMREX_GPU_CONSTANT const amrex::Real global_mw[39] = {
   1.008000,   // H
   2.016000,   // H2
   14.027000,  // CH2
