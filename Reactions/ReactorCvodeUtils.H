@@ -45,6 +45,7 @@ struct CVODEUserData
   amrex::Real* rhoe_init = nullptr; // Initial energy (rhoE for C, rhoH for LM)
   amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
   amrex::Real* rYsrc_ext = nullptr;   // External species forcing
+  amrex::Real* mfTemp = nullptr;  // Temporary holder for mf
   int* mask =
     nullptr; // Masking tagging cells where integration should not be perfomed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
@@ -159,9 +160,6 @@ fKernelComputeallAJ(
   int u_offset = ncell * neqs;
   amrex::Real* u_curr = u_d + u_offset;
 
-  amrex::Real mw[NUM_SPECIES] = {0.0};
-  get_mw(mw);
-
   amrex::Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
     rho_pt = rho_pt + u_curr[n];
@@ -185,10 +183,10 @@ fKernelComputeallAJ(
   amrex::Real* csr_val_cell = csr_val_arg + jac_offset;
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
-      Jmat_pt[k * neqs + i] *= mw[i] / mw[k];
+      Jmat_pt[k * neqs + i] *= global_mw[i] * global_imw[k];
     }
-    Jmat_pt[i * neqs + NUM_SPECIES] /= mw[i];
-    Jmat_pt[NUM_SPECIES * neqs + i] *= mw[i];
+    Jmat_pt[i * neqs + NUM_SPECIES] *= global_imw[i];
+    Jmat_pt[NUM_SPECIES * neqs + i] *= global_mw[i];
   }
   for (int i = 1; i < NUM_SPECIES + 2; i++) {
     int nbVals = csr_row_count_d[i] - csr_row_count_d[i - 1];
@@ -277,14 +275,12 @@ fKernelComputeAJchem(
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
   // Scale Jacobian
-  amrex::Real mw[NUM_SPECIES] = {0.0};
-  get_mw(mw);
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
-      Jmat_pt[k * neqs + i] *= mw[i] / mw[k];
+      Jmat_pt[k * neqs + i] *= global_mw[i] * global_imw[k];
     }
-    Jmat_pt[i * neqs + NUM_SPECIES] /= mw[i];
-    Jmat_pt[NUM_SPECIES * neqs + i] *= mw[i];
+    Jmat_pt[i * neqs + NUM_SPECIES] *= global_imw[i];
+    Jmat_pt[NUM_SPECIES * neqs + i] *= global_mw[i];
   }
 
   // Fill the sparse outgoing Jacobian matrix
@@ -328,18 +324,15 @@ fKernelDenseAJchem(
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
   // Scale Jacobian and pass into outgoing data ptr.
-  amrex::Real mw[NUM_SPECIES] = {0.0};
-  get_mw(mw);
-
   int jac_offset = icell * (neqs * neqs);
   amrex::Real* Jcurr = Jdata + jac_offset;
 
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
-      Jcurr[k * neqs + i] = Jmat_pt[k * neqs + i] * mw[i] / mw[k];
+      Jcurr[k * neqs + i] = Jmat_pt[k * neqs + i] * global_mw[i] * global_imw[k];
     }
-    Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] / mw[i];
-    Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * mw[i];
+    Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] * global_imw[i];
+    Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * global_mw[i];
   }
 }
 
