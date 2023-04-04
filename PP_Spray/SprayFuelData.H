@@ -178,17 +178,6 @@ struct SprayData
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  amrex::Real muL(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = mu_coef[4 * spf];
-    amrex::Real b = mu_coef[4 * spf + 1];
-    amrex::Real c = mu_coef[4 * spf + 2];
-    amrex::Real d = mu_coef[4 * spf + 3];
-    return a + ((d / T + c) / T + b) / T;
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
   amrex::Real rhoL(const amrex::Real& T, const int spf) const
   {
     amrex::Real a = rho_coef[4 * spf];
