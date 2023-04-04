@@ -11,30 +11,31 @@ class DiagBase : public pele::physics::Factory<DiagBase>
 public:
   static std::string base_identifier() { return "DiagBase"; }
 
-  virtual void init(const std::string &a_prefix,
-                    std::string_view a_diagName);
+  virtual void init(const std::string& a_prefix, std::string_view a_diagName);
 
   virtual void close() = 0;
 
-  bool needUpdate() { return need_update;};
+  bool needUpdate() { return need_update; };
 
-  virtual bool doDiag(const amrex::Real &a_time, int a_nstep);
+  virtual bool doDiag(const amrex::Real& a_time, int a_nstep);
 
-  virtual void prepare(int a_nlevels,
-                       const amrex::Vector<amrex::Geometry> &a_geoms,
-                       const amrex::Vector<amrex::BoxArray> &a_grids,
-                       const amrex::Vector<amrex::DistributionMapping> &a_dmap,
-                       const amrex::Vector<std::string> &a_varNames);
+  virtual void prepare(
+    int a_nlevels,
+    const amrex::Vector<amrex::Geometry>& a_geoms,
+    const amrex::Vector<amrex::BoxArray>& a_grids,
+    const amrex::Vector<amrex::DistributionMapping>& a_dmap,
+    const amrex::Vector<std::string>& a_varNames);
 
-  virtual void processDiag(int a_nstep,
-                           const amrex::Real &a_time,
-                           const amrex::Vector<const amrex::MultiFab*> &a_state,
-                           const amrex::Vector<std::string> &a_varNames) = 0;
+  virtual void processDiag(
+    int a_nstep,
+    const amrex::Real& a_time,
+    const amrex::Vector<const amrex::MultiFab*>& a_state,
+    const amrex::Vector<std::string>& a_varNames) = 0;
 
-  virtual void addVars(amrex::Vector<std::string> &a_varList);
+  virtual void addVars(amrex::Vector<std::string>& a_varList);
 
-  int getFieldIndex(const std::string &a_field,
-                    const amrex::Vector<std::string> &a_varList);
+  int getFieldIndex(
+    const std::string& a_field, const amrex::Vector<std::string>& a_varList);
 
 protected:
   std::string m_diagfile{""};
