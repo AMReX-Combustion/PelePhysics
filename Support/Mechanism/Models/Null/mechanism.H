@@ -54,6 +54,14 @@ get_mw(amrex::Real mw_new[])
   mw_new[0] = 1.0;
 }
 
+AMREX_GPU_CONSTANT const amrex::Real global_imw[1] = {
+  1.0,
+};
+
+AMREX_GPU_CONSTANT const amrex::Real global_mw[1] = {
+  1.0,
+};
+
 /* Returns R, Rc, Patm */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKRP(amrex::Real& ru, amrex::Real& ruc, amrex::Real& pa)
