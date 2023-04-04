@@ -170,6 +170,7 @@ if (PELEPHYSICS_UTILS)
   add_subdirectory(Utility/PMF)
   add_subdirectory(Utility/TurbInflow)
   add_subdirectory(Utility/PltFileManager)
+  add_subdirectory(Utility/Diagnostics)
 endif ()
 
 if (PELEPHYSICS_TRANSPORT)
