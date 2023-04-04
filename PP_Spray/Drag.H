@@ -205,8 +205,7 @@ calculateSpraySource(
   int nsub = 1;
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
-  amrex::RealVect part_mom_src;
-  amrex::Real Reyn;
+  amrex::RealVect part_vel_src;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
@@ -281,7 +280,7 @@ calculateSpraySource(
       0.125 * rho_skin * drag_coef * M_PI * dia_part * dia_part * diff_vel_mag;
     amrex::Real drag_force_p =
       0.75 * rho_skin * drag_coef * diff_vel_mag / (dia_part * rho_part);
-    part_mom_src = drag_force_p * diff_vel;
+    part_vel_src = drag_force_p * diff_vel + fdat.body_force;
     if (fdat.mom_trans) {
       gpv.fluid_mom_src += drag_force * diff_vel;
 #ifndef PELELM_USE_SPRAY
@@ -369,9 +368,9 @@ calculateSpraySource(
     const amrex::Real part_dt = fdat.dtmod * dt;
     if (!fdat.fixed_parts) {
       // Update particle velocity
-      AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0];
-                   , vel_part[1] += part_dt * part_mom_src[1];
-                   , vel_part[2] += part_dt * part_mom_src[2];);
+      AMREX_D_TERM(vel_part[0] += part_dt * part_vel_src[0];
+                   , vel_part[1] += part_dt * part_vel_src[1];
+                   , vel_part[2] += part_dt * part_vel_src[2];);
     }
     if (fdat.mass_trans) {
       T_part += part_dt * part_temp_src;

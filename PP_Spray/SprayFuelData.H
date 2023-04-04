@@ -130,6 +130,7 @@ struct SprayData
   amrex::Real theta_c = -1.; // Contact angle for wall film
   // If particle is updated half dt or whole dt
   amrex::Real dtmod = 0.5;
+  amrex::RealVect body_force = amrex::RealVect::TheZeroVector();
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
@@ -148,8 +149,9 @@ struct SprayData
     mass_trans = fdat.mass_trans;
     mom_trans = fdat.mom_trans;
     fixed_parts = fdat.fixed_parts;
-    do_breakup = fdat.do_breakup;
-    do_splash = fdat.do_splash;
+    // Convert input values from CGS to MKS for PeleLM
+    num_ppp = fdat.num_ppp;
+    body_force = fdat.body_force;
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
     wall_T = fdat.wall_T;

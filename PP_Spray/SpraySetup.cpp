@@ -256,7 +256,8 @@ SprayParticleContainer::readSprayParams(
 }
 
 void
-SprayParticleContainer::spraySetup(SprayData& sprayData)
+SprayParticleContainer::spraySetup(
+  SprayData& sprayData, const Real* body_force)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
@@ -290,6 +291,9 @@ SprayParticleContainer::spraySetup(SprayData& sprayData)
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = sprayData.indx[ns];
     sprayData.latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
+  }
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    sprayData.body_force[dir] = body_force[dir];
   }
   Gpu::streamSynchronize();
   ParallelDesciptor::Barrier();
