@@ -101,7 +101,7 @@ calculateFilmSource(
   amrex::Real lambda_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     cp_film += Y_film[spf] * fdat.cp[spf];
-    lambda_film += Y_film[spf] * fdat.lambda[spf];
+    lambda_film += Y_film[spf] * fdat.lambdaL(T_film, spf);
     Tcrit += Y_film[spf] * fdat.critT[spf];
   }
   T_film = amrex::min(0.999 * Tcrit, T_film);

@@ -14,7 +14,7 @@
 enum splash_type { rebound = 0, deposit, splash, thermal_breakup };
 
 // Determine the type of particle impact at the wall
-AMREX_GPU_HOST_DEVICE
+AMREX_GPU_DEVICE
 AMREX_INLINE
 splash_type
 splash_criteria(
