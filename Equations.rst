@@ -8,7 +8,7 @@ Equations
 Spray Equations
 ---------------
 The following equations pertain to the spray modeling algorithm in `PeleMP`.
-The evaporation models follow the work by Abramzon and Sirignano. [#abram]_
+The evaporation models follow the work by Abramzon and Sirignano [#abram]_ and the multicomponent evaporation is based on work by Tonini. [#ton]_ Details regarding the energy balance are provided in Ge et al. [#Ge]_
 
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`s` relates to the reference surface state, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase.
 
@@ -181,7 +181,7 @@ The procedure is as follows for updating the spray droplet:
 
         \mathcal{Q}_d &= \pi \lambda_s d_d (T_g - T_d) {\rm{Nu}}_0
 
-#. The gas phase source terms for a single parcel to a particular cell are
+#. To alleviate conservation issues at AMR interfaces, each parcel only contributes to the gas phase source term of the cell containing it. The gas phase source terms for a single parcel to the cell are
 
     .. math::
        S_{\rho} &= \mathcal{C} \sum^{N_L}_{n=0} \dot{m}_n,
@@ -197,8 +197,12 @@ The procedure is as follows for updating the spray droplet:
     where
 
     .. math::
-       \mathcal{C} = -\frac{w_c N_{\rm{parcel}}}{V_{\rm{cell}}}
+       \mathcal{C} = -\frac{N_{d}}{V_{\rm{cell}}},
 
-    and :math:`w_c` is the deposition weighting for the particle to the cell, :math:`N_{\rm{parcel}}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on if an EB is present.
+    :math:`N_{d}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on AMR level and if an EB is present.
 
 .. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol 32, No. 9, pp 1605-1618 (1989)
+
+.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006)
+
+.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol 128, Issn 0301-9322, 103293 (2020)

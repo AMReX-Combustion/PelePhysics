@@ -5,9 +5,9 @@
 Spray Flags and Inputs
 ======================
 
-* In the ``GNUmakefile``, specify ``USE_PARTICLES = TRUE`` and ``SPRAY_FUEL_NUM = N`` where ``N`` is the number of liquid species being used in the simulation
+* In the ``GNUmakefile``, specify ``USE_PARTICLES = TRUE`` and ``SPRAY_FUEL_NUM = N`` where ``N`` is the number of liquid species being used in the simulation.
 
-* Depending on the gas phase solver, spray solving functionality can be turned on in the input file using ``pelec.do_spray_particles = 1`` or ``pelelm.do_spray_particles = 1``
+* Depending on the gas phase solver, spray solving functionality can be turned on in the input file using ``pelec.do_spray_particles = 1`` or ``pelelm.do_spray_particles = 1``.
 
 * The units for `PeleLM` and `PeleLMeX` are MKS while the units for `PeleC` are CGS. This is the same for the spray inputs. E.g. when running a spray simulation coupled with `PeleC`, the units for ``particles.fuel_cp`` must be in erg/g.
 
@@ -15,43 +15,49 @@ Spray Flags and Inputs
 
   * The liquid fuel species names are specified using ``particles.fuel_species = NC7H16 NC10H22``. The number of fuel species listed must match ``SPRAY_FUEL_NUM``.
 
-  * Many values must be specified on a per-species basis. Following the current example, one would have to specify ``particles.fuel_crit_temp = 540. 617.`` to set a critical temperature of 540 K for ``NC7H16`` and 617 K for ``NC10H22``.
+  * Many values must be specified on a per-species basis. Following the current example, one would have to specify ``particles.NC7H16_crit_temp = 540.`` and ``particles.NC10H22_crit_temp = 617.`` to set a critical temperature of 540 K for ``NC7H16`` and 617 K for ``NC10H22``.
 
   * Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3``. All species specified must be present in the chemistry transport and thermodynamic data.
 
-* The following table lists other inputs related to ``particles.``
+* The following table lists other inputs related to ``particles.``, where ``SP`` will refer to a fuel species name
 
 .. table::
 
    +-----------------------+-------------------------------+-------------+-------------------+
-   |Input                  |Description                    |Per species  |Default Value      |
+   |Input                  |Description                    |Required     |Default Value      |
    +=======================+===============================+=============+===================+
    |``fuel_species``       |Names of liquid species        |Yes          |None               |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``dep_fuel_species``   |Name of gas phase species to   |Yes          |Inputs to          |
    |                       |contribute                     |             |``fuel_species``   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_ref_temp``      |Liquid reference temperature   |No           |None               |
+   |``fuel_ref_temp``      |Liquid reference temperature   |Yes          |None               |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_crit_temp``     |Critical temperature           |Yes          |None               |
+   |``SP_crit_temp``       |Critical temperature           |Yes          |None               |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_boil_temp``     |Boiling temperature at         |Yes          |None               |
+   |``SP_boil_temp``       |Boiling temperature at         |Yes          |None               |
    |                       |atmospheric pressure           |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_cp``            |Liquid :math:`c_p` at reference|Yes          |None               |
+   |``SP_cp``              |Liquid :math:`c_p` at reference|Yes          |None               |
    |                       |temperature                    |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_latent``        |Latent heat at reference       |Yes          |None               |
+   |``SP_latent``          |Latent heat at reference       |Yes          |None               |
    |                       |temperature                    |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_rho``           |Liquid density                 |Yes          |None               |
+   |``SP_rho``             |Liquid density                 |Yes          |None               |
    |                       |                               |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_lambda``          |Liquid thermal conductivity    |No           |0.                 |
+   |                       |(currently unused)             |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_mu``              |Liquid dynamic viscosity       |No           |0.                 |
+   |                       |(currently unused)             |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``mom_transfer``       |Couple momentum with gas phase |No           |``1``              |
    |                       |                               |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``mass_transfer``      |Evaporate mass and exchange    |No           |``1``              |
-   |                       |heat                           |             |                   |
+   |                       |heat with gas phase            |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``fixed_parts``        |Fix particles in space         |No           |``0``              |
    +-----------------------+-------------------------------+-------------+-------------------+
@@ -68,18 +74,35 @@ Spray Flags and Inputs
    |                       |limiting time step             |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``init_file``          |Ascii file name to initialize  |No           |Empty              |
-   |                       |sprays                         |             |                   |
+   |                       |droplets                       |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
 
 
 * If an Antoine fit for saturation pressure is used, it must be specified for individual species, ::
 
-    particles.NC10H22_psat = 4.07857 1501.268 -78.67 1.E5
+    particles.SP_psat = 4.07857 1501.268 -78.67 1.E5
 
   where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
 
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
+
+  * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation; see 
+
+* Temperature based fits for liquid density, thermal conductivity, and dynamic viscosity can be used; these can be specified as ::
+
+    particles.SP_rho = 10.42 -5.222 1.152E-2 4.123E-7
+    particles.SP_lambda = 7.243 1.223 4.223E-8 8.224E-9
+    particles.SP_mu = 7.243 1.223 4.223E-8 8.224E-9
+
+  where the numbers respresent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+
+  .. math::
+     \rho_L \,, \lambda_L = a + b T + c T^2 + d T^3
+
+     \mu_L = a + b / T + c / T^2 + d / T^3
+
+  If only a single value is provided, :math:`a` is assigned to that value and the other coefficients are set to zero, effectively using a constant value for the parameters.
 
 Spray Injection
 ----------------------
