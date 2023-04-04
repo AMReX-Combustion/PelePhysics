@@ -16,15 +16,50 @@ void
 getInpCoef(
   Real* coef,
   const ParmParse& ppp,
-  const std::string& fuel_name,
+  const std::string* fuel_names,
   const std::string& varname,
-  const int spf)
+  bool is_required = false)
 {
-  std::string var_read = fuel_name + "_" + varname;
-  std::vector<Real> inp_coef(4, 0.);
-  ppp.queryarr(var_read.c_str(), inp_coef);
-  for (int i = 0; i < 4; ++i) {
-    coef[4 * spf + i] = inp_coef[i];
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    std::string var_read = fuel_names[spf] + "_" + varname;
+    int numvals = ppp.countval(var_read.c_str());
+    // If 4 values are specified, assume fit coefficients
+    if (numvals == 4) {
+      std::vector<Real> inp_coef(4, 0.);
+      if (is_required) {
+        ppp.getarr(var_read.c_str(), inp_coef);
+      } else {
+        ppp.queryarr(var_read.c_str(), inp_coef);
+      }
+      for (int i = 0; i < 4; ++i) {
+        coef[4 * spf + i] = inp_coef[i];
+      }
+    } else if (numvals == 1) {
+      // If 1 value is specified, assume constant value
+      Real inp_coef = 0.;
+      for (int i = 0; i < 4; ++i) {
+        coef[4 * spf + i] = 0.;
+      }
+      if (is_required) {
+        ppp.get(var_read.c_str(), inp_coef);
+      } else {
+        ppp.query(var_read.c_str(), inp_coef);
+      }
+      coef[4 * spf] = inp_coef;
+    }
+  }
+}
+
+void
+getInpVal(
+  Real* coef,
+  const ParmParse& ppp,
+  const std::string* fuel_names,
+  const std::string& varname)
+{
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    std::string var_read = fuel_names[spf] + "_" + varname;
+    ppp.get(var_read.c_str(), coef[spf]);
   }
 }
 
@@ -60,26 +95,22 @@ SprayParticleContainer::readSprayParams(
 
   std::vector<std::string> fuel_names;
   std::vector<std::string> dep_fuel_names;
-  std::vector<Real> crit_T;
-  std::vector<Real> boil_T;
-  std::vector<Real> spraycp;
-  std::vector<Real> latent;
-  std::vector<Real> sprayrho;
-  std::vector<Real> mu(nfuel, 0.);
-  std::vector<Real> lambda(nfuel, 0.);
   bool has_dep_spec = false;
   {
     pp.getarr("fuel_species", fuel_names);
-    pp.getarr("fuel_crit_temp", crit_T);
-    pp.getarr("fuel_boil_temp", boil_T);
-    pp.getarr("fuel_cp", spraycp);
-    pp.getarr("fuel_latent", latent);
-    pp.getarr("fuel_rho", sprayrho);
-    pp.queryarr("fuel_lambda", lambda);
     if (pp.contains("dep_fuel_species")) {
       has_dep_spec = true;
       pp.getarr("dep_fuel_species", dep_fuel_names);
     }
+    getInpVal(sprayData.critT.data(), pp, fuel_names.data(), "crit_temp");
+    getInpVal(sprayData.boilT.data(), pp, fuel_names.data(), "boil_temp");
+    getInpVal(sprayData.cp.data(), pp, fuel_names.data(), "cp");
+    getInpVal(sprayData.ref_latent.data(), pp, fuel_names.data(), "latent");
+
+    getInpCoef(sprayData.lambda_coef.data(), pp, fuel_names.data(), "lambda");
+    getInpCoef(sprayData.psat_coef.data(), pp, fuel_names.data(), "psat");
+    getInpCoef(sprayData.rho_coef.data(), pp, fuel_names.data(), "rho", true);
+    getInpCoef(sprayData.mu_coef.data(), pp, fuel_names.data(), "mu");
     for (int i = 0; i < nfuel; ++i) {
       spray_fuel_names[i] = fuel_names[i];
       if (has_dep_spec) {
@@ -87,16 +118,7 @@ SprayParticleContainer::readSprayParams(
       } else {
         spray_dep_names[i] = spray_fuel_names[i];
       }
-      sprayData.critT[i] = crit_T[i];
-      sprayData.boilT[i] = boil_T[i];
-      sprayData.cp[i] = spraycp[i];
-      sprayData.latent[i] = latent[i];
-      sprayData.ref_latent[i] = latent[i];
-      sprayData.rho[i] = sprayrho[i];
-      sprayData.lambda[i] = lambda[i];
-      getInpCoef(sprayData.psat_coef.data(), pp, fuel_names[i], "psat", i);
-      getInpCoef(sprayData.rho_coef.data(), pp, fuel_names[i], "rho", i);
-      getInpCoef(sprayData.mu_coef.data(), pp, fuel_names[i], "mu", i);
+      sprayData.latent[i] = sprayData.ref_latent[i];
     }
   }
 
@@ -229,6 +251,7 @@ SprayParticleContainer::readSprayParams(
   //
   // Force other processors to wait till directory is built.
   //
+  Gpu::streamSynchronize();
   ParallelDescriptor::Barrier();
 }
 
@@ -268,4 +291,6 @@ SprayParticleContainer::spraySetup(SprayData& sprayData)
     const int fspec = sprayData.indx[ns];
     sprayData.latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
   }
+  Gpu::streamSynchronize();
+  ParallelDesciptor::Barrier();
 }
