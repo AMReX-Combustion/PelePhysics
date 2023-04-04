@@ -564,11 +564,14 @@ struct SRK
     amrex::Real acti[NUM_SPECIES])
   {
     amrex::Real am, bm, dAmdY[NUM_SPECIES];
+    amrex::Real inv_mwt[NUM_SPECIES], mwt[NUM_SPECIES];
     amrex::Real K1, InvEosT1Denom, InvEosT3Denom, wbar = 0.0, RmT, InvRuT,
                                                   InvBm, tau;
 
     MixingRuleAmBm(T, Y, am, bm);
     Calc_dAmdY(T, Y, dAmdY);
+    get_imw(inv_mwt);
+    get_mw(mwt);
     CKMMWY(Y, wbar);
 
     InvBm = 1.0 / bm;
@@ -582,10 +585,10 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       acti[ii] =
         (exp(
-           (global_mw[ii] * InvRuT) *
+           (mwt[ii] * InvRuT) *
            (RmT * InvEosT1Denom * Bi[ii] - K1 * dAmdY[ii] +
             am * InvBm * K1 * Bi[ii] - am * InvEosT3Denom * Bi[ii] * InvBm)) *
-         Y[ii] * global_imw[ii] * InvEosT1Denom);
+         Y[ii] * inv_mwt[ii] * InvEosT1Denom);
     }
   }
 
@@ -601,8 +604,10 @@ struct SRK
     RTY2C(R, T, Y, C);
     CKWC(T, C, WDOT);
 
+    amrex::Real mw[NUM_SPECIES];
+    get_mw(mw);
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *= mw[n];
     }
   }
 
@@ -771,7 +776,7 @@ struct SRK
     amrex::Real Hi[NUM_SPECIES])
   {
     amrex::Real am, bm, dAmdT, d2AmdT2;
-    amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES];
+    amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES], inv_mwt[NUM_SPECIES];
     amrex::Real wbar = 0.0;
     amrex::Real dpdtau, dhmdtau;
 
@@ -785,6 +790,7 @@ struct SRK
     Calc_dAmdY(T, Y, dAmdY);
     Calc_d2AmdTY(T, Y, d2AmdTY);
     CKMMWY(Y, wbar);
+    get_imw(inv_mwt);
 
     amrex::Real tau = 1.0 / R;
     amrex::Real K1 = (1.0 / bm) * log1p(bm * R);
@@ -800,7 +806,7 @@ struct SRK
               Rm * T * bm * InvEosT1Denom * InvEosT1Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU * inv_mwt[ii];
       amrex::Real dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                           Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                                     am * InvEosT2Denom * InvEosT3Denom);
@@ -928,9 +934,11 @@ struct SRK
   AMREX_FORCE_INLINE
   static void Y2WBAR(const amrex::Real Y[NUM_SPECIES], amrex::Real& WBAR)
   {
+    amrex::Real tmp[NUM_SPECIES];
+    get_imw(tmp);
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] * tmp[i];
     }
     WBAR = 1.0 / summ;
   }
@@ -995,10 +1003,11 @@ struct SRK
   {
     amrex::Real bm, am, dAmdY[NUM_SPECIES], d2AmdY2[NUM_SPECIES][NUM_SPECIES];
     amrex::Real wbar = 0.0;
-    amrex::Real dpdtau, dpdYk[NUM_SPECIES];
+    amrex::Real dpdtau, dpdYk[NUM_SPECIES], inv_mwt[NUM_SPECIES];
 
     // Optimize by combining Am derivate calls?
     CKMMWY(Y, wbar);
+    get_imw(inv_mwt);
     MixingRuleAmBm(T, Y, am, bm);
     Calc_dAmdY(T, Y, dAmdY);
     Calc_d2AmdY2(T, Y, d2AmdY2);
@@ -1015,7 +1024,7 @@ struct SRK
              am * (2.0 * tau + bm) * InvEosT2Denom * InvEosT2Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU * inv_mwt[ii];
       dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                   Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                             am * InvEosT2Denom * InvEosT3Denom);
@@ -1027,18 +1036,18 @@ struct SRK
                  ((dAmdY[ii] - am * Bi[ii] * InvBm) * InvEosT2Denom +
                   am * Bi[ii] * InvBm * InvEosT1Denom * InvEosT1Denom)) -
                 Y[ii] * (Bi[ii] * InvEosT1Denom * InvEosT1Denom +
-                         wbar * global_imw[ii] * InvEosT1Denom);
+                         wbar * inv_mwt[ii] * InvEosT1Denom);
       diP[ii] /= dpdtau;
 
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] = 0.0;
       }
-      dijY[ii][ii] = wbar * global_imw[ii];
+      dijY[ii][ii] = wbar * inv_mwt[ii];
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] +=
           -diP[ii] * dpdYk[jj] +
           wbar * Y[ii] * InvEosT1Denom *
-            (Bi[ii] * global_imw[jj] + Bi[jj] * global_imw[ii]) +
+            (Bi[ii] * inv_mwt[jj] + Bi[jj] * inv_mwt[ii]) +
           Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi[ii] * Bi[jj] +
           Y[ii] / (Rm * T) *
             ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi[ii] * InvBm -

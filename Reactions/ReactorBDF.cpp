@@ -37,6 +37,7 @@ get_bdf_matrix_and_rhs(
   amrex::Real soln_n[NUM_SPECIES + 1],
   amrex::Real soln_nm1[NUM_SPECIES + 1],
   amrex::Real soln_nm2[NUM_SPECIES + 1],
+  amrex::Real mw[NUM_SPECIES],
   int reactor_type,
   int tstepscheme,
   amrex::Real dt,
@@ -67,15 +68,14 @@ get_bdf_matrix_and_rhs(
   for (int ii = 0; ii < NUM_SPECIES; ii++) {
     for (int jj = 0; jj < NUM_SPECIES; jj++) {
       Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0] *
-                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * global_mw[ii] *
-                       global_imw[jj];
+                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * mw[ii] / mw[jj];
     }
     Jmat2d[ii][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0] *
                               Jmat1d[NUM_SPECIES * (NUM_SPECIES + 1) + ii] *
-                              global_mw[ii];
+                              mw[ii];
     Jmat2d[NUM_SPECIES][ii] = -bdfp.FCOEFFMAT[tstepscheme][0] *
-                              Jmat1d[ii * (NUM_SPECIES + 1) + NUM_SPECIES] *
-                              global_imw[ii];
+                              Jmat1d[ii * (NUM_SPECIES + 1) + NUM_SPECIES] /
+                              mw[ii];
   }
   Jmat2d[NUM_SPECIES][NUM_SPECIES] =
     -bdfp.FCOEFFMAT[tstepscheme][0] *
@@ -189,7 +189,9 @@ ReactorBDF::react(
     amrex::Real dsoln0[NUM_SPECIES + 1] = {
       0.0}; // initial newton_soln_k+1 -newton_soln_k
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
+    amrex::Real mw[NUM_SPECIES] = {0.0};
     const int neq = (NUM_SPECIES + 1);
+    get_mw(mw);
 
     // initialization of variables before timestepping
     amrex::Real current_time = time_init;
@@ -237,9 +239,9 @@ ReactorBDF::react(
           dsoln0[ii] = dsoln[ii];
         }
         get_bdf_matrix_and_rhs(
-          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type, tstepscheme,
-          dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time, time_init,
-          Jmat2d, rhs);
+          soln, soln_n, soln_nm1, soln_nm2, mw, captured_reactor_type,
+          tstepscheme, dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time,
+          time_init, Jmat2d, rhs);
 
         performgmres(
           Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
@@ -353,7 +355,9 @@ ReactorBDF::react(
     amrex::Real dsoln0[NUM_SPECIES + 1] = {
       0.0}; // initial newton_soln_k+1 -newton_soln_k
     amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
+    amrex::Real mw[NUM_SPECIES] = {0.0};
     const int neq = (NUM_SPECIES + 1);
+    get_mw(mw);
 
     // initialization of variables before timestepping
     amrex::Real current_time = time_init;
@@ -410,9 +414,9 @@ ReactorBDF::react(
           dsoln0[ii] = dsoln[ii];
         }
         get_bdf_matrix_and_rhs(
-          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type, tstepscheme,
-          dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time, time_init,
-          Jmat2d, rhs);
+          soln, soln_n, soln_nm1, soln_nm2, mw, captured_reactor_type,
+          tstepscheme, dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time,
+          time_init, Jmat2d, rhs);
 
         performgmres(
           Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
