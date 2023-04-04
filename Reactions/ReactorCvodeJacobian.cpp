@@ -108,6 +108,10 @@ cJac(
     // Offset in case several cells
     int offset = tid * (NUM_SPECIES + 1);
 
+    // MW CGS
+    amrex::Real mw[NUM_SPECIES] = {0.0};
+    get_mw(mw);
+
     // rho MKS
     amrex::Real rho = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
@@ -134,17 +138,15 @@ cJac(
       // cppcheck-suppress cstyleCast
       amrex::Real* J_col = SM_COLUMN_D(J, offset + i);
       for (int k = 0; k < NUM_SPECIES; k++) {
-        J_col[offset + k] =
-          Jmat_tmp[i * (NUM_SPECIES + 1) + k] * global_mw[k] * global_imw[i];
+        J_col[offset + k] = Jmat_tmp[i * (NUM_SPECIES + 1) + k] * mw[k] / mw[i];
       }
       J_col[offset + NUM_SPECIES] =
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] * global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] / mw[i];
     }
     // cppcheck-suppress cstyleCast
     amrex::Real* J_col = SM_COLUMN_D(J, offset + NUM_SPECIES);
     for (int i = 0; i < NUM_SPECIES; i++) {
-      J_col[offset + i] =
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] * global_mw[i];
+      J_col[offset + i] = Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] * mw[i];
     }
     // J_col = SM_COLUMN_D(J, offset); // Never read
   }
@@ -175,6 +177,10 @@ cJac_sps(
   auto ncells = udata->ncells;
   auto* colVals_c = udata->colVals_c;
   auto* rowPtrs_c = udata->rowPtrs_c;
+
+  // MW CGS
+  amrex::Real mw[NUM_SPECIES] = {0.0};
+  get_mw(mw);
 
   sunindextype* rowPtrs_tmp = SUNSparseMatrix_IndexPointers(J);
   sunindextype* colIndx_tmp = SUNSparseMatrix_IndexValues(J);
@@ -220,12 +226,12 @@ cJac_sps(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= global_mw[i] * global_imw[k];
+          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= global_mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
       }
     }
     // Go from Dense to Sparse
@@ -268,6 +274,10 @@ cJac_KLU(
   auto colPtrs = udata->colPtrs;
   auto rowVals = udata->rowVals;
 
+  // MW CGS
+  amrex::Real mw[NUM_SPECIES] = {0.0};
+  get_mw(mw);
+
   // Fixed RowVals
   sunindextype* colptrs_tmp = SUNSparseMatrix_IndexPointers(J);
   sunindextype* rowvals_tmp = SUNSparseMatrix_IndexValues(J);
@@ -309,12 +319,12 @@ cJac_KLU(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= global_mw[i] * global_imw[k];
+          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= mw[i] / mw[k];
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] /= mw[i];
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= global_mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= mw[i];
       }
     }
     // Go from Dense to Sparse

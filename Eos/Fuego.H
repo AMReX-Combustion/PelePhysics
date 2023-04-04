@@ -209,8 +209,10 @@ struct Fuego
     CKYTCR(R, T, Y, C);
     CKWC(T, C, WDOT);
 
+    amrex::Real mw[NUM_SPECIES];
+    get_mw(mw);
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *= mw[n];
     }
   }
 
@@ -421,9 +423,11 @@ struct Fuego
   AMREX_FORCE_INLINE
   static void Y2WBAR(const amrex::Real Y[NUM_SPECIES], amrex::Real& WBAR)
   {
+    amrex::Real tmp[NUM_SPECIES];
+    get_imw(tmp);
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] * tmp[i];
     }
     WBAR = 1.0 / summ;
   }
