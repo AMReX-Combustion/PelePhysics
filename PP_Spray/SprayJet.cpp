@@ -3,9 +3,10 @@
 #include <AMReX_ParmParse.H>
 
 // Constructor where parameters are set from inputfile
-SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
+SprayJet::SprayJet(const std::string jet_name, const amrex::Geometry& geom)
+  :
+  m_jetName(jet_name)
 {
-  m_jetName = jet_name;
   std::string ppspray = "spray." + jet_name;
   amrex::ParmParse ps(ppspray);
   std::string dist_type;
@@ -57,7 +58,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 
 // Constructor for assigning parameters directly
 SprayJet::SprayJet(
-  const std::string& jet_name,
+  const std::string jet_name,
   const amrex::Geometry& geom,
   const amrex::RealVect jet_cent,
   const amrex::RealVect jet_norm,

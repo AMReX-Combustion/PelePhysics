@@ -118,7 +118,8 @@ void
 ChiSquared::init(const std::string& a_prefix)
 {
   amrex::ParmParse pp(a_prefix);
-  amrex::Real d32, dummy;
+  amrex::Real d32 = 0.;
+  amrex::Real dummy = 0.;
   pp.get("d32", d32);
   init(d32, dummy);
 }

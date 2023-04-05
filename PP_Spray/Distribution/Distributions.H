@@ -84,7 +84,7 @@ public:
   amrex::Real get_avg_dia() override;
 
 private:
-  amrex::GpuArray<amrex::Real, 100> rvals;
+  amrex::GpuArray<amrex::Real, 100> rvals = {{0.0}};
   amrex::Real m_d32 = 0.;
 };
 #endif

@@ -55,7 +55,7 @@ SprayParticleContainer::SprayParticleIO(
   // File line 0: Number of jets.
   // Each line after lists the jet name then the oustanding mass and injection
   // time, then the minimum injection parcel
-  if (is_checkpoint && m_sprayJets.size() > 0) {
+  if (is_checkpoint && !m_sprayJets.empty()) {
     int numjets = static_cast<int>(m_sprayJets.size());
     std::string filename = dir + "/particles/injection_data.log";
     if (ParallelDescriptor::IOProcessor()) {
@@ -103,56 +103,53 @@ SprayParticleContainer::SprayParticleIO(
 void
 SprayParticleContainer::PostInitRestart(const std::string& dir)
 {
-  int numjets = static_cast<int>(m_sprayJets.size());
-  // Ensure all jet names are unique
-  if (numjets > 0) {
+  std::string JetDataFileName = dir + "/particles/injection_data.log";
+  if (!m_sprayJets.empty()) {
+    int numjets = static_cast<int>(m_sprayJets.size());
+    // Ensure all jet names are unique
     std::vector<std::string> jet_names(numjets);
     for (int i = 0; i < numjets; ++i) {
       jet_names[i] = m_sprayJets[i]->jet_name();
-      if (jet_names[i] == "") {
-        Abort("Jet not provided proper name");
+      if (jet_names[i].empty()) {
+        Abort("Jet not provided name");
       }
     }
-    int count = std::distance(
+    auto count = std::distance(
       jet_names.begin(), std::unique(jet_names.begin(), jet_names.end()));
-    if (count != numjets) {
+    if (static_cast<int>(count) != numjets) {
       Abort("Duplicate jet names detected");
     }
-  }
-  std::string JetDataFileName = dir + "/particles/injection_data.log";
-  if (FileSystem::Exists(JetDataFileName)) {
-    if (numjets == 0) {
-      if (ParallelDescriptor::IOProcessor()) {
-        Print() << "Warning: Restart file contains jet information but no "
-                   "SprayJets have been initialized"
-                << std::endl;
+    if (FileSystem::Exists(JetDataFileName)) {
+      Vector<char> fileCharPtr;
+      ParallelDescriptor::ReadAndBcastFile(JetDataFileName, fileCharPtr);
+      std::string fileCharPtrString(fileCharPtr.dataPtr());
+      std::istringstream JetDataFile(fileCharPtrString, std::istringstream::in);
+      int in_numjets;
+      JetDataFile >> in_numjets;
+      Vector<std::string> in_jet_names(in_numjets);
+      Vector<Real> in_inj_mass(in_numjets);
+      Vector<Real> in_inj_time(in_numjets);
+      Vector<Real> in_min_parcel(in_numjets);
+      for (int i = 0; i < in_numjets; ++i) {
+        JetDataFile >> in_jet_names[i] >> in_inj_mass[i] >> in_inj_time[i] >>
+          in_min_parcel[i];
       }
-      return;
-    }
-    Vector<char> fileCharPtr;
-    ParallelDescriptor::ReadAndBcastFile(JetDataFileName, fileCharPtr);
-    std::string fileCharPtrString(fileCharPtr.dataPtr());
-    std::istringstream JetDataFile(fileCharPtrString, std::istringstream::in);
-    int in_numjets;
-    JetDataFile >> in_numjets;
-    Vector<std::string> in_jet_names(in_numjets);
-    Vector<Real> in_inj_mass(in_numjets);
-    Vector<Real> in_inj_time(in_numjets);
-    Vector<Real> in_min_parcel(in_numjets);
-    for (int i = 0; i < in_numjets; ++i) {
-      JetDataFile >> in_jet_names[i] >> in_inj_mass[i] >> in_inj_time[i] >>
-        in_min_parcel[i];
-    }
-    for (int ijets = 0; ijets < in_numjets; ++ijets) {
-      std::string in_name = in_jet_names[ijets];
-      for (int mjets = 0; mjets < numjets; ++mjets) {
-        SprayJet* js = m_sprayJets[mjets].get();
-        if (js->jet_name() == in_name) {
-          js->m_sumInjMass = in_inj_mass[ijets];
-          js->m_sumInjTime = in_inj_time[ijets];
-          js->m_minParcel = in_min_parcel[ijets];
+      for (int ijets = 0; ijets < in_numjets; ++ijets) {
+        std::string in_name = in_jet_names[ijets];
+        for (int mjets = 0; mjets < numjets; ++mjets) {
+          SprayJet* js = m_sprayJets[mjets].get();
+          if (js->jet_name() == in_name) {
+            js->m_sumInjMass = in_inj_mass[ijets];
+            js->m_sumInjTime = in_inj_time[ijets];
+            js->m_minParcel = in_min_parcel[ijets];
+          }
         }
       }
+    }
+  } else if (FileSystem::Exists(JetDataFileName)) {
+    if (ParallelDescriptor::IOProcessor()) {
+      Print() << "Warning: Restart file contains jet information but no "
+                 "SprayJets have been initialized\n";
     }
   }
 }

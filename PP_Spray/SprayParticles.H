@@ -252,68 +252,72 @@ public:
     amrex::MultiFab* u_mac);
 
   /// \brief Sum boundary and copy temporary source term
+  /// @param source_ghosts Number of ghost cells needed for source terms
+  /// @param level Current AMR level
+  /// @param tmpSource MultiFab containing the temporary spray source data
+  /// @param actSource MultiFab where final source data should end up
   inline void transferSource(
     const int& source_ghosts,
     const int& level,
-    amrex::MultiFab& sprayDot,
-    amrex::MultiFab& extSrc)
+    amrex::MultiFab& tmpSource,
+    amrex::MultiFab& actSource)
   {
     BL_PROFILE("ParticleContainer::transferSource()");
     AMREX_ALWAYS_ASSERT(level >= 0);
-    const int nghost = amrex::min(extSrc.nGrow(), source_ghosts);
+    const int nghost = amrex::min(actSource.nGrow(), source_ghosts);
 #ifdef PELELM_USE_SPRAY
-    const int ncomp = sprayDot.nComp();
+    const int ncomp = tmpSource.nComp();
     if (level > 0) {
       amrex::MultiFab tmp_mf(
         this->m_gdb->ParticleBoxArray(level),
         this->m_gdb->ParticleDistributionMap(level), ncomp, source_ghosts);
       tmp_mf.setVal(0.);
       tmp_mf.ParallelAdd(
-        sprayDot, 0, 0, ncomp, source_ghosts, source_ghosts,
+        tmpSource, 0, 0, ncomp, source_ghosts, source_ghosts,
         Geom(level).periodicity());
-      sprayDot.ParallelCopy(
+      tmpSource.ParallelCopy(
         tmp_mf, 0, 0, ncomp, source_ghosts, source_ghosts,
         Geom(level).periodicity());
     } else
 #endif
     {
-      sprayDot.SumBoundary(Geom(level).periodicity());
+      tmpSource.SumBoundary(Geom(level).periodicity());
     }
-    if (sprayDot.nComp() == extSrc.nComp()) {
+    if (tmpSource.nComp() == actSource.nComp()) {
       amrex::MultiFab::Add(
-        extSrc, sprayDot, 0, 0, extSrc.nComp(), nghost); // NOLINT
+        actSource, tmpSource, 0, 0, actSource.nComp(), nghost); // NOLINT
     } else {
-      for (amrex::MFIter mfi(extSrc, amrex::TilingIfNotGPU()); mfi.isValid();
+      for (amrex::MFIter mfi(actSource, amrex::TilingIfNotGPU()); mfi.isValid();
            ++mfi) {
         const amrex::Box vbox = mfi.growntilebox(nghost);
-        auto const& spraydot = sprayDot.array(mfi);
-        auto const& ext_src = extSrc.array(mfi);
-        addSpraySrc(vbox, spraydot, ext_src);
+        auto const& tmp_array = tmpSource.array(mfi);
+        auto const& act_array = actSource.array(mfi);
+        addSpraySrc(vbox, tmp_array, act_array);
       }
     }
-    sprayDot.setVal(0.);
+    tmpSource.setVal(0.);
   }
 
   /// \brief Add spray source term data with components pstateNum to data
   /// containing total number of conservative variables
   inline void addSpraySrc(
     const amrex::Box& vbox,
-    amrex::Array4<const amrex::Real> const& spraydot,
-    amrex::Array4<amrex::Real> const& ext_src)
+    amrex::Array4<const amrex::Real> const& tmp_array,
+    amrex::Array4<amrex::Real> const& act_array)
   {
     SprayData* fdat = d_sprayData;
     SprayComps SPI = m_sprayIndx;
     amrex::ParallelFor(
       vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          ext_src(i, j, k, SPI.momIndx + dir) +=
-            spraydot(i, j, k, SPI.momSrcIndx + dir);
+          act_array(i, j, k, SPI.momIndx + dir) +=
+            tmp_array(i, j, k, SPI.momSrcIndx + dir);
         }
-        ext_src(i, j, k, SPI.rhoIndx) += spraydot(i, j, k, SPI.rhoSrcIndx);
-        ext_src(i, j, k, SPI.engIndx) += spraydot(i, j, k, SPI.engSrcIndx);
+        act_array(i, j, k, SPI.rhoIndx) += tmp_array(i, j, k, SPI.rhoSrcIndx);
+        act_array(i, j, k, SPI.engIndx) += tmp_array(i, j, k, SPI.engSrcIndx);
         for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
           const int ecomp = SPI.specIndx + fdat->dep_indx[sp];
-          ext_src(i, j, k, ecomp) += spraydot(i, j, k, SPI.specSrcIndx + sp);
+          act_array(i, j, k, ecomp) += tmp_array(i, j, k, SPI.specSrcIndx + sp);
         }
       });
   }

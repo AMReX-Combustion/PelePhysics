@@ -220,7 +220,7 @@ public:
 
 protected:
   // Member data
-  std::string m_jetName = "";
+  std::string m_jetName;
   amrex::RealVect m_norm = amrex::RealVect::TheZeroVector();
   amrex::RealVect m_cent = amrex::RealVect::TheZeroVector();
   amrex::Real m_spreadAngle = 0.;
