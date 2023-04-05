@@ -7,7 +7,7 @@ CUDA_ARCH       ?= 70
 AMD_ARCH        ?= gfx90a
 
 SS_VERSION=5.4.0
-MAGMA_VERSION=2.7.0
+MAGMA_VERSION=2.7.1
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
@@ -166,7 +166,7 @@ else
   SYCLSuffix=
 endif
 
-SUNDIALS_VERSION ?= 6.5.0
+SUNDIALS_VERSION ?= 6.5.1
 SUNDIALS_DIST_FILE ?= v$(SUNDIALS_VERSION).tar.gz
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
@@ -238,11 +238,11 @@ $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
 
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
-	@cd $(MAGMA_DIST_DIR); cp $(WORLDWORK)/cmb138/software/$(MAGMA_DIST_FILE) . || wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR); wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@cd $(SUNDIALS_SOURCE_DIR)/..; cp $(WORLDWORK)/cmb138/software/$(SUNDIALS_DIST_FILE) . || wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
+	@cd $(SUNDIALS_SOURCE_DIR)/..; wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
