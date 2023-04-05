@@ -84,11 +84,19 @@ calculateFilmSource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat = {{0.0}};
   amrex::Real T_film = p.rdata(SprayComps::pstateT);
   amrex::Real rho_film = 0.;
+  amrex::Real Tcrit = 0.;
+  amrex::Real cp_film = 0.;
+  amrex::Real lambda_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    amrex::Real minT = amrex::min(T_film, cBoilT[spf]);
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_film += Y_film[spf] / fdat.rhoL(amrex::min(T_film, cBoilT[spf]), spf);
+    rho_film += Y_film[spf] / fdat.rhoL(minT, spf);
+    cp_film += Y_film[spf] * fdat.cp[spf];
+    lambda_film += Y_film[spf] * fdat.lambdaL(minT, spf);
+    Tcrit += Y_film[spf] * fdat.critT[spf];
   }
   rho_film = 1. / rho_film;
+  T_film = amrex::min(0.999 * Tcrit, T_film);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
   amrex::Real rad2 = std::pow(0.5 * film_dia, 2);
@@ -96,15 +104,6 @@ calculateFilmSource(
   amrex::Real film_area = M_PI * rad2;
   amrex::Real film_mass = rho_film * film_height * film_area;
   amrex::Real start_mass = film_mass;
-  amrex::Real Tcrit = 0.;
-  amrex::Real cp_film = 0.;
-  amrex::Real lambda_film = 0.;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    cp_film += Y_film[spf] * fdat.cp[spf];
-    lambda_film += Y_film[spf] * fdat.lambdaL(T_film, spf);
-    Tcrit += Y_film[spf] * fdat.critT[spf];
-  }
-  T_film = amrex::min(0.999 * Tcrit, T_film);
   // Model the fuel vapor using the one-third rule
   amrex::Real delT = amrex::max(gpv.T_fluid - T_film, 0.);
   amrex::Real T_skin = T_film + rule * delT;
