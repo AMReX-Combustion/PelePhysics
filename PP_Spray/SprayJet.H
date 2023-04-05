@@ -13,7 +13,7 @@ public:
 
   // Constructor for assigning parameters directly
   SprayJet(
-    const std::string& jet_name,
+    const std::string jet_name,
     const amrex::Geometry& geom,
     const amrex::RealVect jet_cent,
     const amrex::RealVect jet_norm,
@@ -31,7 +31,7 @@ public:
     const amrex::Real hollow_spread = 0.);
 
   // Constructor where parameters are set from input file
-  SprayJet(const std::string& jet_name, const amrex::Geometry& geom);
+  SprayJet(const std::string jet_name, const amrex::Geometry& geom);
 
   virtual ~SprayJet() = default;
 
