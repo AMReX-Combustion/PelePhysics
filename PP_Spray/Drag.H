@@ -309,6 +309,8 @@ calculateSpraySource(
       // If gas phase is not saturated
       if (sumXVap > 0.) {
         amrex::Real rhoDtotal = 0.;
+        amrex::Real cp_fuel = 0.;
+        amrex::Real sumYSkin = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           const int fspec = fdat.indx[spf];
           // Convert mass diffusion coefficient from mixture average
@@ -319,7 +321,10 @@ calculateSpraySource(
             Y_part[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
           Ddiag[fspec] *= X_norm;
           rhoDtotal += Ddiag[fspec];
+          cp_fuel += Y_skin[fspec] * cp_n[fspec];
+          sumYSkin += Y_skin[fspec];
         }
+        cp_fuel /= sumYSkin;
         // Normal evaporation
         amrex::Real Sc_skin = mu_skin / rhoDtotal;
         amrex::Real logB = std::log1p(B_M);
@@ -327,7 +332,7 @@ calculateSpraySource(
         amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
         amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
         amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
-        amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
+        amrex::Real ratio = cp_fuel * Sh_num * rhoDtotal / lambda_skin;
         Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           // Species index
