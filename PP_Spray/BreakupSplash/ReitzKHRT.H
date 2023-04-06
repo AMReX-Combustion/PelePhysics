@@ -12,6 +12,7 @@ updateBreakupKHRT(
   SprayParticleContainer::ParticleType& p,
   const amrex::Real& Reyn_d,
   const amrex::Real& dt,
+  const amrex::Real* cBoilT,
   const amrex::Real& avg_inject_d3,
   const amrex::Real B0,
   const amrex::Real B1,

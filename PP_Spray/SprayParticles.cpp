@@ -462,7 +462,8 @@ SprayParticleContainer::updateParticles(
             ijkc = lxc.floor(); // New cell center
             // Update breakup variables and determine if breakup occurs
             if (p.id() > 0 && fdat->do_breakup == 1 && isActive) {
-              Utan_total += updateBreakupTAB(Reyn_d, sub_dt, gpv, *fdat, p);
+              Utan_total +=
+                updateBreakupTAB(Reyn_d, sub_dt, cBoilT.data(), gpv, *fdat, p);
             }
           }
           if (isGhost && !src_box.contains(ijkc)) {
@@ -476,8 +477,8 @@ SprayParticleContainer::updateParticles(
           } else {
             // Update breakup for KH-RT model
             updateBreakupKHRT(
-              pid, p, Reyn_d, flow_dt, avg_inject_d3, B0, B1, C3, gpv, *fdat,
-              N_SB, rf_d);
+              pid, p, Reyn_d, flow_dt, cBoilT.data(), avg_inject_d3, B0, B1, C3,
+              gpv, *fdat, N_SB, rf_d);
           }
         }
       } // End of p.id() > 0 check
