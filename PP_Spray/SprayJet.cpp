@@ -6,7 +6,7 @@
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   : m_jetName(std::move(jet_name))
 {
-  std::string ppspray = "spray." + jet_name;
+  std::string ppspray = "spray." + m_jetName;
   amrex::ParmParse ps(ppspray);
   std::string dist_type;
   ps.get("dist_type", dist_type);
