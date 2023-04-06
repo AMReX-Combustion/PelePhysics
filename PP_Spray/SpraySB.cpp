@@ -126,11 +126,12 @@ SprayParticleContainer::CreateSBDroplets(
           Real new_mass = ms * (1. + tanterm * std::cos(psi)) / Nsdrops;
           Real dia_part = std::cbrt(6. * new_mass / (M_PI * rho_part));
           p.rdata(SprayComps::pstateDia) = dia_part;
-          Real psi_sign = std::copysign(1., 0.5 - amrex::Random());
+
           AMREX_D_TERM(
             Real un = Unmag;
             , Real utBeta = std::cos(psi / 3.) * U0tan + Utmag * std::cos(psi);
-            , Real utPsi = psi_sign * std::sin(psi) * (0.2 * U0tan + Utmag););
+            , Real psi_sign = std::copysign(1., 0.5 - amrex::Random());
+            Real utPsi = psi_sign * std::sin(psi) * (0.2 * U0tan + Utmag););
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Real pvel = AMREX_D_TERM(
               un * normal[dir], +utBeta * tanBeta[dir], +utPsi * tanPsi[dir]);
