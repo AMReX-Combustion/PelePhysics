@@ -147,19 +147,18 @@ struct SootData
     mom_src[NUM_SOOT_MOMENTS] += 0.5 * betaNucl * dimerConc2;
   }
 
-  // Condensation source term
+  /** Compute condensation source values
+      @param colConst Constant for free molecular collisions
+      @param dimerConc Concentration of dimer
+      @param momFV Vector of factors used in moment interpolation
+      @param mom_src Moment source values
+  */
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void condensationMomSrc(
     const amrex::Real& colConst,
     const amrex::Real& dimerConc,
     const amrex::Real momFV[],
     amrex::Real mom_src[]) const
   {
-    /** Compute condensation source values
-        @param colConst Constant for free molecular collisions
-        @param dimerConc Concentration of dimer
-        @param momFV Vector of factors used in moment interpolation
-        @param mom_src Moment source values
-    */
     amrex::Real weightDelta = momFV[NUM_SOOT_MOMENTS];
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       const amrex::Real momV = sc.MomOrderV[i];

@@ -18,7 +18,7 @@ SprayParticleContainer::SprayParticleIO(
   real_comp_names[SprayComps::pstateDia] = "diam";
   for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
     real_comp_names[SprayComps::pstateY + sp] =
-      "spray_mf_" + spray_fuel_names[sp];
+      "spray_mf_" + m_sprayFuelNames[sp];
   }
   real_comp_names[SprayComps::pstateNumDens] = "number_density";
   if (m_sprayData->do_breakup == 1) {
@@ -152,4 +152,5 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
                  "SprayJets have been initialized\n";
     }
   }
+  Gpu::streamSynchronize();
 }

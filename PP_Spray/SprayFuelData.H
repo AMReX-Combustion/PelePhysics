@@ -144,38 +144,6 @@ struct SprayData
   amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
   amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
 
-  void build(const SprayData& fdat)
-  {
-    mass_trans = fdat.mass_trans;
-    mom_trans = fdat.mom_trans;
-    fixed_parts = fdat.fixed_parts;
-    // Convert input values from CGS to MKS for PeleLM
-    num_ppp = fdat.num_ppp;
-    body_force = fdat.body_force;
-    ref_T = fdat.ref_T;
-    sigma = fdat.sigma;
-    wall_T = fdat.wall_T;
-    theta_c = fdat.theta_c;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      critT[spf] = fdat.critT[spf];
-      boilT[spf] = fdat.boilT[spf];
-      cp[spf] = fdat.cp[spf];
-      latent[spf] = fdat.latent[spf];
-      ref_latent[spf] = fdat.ref_latent[spf];
-      for (int cf = 0; cf < 4; ++cf) {
-        psat_coef[4 * spf + cf] = fdat.psat_coef[4 * spf + cf];
-        rho_coef[4 * spf + cf] = fdat.rho_coef[4 * spf + cf];
-        mu_coef[4 * spf + cf] = fdat.mu_coef[4 * spf + cf];
-        lambda_coef[4 * spf + cf] = fdat.lambda_coef[4 * spf + cf];
-      }
-      indx[spf] = fdat.indx[spf];
-      dep_indx[spf] = fdat.dep_indx[spf];
-    }
-    dtmod = fdat.dtmod;
-    min_eb_vfrac = fdat.min_eb_vfrac;
-    T_wall = fdat.T_wall;
-  }
-
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real rhoL(const amrex::Real& T, const int spf) const
