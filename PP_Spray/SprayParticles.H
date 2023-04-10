@@ -57,7 +57,7 @@ public:
   {
     d_sprayData =
       static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
-    &(m_sprayData) = fdat;
+    std::memcpy(m_sprayData, &(fdat), sizeof(SprayData));
     amrex::Gpu::copy(
       amrex::Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
     init_bcs();
@@ -354,6 +354,18 @@ public:
   /// are unique
   /// @param dir Name of restart directory
   void PostInitRestart(const std::string& dir = "");
+
+  /// \brief Return the number of derived spray variables
+  static int NumDeriveVars()
+  {
+    return static_cast<int>(m_sprayDeriveVars.size());
+  }
+
+  /// \brief Return derive variable names
+  static amrex::Vector<std::string>& DeriveVarNames()
+  {
+    return m_sprayDeriveVars;
+  }
 
   static std::string m_sprayFuelNames[SPRAY_FUEL_NUM];
   static std::string m_sprayDepNames[SPRAY_FUEL_NUM];
