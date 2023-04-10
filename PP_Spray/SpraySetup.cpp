@@ -132,9 +132,9 @@ SprayParticleContainer::readSprayParams(
     pp.query("max_parcel_size", max_num_ppp);
   } else if (breakup_model_str == "KHRT") {
     breakup_model = 2;
-    pp.query("B0_KHRT", B0_KHRT);
-    pp.query("B1_KHRT", B1_KHRT);
-    pp.query("C3_KHRT", C3_KHRT);
+    pp.query("KHRT_B0", m_khrtB0);
+    pp.query("KHRT_B1", m_khrtB1);
+    pp.query("KHRT_C3", m_khrtC3);
   } else if (breakup_model_str == "None") {
     breakup_model = 0;
   } else {
