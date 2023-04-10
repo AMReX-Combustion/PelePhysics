@@ -10,7 +10,7 @@ void
 SprayParticleContainer::computeDerivedVars(
   MultiFab& mf_var, const int level, const int start_indx)
 {
-  auto derivePlotVarCount = spray_derive_vars.size();
+  auto derivePlotVarCount = m_sprayDeriveVars.size();
   AMREX_ALWAYS_ASSERT(mf_var.nComp() >= derivePlotVarCount);
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
@@ -27,11 +27,11 @@ SprayParticleContainer::computeDerivedVars(
 #endif
   int total_spec_indx = -1;
   for (auto ivar = 0; ivar < derivePlotVarCount; ++ivar) {
-    if (spray_derive_vars[ivar] == "spray_mass_" + spray_fuel_names[0]) {
+    if (m_sprayDeriveVars[ivar] == "spray_mass_" + m_sprayFuelNames[0]) {
       total_spec_indx = ivar;
     }
   }
-  // Must correspond to order of spray_derive_vars
+  // Must correspond to order of m_sprayDeriveVars
   const int mass_indx = 0;
   const int dens_indx = mass_indx + 1;
   const int num_indx = dens_indx + 1;
