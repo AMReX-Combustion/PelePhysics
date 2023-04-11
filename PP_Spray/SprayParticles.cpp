@@ -285,16 +285,20 @@ SprayParticleContainer::updateParticles(
     //       u_mac[2].array(pti))};
     // #endif
     // Data structures for creating new particles during splashing/breakup
-    Gpu::HostVector<splash_breakup> N_SB_h(Np, splash_breakup::no_change);
-    Gpu::DeviceVector<splash_breakup> N_SB_d(Np);
-    Gpu::copyAsync(
-      Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
-    auto N_SB = N_SB_d.dataPtr();
-    SBVects refv(Np);
+    Gpu::HostVector<splash_breakup> N_SB_h;
+    Gpu::DeviceVector<splash_breakup> N_SB_d;
+    bool do_splash_box = (do_splash && (eb_in_box || at_bounds));
+    SBVects refv;
     SBPtrs rf_d;
-    if (do_splash || do_breakup) {
+    if (do_breakup || do_splash_box) {
+      N_SB_h.assign(Np, splash_breakup::no_change);
+      N_SB_d.resize(Np);
+      Gpu::copyAsync(
+        Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
+      refv.build(Np);
       refv.fillPtrs_d(rf_d);
     }
+    auto N_SB = N_SB_d.dataPtr();
     amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
@@ -483,7 +487,7 @@ SprayParticleContainer::updateParticles(
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles
-    if (do_splash || do_breakup) {
+    if (do_splash_box || do_breakup) {
       Gpu::copy(
         Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
       bool get_new_parts = false;
@@ -500,5 +504,4 @@ SprayParticleContainer::updateParticles(
       }
     }
   } // for (int MyParIter pti..
-  Gpu::streamSynchronize();
 }

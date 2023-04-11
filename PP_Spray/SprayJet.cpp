@@ -48,6 +48,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.query("end_time", m_endTime);
   ps.get("jet_vel", m_jetVel);
   ps.get("mass_flow_rate", m_massFlow);
+  ps.query("inject_ppp", m_numPPP);
   ps.query("hollow_spray", m_hollowSpray);
   if (m_hollowSpray) {
     ps.query("hollow_spread", m_hollowSpread);
