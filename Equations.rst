@@ -7,7 +7,19 @@ Equations
 
 Spray Equations
 ---------------
-The following equations pertain to the spray modeling algorithm in `PeleMP`.
+This section outlines the modeling and mathematics for the spray routines in `PeleMP`.
+Firstly, spray modeling in `PeleMP` relies on the following assumptions:
+
+* Dilute spray: droplet volume inside an Eulerian cell is much smaller than the volume of the gas phase; the droplets can be modeled as Lagrangian point source terms relative to the Eulerian gas phase
+
+* Infinite conductivity model: temperature is temporally varying but spatially uniform within a droplet
+
+* 1/3 rule: the thermophysical properties in the film of an evaporating droplet can be approximated as an 2/3 vapor state and 1/3 gas phase state
+
+* Ideal equilibrium: the liquid and vapor state at the surface of the droplet are in equilibrium
+
+* The radiation, Soret, and Dufour effects are neglected
+
 The evaporation models follow the work by Abramzon and Sirignano [#abram]_ and the multicomponent evaporation is based on work by Tonini. [#ton]_ Details regarding the energy balance are provided in Ge et al. [#Ge]_
 
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`s` relates to the reference surface state, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase.
