@@ -89,18 +89,11 @@ public:
     const amrex::Real absTol,
     const std::string& solvername);
 
-#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
-  ~ReactorBase() { amrex::The_Arena()->free(m_typ_vals_gpu); }
-#else
   ~ReactorBase() override = default;
-#endif
 
 protected:
   int verbose{0};
-  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
-#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
-  amrex::Real* m_typ_vals_gpu = nullptr;
-#endif
+  amrex::GpuArray<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
 } // namespace pele::physics::reactions
 #endif

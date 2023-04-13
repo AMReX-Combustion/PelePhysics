@@ -28,6 +28,7 @@ void
 ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 {
   const int size_ETV = static_cast<int>(ExtTypVals.size());
+  AMREX_ALWAYS_ASSERT(size_ETV == static_cast<int>(m_typ_vals.size()));
   amrex::Vector<std::string> kname;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
   int omp_thread = 0;
@@ -49,13 +50,6 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     }
     amrex::Print() << "Temp : " << m_typ_vals[size_ETV - 1] << std::endl;
   }
-#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
-  m_typ_vals_gpu =
-    (amrex::Real*)amrex::The_Arena()->alloc(size_ETV * sizeof(amrex::Real));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &(m_typ_vals[0]), &(m_typ_vals[0]) + size_ETV,
-    m_typ_vals_gpu);
-#endif
 }
 
 void
@@ -106,7 +100,7 @@ ReactorBase::set_sundials_solver_tols(
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
-    auto arr = m_typ_vals_gpu;
+    auto arr = m_typ_vals.data();
     amrex::launch_global<256>
       <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
         const int icell = blockDim.x * blockIdx.x + threadIdx.x;
