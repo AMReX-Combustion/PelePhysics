@@ -380,9 +380,26 @@ SprayParticleContainer::updateParticles(
             Reyn_d = calculateSpraySource(
               sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
           }
-          Real num_ppp = p.rdata(SprayComps::pstateNumDens);
           IntVect cur_indx = ijkc;
           Real cvol = inv_vol;
+          if (p.id() > 0 && do_breakup) {
+            // Update breakup variables and determine if breakup occurs
+            if (fdat->do_breakup == 1) {
+              Utan_total +=
+                updateBreakupTAB(Reyn_d, sub_dt, cBoilT.data(), gpv, *fdat, p);
+            }
+            if (cur_iter == num_iter - 1) {
+              if (fdat->do_breakup == 1) {
+                // Determine if parcel must be split into multiple parcels
+                splitDropletTAB(pid, p, max_ppp, N_SB, rf_d, Utan_total);
+              } else {
+                // Update breakup for KH-RT model
+                updateBreakupKHRT(
+                  pid, p, Reyn_d, flow_dt, cBoilT.data(), avg_inject_d3, B0, B1,
+                  C3, gpv, *fdat, N_SB, rf_d);
+              }
+            }
+          }
 #ifdef AMREX_USE_EB
           if (flags_array(cur_indx).isSingleValued()) {
             if (volfrac_fab(cur_indx) < fdat->min_eb_vfrac) {
@@ -407,7 +424,7 @@ SprayParticleContainer::updateParticles(
             cvol *= 1. / (volfrac_fab(cur_indx));
           }
 #endif
-          Real cur_coef = -fdat->num_ppp * cvol * sub_dt / flow_dt;
+          Real cur_coef = -cvol * sub_dt / flow_dt;
           if (!src_box.contains(cur_indx)) {
             if (!isGhost) {
               Abort("SprayParticleContainer::updateParticles() -- source box "
@@ -464,29 +481,13 @@ SprayParticleContainer::updateParticles(
             ijk = lx.floor();
             lxc = (p.pos() - plo) * dxi;
             ijkc = lxc.floor(); // New cell center
-            // Update breakup variables and determine if breakup occurs
-            if (p.id() > 0 && fdat->do_breakup == 1 && isActive) {
-              Utan_total +=
-                updateBreakupTAB(Reyn_d, sub_dt, cBoilT.data(), gpv, *fdat, p);
-            }
           }
           if (isGhost && !src_box.contains(ijkc)) {
             p.id() = -1;
           }
         } // End of subcycle loop
-        if (p.id() > 0 && do_breakup) {
-          if (fdat->do_breakup == 1) {
-            // Determine if parcel must be split into multiple parcels
-            splitDropletTAB(pid, p, max_ppp, N_SB, rf_d, Utan_total);
-          } else {
-            // Update breakup for KH-RT model
-            updateBreakupKHRT(
-              pid, p, Reyn_d, flow_dt, cBoilT.data(), avg_inject_d3, B0, B1, C3,
-              gpv, *fdat, N_SB, rf_d);
-          }
-        }
-      } // End of p.id() > 0 check
-    }); // End of loop over particles
+      }   // End of p.id() > 0 check
+    });   // End of loop over particles
     if (do_splash_box || do_breakup) {
       Gpu::copy(
         Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());

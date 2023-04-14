@@ -17,7 +17,7 @@ updateBreakupKHRT(
   const amrex::Real B0,
   const amrex::Real B1,
   const amrex::Real C3,
-  const GasPhaseVals& gpv,
+  GasPhaseVals& gpv,
   const SprayData& fdat,
   splash_breakup* N_SB,
   const SBPtrs& rf)
@@ -27,6 +27,7 @@ updateBreakupKHRT(
   const amrex::Real We_crit = 6.;
   // RT model constants
   const amrex::Real A1 = 0.188;
+  SprayUnits SPU;
   // Retreive particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
@@ -50,6 +51,7 @@ updateBreakupKHRT(
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
+  amrex::Real rad_part3 = std::pow(rad_part, 3);
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
   amrex::Real vel_mag = diff_vel.vectorLength();
   amrex::Real vel_sq = vel_mag * vel_mag;
@@ -119,50 +121,65 @@ updateBreakupKHRT(
     amrex::Real lam_KH = rad_part * 9.02 * (1. + 0.45 * std::sqrt(Z)) *
                          (1. + 0.4 * std::pow(T, 0.7)) /
                          std::pow(1. + 0.865 * std::pow(We_g, 1.67), 0.6);
-    amrex::Real omega_KH =
-      (0.34 + 0.385 * We_g * std::sqrt(We_g)) /
-      ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
-      std::sqrt(sigma / (rho_part * std::pow(rad_part, 3)));
+    amrex::Real omega_KH = (0.34 + 0.385 * We_g * std::sqrt(We_g)) /
+                           ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
+                           std::sqrt(sigma / (rho_part * rad_part3));
     amrex::Real tau_KH = 3.726 * B1 * rad_part / (lam_KH * omega_KH);
     amrex::Real rs = B0 * lam_KH;
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
       amrex::Real rp = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
-      amrex::Real np = num_dens * std::pow(rad_part / rp, 3);
-      rt_time = 0.;
       amrex::Real rp3 = rp * rp * rp;
       amrex::Real rs3 = rs * rs * rs;
+      amrex::Real np = num_dens * rad_part3 / rp3;
+      rt_time = 0.;
       amrex::Real shed_mass = rp3 * (np - N0);
       amrex::Real ns = shed_mass / rs3;
       amrex::Real removed_perc = (std::pow(r0, 3) - rp3) / rjet3;
       amrex::Real Utan = A1 * omega_KH * lam_KH;
       // If removed mass is greater than 3%, break particle up
-      if (ns > num_dens && removed_perc > massperc) {
-        N_SB[pid] = splash_breakup::breakup_KH;
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
-          rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-          rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
-        }
-        rf.numDens[pid] = ns;
-        rf.ref_dia[pid] = 2. * rs;
-        rf.T0[pid] = T_part;
-        rf.phi1[pid] = Utan;
-        rf.phi2[pid] = N0;
-        rf.phi3[pid] = 0.; // Unused
+      if (ns > 1. && ns > num_dens && removed_perc > massperc) {
+        amrex::Real child_mass = 4. * M_PI / 3. * rho_part * rs3;
+        // If dropet mass is too small and evaporation is on, assume child
+        // droplets evaporate immediately
+        if (child_mass < SPU.min_mass && fdat.mass_trans) {
+          auto eos = pele::physics::PhysicsType::eos();
+          amrex::GpuArray<amrex::Real, NUM_SPECIES> h_part;
+          eos.T2Hi(T_part, h_part.data());
+          amrex::Real mass_src = ns * child_mass / dt;
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            const int fdspec = fdat.dep_indx[spf];
+            amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
+            gpv.fluid_Y_dot[spf] += Y_part * mass_src;
+            gpv.fluid_eng_src += Y_part * mass_src * h_part[fdspec];
+          }
+          gpv.fluid_mass_src += mass_src;
+          // Otherwise, create new droplets
+        } else {
+          N_SB[pid] = splash_breakup::breakup_KH;
+          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+            rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
+            rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
+            rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
+          }
+          rf.numDens[pid] = ns;
+          rf.ref_dia[pid] = 2. * rs;
+          rf.T0[pid] = T_part;
+          rf.phi1[pid] = Utan;
+          rf.phi2[pid] = 0.; // Unused
+          rf.phi3[pid] = 0.; // Unused
 #if SPRAY_FUEL_NUM > 1
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          rf.Y0[SPRAY_FUEL_NUM * pid + spf] =
-            p.rdata(SprayComps::pstateY + spf);
-        }
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            rf.Y0[SPRAY_FUEL_NUM * pid + spf] =
+              p.rdata(SprayComps::pstateY + spf);
+          }
 #endif
-        rad_part = rp;
-        num_dens = (np * rp3 - ns * rs3) / rp3;
+        }
+        np = (np * rp3 - ns * rs3) / rp3;
         d0 = 2. * rp; // Reset original diameter
-      } else {
-        rad_part = rp;
-        num_dens = np;
       }
+      rad_part = rp;
+      num_dens = np;
     }
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
