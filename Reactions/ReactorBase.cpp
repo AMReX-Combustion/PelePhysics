@@ -100,12 +100,12 @@ ReactorBase::set_sundials_solver_tols(
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     const int nbThreads = 256;
     const int nbBlocks = std::max(1, neq_tot / nbThreads);
-    auto arr = m_typ_vals.data();
+    auto arr = m_typ_vals;
     amrex::launch_global<256>
       <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
         const int icell = blockDim.x * blockIdx.x + threadIdx.x;
         if (icell < neq_tot) {
-          ratol[icell] = arr[icell / ncells] * absTol;
+          ratol[icell] = arr[icell % arr.size()] * absTol;
         }
       });
 #else
