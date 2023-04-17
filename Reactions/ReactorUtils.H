@@ -12,6 +12,8 @@
 #include <arkode/arkode_erkstep.h>
 #include <cvode/cvode.h>
 
+#include <nvector/nvector_serial.h>
+
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
 #endif
