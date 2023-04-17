@@ -3,6 +3,8 @@ import ceptr.constants as cc
 import ceptr.thermo as cth
 import ceptr.writer as cw
 
+def global_imw_str():
+    return "\n#if AMREX_DEVICE_COMPILE\n global_imw[i] \n#else\n h_global_imw[i]\n#endif\n" 
 
 def ckawt(fstream, mechanism):
     """Write ckawt."""
@@ -676,11 +678,7 @@ def cksbms(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "#if AMREX_DEVICE_COMPILE")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
-    cw.writer(fstream, "#else")
-    cw.writer(fstream, "YOW += y[i]*h_global_imw[i];")
-    cw.writer(fstream, "#endif")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str() + ";")
     cw.writer(fstream, "}")
 
     # now to ytx

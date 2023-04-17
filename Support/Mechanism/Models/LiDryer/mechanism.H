@@ -1432,11 +1432,13 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 9; i++) {
+    YOW += y[i] *
 #if AMREX_DEVICE_COMPILE
-    YOW += y[i] * global_imw[i];
+           global_imw[i]
 #else
-    YOW += y[i] * h_global_imw[i];
+           h_global_imw[i]
 #endif
+      ;
   }
   // Now compute y to x conversion
   x[0] = y[0] / (2.016000 * YOW);
