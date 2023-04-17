@@ -1082,13 +1082,19 @@ def production_rate(
                 agents,
                 key=lambda v, dict_species=dict_species: dict_species[v[0]],
             )
+            # Check for duplicates
+            if len(agents) != len(set(agents)):
+                message = f"Reaction {reaction} contains duplicate agents\n"
+                message += "This will create an issue for productionRate\n"
+                print(message)
+                sys.exit(1)
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)
             for a in agents:
                 symbol, coefficient = a
                 for b in reaction.reactants:
-                    if b == a[0]:
+                    if b == a[0] and reaction.reactants[b] == a[1]:
                         if coefficient == 1.0:
                             cw.writer(
                                 fstream,
@@ -1115,7 +1121,7 @@ def production_rate(
                                 species_info.ordered_idx_map[symbol]
                             ] -= (coefficient * qdot_smp)
                 for b in reaction.products:
-                    if b == a[0]:
+                    if b == a[0] and reaction.products[b] == a[1]:
                         if coefficient == 1.0:
                             cw.writer(
                                 fstream,
@@ -1624,13 +1630,21 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 agents,
                 key=lambda v, dict_species=dict_species: dict_species[v[0]],
             )
+            # Check for duplicates
+            if len(agents) != len(set(agents)):
+                message = f"Reaction {reaction} contains duplicate agents\n"
+                message += (
+                    "This will create an issue for productionRate_light\n"
+                )
+                print(message)
+                sys.exit(1)
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)
             for a in agents:
                 symbol, coefficient = a
                 for b in reaction.reactants:
-                    if b == a[0]:
+                    if b == a[0] and reaction.reactants[b] == a[1]:
                         if coefficient == 1.0:
                             cw.writer(
                                 fstream,
@@ -1648,7 +1662,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                                 ),
                             )
                 for b in reaction.products:
-                    if b == a[0]:
+                    if b == a[0] and reaction.products[b] == a[1]:
                         if coefficient == 1.0:
                             cw.writer(
                                 fstream,
