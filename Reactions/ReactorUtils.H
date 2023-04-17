@@ -8,6 +8,10 @@
 #include "ReactorTypes.H"
 #include "AMReX_Sundials.H"
 
+#include <arkode/arkode_arkstep.h>
+#include <arkode/arkode_erkstep.h>
+#include <cvode/cvode.h>
+
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
 #endif
@@ -68,6 +72,120 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE int
 spec_index<CYOrder>(const int specie_idx, const int icell, const int ncells)
 {
   return vec_index<CYOrder>(specie_idx, icell, ncells);
+}
+
+template <typename OrderType>
+void
+set_sundials_solver_tols(
+  // cppcheck-suppress constParameter
+  sundials::Context& sunctx,
+  void* sundials_mem,
+  const int ncells,
+  const amrex::Real relTol,
+  const amrex::Real absTol,
+  const amrex::GpuArray<amrex::Real, NUM_SPECIES + 1>& typ_vals,
+  const std::string& solvername,
+  const int verbose)
+{
+  int omp_thread = 0;
+#ifdef AMREX_USE_OMP
+  omp_thread = omp_get_thread_num();
+#endif
+
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
+
+#if defined(AMREX_USE_CUDA)
+  N_Vector atol = N_VNewWithMemHelp_Cuda(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(), sunctx);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Cuda(atol);
+#elif defined(AMREX_USE_HIP)
+  N_Vector atol = N_VNewWithMemHelp_Hip(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(), sunctx);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Hip(atol);
+#elif defined(AMREX_USE_SYCL)
+  N_Vector atol = N_VNewWithMemHelp_Sycl(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue(), sunctx);
+  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
+#else
+  N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
+  amrex::Real* ratol = N_VGetArrayPointer(atol);
+#endif
+
+  if (typ_vals[0] > 0.0) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if ((verbose > 0) && (omp_thread == 0)) {
+      amrex::Print() << " Setting " << solvername
+                     << " tolerances with TypVals rtol = " << relTol
+                     << " atolfact = " << absTol << " in PelePhysics \n";
+    }
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
+    const int nbThreads = 256;
+    const int nbBlocks = std::max(1, neq_tot / nbThreads);
+    auto arr = typ_vals;
+    amrex::launch_global<256>
+      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
+        const int icell = blockDim.x * blockIdx.x + threadIdx.x;
+        if (icell < neq_tot) {
+          ratol[icell] = arr[icell % arr.size()] * absTol;
+        }
+      });
+#else
+    for (int k = 0; k < NUM_SPECIES + 1; k++) {
+      amrex::Real T = typ_vals[k] * absTol;
+      for (int i = 0; i < ncells; i++) {
+        ratol[vec_index<OrderType>(k, i, ncells)] = T;
+      }
+    }
+#endif
+  } else {
+    // cppcheck-suppress knownConditionTrueFalse
+    if ((verbose > 0) && (omp_thread == 0)) {
+      amrex::Print() << " Setting " << solvername
+                     << " tolerances rtol = " << relTol << " atol = " << absTol
+                     << " in PelePhysics \n";
+    }
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
+    const int nbThreads = 256;
+    const int nbBlocks = std::max(1, neq_tot / nbThreads);
+    amrex::launch_global<256>
+      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
+        int icell = blockDim.x * blockIdx.x + threadIdx.x;
+        if (icell < neq_tot) {
+          ratol[icell] = absTol;
+        }
+      });
+#else
+    for (int i = 0; i < neq_tot; i++) {
+      ratol[i] = absTol;
+    }
+#endif
+  }
+
+#if defined(AMREX_USE_SYCL)
+  N_VCopyToDevice_Sycl(atol);
+#endif
+
+  // Call CVodeSVtolerances to specify the scalar relative tolerance
+  // and vector absolute tolerances
+  int flag;
+  if (solvername == "cvode") {
+    flag = CVodeSVtolerances(sundials_mem, relTol, atol);
+  } else if (solvername == "arkstep") {
+    flag = ARKStepSVtolerances(sundials_mem, relTol, atol);
+  } else if (solvername == "erkstep") {
+    flag = ERKStepSVtolerances(sundials_mem, relTol, atol);
+  } else {
+    amrex::Abort("setSundialsSolverTols not implemented for this solver type");
+  }
+  if (utils::check_flag(&flag, "SVtolerances", 1) != 0) {
+    amrex::Abort("Problem in setSundialsSolverTols");
+  }
+
+  N_VDestroy(atol);
 }
 
 template <typename OrderType>

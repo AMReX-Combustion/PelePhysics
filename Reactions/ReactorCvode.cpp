@@ -70,9 +70,9 @@ ReactorCvode::init(int reactor_type, int ncells)
   }
 
   // Setup tolerances
-  set_sundials_solver_tols(
+  utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    relTol, absTol, "cvode");
+    relTol, absTol, m_typ_vals, "cvode", verbose);
 
   // Linear solver data
   if (udata_g->solve_type == cvode::fixedPoint) {
@@ -1201,9 +1201,9 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  set_sundials_solver_tols(
+  utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
-    relTol, absTol, "cvode");
+    relTol, absTol, m_typ_vals, "cvode", verbose);
 
   // Solver data
   SUNNonlinearSolver NLS = nullptr;
@@ -1370,9 +1370,9 @@ ReactorCvode::react(
 #endif
 
   // Update TypicalValues
-  set_sundials_solver_tols(
+  utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    relTol, absTol, "cvode");
+    relTol, absTol, m_typ_vals, "cvode", verbose);
 
   // Perform integration one cell at a time
   const int icell = 0;
@@ -1527,9 +1527,9 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  set_sundials_solver_tols(
+  utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
-    relTol, absTol, "cvode");
+    relTol, absTol, m_typ_vals, "cvode", verbose);
 
   // Solver data
   if (user_data->solve_type == cvode::fixedPoint) {
@@ -1717,9 +1717,9 @@ ReactorCvode::react(
   BL_PROFILE_VAR_STOP(AroundCVODE);
 
   // Update TypicalValues
-  set_sundials_solver_tols(
+  utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    relTol, absTol, "cvode");
+    relTol, absTol, m_typ_vals, "cvode", verbose);
 
 #ifdef MOD_REACTOR
   dt_react =

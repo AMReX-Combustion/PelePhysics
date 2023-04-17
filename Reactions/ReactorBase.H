@@ -81,14 +81,6 @@ public:
 
   void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
-  void set_sundials_solver_tols(
-    sundials::Context& sunctx,
-    void* sundials_mem,
-    const int ncells,
-    const amrex::Real relTol,
-    const amrex::Real absTol,
-    const std::string& solvername);
-
   ~ReactorBase() override = default;
 
 protected:
