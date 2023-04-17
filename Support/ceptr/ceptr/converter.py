@@ -524,6 +524,16 @@ class Converter:
             text = f"{1.0 / species.weight:.16f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
+        cw.writer(
+            fstream,
+            "const amrex::Real "
+            f"h_global_imw[{self.species_info.n_species}]={{",
+        )
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"{1.0 / species.weight:.16f},"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "};")
         cw.writer(fstream)
 
         cw.writer(fstream, cw.comment(" molecular weights "))
@@ -531,6 +541,16 @@ class Converter:
             fstream,
             "AMREX_GPU_CONSTANT const amrex::Real "
             f"global_mw[{self.species_info.n_species}]={{",
+        )
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"{species.weight:f},"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "};")
+        cw.writer(
+            fstream,
+            "const amrex::Real "
+            f"h_global_mw[{self.species_info.n_species}]={{",
         )
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
