@@ -676,7 +676,7 @@ def cksbms(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "#ifdef __CUDA_ARCH__")
+    cw.writer(fstream, "#if AMREX_DEVICE_COMPILE")
     cw.writer(fstream, "YOW += y[i]*global_imw[i];")
     cw.writer(fstream, "#else")
     cw.writer(fstream, "YOW += y[i]*h_global_imw[i];")
