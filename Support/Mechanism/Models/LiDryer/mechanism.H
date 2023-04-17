@@ -1432,7 +1432,7 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 9; i++) {
-#ifdef __CUDA_ARCH__
+#if AMREX_DEVICE_COMPILE
     YOW += y[i] * global_imw[i];
 #else
     YOW += y[i] * h_global_imw[i];
