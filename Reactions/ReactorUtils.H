@@ -131,15 +131,17 @@ set_sundials_solver_tols(
     amrex::launch_global<256>
       <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
         const int icell = blockDim.x * blockIdx.x + threadIdx.x;
-        if (icell < neq_tot) {
-          ratol[icell] = arr[icell % arr.size()] * absTol;
+        if (icell < ncells) {
+          for (int k = 0; k < NUM_SPECIES + 1; k++) {
+            ratol[vec_index<OrderType>(k, icell, ncells)] = arr[k] * absTol;
+          }
         }
       });
 #else
     for (int k = 0; k < NUM_SPECIES + 1; k++) {
       amrex::Real T = typ_vals[k] * absTol;
-      for (int i = 0; i < ncells; i++) {
-        ratol[vec_index<OrderType>(k, i, ncells)] = T;
+      for (int icell = 0; icell < ncells; icell++) {
+        ratol[vec_index<OrderType>(k, icell, ncells)] = T;
       }
     }
 #endif
