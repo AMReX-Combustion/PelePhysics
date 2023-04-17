@@ -57,8 +57,14 @@ get_mw(amrex::Real mw_new[])
 AMREX_GPU_CONSTANT const amrex::Real global_imw[1] = {
   1.0,
 };
+const amrex::Real h_global_imw[1] = {
+  1.0,
+};
 
 AMREX_GPU_CONSTANT const amrex::Real global_mw[1] = {
+  1.0,
+};
+const amrex::Real h_global_mw[1] = {
   1.0,
 };
 

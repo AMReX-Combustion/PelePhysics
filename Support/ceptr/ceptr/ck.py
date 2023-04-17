@@ -3,8 +3,14 @@ import ceptr.constants as cc
 import ceptr.thermo as cth
 import ceptr.writer as cw
 
+
 def global_imw_str(idx):
-    return f"\n#if AMREX_DEVICE_COMPILE\n global_imw[{idx}] \n#else\n h_global_imw[{idx}]\n#endif\n" 
+    """Return a device aware string for imw."""
+    return (
+        f"\n#if AMREX_DEVICE_COMPILE\n global_imw[{idx}]"
+        + f"\n#else\n h_global_imw[{idx}]\n#endif\n"
+    )
+
 
 def ckawt(fstream, mechanism):
     """Write ckawt."""
@@ -846,7 +852,9 @@ def ckgbms(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"YOW += y[{spec_idx}]*global_imw[{spec_idx}]; "
+            f"YOW += y[{spec_idx}]*"
+            + global_imw_str(spec_idx)
+            + "; "
             + cw.comment(f"{species.name}"),
         )
 
@@ -1011,7 +1019,9 @@ def ckabms(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"YOW += y[{spec_idx}]*global_imw[{spec_idx}]; "
+            f"YOW += y[{spec_idx}]*"
+            + global_imw_str(spec_idx)
+            + "; "
             + cw.comment(f"{species.name}"),
         )
 
@@ -1111,7 +1121,7 @@ def ckpy(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
 
     cw.comment("YOW holds the reciprocal of the mean molecular wt")
@@ -1232,7 +1242,7 @@ def ckrhoy(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(
@@ -1325,7 +1335,7 @@ def ckmmwy(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(fstream, "wtm = 1.0 / YOW;")
@@ -1507,14 +1517,14 @@ def ckytx(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "")
     cw.writer(fstream, "amrex::Real YOWINV = 1.0/YOW;")
     cw.writer(fstream, "")
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "x[i] = y[i]*global_imw[i]*YOWINV;")
+    cw.writer(fstream, "x[i] = y[i]*" + global_imw_str("i") + "*YOWINV;")
     cw.writer(fstream, "}")
 
     cw.writer(fstream, "}")
@@ -1547,7 +1557,7 @@ def ckytcp(fstream, mechanism, species_info):
     )
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "c[i] = y[i]*global_imw[i];")
+    cw.writer(fstream, "c[i] = y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
@@ -1569,7 +1579,7 @@ def ckytcp(fstream, mechanism, species_info):
     cw.writer(fstream, "")
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "c[i] = PWORT * y[i] * global_imw[i];")
+    cw.writer(fstream, "c[i] = PWORT * y[i] * " + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
 
     cw.writer(fstream, "}")
@@ -1596,7 +1606,7 @@ def ckytcr(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "c[i] = rho  * y[i] * global_imw[i];")
+    cw.writer(fstream, "c[i] = rho  * y[i] * " + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
@@ -2260,7 +2270,7 @@ def ckums(fstream, mechanism, species_info):
 
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "ums[i] *= RT*global_imw[i];")
+    cw.writer(fstream, "ums[i] *= RT*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
@@ -2301,7 +2311,7 @@ def ckhms(fstream, mechanism, species_info):
 
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "hms[i] *= RT*global_imw[i];")
+    cw.writer(fstream, "hms[i] *= RT*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
@@ -2342,7 +2352,7 @@ def ckgms(fstream, mechanism, species_info):
 
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "gms[i] *= RT*global_imw[i];")
+    cw.writer(fstream, "gms[i] *= RT*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
@@ -2382,7 +2392,7 @@ def ckams(fstream, mechanism, species_info):
 
     cw.writer(fstream, f"for (int i = 0; i < {n_species}; i++)")
     cw.writer(fstream, "{")
-    cw.writer(fstream, "ams[i] *= RT*global_imw[i];")
+    cw.writer(fstream, "ams[i] *= RT*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
 
@@ -2503,7 +2513,7 @@ def ckwyp(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "YOW += y[i]*global_imw[i];")
+    cw.writer(fstream, "YOW += y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
 
     cw.writer(fstream, cw.comment("PW/RT (see Eq. 7)"))
@@ -2526,7 +2536,7 @@ def ckwyp(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "c[i] = PWORT * y[i]*global_imw[i];")
+    cw.writer(fstream, "c[i] = PWORT * y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
 
     # call productionRate
@@ -2626,7 +2636,7 @@ def ckwyr(fstream, mechanism, species_info):
         f"for (int i = 0; i < {len(species_info.nonqssa_species_list)}; i++)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, "c[i] = 1e6 * rho * y[i]*global_imw[i];")
+    cw.writer(fstream, "c[i] = 1e6 * rho * y[i]*" + global_imw_str("i") + ";")
     cw.writer(fstream, "}")
 
     # call productionRate
@@ -2734,7 +2744,9 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(
         fstream,
-        f"zk[id] = {cc.Na:.8e} * {cc.qc:.8e} * kchrg[id] * global_imw[id];",
+        f"zk[id] = {cc.Na:.8e} * {cc.qc:.8e} * kchrg[id] * "
+        + global_imw_str("id")
+        + ";",
     )
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")

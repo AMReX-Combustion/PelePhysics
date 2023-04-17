@@ -582,10 +582,22 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       acti[ii] =
         (exp(
-           (global_mw[ii] * InvRuT) *
+           (
+#if AMREX_DEVICE_COMPILE
+             global_mw[ii]
+#else
+             h_global_mw[ii]
+#endif
+             * InvRuT) *
            (RmT * InvEosT1Denom * Bi[ii] - K1 * dAmdY[ii] +
             am * InvBm * K1 * Bi[ii] - am * InvEosT3Denom * Bi[ii] * InvBm)) *
-         Y[ii] * global_imw[ii] * InvEosT1Denom);
+         Y[ii] *
+#if AMREX_DEVICE_COMPILE
+         global_imw[ii]
+#else
+         h_global_imw[ii]
+#endif
+         * InvEosT1Denom);
     }
   }
 
@@ -602,7 +614,13 @@ struct SRK
     CKWC(T, C, WDOT);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *=
+#if AMREX_DEVICE_COMPILE
+        global_mw[n]
+#else
+        h_global_mw[n]
+#endif
+        ;
     }
   }
 
@@ -800,7 +818,13 @@ struct SRK
               Rm * T * bm * InvEosT1Denom * InvEosT1Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU *
+#if AMREX_DEVICE_COMPILE
+                        global_imw[ii]
+#else
+                        h_global_imw[ii]
+#endif
+        ;
       amrex::Real dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                           Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                                     am * InvEosT2Denom * InvEosT3Denom);
@@ -930,7 +954,13 @@ struct SRK
   {
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] *
+#if AMREX_DEVICE_COMPILE
+              global_imw[i]
+#else
+              h_global_imw[i]
+#endif
+        ;
     }
     WBAR = 1.0 / summ;
   }
@@ -1015,7 +1045,13 @@ struct SRK
              am * (2.0 * tau + bm) * InvEosT2Denom * InvEosT2Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU *
+#if AMREX_DEVICE_COMPILE
+                        global_imw[ii]
+#else
+                        h_global_imw[ii]
+#endif
+        ;
       dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                   Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                             am * InvEosT2Denom * InvEosT3Denom);
@@ -1023,22 +1059,47 @@ struct SRK
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
 
-      diP[ii] = (Y[ii] * wbar / (Rm * T) *
-                 ((dAmdY[ii] - am * Bi[ii] * InvBm) * InvEosT2Denom +
-                  am * Bi[ii] * InvBm * InvEosT1Denom * InvEosT1Denom)) -
-                Y[ii] * (Bi[ii] * InvEosT1Denom * InvEosT1Denom +
-                         wbar * global_imw[ii] * InvEosT1Denom);
+      diP[ii] =
+        (Y[ii] * wbar / (Rm * T) *
+         ((dAmdY[ii] - am * Bi[ii] * InvBm) * InvEosT2Denom +
+          am * Bi[ii] * InvBm * InvEosT1Denom * InvEosT1Denom)) -
+        Y[ii] * (Bi[ii] * InvEosT1Denom * InvEosT1Denom + wbar *
+#if AMREX_DEVICE_COMPILE
+                                                            global_imw[ii]
+#else
+                                                            h_global_imw[ii]
+#endif
+                                                            * InvEosT1Denom);
       diP[ii] /= dpdtau;
 
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] = 0.0;
       }
-      dijY[ii][ii] = wbar * global_imw[ii];
+      dijY[ii][ii] = wbar *
+#if AMREX_DEVICE_COMPILE
+                     global_imw[ii]
+#else
+                     h_global_imw[ii]
+#endif
+        ;
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] +=
           -diP[ii] * dpdYk[jj] +
           wbar * Y[ii] * InvEosT1Denom *
-            (Bi[ii] * global_imw[jj] + Bi[jj] * global_imw[ii]) +
+            (Bi[ii] *
+#if AMREX_DEVICE_COMPILE
+               global_imw[jj]
+#else
+               h_global_imw[jj]
+#endif
+
+             + Bi[jj] *
+#if AMREX_DEVICE_COMPILE
+                 global_imw[ii]
+#else
+                 h_global_imw[ii]
+#endif
+             ) +
           Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi[ii] * Bi[jj] +
           Y[ii] / (Rm * T) *
             ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi[ii] * InvBm -

@@ -210,7 +210,13 @@ struct Fuego
     CKWC(T, C, WDOT);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *=
+#if AMREX_DEVICE_COMPILE
+        global_mw[n]
+#else
+        h_global_mw[n]
+#endif
+        ;
     }
   }
 
@@ -423,7 +429,13 @@ struct Fuego
   {
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] *
+#if AMREX_DEVICE_COMPILE
+              global_imw[i]
+#else
+              h_global_imw[i]
+#endif
+        ;
     }
     WBAR = 1.0 / summ;
   }
