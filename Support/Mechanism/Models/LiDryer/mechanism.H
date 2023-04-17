@@ -113,9 +113,31 @@ AMREX_GPU_CONSTANT const amrex::Real global_imw[9] = {
   0.0293996589639560, // H2O2
   0.0356964374955379, // N2
 };
+const amrex::Real h_global_imw[9] = {
+  0.4960317460317460, // H2
+  0.0312519532470779, // O2
+  0.0555092978073827, // H2O
+  0.9920634920634921, // H
+  0.0625039064941559, // O
+  0.0587993179279120, // OH
+  0.0302975216627280, // HO2
+  0.0293996589639560, // H2O2
+  0.0356964374955379, // N2
+};
 
 //  molecular weights
 AMREX_GPU_CONSTANT const amrex::Real global_mw[9] = {
+  2.016000,  // H2
+  31.998000, // O2
+  18.015000, // H2O
+  1.008000,  // H
+  15.999000, // O
+  17.007000, // OH
+  33.006000, // HO2
+  34.014000, // H2O2
+  28.014000, // N2
+};
+const amrex::Real h_global_mw[9] = {
   2.016000,  // H2
   31.998000, // O2
   18.015000, // H2O
@@ -1410,7 +1432,11 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 9; i++) {
+#ifdef __CUDA_ARCH__
     YOW += y[i] * global_imw[i];
+#else
+    YOW += y[i] * h_global_imw[i];
+#endif
   }
   // Now compute y to x conversion
   x[0] = y[0] / (2.016000 * YOW);
