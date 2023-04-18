@@ -134,17 +134,33 @@ cJac(
       // cppcheck-suppress cstyleCast
       amrex::Real* J_col = SM_COLUMN_D(J, offset + i);
       for (int k = 0; k < NUM_SPECIES; k++) {
-        J_col[offset + k] =
-          Jmat_tmp[i * (NUM_SPECIES + 1) + k] * global_mw[k] * global_imw[i];
+        J_col[offset + k] = Jmat_tmp[i * (NUM_SPECIES + 1) + k] *
+#if AMREX_DEVICE_COMPILE
+                            global_mw[k] * global_imw[i]
+#else
+                            h_global_mw[k] * h_global_imw[i]
+#endif
+          ;
       }
       J_col[offset + NUM_SPECIES] =
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] * global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *
+#if AMREX_DEVICE_COMPILE
+        global_imw[i]
+#else
+        h_global_imw[i]
+#endif
+        ;
     }
     // cppcheck-suppress cstyleCast
     amrex::Real* J_col = SM_COLUMN_D(J, offset + NUM_SPECIES);
     for (int i = 0; i < NUM_SPECIES; i++) {
-      J_col[offset + i] =
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] * global_mw[i];
+      J_col[offset + i] = Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *
+#if AMREX_DEVICE_COMPILE
+                          global_mw[i]
+#else
+                          h_global_mw[i]
+#endif
+        ;
     }
     // J_col = SM_COLUMN_D(J, offset); // Never read
   }
@@ -220,12 +236,32 @@ cJac_sps(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= global_mw[i] * global_imw[k];
+          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *=
+#if AMREX_DEVICE_COMPILE
+            global_mw[i] * global_imw[k]
+#else
+            h_global_mw[i] * h_global_imw[k]
+#endif
+            ;
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *=
+#if AMREX_DEVICE_COMPILE
+          global_imw[i]
+#else
+          h_global_imw[i]
+
+#endif
+          ;
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= global_mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *=
+#if AMREX_DEVICE_COMPILE
+          global_mw[i]
+#else
+          h_global_mw[i]
+
+#endif
+          ;
       }
     }
     // Go from Dense to Sparse
@@ -309,12 +345,30 @@ cJac_KLU(
       // rescale
       for (int i = 0; i < NUM_SPECIES; i++) {
         for (int k = 0; k < NUM_SPECIES; k++) {
-          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *= global_mw[i] * global_imw[k];
+          Jmat_tmp[k * (NUM_SPECIES + 1) + i] *=
+#if AMREX_DEVICE_COMPILE
+            global_mw[i] * global_imw[k]
+#else
+            h_global_mw[i] * h_global_imw[k]
+#endif
+            ;
         }
-        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *= global_imw[i];
+        Jmat_tmp[i * (NUM_SPECIES + 1) + NUM_SPECIES] *=
+#if AMREX_DEVICE_COMPILE
+          global_imw[i]
+#else
+          h_global_imw[i]
+#endif
+          ;
       }
       for (int i = 0; i < NUM_SPECIES; i++) {
-        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *= global_mw[i];
+        Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] *=
+#if AMREX_DEVICE_COMPILE
+          global_mw[i]
+#else
+          h_global_mw[i]
+#endif
+          ;
       }
     }
     // Go from Dense to Sparse
