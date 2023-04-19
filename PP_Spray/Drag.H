@@ -77,7 +77,7 @@ calcVaporState(
     This computes the mass fractions in the vapor. The vapor mass fraction is
     y_vi = x_vi * mw_i / mw_vg where mw_vg = mw_gas * (1 - sum_k x_vk) + sum_k
     x_vk * mw_k and x_vk = x_lk * psat_k / p_gas Note: this function seems more
-    convuluted because we start with the liquid mass fractions, not molar
+    convoluted because we start with the liquid mass fractions, not molar
     fractions
   */
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -149,7 +149,7 @@ amrex::Real
 calculateSpraySource(
   const amrex::Real flow_dt,
   GasPhaseVals& gpv,
-  SprayData fdat,
+  const SprayData& fdat,
   SprayParticleContainer::ParticleType& p,
   amrex::Real* cBoilT,
   pele::physics::transport::TransParm<
