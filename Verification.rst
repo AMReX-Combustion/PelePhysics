@@ -8,8 +8,11 @@ Verification and Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed with `PeleMP` and compared with computational or experimental results published in literature. These tests are setup in ``PeleProduction/PeleMPruns/single_drop_test``
+Single droplet tests are performed with `PeleMP` and compared with computational or experimental results published in literature. These tests are setup in ``PeleProduction/PeleMPruns/single_drop_test``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
 
+  case = TestCaseName()
+
+then do ``python Validate.py``.
 The following table details the parameters of each test:
 
 .. table::
@@ -24,7 +27,9 @@ The following table details the parameters of each test:
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
    |``Daif``       |348              |1                |294              |1334             |3.10             |[#daif]_         |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
-   |``Runge``      |273              |1                |272              |500-570          |2.5              |[#runge]_        |
+   |``RungeHep``   |273              |1                |272              |500-570          |2.5              |[#runge]_        |
+   |``RungeDec``   |                 |                 |                 |                 |                 |                 |
+   |``RungeMix``   |                 |                 |                 |                 |                 |                 |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 
 .. figure:: /images/ton_res.png
