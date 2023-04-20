@@ -582,10 +582,10 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       acti[ii] =
         (exp(
-           (global_mw[ii] * InvRuT) *
+           (mw(ii) * InvRuT) *
            (RmT * InvEosT1Denom * Bi[ii] - K1 * dAmdY[ii] +
             am * InvBm * K1 * Bi[ii] - am * InvEosT3Denom * Bi[ii] * InvBm)) *
-         Y[ii] * global_imw[ii] * InvEosT1Denom);
+         Y[ii] * imw(ii) * InvEosT1Denom);
     }
   }
 
@@ -602,7 +602,7 @@ struct SRK
     CKWC(T, C, WDOT);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *= mw(n);
     }
   }
 
@@ -800,7 +800,7 @@ struct SRK
               Rm * T * bm * InvEosT1Denom * InvEosT1Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU * imw(ii);
       amrex::Real dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                           Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                                     am * InvEosT2Denom * InvEosT3Denom);
@@ -930,7 +930,7 @@ struct SRK
   {
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] * imw(i);
     }
     WBAR = 1.0 / summ;
   }
@@ -1015,7 +1015,7 @@ struct SRK
              am * (2.0 * tau + bm) * InvEosT2Denom * InvEosT2Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      amrex::Real Rmk = Constants::RU * global_imw[ii];
+      amrex::Real Rmk = Constants::RU * imw(ii);
       dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                   Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                             am * InvEosT2Denom * InvEosT3Denom);
@@ -1027,18 +1027,18 @@ struct SRK
                  ((dAmdY[ii] - am * Bi[ii] * InvBm) * InvEosT2Denom +
                   am * Bi[ii] * InvBm * InvEosT1Denom * InvEosT1Denom)) -
                 Y[ii] * (Bi[ii] * InvEosT1Denom * InvEosT1Denom +
-                         wbar * global_imw[ii] * InvEosT1Denom);
+                         wbar * imw(ii) * InvEosT1Denom);
       diP[ii] /= dpdtau;
 
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] = 0.0;
       }
-      dijY[ii][ii] = wbar * global_imw[ii];
+      dijY[ii][ii] = wbar * imw(ii);
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] +=
           -diP[ii] * dpdYk[jj] +
           wbar * Y[ii] * InvEosT1Denom *
-            (Bi[ii] * global_imw[jj] + Bi[jj] * global_imw[ii]) +
+          (Bi[ii] * imw(jj) + Bi[jj] * imw(ii)) +
           Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi[ii] * Bi[jj] +
           Y[ii] / (Rm * T) *
             ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi[ii] * InvBm -
