@@ -28,7 +28,20 @@ struct is_valid_physics_combination<eos::GammaLaw, transport::SimpleTransport>
 };
 
 template <>
+struct is_valid_physics_combination<
+  eos::GammaLaw,
+  transport::SutherlandTransport> : public std::false_type
+{
+};
+
+template <>
 struct is_valid_physics_combination<eos::SRK, transport::ConstTransport>
+  : public std::false_type
+{
+};
+
+template <>
+struct is_valid_physics_combination<eos::SRK, transport::SutherlandTransport>
   : public std::false_type
 {
 };
