@@ -210,7 +210,7 @@ struct Fuego
     CKWC(T, C, WDOT);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= global_mw[n];
+      WDOT[n] *= mw(n);
     }
   }
 
@@ -423,7 +423,7 @@ struct Fuego
   {
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * global_imw[i];
+      summ += Y[i] * imw(i);
     }
     WBAR = 1.0 / summ;
   }
