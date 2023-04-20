@@ -40,11 +40,37 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* colVals, int* rowPtr, const int* consP, int base);
 
+//  inverse molecular weights
+AMREX_GPU_CONSTANT const amrex::Real global_imw[1] = {
+  1.0,
+};
+const amrex::Real h_global_imw[1] = {
+  1.0,
+};
+
+//  molecular weights
+AMREX_GPU_CONSTANT const amrex::Real global_mw[1] = {
+  1.0,
+};
+const amrex::Real h_global_mw[1] = {
+  1.0,
+};
+
 /* inverse molecular weights  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_imw(amrex::Real imw_new[])
 {
   imw_new[0] = 1.0;
+}
+//  inverse molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+imw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_imw[n];
+#else
+  return h_global_imw[n];
+#endif
 }
 
 /* molecular weights  */
@@ -54,13 +80,16 @@ get_mw(amrex::Real mw_new[])
   mw_new[0] = 1.0;
 }
 
-AMREX_GPU_CONSTANT const amrex::Real global_imw[1] = {
-  1.0,
-};
-
-AMREX_GPU_CONSTANT const amrex::Real global_mw[1] = {
-  1.0,
-};
+//  molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+mw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_mw[n];
+#else
+  return h_global_mw[n];
+#endif
+}
 
 /* Returns R, Rc, Patm */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
