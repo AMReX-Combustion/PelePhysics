@@ -13,6 +13,7 @@ PeleMP Documentation
 
    GettingStarted
    Equations
+   Verification
 
 
 Indices and tables
