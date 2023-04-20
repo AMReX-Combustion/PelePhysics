@@ -99,89 +99,44 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 }
 
 //  inverse molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_imw(amrex::Real* imw_new)
-{
-  imw_new[0] = 0.4960317460317460;  // H2
-  imw_new[1] = 0.9920634920634921;  // H
-  imw_new[2] = 0.0625039064941559;  // O
-  imw_new[3] = 0.0312519532470779;  // O2
-  imw_new[4] = 0.0587993179279120;  // OH
-  imw_new[5] = 0.0555092978073827;  // H2O
-  imw_new[6] = 0.0302975216627280;  // HO2
-  imw_new[7] = 0.0293996589639560;  // H2O2
-  imw_new[8] = 0.0832570144034635;  // C
-  imw_new[9] = 0.0768108149627468;  // CH
-  imw_new[10] = 0.0712910814857061; // CH2
-  imw_new[11] = 0.0712910814857061; // CH2(S)
-  imw_new[12] = 0.0665114732291320; // CH3
-  imw_new[13] = 0.0623324814560868; // CH4
-  imw_new[14] = 0.0357015351660121; // CO
-  imw_new[15] = 0.0227226249176305; // CO2
-  imw_new[16] = 0.0344613688055690; // HCO
-  imw_new[17] = 0.0333044694598015; // CH2O
-  imw_new[18] = 0.0322227234645872; // CH2OH
-  imw_new[19] = 0.0322227234645872; // CH3O
-  imw_new[20] = 0.0312090381374446; // CH3OH
-  imw_new[21] = 0.0399520575309628; // C2H
-  imw_new[22] = 0.0384054074813734; // C2H2
-  imw_new[23] = 0.0369740442209569; // C2H3
-  imw_new[24] = 0.0356455407428531; // C2H4
-  imw_new[25] = 0.0344091941366733; // C2H5
-  imw_new[26] = 0.0332557366145660; // C2H6
-  imw_new[27] = 0.0243730044602598; // HCCO
-  imw_new[28] = 0.0237885672145967; // CH2CO
-  imw_new[29] = 0.0237885672145967; // HCCOH
-  imw_new[30] = 0.0356964374955379; // N2
-  imw_new[31] = 0.0232077792476038; // C3H7
-  imw_new[32] = 0.0226772796335352; // C3H8
-  imw_new[33] = 0.0232315019165989; // CH2CHO
-  imw_new[34] = 0.0226999296302181; // CH3CHO
-}
-
-//  molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_mw(amrex::Real* mw_new)
-{
-  mw_new[0] = 2.016000;   // H2
-  mw_new[1] = 1.008000;   // H
-  mw_new[2] = 15.999000;  // O
-  mw_new[3] = 31.998000;  // O2
-  mw_new[4] = 17.007000;  // OH
-  mw_new[5] = 18.015000;  // H2O
-  mw_new[6] = 33.006000;  // HO2
-  mw_new[7] = 34.014000;  // H2O2
-  mw_new[8] = 12.011000;  // C
-  mw_new[9] = 13.019000;  // CH
-  mw_new[10] = 14.027000; // CH2
-  mw_new[11] = 14.027000; // CH2(S)
-  mw_new[12] = 15.035000; // CH3
-  mw_new[13] = 16.043000; // CH4
-  mw_new[14] = 28.010000; // CO
-  mw_new[15] = 44.009000; // CO2
-  mw_new[16] = 29.018000; // HCO
-  mw_new[17] = 30.026000; // CH2O
-  mw_new[18] = 31.034000; // CH2OH
-  mw_new[19] = 31.034000; // CH3O
-  mw_new[20] = 32.042000; // CH3OH
-  mw_new[21] = 25.030000; // C2H
-  mw_new[22] = 26.038000; // C2H2
-  mw_new[23] = 27.046000; // C2H3
-  mw_new[24] = 28.054000; // C2H4
-  mw_new[25] = 29.062000; // C2H5
-  mw_new[26] = 30.070000; // C2H6
-  mw_new[27] = 41.029000; // HCCO
-  mw_new[28] = 42.037000; // CH2CO
-  mw_new[29] = 42.037000; // HCCOH
-  mw_new[30] = 28.014000; // N2
-  mw_new[31] = 43.089000; // C3H7
-  mw_new[32] = 44.097000; // C3H8
-  mw_new[33] = 43.045000; // CH2CHO
-  mw_new[34] = 44.053000; // CH3CHO
-}
-
-//  inverse molecular weights
 AMREX_GPU_CONSTANT const amrex::Real global_imw[35] = {
+  0.4960317460317460, // H2
+  0.9920634920634921, // H
+  0.0625039064941559, // O
+  0.0312519532470779, // O2
+  0.0587993179279120, // OH
+  0.0555092978073827, // H2O
+  0.0302975216627280, // HO2
+  0.0293996589639560, // H2O2
+  0.0832570144034635, // C
+  0.0768108149627468, // CH
+  0.0712910814857061, // CH2
+  0.0712910814857061, // CH2(S)
+  0.0665114732291320, // CH3
+  0.0623324814560868, // CH4
+  0.0357015351660121, // CO
+  0.0227226249176305, // CO2
+  0.0344613688055690, // HCO
+  0.0333044694598015, // CH2O
+  0.0322227234645872, // CH2OH
+  0.0322227234645872, // CH3O
+  0.0312090381374446, // CH3OH
+  0.0399520575309628, // C2H
+  0.0384054074813734, // C2H2
+  0.0369740442209569, // C2H3
+  0.0356455407428531, // C2H4
+  0.0344091941366733, // C2H5
+  0.0332557366145660, // C2H6
+  0.0243730044602598, // HCCO
+  0.0237885672145967, // CH2CO
+  0.0237885672145967, // HCCOH
+  0.0356964374955379, // N2
+  0.0232077792476038, // C3H7
+  0.0226772796335352, // C3H8
+  0.0232315019165989, // CH2CHO
+  0.0226999296302181, // CH3CHO
+};
+const amrex::Real h_global_imw[35] = {
   0.4960317460317460, // H2
   0.9920634920634921, // H
   0.0625039064941559, // O
@@ -257,6 +212,146 @@ AMREX_GPU_CONSTANT const amrex::Real global_mw[35] = {
   43.045000, // CH2CHO
   44.053000, // CH3CHO
 };
+const amrex::Real h_global_mw[35] = {
+  2.016000,  // H2
+  1.008000,  // H
+  15.999000, // O
+  31.998000, // O2
+  17.007000, // OH
+  18.015000, // H2O
+  33.006000, // HO2
+  34.014000, // H2O2
+  12.011000, // C
+  13.019000, // CH
+  14.027000, // CH2
+  14.027000, // CH2(S)
+  15.035000, // CH3
+  16.043000, // CH4
+  28.010000, // CO
+  44.009000, // CO2
+  29.018000, // HCO
+  30.026000, // CH2O
+  31.034000, // CH2OH
+  31.034000, // CH3O
+  32.042000, // CH3OH
+  25.030000, // C2H
+  26.038000, // C2H2
+  27.046000, // C2H3
+  28.054000, // C2H4
+  29.062000, // C2H5
+  30.070000, // C2H6
+  41.029000, // HCCO
+  42.037000, // CH2CO
+  42.037000, // HCCOH
+  28.014000, // N2
+  43.089000, // C3H7
+  44.097000, // C3H8
+  43.045000, // CH2CHO
+  44.053000, // CH3CHO
+};
+
+//  inverse molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_imw(amrex::Real* imw_new)
+{
+  imw_new[0] = 0.4960317460317460;  // H2
+  imw_new[1] = 0.9920634920634921;  // H
+  imw_new[2] = 0.0625039064941559;  // O
+  imw_new[3] = 0.0312519532470779;  // O2
+  imw_new[4] = 0.0587993179279120;  // OH
+  imw_new[5] = 0.0555092978073827;  // H2O
+  imw_new[6] = 0.0302975216627280;  // HO2
+  imw_new[7] = 0.0293996589639560;  // H2O2
+  imw_new[8] = 0.0832570144034635;  // C
+  imw_new[9] = 0.0768108149627468;  // CH
+  imw_new[10] = 0.0712910814857061; // CH2
+  imw_new[11] = 0.0712910814857061; // CH2(S)
+  imw_new[12] = 0.0665114732291320; // CH3
+  imw_new[13] = 0.0623324814560868; // CH4
+  imw_new[14] = 0.0357015351660121; // CO
+  imw_new[15] = 0.0227226249176305; // CO2
+  imw_new[16] = 0.0344613688055690; // HCO
+  imw_new[17] = 0.0333044694598015; // CH2O
+  imw_new[18] = 0.0322227234645872; // CH2OH
+  imw_new[19] = 0.0322227234645872; // CH3O
+  imw_new[20] = 0.0312090381374446; // CH3OH
+  imw_new[21] = 0.0399520575309628; // C2H
+  imw_new[22] = 0.0384054074813734; // C2H2
+  imw_new[23] = 0.0369740442209569; // C2H3
+  imw_new[24] = 0.0356455407428531; // C2H4
+  imw_new[25] = 0.0344091941366733; // C2H5
+  imw_new[26] = 0.0332557366145660; // C2H6
+  imw_new[27] = 0.0243730044602598; // HCCO
+  imw_new[28] = 0.0237885672145967; // CH2CO
+  imw_new[29] = 0.0237885672145967; // HCCOH
+  imw_new[30] = 0.0356964374955379; // N2
+  imw_new[31] = 0.0232077792476038; // C3H7
+  imw_new[32] = 0.0226772796335352; // C3H8
+  imw_new[33] = 0.0232315019165989; // CH2CHO
+  imw_new[34] = 0.0226999296302181; // CH3CHO
+}
+
+//  inverse molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+imw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_imw[n];
+#else
+  return h_global_imw[n];
+#endif
+}
+//  molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_mw(amrex::Real* mw_new)
+{
+  mw_new[0] = 2.016000;   // H2
+  mw_new[1] = 1.008000;   // H
+  mw_new[2] = 15.999000;  // O
+  mw_new[3] = 31.998000;  // O2
+  mw_new[4] = 17.007000;  // OH
+  mw_new[5] = 18.015000;  // H2O
+  mw_new[6] = 33.006000;  // HO2
+  mw_new[7] = 34.014000;  // H2O2
+  mw_new[8] = 12.011000;  // C
+  mw_new[9] = 13.019000;  // CH
+  mw_new[10] = 14.027000; // CH2
+  mw_new[11] = 14.027000; // CH2(S)
+  mw_new[12] = 15.035000; // CH3
+  mw_new[13] = 16.043000; // CH4
+  mw_new[14] = 28.010000; // CO
+  mw_new[15] = 44.009000; // CO2
+  mw_new[16] = 29.018000; // HCO
+  mw_new[17] = 30.026000; // CH2O
+  mw_new[18] = 31.034000; // CH2OH
+  mw_new[19] = 31.034000; // CH3O
+  mw_new[20] = 32.042000; // CH3OH
+  mw_new[21] = 25.030000; // C2H
+  mw_new[22] = 26.038000; // C2H2
+  mw_new[23] = 27.046000; // C2H3
+  mw_new[24] = 28.054000; // C2H4
+  mw_new[25] = 29.062000; // C2H5
+  mw_new[26] = 30.070000; // C2H6
+  mw_new[27] = 41.029000; // HCCO
+  mw_new[28] = 42.037000; // CH2CO
+  mw_new[29] = 42.037000; // HCCOH
+  mw_new[30] = 28.014000; // N2
+  mw_new[31] = 43.089000; // C3H7
+  mw_new[32] = 44.097000; // C3H8
+  mw_new[33] = 43.045000; // CH2CHO
+  mw_new[34] = 44.053000; // CH3CHO
+}
+
+//  molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+mw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_mw[n];
+#else
+  return h_global_mw[n];
+#endif
+}
 
 //  Returns R, Rc, Patm
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -4399,7 +4494,7 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // Now compute y to x conversion
   x[0] = y[0] / (2.016000 * YOW);
@@ -4608,7 +4703,7 @@ CKPY(
   amrex::Real YOW = 0; //  for computing mean MW
 
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
@@ -4724,7 +4819,7 @@ CKRHOY(
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -4798,7 +4893,7 @@ CKMMWY(const amrex::Real y[], amrex::Real& wtm)
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   wtm = 1.0 / YOW;
@@ -4939,13 +5034,13 @@ CKYTX(const amrex::Real y[], amrex::Real x[])
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 35; i++) {
-    x[i] = y[i] * global_imw[i] * YOWINV;
+    x[i] = y[i] * imw(i) * YOWINV;
   }
 }
 
@@ -4962,7 +5057,7 @@ CKYTCP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 35; i++) {
-    c[i] = y[i] * global_imw[i];
+    c[i] = y[i] * imw(i);
   }
   for (int i = 0; i < 35; i++) {
     YOW += c[i];
@@ -4973,7 +5068,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 35; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 }
 
@@ -4987,7 +5082,7 @@ CKYTCR(
 {
 
   for (int i = 0; i < 35; i++) {
-    c[i] = rho * y[i] * global_imw[i];
+    c[i] = rho * y[i] * imw(i);
   }
 }
 
@@ -5426,7 +5521,7 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
   speciesInternalEnergy(ums, tc);
 
   for (int i = 0; i < 35; i++) {
-    ums[i] *= RT * global_imw[i];
+    ums[i] *= RT * imw(i);
   }
 }
 
@@ -5442,7 +5537,7 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
   speciesEnthalpy(hms, tc);
 
   for (int i = 0; i < 35; i++) {
-    hms[i] *= RT * global_imw[i];
+    hms[i] *= RT * imw(i);
   }
 }
 
@@ -10947,7 +11042,7 @@ CKWYP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 35; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
@@ -10955,7 +11050,7 @@ CKWYP(
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
   for (int i = 0; i < 35; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 
   // convert to chemkin units
@@ -11007,7 +11102,7 @@ CKWYR(
 
   // See Eq 8 with an extra 1e6 so c goes to SI
   for (int i = 0; i < 35; i++) {
-    c[i] = 1e6 * rho * y[i] * global_imw[i];
+    c[i] = 1e6 * rho * y[i] * imw(i);
   }
 
   // call productionRate
@@ -11134,7 +11229,7 @@ CKCHRGMASS(amrex::Real zk[])
   CKCHRG(kchrg);
 
   for (int id = 0; id < 35; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
 }
 
