@@ -67,8 +67,7 @@ get_bdf_matrix_and_rhs(
   for (int ii = 0; ii < NUM_SPECIES; ii++) {
     for (int jj = 0; jj < NUM_SPECIES; jj++) {
       Jmat2d[ii][jj] = -bdfp.FCOEFFMAT[tstepscheme][0] *
-                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * mw(ii) *
-                       imw(jj);
+                       Jmat1d[jj * (NUM_SPECIES + 1) + ii] * mw(ii) * imw(jj);
     }
     Jmat2d[ii][NUM_SPECIES] = -bdfp.FCOEFFMAT[tstepscheme][0] *
                               Jmat1d[NUM_SPECIES * (NUM_SPECIES + 1) + ii] *

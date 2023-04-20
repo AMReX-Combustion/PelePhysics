@@ -1037,8 +1037,7 @@ struct SRK
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] +=
           -diP[ii] * dpdYk[jj] +
-          wbar * Y[ii] * InvEosT1Denom *
-          (Bi[ii] * imw(jj) + Bi[jj] * imw(ii)) +
+          wbar * Y[ii] * InvEosT1Denom * (Bi[ii] * imw(jj) + Bi[jj] * imw(ii)) +
           Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi[ii] * Bi[jj] +
           Y[ii] / (Rm * T) *
             ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi[ii] * InvBm -

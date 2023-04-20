@@ -328,13 +328,10 @@ fKernelDenseAJchem(
 
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
-      Jcurr[k * neqs + i] =
-        Jmat_pt[k * neqs + i] * mw(i) * imw(k);
+      Jcurr[k * neqs + i] = Jmat_pt[k * neqs + i] * mw(i) * imw(k);
     }
-    Jcurr[i * neqs + NUM_SPECIES] =
-      Jmat_pt[i * neqs + NUM_SPECIES] * imw(i);
-    Jcurr[NUM_SPECIES * neqs + i] =
-      Jmat_pt[NUM_SPECIES * neqs + i] * mw(i);
+    Jcurr[i * neqs + NUM_SPECIES] = Jmat_pt[i * neqs + NUM_SPECIES] * imw(i);
+    Jcurr[NUM_SPECIES * neqs + i] = Jmat_pt[NUM_SPECIES * neqs + i] * mw(i);
   }
 }
 
