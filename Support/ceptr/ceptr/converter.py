@@ -494,26 +494,6 @@ class Converter:
         """Write the molecular weights."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment(" inverse molecular weights "))
-        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
-        for i in range(0, self.species_info.n_species):
-            species = self.species_info.nonqssa_species[i]
-            text = f"imw_new[{i}] = {1.0 / species.weight:.16f};"
-            cw.writer(fstream, text + cw.comment(f"{species.name}"))
-        cw.writer(fstream, "}")
-        cw.writer(fstream)
-
-        cw.writer(fstream, cw.comment(" molecular weights "))
-        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
-        for i in range(0, self.species_info.n_species):
-            species = self.species_info.nonqssa_species[i]
-            text = f"mw_new[{i}] = {species.weight:f};"
-            cw.writer(fstream, text + cw.comment(f"{species.name}"))
-        cw.writer(fstream, "}")
-
-        cw.writer(fstream)
-        cw.writer(fstream, cw.comment(" inverse molecular weights "))
         cw.writer(
             fstream,
             "AMREX_GPU_CONSTANT const amrex::Real "
@@ -557,6 +537,45 @@ class Converter:
             text = f"{species.weight:f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
+
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment(" inverse molecular weights "))
+        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
+        cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"imw_new[{i}] = {1.0 / species.weight:.16f};"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "}")
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment(" inverse molecular weight "))
+        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
+        cw.writer(fstream, "amrex::Real imw(const int n){")
+        cw.writer(fstream, "#if AMREX_DEVICE_COMPILE")
+        cw.writer(fstream, "return global_imw[n];")
+        cw.writer(fstream, "#else")
+        cw.writer(fstream, "return h_global_imw[n];")
+        cw.writer(fstream, "#endif")
+        cw.writer(fstream, "}")
+
+        cw.writer(fstream, cw.comment(" molecular weights "))
+        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
+        cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
+        for i in range(0, self.species_info.n_species):
+            species = self.species_info.nonqssa_species[i]
+            text = f"mw_new[{i}] = {species.weight:f};"
+            cw.writer(fstream, text + cw.comment(f"{species.name}"))
+        cw.writer(fstream, "}")
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment(" molecular weight "))
+        cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
+        cw.writer(fstream, "amrex::Real mw(const int n){")
+        cw.writer(fstream, "#if AMREX_DEVICE_COMPILE")
+        cw.writer(fstream, "return global_mw[n];")
+        cw.writer(fstream, "#else")
+        cw.writer(fstream, "return h_global_mw[n];")
+        cw.writer(fstream, "#endif")
+        cw.writer(fstream, "}")
 
     def mechanism_cpp_declarations(self, fstream):
         """Write the chemistry function declarations."""
