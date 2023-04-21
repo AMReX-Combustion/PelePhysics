@@ -125,20 +125,20 @@ The procedure is as follows for updating the spray droplet:
 
 #. Transport properties are computed using the reference state: dynamic viscosity, :math:`\mu_r`, thermal conductivity, :math:`\lambda_r`, and mass diffusion coefficient for species :math:`n`, :math:`D_{r,n}`.
 
-#. It is important to note that `PelePhysics` provides mixture averaged mass diffusion coefficient :math:`\left(\overline{\rho D}\right)_{r,n}`, which is converted into the binary mass diffusion coefficient using
+#. It is important to note that `PelePhysics` provides mixture averaged mass diffusion coefficient :math:`\overline{(\rho D)}_{r,n}`, which is converted into the binary mass diffusion coefficient using
 
    .. math::
-      \left(\rho D\right)_{r,n} = \left(\overline{\rho D}\right)_{r,n} \overline{M}_r / M_n.
+      (\rho D)_{r,n} = \overline{(\rho D)}_{r,n} \overline{M}_r / M_n.
 
    Mass diffusion coefficient is then normalized by the total fuel vapor molar fraction
 
    .. math::
-      \left(\rho D\right)_{r,n}^* = \frac{\chi_{v,n} \left(\rho D)_{r,n}}{\chi_{v,{\rm{sum}}}} \; \forall n \in N_L
+      (\rho D)^*_{r,n} = \frac{\chi_{v,n} (\rho D)_{r,n}}{\chi_{v,{\rm{sum}}}} \; \forall n \in N_L
 
    and the total is
 
    .. math::
-      \left(\rho D\right)_r = \sum_{n=0}^{N_L} \left(\rho D\right)_{r,n}^*
+      (\rho D)_r = \sum_{n=0}^{N_L} (\rho D)_{r,n}^*
 
 #. The momentum source is a function of the drag force
 
@@ -168,7 +168,7 @@ The procedure is as follows for updating the spray droplet:
 
       {\rm{Pr}}_r &= \frac{\mu_r c_{p,r}}{\lambda_r}
 
-      {\rm{Sc}}_r &= \frac{\mu_r}{\left(\rho D\right)_r}
+      {\rm{Sc}}_r &= \frac{\mu_r}{(\rho D)_r}
 
       {\rm{Sh}}_0 &= 1 + (1 + {\rm{Re}}_d {\rm{Sc}}_r)^{1/3} F_2
 
@@ -188,12 +188,12 @@ The procedure is as follows for updating the spray droplet:
      where
 
      .. math::
-        \phi = \frac{c_{p,r} \left(\rho D\right)_r {\rm{Sh}}^*}{\lambda_r {\rm{Nu}}^*}
+        \phi = \frac{c_{p,r} (\rho D)_r {\rm{Sh}}^*}{\lambda_r {\rm{Nu}}^*}
 
      Note the dependence of :math:`{\rm{Nu}}^*` on :math:`B_T` means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become
 
      .. math::
-        \dot{m}_n &= -\pi \left(\rho D\right)_{r,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
+        \dot{m}_n &= -\pi (\rho D)_{r,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
 
         \mathcal{Q}_d &= \pi \lambda_r d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
 
