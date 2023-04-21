@@ -48,13 +48,12 @@ SprayParticleContainer::moveKick(
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* ltransparm,
-  const Real spray_cfl_lev,
-  MultiFab* u_mac)
+  const Real spray_cfl_lev)
 {
   bool do_move = false;
   moveKickDrift(
     state, source, level, dt, time, isVirtualPart, isGhostPart, state_ghosts,
-    source_ghosts, do_move, ltransparm, spray_cfl_lev, u_mac);
+    source_ghosts, do_move, ltransparm, spray_cfl_lev);
 }
 
 void
@@ -72,11 +71,9 @@ SprayParticleContainer::moveKickDrift(
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* ltransparm,
-  const Real spray_cfl_lev,
-  MultiFab* u_mac)
+  const Real spray_cfl_lev)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
-  AMREX_ASSERT(u_mac == nullptr || u_mac[0].nGrow() >= 1);
   AMREX_ASSERT(level >= 0);
 
   // If there are no particles at this level
@@ -86,23 +83,13 @@ SprayParticleContainer::moveKickDrift(
 
   updateParticles(
     level, state, source, dt, time, state_ghosts, source_ghosts, isVirtualPart,
-    isGhostPart, do_move, ltransparm, spray_cfl_lev, u_mac);
-
-  // Fill ghost cells after we've synced up ..
-  // TODO: Check to see if this is needed at all
-  // if (level > 0)
-  //   source.FillBoundary(Geom(level).periodicity());
-
-  // ********************************************************************************
-
-  // ********************************************************************************
+    isGhostPart, do_move, ltransparm, spray_cfl_lev);
 }
 
 Real
 SprayParticleContainer::estTimestep(int level, Real cfl) const
 {
   BL_PROFILE("ParticleContainer::estTimestep()");
-  // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
   if (level >= this->GetParticles().size() || m_sprayData->fixed_parts) {
     return -1.;
@@ -121,16 +108,12 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
       reduce_op.eval(
         n, reduce_data, [=] AMREX_GPU_DEVICE(const Long i) -> ReduceTuple {
           const ParticleType& p = pstruct[i];
-          // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] =
-          // dxi[2]
           if (p.id() > 0) {
-            const Real max_mag_vdx =
-              amrex::max(AMREX_D_DECL(
-                std::abs(p.rdata(SprayComps::pstateVel)),
-                std::abs(p.rdata(SprayComps::pstateVel + 1)),
-                std::abs(p.rdata(SprayComps::pstateVel + 2)))) *
-              dxi[0];
-            Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
+            const Real max_mag_vdx = amrex::max(AMREX_D_DECL(
+              std::abs(p.rdata(SprayComps::pstateVel)) * dxi[0],
+              std::abs(p.rdata(SprayComps::pstateVel + 1)) * dxi[1],
+              std::abs(p.rdata(SprayComps::pstateVel + 2)) * dxi[2]))
+              Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
             return dt_part;
           }
           return -1.;
@@ -141,12 +124,11 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
     dt = amrex::min(dt, ldt_cpu);
   }
   ParallelDescriptor::ReduceRealMin(dt);
-  // Check if the velocity of particles being injected
-  // is greater existing particle velocities
+  // Check if the velocity of particles being injected is greater than existing
+  // particle velocities
   if (m_injectVel > 0.) {
     dt = amrex::min(dt, cfl * dx[0] / m_injectVel);
   }
-
   return dt;
 }
 
@@ -165,8 +147,7 @@ SprayParticleContainer::updateParticles(
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* ltransparm,
-  const Real spray_cfl_lev,
-  MultiFab* /*u_mac*/)
+  const Real spray_cfl_lev)
 {
   BL_PROFILE("SprayParticleContainer::updateParticles()");
   AMREX_ASSERT(OnSameGrids(level, state));
@@ -278,27 +259,6 @@ SprayParticleContainer::updateParticles(
       volfrac_fab = volfrac->array(pti);
     }
 #endif
-    // #ifdef PELELM_USE_SPRAY
-    //     GpuArray<
-    //       Array4<const Real>, AMREX_SPACEDIM> const
-    //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
-    //       u_mac[2].array(pti))};
-    // #endif
-    // Data structures for creating new particles during splashing/breakup
-    Gpu::HostVector<splash_breakup> N_SB_h;
-    Gpu::DeviceVector<splash_breakup> N_SB_d;
-    bool do_splash_box = (do_splash && (eb_in_box || at_bounds));
-    SBVects refv;
-    SBPtrs rf_d;
-    if (do_breakup || do_splash_box) {
-      N_SB_h.assign(Np, splash_breakup::no_change);
-      N_SB_d.resize(Np);
-      Gpu::copyAsync(
-        Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
-      refv.build(Np);
-      refv.fillPtrs_d(rf_d);
-    }
-    auto N_SB = N_SB_d.dataPtr();
     amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {

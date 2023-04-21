@@ -36,8 +36,6 @@ SprayParticleContainer::SprayParticleIO(
   Checkpoint(dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
   // Here we write ascii information every time we write a plot file
   if (level == 0 && write_ascii == 1) {
-    // TODO: Would be nice to be able to use file_name_digits
-    // instead of doing this
     size_t num_end_loc = dir.find_last_of("0123456789") + 1;
     // Remove anything following numbers, like .temp
     std::string dirout = dir.substr(0, num_end_loc);

@@ -2,7 +2,7 @@
 #include "SprayJet.H"
 #include <AMReX_ParmParse.H>
 
-// Constructor where parameters are set from inputfile
+// Constructor where parameters are set from input file
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   : m_jetName(std::move(jet_name))
 {
@@ -26,8 +26,14 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   check_jet_cent(geom);
   ps.get("jet_dia", m_jetDia);
   ps.get("spread_angle", m_spreadAngle);
+  if (m_spreadAngle < 0. || m_spreadAngle > 180.) {
+    amrex::Abort("'spread_angle' must be between 0 and 180");
+  }
   m_spreadAngle *= M_PI / 180.; // Assumes spread angle is in degrees
   ps.query("swirl_angle", m_swirlAngle);
+  if (m_swirlAngle < 0. || m_swirlAngle > 90.) {
+    amrex::Abort("'swirl_angle' must be between 0 and 90");
+  }
   m_swirlAngle *= M_PI / 180.;
   ps.get("T", m_jetT);
   if (SPRAY_FUEL_NUM == 1) {
@@ -52,7 +58,13 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.query("hollow_spray", m_hollowSpray);
   if (m_hollowSpray) {
     ps.query("hollow_spread", m_hollowSpread);
+    if (m_hollowSpread < 0. || m_hollowSpread > 180.) {
+      amrex::Abort("'hollow_spread' must be between 0 and 180");
+    }
     m_hollowSpread *= M_PI / 180.;
+  }
+  if (m_jetVel < 0. || m_jetT < 0. || m_massFlow < 0.) {
+    amrex::Abort("Jet u, T, and mdot must be greater than 0");
   }
 }
 
@@ -88,6 +100,18 @@ SprayJet::SprayJet(
     m_hollowSpray(hollow_spray),
     m_hollowSpread(hollow_spread * M_PI / 180.)
 {
+  if (m_spreadAngle < 0. || m_spreadAngle > M_PI) {
+    amrex::Abort("Spread angle must be between 0 and 180");
+  }
+  if (m_swirlAngle < 0. || m_swirlAngle > 0.5 * M_PI) {
+    amrex::Abort("Swirl angle must be between 0 and 90");
+  }
+  if (m_hollowSpread < 0. || m_hollowSpread > M_PI) {
+    amrex::Abort("Hollow spread must be between 0 and 180");
+  }
+  if (m_jetVel < 0. || m_massFlow < 0. || m_jetT < 0.) {
+    amrex::Abort("Jet u, T, and mdot must be greater than 0");
+  }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     m_jetY[spf] = jet_Y[spf];
   }

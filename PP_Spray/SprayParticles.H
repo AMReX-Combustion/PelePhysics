@@ -77,6 +77,13 @@ public:
     const int level);
 
   /// \brief General initialization routine for uniformly distributed droplets
+  /// @param num_part Number of parcels to initialize in each direction
+  /// @param vel_part Droplet velocity
+  /// @param dia_part Droplet diameter
+  /// @param T_part Droplet temperature
+  /// @param Y_part Pointer to array of droplet mass fractions
+  /// @param level Current AMR level
+  /// @param num_redist Number of redistributes to do during initialization
   void uniformSprayInit(
     const amrex::IntVect num_part,
     const amrex::RealVect vel_part,
@@ -84,8 +91,7 @@ public:
     const amrex::Real T_part,
     const amrex::Real* Y_part,
     const int level,
-    const int numRedist,
-    const amrex::Real num_ppp = 1.);
+    const int num_redist);
 
   /// \brief Setup spray parameters
   static void spraySetup(SprayData& sprayData, const amrex::Real* body_force);
@@ -198,7 +204,7 @@ public:
     return ghost_source;
   }
 
-  /// \brief Update the particles but do not move particles
+  /// \brief Update but do not move particles
   void moveKick(
     amrex::MultiFab& state,
     amrex::MultiFab& source,
@@ -212,10 +218,9 @@ public:
     pele::physics::transport::TransParm<
       pele::physics::EosType,
       pele::physics::TransportType> const* ltransparm,
-    const amrex::Real spray_cfl_lev = -1.,
-    amrex::MultiFab* u_mac = nullptr);
+    const amrex::Real spray_cfl_lev = -1.);
 
-  /// \brief Update and move positions of the particles
+  /// \brief Update and move particles
   void moveKickDrift(
     amrex::MultiFab& state,
     amrex::MultiFab& source,
@@ -230,8 +235,7 @@ public:
     pele::physics::transport::TransParm<
       pele::physics::EosType,
       pele::physics::TransportType> const* ltransparm,
-    const amrex::Real spray_cfl_lev = -1.,
-    amrex::MultiFab* u_mac = nullptr);
+    const amrex::Real spray_cfl_lev = -1.);
 
   /// \brief Update particle data and solve gas-phase source terms
   void updateParticles(
@@ -248,8 +252,7 @@ public:
     pele::physics::transport::TransParm<
       pele::physics::EosType,
       pele::physics::TransportType> const* ltransparm,
-    const amrex::Real spray_cfl_lev,
-    amrex::MultiFab* u_mac);
+    const amrex::Real spray_cfl_lev);
 
   /// \brief Sum boundary and copy temporary source term
   /// @param source_ghosts Number of ghost cells needed for source terms
