@@ -112,8 +112,8 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
             const Real max_mag_vdx = amrex::max(AMREX_D_DECL(
               std::abs(p.rdata(SprayComps::pstateVel)) * dxi[0],
               std::abs(p.rdata(SprayComps::pstateVel + 1)) * dxi[1],
-              std::abs(p.rdata(SprayComps::pstateVel + 2)) * dxi[2]))
-              Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
+              std::abs(p.rdata(SprayComps::pstateVel + 2)) * dxi[2]));
+            Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
             return dt_part;
           }
           return -1.;
