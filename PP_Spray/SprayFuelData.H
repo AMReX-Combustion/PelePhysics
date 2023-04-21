@@ -73,10 +73,8 @@ struct GasPhaseVals
   amrex::Real rho_fluid;
   amrex::Real p_fluid;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_fluid;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> X_fluid;
   amrex::Real mw_mix;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> mw_fluid;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> invmw;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
   amrex::RealVect fluid_mom_src;
   amrex::Real fluid_mass_src;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> fluid_Y_dot;
@@ -102,14 +100,11 @@ struct GasPhaseVals
     SprayUnits SPU;
     mw_mix = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
-      mw_mix += Y_fluid[n] * invmw[n];
+      mw_mix += Y_fluid[n] / mw[n];
     }
     p_fluid =
       rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid * SPU.ru_conv;
     mw_mix = 1. / mw_mix;
-    for (int n = 0; n < NUM_SPECIES; ++n) {
-      X_fluid[n] = Y_fluid[n] * invmw[n] * mw_mix;
-    }
   }
 };
 
@@ -186,7 +181,7 @@ struct SprayData
     amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
-      const amrex::Real mw_fuel = gpv.mw_fluid[fspec];
+      const amrex::Real mw_fuel = gpv.mw[fspec];
       // Since we only know the latent heat at the reference temperature,
       // modify Watsons power law to find latent heat at boiling conditions
       amrex::Real Hboil_ref =
