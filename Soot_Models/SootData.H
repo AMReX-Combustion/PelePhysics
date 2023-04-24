@@ -24,6 +24,13 @@ struct SootData
   amrex::GpuArray<amrex::Real, NUM_SOOT_MOMENTS + 1> smallOF;
   amrex::GpuArray<amrex::Real, NUM_SOOT_MOMENTS> fragFact;
 
+  // Return corresponding PelePhysics species index
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE int
+  getPPIndx(SootGasSpecIndx soot_indx) const
+  {
+    return refIndx[soot_indx];
+  }
+
   // Convert moments from CGS/SI to mol of C
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertToMol(amrex::Real moments[]) const

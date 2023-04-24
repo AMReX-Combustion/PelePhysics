@@ -145,7 +145,6 @@ public:
   /// Mass can be conserved again by adding remaining lost mass to H2
   bool m_conserveMass = false;
 
-  // TODO: Make these vectors in case multiple inception species are used
   /// Species index of PAH
   int m_PAHindx = -1;
   /// PAH inception path to be used, must be A2, A3, or A4

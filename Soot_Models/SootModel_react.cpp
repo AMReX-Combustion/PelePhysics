@@ -118,8 +118,8 @@ SootModel::initializeReactData()
   m_sootReact->sIndx_b[4] = SootIndx::indxSootS;
 
   // 6. Soot-H + OH => Soot-H + CO
-  // TODO: This transforms the Arrhenius formulation to be
-  // reaction probability, 8.94*sqrt(T)*probGamma*A
+  // This transforms the Arrhenius formulation to be reaction
+  // probability, 8.94*sqrt(T)*probGamma*A
   Real probGamma = 0.13;
   m_sootReact->A_f[5] =
     8.94 * probGamma * pele::physics::Constants::Avna * 100.;

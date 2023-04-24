@@ -24,7 +24,7 @@ struct SootReaction
   amrex::GpuArray<int, 3 * NUM_SOOT_REACT> nIndx_b = {{0}};
   // Soot surface reaction reference indexing
   // Forward and backward reaction soot indices
-  // TODO: Assumes only 1 mole of soot is on each side
+  // Note: Assumes only 1 mole of soot is on each side
   amrex::GpuArray<int, NUM_SOOT_REACT> sIndx_f = {{0}};
   amrex::GpuArray<int, NUM_SOOT_REACT> sIndx_b = {{0}};
   // Vector of stoichiometric coefficients
@@ -80,7 +80,7 @@ struct SootReaction
       }
       w_bkwd[i] = k_bkwd[i] * bkwdM;
     }
-    // TODO: This will depend on the surface reactions, currently hardcoded
+    // Note: This will depend on the surface reactions, currently hardcoded
     amrex::Real fSootStar =
       computeRadSiteConc(xi_n, k_fwd.data(), k_bkwd.data());
     computeSurfRates(w_fwd.data(), w_bkwd.data(), fSootStar, k_sg, k_ox, k_o2);
@@ -89,16 +89,16 @@ struct SootReaction
     amrex::GpuArray<amrex::Real, SootIndx::numSootSpecs> C_Soot = {0.0};
     C_Soot[SootIndx::indxSootS] = fSootStar * SootDensityC * moments[2];
     C_Soot[SootIndx::indxSootH] = (1. - fSootStar) * SootDensityC * moments[2];
-    // TODO: The last two reaction (6 and 7) are special
+    // Note: The last two reaction (6 and 7) are special
     // they are not treated the same in this loop
-    // TODO: Currently assumes soot is involved in every reaction on both sides
+    // Currently assumes soot is involved in every reaction on both sides
     for (int i = 0; i < nsr - 2; ++i) {
       int sootIndx = sIndx_f[i];
       w_fwd[i] *= C_Soot[sootIndx];
       sootIndx = sIndx_b[i];
       w_bkwd[i] *= C_Soot[sootIndx];
     }
-    // TODO: This is specific to the hardcoded 6th reaction, not universal
+    // Note: This is specific to the hardcoded 6th reaction, not universal
     w_fwd[5] *= surf;
     // Loop over gas species and solve for omegas
     for (int i = 0; i < nsr; ++i) {

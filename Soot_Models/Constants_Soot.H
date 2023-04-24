@@ -5,9 +5,8 @@
 #include <AMReX_GpuQualifiers.H>
 #include "PhysicsConstants.H"
 
-// TODO: This should be specified in makefile when
-// different soot formation reactions are implemented
-// Define the number of species involved in soot reactions
+// Note: These will change if a different soot surface chemistry model is
+// implemented Define the number of species involved in soot model
 #define NUM_SOOT_GS 8
 #define NUM_SOOT_REACT 7
 
@@ -34,9 +33,8 @@ struct SootComps
 };
 
 // Local gas species index, not the same as what comes from PelePhysics
-// Use gasIndxtoPeleP to convert between
+// Used as input to m_sootData->getPPIndx()
 enum SootGasSpecIndx {
-  // Hardcoded indices for species in m_specSootRefs
   indxH2 = 0,
   indxH,
   indxOH,

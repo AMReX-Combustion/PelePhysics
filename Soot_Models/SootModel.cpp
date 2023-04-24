@@ -53,13 +53,12 @@ SootModel::define()
     Abort("SootModel::define(): Must set indices before defining");
   }
   // Relevant species names for the surface chemistry model
-  // TODO: Currently must correspond to GasSpecIndx enum in Constants_Soot.H
+  // Must correspond to SootGasSpecIndx enum in Constants_Soot.H
   m_gasSpecNames = {"H2", "H", "OH", "H2O", "CO", "C2H2", "O2", m_PAHname};
   // Number of accounted for PAH particles (hard-coded)
   const int numPAH = 3;
-  // Names of PAH species
-  // TODO: Currently can only handle naphthalene(C10H8), phenathrene(C14H10),
-  // and pyrene(C16H10) and can only handle 1 PAH inception species
+  // Names of PAH species. Can only handle naphthalene (C10H8), phenathrene
+  // (C14H10), and pyrene (C16H10) and can only handle 1 PAH inception species
   const std::string PAH_names[] = {"A2", "A3", "A4"};
   // Corresponding sticking coefficients
   const Real PAH_gammas[] = {0.002, 0.015, 0.025};
