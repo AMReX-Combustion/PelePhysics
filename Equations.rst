@@ -226,14 +226,13 @@ The procedure is as follows for updating the spray droplet:
 
 Soot Equations
 --------------
-In `PeleMP` soot formation and growth is modeled using the HMOM model of Mueller et al. [#mueller]_. This approach combines the numerical ease of the method of moments with interpolative closure (MOMIC) with the ability to capture the bimodal nature of the soot number density function (NDF) provided by the direct quadrature method of moments (DQMOM). :math:`M_{x,y}` is the moment of the soot NDF, where :math:`x` is the order for volume and :math:`y` for surface area; these terms are modeled according to
+In `PeleMP`, soot formation, growth, and oxidation is modeled using the hybrid-method of moments (HMOM) model developed by Mueller et al. [#mueller]_. This approach combines the numerical ease of the method of moments with interpolative closure (MOMIC) with the ability to capture the bimodal nature of the soot number density function (NDF) provided by the direct quadrature method of moments (DQMOM). :math:`M_{x,y}` is the moment of the soot NDF, where :math:`x` is the order for volume and :math:`y` for surface area; these terms are modeled according to
 
 .. math::
    M_{x,y} = N_0 V_0^x S_0^y + \exp{\left(\sum_{r=0}^R \sum_{k = 0}^r a_{r,k} x^k y^{r-k}\right)},
 
-where :math:`R` is the order of the polynomial interpolation, :math:`a_{r,k}` are the interpolation coefficients, :math:`N_0` is the weight of the quadrature node used in the representation of the moments of the NDF, and :math:`V_0` and :math:`S_0` are the volume and surface area of the nucleated spherical soot particles, respectively.
-where :math:`R` is the order of the polynomial interpolation, :math:`a_{r,k}` are the interpolation coefficients, :math:`N_0` is the weight of the quadrature node used in the representation of the moments of the NDF, and :math:`V_0` and :math:`S_0` are the volume and surface area of the nucleated spherical soot particles, respectively.
-The nucleated particle volume and surface area are fixed according to :math:`V_0 = 2 W_C C_{\rm{dimer}} / \rho_{\rm{soot}}` and :math:`S_0 = (36 \pi)^{1/3} V_0^{2/3}`, where :math:`W_C` is the molar mass of carbon, :math:`C_{\rm{dimer}}` is the average number of carbon atoms per dimer, and :math:`\rho_{\rm{soot}}` is the density of soot (`\rho_{\rm{soot}} = 1800` kg/m:math:`^3`). In this study, the first-order polynomial interpolation of the moments (:math:`R=1`) is used, and the above equation reduces to
+where :math:`R` is the order of the polynomial interpolation, :math:`a_{r,k}` are the interpolation coefficients, :math:`N_0` is the weight of the delta function, and :math:`V_0` and :math:`S_0` are the volume and surface area of the nucleated spherical soot particles, respectively. The location of the delta function is fixed at coordinates :math:`V_0` and :math:`S_0` and assumed to be equal to the nucleated particle size.
+The nucleated particle volume and surface area are fixed according to :math:`V_0 = 2 W_C C_{\rm{dimer}} / \rho_{\rm{soot}}` and :math:`S_0 = (36 \pi)^{1/3} V_0^{2/3}`, where :math:`W_C` is the molar mass of carbon, :math:`C_{\rm{dimer}}` is the average number of carbon atoms per dimer, and :math:`\rho_{\rm{soot}}` is the density of soot (:math:`\rho_{\rm{soot}} = 1800 {\text{ kg/m}}^3`). If the first-order polynomial interpolation of the moments (:math:`R=1`) is used, the above equation reduces to
 
 .. math::
    M_{x,y} = N_0 V_0^x S_0^y + N_L V_L^x S_L^y,

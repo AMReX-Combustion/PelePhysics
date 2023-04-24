@@ -39,5 +39,6 @@ Since the suite of `Pele` codes are in active development, the easiest method to
    :maxdepth: 1
 
    SprayInputs
+   SootInputs
 
 
