@@ -29,6 +29,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     amrex::Print() << "  Using LDS reductions\n";
   }
 
+#ifdef AMREX_USE_OMP
+  if (omp_get_max_threads() > 1) {
+    amrex::Abort("CVODE chem_integrator is not supported with multiple OMP "
+                 "threads, use MPI only or a different chem_integrator");
+  }
+#endif
+
 #ifndef AMREX_USE_GPU
   // ----------------------------------------------------------
   // On CPU, initialize cvode_mem/userData
