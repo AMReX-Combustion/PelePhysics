@@ -6,12 +6,89 @@
 #include "SBData.H"
 
 /****************************************************************
- Functions for imposing wall boundaries including adding
- splashed droplets, modifying particles to be wall film,
- and rebounding particles. These occur on the host
+ Functions for applying the splash model developed by Ahamed et al. Atomization
+ and Sprays, 32(4): 1-23 (2022)
  ***************************************************************/
 
-enum splash_type { rebound = 0, deposit, splash, thermal_breakup };
+enum splash_type {
+  rebound = 0,
+  deposit,
+  splash_dry,
+  thermal_breakup,
+  spread,
+  splash_wet
+};
+
+// Find tangents along surface
+AMREX_GPU_HOST_DEVICE
+AMREX_INLINE
+void
+find_tangents(
+  const amrex::RealVect& pvel,
+  amrex::RealVect& tanPsi,
+  const amrex::RealVect& norm,
+  amrex::RealVect& tanBeta)
+{
+#if AMREX_SPACEDIM == 3
+  amrex::RealVect testvec = -pvel;
+  // Check if directions of norm and velocity are the same
+  if (testvec.crossProduct(norm).vectorLength() < 1.E-5) {
+    // If so, pick an arbitrary direction
+    testvec += {1., 1., 1.};
+  }
+  tanPsi = testvec.crossProduct(norm);
+  tanPsi /= tanPsi.vectorLength();
+  tanBeta = tanPsi.crossProduct(norm);
+  tanBeta /= tanBeta.vectorLength();
+#else
+  amrex::ignore_unused(pvel, tanPsi);
+  tanBeta[0] = -norm[1];
+  tanBeta[1] = norm[0];
+#endif
+}
+
+// According to the reference, four splashed droplets are formed and the
+inline void
+get_splash_vels(
+  const amrex::Real U0norm,
+  const amrex::Real U0tan,
+  const amrex::Real Kv,
+  const amrex::Real del_film,
+  amrex::Real& uBeta_0,
+  amrex::Real& uBeta_half,
+  amrex::Real& uBeta_pi,
+  amrex::Real& uPsi_coeff,
+  amrex::Real& usNorm)
+{
+  amrex::Real Un_mag = std::abs(U0norm);
+  if (del_film < 0.01) {
+    amrex::Real Ut_splash = 0.0065 * Kv * std::exp(-0.004 * Kv) * Un_mag;
+    uBeta_0 = U0tan + Ut_splash;
+    uBeta_half = std::cos(M_PI / 6.) * U0tan;
+    uBeta_pi = std::cos(M_PI / 3.) * U0tan - Ut_splash;
+    uPsi_coeff = 0.2 * U0tan + Ut_splash;
+    usNorm = 0.0028 * Kv * std::exp(-0.0062 * Kv) * Un_mag;
+  } else if (del_film < 0.1) {
+    amrex::Real Ut_splash;
+    if (del_film > 0.05) {
+      Ut_splash = (5.E-5 * Kv + 0.0203) * Un_mag;
+      usNorm = 0.03 * U0tan + (1.32E-4 * Kv + 0.0158) * Un_mag;
+    } else {
+      Ut_splash = (3.45E-5 * Kv + 0.006) * Un_mag;
+      usNorm = 0.03 * U0tan + (3.57E-5 * Kv - 0.0057) * Un_mag;
+    }
+    uBeta_0 = 0.3 * U0tan + Ut_splash;
+    uBeta_half = 0.1 * U0tan;
+    uBeta_pi = 0.033 * U0tan - Ut_splash;
+    uPsi_coeff = 0.06 * U0tan + Ut_splash;
+  } else {
+    uBeta_0 = 0.1 * U0tan;
+    uBeta_half = 0.05 * U0tan;
+    uBeta_pi = 0.01 * U0tan;
+    uPsi_coeff = 0.02 * U0tan;
+    usNorm = 0.03 * U0tan;
+  }
+};
 
 // Determine the type of particle impact at the wall
 AMREX_GPU_DEVICE
@@ -21,18 +98,28 @@ splash_criteria(
   const amrex::Real Kv,
   const amrex::Real Tstar,
   const amrex::Real alpha,
-  const amrex::Real Kcrit)
+  const amrex::Real Kcrit,
+  const amrex::Real del_film)
 {
   splash_type crit = splash_type::thermal_breakup;
-  if (Tstar < 1.1) {
-    if (Kv < Kcrit) {
-      crit = splash_type::deposit;
+  if (del_film < 0.01) {
+    if (Tstar < 1.1) {
+      if (Kv < Kcrit) {
+        crit = splash_type::deposit;
+      } else {
+        crit = splash_type::splash_dry;
+      }
     } else {
-      crit = splash_type::splash;
+      if (Kv < Kcrit) {
+        crit = splash_type::rebound;
+      }
     }
   } else {
-    if (Kv < Kcrit) {
-      crit = splash_type::rebound;
+    amrex::Real Kcrit_wet = Kcrit + 226. * std::pow(del_film, 0.72);
+    if (Kv > Kcrit_wet) {
+      crit = splash_type::splash_wet;
+    } else {
+      crit = splash_type::spread;
     }
   }
   return crit;
@@ -53,14 +140,18 @@ droplet_splashing(
   amrex::RealVect& normpos,
   amrex::RealVect& vel_part,
   const amrex::Real par_dot,
-  const amrex::RealVect normal,
+  const amrex::RealVect& normal,
   const amrex::Real* cBoilT,
   splash_breakup* N_SB,
   const SBPtrs& rf,
-  const bool dry_wall,
-  const amrex::Real rem_dt)
+  const amrex::Real film_h)
 {
-  amrex::Real Nw_Vp = normal.dotProduct(vel_part);
+  // Velocity magnitude of droplet
+  amrex::Real U0mag = vel_part.vectorLength();
+  // Normal velocity magnitude of droplet relative to wall
+  amrex::Real U0norm = normal.dotProduct(vel_part);
+  // Magnitude of tangential velocity relative to wall
+  amrex::Real U0tan = std::sqrt(U0mag * U0mag - U0norm * U0norm);
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
   amrex::Real mu_part = 0.;
@@ -78,13 +169,12 @@ droplet_splashing(
   const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
-  const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
-  const amrex::Real Re_L = std::abs(Nw_Vp) * dia_part * rho_part / mu_part;
+  const amrex::Real We = rho_part * dia_part * U0norm * U0norm / fdat.sigma;
+  const amrex::Real Re_L = std::abs(U0norm) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
-  amrex::Real umag = vel_part.vectorLength();
   // Inclination of on-coming particle to surface in radians
   amrex::Real alpha =
-    amrex::max(M_PI / 6., std::asin(amrex::Math::abs(Nw_Vp) / umag));
+    amrex::max(M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
 #ifdef PELELM_USE_SPRAY
   const amrex::Real p_bar = p_gas * 1.E-5;
 #else
@@ -93,53 +183,76 @@ droplet_splashing(
   const amrex::Real Kcrit = (26.788 * std::log(p_bar) + 33.546) *
                               std::exp(-6.E-3 * (fdat.wall_T - 260.)) +
                             36.;
-  splash_type splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit);
+  const amrex::Real del_film = film_h / dia_part;
+  splash_type splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit, del_film);
   // Amount of mass that gets deposited
   amrex::Real dm = 0.;
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      normpos[dir] -= (1. + rbound) * par_dot * vel_part[dir] / Nw_Vp;
-      vel_part[dir] -= Nw_Vp * (1. + rbound) * normal[dir];
+      normpos[dir] -= (1. + rbound) * par_dot * vel_part[dir] / U0norm;
+      vel_part[dir] -= U0norm * (1. + rbound) * normal[dir];
     }
   } else if (splash_flag == splash_type::deposit) {
     dm = pmass;
   } else {
-    amrex::Real ms;
+    // Ratio of mass that splashes
+    amrex::Real ms = 0.;
     // If splashing, turn current particle into wall film
-    if (splash_flag == splash_type::splash) {
-      N_SB[pid] = splash_breakup::splash_splash;
-      ms = pmass * 0.75 * (1. - std::exp(-3.E-3 * (Kv - Kcrit)));
-      dm = pmass - ms;
+    if (splash_flag == splash_type::splash_dry) {
+      N_SB[pid] = splash_breakup::splash_dry_splash;
+      ms = 0.75 * (1. - std::exp(-3.E-3 * (Kv - Kcrit)));
+      dm = pmass * (1. - ms);
     } else {
-      // For thermal breakup, no deposition occurs and current particle is
-      // deleted
+      // For thermal breakup, no deposition occurs and current droplet velocity
+      // is equal to average of child droplets
       N_SB[pid] = splash_breakup::splash_thermal_breakup;
-      ms = pmass * 0.75 * (1. - std::exp(-0.0175 * (Kv - Kcrit)));
-      p.id() = -1;
+      ms = 0.75 * (1. - std::exp(-0.0175 * (Kv - Kcrit)));
     }
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      // Save location where droplet hit wall
+      // Save unnormalized location where droplet hit wall
       rf.loc[AMREX_SPACEDIM * pid + dir] =
-        (normpos[dir] - par_dot * vel_part[dir] / Nw_Vp) * dx[dir] + plo[dir];
+        (normpos[dir] - par_dot * vel_part[dir] / U0norm) * dx[dir] + plo[dir];
       rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
     rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
     rf.phi1[pid] = Kv;
-    rf.phi2[pid] = ms;
-    rf.phi3[pid] = par_dot * dx[0] / Nw_Vp + rem_dt;
+    rf.phi2[pid] = pmass * ms;
+    rf.phi3[pid] = 0.;
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
-    rf.numDens[pid] = num_dens;
+    rf.num_dens[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       rf.Y0[SPRAY_FUEL_NUM * pid + spf] = p.rdata(SprayComps::pstateY + spf);
     }
 #endif
+    // Droplet reflects in the case of thermal breakup
+    if (splash_flag == splash_type::splash_thermal_breakup) {
+      amrex::Real rem_mass = pmass * (1. - ms);
+      amrex::Real new_dia = std::cbrt(6. * rem_mass / (M_PI * rho_part));
+      amrex::RealVect tanBeta, tanPsi;
+      find_tangents(vel_part, tanPsi, normal, tanBeta);
+      amrex::Real Un_splash =
+        0.0028 * Kv * std::exp(-0.0062 * Kv) * std::abs(U0mag);
+      // This is the average of the splashed droplet velocities, 3 sqrt(3) / (2
+      // pi) is the integral of cos(theta/3) from -pi to pi
+      amrex::Real Ut_splash = 1.5 * std::sqrt(3.) * U0tan / M_PI;
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        normpos[dir] -= 1.01 * par_dot * vel_part[dir] / U0norm;
+        vel_part[dir] = Ut_splash * tanBeta[dir] + Un_splash * normal[dir];
+      }
+      p.rdata(SprayComps::pstateDia) = new_dia;
+      if (fdat.do_breakup == 2) {
+        p.rdata(SprayComps::pstateBM1) = new_dia;
+      } else {
+        p.rdata(SprayComps::pstateBM1) = 0.;
+      }
+      p.rdata(SprayComps::pstateBM2) = 0.;
+    }
   }
   if (dm > 0.) {
     // Convert parcel to wall film
-    vel_part = amrex::RealVect::TheZeroVector();
     // Assume all remaining droplets in parcel coalesce to form the wall film
     amrex::Real film_vol = num_dens * dm / rho_part;
     // Combined droplet diameter
@@ -161,7 +274,8 @@ droplet_splashing(
     amrex::Real film_hght = film_vol / (0.25 * M_PI * film_dia * film_dia);
     p.rdata(SprayComps::pstateFilmHght) = film_hght;
     p.rdata(SprayComps::pstateNumDens) = 1.;
-    normpos -= (1. + film_hght / dx[0]) * par_dot * vel_part / Nw_Vp;
+    normpos -= (1. + film_hght / dx[0]) * par_dot * vel_part / U0norm;
+    vel_part = amrex::RealVect::TheZeroVector();
   }
 }
 

@@ -32,8 +32,9 @@ enum splash_breakup {
   breakup_KH,
   breakup_RT,
   breakup_TAB,
-  splash_splash,
-  splash_thermal_breakup
+  splash_dry_splash,
+  splash_thermal_breakup,
+  splash_wet_splash
 };
 
 // Units for sprays

@@ -162,7 +162,7 @@ updateBreakupKHRT(
             rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
             rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
           }
-          rf.numDens[pid] = ns;
+          rf.num_dens[pid] = ns;
           rf.ref_dia[pid] = 2. * rs;
           rf.T0[pid] = T_part;
           rf.phi1[pid] = Utan;

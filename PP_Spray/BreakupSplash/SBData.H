@@ -12,7 +12,7 @@ struct SBPtrs
   amrex::Real* T0 = nullptr;
   amrex::Real* ref_dia = nullptr;
   amrex::Real* Y0 = nullptr;
-  amrex::Real* numDens = nullptr;
+  amrex::Real* num_dens = nullptr;
   amrex::Real* phi1 = nullptr;
   amrex::Real* phi2 = nullptr;
   amrex::Real* phi3 = nullptr;
@@ -52,14 +52,16 @@ struct SBVects
   amrex::Gpu::HostVector<amrex::Real> phi2_h;
   amrex::Gpu::DeviceVector<amrex::Real> phi2_d;
   // Variable
-  // Splashing: Remaining dt after splashing
+  // Splashing: film thickness / drop diameter
   // TAB Breakup: TABY_dot value
   // KH-RT Breakup: Unused
   amrex::Gpu::HostVector<amrex::Real> phi3_h;
   amrex::Gpu::DeviceVector<amrex::Real> phi3_d;
-  // Droplet number density
-  amrex::Gpu::HostVector<amrex::Real> numDens_h;
-  amrex::Gpu::DeviceVector<amrex::Real> numDens_d;
+  // Variable
+  // Splashing: Original parcel number density
+  // Breakup: Total number of created droplets
+  amrex::Gpu::HostVector<amrex::Real> num_dens_h;
+  amrex::Gpu::DeviceVector<amrex::Real> num_dens_d;
 
   SBVects() = default;
 
@@ -70,7 +72,7 @@ struct SBVects
     loc_h.assign(AMREX_SPACEDIM * Np, 0.);
     T0_h.assign(Np, 0.);
     ref_dia_h.assign(Np, 0.);
-    numDens_h.assign(Np, 0.);
+    num_dens_h.assign(Np, 0.);
     phi1_h.assign(Np, 0.);
     phi2_h.assign(Np, 0.);
     phi3_h.assign(Np, 0.);
@@ -79,7 +81,7 @@ struct SBVects
     vel_d.resize(AMREX_SPACEDIM * Np);
     loc_d.resize(AMREX_SPACEDIM * Np);
     T0_d.resize(Np);
-    numDens_d.resize(Np);
+    num_dens_d.resize(Np);
     ref_dia_d.resize(Np);
     phi1_d.resize(Np);
     phi2_d.resize(Np);
@@ -98,8 +100,8 @@ struct SBVects
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, T0_h.begin(), T0_h.end(), T0_d.begin());
     amrex::Gpu::copyAsync(
-      amrex::Gpu::hostToDevice, numDens_h.begin(), numDens_h.end(),
-      numDens_d.begin());
+      amrex::Gpu::hostToDevice, num_dens_h.begin(), num_dens_h.end(),
+      num_dens_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, ref_dia_h.begin(), ref_dia_h.end(),
       ref_dia_d.begin());
@@ -128,8 +130,8 @@ struct SBVects
     amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, T0_d.begin(), T0_d.end(), T0_h.begin());
     amrex::Gpu::copyAsync(
-      amrex::Gpu::deviceToHost, numDens_d.begin(), numDens_d.end(),
-      numDens_h.begin());
+      amrex::Gpu::deviceToHost, num_dens_d.begin(), num_dens_d.end(),
+      num_dens_h.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::deviceToHost, ref_dia_d.begin(), ref_dia_d.end(),
       ref_dia_h.begin());
@@ -148,7 +150,7 @@ struct SBVects
     rf.vel = vel_d.data();
     rf.loc = loc_d.data();
     rf.T0 = T0_d.data();
-    rf.numDens = numDens_d.data();
+    rf.num_dens = num_dens_d.data();
     rf.ref_dia = ref_dia_d.data();
     rf.Y0 = Y0_d.data();
     rf.phi1 = phi1_d.data();
@@ -161,7 +163,7 @@ struct SBVects
     rf.vel = vel_h.data();
     rf.loc = loc_h.data();
     rf.T0 = T0_h.data();
-    rf.numDens = numDens_h.data();
+    rf.num_dens = num_dens_h.data();
     rf.ref_dia = ref_dia_h.data();
     rf.Y0 = Y0_h.data();
     rf.phi1 = phi1_h.data();
