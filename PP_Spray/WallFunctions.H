@@ -253,9 +253,7 @@ impose_wall(
       } else {
         // If not bouncing and splash model is on
         if (isActive) {
-          droplet_splashing(
-            p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal,
-            cBoilT, N_SB, rf, film_h;
+          droplet_splashing(p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal, cBoilT, N_SB, rf, film_h);
         } else {
           // Otherwise, just reflect particle
           normpos = refl_pos;
@@ -295,4 +293,4 @@ impose_wall(
     p.rdata(SprayComps::pstateVel + dir) = vel_part[dir];
   }
 }
-#endif // _WALLFUNCTIONS_H
+#endif // WALLFUNCTIONS_H

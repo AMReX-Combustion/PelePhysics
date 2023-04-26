@@ -228,7 +228,7 @@ droplet_splashing(
     }
 #endif
     // Droplet reflects in the case of thermal breakup
-    if (splash_flag == splash_type::splash_thermal_breakup) {
+    if (splash_flag == splash_type::thermal_breakup) {
       amrex::Real rem_mass = pmass * (1. - ms);
       amrex::Real new_dia = std::cbrt(6. * rem_mass / (M_PI * rho_part));
       amrex::RealVect tanBeta, tanPsi;
