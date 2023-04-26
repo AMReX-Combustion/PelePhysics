@@ -1,3 +1,5 @@
+"""Solve a 1D premixed flame in Cantera and save in Pele-readable format."""
+
 ###############################################################
 # ADIABATIC_FLAME - A freely-propagating, premixed flat flame
 #                   of fuel in AIR (O2 + N2)
@@ -11,15 +13,14 @@ import os
 
 import numpy as np
 import yaml
-from cantera import *
+from cantera import Solution, FreeFlame
 
 #################################################################
 # Parse arguments
 #################################################################
 parser = argparse.ArgumentParser(
     prog="Cantera PMF Generator",
-    description="""Use Cantera to solve a 1D premixed 
-                                 flame and save in a Pele-readable format""",
+    description="Use Cantera to solve a 1D premixed flame and save in a Pele-readable format",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 
@@ -195,13 +196,13 @@ f.set_refine_criteria(ratio=3.0, slope=0.1, curve=0.1)
 f.solve(loglevel, refine_grid)
 
 ##################
-##Fourth flame and so on ...:
+# Fourth flame and so on ...:
 f.set_refine_criteria(ratio=2.0, slope=0.05, curve=0.05, prune=0.01)
 
 f.solve(loglevel, refine_grid)
 
 ##################
-##Fifth flame and so on ...
+# Fifth flame and so on ...
 f.set_refine_criteria(ratio=2.0, slope=0.02, curve=0.02, prune=0.01)
 
 f.solve(loglevel, refine_grid)

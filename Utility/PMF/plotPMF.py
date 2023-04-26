@@ -1,3 +1,5 @@
+"""Plot data from PMF files."""
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -19,13 +21,13 @@ vars = f.readline().strip().replace('"', "").replace(",", "").split()[2:]
 if len(vars) != pmf.shape[1]:
     print("Variable list not consistent with data in " + sys.argv[1])
 
-varMap = {}
+var_map = {}
 for i, var in enumerate(vars):
-    varMap[var] = i
+    var_map[var] = i
 
-print(varMap)
+print(var_map)
 
-vid = varMap["temp"]
+vid = var_map["temp"]
 if len(sys.argv) > 2:
     vid = int(sys.argv[2])
 plt.plot(pmf[:, 0], pmf[:, vid], linewidth=1.0, color="black")
