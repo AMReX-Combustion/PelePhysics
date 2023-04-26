@@ -30,7 +30,7 @@ The first parameter specifies the path to the PMF data file. This file contains 
 Generating a PMF file
 ~~~~~~~~~~~~~~~~~~~~~
 
-The script ``cantera_pmf_generator.py`` solves a 1D unstrained premixed flame using `Cantera <https://doi.org/10.5281/zenodo.6387882>`_ and saves it in the appropriate file format. To use this script, first follow the :ref:`CEPTR instructions <sec_ceptr_software>` for setting up ``poetry``. Then return to the ``Utility/PMF/`` directory and run the script: ::
+The script ``cantera_pmf_generator.py`` solves a 1D unstrained premixed flame using `Cantera <https://doi.org/10.5281/zenodo.6387882>`_ and saves it in the appropriate file format for use by the Pele codes. To use this script, first follow the :ref:`CEPTR instructions <sec_ceptr_software>` for setting up ``poetry``. Then return to the ``Utility/PMF/`` directory and run the script: ::
 
   poetry -C ../../Support/ceptr/ run python cantera_pmf_generator.py -m dodecane_lu -f NC12H26 -d 0.01 -o ./
 
@@ -48,13 +48,17 @@ An additional script is provided to allow plotting of the PMF solutions. This sc
 Turbulent Inflows
 =================
 
+Placeholder. PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data. 
+
 Generating a turbulence file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A python script is used to generate a synthetic turbulence spectrum.
 
 Plt File Management
 ===================
 
-
+This code contains data structures used to handle data read from plt files that is utilized by the routines that allow the code to be restarted based on data from plt files.
 
 Diagnostics
 ===========
