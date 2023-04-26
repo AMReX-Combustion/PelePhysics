@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(prog='Cantera PMF Generator',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('-m',   '--mechanism',   default='drm19',            help="Name of PelePhysics mechanism from Support/Mechanism/Models")
-parser.add_argument('-pp',  '--pp_home',     default='../',              help="Path to PelePhysics directory")
+parser.add_argument('-pp',  '--pp_home',     default='../../',           help="Path to PelePhysics directory")
 parser.add_argument('-f',   '--fuel',        default='CH4:1',            help="Fuel stream mole-basis Cantera composition")
 parser.add_argument('-ox',  '--oxidizer',    default='O2:1, N2:3.76',    help="Oxidizer stream mole-basis Cantera composition")
 parser.add_argument('-T',   '--temperature', default=300, type=float,    help="Unburned mixture temperature [K]")
