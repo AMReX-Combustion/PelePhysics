@@ -12,7 +12,7 @@ PelePhysics allows the user to use different equation of state (EOS) as the cons
 * An ideal gas mixture model (similar to the CHEMKIN-II approach) labeled ``Fuego``
 * The ``Soave-Redlich-Kwong`` cubic equation of state; ``Peng-Robinson`` support was started in the original Fortran version of the code but stalled and is not supported.
 
-Examples of EOS implementation can be seen in ``PelePhysics/Eos``.
+Examples of EOS implementation can be seen in ``PelePhysics/Eos``. The choice between these Eos models is made at compile time. When using GNUmake, this is done by setting the ``Eos_Model`` parameter in the ``GNUmakefile``.
 
 The following sections will fully describe the implementation of Soave-Redlich-Kwong, a non-ideal cubic EOS, for a general mixture of species. Some examples of the old Fortran implementation of the code are given; these have since been ported to C++. Integration with CEPTR, for a chemical mechanism described in a chemkin format, will also be highlighted. For an advanced user interested in implementing a new EOS this chapter should provide a good starting point.
 
