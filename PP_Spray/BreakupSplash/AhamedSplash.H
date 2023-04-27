@@ -239,7 +239,8 @@ droplet_splashing(
       // pi) is the integral of cos(theta/3) from -pi to pi
       amrex::Real Ut_splash = 1.5 * std::sqrt(3.) * U0tan / M_PI;
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        normpos[dir] -= (1. + new_dia / dx[dir]) * par_dot * vel_part[dir] / U0norm;
+        normpos[dir] -=
+          (1. + new_dia / dx[dir]) * par_dot * vel_part[dir] / U0norm;
         vel_part[dir] = Ut_splash * tanBeta[dir] + Un_splash * normal[dir];
       }
       p.rdata(SprayComps::pstateDia) = new_dia;
