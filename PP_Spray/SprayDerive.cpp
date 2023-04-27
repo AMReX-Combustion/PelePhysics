@@ -41,7 +41,8 @@ SprayParticleContainer::computeDerivedVars(
   const int d10_indx = volf_indx + 1;
   const int d32_indx = d10_indx + 1;
   const int wfh_indx = d32_indx + 1;
-  const int temp_indx = wfh_indx + 1;
+  const int wfm_indx = wfh_indx + 1;
+  const int temp_indx = wfm_indx + 1;
   const int nump_indx = temp_indx + 1;
   const int vel_indx = nump_indx + 1;
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
@@ -120,6 +121,7 @@ SprayParticleContainer::computeDerivedVars(
           Real cur_vol =
             M_PI / 6. * film_hght * (3. * rad2 + film_hght * film_hght);
           Gpu::Atomic::Add(&vararr(ijkc, wfh_indx), cur_vol / face_area);
+          Gpu::Atomic::Add(&vararr(ijkc, wfm_indx), rho_part * cur_vol);
         }
       }
     });

@@ -62,7 +62,6 @@ SprayParticleContainer::CreateSBDroplets(
       Real mu_part = fdat->muL(T0, 0);
       Y0[0] = 1.;
 #endif
-      const Real sigma = fdat->sigma;
       Real pmass = M_PI / 6. * rho_part * std::pow(ref_dia, 3);
       Real U0mag = vel0.vectorLength();
 
@@ -107,7 +106,7 @@ SprayParticleContainer::CreateSBDroplets(
             Real pvel = AMREX_D_TERM(
               usNorm * normal[dir], +utBeta * tanBeta[dir],
               +utPsi * tanPsi[dir]);
-            p.pos(dir) = loc0[dir];
+            p.pos(dir) = loc0[dir] + dia_part * normal[dir];
             p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {

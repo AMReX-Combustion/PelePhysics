@@ -219,7 +219,7 @@ droplet_splashing(
     rf.ref_dia[pid] = p.rdata(SprayComps::pstateDia);
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = pmass * ms;
-    rf.phi3[pid] = 0.;
+    rf.phi3[pid] = del_film;
     rf.T0[pid] = p.rdata(SprayComps::pstateT);
     rf.num_dens[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1

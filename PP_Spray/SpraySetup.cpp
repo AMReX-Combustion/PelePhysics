@@ -213,6 +213,7 @@ SprayParticleContainer::readSprayParams(
     "d10",             // Average diameter
     "d32",             // SMD
     "wall_film_hght",  // Wall film height
+    "wall_film_mass",  // Wall film mass
     "spray_temp",      // Mass-weighted average temperature
     "num_parcels",     // Number of parcels in a cell
     AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
