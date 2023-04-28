@@ -84,8 +84,6 @@ SprayParticleContainer::CreateSBDroplets(
           uPsi_coeff, usNorm);
         int Nsint = 4;
         Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
-        // Sum splashed mass
-        Real sum_mass = 0.;
         // Note: Must be -pi < psi < pi, not 0 < psi < 2 pi for symmetry
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
           Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);

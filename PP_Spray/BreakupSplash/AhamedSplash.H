@@ -47,7 +47,7 @@ find_tangents(
 #endif
 }
 
-// According to the reference, four splashed droplets are formed and the
+// According to the reference, four splashed droplets are formed
 inline void
 get_splash_vels(
   const amrex::Real U0norm,
@@ -160,8 +160,9 @@ droplet_splashing(
   amrex::Real Tboil = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int ysp = SprayComps::pstateY + spf;
-    mu_part += p.rdata(ysp) * fdat.muL(T_part, spf);
-    rho_part += p.rdata(ysp) / fdat.rhoL(T_part, spf);
+    amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
+    mu_part += p.rdata(ysp) * fdat.muL(minT, spf);
+    rho_part += p.rdata(ysp) / fdat.rhoL(minT, spf);
     Tboil += p.rdata(ysp) * cBoilT[spf];
   }
   rho_part = 1. / rho_part;
@@ -220,7 +221,7 @@ droplet_splashing(
     rf.phi1[pid] = Kv;
     rf.phi2[pid] = pmass * ms;
     rf.phi3[pid] = del_film;
-    rf.T0[pid] = p.rdata(SprayComps::pstateT);
+    rf.T0[pid] = T_part;
     rf.num_dens[pid] = num_dens;
 #if SPRAY_FUEL_NUM > 1
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
