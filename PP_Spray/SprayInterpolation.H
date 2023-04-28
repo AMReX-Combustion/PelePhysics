@@ -568,7 +568,9 @@ eb_interp(
     // 1) between the cell centroid and the EB, or
     // 2) one or more cells in the 2^3 stencil is covered.
     // Either way, we interpolate using an inverse weighting method
-  } else if ((covered > 0) || (par_dot_EB < cent_dot_EB)) {
+  } else if (
+    (covered > 0) || (par_dot_EB < cent_dot_EB) ||
+    (vfrac(ip, jp, kp) < min_eb_vfrac)) {
     int nic = 0;
     int found_cells = 0;
     amrex::Real sum_wt = 0.;
@@ -577,6 +579,7 @@ eb_interp(
         auto y = static_cast<amrex::Real>(jj);
         for (int ii = ic - 1; ii <= ic; ii++) {
           auto x = static_cast<amrex::Real>(ii);
+          indx_array[nic] = {AMREX_D_DECL(ii, jj, kk)};
           if (
             !flags(ii, jj, kk).isCovered() &&
             vfrac(ii, jj, kk) > min_eb_vfrac) {
@@ -589,10 +592,8 @@ eb_interp(
               1. / std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
             weights[nic] = wt;
             sum_wt += wt;
-            indx_array[nic] = {AMREX_D_DECL(ii, jj, kk)};
             found_cells++;
           } else {
-            indx_array[nic] = {AMREX_D_DECL(ic, jc, kc)};
             weights[nic] = 0.;
           }
           nic++;
@@ -683,4 +684,4 @@ eb_interp(
 }
 
 #endif // AMREX_USE_EB
-#endif // _SPRAYINTERPOLATION_H
+#endif // SPRAYINTERPOLATION_H
