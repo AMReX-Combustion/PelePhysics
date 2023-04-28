@@ -290,15 +290,14 @@ SprayParticleContainer::updateParticles(
         // Used for ETAB breakup model
         Real Utan_total = 0.;
         Real Reyn_d = 0.;
-        bool is_film = false;
         RealVect film_normal;
-        // Gather wall film values
-        if (p.rdata(SprayComps::pstateFilmHght) > 0.) {
-          is_film = true;
-        }
         // Subcycle loop
-        int cur_iter = 0;
-        while (p.id() > 0 && cur_iter < num_iter) {
+        for (int cur_iter = 0; cur_iter < num_iter && p.id() > 0; ++cur_iter) {
+          bool is_film = false;
+          // Gather wall film values
+          if (p.rdata(SprayComps::pstateFilmHght) > 0.) {
+            is_film = true;
+          }
           // Flag for whether we are near EB boundaries
           bool do_fe_interp = false;
           if (is_film) {
