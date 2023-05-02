@@ -213,7 +213,7 @@ DiagFramePlane::processDiag(
   int a_nstep,
   const amrex::Real& a_time,
   const amrex::Vector<const amrex::MultiFab*>& a_state,
-  const amrex::Vector<std::string>& a_stateVar)
+  const amrex::Vector<std::string>& /*a_stateVar*/)
 {
   // Interpolate data to slice
   amrex::Vector<amrex::MultiFab> planeData(a_state.size());

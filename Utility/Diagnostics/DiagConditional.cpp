@@ -157,10 +157,10 @@ DiagConditional::processDiag(
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth);
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {
-              for (size_t f{0}; f < nProcessFields; ++f) {
+              for (int f{0}; f < nProcessFields; ++f) {
                 int fidx = idx_d_p[f];
                 int binOffset = f * nBins;
                 amrex::HostDevice::Atomic::Add(
@@ -185,10 +185,10 @@ DiagConditional::processDiag(
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth);
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {
-              for (size_t f{0}; f < nProcessFields; ++f) {
+              for (int f{0}; f < nProcessFields; ++f) {
                 int fidx = idx_d_p[f];
                 int binOffset = f * nBins;
                 amrex::HostDevice::Atomic::Add(
@@ -207,10 +207,10 @@ DiagConditional::processDiag(
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth);
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {
-              for (size_t f{0}; f < nProcessFields; ++f) {
+              for (int f{0}; f < nProcessFields; ++f) {
                 int fidx = idx_d_p[f];
                 int binOffset = f * nBins;
                 amrex::HostDevice::Atomic::Add(
@@ -246,16 +246,16 @@ DiagConditional::processDiag(
       condSq.begin());
     amrex::Gpu::streamSynchronize();
     amrex::ParallelDescriptor::ReduceRealSum(condSq.data(), condSq.size());
-    for (size_t f{0}; f < nProcessFields; ++f) {
+    for (int f{0}; f < nProcessFields; ++f) {
       int binOffset = f * m_nBins;
-      for (size_t n{0}; n < m_nBins; ++n) {
+      for (int n{0}; n < m_nBins; ++n) {
         if (condVol[n] != 0.0) {
           cond[binOffset + n] /= condVol[n];
           condSq[binOffset + n] /= condVol[n];
         }
       }
     }
-    for (size_t n{0}; n < m_nBins; ++n) {
+    for (int n{0}; n < m_nBins; ++n) {
       if (condVol[n] != 0.0) {
         condAbs[n] /= condVol[n];
       }
@@ -342,14 +342,14 @@ DiagConditional::writeAverageDataToFile(
     int nProcessFields = m_fieldIndices_d.size();
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    for (size_t n{0}; n < m_nBins; ++n) {
+    for (int n{0}; n < m_nBins; ++n) {
       condFile << std::left << std::setw(width) << std::setprecision(prec)
                << std::scientific << m_lowBnd + (n + 0.5) * binWidth << " ";
       condFile << std::left << std::setw(width) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
       condFile << std::left << std::setw(width) << std::setprecision(prec)
                << std::scientific << a_condVol[n] << " ";
-      for (size_t f{0}; f < nProcessFields; ++f) {
+      for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
         condFile << std::left << std::setw(width) << std::setprecision(prec)
                  << std::scientific << a_cond[binOffset + n] << " "
@@ -399,12 +399,11 @@ DiagConditional::writeIntegralDataToFile(
 
     // Retrieve some data
     int nProcessFields = m_fieldIndices_d.size();
-    amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    for (size_t n{0}; n < m_nBins; ++n) {
+    for (int n{0}; n < m_nBins; ++n) {
       condFile << std::left << std::setw(width) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
-      for (size_t f{0}; f < nProcessFields; ++f) {
+      for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
         condFile << std::left << std::setw(width) << std::setprecision(prec)
                  << std::scientific << a_cond[binOffset + n] << " ";
@@ -448,12 +447,11 @@ DiagConditional::writeSumDataToFile(
 
     // Retrieve some data
     int nProcessFields = m_fieldIndices_d.size();
-    amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    for (size_t n{0}; n < m_nBins; ++n) {
+    for (int n{0}; n < m_nBins; ++n) {
       condFile << std::left << std::setw(width) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
-      for (size_t f{0}; f < nProcessFields; ++f) {
+      for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
         condFile << std::left << std::setw(width) << std::setprecision(prec)
                  << std::scientific << a_cond[binOffset + n] << " ";
