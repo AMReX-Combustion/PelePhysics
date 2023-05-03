@@ -116,8 +116,8 @@ DiagPDF::processDiag(
         [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth);
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
             amrex::HostDevice::Atomic::Add(
               &(pdf_d_p[cbin]), varrs[box_no](i, j, k));
           }
@@ -129,8 +129,8 @@ DiagPDF::processDiag(
         [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth);
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
             amrex::HostDevice::Atomic::Add(&(pdf_d_p[cbin]), amrex::Real(1.0));
           }
         });
@@ -204,7 +204,7 @@ DiagPDF::writePDFToFile(
             << m_fieldName + "_PDF"
             << "\n";
 
-    for (size_t i{0}; i < a_pdf.size(); ++i) {
+    for (int i{0}; i < a_pdf.size(); ++i) {
       pdfFile << std::setw(width) << std::setprecision(prec) << std::scientific
               << m_lowBnd + (static_cast<amrex::Real>(i) + 0.5) * binWidth
               << " " << std::setw(width) << std::setprecision(prec)
