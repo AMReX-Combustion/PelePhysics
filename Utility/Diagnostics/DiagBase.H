@@ -15,7 +15,7 @@ public:
 
   virtual void close() = 0;
 
-  bool needUpdate() { return need_update; };
+  bool needUpdate() { return need_update; }
 
   virtual bool doDiag(const amrex::Real& a_time, int a_nstep);
 
