@@ -1,5 +1,5 @@
-#ifndef _DIAGPDF_H_
-#define _DIAGPDF_H_
+#ifndef DIAGPDF_H
+#define DIAGPDF_H
 
 #include "DiagBase.H"
 
@@ -39,7 +39,7 @@ public:
 
 private:
   // PDF properties
-  std::string m_fieldName{""}; // Field name
+  std::string m_fieldName;     // Field name
   int m_nBins{-1};             // Number of bins
   int m_normalized{1};         // Normalized ?
   int m_volWeighted{1};        // Volume weighted ?

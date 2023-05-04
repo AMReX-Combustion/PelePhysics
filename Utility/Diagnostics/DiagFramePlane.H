@@ -1,5 +1,5 @@
-#ifndef _DIAGFRAMEPLANE_H_
-#define _DIAGFRAMEPLANE_H_
+#ifndef DIAGFRAMEPLANE_H
+#define DIAGFRAMEPLANE_H
 
 #include "DiagBase.H"
 

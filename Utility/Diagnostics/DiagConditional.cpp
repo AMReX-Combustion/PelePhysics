@@ -8,7 +8,7 @@ DiagConditional::init(const std::string& a_prefix, std::string_view a_diagName)
 
   amrex::ParmParse pp(a_prefix);
 
-  std::string condType = "";
+  std::string condType;
   pp.get("conditional_type", condType);
   if (condType == "Average") {
     m_condType = Average;
@@ -22,7 +22,7 @@ DiagConditional::init(const std::string& a_prefix, std::string_view a_diagName)
   pp.get("nBins", m_nBins);
   AMREX_ASSERT(m_nBins > 0);
   pp.get("condition_field_name", m_cFieldName);
-  if (pp.countval("range")) {
+  if (pp.countval("range") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("range", range, 0, 2);
     m_lowBnd = std::min(range[0], range[1]);
@@ -156,7 +156,7 @@ DiagConditional::processDiag(
         *a_state[lev], amrex::IntVect(0),
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
-          if (marrs[box_no](i, j, k)) {
+          if (marrs[box_no](i, j, k) != 0) {
             int cbin = static_cast<int>(std::floor(
               (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {
@@ -184,7 +184,7 @@ DiagConditional::processDiag(
         *a_state[lev], amrex::IntVect(0),
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
-          if (marrs[box_no](i, j, k)) {
+          if (marrs[box_no](i, j, k) != 0) {
             int cbin = static_cast<int>(std::floor(
               (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {
@@ -206,7 +206,7 @@ DiagConditional::processDiag(
         *a_state[lev], amrex::IntVect(0),
         [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
-          if (marrs[box_no](i, j, k)) {
+          if (marrs[box_no](i, j, k) != 0) {
             int cbin = static_cast<int>(std::floor(
               (sarrs[box_no](i, j, k, cFieldIdx) - lowBnd) / binWidth));
             if (cbin >= 0 && cbin < nBins) {

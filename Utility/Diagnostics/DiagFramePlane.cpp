@@ -1,9 +1,9 @@
 #include "DiagFramePlane.H"
-#include "AMReX_VisMF.H"
+#include <AMReX_VisMF.H>
 #include <AMReX_FPC.H>
-#include "AMReX_PlotFileUtil.H"
+#include <AMReX_PlotFileUtil.H>
 #include <regex>
-#include <stdio.h>
+#include <cstdio>
 
 void
 printLowerDimIntVect(
@@ -15,8 +15,9 @@ printLowerDimIntVect(
     if (idim != skipDim) {
       a_File << a_IntVect[idim];
       doneDim++;
-      if (doneDim < AMREX_SPACEDIM - 1)
+      if (doneDim < AMREX_SPACEDIM - 1) {
         a_File << ",";
+      }
     }
   }
   a_File << ')';
@@ -39,7 +40,7 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
 {
   DiagBase::init(a_prefix, a_diagName);
 
-  if (m_filters.size() != 0) {
+  if (!m_filters.empty()) {
     amrex::Print() << " Filters are not available on DiagFramePlane and will "
                       "be discarded \n";
   }
@@ -266,8 +267,9 @@ DiagFramePlane::processDiag(
   // Count the number of level where the cut exists
   int nlevs = 0;
   for (int lev = 0; lev < a_state.size(); lev++) {
-    if (!m_sliceBA[lev].empty())
+    if (!m_sliceBA[lev].empty()) {
       nlevs += 1;
+    }
   }
 
   // Build up a z-normal 2D Geom
@@ -329,8 +331,9 @@ DiagFramePlane::Write2DMultiLevelPlotfile(
     HeaderFile.open(
       HeaderFileName.c_str(),
       std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-    if (!HeaderFile.good())
+    if (!HeaderFile.good()) {
       amrex::FileOpenFailed(HeaderFileName);
+    }
     Write2DPlotfileHeader(
       HeaderFile, a_nlevels, boxArrays, a_varnames, a_geoms, a_time, a_steps,
       a_rref, versionName, levelPrefix, mfPrefix);
@@ -443,8 +446,9 @@ DiagFramePlane::ReWriteLevelVisMFHeader(const std::string& a_HeaderPath)
     HeaderFile.open(
       HeaderFileName.c_str(),
       std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-    if (!HeaderFile.good())
+    if (!HeaderFile.good()) {
       amrex::FileOpenFailed(HeaderFileName);
+    }
 
     std::string fileCharPtrString(oldfileCharPtr.dataPtr());
     std::istringstream is(fileCharPtrString, std::istringstream::in);
@@ -498,8 +502,9 @@ DiagFramePlane::ReWriteLevelVisMFHeader(const std::string& a_HeaderPath)
       lis >> w2;
       lis >> w3;
       int offset = std::stoi(w3);
-      if (offset == 0)
+      if (offset == 0) {
         dataFiles.push_back(w2);
+      }
     }
 
     // Map files and FABs
@@ -565,7 +570,7 @@ DiagFramePlane::ReWriteLevelVisMFHeader(const std::string& a_HeaderPath)
   // Replace 3D data file by 2D ones
   std::string oldname = amrex::Concatenate(
     a_HeaderPath + "Cell2D_D_", amrex::ParallelDescriptor::MyProc(), 5);
-  if (amrex::FileSystem::Exists(oldname.c_str())) {
+  if (amrex::FileSystem::Exists(oldname)) {
     std::string newname =
       std::regex_replace(oldname, std::regex("Cell2D_"), "Cell_");
     std::remove(newname.c_str());
@@ -607,9 +612,8 @@ DiagFramePlane::VisMF2D(
   }
   if (static_cast<int>(procsWithData.size()) < nOutFiles) {
     useSparseFPP = true;
-    for (std::set<int>::iterator it = procsWithData.begin();
-         it != procsWithData.end(); ++it) {
-      procsWithDataVector.push_back(*it);
+    for (int it : procsWithData) {
+      procsWithDataVector.push_back(it);
     }
   }
 
@@ -634,11 +638,7 @@ DiagFramePlane::VisMF2D(
     if ((nFABs > 1 || doConvert) && amrex::VisMF::GetUseSingleWrite()) {
       allFabData = new (std::nothrow) char[bytesWritten];
     } // ---- else { no need to make a copy for one fab }
-    if (allFabData == nullptr) {
-      canCombineFABs = false;
-    } else {
-      canCombineFABs = true;
-    }
+    canCombineFABs = allFabData != nullptr;
 
     if (canCombineFABs) {
       amrex::Long writePosition = 0;
