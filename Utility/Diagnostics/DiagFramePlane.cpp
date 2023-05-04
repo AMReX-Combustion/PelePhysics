@@ -39,7 +39,7 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
 {
   DiagBase::init(a_prefix, a_diagName);
 
-  if (m_filters.size() != 0) {
+  if (m_filters.empty()) {
     amrex::Print() << " Filters are not available on DiagFramePlane and will "
                       "be discarded \n";
   }
@@ -121,7 +121,7 @@ DiagFramePlane::prepare(
       initDomain, initRealBox, a_geoms[0].Coord(),
       amrex::Array<int, AMREX_SPACEDIM>({AMREX_D_DECL(0, 0, 0)}));
 
-    int nOutFields = m_fieldIndices_d.size();
+    int nOutFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> m_fieldIndices(nOutFields, 0);
     for (int f{0}; f < nOutFields; ++f) {
       m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
@@ -213,7 +213,7 @@ DiagFramePlane::processDiag(
   int a_nstep,
   const amrex::Real& a_time,
   const amrex::Vector<const amrex::MultiFab*>& a_state,
-  const amrex::Vector<std::string>& /*a_stateVar*/)
+  const amrex::Vector<std::string>& a_stateVar)
 {
   // Interpolate data to slice
   amrex::Vector<amrex::MultiFab> planeData(a_state.size());
@@ -317,6 +317,8 @@ DiagFramePlane::Write2DMultiLevelPlotfile(
   if (
     amrex::ParallelDescriptor::MyProc() ==
     amrex::ParallelDescriptor::NProcs() - 1) {
+
+    // Write 2D pltfile header
     amrex::Vector<amrex::BoxArray> boxArrays(a_nlevels);
     for (int level(0); level < boxArrays.size(); ++level) {
       boxArrays[level] = a_slice[level]->boxArray();
@@ -329,22 +331,42 @@ DiagFramePlane::Write2DMultiLevelPlotfile(
     HeaderFile.open(
       HeaderFileName.c_str(),
       std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-    if (!HeaderFile.good())
+    if (!HeaderFile.good()) {
       amrex::FileOpenFailed(HeaderFileName);
+    }
     Write2DPlotfileHeader(
       HeaderFile, a_nlevels, boxArrays, a_varnames, a_geoms, a_time, a_steps,
       a_rref, versionName, levelPrefix, mfPrefix);
+    HeaderFile.flush();
+    HeaderFile.close();
+
+    // Add extra file providing the plane information
+    // because the output is always a z-normal plane at z=0
+    std::string PlaneFileName(a_pltfile + "/PlaneData");
+    std::ofstream PlaneFile;
+    PlaneFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+    PlaneFile.open(
+      PlaneFileName.c_str(),
+      std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+    if (!PlaneFile.good()) {
+      amrex::FileOpenFailed(PlaneFileName);
+    }
+
+    PlaneFile << "Pele plane definition: \n";
+    PlaneFile << m_normal << "\n";
+    PlaneFile << AMREX_D_TERM(
+                   m_center[0], << " " << m_center[1], << " " << m_center[2])
+              << "\n";
+
+    PlaneFile.flush();
+    PlaneFile.close();
   }
+
+  // Write a 2D version of the MF at each level
   for (int level = 0; level < a_nlevels; ++level) {
     VisMF2D(
-      *a_slice[level], amrex::MultiFabFileFullPrefix(
-                         level, a_pltfile, levelPrefix, mfPrefix + "2D"));
-    amrex::VisMF::Write(
       *a_slice[level],
       amrex::MultiFabFileFullPrefix(level, a_pltfile, levelPrefix, mfPrefix));
-    amrex::ParallelDescriptor::Barrier();
-    ReWriteLevelVisMFHeader(
-      amrex::MultiFabFileFullPrefix(level, a_pltfile, levelPrefix, ""));
   }
 }
 
@@ -423,153 +445,6 @@ DiagFramePlane::Write2DPlotfileHeader(
     }
     HeaderFile << amrex::MultiFabHeaderPath(level, levelPrefix, mfPrefix)
                << '\n';
-  }
-}
-
-void
-DiagFramePlane::ReWriteLevelVisMFHeader(const std::string& a_HeaderPath)
-{
-  std::string OldHeaderFileName(a_HeaderPath + "Cell_H");
-  amrex::Vector<char> oldfileCharPtr;
-  amrex::ParallelDescriptor::ReadAndBcastFile(
-    OldHeaderFileName, oldfileCharPtr);
-
-  if (amrex::ParallelDescriptor::IOProcessor()) {
-    amrex::VisMF::IO_Buffer io_buffer_new(amrex::VisMF::IO_Buffer_Size);
-    std::string HeaderFileName(a_HeaderPath + "Cell_temp_H");
-    std::ofstream HeaderFile;
-    HeaderFile.rdbuf()->pubsetbuf(
-      io_buffer_new.dataPtr(), io_buffer_new.size());
-    HeaderFile.open(
-      HeaderFileName.c_str(),
-      std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-    if (!HeaderFile.good())
-      amrex::FileOpenFailed(HeaderFileName);
-
-    std::string fileCharPtrString(oldfileCharPtr.dataPtr());
-    std::istringstream is(fileCharPtrString, std::istringstream::in);
-    std::string line, word;
-
-    // Version, How, nComp, nGrow
-    int version, how, nComp, nGrow;
-    is >> version;
-    is.ignore(std::streamsize(10000), '\n');
-    is >> how;
-    is.ignore(std::streamsize(10000), '\n');
-    is >> nComp;
-    is.ignore(std::streamsize(10000), '\n');
-    is >> nGrow;
-
-    HeaderFile << version << "\n";
-    HeaderFile << how << "\n";
-    HeaderFile << nComp << "\n";
-    HeaderFile << nGrow << "\n";
-
-    // BoxArray
-    int nbox = -1, dummy = 0;
-    is.ignore(std::streamsize(10000), '(') >> nbox >> dummy;
-    is.ignore(std::streamsize(10000), '\n');
-    HeaderFile << '(' << nbox << ' ' << 0 << '\n';
-    amrex::Vector<amrex::Box> fullDimBox(nbox);
-    for (int i = 0; i < nbox; ++i) {
-      is >> fullDimBox[i];
-      printLowerDimBox(HeaderFile, fullDimBox[i], 2);
-      HeaderFile << '\n';
-    }
-    is.ignore(std::streamsize(10000), '\n');
-    std::getline(is, line);
-    HeaderFile << line << "\n";
-
-    //------------------------------------------------------------------
-    // Get list of Datafiles and correct for FAB header length in offset
-    //------------------------------------------------------------------
-    std::getline(is, line);
-    HeaderFile << line << "\n";
-    int nFabs = std::stoi(line);
-
-    // Stash away lines and count the number of files
-    amrex::Vector<std::string> dataFiles;
-    amrex::Vector<std::string> fablines(nFabs);
-    for (int i = 0; i < nFabs; ++i) {
-      std::getline(is, fablines[i]);
-      std::istringstream lis(fablines[i]);
-      std::string w1, w2, w3;
-      lis >> w1;
-      lis >> w2;
-      lis >> w3;
-      int offset = std::stoi(w3);
-      if (offset == 0)
-        dataFiles.push_back(w2);
-    }
-
-    // Map files and FABs
-    int nDataFiles = dataFiles.size();
-    amrex::Vector<int> nFabsInFiles(nDataFiles);
-    amrex::Vector<amrex::Vector<int>> FabsInFiles(nDataFiles);
-    for (int i = 0; i < nFabs; ++i) {
-      std::istringstream lis(fablines[i]);
-      std::string w1, w2, w3;
-      lis >> w1;
-      lis >> w2;
-      lis >> w3;
-      for (int f = 0; f < nDataFiles; ++f) {
-        if (w2 == dataFiles[f]) {
-          nFabsInFiles[f] += 1;
-          FabsInFiles[f].push_back(i);
-          break;
-        }
-      }
-    }
-    // Check
-    for (int f = 0; f < nDataFiles; ++f) {
-      if (nFabsInFiles[f] != FabsInFiles[f].size()) {
-        amrex::Abort("Something went wrong while counting FABs in files");
-      }
-    }
-
-    // Write out the FAB on disk list, corrected
-    for (int i = 0; i < nFabs; ++i) {
-      std::istringstream lis(fablines[i]);
-      std::string w1, w2, w3;
-      lis >> w1;
-      lis >> w2;
-      lis >> w3;
-      int offset = std::stoi(w3);
-      for (int f = 0; f < nDataFiles; ++f) {
-        if (w2 == dataFiles[f]) {
-          for (int fa = 0; fa < FabsInFiles[f].size(); ++fa) {
-            if (FabsInFiles[f][fa] == i) {
-              if (fa > 0) {
-                for (int fback = fa - 1; fback >= 0; --fback) {
-                  offset -= diff_2D3D_header(fullDimBox[fback], nComp);
-                }
-              }
-            }
-          }
-        }
-      }
-      HeaderFile << w1 << " " << w2 << " " << offset << "\n";
-    }
-
-    // Just pass from istream to ostream `till the end
-    while (is) {
-      std::getline(is, line);
-      HeaderFile << line << "\n";
-    }
-    HeaderFile.close();
-
-    // Replace header file
-    std::rename(HeaderFileName.c_str(), OldHeaderFileName.c_str());
-  }
-
-  // Replace 3D data file by 2D ones
-  std::string oldname = amrex::Concatenate(
-    a_HeaderPath + "Cell2D_D_", amrex::ParallelDescriptor::MyProc(), 5);
-  if (amrex::FileSystem::Exists(oldname.c_str())) {
-    std::string newname =
-      std::regex_replace(oldname, std::regex("Cell2D_"), "Cell_");
-    std::remove(newname.c_str());
-    std::rename(oldname.c_str(), newname.c_str());
   }
 }
 
@@ -702,6 +577,174 @@ DiagFramePlane::VisMF2D(
       }
     }
   }
+
+  int coordinatorProc(amrex::ParallelDescriptor::IOProcessorNumber());
+  if (nfi.GetDynamic()) {
+    coordinatorProc = nfi.CoordinatorProc();
+  }
+  hdr.CalculateMinMax(a_mf, coordinatorProc);
+
+  Find2FOffsets(
+    a_mf, filePrefix, hdr, currentVersion, nfi, nOutFiles,
+    amrex::ParallelDescriptor::Communicator());
+
+  Write2DMFHeader(
+    a_mf_name, hdr, coordinatorProc, amrex::ParallelDescriptor::Communicator());
+}
+
+void
+DiagFramePlane::Write2DMFHeader(
+  const std::string& a_mf_name,
+  amrex::VisMF::Header& hdr,
+  int coordinatorProc,
+  MPI_Comm comm)
+{
+  const int myProc(amrex::ParallelDescriptor::MyProc(comm));
+  if (myProc == coordinatorProc) {
+
+    std::string MFHdrFileName(a_mf_name);
+
+    MFHdrFileName += "_H";
+
+    amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
+
+    std::ofstream MFHdrFile;
+
+    MFHdrFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+    MFHdrFile.open(MFHdrFileName.c_str(), std::ios::out | std::ios::trunc);
+
+    if (!MFHdrFile.good()) {
+      amrex::FileOpenFailed(MFHdrFileName);
+    }
+
+    MFHdrFile.setf(std::ios::floatfield, std::ios::scientific);
+    MFHdrFile << hdr.m_vers << '\n';
+    MFHdrFile << int(hdr.m_how) << '\n';
+    MFHdrFile << hdr.m_ncomp << '\n';
+    if (hdr.m_ngrow == hdr.m_ngrow[0]) {
+      MFHdrFile << hdr.m_ngrow[0] << '\n';
+    } else {
+      MFHdrFile << hdr.m_ngrow << '\n';
+    }
+
+    MFHdrFile << "(" << hdr.m_ba.size() << " 0" << '\n';
+    for (int i = 0; i < hdr.m_ba.size(); ++i) {
+      printLowerDimBox(MFHdrFile, hdr.m_ba[i], 2);
+      MFHdrFile << '\n';
+    }
+    MFHdrFile << ") \n";
+
+    MFHdrFile << hdr.m_fod << '\n';
+
+    MFHdrFile << hdr.m_min.size() << "," << hdr.m_min[0].size() << '\n';
+    MFHdrFile.precision(16);
+    for (int i = 0; i < hdr.m_min.size(); ++i) {
+      for (int j = 0; j < hdr.m_min[i].size(); ++j) {
+        MFHdrFile << hdr.m_min[i][j] << ",";
+      }
+      MFHdrFile << "\n";
+    }
+
+    MFHdrFile << "\n";
+
+    MFHdrFile << hdr.m_max.size() << "," << hdr.m_max[0].size() << '\n';
+    for (int i = 0; i < hdr.m_max.size(); ++i) {
+      for (int j = 0; j < hdr.m_max[i].size(); ++j) {
+        MFHdrFile << hdr.m_max[i][j] << ",";
+      }
+      MFHdrFile << "\n";
+    }
+
+    MFHdrFile.flush();
+    MFHdrFile.close();
+  }
+}
+
+void
+DiagFramePlane::Find2FOffsets(
+  const amrex::FabArray<amrex::FArrayBox>& mf,
+  const std::string& filePrefix,
+  amrex::VisMF::Header& hdr,
+  amrex::VisMF::Header::Version /*whichVersion*/,
+  amrex::NFilesIter& nfi,
+  int nOutFiles,
+  MPI_Comm comm)
+{
+  bool groupSets = false;
+
+  const int myProc(amrex::ParallelDescriptor::MyProc(comm));
+  const int nProcs(amrex::ParallelDescriptor::NProcs(comm));
+  int coordinatorProc(amrex::ParallelDescriptor::IOProcessorNumber(comm));
+  if (nfi.GetDynamic()) {
+    coordinatorProc = nfi.CoordinatorProc();
+  }
+
+  auto whichRD = amrex::FArrayBox::getDataDescriptor();
+  int whichRDBytes(whichRD->numBytes());
+  int nComps(mf.nComp());
+
+  if (myProc == coordinatorProc) { // ---- calculate offsets
+    const amrex::BoxArray& mfBA = mf.boxArray();
+    const amrex::DistributionMapping& mfDM = mf.DistributionMap();
+    amrex::Vector<amrex::Long> fabHeaderBytes(mfBA.size(), 0);
+    int nFiles(amrex::NFilesIter::ActualNFiles(nOutFiles));
+    int whichFileNumber(-1);
+    std::string whichFileName;
+    amrex::Vector<amrex::Long> currentOffset(nProcs, 0L);
+
+    // ---- find the length of the fab header instead of asking the file system
+    for (int i(0); i < mfBA.size(); ++i) {
+      std::stringstream hss;
+      amrex::FArrayBox tempFab(mf.fabbox(i), nComps, false); // ---- no alloc
+      write_2D_header(hss, tempFab, tempFab.nComp());
+      fabHeaderBytes[i] = static_cast<std::streamoff>(hss.tellp());
+    }
+
+    std::map<int, amrex::Vector<int>>
+      rankBoxOrder; // ---- [rank, boxarray index array]
+    for (int i(0); i < mfBA.size(); ++i) {
+      rankBoxOrder[mfDM[i]].push_back(i);
+    }
+
+    amrex::Vector<int> fileNumbers;
+    if (nfi.GetDynamic()) {
+      fileNumbers = nfi.FileNumbersWritten();
+    } else if (nfi.GetSparseFPP()) { // if sparse, write to (file number = rank)
+      fileNumbers.resize(nProcs);
+      for (int i(0); i < nProcs; ++i) {
+        fileNumbers[i] = i;
+      }
+    } else {
+      fileNumbers.resize(nProcs);
+      for (int i(0); i < nProcs; ++i) {
+        fileNumbers[i] = amrex::NFilesIter::FileNumber(nFiles, i, groupSets);
+      }
+    }
+    const amrex::Vector<amrex::Vector<int>>& fileNumbersWriteOrder =
+      nfi.FileNumbersWriteOrder();
+
+    for (int fn(0); fn < fileNumbersWriteOrder.size(); ++fn) {
+      for (int ri(0); ri < fileNumbersWriteOrder[fn].size(); ++ri) {
+        int rank(fileNumbersWriteOrder[fn][ri]);
+        auto rboIter = rankBoxOrder.find(rank);
+
+        if (rboIter != rankBoxOrder.end()) {
+          amrex::Vector<int>& index = rboIter->second;
+          whichFileNumber = fileNumbers[rank];
+          whichFileName = amrex::VisMF::BaseName(
+            amrex::NFilesIter::FileName(whichFileNumber, filePrefix));
+
+          for (int i(0); i < index.size(); ++i) {
+            hdr.m_fod[index[i]].m_name = whichFileName;
+            hdr.m_fod[index[i]].m_head = currentOffset[whichFileNumber];
+            currentOffset[whichFileNumber] +=
+              mf.fabbox(index[i]).numPts() * nComps * whichRDBytes +
+              fabHeaderBytes[index[i]];
+          }
+        }
+      }
+    }
+  }
 }
 
 void
@@ -714,29 +757,4 @@ DiagFramePlane::write_2D_header(
     printLowerDimBox(os, f.box(), 2);
     os << ' ' << nvar << '\n';
   }
-}
-
-int
-DiagFramePlane::diff_2D3D_header(const amrex::Box a_box, int nvar)
-{
-  std::stringstream hss2D;
-  std::stringstream hss3D;
-  hss2D << "FAB " << amrex::FPC::NativeRealDescriptor();
-  amrex::StreamRetry sr(hss2D, "FABio_write_header", 4);
-  while (sr.TryOutput()) {
-    printLowerDimBox(hss2D, a_box, 2); // Skipping z-dir
-    hss2D << ' ' << nvar << '\n';
-  }
-
-  hss3D << "FAB " << amrex::FPC::NativeRealDescriptor();
-  amrex::StreamRetry sr3(hss3D, "FABio_write_header", 4);
-  while (sr3.TryOutput()) {
-    hss3D << a_box;
-    hss3D << ' ' << nvar << '\n';
-  }
-
-  int Length2D = static_cast<std::streamoff>(hss2D.tellp());
-  int Length3D = static_cast<std::streamoff>(hss3D.tellp());
-
-  return Length3D - Length2D;
 }
