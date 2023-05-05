@@ -533,7 +533,7 @@ eb_interp(
                                           ccent(ii, jj, kk, 2)););
             amrex::Real len =
               std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
-            weights[nic] = 1. / len;
+            weights[aindx] = 1. / len;
             sum_wt += 1. / len;
             if (len < min_dis) {
               closest_aindx = aindx;
