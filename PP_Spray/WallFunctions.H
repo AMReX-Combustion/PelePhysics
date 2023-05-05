@@ -80,8 +80,6 @@ Determines if particle must be reflected off BC or EB
 @param[in] flags Array of flags denoting if a cell has EB in it
 @param[in] bcent Array of EB centroids for each cell
 @param[in] bnorm Array of EB normal vectors for each cell
-@param[in] vfrac Array of EB volume fractions for each cell
-@param[in] min_eb_vfrac Minimum volume fraction to allow particles in
 @param[out] par_dot Magnitude of vector from wall plane to particle, negative
 means outside the domain
 @param[out] normal Boundary normal vector
@@ -101,8 +99,6 @@ check_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
-  amrex::Array4<amrex::Real const> const& vfrac,
-  const amrex::Real min_eb_vfrac,
 #endif
   amrex::Real& par_dot,
   amrex::RealVect& normal)
@@ -196,8 +192,6 @@ impose_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
-  amrex::Array4<amrex::Real const> const& vfrac,
-  const amrex::Real min_eb_vfrac,
 #endif
   const amrex::IntVect& ijkc_prev,
   splash_breakup* N_SB,
@@ -217,7 +211,7 @@ impose_wall(
   bool do_refl = check_wall(
     normpos, bflags, ijkc,
 #ifdef AMREX_USE_EB
-    ijkc_prev, vel_part, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
+    ijkc_prev, vel_part, use_EB, flags, bcent, bnorm,
 #endif
     par_dot, normal);
   int bounce = 0;
@@ -242,7 +236,7 @@ impose_wall(
     do_refl = check_wall(
       refl_pos, bflags, refl_ijkc,
 #ifdef AMREX_USE_EB
-      refl_prev, refl_vel, use_EB, flags, bcent, bnorm, vfrac, min_eb_vfrac,
+      refl_prev, refl_vel, use_EB, flags, bcent, bnorm,
 #endif
       refl_par_dot, refl_normal);
     if (fdat.do_splash) {
