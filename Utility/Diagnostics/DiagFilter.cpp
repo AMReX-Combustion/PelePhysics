@@ -12,22 +12,22 @@ DiagFilter::init(const std::string& a_prefix)
   }
 
   int definedRange = 0;
-  if (pp.countval("value_greater")) {
+  if (pp.countval("value_greater") != 0) {
     pp.get("value_greater", m_fdata.m_low_val);
     m_fdata.m_high_val = AMREX_REAL_MAX;
     definedRange = 1;
-  } else if (pp.countval("value_less")) {
+  } else if (pp.countval("value_less") != 0) {
     pp.get("value_less", m_fdata.m_high_val);
     m_fdata.m_low_val = AMREX_REAL_LOWEST;
     definedRange = 1;
-  } else if (pp.countval("value_inrange")) {
+  } else if (pp.countval("value_inrange") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("value_inrange", range, 0, 2);
     m_fdata.m_low_val = std::min(range[0], range[1]);
     m_fdata.m_high_val = std::max(range[0], range[1]);
     definedRange = 1;
   }
-  if (!definedRange) {
+  if (definedRange == 0) {
     amrex::Abort("filter: " + a_prefix + " is missing a range definition !");
   }
 }

@@ -15,8 +15,9 @@ printLowerDimIntVect(
     if (idim != skipDim) {
       a_File << a_IntVect[idim];
       doneDim++;
-      if (doneDim < AMREX_SPACEDIM - 1)
+      if (doneDim < AMREX_SPACEDIM - 1) {
         a_File << ",";
+      }
     }
   }
   a_File << ')';
@@ -213,7 +214,7 @@ DiagFramePlane::processDiag(
   int a_nstep,
   const amrex::Real& a_time,
   const amrex::Vector<const amrex::MultiFab*>& a_state,
-  const amrex::Vector<std::string>& a_stateVar)
+  const amrex::Vector<std::string>& /*a_stateVar*/)
 {
   // Interpolate data to slice
   amrex::Vector<amrex::MultiFab> planeData(a_state.size());
@@ -266,8 +267,9 @@ DiagFramePlane::processDiag(
   // Count the number of level where the cut exists
   int nlevs = 0;
   for (int lev = 0; lev < a_state.size(); lev++) {
-    if (!m_sliceBA[lev].empty())
+    if (!m_sliceBA[lev].empty()) {
       nlevs += 1;
+    }
   }
 
   // Build up a z-normal 2D Geom
@@ -482,9 +484,8 @@ DiagFramePlane::VisMF2D(
   }
   if (static_cast<int>(procsWithData.size()) < nOutFiles) {
     useSparseFPP = true;
-    for (std::set<int>::iterator it = procsWithData.begin();
-         it != procsWithData.end(); ++it) {
-      procsWithDataVector.push_back(*it);
+    for (int it : procsWithData) {
+      procsWithDataVector.push_back(it);
     }
   }
 
@@ -509,11 +510,7 @@ DiagFramePlane::VisMF2D(
     if ((nFABs > 1 || doConvert) && amrex::VisMF::GetUseSingleWrite()) {
       allFabData = new (std::nothrow) char[bytesWritten];
     } // ---- else { no need to make a copy for one fab }
-    if (allFabData == nullptr) {
-      canCombineFABs = false;
-    } else {
-      canCombineFABs = true;
-    }
+    canCombineFABs = allFabData != nullptr;
 
     if (canCombineFABs) {
       amrex::Long writePosition = 0;

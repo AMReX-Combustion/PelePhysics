@@ -38,15 +38,16 @@ public:
     const amrex::Vector<int>& a_steps,
     const amrex::Vector<amrex::IntVect>& a_rref);
 
-  void VisMF2D(const amrex::MultiFab& a_mf, const std::string& a_mf_name);
+  static void
+  VisMF2D(const amrex::MultiFab& a_mf, const std::string& a_mf_name);
 
-  void Write2DMFHeader(
+  static void Write2DMFHeader(
     const std::string& a_mf_name,
     amrex::VisMF::Header& hdr,
     int coordinatorProc,
     MPI_Comm comm);
 
-  void Find2FOffsets(
+  static void Find2FOffsets(
     const amrex::FabArray<amrex::FArrayBox>& mf,
     const std::string& filePrefix,
     amrex::VisMF::Header& hdr,
@@ -55,9 +56,10 @@ public:
     int nOutFile,
     MPI_Comm comm);
 
-  void write_2D_header(std::ostream& os, const amrex::FArrayBox& f, int nvar);
+  static void
+  write_2D_header(std::ostream& os, const amrex::FArrayBox& f, int nvar);
 
-  void Write2DPlotfileHeader(
+  static void Write2DPlotfileHeader(
     std::ostream& HeaderFile,
     int nlevels,
     const amrex::Vector<amrex::BoxArray>& bArray,

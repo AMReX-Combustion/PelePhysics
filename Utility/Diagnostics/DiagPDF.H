@@ -25,9 +25,9 @@ public:
 
   void addVars(amrex::Vector<std::string>& a_varList) override;
 
-  amrex::Real
+  static amrex::Real
   MFVecMin(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
-  amrex::Real
+  static amrex::Real
   MFVecMax(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
   void writePDFToFile(
     int a_nstep,
@@ -39,7 +39,7 @@ public:
 
 private:
   // PDF properties
-  std::string m_fieldName{""}; // Field name
+  std::string m_fieldName;     // Field name
   int m_nBins{-1};             // Number of bins
   int m_normalized{1};         // Normalized ?
   int m_volWeighted{1};        // Volume weighted ?

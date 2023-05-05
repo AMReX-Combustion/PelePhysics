@@ -13,7 +13,7 @@ struct DiagFilterData
 
 struct DiagFilter
 {
-  std::string m_filterVar{""};
+  std::string m_filterVar;
 
   void init(const std::string& a_prefix);
   void setup(const amrex::Vector<std::string>& a_varNames);
