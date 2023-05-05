@@ -290,7 +290,6 @@ SprayParticleContainer::updateParticles(
         // Used for ETAB breakup model
         Real Utan_total = 0.;
         Real Reyn_d = 0.;
-        RealVect film_normal;
         // Subcycle loop
         for (int cur_iter = 0; cur_iter < num_iter && p.id() > 0; ++cur_iter) {
           bool is_film = false;
@@ -330,7 +329,7 @@ SprayParticleContainer::updateParticles(
           fdat->calcBoilT(gpv, cBoilT.data());
           if (is_film) {
             calculateFilmSource(
-              sub_dt, gpv, *fdat, p, cBoilT.data(), film_normal, ltransparm);
+              sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
           } else {
             Reyn_d = calculateSpraySource(
               sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);

@@ -59,7 +59,6 @@ calculateFilmSource(
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
   amrex::Real* cBoilT,
-  const amrex::RealVect& film_normal,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
@@ -206,11 +205,6 @@ calculateFilmSource(
   p.rdata(SprayComps::pstateT) = T_film;
   amrex::Real mdot_total = (film_mass - start_mass) / dt;
   gpv.fluid_mass_src = mdot_total;
-  // Velocity from evaporation
-  amrex::Real evap_vel = mdot_total / (rho_film * film_area);
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    gpv.fluid_mom_src[dir] = evap_vel * mdot_total * film_normal[dir];
-  }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fdspec = fdat.dep_indx[spf];
     amrex::Real oldY = p.rdata(SprayComps::pstateY + spf);
