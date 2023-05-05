@@ -1,5 +1,5 @@
-#ifndef _DIAGCOND_H_
-#define _DIAGCOND_H_
+#ifndef DIAGCOND_H
+#define DIAGCOND_H
 
 #include "DiagBase.H"
 

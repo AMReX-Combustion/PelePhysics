@@ -1,5 +1,5 @@
-#ifndef DIAGFRAMEPLANE_H_
-#define DIAGFRAMEPLANE_H_
+#ifndef DIAGFRAMEPLANE_H
+#define DIAGFRAMEPLANE_H
 
 #include "DiagBase.H"
 #include <AMReX_VisMF.H>

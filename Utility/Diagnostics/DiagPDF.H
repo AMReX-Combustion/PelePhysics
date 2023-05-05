@@ -1,5 +1,5 @@
-#ifndef _DIAGPDF_H_
-#define _DIAGPDF_H_
+#ifndef DIAGPDF_H
+#define DIAGPDF_H
 
 #include "DiagBase.H"
 

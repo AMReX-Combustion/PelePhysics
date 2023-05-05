@@ -1,8 +1,8 @@
-#ifndef _DIAGFILTERS_H_
-#define _DIAGFILTERS_H_
+#ifndef DIAGFILTERS_H
+#define DIAGFILTERS_H
 
-#include "AMReX.H"
-#include "AMReX_Utility.H"
+#include <AMReX.H>
+#include <AMReX_Utility.H>
 
 struct DiagFilterData
 {

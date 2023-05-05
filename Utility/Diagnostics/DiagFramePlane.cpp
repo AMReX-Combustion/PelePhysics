@@ -1,9 +1,9 @@
 #include "DiagFramePlane.H"
-#include "AMReX_VisMF.H"
+#include <AMReX_VisMF.H>
 #include <AMReX_FPC.H>
-#include "AMReX_PlotFileUtil.H"
+#include <AMReX_PlotFileUtil.H>
 #include <regex>
-#include <stdio.h>
+#include <cstdio>
 
 void
 printLowerDimIntVect(

@@ -1,5 +1,5 @@
-#ifndef _DIAGBASE_H_
-#define _DIAGBASE_H_
+#ifndef DIAGBASE_H
+#define DIAGBASE_H
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFab.H>
