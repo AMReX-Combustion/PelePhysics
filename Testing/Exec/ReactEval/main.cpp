@@ -220,7 +220,7 @@ main(int argc, char* argv[])
       // General info
       //--------------------------------------------
       finest_level = pltData.getNlev() - 1;
-      dt = pltData.getTime();           // In LMeX we stored the dt in the pltfileIn time 
+      dt = pltData.getTime();           // In LMeX we stored the dt in the pltfileIn time
 
       // -----------------------------------------------------------------------------
       // Resize vectors

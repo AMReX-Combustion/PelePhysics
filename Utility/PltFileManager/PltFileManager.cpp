@@ -195,9 +195,9 @@ PltFileManager::fillPatchFromPlt(
 {
   // If we haven't yet, read the plot data on all levels
   if (!m_dataLoaded) {
-      readPlotFileData();
+    readPlotFileData();
   }
-  
+
   Vector<BCRec> dummyBCRec(nComp);
   for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
     if (a_level_geom.isPeriodic(idim)) {
