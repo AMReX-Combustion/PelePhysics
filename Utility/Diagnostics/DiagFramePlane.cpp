@@ -524,7 +524,7 @@ DiagFramePlane::VisMF2D(
         char* afPtr = allFabData + writePosition;
         std::stringstream hss;
         write_2D_header(hss, fab, fab.nComp());
-        hLength = static_cast<std::streamoff>(hss.tellp());
+        hLength = static_cast<int>(hss.tellp());
         auto tstr = hss.str();
         std::memcpy(afPtr, tstr.c_str(), hLength); // ---- the fab header
         amrex::Real const* fabdata = fab.dataPtr();
@@ -554,7 +554,7 @@ DiagFramePlane::VisMF2D(
         writeDataSize = writeDataItems * whichRDBytes;
         std::stringstream hss;
         write_2D_header(hss, fab, fab.nComp());
-        hLength = static_cast<std::streamoff>(hss.tellp());
+        hLength = static_cast<int>(hss.tellp());
         auto tstr = hss.str();
         nfi.Stream().write(tstr.c_str(), hLength); // ---- the fab header
         nfi.Stream().flush();

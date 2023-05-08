@@ -23,7 +23,7 @@ public:
     int a_nstep,
     const amrex::Real& a_time,
     const amrex::Vector<const amrex::MultiFab*>& a_state,
-    const amrex::Vector<std::string>& a_varNames) override;
+    const amrex::Vector<std::string>& a_stateVar) override;
 
   void addVars(amrex::Vector<std::string>& a_varList) override;
 
