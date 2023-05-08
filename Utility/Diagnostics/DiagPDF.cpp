@@ -140,7 +140,8 @@ DiagPDF::processDiag(
 
   amrex::Gpu::copy(
     amrex::Gpu::deviceToHost, pdf_d.begin(), pdf_d.end(), pdf.begin());
-  amrex::ParallelDescriptor::ReduceRealSum(pdf.data(), pdf.size());
+  amrex::ParallelDescriptor::ReduceRealSum(
+    pdf.data(), static_cast<int>(pdf.size()));
   auto sum =
     std::accumulate(pdf.begin(), pdf.end(), decltype(pdf)::value_type(0));
 

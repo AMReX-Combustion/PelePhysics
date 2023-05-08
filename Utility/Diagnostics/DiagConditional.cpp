@@ -60,7 +60,7 @@ DiagConditional::prepare(
   if (first_time) {
     DiagBase::prepare(a_nlevels, a_geoms, a_grids, a_dmap, a_varNames);
     first_time = false;
-    int nProcessFields = m_fieldIndices_d.size();
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> m_fieldIndices(nProcessFields, 0);
     for (int f{0}; f < nProcessFields; ++f) {
       m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
@@ -98,7 +98,7 @@ DiagConditional::processDiag(
     (m_highBnd - m_lowBnd) / static_cast<amrex::Real>(m_nBins);
 
   // Data holders
-  int nProcessFields = m_fieldIndices_d.size();
+  int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
   int vecSize = m_nBins * nProcessFields;
   amrex::Gpu::DeviceVector<amrex::Real> cond_d(vecSize, 0.0);
   amrex::Gpu::DeviceVector<amrex::Real> condSq_d(vecSize, 0.0);
@@ -229,23 +229,27 @@ DiagConditional::processDiag(
   amrex::Gpu::copy(
     amrex::Gpu::deviceToHost, cond_d.begin(), cond_d.end(), cond.begin());
   amrex::Gpu::streamSynchronize();
-  amrex::ParallelDescriptor::ReduceRealSum(cond.data(), cond.size());
+  amrex::ParallelDescriptor::ReduceRealSum(
+    cond.data(), static_cast<int>(cond.size()));
   amrex::Gpu::copy(
     amrex::Gpu::deviceToHost, condAbs_d.begin(), condAbs_d.end(),
     condAbs.begin());
   amrex::Gpu::streamSynchronize();
-  amrex::ParallelDescriptor::ReduceRealSum(condAbs.data(), condAbs.size());
+  amrex::ParallelDescriptor::ReduceRealSum(
+    condAbs.data(), static_cast<int>(condAbs.size()));
   if (m_condType == Average) {
     amrex::Gpu::copy(
       amrex::Gpu::deviceToHost, condVol_d.begin(), condVol_d.end(),
       condVol.begin());
     amrex::Gpu::streamSynchronize();
-    amrex::ParallelDescriptor::ReduceRealSum(condVol.data(), condVol.size());
+    amrex::ParallelDescriptor::ReduceRealSum(
+      condVol.data(), static_cast<int>(condVol.size()));
     amrex::Gpu::copy(
       amrex::Gpu::deviceToHost, condSq_d.begin(), condSq_d.end(),
       condSq.begin());
     amrex::Gpu::streamSynchronize();
-    amrex::ParallelDescriptor::ReduceRealSum(condSq.data(), condSq.size());
+    amrex::ParallelDescriptor::ReduceRealSum(
+      condSq.data(), static_cast<int>(condSq.size()));
     for (int f{0}; f < nProcessFields; ++f) {
       int binOffset = f * m_nBins;
       for (int n{0}; n < m_nBins; ++n) {
@@ -339,7 +343,7 @@ DiagConditional::writeAverageDataToFile(
     condFile << "\n";
 
     // Retrieve some data
-    int nProcessFields = m_fieldIndices_d.size();
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
     for (int n{0}; n < m_nBins; ++n) {
@@ -398,7 +402,7 @@ DiagConditional::writeIntegralDataToFile(
     condFile << "\n";
 
     // Retrieve some data
-    int nProcessFields = m_fieldIndices_d.size();
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
 
     for (int n{0}; n < m_nBins; ++n) {
       condFile << std::left << std::setw(width) << std::setprecision(prec)
@@ -446,7 +450,7 @@ DiagConditional::writeSumDataToFile(
     condFile << "\n";
 
     // Retrieve some data
-    int nProcessFields = m_fieldIndices_d.size();
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
 
     for (int n{0}; n < m_nBins; ++n) {
       condFile << std::left << std::setw(width) << std::setprecision(prec)

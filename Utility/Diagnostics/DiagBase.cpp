@@ -37,7 +37,7 @@ DiagBase::prepare(
   const amrex::Vector<std::string>& a_varNames)
 {
   if (first_time) {
-    int nFilters = m_filters.size();
+    int nFilters = static_cast<int>(m_filters.size());
     // Move the filter data to the device
     for (int n = 0; n < nFilters; ++n) {
       m_filters[n].setup(a_varNames);
@@ -70,7 +70,7 @@ DiagBase::doDiag(const amrex::Real& a_time, int a_nstep)
 void
 DiagBase::addVars(amrex::Vector<std::string>& a_varList)
 {
-  int nFilters = m_filters.size();
+  int nFilters = static_cast<int>(m_filters.size());
   for (int n = 0; n < nFilters; ++n) {
     a_varList.push_back(m_filters[n].m_filterVar);
   }
