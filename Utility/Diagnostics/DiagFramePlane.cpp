@@ -272,28 +272,30 @@ DiagFramePlane::processDiag(
     }
   }
 
-  // Build up a z-normal 2D Geom
-  amrex::Vector<amrex::Geometry> pltGeoms(nlevs);
-  pltGeoms[0] = m_geomLev0;
-  amrex::Vector<amrex::IntVect> ref_ratio;
-  amrex::IntVect rref(AMREX_D_DECL(2, 2, 1));
-  for (int lev = 1; lev < nlevs; ++lev) {
-    pltGeoms[lev] = amrex::refine(pltGeoms[lev - 1], rref);
-    ref_ratio.push_back(rref);
-  }
+  if (nlevs > 0) {
+    // Build up a z-normal 2D Geom
+    amrex::Vector<amrex::Geometry> pltGeoms(nlevs);
+    pltGeoms[0] = m_geomLev0;
+    amrex::Vector<amrex::IntVect> ref_ratio;
+    amrex::IntVect rref(AMREX_D_DECL(2, 2, 1));
+    for (int lev = 1; lev < nlevs; ++lev) {
+      pltGeoms[lev] = amrex::refine(pltGeoms[lev - 1], rref);
+      ref_ratio.push_back(rref);
+    }
 
-  // File name based on tep or time
-  std::string diagfile;
-  if (m_interval > 0) {
-    diagfile = amrex::Concatenate(m_diagfile, a_nstep, 6);
+    // File name based on tep or time
+    std::string diagfile;
+    if (m_interval > 0) {
+      diagfile = amrex::Concatenate(m_diagfile, a_nstep, 6);
+    }
+    if (m_per > 0.0) {
+      diagfile = m_diagfile + std::to_string(a_time);
+    }
+    amrex::Vector<int> step_array(nlevs, a_nstep);
+    Write2DMultiLevelPlotfile(
+      diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
+      a_time, step_array, ref_ratio);
   }
-  if (m_per > 0.0) {
-    diagfile = m_diagfile + std::to_string(a_time);
-  }
-  amrex::Vector<int> step_array(nlevs, a_nstep);
-  Write2DMultiLevelPlotfile(
-    diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
-    a_time, step_array, ref_ratio);
 }
 
 void
