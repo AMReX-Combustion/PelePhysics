@@ -41,7 +41,7 @@ protected:
   amrex::Vector<std::string> m_vars; // list of variable in the plotfile
   int m_nlevels{0};                  // number of levels
   amrex::Real m_time{0.0};           // Simulation time
-  bool m_dataLoaded{false};          // Flag to check is the data has been read in
+  bool m_dataLoaded{false}; // Flag to check is the data has been read in
 
   // Geometry, grid and data containers
   amrex::Vector<amrex::BoxArray> m_grids;

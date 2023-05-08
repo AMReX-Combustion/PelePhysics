@@ -65,7 +65,7 @@ main(int argc, char* argv[])
     }
 
     bool subcycledt = true;
-    pp.query("subcycle_dt",subcycledt);
+    pp.query("subcycle_dt", subcycledt);
 
     /* react() function version */
     // 1 -> Array4 version of react()  (Default)
@@ -220,7 +220,7 @@ main(int argc, char* argv[])
       // General info
       //--------------------------------------------
       finest_level = pltData.getNlev() - 1;
-      dt = pltData.getTime();           // In LMeX we stored the dt in the pltfileIn time
+      dt = pltData.getTime(); // In LMeX we stored the dt in the pltfileIn time
 
       // -----------------------------------------------------------------------------
       // Resize vectors
@@ -240,8 +240,8 @@ main(int argc, char* argv[])
       for (int lev = 0; lev <= finest_level; ++lev) {
         // Set vector entries
         grids[lev] = pltData.getGrid(lev);
-        dmaps[lev] =
-          amrex::DistributionMapping(grids[lev], amrex::ParallelDescriptor::NProcs());
+        dmaps[lev] = amrex::DistributionMapping(
+          grids[lev], amrex::ParallelDescriptor::NProcs());
       }
 
       for (int lev = 0; lev <= finest_level; ++lev) {
@@ -253,8 +253,8 @@ main(int argc, char* argv[])
         } else {
           amrex::Print() << "  Level " << lev << " integrating "
                          << grids[lev].numPts() << " cells on "
-                         << grids[lev].size() << " boxes for "
-                         << dt << " seconds \n";
+                         << grids[lev].size() << " boxes for " << dt
+                         << " seconds \n";
         }
       }
     }
@@ -317,50 +317,53 @@ main(int argc, char* argv[])
       amrex::Vector<std::string> plt_vars = pltData.getVariableList();
 
       // Figure out the indices of reauired entries
-      // Assuming PeleLMeX evaluate mode was used: rhoY + rhoH + T + F_rhoY + F_rhoH
+      // Assuming PeleLMeX evaluate mode was used: rhoY + rhoH + T + F_rhoY +
+      // F_rhoH
       amrex::Vector<std::string> spec_names;
-      pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(spec_names);
-      const std::string firstSpecVar = "rhoY("+spec_names[0]+")";
-      const std::string firstSpecForceVar = "F_rhoY("+spec_names[0]+")";
-      int idFirstSpec = -1, idFirstSpecForce = -1, idrhoH = -1, idT = -1, idrhoHForce = -1;
+      pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+        spec_names);
+      const std::string firstSpecVar = "rhoY(" + spec_names[0] + ")";
+      const std::string firstSpecForceVar = "F_rhoY(" + spec_names[0] + ")";
+      int idFirstSpec = -1, idFirstSpecForce = -1, idrhoH = -1, idT = -1,
+          idrhoHForce = -1;
       for (int i = 0; i < plt_vars.size(); ++i) {
-          if (plt_vars[i] == firstSpecVar) {
-              idFirstSpec = i;
-          } else if (plt_vars[i] == firstSpecForceVar) {
-              idFirstSpecForce = i;
-          } else if (plt_vars[i] == "rhoH") {
-              idrhoH = i;
-          } else if (plt_vars[i] == "Temp") {
-              idT = i;
-          } else if (plt_vars[i] == "F_rhoH") {
-              idrhoHForce = i;
-          }
+        if (plt_vars[i] == firstSpecVar) {
+          idFirstSpec = i;
+        } else if (plt_vars[i] == firstSpecForceVar) {
+          idFirstSpecForce = i;
+        } else if (plt_vars[i] == "rhoH") {
+          idrhoH = i;
+        } else if (plt_vars[i] == "Temp") {
+          idT = i;
+        } else if (plt_vars[i] == "F_rhoH") {
+          idrhoHForce = i;
+        }
       }
-      if (idFirstSpec*idFirstSpecForce*idrhoH*idT*idrhoHForce < 0 ) {
-          amrex::Abort("All of 'rhoY(<spec>)', 'F_rhoY(<spec>)', 'rhoH', 'Temp' and 'F_rhoH' must be in the pltfile !");
+      if (idFirstSpec * idFirstSpecForce * idrhoH * idT * idrhoHForce < 0) {
+        amrex::Abort("All of 'rhoY(<spec>)', 'F_rhoY(<spec>)', 'rhoH', 'Temp' "
+                     "and 'F_rhoH' must be in the pltfile !");
       }
 
       // Load the data from pltfile
       for (int lev = 0; lev <= finest_level; ++lev) {
         // rhoYs
-        pltData.fillPatchFromPlt(lev, geoms[lev], idFirstSpec, 0, NUM_SPECIES,
-                                 mf[lev]);
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idFirstSpec, 0, NUM_SPECIES, mf[lev]);
 
         // Temperature
-        pltData.fillPatchFromPlt(lev, geoms[lev], idT, NUM_SPECIES, 1,
-                                 mf[lev]);
+        pltData.fillPatchFromPlt(lev, geoms[lev], idT, NUM_SPECIES, 1, mf[lev]);
 
         // RhoH
-        pltData.fillPatchFromPlt(lev, geoms[lev], idrhoH, 0, 1,
-                                 mfE[lev]);
+        pltData.fillPatchFromPlt(lev, geoms[lev], idrhoH, 0, 1, mfE[lev]);
 
         // Force rhoYs
-        pltData.fillPatchFromPlt(lev, geoms[lev], idFirstSpecForce, 0, NUM_SPECIES,
-                                 rY_source_ext[lev]);
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idFirstSpecForce, 0, NUM_SPECIES,
+          rY_source_ext[lev]);
 
         // Force rhoH
-        pltData.fillPatchFromPlt(lev, geoms[lev], idrhoHForce, 0, 1,
-                                 rY_source_energy_ext[lev]);
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idrhoHForce, 0, 1, rY_source_energy_ext[lev]);
 
         // Convert from MKS -> CGS since we have PeleLMeX data
 #ifdef AMREX_USE_OMP
@@ -505,8 +508,7 @@ main(int argc, char* argv[])
         // Integration with Array4 react function
         if (reactFunc == 1) {
           amrex::Real time = 0.0;
-          amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev)
-                                            : dt;
+          amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev) : dt;
           amrex::Real dt_incr = dt_lev / ndt;
           int tmp_fc;
           if (omp_thread == 0) {
@@ -614,8 +616,7 @@ main(int argc, char* argv[])
           for (int i = 0; i < nCells; i += ode_ncells) {
             tmp_fc[i] = 0;
             amrex::Real time = 0.0;
-            amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev)
-                                              : dt;
+            amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev) : dt;
             amrex::Real dt_incr = dt_lev / ndt;
             for (int ii = 0; ii < ndt; ++ii) {
               tmp_fc[i] += reactor->react(
