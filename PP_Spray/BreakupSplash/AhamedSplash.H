@@ -99,27 +99,50 @@ splash_criteria(
   const amrex::Real Tstar,
   const amrex::Real alpha,
   const amrex::Real Kcrit,
-  const amrex::Real del_film)
+  const amrex::Real del_film,
+  splash_breakup& N_SB,
+  amrex::Real& ms,
+  amrex::Real& dm)
 {
   splash_type crit = splash_type::thermal_breakup;
   if (del_film < 0.01) {
     if (Tstar < 1.1) {
       if (Kv < Kcrit) {
         crit = splash_type::deposit;
+        ms = 0.; // No splashing mass
+        dm = 1.; // All mass is deposited
       } else {
         crit = splash_type::splash_dry;
+        ms = 0.75 * (1. - std::exp(-3.E-3 * (Kv - Kcrit)));
+        dm = 1. - ms;
+        N_SB = splash_breakup::splash_dry_splash;
       }
     } else {
       if (Kv < Kcrit) {
         crit = splash_type::rebound;
+      } else {
+        crit = splash_type::thermal_breakup;
+        ms = 0.75 * (1. - std::exp(-0.0175 * (Kv - Kcrit)));
+        dm = 0.;
+        N_SB = splash_breakup::splash_thermal_breakup;
       }
     }
   } else {
     amrex::Real Kcrit_wet = Kcrit + 226. * std::pow(del_film, 0.72);
     if (Kv > Kcrit_wet) {
       crit = splash_type::splash_wet;
+      amrex::Real A = 4.5;
+      amrex::Real B = 0.2;
+      if (del_film < 0.5) {
+        A = 10.42 * del_film + 0.32;
+        B = 8.75 * del_film - 0.107;
+      }
+      ms = A * (1. - std::exp(-0.003 * (Kv - Kcrit_wet))) + B;
     } else {
       crit = splash_type::spread;
+      // All mass becomes part of the wall film
+      ms = 0.;
+      dm = 1.;
     }
   }
   return crit;
@@ -185,31 +208,19 @@ droplet_splashing(
                               std::exp(-6.E-3 * (fdat.wall_T - 260.)) +
                             36.;
   const amrex::Real del_film = film_h / dia_part;
-  splash_type splash_flag = splash_criteria(Kv, Tstar, alpha, Kcrit, del_film);
-  // Amount of mass that gets deposited
+  // Ratio of mass that splashes
+  amrex::Real ms = 0.;
+  // Ratio of mass that deposits into wall film
   amrex::Real dm = 0.;
+  splash_type splash_flag =
+    splash_criteria(Kv, Tstar, alpha, Kcrit, del_film, ms, dm);
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       normpos[dir] -= (1. + rbound) * par_dot * vel_part[dir] / U0norm;
       vel_part[dir] -= U0norm * (1. + rbound) * normal[dir];
     }
-  } else if (splash_flag == splash_type::deposit) {
-    dm = pmass;
-  } else {
-    // Ratio of mass that splashes
-    amrex::Real ms = 0.;
-    // If splashing, turn current particle into wall film
-    if (splash_flag == splash_type::splash_dry) {
-      N_SB[pid] = splash_breakup::splash_dry_splash;
-      ms = 0.75 * (1. - std::exp(-3.E-3 * (Kv - Kcrit)));
-      dm = pmass * (1. - ms);
-    } else {
-      // For thermal breakup, no deposition occurs and current droplet velocity
-      // is equal to average of child droplets
-      N_SB[pid] = splash_breakup::splash_thermal_breakup;
-      ms = 0.75 * (1. - std::exp(-0.0175 * (Kv - Kcrit)));
-    }
+  } else if (ms > 0.) {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       // Save unnormalized location where droplet hit wall
       rf.loc[AMREX_SPACEDIM * pid + dir] =
@@ -256,7 +267,7 @@ droplet_splashing(
   if (dm > 0.) {
     // Convert parcel to wall film
     // Assume all remaining droplets in parcel coalesce to form the wall film
-    amrex::Real film_vol = num_dens * dm / rho_part;
+    amrex::Real film_vol = num_dens * pmass * dm / rho_part;
     // Combined droplet diameter
     amrex::Real comb_dia = std::cbrt(film_vol * 6. / M_PI);
     amrex::Real comb_We = We * comb_dia / dia_part;

@@ -4,6 +4,27 @@
 
 #include "Drag.H"
 
+// Determine the wall film thickness within the cell by summing film volume
+// divided by the face area
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void
+fillFilmFab(
+  amrex::Array4<amrex::Real> const& wf_arr,
+  SprayParticleContainer::ParticleyType& p,
+  const amrex::Real& face_area,
+  const amrex::RealVect& plo,
+  const amrex::RealVect& dx)
+{
+  amrex::RealVect lxc = (p.pos() - plo) / dx;
+  amrex::IntVect ijkc = lxc.floor(); // Cell with particle
+  amrex::Real film_hght = p.rdata(SprayComps::pstateFilmHght);
+  amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
+  amrex::Real film_vol =
+    M_PI * film_hght * (0.75 * film_dia * film_dia + film_hght * film_hght);
+  amrex::Gpu::Atomic::Add(&wf_arr(ijkc, 0), film_vol / face_area);
+}
+
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 bool
