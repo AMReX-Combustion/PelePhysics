@@ -26,8 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.10]
-        poetry-version: [1.4.2]
+        python-version: ['3.10']
+        poetry-version: ['1.4.2']
     defaults:
       run:
         working-directory: ${{github.workspace}}/Support/ceptr
@@ -35,11 +35,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '${{matrix.python-version}}'
+          python-version: ${{matrix.python-version}}
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: '${{matrix.poetry-version}}'
+          poetry-version: ${{matrix.poetry-version}}
       - name: Install Dependencies using Poetry
         run: poetry install
       - name: Formatting with black
@@ -61,8 +61,8 @@ jobs:
     strategy:
       matrix:
         comp: [gnu, llvm, cuda, hip, sycl]
-        python-version: [3.10]
-        poetry-version: [1.4.2]
+        python-version: ['3.10']
+        poetry-version: ['1.4.2']
         include:
           - comp: gnu
             amrex_build_args: 'COMP=gnu'
@@ -83,11 +83,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '${{matrix.python-version}}'
+          python-version: ${{matrix.python-version}}
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: '${{matrix.poetry-version}}'
+          poetry-version: ${{matrix.poetry-version}}
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
         with:
