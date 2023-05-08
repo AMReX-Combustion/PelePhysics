@@ -21,7 +21,6 @@ jobs:
           clangFormatVersion: 14
 
   CEPTR:
-    needs: Formatting
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
