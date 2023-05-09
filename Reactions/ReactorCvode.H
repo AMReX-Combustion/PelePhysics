@@ -136,6 +136,20 @@ public:
 
 private:
   void checkCvodeOptions() const;
+  int initCvodeCPU(N_Vector &a_y,
+                   SUNMatrix &a_A,
+                   CVODEUserData *a_udata,
+                   SUNNonlinearSolver &a_NLS,
+                   SUNLinearSolver &a_LS,
+                   void *a_cvode_mem,
+                   int ncells);
+  int initCvodeGPU(N_Vector &a_y,
+                   SUNMatrix &a_A,
+                   CVODEUserData *a_udata,
+                   SUNNonlinearSolver &a_NLS,
+                   SUNLinearSolver &a_LS,
+                   void *a_cvode_mem,
+                   int ncells);
   void allocUserData(
     CVODEUserData* udata,
     int a_ncells
@@ -160,15 +174,6 @@ private:
   int max_fp_accel{2};
   int m_print_profiling{0};
   bool m_clean_init_massfrac{false};
-
-#ifndef AMREX_USE_GPU
-  N_Vector y = nullptr;
-  SUNLinearSolver LS = nullptr;
-  SUNNonlinearSolver NLS = nullptr;
-  SUNMatrix A = nullptr;
-  void* cvode_mem = nullptr;
-  CVODEUserData* udata_g = nullptr;
-#endif
 };
 } // namespace pele::physics::reactions
 #endif
