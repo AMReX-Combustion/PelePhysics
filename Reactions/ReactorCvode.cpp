@@ -34,32 +34,34 @@ ReactorCvode::init(int reactor_type, int ncells)
   return (0);
 }
 
+#ifdef AMREX_USE_GPU
 int
-ReactorCvode::initCvodeGPU(
+ReactorCvode::initCvode(
   N_Vector &a_y,
   SUNMatrix &a_A,
   CVODEUserData *a_udata,
   SUNNonlinearSolver &a_NLS,
   SUNLinearSolver &a_LS,
   void *a_cvode_mem,
+  amrex::gpuStream_t stream,
+  const amrex::Real &a_time,
   const int ncells)
 {
-#ifdef AMREX_USE_GPU
 
   const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
   // Solution vector and execution policy
-  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
+  a_y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Populate the userData
-  allocUserData(a_udata, ncells);
+  allocUserData(a_udata, ncells, a_A, stream);
 
   int flag = CVodeSetUserData(a_cvode_mem, static_cast<void*>(a_udata));
 
   // Call CVodeInit to initialize the integrator memory and specify the user's
   // right hand side function, the inital time, and initial dependent variable
-  // vector y.
-  flag = CVodeInit(a_cvode_mem, cF_RHS, time_start, y);
+  // vector a_y.
+  flag = CVodeInit(a_cvode_mem, cF_RHS, a_time, a_y);
   if (utils::check_flag(&flag, "CVodeInit", 1)) {
     return (1);
   }
@@ -73,7 +75,7 @@ ReactorCvode::initCvodeGPU(
       return (1);
     }
 
-    flag = CVodeSetNonlinearSolver(a_cvode_mem, NLS);
+    flag = CVodeSetNonlinearSolver(a_cvode_mem, a_NLS);
     if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
       return (1);
     }
@@ -131,7 +133,7 @@ ReactorCvode::initCvodeGPU(
   } else if (a_udata->solve_type == cvode::GMRES) {
     a_LS = SUNLinSol_SPGMR(
       a_y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0)) {
+    if (utils::check_flag(static_cast<void*>(a_LS), "SUNLinSol_SPGMR", 0)) {
       return (1);
     }
     flag = CVodeSetLinearSolver(a_cvode_mem, a_LS, nullptr);
@@ -142,17 +144,18 @@ ReactorCvode::initCvodeGPU(
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
       return (1);
     }
+    amrex::Print() << " Setting a_LS for GMRES \n";
   } else if (a_udata->solve_type == cvode::precGMRES) {
     a_LS = SUNLinSol_SPGMR(
       a_y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag(static_cast<void*>(LS), "SUNLinSol_SPGMR", 0)) {
+    if (utils::check_flag(static_cast<void*>(a_LS), "SUNLinSol_SPGMR", 0)) {
       return (1);
     }
     flag = CVodeSetLinearSolver(a_cvode_mem, a_LS, nullptr);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
       return (1);
     }
-    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
+    flag = CVodeSetJacTimes(a_cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
       return (1);
     }
@@ -184,23 +187,31 @@ ReactorCvode::initCvodeGPU(
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1)) {
     return (1);
   }
-  flag = CVodeSetMaxOrd(a_cvode_mem, audata->maxOrder);
+  flag = CVodeSetMaxOrd(a_cvode_mem, a_udata->maxOrder);
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1)) {
     return (1);
   }
+  if (a_LS != nullptr) {
+    flag = CVodeSetJacEvalFrequency(a_cvode_mem, 100); // Max Jac age
+    if (utils::check_flag(&flag, "CVodeSetJacEvalFrequency", 1) != 0) {
+      return (1);
+    }
+  }
 
-#endif
   return (0);
 }
 
+#else
+
 int
-ReactorCvode::initCvodeCPU(
+ReactorCvode::initCvode(
   N_Vector &a_y,
   SUNMatrix &a_A,
   CVODEUserData *a_udata,
   SUNNonlinearSolver &a_NLS,
   SUNLinearSolver &a_LS,
   void *a_cvode_mem,
+  const amrex::Real &a_time,
   const int ncells)
 {
   // Solution vector
@@ -224,9 +235,8 @@ ReactorCvode::initCvodeCPU(
 
   // Call CVodeInit to initialize the integrator memory and specify the user's
   // right hand side function, the inital time, and initial dependent variable
-  // vector y.
-  amrex::Real time = 0.0;
-  flag = CVodeInit(a_cvode_mem, cF_RHS, time, a_y);
+  // vector a_y.
+  flag = CVodeInit(a_cvode_mem, cF_RHS, a_time, a_y);
   if (utils::check_flag(&flag, "CVodeInit", 1) != 0) {
     return (1);
   }
@@ -429,6 +439,8 @@ ReactorCvode::initCvodeCPU(
   }
   return (0);
 }
+
+#endif  // End check GPU for initCvode method
 
 void
 ReactorCvode::checkCvodeOptions() const
@@ -1055,7 +1067,7 @@ ReactorCvode::allocUserData(
       *amrex::sundials::The_SUNMemory_Helper(), nullptr,
       *amrex::sundials::The_Sundials_Context());
 #else
-    amrex::Abort("Solver_type magma_direct reauires PELE_USE_MAGMA = TRUE");
+    amrex::Abort("Solver_type magma_direct requires PELE_USE_MAGMA = TRUE");
 #endif
   }
 
@@ -1307,6 +1319,7 @@ ReactorCvode::react(
   void* cvode_mem =
       CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());;  // Internal Cvode memory
 
+
   //----------------------------------------------------------
   // GPU Region
   //----------------------------------------------------------
@@ -1315,7 +1328,22 @@ ReactorCvode::react(
   const int ncells = box.numPts();
 
   amrex::Gpu::streamSynchronize();
-  initCvodeGPU(y, A, udata, NLS, LS, cvode_mem, ncells);
+  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
+
+  amrex::Print() << "Integrating from " << time_start << " to " << time_final << "\n";
+
+  if (A == nullptr) {
+    amrex::Print() << " A not allocated, something is up ! \n";
+  }
+  if (y == nullptr) {
+    amrex::Print() << " y not allocated, something is up ! \n";
+  }
+  if (LS == nullptr) {
+    amrex::Print() << " LS not allocated, something is up ! \n";
+  }
+  if (NLS == nullptr) {
+    amrex::Print() << " NLS not allocated, something is up ! \n";
+  }
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1336,9 +1364,10 @@ ReactorCvode::react(
 
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
-  flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
-  if (utils::check_flag(&flag, "CVode", 1))
+  int flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
+  if (utils::check_flag(&flag, "CVode", 1)) {
     return (1);
+  }
   BL_PROFILE_VAR_STOP(AroundCVODE);
 
 #ifdef MOD_REACTOR
@@ -1359,9 +1388,9 @@ ReactorCvode::react(
   long int* d_nfe = v_nfe.data();
   unflatten(
     box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
-    user_data->rhoe_init, d_nfe, dt_react);
+    udata->rhoe_init, d_nfe, dt_react);
 
-  if (user_data->verbose > 1) {
+  if (udata->verbose > 1) {
     print_final_stats(cvode_mem, LS != nullptr);
   }
 
@@ -1379,7 +1408,7 @@ ReactorCvode::react(
   omp_thread = omp_get_thread_num();
 #endif
 
-  initCvodeCPU(y, A, udata, NLS, LS, cvode_mem, ncells);
+  initCvode(y, A, udata, NLS, LS, cvode_mem, time_start, ncells);
 
   // Update TypicalValues
   utils::set_sundials_solver_tols<Ordering>(
@@ -1522,7 +1551,7 @@ ReactorCvode::react(
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
-  initCvodeGPU(y, A, udata, NLS, LS, cvode_mem, ncells);
+  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1549,7 +1578,7 @@ ReactorCvode::react(
 
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
-  flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
+  int flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
   if (utils::check_flag(&flag, "CVode", 1))
     return (1);
   BL_PROFILE_VAR_STOP(AroundCVODE);
@@ -1588,7 +1617,7 @@ ReactorCvode::react(
   omp_thread = omp_get_thread_num();
 #endif
 
-  initCvodeCPU(y, A, udata, NLS, LS, cvode_mem, ncells);
+  initCvode(y, A, udata, NLS, LS, cvode_mem, time_start, ncells);
 
   // Pointer of solution vector
   amrex::Real* yvec_d = N_VGetArrayPointer(y);

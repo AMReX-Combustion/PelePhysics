@@ -136,20 +136,17 @@ public:
 
 private:
   void checkCvodeOptions() const;
-  int initCvodeCPU(N_Vector &a_y,
-                   SUNMatrix &a_A,
-                   CVODEUserData *a_udata,
-                   SUNNonlinearSolver &a_NLS,
-                   SUNLinearSolver &a_LS,
-                   void *a_cvode_mem,
-                   int ncells);
-  int initCvodeGPU(N_Vector &a_y,
-                   SUNMatrix &a_A,
-                   CVODEUserData *a_udata,
-                   SUNNonlinearSolver &a_NLS,
-                   SUNLinearSolver &a_LS,
-                   void *a_cvode_mem,
-                   int ncells);
+  int initCvode(N_Vector &a_y,
+                SUNMatrix &a_A,
+                CVODEUserData *a_udata,
+                SUNNonlinearSolver &a_NLS,
+                SUNLinearSolver &a_LS,
+                void *a_cvode_mem,
+#ifdef AMREX_USE_GPU
+                amrex::gpuStream_t stream,
+#endif
+                const amrex::Real &a_time,
+                int ncells);
   void allocUserData(
     CVODEUserData* udata,
     int a_ncells
