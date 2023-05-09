@@ -1,5 +1,5 @@
-#ifndef _DIAGPDF_H_
-#define _DIAGPDF_H_
+#ifndef DIAGPDF_H
+#define DIAGPDF_H
 
 #include "DiagBase.H"
 
@@ -21,13 +21,13 @@ public:
     int a_nstep,
     const amrex::Real& a_time,
     const amrex::Vector<const amrex::MultiFab*>& a_state,
-    const amrex::Vector<std::string>& a_varNames) override;
+    const amrex::Vector<std::string>& a_stateVar) override;
 
   void addVars(amrex::Vector<std::string>& a_varList) override;
 
-  amrex::Real
+  static amrex::Real
   MFVecMin(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
-  amrex::Real
+  static amrex::Real
   MFVecMax(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
   void writePDFToFile(
     int a_nstep,
@@ -39,7 +39,7 @@ public:
 
 private:
   // PDF properties
-  std::string m_fieldName{""}; // Field name
+  std::string m_fieldName;     // Field name
   int m_nBins{-1};             // Number of bins
   int m_normalized{1};         // Normalized ?
   int m_volWeighted{1};        // Volume weighted ?

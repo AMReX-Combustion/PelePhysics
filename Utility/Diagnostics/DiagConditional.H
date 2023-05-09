@@ -1,5 +1,5 @@
-#ifndef _DIAGCOND_H_
-#define _DIAGCOND_H_
+#ifndef DIAGCOND_H
+#define DIAGCOND_H
 
 #include "DiagBase.H"
 
@@ -23,13 +23,13 @@ public:
     int a_nstep,
     const amrex::Real& a_time,
     const amrex::Vector<const amrex::MultiFab*>& a_state,
-    const amrex::Vector<std::string>& a_varNames) override;
+    const amrex::Vector<std::string>& a_stateVar) override;
 
   void addVars(amrex::Vector<std::string>& a_varList) override;
 
-  amrex::Real
+  static amrex::Real
   MFVecMin(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
-  amrex::Real
+  static amrex::Real
   MFVecMax(const amrex::Vector<const amrex::MultiFab*>& a_state, int comp);
   void writeAverageDataToFile(
     int a_nstep,
@@ -54,7 +54,7 @@ public:
 private:
   // List of variables
   conditionalType m_condType;              // Type of conditional calculation
-  std::string m_cFieldName{""};            // Condition Field name
+  std::string m_cFieldName;                // Condition Field name
   amrex::Vector<std::string> m_fieldNames; // Processed Field names
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
   int m_nBins{-1};              // Number of bins
