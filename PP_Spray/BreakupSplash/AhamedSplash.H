@@ -213,7 +213,7 @@ droplet_splashing(
   // Ratio of mass that deposits into wall film
   amrex::Real dm = 0.;
   splash_type splash_flag =
-    splash_criteria(Kv, Tstar, alpha, Kcrit, del_film, ms, dm);
+    splash_criteria(Kv, Tstar, alpha, Kcrit, del_film, N_SB[pid], ms, dm);
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {

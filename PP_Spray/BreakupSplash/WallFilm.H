@@ -11,7 +11,7 @@ AMREX_FORCE_INLINE
 void
 fillFilmFab(
   amrex::Array4<amrex::Real> const& wf_arr,
-  SprayParticleContainer::ParticleyType& p,
+  SprayParticleContainer::ParticleType& p,
   const amrex::Real& face_area,
   const amrex::RealVect& plo,
   const amrex::RealVect& dx)
