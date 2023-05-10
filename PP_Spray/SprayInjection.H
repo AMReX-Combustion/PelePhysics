@@ -334,6 +334,5 @@ SprayParticleContainer::uniformSprayInit(
     }
     Redistribute();
   } // for (int which ...
-  amrex::Gpu::streamSynchronize();
 }
 #endif
