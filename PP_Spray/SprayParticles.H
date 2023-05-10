@@ -83,7 +83,7 @@ public:
   /// @param T_part Droplet temperature
   /// @param Y_part Pointer to array of droplet mass fractions
   /// @param level Current AMR level
-  /// @param num_redist Number of redistributes to do during initialization
+  /// @param num_init_procs Number of processors to do initialization
   void uniformSprayInit(
     const amrex::IntVect num_part,
     const amrex::RealVect vel_part,
@@ -91,7 +91,7 @@ public:
     const amrex::Real T_part,
     const amrex::Real* Y_part,
     const int level,
-    const int num_redist);
+    const int num_init_procs = 1);
 
   /// \brief Setup spray parameters
   static void spraySetup(SprayData& sprayData, const amrex::Real* body_force);
@@ -290,12 +290,17 @@ public:
       amrex::MultiFab::Add(
         actSource, tmpSource, 0, 0, actSource.nComp(), nghost); // NOLINT
     } else {
-      for (amrex::MFIter mfi(actSource, amrex::TilingIfNotGPU()); mfi.isValid();
-           ++mfi) {
-        const amrex::Box vbox = mfi.growntilebox(nghost);
-        auto const& tmp_array = tmpSource.array(mfi);
-        auto const& act_array = actSource.array(mfi);
-        addSpraySrc(vbox, tmp_array, act_array);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+      {
+        for (amrex::MFIter mfi(actSource, amrex::TilingIfNotGPU());
+             mfi.isValid(); ++mfi) {
+          const amrex::Box vbox = mfi.growntilebox(nghost);
+          auto const& tmp_array = tmpSource.array(mfi);
+          auto const& act_array = actSource.array(mfi);
+          addSpraySrc(vbox, tmp_array, act_array);
+        }
       }
     }
     tmpSource.setVal(0.);
