@@ -47,15 +47,6 @@ ReactorCvode::initCvode(
   const amrex::Real &a_time,
   const int ncells)
 {
-
-  const int neq_tot = (NUM_SPECIES + 1) * ncells;
-
-  // Solution vector and execution policy
-  a_y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
-
-  // Populate the userData
-  allocUserData(a_udata, ncells, a_A, stream);
-
   int flag = CVodeSetUserData(a_cvode_mem, static_cast<void*>(a_udata));
 
   // Call CVodeInit to initialize the integrator memory and specify the user's
@@ -1308,7 +1299,6 @@ ReactorCvode::react(
 #endif
 
   // Set of SUNDIALs objects needed for Cvode
-  N_Vector y = nullptr;                         // Solution vector
   SUNMatrix A = nullptr;                        // Jacobian matrix
   CVODEUserData* udata = new CVODEUserData{};   // Userdata container
   SUNNonlinearSolver NLS = nullptr;             // Non-linear solver
@@ -1319,34 +1309,23 @@ ReactorCvode::react(
   void* cvode_mem =
       CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());;  // Internal Cvode memory
 
-
   //----------------------------------------------------------
   // GPU Region
   //----------------------------------------------------------
 
 #ifdef AMREX_USE_GPU
   const int ncells = box.numPts();
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
-  amrex::Gpu::streamSynchronize();
-  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
-
-  amrex::Print() << "Integrating from " << time_start << " to " << time_final << "\n";
-
-  if (A == nullptr) {
-    amrex::Print() << " A not allocated, something is up ! \n";
-  }
-  if (y == nullptr) {
-    amrex::Print() << " y not allocated, something is up ! \n";
-  }
-  if (LS == nullptr) {
-    amrex::Print() << " LS not allocated, something is up ! \n";
-  }
-  if (NLS == nullptr) {
-    amrex::Print() << " NLS not allocated, something is up ! \n";
-  }
+  // Solution vector and execution policy
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
+
+  // Populate the userData
+  amrex::Gpu::streamSynchronize();
+  allocUserData(udata, ncells, A, stream);
 
   // Fill data
   flatten(
@@ -1356,6 +1335,8 @@ ReactorCvode::react(
 #ifdef AMREX_USE_OMP
   amrex::Gpu::Device::streamSynchronize();
 #endif
+
+  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
 
   // Setup tolerances with typical values
   utils::set_sundials_solver_tols<Ordering>(
@@ -1398,6 +1379,8 @@ ReactorCvode::react(
   //----------------------------------------------------------
   // CPU Region
   //----------------------------------------------------------
+
+  N_Vector y = nullptr;                         // Solution vector
 
   // Perform integration one cell at a time
   const int icell = 0;
@@ -1531,7 +1514,6 @@ ReactorCvode::react(
   amrex::Real CvodeActual_time_final = 0.0;
 
   // Set of SUNDIALs objects needed for Cvode
-  N_Vector y = nullptr;                         // Solution vector
   SUNMatrix A = nullptr;                        // Jacobian matrix
   CVODEUserData* udata = new CVODEUserData{};   // Userdata container
   SUNNonlinearSolver NLS = nullptr;             // Non-linear solver
@@ -1547,14 +1529,20 @@ ReactorCvode::react(
   //----------------------------------------------------------
 
 #ifdef AMREX_USE_GPU
-  int neq_tot = (NUM_SPECIES + 1) * ncells;
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
-  // Fill user_data
-  amrex::Gpu::streamSynchronize();
-  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
+  // Solution vector and execution policy
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
+
+  // Populate the userData
+  amrex::Gpu::streamSynchronize();
+  allocUserData(udata, ncells, A, stream);
+
+  // Fill user_data
+  initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
 
   // Fill data
   BL_PROFILE_VAR("Pele::ReactorCvode::react():ASyncCopy", AsyncCopy);
@@ -1612,6 +1600,9 @@ ReactorCvode::react(
   // CPU Region
   //----------------------------------------------------------
 #else
+
+  N_Vector y = nullptr;                         // Solution vector
+
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
