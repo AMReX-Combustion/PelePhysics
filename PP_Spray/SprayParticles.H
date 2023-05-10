@@ -83,7 +83,7 @@ public:
   /// @param T_part Droplet temperature
   /// @param Y_part Pointer to array of droplet mass fractions
   /// @param level Current AMR level
-  /// @param num_init_procs Number of processors to do initialization
+  /// @param num_redist Number of redistributes to do during initialization
   void uniformSprayInit(
     const amrex::IntVect num_part,
     const amrex::RealVect vel_part,
@@ -91,7 +91,7 @@ public:
     const amrex::Real T_part,
     const amrex::Real* Y_part,
     const int level,
-    const int num_init_procs = 1);
+    const int num_redist = 1);
 
   /// \brief Setup spray parameters
   static void spraySetup(SprayData& sprayData, const amrex::Real* body_force);
