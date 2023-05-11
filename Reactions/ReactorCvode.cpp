@@ -517,13 +517,14 @@ ReactorCvode::checkCvodeOptions(
       }
     } else if (a_precond_type_str == "sparse_simplified_AJacobian") {
       a_precond_type = cvode::sparseSimpleAJac;
-#ifndef PELE_USE_KLU
-      amrex::Abort(
-        "precond_type sparse_simplified_AJacobian requires the KLU library");
-#endif
+#ifdef PELE_USE_KLU
       if (verbose > 0) {
         amrex::Print() << " with a sparse simplified AJ-based preconditioner";
       }
+#else
+      amrex::Abort(
+        "precond_type sparse_simplified_AJacobian requires the KLU library");
+#endif
     } else if (a_precond_type_str == "custom_simplified_AJacobian") {
       a_precond_type = cvode::customSimpleAJac;
       if (verbose > 0) {
@@ -619,9 +620,9 @@ ReactorCvode::checkCvodeOptions(
     a_solve_type = cvode::hackDumpSparsePattern;
 #endif
 
-    } else {
+  } else {
 #ifdef AMREX_USE_GPU
-      amrex::Abort(
+    amrex::Abort(
         "Wrong solve_type. Options are: 'sparse_direct', 'custom_direct', "
         "'GMRES', 'precGMRES', 'fixed_point'");
 #else
@@ -629,7 +630,7 @@ ReactorCvode::checkCvodeOptions(
       "Wrong solve_type. Options are: 'dense_direct', denseAJ_direct', "
       "'sparse_direct', 'custom_direct', 'GMRES', 'precGMRES', 'fixed_point'");
 #endif
-    }
+  }
 
     // Print additionnal information
     if (a_precond_type == cvode::sparseSimpleAJac) {
@@ -887,6 +888,7 @@ ReactorCvode::checkCvodeOptions(
     }
 #endif
   }
+}
 
   void ReactorCvode::allocUserData(
     CVODEUserData * udata, int a_ncells
