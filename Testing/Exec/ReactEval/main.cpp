@@ -7,6 +7,7 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
+#include <PltFileManager.H>
 
 #ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
@@ -55,13 +56,16 @@ main(int argc, char* argv[])
 
     /* initial data */
     // Can either generate single level data
-    // or read in data from a checkpoint like file
-    int initFromChk = 0;
-    pp.query("initFromFile", initFromChk);
-    std::string chkfile = "";
-    if (initFromChk) {
-      pp.query("initFile", chkfile);
+    // or read in data from a plotfile like file
+    int initFromPlt = 0;
+    pp.query("initFromFile", initFromPlt);
+    std::string pltfileIn = "";
+    if (initFromPlt) {
+      pp.query("initFile", pltfileIn);
     }
+
+    bool subcycledt = true;
+    pp.query("subcycle_dt", subcycledt);
 
     /* react() function version */
     // 1 -> Array4 version of react()  (Default)
@@ -141,10 +145,10 @@ main(int argc, char* argv[])
 
     // -----------------------------------------------------------------------------
     // Initialize geom/data
-    // When initFromChk = 0, default is single level data provided by
+    // When initFromPlt = 0, default is single level data provided by
     // initialize_data with a -1:1 unit length realbox in each dir and cell
     // count provided by the user otherwise number of levels, geom and all are
-    // read in from the chkfile
+    // read in from the pltfileIn
     // -----------------------------------------------------------------------------
     int finest_level = 0;
     amrex::Vector<amrex::Geometry> geoms;
@@ -152,7 +156,7 @@ main(int argc, char* argv[])
     amrex::Vector<amrex::DistributionMapping> dmaps;
 
     BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
-    if (initFromChk == 0) {
+    if (initFromPlt == 0) {
       // -----------------------------------------------------------------------------
       // Resize vectors
       // -----------------------------------------------------------------------------
@@ -203,8 +207,8 @@ main(int argc, char* argv[])
       dmaps[0] = amrex::DistributionMapping(
         grids[0], amrex::ParallelDescriptor::NProcs());
     } else {
-      // Read chkfile header to get the geometry/BAs info
-      //
+      // Use PltFileManager, only metadata loaded here
+      pele::physics::pltfilemanager::PltFileManager pltData(pltfileIn);
 
       if (ode_iE == 1) {
         amrex::Abort(
@@ -212,60 +216,11 @@ main(int argc, char* argv[])
           "with PeleLM data and requires ode_iE=2");
       }
 
-      std::string File(chkfile + "/Header");
-      amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::GetIOBufferSize());
-      amrex::Vector<char> fileCharPtr;
-      amrex::ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
-      std::string fileCharPtrString(fileCharPtr.dataPtr());
-      std::istringstream is(fileCharPtrString, std::istringstream::in);
-      std::string line, word;
-
       //--------------------------------------------
       // General info
       //--------------------------------------------
-      amrex::Real crse_dt = 0.0;
-      std::getline(is, line); // Dummy title
-      is >> finest_level;     // Finest level
-      GotoNextLine(is);
-      is >> crse_dt; // Coarse level dt
-      GotoNextLine(is);
-
-      amrex::Print()
-        << "  Warning: dt and ndt are overwritten when using data from a "
-           "checkfile ! \n";
-      ndt = 1;
-      dt = crse_dt;
-
-      //--------------------------------------------
-      // Geometry
-      //--------------------------------------------
-      amrex::Real prob_lo[AMREX_SPACEDIM];
-      amrex::Real prob_hi[AMREX_SPACEDIM];
-      // Low coordinates of domain bounding box
-      std::getline(is, line);
-      {
-        std::istringstream lis(line);
-        int i = 0;
-        while (lis >> word) {
-          prob_lo[i++] = std::stod(word);
-        }
-      }
-
-      // High coordinates of domain bounding box
-      std::getline(is, line);
-      {
-        std::istringstream lis(line);
-        int i = 0;
-        while (lis >> word) {
-          prob_hi[i++] = std::stod(word);
-        }
-      }
-      int coord = 0;
-      amrex::Array<int, AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1, 1, 1)};
-      amrex::RealBox domainSize(prob_lo, prob_hi);
-      amrex::Box domain; // Read domain amrex::Box
-      is >> domain;
-      GotoNextLine(is);
+      finest_level = pltData.getNlev() - 1;
+      dt = pltData.getTime(); // In LMeX we stored the dt in the pltfileIn time
 
       // -----------------------------------------------------------------------------
       // Resize vectors
@@ -277,28 +232,30 @@ main(int argc, char* argv[])
       // -----------------------------------------------------------------------------
       // Define geoms, read amrex::BoxArray and define dmap
       // -----------------------------------------------------------------------------
-      geoms[0] = amrex::Geometry(domain, domainSize, coord, is_periodic);
+      geoms[0] = pltData.getGeom(0);
       for (int lev = 1; lev <= finest_level; ++lev) {
         geoms[lev] = amrex::refine(geoms[lev - 1], 2); // Assumes ref_ratio = 2
       }
 
       for (int lev = 0; lev <= finest_level; ++lev) {
-        // read in level 'lev' amrex::BoxArray from Header
-        amrex::BoxArray ba;
-        ba.readFrom(is);
-        GotoNextLine(is);
-
         // Set vector entries
-        grids[lev] = ba;
-        dmaps[lev] =
-          amrex::DistributionMapping(ba, amrex::ParallelDescriptor::NProcs());
+        grids[lev] = pltData.getGrid(lev);
+        dmaps[lev] = amrex::DistributionMapping(
+          grids[lev], amrex::ParallelDescriptor::NProcs());
       }
 
       for (int lev = 0; lev <= finest_level; ++lev) {
-        amrex::Print() << "  Level " << lev << " integrating "
-                       << grids[lev].numPts() << " cells on "
-                       << grids[lev].size() << " boxes for "
-                       << dt / std::pow(2, lev) << " seconds \n";
+        if (subcycledt) {
+          amrex::Print() << "  Level " << lev << " integrating "
+                         << grids[lev].numPts() << " cells on "
+                         << grids[lev].size() << " boxes for "
+                         << dt / std::pow(2, lev) << " seconds \n";
+        } else {
+          amrex::Print() << "  Level " << lev << " integrating "
+                         << grids[lev].numPts() << " cells on "
+                         << grids[lev].size() << " boxes for " << dt
+                         << " seconds \n";
+        }
       }
     }
     BL_PROFILE_VAR_STOP(GeomSetup);
@@ -330,7 +287,7 @@ main(int argc, char* argv[])
     // -----------------------------------------------------------------------------
     // Initialize data
     // -----------------------------------------------------------------------------
-    if (initFromChk == 0) {
+    if (initFromPlt == 0) {
       for (int lev = 0; lev <= finest_level; ++lev) {
         const auto geomdata = geoms[lev].data();
 #ifdef AMREX_USE_OMP
@@ -356,20 +313,59 @@ main(int argc, char* argv[])
         }
       }
     } else {
-      // Load the data from chkfile
+      pele::physics::pltfilemanager::PltFileManager pltData(pltfileIn);
+      amrex::Vector<std::string> plt_vars = pltData.getVariableList();
+
+      // Figure out the indices of reauired entries
+      // Assuming PeleLMeX evaluate mode was used: rhoY + rhoH + T + F_rhoY +
+      // F_rhoH
+      amrex::Vector<std::string> spec_names;
+      pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+        spec_names);
+      const std::string firstSpecVar = "rhoY(" + spec_names[0] + ")";
+      const std::string firstSpecForceVar = "F_rhoY(" + spec_names[0] + ")";
+      int idFirstSpec = -1, idFirstSpecForce = -1, idrhoH = -1, idT = -1,
+          idrhoHForce = -1;
+      for (int i = 0; i < plt_vars.size(); ++i) {
+        if (plt_vars[i] == firstSpecVar) {
+          idFirstSpec = i;
+        } else if (plt_vars[i] == firstSpecForceVar) {
+          idFirstSpecForce = i;
+        } else if (plt_vars[i] == "rhoH") {
+          idrhoH = i;
+        } else if (plt_vars[i] == "Temp") {
+          idT = i;
+        } else if (plt_vars[i] == "F_rhoH") {
+          idrhoHForce = i;
+        }
+      }
+      if (idFirstSpec * idFirstSpecForce * idrhoH * idT * idrhoHForce < 0) {
+        amrex::Abort("All of 'rhoY(<spec>)', 'F_rhoY(<spec>)', 'rhoH', 'Temp' "
+                     "and 'F_rhoH' must be in the pltfile !");
+      }
+
+      // Load the data from pltfile
       for (int lev = 0; lev <= finest_level; ++lev) {
-        // Assuming here a PeleLM state: vel + rho + species + rhoh + T + rhoRT
-        amrex::MultiFab stateIn(
-          grids[lev], dmaps[lev], NUM_SPECIES + AMREX_SPACEDIM + 4, 0);
-        amrex::MultiFab forcingIn(grids[lev], dmaps[lev], NUM_SPECIES + 1, 0);
-        amrex::VisMF::Read(
-          stateIn, amrex::MultiFabFileFullPrefix(
-                     lev, chkfile, level_prefix, "OldState"));
-        amrex::VisMF::Read(
-          forcingIn, amrex::MultiFabFileFullPrefix(
-                       lev, chkfile, level_prefix, "ChemForcing"));
-        // Copy into our local data holders
-        // and convert from MKS -> CGS since we have PeleLM data
+        // rhoYs
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idFirstSpec, 0, NUM_SPECIES, mf[lev]);
+
+        // Temperature
+        pltData.fillPatchFromPlt(lev, geoms[lev], idT, NUM_SPECIES, 1, mf[lev]);
+
+        // RhoH
+        pltData.fillPatchFromPlt(lev, geoms[lev], idrhoH, 0, 1, mfE[lev]);
+
+        // Force rhoYs
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idFirstSpecForce, 0, NUM_SPECIES,
+          rY_source_ext[lev]);
+
+        // Force rhoH
+        pltData.fillPatchFromPlt(
+          lev, geoms[lev], idrhoHForce, 0, 1, rY_source_energy_ext[lev]);
+
+        // Convert from MKS -> CGS since we have PeleLMeX data
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -382,23 +378,14 @@ main(int argc, char* argv[])
           auto const& rhoH = mfE[lev].array(mfi);
           auto const& force_Y = rY_source_ext[lev].array(mfi);
           auto const& force_E = rY_source_energy_ext[lev].array(mfi);
-          auto const& rhoYs_in = stateIn.const_array(mfi, AMREX_SPACEDIM + 1);
-          auto const& temp_in =
-            stateIn.const_array(mfi, AMREX_SPACEDIM + NUM_SPECIES + 2);
-          auto const& rhoh_in =
-            stateIn.const_array(mfi, AMREX_SPACEDIM + NUM_SPECIES + 1);
-          auto const& force_a = forcingIn.const_array(mfi);
           amrex::ParallelFor(
             box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
               for (int n = 0; n < NUM_SPECIES; n++) {
-                rhoYs(i, j, k, n) =
-                  rhoYs_in(i, j, k, n) * 1.0e-3; // with MKS -> CGS conversion
-                force_Y(i, j, k, n) = force_a(i, j, k, n) * 1.0e-3;
+                rhoYs(i, j, k, n) *= 1.0e-3;
+                force_Y(i, j, k, n) *= 1.0e-3;
               }
-              temp(i, j, k) = temp_in(i, j, k);
-              rhoH(i, j, k) =
-                rhoh_in(i, j, k) * 10.0; // with MKS -> CGS conversion
-              force_E(i, j, k) = force_a(i, j, k, NUM_SPECIES) * 10.0;
+              rhoH(i, j, k) *= 10.0;
+              force_E(i, j, k) *= 10.0;
             });
         }
       }
@@ -521,7 +508,7 @@ main(int argc, char* argv[])
         // Integration with Array4 react function
         if (reactFunc == 1) {
           amrex::Real time = 0.0;
-          amrex::Real dt_lev = dt / std::pow(2, lev);
+          amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev) : dt;
           amrex::Real dt_incr = dt_lev / ndt;
           int tmp_fc;
           if (omp_thread == 0) {
@@ -629,7 +616,7 @@ main(int argc, char* argv[])
           for (int i = 0; i < nCells; i += ode_ncells) {
             tmp_fc[i] = 0;
             amrex::Real time = 0.0;
-            amrex::Real dt_lev = dt / std::pow(2, lev);
+            amrex::Real dt_lev = (subcycledt) ? dt / std::pow(2, lev) : dt;
             amrex::Real dt_incr = dt_lev / ndt;
             for (int ii = 0; ii < ndt; ++ii) {
               tmp_fc[i] += reactor->react(

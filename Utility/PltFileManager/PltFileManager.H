@@ -14,7 +14,10 @@ public:
 
   void readGenericPlotfileHeader(const std::string& a_pltFileHeader);
 
-  void readPlotFile();
+  void readPlotFileMetaData();
+
+  void readPlotFileData();
+
   void readLevelBoxArray(int a_lev, amrex::BoxArray& a_grid);
 
   void fillPatchFromPlt(
@@ -32,13 +35,15 @@ public:
   const amrex::Geometry& getGeom(int a_lev) { return m_geoms[a_lev]; }
 
 protected:
-  // MetaData
+  // Plot metadata
   std::string m_pltFile;             // pltfile name
   int m_nvars{0};                    // number of variables
   amrex::Vector<std::string> m_vars; // list of variable in the plotfile
   int m_nlevels{0};                  // number of levels
   amrex::Real m_time{0.0};           // Simulation time
+  bool m_dataLoaded{false}; // Flag to check is the data has been read in
 
+  // Geometry, grid and data containers
   amrex::Vector<amrex::BoxArray> m_grids;
   amrex::Vector<amrex::Geometry> m_geoms;
   amrex::Vector<int> m_refRatio;

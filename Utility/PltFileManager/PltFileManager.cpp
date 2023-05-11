@@ -24,15 +24,16 @@ PltFileManager::PltFileManager(std::string a_pltFile)
   : m_pltFile{std::move(a_pltFile)}
 {
   // Get the plt metadata and resize part of the data vectors
-  std::string pltFileHeader(m_pltFile + "/Header");
+  const std::string pltFileHeader(m_pltFile + "/Header");
   readGenericPlotfileHeader(pltFileHeader);
 
   // Resize the actual data container
+  m_grids.resize(m_nlevels);
   m_dmaps.resize(m_nlevels);
   m_data.resize(m_nlevels);
 
-  // Read the pltfile data
-  readPlotFile();
+  // Read the pltfile metadata only
+  readPlotFileMetaData();
 }
 
 void
@@ -75,8 +76,7 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
   GotoNextLine(is);
   m_nlevels += 1; // Finest is stored, need to add 1
 
-  // Setup data holders
-  m_grids.resize(m_nlevels);
+  // Setup geometry data
   m_geoms.resize(m_nlevels);
   m_refRatio.resize(m_nlevels - 1);
 
@@ -140,18 +140,28 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
 }
 
 void
-PltFileManager::readPlotFile()
+PltFileManager::readPlotFileMetaData()
 {
-  // Set BoxArray, DistMap on each level and load data
-  // TODO: only load a subset of the pltfile variables
+  // Set BoxArray, DistMap on each level
   for (int lev = 0; lev < m_nlevels; ++lev) {
     readLevelBoxArray(lev, m_grids[lev]);
     m_dmaps[lev] = DistributionMapping(m_grids[lev]);
+  }
+}
+
+void
+PltFileManager::readPlotFileData()
+{
+  // Load the actual data
+  // TODO: only load a subset of the pltfile variables
+  for (int lev = 0; lev < m_nlevels; ++lev) {
     m_data[lev].define(m_grids[lev], m_dmaps[lev], m_nvars, 0);
     VisMF::Read(
       m_data[lev],
       MultiFabFileFullPrefix(lev, m_pltFile, level_prefix, "Cell"));
   }
+
+  m_dataLoaded = true;
 }
 
 void
@@ -183,6 +193,11 @@ PltFileManager::fillPatchFromPlt(
   int nComp,
   MultiFab& a_mf)
 {
+  // If we haven't yet, read the plot data on all levels
+  if (!m_dataLoaded) {
+    readPlotFileData();
+  }
+
   Vector<BCRec> dummyBCRec(nComp);
   for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
     if (a_level_geom.isPeriodic(idim)) {
