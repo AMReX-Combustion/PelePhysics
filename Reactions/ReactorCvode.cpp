@@ -138,7 +138,6 @@ ReactorCvode::initCvode(
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
       return (1);
     }
-    amrex::Print() << " Setting a_LS for GMRES \n";
   } else if (a_udata->solve_type == cvode::precGMRES) {
     a_LS = SUNLinSol_SPGMR(
       a_y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
