@@ -73,7 +73,7 @@ ReactorCvode::initCvode(
   } else if (a_udata->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     a_LS = SUNLinSol_cuSolverSp_batchQR(
-      a_y, a_A, udata->cusolverHandle,
+      a_y, a_A, a_udata->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag(
           static_cast<void*>(a_LS), "SUNLinSol_cuSolverSp_batchQR", 0)) {
