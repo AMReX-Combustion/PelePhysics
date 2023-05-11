@@ -1628,6 +1628,11 @@ ReactorCvode::react(
   std::memcpy(udata->rhoe_init, rX_in, sizeof(amrex::Real) * ncells);
   std::memcpy(udata->rhoesrc_ext, rX_src_in, sizeof(amrex::Real) * ncells);
 
+  // Update TypicalValues
+  utils::set_sundials_solver_tols<Ordering>(
+    *amrex::sundials::The_Sundials_Context(), cvode_mem, udata->ncells, relTol,
+    absTol, m_typ_vals, "cvode", verbose);
+
   // ReInit CVODE is faster
   CVodeReInit(cvode_mem, time_start, y);
 
@@ -1641,11 +1646,6 @@ ReactorCvode::react(
     return (1);
   }
   BL_PROFILE_VAR_STOP(AroundCVODE);
-
-  // Update TypicalValues
-  utils::set_sundials_solver_tols<Ordering>(
-    *amrex::sundials::The_Sundials_Context(), cvode_mem, udata->ncells, relTol,
-    absTol, m_typ_vals, "cvode", verbose);
 
 #ifdef MOD_REACTOR
   dt_react =
