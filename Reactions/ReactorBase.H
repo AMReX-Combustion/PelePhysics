@@ -2,6 +2,7 @@
 #define REACTORBASE_H
 
 #include <AMReX_ParmParse.H>
+#include <AMReX_Gpu.H>
 #include <sundials/sundials_context.h>
 #include "Factory.H"
 #include "PelePhysics.H"
@@ -80,19 +81,11 @@ public:
 
   void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
-  void set_sundials_solver_tols(
-    sundials::Context& sunctx,
-    void* sundials_mem,
-    const int ncells,
-    const amrex::Real relTol,
-    const amrex::Real absTol,
-    const std::string& solvername);
-
   ~ReactorBase() override = default;
 
 protected:
   int verbose{0};
-  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
 } // namespace pele::physics::reactions
 #endif

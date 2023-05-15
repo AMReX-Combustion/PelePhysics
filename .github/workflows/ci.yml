@@ -21,19 +21,18 @@ jobs:
           clangFormatVersion: 14
 
   CEPTR:
-    needs: Formatting
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8]
-        poetry-version: [1.1.7]
+        python-version: ['3.10']
+        poetry-version: ['1.4.2']
     defaults:
       run:
         working-directory: ${{github.workspace}}/Support/ceptr
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
@@ -61,8 +60,8 @@ jobs:
     strategy:
       matrix:
         comp: [gnu, llvm, cuda, hip, sycl]
-        python-version: [3.8]
-        poetry-version: [1.1.7]
+        python-version: ['3.10']
+        poetry-version: ['1.4.2']
         include:
           - comp: gnu
             amrex_build_args: 'COMP=gnu'
@@ -80,8 +79,8 @@ jobs:
             amrex_build_args: 'USE_SYCL=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
@@ -193,8 +192,8 @@ jobs:
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
-               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
-               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 fuel_name=H2 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_1dArray fuel_name=H2 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
               if [ $? -ne 0 ]; then exit 1; fi; \
             done \
           fi

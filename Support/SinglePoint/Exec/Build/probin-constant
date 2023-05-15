@@ -1,6 +1,0 @@
-&extern
- const_conductivity   = 1.
- const_viscosity      = 2.
- const_bulk_viscosity = 3.
- const_diffusivity    = 4.
-/

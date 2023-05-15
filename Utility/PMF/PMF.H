@@ -77,7 +77,7 @@ pmf(
         y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hi_loside];
         x2 = pmf_data->pmf_X[hi_hiside];
         y2 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + hi_hiside];
-        if (lo_loside == lo_hiside) {
+        if (hi_loside == hi_hiside) {
           dydx = 0.0;
         } else {
           dydx = (y2 - y1) / (x2 - x1);

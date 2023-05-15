@@ -7,6 +7,8 @@ CEPTR: Chemistry Evaluation for Pele Through Recasting
 
 We use CEPTR to generate C++ mechanism files from `Cantera <https://cantera.org>`_ yaml chemistry files. CEPTR is a python package part of the PelePhysics source code.
 
+.. _sec_ceptr_software:
+
 Software requirements
 ---------------------
 

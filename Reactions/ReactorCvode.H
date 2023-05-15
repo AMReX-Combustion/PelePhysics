@@ -139,7 +139,24 @@ public:
   }
 
 private:
-  void checkCvodeOptions() const;
+  void checkCvodeOptions(
+    const std::string& a_solve_type_str,
+    const std::string& a_precond_type_str,
+    int& a_solve_type,
+    int& a_ajac,
+    int& a_precond_type) const;
+  int initCvode(
+    N_Vector& a_y,
+    SUNMatrix& a_A,
+    CVODEUserData* a_udata,
+    SUNNonlinearSolver& a_NLS,
+    SUNLinearSolver& a_LS,
+    void* a_cvode_mem,
+#ifdef AMREX_USE_GPU
+    amrex::gpuStream_t stream,
+#endif
+    const amrex::Real& a_time,
+    int ncells);
   void allocUserData(
     CVODEUserData* udata,
     int a_ncells
@@ -163,16 +180,11 @@ private:
   int max_nls_iters{3};
   int max_fp_accel{2};
   int m_print_profiling{0};
+  int m_cvode_maxorder{2};
+  int m_solve_type{-1};
+  int m_analytical_jacobian{-1};
+  int m_precond_type{-1};
   bool m_clean_init_massfrac{false};
-
-#ifndef AMREX_USE_GPU
-  N_Vector y = nullptr;
-  SUNLinearSolver LS = nullptr;
-  SUNNonlinearSolver NLS = nullptr;
-  SUNMatrix A = nullptr;
-  void* cvode_mem = nullptr;
-  CVODEUserData* udata_g = nullptr;
-#endif
 };
 } // namespace pele::physics::reactions
 #endif

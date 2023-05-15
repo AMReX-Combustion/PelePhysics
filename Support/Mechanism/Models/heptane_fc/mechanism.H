@@ -116,123 +116,61 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 }
 
 //  inverse molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_imw(amrex::Real* imw_new)
-{
-  imw_new[0] = 0.0356964374955379;  // N2
-  imw_new[1] = 0.0625039064941559;  // O
-  imw_new[2] = 0.4960317460317460;  // H2
-  imw_new[3] = 0.9920634920634921;  // H
-  imw_new[4] = 0.0587993179279120;  // OH
-  imw_new[5] = 0.0555092978073827;  // H2O
-  imw_new[6] = 0.0312519532470779;  // O2
-  imw_new[7] = 0.0302975216627280;  // HO2
-  imw_new[8] = 0.0293996589639560;  // H2O2
-  imw_new[9] = 0.0768108149627468;  // CH
-  imw_new[10] = 0.0344613688055690; // HCO
-  imw_new[11] = 0.0712910814857061; // CH2
-  imw_new[12] = 0.0227226249176305; // CO2
-  imw_new[13] = 0.0357015351660121; // CO
-  imw_new[14] = 0.0333044694598015; // CH2O
-  imw_new[15] = 0.0712910814857061; // CH2GSG
-  imw_new[16] = 0.0665114732291320; // CH3
-  imw_new[17] = 0.0322227234645872; // CH3O
-  imw_new[18] = 0.0623324814560868; // CH4
-  imw_new[19] = 0.0312090381374446; // CH3OH
-  imw_new[20] = 0.0332557366145660; // C2H6
-  imw_new[21] = 0.0344091941366733; // C2H5
-  imw_new[22] = 0.0237885672145967; // CH2CO
-  imw_new[23] = 0.0217273221075502; // HOCHO
-  imw_new[24] = 0.0212616673399528; // CH3O2
-  imw_new[25] = 0.0208155533814866; // CH3O2H
-  imw_new[26] = 0.0384054074813734; // C2H2
-  imw_new[27] = 0.0243730044602598; // HCCO
-  imw_new[28] = 0.0369740442209569; // C2H3
-  imw_new[29] = 0.0232315019165989; // CH2CHO
-  imw_new[30] = 0.0237636938285687; // C3H6
-  imw_new[31] = 0.0356455407428531; // C2H4
-  imw_new[32] = 0.0221921395441735; // C2H5O
-  imw_new[33] = 0.0232315019165989; // CH3CO
-  imw_new[34] = 0.0163773337700622; // C2H5O2
-  imw_new[35] = 0.0262818996557071; // C3H2
-  imw_new[36] = 0.0256036049875823; // C3H3
-  imw_new[37] = 0.0249594409085237; // C3H4XA
-  imw_new[38] = 0.0243468945535997; // C3H5XA
-  imw_new[39] = 0.0232077792476038; // NXC3H7
-  imw_new[40] = 0.0133178845872122; // NXC3H7O2
-  imw_new[41] = 0.0184870221104784; // C4H6
-  imw_new[42] = 0.0181488203266788; // C4H7
-  imw_new[43] = 0.0178227703714265; // C4H8X1
-  imw_new[44] = 0.0175082288675678; // PXC4H9
-  imw_new[45] = 0.0112215813452432; // PXC4H9O2
-  imw_new[46] = 0.0144661275623128; // C5H9
-  imw_new[47] = 0.0142582162971412; // C5H10X1
-  imw_new[48] = 0.0140561966743039; // C5H11X1
-  imw_new[49] = 0.0118818469142844; // C6H12X1
-  imw_new[50] = 0.0100809500287307; // C7H15X2
-  imw_new[51] = 0.0099795419390250; // NXC7H16
-}
-
-//  molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_mw(amrex::Real* mw_new)
-{
-  mw_new[0] = 28.014000;   // N2
-  mw_new[1] = 15.999000;   // O
-  mw_new[2] = 2.016000;    // H2
-  mw_new[3] = 1.008000;    // H
-  mw_new[4] = 17.007000;   // OH
-  mw_new[5] = 18.015000;   // H2O
-  mw_new[6] = 31.998000;   // O2
-  mw_new[7] = 33.006000;   // HO2
-  mw_new[8] = 34.014000;   // H2O2
-  mw_new[9] = 13.019000;   // CH
-  mw_new[10] = 29.018000;  // HCO
-  mw_new[11] = 14.027000;  // CH2
-  mw_new[12] = 44.009000;  // CO2
-  mw_new[13] = 28.010000;  // CO
-  mw_new[14] = 30.026000;  // CH2O
-  mw_new[15] = 14.027000;  // CH2GSG
-  mw_new[16] = 15.035000;  // CH3
-  mw_new[17] = 31.034000;  // CH3O
-  mw_new[18] = 16.043000;  // CH4
-  mw_new[19] = 32.042000;  // CH3OH
-  mw_new[20] = 30.070000;  // C2H6
-  mw_new[21] = 29.062000;  // C2H5
-  mw_new[22] = 42.037000;  // CH2CO
-  mw_new[23] = 46.025000;  // HOCHO
-  mw_new[24] = 47.033000;  // CH3O2
-  mw_new[25] = 48.041000;  // CH3O2H
-  mw_new[26] = 26.038000;  // C2H2
-  mw_new[27] = 41.029000;  // HCCO
-  mw_new[28] = 27.046000;  // C2H3
-  mw_new[29] = 43.045000;  // CH2CHO
-  mw_new[30] = 42.081000;  // C3H6
-  mw_new[31] = 28.054000;  // C2H4
-  mw_new[32] = 45.061000;  // C2H5O
-  mw_new[33] = 43.045000;  // CH3CO
-  mw_new[34] = 61.060000;  // C2H5O2
-  mw_new[35] = 38.049000;  // C3H2
-  mw_new[36] = 39.057000;  // C3H3
-  mw_new[37] = 40.065000;  // C3H4XA
-  mw_new[38] = 41.073000;  // C3H5XA
-  mw_new[39] = 43.089000;  // NXC3H7
-  mw_new[40] = 75.087000;  // NXC3H7O2
-  mw_new[41] = 54.092000;  // C4H6
-  mw_new[42] = 55.100000;  // C4H7
-  mw_new[43] = 56.108000;  // C4H8X1
-  mw_new[44] = 57.116000;  // PXC4H9
-  mw_new[45] = 89.114000;  // PXC4H9O2
-  mw_new[46] = 69.127000;  // C5H9
-  mw_new[47] = 70.135000;  // C5H10X1
-  mw_new[48] = 71.143000;  // C5H11X1
-  mw_new[49] = 84.162000;  // C6H12X1
-  mw_new[50] = 99.197000;  // C7H15X2
-  mw_new[51] = 100.205000; // NXC7H16
-}
-
-//  inverse molecular weights
 AMREX_GPU_CONSTANT const amrex::Real global_imw[52] = {
+  0.0356964374955379, // N2
+  0.0625039064941559, // O
+  0.4960317460317460, // H2
+  0.9920634920634921, // H
+  0.0587993179279120, // OH
+  0.0555092978073827, // H2O
+  0.0312519532470779, // O2
+  0.0302975216627280, // HO2
+  0.0293996589639560, // H2O2
+  0.0768108149627468, // CH
+  0.0344613688055690, // HCO
+  0.0712910814857061, // CH2
+  0.0227226249176305, // CO2
+  0.0357015351660121, // CO
+  0.0333044694598015, // CH2O
+  0.0712910814857061, // CH2GSG
+  0.0665114732291320, // CH3
+  0.0322227234645872, // CH3O
+  0.0623324814560868, // CH4
+  0.0312090381374446, // CH3OH
+  0.0332557366145660, // C2H6
+  0.0344091941366733, // C2H5
+  0.0237885672145967, // CH2CO
+  0.0217273221075502, // HOCHO
+  0.0212616673399528, // CH3O2
+  0.0208155533814866, // CH3O2H
+  0.0384054074813734, // C2H2
+  0.0243730044602598, // HCCO
+  0.0369740442209569, // C2H3
+  0.0232315019165989, // CH2CHO
+  0.0237636938285687, // C3H6
+  0.0356455407428531, // C2H4
+  0.0221921395441735, // C2H5O
+  0.0232315019165989, // CH3CO
+  0.0163773337700622, // C2H5O2
+  0.0262818996557071, // C3H2
+  0.0256036049875823, // C3H3
+  0.0249594409085237, // C3H4XA
+  0.0243468945535997, // C3H5XA
+  0.0232077792476038, // NXC3H7
+  0.0133178845872122, // NXC3H7O2
+  0.0184870221104784, // C4H6
+  0.0181488203266788, // C4H7
+  0.0178227703714265, // C4H8X1
+  0.0175082288675678, // PXC4H9
+  0.0112215813452432, // PXC4H9O2
+  0.0144661275623128, // C5H9
+  0.0142582162971412, // C5H10X1
+  0.0140561966743039, // C5H11X1
+  0.0118818469142844, // C6H12X1
+  0.0100809500287307, // C7H15X2
+  0.0099795419390250, // NXC7H16
+};
+const amrex::Real h_global_imw[52] = {
   0.0356964374955379, // N2
   0.0625039064941559, // O
   0.4960317460317460, // H2
@@ -342,6 +280,197 @@ AMREX_GPU_CONSTANT const amrex::Real global_mw[52] = {
   99.197000,  // C7H15X2
   100.205000, // NXC7H16
 };
+const amrex::Real h_global_mw[52] = {
+  28.014000,  // N2
+  15.999000,  // O
+  2.016000,   // H2
+  1.008000,   // H
+  17.007000,  // OH
+  18.015000,  // H2O
+  31.998000,  // O2
+  33.006000,  // HO2
+  34.014000,  // H2O2
+  13.019000,  // CH
+  29.018000,  // HCO
+  14.027000,  // CH2
+  44.009000,  // CO2
+  28.010000,  // CO
+  30.026000,  // CH2O
+  14.027000,  // CH2GSG
+  15.035000,  // CH3
+  31.034000,  // CH3O
+  16.043000,  // CH4
+  32.042000,  // CH3OH
+  30.070000,  // C2H6
+  29.062000,  // C2H5
+  42.037000,  // CH2CO
+  46.025000,  // HOCHO
+  47.033000,  // CH3O2
+  48.041000,  // CH3O2H
+  26.038000,  // C2H2
+  41.029000,  // HCCO
+  27.046000,  // C2H3
+  43.045000,  // CH2CHO
+  42.081000,  // C3H6
+  28.054000,  // C2H4
+  45.061000,  // C2H5O
+  43.045000,  // CH3CO
+  61.060000,  // C2H5O2
+  38.049000,  // C3H2
+  39.057000,  // C3H3
+  40.065000,  // C3H4XA
+  41.073000,  // C3H5XA
+  43.089000,  // NXC3H7
+  75.087000,  // NXC3H7O2
+  54.092000,  // C4H6
+  55.100000,  // C4H7
+  56.108000,  // C4H8X1
+  57.116000,  // PXC4H9
+  89.114000,  // PXC4H9O2
+  69.127000,  // C5H9
+  70.135000,  // C5H10X1
+  71.143000,  // C5H11X1
+  84.162000,  // C6H12X1
+  99.197000,  // C7H15X2
+  100.205000, // NXC7H16
+};
+
+//  inverse molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_imw(amrex::Real* imw_new)
+{
+  imw_new[0] = 0.0356964374955379;  // N2
+  imw_new[1] = 0.0625039064941559;  // O
+  imw_new[2] = 0.4960317460317460;  // H2
+  imw_new[3] = 0.9920634920634921;  // H
+  imw_new[4] = 0.0587993179279120;  // OH
+  imw_new[5] = 0.0555092978073827;  // H2O
+  imw_new[6] = 0.0312519532470779;  // O2
+  imw_new[7] = 0.0302975216627280;  // HO2
+  imw_new[8] = 0.0293996589639560;  // H2O2
+  imw_new[9] = 0.0768108149627468;  // CH
+  imw_new[10] = 0.0344613688055690; // HCO
+  imw_new[11] = 0.0712910814857061; // CH2
+  imw_new[12] = 0.0227226249176305; // CO2
+  imw_new[13] = 0.0357015351660121; // CO
+  imw_new[14] = 0.0333044694598015; // CH2O
+  imw_new[15] = 0.0712910814857061; // CH2GSG
+  imw_new[16] = 0.0665114732291320; // CH3
+  imw_new[17] = 0.0322227234645872; // CH3O
+  imw_new[18] = 0.0623324814560868; // CH4
+  imw_new[19] = 0.0312090381374446; // CH3OH
+  imw_new[20] = 0.0332557366145660; // C2H6
+  imw_new[21] = 0.0344091941366733; // C2H5
+  imw_new[22] = 0.0237885672145967; // CH2CO
+  imw_new[23] = 0.0217273221075502; // HOCHO
+  imw_new[24] = 0.0212616673399528; // CH3O2
+  imw_new[25] = 0.0208155533814866; // CH3O2H
+  imw_new[26] = 0.0384054074813734; // C2H2
+  imw_new[27] = 0.0243730044602598; // HCCO
+  imw_new[28] = 0.0369740442209569; // C2H3
+  imw_new[29] = 0.0232315019165989; // CH2CHO
+  imw_new[30] = 0.0237636938285687; // C3H6
+  imw_new[31] = 0.0356455407428531; // C2H4
+  imw_new[32] = 0.0221921395441735; // C2H5O
+  imw_new[33] = 0.0232315019165989; // CH3CO
+  imw_new[34] = 0.0163773337700622; // C2H5O2
+  imw_new[35] = 0.0262818996557071; // C3H2
+  imw_new[36] = 0.0256036049875823; // C3H3
+  imw_new[37] = 0.0249594409085237; // C3H4XA
+  imw_new[38] = 0.0243468945535997; // C3H5XA
+  imw_new[39] = 0.0232077792476038; // NXC3H7
+  imw_new[40] = 0.0133178845872122; // NXC3H7O2
+  imw_new[41] = 0.0184870221104784; // C4H6
+  imw_new[42] = 0.0181488203266788; // C4H7
+  imw_new[43] = 0.0178227703714265; // C4H8X1
+  imw_new[44] = 0.0175082288675678; // PXC4H9
+  imw_new[45] = 0.0112215813452432; // PXC4H9O2
+  imw_new[46] = 0.0144661275623128; // C5H9
+  imw_new[47] = 0.0142582162971412; // C5H10X1
+  imw_new[48] = 0.0140561966743039; // C5H11X1
+  imw_new[49] = 0.0118818469142844; // C6H12X1
+  imw_new[50] = 0.0100809500287307; // C7H15X2
+  imw_new[51] = 0.0099795419390250; // NXC7H16
+}
+
+//  inverse molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+imw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_imw[n];
+#else
+  return h_global_imw[n];
+#endif
+}
+//  molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_mw(amrex::Real* mw_new)
+{
+  mw_new[0] = 28.014000;   // N2
+  mw_new[1] = 15.999000;   // O
+  mw_new[2] = 2.016000;    // H2
+  mw_new[3] = 1.008000;    // H
+  mw_new[4] = 17.007000;   // OH
+  mw_new[5] = 18.015000;   // H2O
+  mw_new[6] = 31.998000;   // O2
+  mw_new[7] = 33.006000;   // HO2
+  mw_new[8] = 34.014000;   // H2O2
+  mw_new[9] = 13.019000;   // CH
+  mw_new[10] = 29.018000;  // HCO
+  mw_new[11] = 14.027000;  // CH2
+  mw_new[12] = 44.009000;  // CO2
+  mw_new[13] = 28.010000;  // CO
+  mw_new[14] = 30.026000;  // CH2O
+  mw_new[15] = 14.027000;  // CH2GSG
+  mw_new[16] = 15.035000;  // CH3
+  mw_new[17] = 31.034000;  // CH3O
+  mw_new[18] = 16.043000;  // CH4
+  mw_new[19] = 32.042000;  // CH3OH
+  mw_new[20] = 30.070000;  // C2H6
+  mw_new[21] = 29.062000;  // C2H5
+  mw_new[22] = 42.037000;  // CH2CO
+  mw_new[23] = 46.025000;  // HOCHO
+  mw_new[24] = 47.033000;  // CH3O2
+  mw_new[25] = 48.041000;  // CH3O2H
+  mw_new[26] = 26.038000;  // C2H2
+  mw_new[27] = 41.029000;  // HCCO
+  mw_new[28] = 27.046000;  // C2H3
+  mw_new[29] = 43.045000;  // CH2CHO
+  mw_new[30] = 42.081000;  // C3H6
+  mw_new[31] = 28.054000;  // C2H4
+  mw_new[32] = 45.061000;  // C2H5O
+  mw_new[33] = 43.045000;  // CH3CO
+  mw_new[34] = 61.060000;  // C2H5O2
+  mw_new[35] = 38.049000;  // C3H2
+  mw_new[36] = 39.057000;  // C3H3
+  mw_new[37] = 40.065000;  // C3H4XA
+  mw_new[38] = 41.073000;  // C3H5XA
+  mw_new[39] = 43.089000;  // NXC3H7
+  mw_new[40] = 75.087000;  // NXC3H7O2
+  mw_new[41] = 54.092000;  // C4H6
+  mw_new[42] = 55.100000;  // C4H7
+  mw_new[43] = 56.108000;  // C4H8X1
+  mw_new[44] = 57.116000;  // PXC4H9
+  mw_new[45] = 89.114000;  // PXC4H9O2
+  mw_new[46] = 69.127000;  // C5H9
+  mw_new[47] = 70.135000;  // C5H10X1
+  mw_new[48] = 71.143000;  // C5H11X1
+  mw_new[49] = 84.162000;  // C6H12X1
+  mw_new[50] = 99.197000;  // C7H15X2
+  mw_new[51] = 100.205000; // NXC7H16
+}
+
+//  molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+mw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_mw[n];
+#else
+  return h_global_mw[n];
+#endif
+}
 
 //  Returns R, Rc, Patm
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -7090,7 +7219,7 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // Now compute y to x conversion
   x[0] = y[0] / (28.014000 * YOW);
@@ -7333,7 +7462,7 @@ CKPY(
   amrex::Real YOW = 0; //  for computing mean MW
 
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
@@ -7483,7 +7612,7 @@ CKRHOY(
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -7574,7 +7703,7 @@ CKMMWY(const amrex::Real y[], amrex::Real& wtm)
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   wtm = 1.0 / YOW;
@@ -7749,13 +7878,13 @@ CKYTX(const amrex::Real y[], amrex::Real x[])
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 52; i++) {
-    x[i] = y[i] * global_imw[i] * YOWINV;
+    x[i] = y[i] * imw(i) * YOWINV;
   }
 }
 
@@ -7772,7 +7901,7 @@ CKYTCP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 52; i++) {
-    c[i] = y[i] * global_imw[i];
+    c[i] = y[i] * imw(i);
   }
   for (int i = 0; i < 52; i++) {
     YOW += c[i];
@@ -7783,7 +7912,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 52; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 }
 
@@ -7797,7 +7926,7 @@ CKYTCR(
 {
 
   for (int i = 0; i < 52; i++) {
-    c[i] = rho * y[i] * global_imw[i];
+    c[i] = rho * y[i] * imw(i);
   }
 }
 
@@ -8355,7 +8484,7 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
   speciesInternalEnergy(ums, tc);
 
   for (int i = 0; i < 52; i++) {
-    ums[i] *= RT * global_imw[i];
+    ums[i] *= RT * imw(i);
   }
 }
 
@@ -8371,7 +8500,7 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
   speciesEnthalpy(hms, tc);
 
   for (int i = 0; i < 52; i++) {
-    hms[i] *= RT * global_imw[i];
+    hms[i] *= RT * imw(i);
   }
 }
 
@@ -13339,7 +13468,7 @@ CKWYP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 52; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
@@ -13347,7 +13476,7 @@ CKWYP(
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
   for (int i = 0; i < 52; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 
   // convert to chemkin units
@@ -13399,7 +13528,7 @@ CKWYR(
 
   // See Eq 8 with an extra 1e6 so c goes to SI
   for (int i = 0; i < 52; i++) {
-    c[i] = 1e6 * rho * y[i] * global_imw[i];
+    c[i] = 1e6 * rho * y[i] * imw(i);
   }
 
   // call productionRate
@@ -13560,7 +13689,7 @@ CKCHRGMASS(amrex::Real zk[])
   CKCHRG(kchrg);
 
   for (int id = 0; id < 52; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
 }
 

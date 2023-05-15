@@ -106,6 +106,7 @@ endif
 
 # Utilities
 include $(PELE_PHYSICS_HOME)/Utility/PMF/Make.package
+include $(PELE_PHYSICS_HOME)/Utility/PltFileManager/Make.package
 
 
 Pdirs   := Base Boundary AmrCore

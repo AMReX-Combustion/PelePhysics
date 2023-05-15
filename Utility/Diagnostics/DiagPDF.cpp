@@ -13,7 +13,7 @@ DiagPDF::init(const std::string& a_prefix, std::string_view a_diagName)
   pp.query("normalized", m_normalized);
   pp.query("volume_weighted", m_volWeighted);
 
-  if (pp.countval("range")) {
+  if (pp.countval("range") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("range", range, 0, 2);
     m_lowBnd = std::min(range[0], range[1]);
@@ -103,7 +103,7 @@ DiagPDF::processDiag(
       });
     amrex::Gpu::streamSynchronize();
 
-    if (m_volWeighted) {
+    if (m_volWeighted != 0) {
       // Get the geometry volume to account for 2D-RZ
       amrex::MultiFab volume(
         a_state[lev]->boxArray(), a_state[lev]->DistributionMap(), 1, 0);
@@ -115,9 +115,9 @@ DiagPDF::processDiag(
         *a_state[lev], amrex::IntVect(0),
         [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
-          if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth);
+          if (marrs[box_no](i, j, k) != 0) {
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
             amrex::HostDevice::Atomic::Add(
               &(pdf_d_p[cbin]), varrs[box_no](i, j, k));
           }
@@ -128,9 +128,9 @@ DiagPDF::processDiag(
         *a_state[lev], amrex::IntVect(0),
         [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
-          if (marrs[box_no](i, j, k)) {
-            int cbin = std::floor(
-              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth);
+          if (marrs[box_no](i, j, k) != 0) {
+            int cbin = static_cast<int>(std::floor(
+              (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
             amrex::HostDevice::Atomic::Add(&(pdf_d_p[cbin]), amrex::Real(1.0));
           }
         });
@@ -140,7 +140,8 @@ DiagPDF::processDiag(
 
   amrex::Gpu::copy(
     amrex::Gpu::deviceToHost, pdf_d.begin(), pdf_d.end(), pdf.begin());
-  amrex::ParallelDescriptor::ReduceRealSum(pdf.data(), pdf.size());
+  amrex::ParallelDescriptor::ReduceRealSum(
+    pdf.data(), static_cast<int>(pdf.size()));
   auto sum =
     std::accumulate(pdf.begin(), pdf.end(), decltype(pdf)::value_type(0));
 
@@ -204,7 +205,7 @@ DiagPDF::writePDFToFile(
             << m_fieldName + "_PDF"
             << "\n";
 
-    for (size_t i{0}; i < a_pdf.size(); ++i) {
+    for (int i{0}; i < a_pdf.size(); ++i) {
       pdfFile << std::setw(width) << std::setprecision(prec) << std::scientific
               << m_lowBnd + (static_cast<amrex::Real>(i) + 0.5) * binWidth
               << " " << std::setw(width) << std::setprecision(prec)

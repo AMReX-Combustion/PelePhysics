@@ -1,5 +1,5 @@
-#ifndef _DIAGBASE_H_
-#define _DIAGBASE_H_
+#ifndef DIAGBASE_H
+#define DIAGBASE_H
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFab.H>
@@ -15,7 +15,7 @@ public:
 
   virtual void close() = 0;
 
-  bool needUpdate() { return need_update; };
+  bool needUpdate() const { return need_update; }
 
   virtual bool doDiag(const amrex::Real& a_time, int a_nstep);
 
@@ -34,11 +34,11 @@ public:
 
   virtual void addVars(amrex::Vector<std::string>& a_varList);
 
-  int getFieldIndex(
+  static int getFieldIndex(
     const std::string& a_field, const amrex::Vector<std::string>& a_varList);
 
 protected:
-  std::string m_diagfile{""};
+  std::string m_diagfile;
   int m_verbose{0};
   amrex::Real m_per{-1.0};
   int m_interval{-1};

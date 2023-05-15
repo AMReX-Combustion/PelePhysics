@@ -63,23 +63,11 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 }
 
 //  inverse molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_imw(amrex::Real* imw_new)
-{
-  imw_new[0] = 0.0356964374955379; // N2
-  imw_new[1] = 0.0356964374955379; // N2a
-}
-
-//  molecular weights
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-get_mw(amrex::Real* mw_new)
-{
-  mw_new[0] = 28.014000; // N2
-  mw_new[1] = 28.014000; // N2a
-}
-
-//  inverse molecular weights
 AMREX_GPU_CONSTANT const amrex::Real global_imw[2] = {
+  0.0356964374955379, // N2
+  0.0356964374955379, // N2a
+};
+const amrex::Real h_global_imw[2] = {
   0.0356964374955379, // N2
   0.0356964374955379, // N2a
 };
@@ -89,6 +77,47 @@ AMREX_GPU_CONSTANT const amrex::Real global_mw[2] = {
   28.014000, // N2
   28.014000, // N2a
 };
+const amrex::Real h_global_mw[2] = {
+  28.014000, // N2
+  28.014000, // N2a
+};
+
+//  inverse molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_imw(amrex::Real* imw_new)
+{
+  imw_new[0] = 0.0356964374955379; // N2
+  imw_new[1] = 0.0356964374955379; // N2a
+}
+
+//  inverse molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+imw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_imw[n];
+#else
+  return h_global_imw[n];
+#endif
+}
+//  molecular weights
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+get_mw(amrex::Real* mw_new)
+{
+  mw_new[0] = 28.014000; // N2
+  mw_new[1] = 28.014000; // N2a
+}
+
+//  molecular weight
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+mw(const int n)
+{
+#if AMREX_DEVICE_COMPILE
+  return global_mw[n];
+#else
+  return h_global_mw[n];
+#endif
+}
 
 //  Returns R, Rc, Patm
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -617,7 +646,7 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // Now compute y to x conversion
   x[0] = y[0] / (28.014000 * YOW);
@@ -760,7 +789,7 @@ CKPY(
   amrex::Real YOW = 0; //  for computing mean MW
 
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
@@ -810,7 +839,7 @@ CKRHOY(
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -851,7 +880,7 @@ CKMMWY(const amrex::Real y[], amrex::Real& wtm)
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   wtm = 1.0 / YOW;
@@ -926,13 +955,13 @@ CKYTX(const amrex::Real y[], amrex::Real x[])
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 2; i++) {
-    x[i] = y[i] * global_imw[i] * YOWINV;
+    x[i] = y[i] * imw(i) * YOWINV;
   }
 }
 
@@ -949,7 +978,7 @@ CKYTCP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 2; i++) {
-    c[i] = y[i] * global_imw[i];
+    c[i] = y[i] * imw(i);
   }
   for (int i = 0; i < 2; i++) {
     YOW += c[i];
@@ -960,7 +989,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 2; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 }
 
@@ -974,7 +1003,7 @@ CKYTCR(
 {
 
   for (int i = 0; i < 2; i++) {
-    c[i] = rho * y[i] * global_imw[i];
+    c[i] = rho * y[i] * imw(i);
   }
 }
 
@@ -1182,7 +1211,7 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
   speciesInternalEnergy(ums, tc);
 
   for (int i = 0; i < 2; i++) {
-    ums[i] *= RT * global_imw[i];
+    ums[i] *= RT * imw(i);
   }
 }
 
@@ -1198,7 +1227,7 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
   speciesEnthalpy(hms, tc);
 
   for (int i = 0; i < 2; i++) {
-    hms[i] *= RT * global_imw[i];
+    hms[i] *= RT * imw(i);
   }
 }
 
@@ -1272,7 +1301,7 @@ CKWYP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 2; i++) {
-    YOW += y[i] * global_imw[i];
+    YOW += y[i] * imw(i);
   }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
@@ -1280,7 +1309,7 @@ CKWYP(
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
   for (int i = 0; i < 2; i++) {
-    c[i] = PWORT * y[i] * global_imw[i];
+    c[i] = PWORT * y[i] * imw(i);
   }
 
   // convert to chemkin units
@@ -1332,7 +1361,7 @@ CKWYR(
 
   // See Eq 8 with an extra 1e6 so c goes to SI
   for (int i = 0; i < 2; i++) {
-    c[i] = 1e6 * rho * y[i] * global_imw[i];
+    c[i] = 1e6 * rho * y[i] * imw(i);
   }
 
   // call productionRate
@@ -1393,7 +1422,7 @@ CKCHRGMASS(amrex::Real zk[])
   CKCHRG(kchrg);
 
   for (int id = 0; id < 2; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
 }
 

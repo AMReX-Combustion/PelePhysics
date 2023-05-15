@@ -8,17 +8,32 @@ Equation of State
 
 PelePhysics allows the user to use different equation of state (EOS) as the constitutive equation and close the compressible Navier-Stokes system of equations. All the routines needed to fully define an EOS are implemented through PelePhysics module. Available models include:
 
-* An ideal gas mixture model (similar to the CHEMKIN-II approach)
-* A simple `GammaLaw` model
-* Cubic models such as `Soave-Redlich-Kwong`; `Peng-Robinson` support was started but is currently stalled.
+* A simple ``GammaLaw`` model for a single component perfect gas
+* An ideal gas mixture model (similar to the CHEMKIN-II approach) labeled ``Fuego``
+* The ``Soave-Redlich-Kwong`` cubic equation of state; ``Peng-Robinson`` support was started in the original Fortran version of the code but stalled and is not supported.
 
-Examples of EOS implementation can be seen in `PelePhysics/Eos`. The following sections will fully describe the implementation of Soave-Redlich-Kwong, a non-ideal cubic EOS, for a general mixture of species. Integration with CEPTR, for a chemical mechanism described in a chemkin format, will also be highlighted. For an advanced user interested in implementing a new EOS this chapter should provide a good starting point.
+Examples of EOS implementation can be seen in ``PelePhysics/Eos``. The choice between these Eos models is made at compile time. When using GNUmake, this is done by setting the ``Eos_Model`` parameter in the ``GNUmakefile``.
 
+The following sections will fully describe the implementation of Soave-Redlich-Kwong, a non-ideal cubic EOS, for a general mixture of species. Some examples of the old Fortran implementation of the code are given; these have since been ported to C++. Integration with CEPTR, for a chemical mechanism described in a chemkin format, will also be highlighted. For an advanced user interested in implementing a new EOS this chapter should provide a good starting point.
+
+.. note::  For the flow solvers in the Pele suite, the SRK EOS is presently only supported in PeleC, and not PeleLM(eX).
+
+GammaLaw
+========
+
+This EOS corresponds to a single component perfect gas, i.e. a gas that follows :math:`p = \rho \hat{R} T` and :math:`e = c_v T`, with constant :math:`c_v`, which together imply that :math:`p = (\gamma - 1)\rho e`, where :math:`\gamma = c_p / c_v`. The values of the relevant physical properties (:math:`\gamma = 1.4`, :math:`MW=28.97` g/mol) are chosen to correspond to air at standard conditions and are set in ``PelePhysics/Source/PhysicsConstants.H``. 
+
+When the GammaLaw EOS is used, the ``Chemistry_Model`` should be set to ``Null``.
+
+Fuego
+=====
+
+This is a multi-component ideal gas EOS to be used for mutli-component (reacting) calculations with any ``Chemistry_Model`` besides ``Null``. The gas mixture follows :math:`p = \rho \hat{R} T`, but with :math:`h(T) \equiv \sum Y_i h_i(T)` and :math:`h_i(T)` computed based on `NASA polynomials <https://ntrs.nasa.gov/citations/20020085330>`_ that are included in the ``Chemistry_Model``.
+	   
 Soave-Redlich-Kwong (SRK)
 =========================
 
-The cubic model is built on top of the ideal gas models, and is selected by specifying its name as the `Eos_dir` during the build (the `Chemistry_Model` must also be specified).  Any additional parameters (e.g., attractions, repulsions, critical states) are either included in the underlying FUEGO database used to generate the source file model implementation, or else are inferred from the input model data.
-
+The cubic model is built on top of the ideal gas models. It should be used for multi-component (reacting) calculations where the pressure is sufficiently high that real gas effects are important; there is a significant computational cost penalty relative ideal gas calculations. Note that the function to compute the analytical Jacobian of the chemical system using the SRK EOS has not been implemented, so this EOS is not compatible with reaction integrators that rely on computing the analytical Jacobian. Any additional parameters (e.g., attractions, repulsions, critical states) are either included in the underlying Fuego database used to generate the source file model implementation, or else are inferred from the input model data.
 
 SRK EOS as a function of Pressure (p), Temperature(T), and :math:`\tau` (specific volume) is given by
 
