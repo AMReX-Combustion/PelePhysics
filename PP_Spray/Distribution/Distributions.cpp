@@ -10,9 +10,9 @@ Uniform::init(const std::string& a_prefix)
 }
 
 void
-Uniform::init(const amrex::Real& mean, const amrex::Real& /*std*/)
+Uniform::init(const amrex::Real& diam)
 {
-  m_diam = mean;
+  m_diam = diam;
 }
 
 amrex::Real
@@ -119,13 +119,12 @@ ChiSquared::init(const std::string& a_prefix)
 {
   amrex::ParmParse pp(a_prefix);
   amrex::Real d32 = 0.;
-  amrex::Real dummy = 0.;
   pp.get("d32", d32);
-  init(d32, dummy);
+  init(d32);
 }
 
 void
-ChiSquared::init(const amrex::Real& d32, const amrex::Real& /*dummy*/)
+ChiSquared::init(const amrex::Real& d32)
 {
   m_d32 = d32;
   amrex::Real xiend = 12.;

@@ -10,10 +10,6 @@ public:
 
   virtual void init(const std::string& a_prefix) = 0;
 
-  // Initializer that takes inputs directly. inp2 is std, except for Weibull
-  // where it is k
-  virtual void init(const amrex::Real& mean, const amrex::Real& inp2) = 0;
-
   virtual amrex::Real get_dia() = 0;
   virtual amrex::Real get_avg_dia() = 0;
 
