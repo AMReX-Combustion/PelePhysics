@@ -148,9 +148,9 @@ SprayParticleContainer::sprayInjection(
     }
   }
   amrex::Real est_mdot = cur_mass / dt;
-  // If we are over-injecting mass, we can either decrease the number density or increase the minimum parcel
-  if (est_mdot - mdot > 0.1 * mdot) {
-    // Increase the minimum injection parcels
+  // If we are over-injecting mass, increase the minimum parcels needed for
+  // injection
+  if (est_mdot - mdot > 0.5 * mdot) {
     spray_jet->m_minParcel += 1.;
   }
   for (auto& kv : host_particles) {
