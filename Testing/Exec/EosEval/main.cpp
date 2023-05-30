@@ -19,11 +19,14 @@ main(int argc, char* argv[])
 
     amrex::ParmParse pp;
 
+    int gridsize = 128;
+    pp.query("gridsize",gridsize);
+
     // Define geometry
     amrex::Array<int, AMREX_SPACEDIM> npts{AMREX_D_DECL(1, 1, 1)};
 
     for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-      npts[i] = 128;
+      npts[i] = gridsize;
     }
 
     amrex::Box domain(
@@ -59,7 +62,8 @@ main(int argc, char* argv[])
     amrex::MultiFab energy(ba, dm, 1, num_grow);
 
     const auto geomdata = geom.data();
-
+    {
+      BL_PROFILE("Pele::init()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -77,11 +81,13 @@ main(int argc, char* argv[])
           initialize_data(i, j, k, Y_a, T_a, rho_a, e_a, geomdata);
         });
     }
+    }
 
     amrex::MultiFab VarPlt(ba, dm, 4, num_grow);
     amrex::MultiFab cp(ba, dm, 1, num_grow);
     amrex::MultiFab cv(ba, dm, 1, num_grow);
-
+    {
+      BL_PROFILE("Pele::cp()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -93,13 +99,16 @@ main(int argc, char* argv[])
       auto const& Y_a = mass_frac.const_array(mfi);
       auto const& T_a = temperature.const_array(mfi);
       auto const& cp_a = cp.array(mfi);
+      auto const& rho_a = density.array(mfi);
       amrex::ParallelFor(
         box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-          get_cp(i, j, k, Y_a, T_a, cp_a);
+          get_cp(i, j, k, Y_a, T_a, rho_a, cp_a);
         });
     }
+    }
     amrex::MultiFab::Copy(VarPlt, cp, 0, 0, 1, num_grow);
-
+    {
+       BL_PROFILE("Pele::cv()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -111,13 +120,17 @@ main(int argc, char* argv[])
       auto const& Y_a = mass_frac.const_array(mfi);
       auto const& T_a = temperature.const_array(mfi);
       auto const& cv_a = cv.array(mfi);
+      auto const& rho_a = density.array(mfi);
       amrex::ParallelFor(
         box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-          get_cv(i, j, k, Y_a, T_a, cv_a);
+          get_cv(i, j, k, Y_a, T_a, rho_a, cv_a);
         });
+    }
     }
     amrex::MultiFab::Copy(VarPlt, cv, 0, 1, 1, num_grow);
 
+    {
+       BL_PROFILE("Pele::getE()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -129,10 +142,12 @@ main(int argc, char* argv[])
       auto const& Y_a = mass_frac.const_array(mfi);
       auto const& e_a = energy.const_array(mfi);
       auto const& T_a = temperature.array(mfi);
+      auto const& rho_a = density.array(mfi);
       amrex::ParallelFor(
         box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-          get_T_from_EY(i, j, k, Y_a, T_a, e_a);
+          get_T_from_EY(i, j, k, Y_a, T_a, rho_a, e_a);
         });
+    }
     }
     amrex::MultiFab::Copy(VarPlt, temperature, 0, 2, 1, num_grow);
     amrex::MultiFab::Copy(VarPlt, energy, 0, 3, 1, num_grow);

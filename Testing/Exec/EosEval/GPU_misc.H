@@ -26,7 +26,7 @@ initialize_data(
 
   amrex::Real dTemp = 5.0;
   amrex::Real dRho = 0.005;
-  amrex::Real denergy = 100.0;
+  amrex::Real denergy = 1000000.0;
   amrex::Real y = plo[1] + (j + 0.5) * dx[1];
   amrex::Real x = plo[0] + (i + 0.5) * dx[0];
   amrex::Real pi = 3.1415926535897932;
@@ -65,16 +65,15 @@ initialize_data(
   mf(i, j, k, NUM_SPECIES - 1) = 1.0 - dummy;
   // compute real E + perturb it for future tests
   auto eos = pele::physics::PhysicsType::eos();
-  eos.T2Ei(temp(i, j, k), ei.arr);
-  energy(i, j, k) = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
   for (int n = 0; n < NUM_SPECIES; n++) {
-    energy(i, j, k) = energy(i, j, k) + mf(i, j, k, n) * ei[n];
+    mf_pt[n] = mf(i, j, k, n);
   }
+  eos.RTY2E(rho(i,j,k), temp(i, j, k), mf_pt.arr, energy(i,j,k));
 #if (AMREX_SPACEDIM == 1)
   energy(i, j, k) = energy(i, j, k);
 #else
-  energy(i, j, k) =
-    energy(i, j, k) + denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
+  energy(i, j, k) += denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
 #endif
 }
 
@@ -87,6 +86,7 @@ get_cp(
   int k,
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<const amrex::Real> const& temp,
+  amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& cp) noexcept
 {
 
@@ -96,7 +96,7 @@ get_cp(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.TY2Cp(temp(i, j, k), mf_pt.arr, cp(i, j, k));
+  eos.RTY2Cp(rho(i,j,k), temp(i, j, k), mf_pt.arr, cp(i, j, k));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -108,6 +108,7 @@ get_cv(
   int k,
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<const amrex::Real> const& temp,
+  amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& cv) noexcept
 {
 
@@ -117,7 +118,7 @@ get_cv(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.TY2Cv(temp(i, j, k), mf_pt.arr, cv(i, j, k));
+  eos.RTY2Cv(rho(i,j,k), temp(i, j, k), mf_pt.arr, cv(i, j, k));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -129,6 +130,7 @@ get_T_from_EY(
   int k,
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<amrex::Real> const& temp,
+  amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<const amrex::Real> const& energy) noexcept
 {
 
@@ -138,7 +140,7 @@ get_T_from_EY(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.EY2T(energy(i, j, k), mf_pt.arr, temp(i, j, k));
+  eos.REY2T(rho(i,j,k), energy(i, j, k), mf_pt.arr, temp(i, j, k));
 }
 
 #endif
