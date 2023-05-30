@@ -433,7 +433,8 @@ struct SRK
     Tn = T;
     AMREX_ASSERT(Tn > 0.0);
 
-    while (std::abs(fzero) > convCrit && nIter < maxIter) {
+    amrex::Real dT = 100000.0;
+    while (std::abs(dT) > convCritT && nIter < maxIter) {
       nIter++;
       Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
       // ideal gas internal energy
@@ -449,7 +450,7 @@ struct SRK
 
       // Take difference between E(Tn) and E and iterate
       fzero = -E + Eig + (Tn * dAmdT - am) * K1;
-      amrex::Real dT = fzero / Cv;
+      dT = fzero / Cv;
       Tn -= dT;
     }
     T = Tn;
@@ -543,7 +544,7 @@ struct SRK
     nIter = 0;
 
     // Newton Iteration loop
-    while (std::abs(P - Pnp1) > convCrit && nIter < maxIter) {
+    while (std::abs(P - Pnp1) > convCritP && nIter < maxIter) {
       nIter += 1;
       Calc_dAmdT(T, Y, dAmdT);
       amrex::Real dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
@@ -1055,29 +1056,15 @@ struct SRK
   template <class... Args>
   AMREX_GPU_HOST_DEVICE explicit SRK(Args... /*unused*/)
   {
-    // Note maybe these should be placed in mechanism.H and computed
-    // there instead of every time the EOS is initialized
-    amrex::Real Asti[NUM_SPECIES];
-    amrex::Real omega[NUM_SPECIES];
-    GET_CRITPARAMS(Tc, Asti, Bi, omega);
-    for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      oneOverTc[ii] = 1.0 / Tc[ii];
-      sqrtOneOverTc[ii] = std::sqrt(oneOverTc[ii]);
-      sqrtAsti[ii] = std::sqrt(Asti[ii]);
-      Fomega[ii] = f0 + omega[ii] * (f1 + f2 * omega[ii]);
-    }
+    GET_CRITPARAMS_SRK(sqrtOneOverTc, sqrtAsti, Bi, Fomega);
   }
 
   // Constants for SRK
-  static constexpr amrex::Real f0 = 0.48508e+0;
-  static constexpr amrex::Real f1 = 1.5517e+0;
-  static constexpr amrex::Real f2 = -0.151613e+0;
-  static constexpr amrex::Real convCrit = 1e-4;
+  static constexpr amrex::Real convCritP = 1e-4;
+  static constexpr amrex::Real convCritT = 1e-6;
   static constexpr int maxIter = 2000;
 
-  amrex::Real Tc[NUM_SPECIES];
   amrex::Real Bi[NUM_SPECIES];
-  amrex::Real oneOverTc[NUM_SPECIES];
   amrex::Real sqrtOneOverTc[NUM_SPECIES];
   amrex::Real sqrtAsti[NUM_SPECIES];
   amrex::Real Fomega[NUM_SPECIES];
