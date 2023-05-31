@@ -186,15 +186,15 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   //
   // Set if spray ascii files should be written
   //
-  pp.query("write_ascii_files", m_writeASCIIFiles);
+  pp.query("write_ascii_files", write_ascii_files);
   //
   // Set if gas phase spray source term should be written
   //
-  pp.query("plot_src", m_plotSpraySrc);
+  pp.query("plot_src", plot_spray_src);
   //
   // Used in initData() on startup to read in a file of particles.
   //
-  pp.query("init_file", m_initFile);
+  pp.query("init_file", spray_init_file);
 #ifdef AMREX_USE_EB
   //
   // Spray source terms are only added to cells with a volume fraction higher
@@ -309,7 +309,7 @@ SprayParticleContainer::SprayInitialize(
     init_sprays = true;
   }
   InitSprayParticles(
-    init_part, prob_parm
+    init_sprays, prob_parm
 #ifndef PELELM_USE_SPRAY
     ,
     prob_parm_d
