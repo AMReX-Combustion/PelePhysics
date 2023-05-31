@@ -143,8 +143,9 @@ public:
     const int depos_width = 0)
   {
     if (level - 1 < finest_level) {
-      return depos_width + static_cast<int>(std::round(
-                             cfl * static_cast<amrex::Real>(amr_ncycle)));
+      return amrex::max(
+        1, depos_width + static_cast<int>(std::round(
+                           cfl * static_cast<amrex::Real>(amr_ncycle))));
     }
     return 0;
   }
@@ -194,7 +195,8 @@ public:
     const amrex::Real& cfl = 0.5,
     const int depos_width = 0)
   {
-    int ghost_source = depos_width + static_cast<int>(std::round(cfl));
+    int ghost_source =
+      amrex::max(1, depos_width + static_cast<int>(std::round(cfl)));
     if (level > 0) {
       // If ghost particles are present, we need to accommodate those
       const int ghost_part_cells =
