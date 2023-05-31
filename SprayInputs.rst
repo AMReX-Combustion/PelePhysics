@@ -67,9 +67,6 @@ Spray Flags and Inputs
    |``write_ascii_files``  |Output ascii files of spray    |No           |``0``              |
    |                       |data                           |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
-   |``init_function``      |Initialize with                |No           |``1``              |
-   |                       |``InitSprayParticles()``       |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
    |``cfl``                |Particle CFL number for        |No           |``0.5``            |
    |                       |limiting time step             |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
@@ -118,8 +115,6 @@ Templates to facilitate and simplify spray injection are available in `PeleMP`. 
     m_sprayJets.resize(num_jets);
     std::string jet_name = "jet1";
     m_sprayJets[0] = std::make_unique<SprayJet>(jet_name, Geom(0));
-    // Start without any particles
-    m_injectVel = m_sprayJets[0]->jet_vel();
     return;
   }
 
