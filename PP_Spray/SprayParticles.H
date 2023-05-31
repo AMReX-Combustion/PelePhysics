@@ -43,27 +43,14 @@ public:
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
-  SprayParticleContainer(
-    amrex::AmrCore* amr,
-    amrex::BCRec* _phys_bc,
-    const SprayData& fdat,
-    const SprayComps& SPI,
-    amrex::Real part_cfl = -1.)
+  SprayParticleContainer(amrex::AmrCore* amr, amrex::BCRec* _phys_bc)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
-      phys_bc(_phys_bc),
-      m_sprayData(new SprayData{}),
-      m_sprayIndx(SPI),
-      m_partCFL(part_cfl)
+      phys_bc(_phys_bc)
   {
-    d_sprayData =
-      static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
-    std::memcpy(m_sprayData, &(fdat), sizeof(SprayData));
-    amrex::Gpu::copy(
-      amrex::Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
     init_bcs();
   }
 
-  ~SprayParticleContainer() override
+  static void SprayCleanUp()
   {
     delete m_sprayData;
     amrex::The_Arena()->free(d_sprayData);
@@ -94,26 +81,14 @@ public:
     const int num_redist = 1);
 
   /// \brief Setup spray parameters
-  static void spraySetup(SprayData& sprayData, const amrex::Real* body_force);
+  static void spraySetup(const amrex::Real* body_force);
 
   /// \brief Read in spray parameters from input file
-  static void readSprayParams(
-    int& particle_verbose,
-    amrex::Real& particle_cfl,
-    int& write_spray_ascii_files,
-    int& plot_spray_src,
-    int& init_function,
-    std::string& init_file,
-    SprayData& sprayData,
-    const amrex::Real& max_cfl = 0.5);
+  static void readSprayParams(int& particle_verbose);
 
   /// \brief Spray particle write routine, writes plot, checkpoint, ascii, and
   /// injection data files
-  void SprayParticleIO(
-    const int level,
-    const bool is_checkpoint,
-    const int write_ascii,
-    const std::string& dir);
+  void SprayParticleIO(const int level, const bool is_checkpoint, const std::string& dir);
 
   /// \brief Derive grid variables related to sprays
   void computeDerivedVars(
@@ -121,7 +96,7 @@ public:
 
   /// \brief Compute a maximum time step based on the particle velocities and a
   /// particle CFL number
-  amrex::Real estTimestep(int level, amrex::Real cfl) const;
+  amrex::Real estTimestep(int level) const;
 
   /// \brief Reset the particle ID in case we need to reinitialize the particles
   static inline void resetID(const int id) { ParticleType::NextID(id); }
@@ -347,6 +322,17 @@ public:
 #endif
   );
 
+  /// \brief Generalized initializer routine. Calls #InitSprayParticles and #PostInitRestart
+  void SprayInitialize(
+#ifdef PELELM_USE_SPRAY
+    ProbParm const& prob_parm,
+#else
+    ProbParmHost const& prob_parm,
+    ProbParmDevice const& prob_parm_d,
+#endif
+    const std::string& restart_dir = ""
+  );
+
   /// \brief Problem specific initialization routine. Typically initializes the
   /// SprayJet pointers or calls #uniformSprayInit
   void InitSprayParticles(
@@ -377,9 +363,39 @@ public:
     return m_sprayDeriveVars;
   }
 
+  /// \brief Return host spray data pointer
+  static SprayData* getSprayData()
+  {
+    return m_sprayData;
+  }
+
+  /// \brief Return fuel species index
+  static int getFuelIndx(const int spf)
+  {
+    return m_sprayData->dep_indx[spf];
+  }
+
+  /// \brief Return spray indices
+  static SprayComps getSprayComps()
+  {
+    return m_sprayIndx;
+  }
+
+  static void AssignSprayComps(SprayComps scomps)
+  {
+    m_sprayIndx = scomps;
+  }
+
   static std::string m_sprayFuelNames[SPRAY_FUEL_NUM];
   static std::string m_sprayDepNames[SPRAY_FUEL_NUM];
   static amrex::Vector<std::string> m_sprayDeriveVars;
+  static SprayData* m_sprayData;
+  static SprayData* d_sprayData;
+  static SprayComps m_sprayIndx;
+  static amrex::Real spray_cfl;
+  static bool write_ascii_files;
+  static bool plot_spray_src;
+  static std::string spray_init_file;
 
 private:
   /// \brief This defines reflect_lo and reflect_hi from phys_bc
@@ -388,11 +404,6 @@ private:
   amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
-  SprayData* m_sprayData;
-  SprayData* d_sprayData = nullptr;
-  SprayComps m_sprayIndx;
-  // Particle CFL, used for injection cases with LMeX
-  amrex::Real m_partCFL;
   amrex::Vector<std::unique_ptr<SprayJet>> m_sprayJets;
 };
 

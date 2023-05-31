@@ -6,6 +6,13 @@ using namespace amrex;
 std::string SprayParticleContainer::m_sprayFuelNames[SPRAY_FUEL_NUM];
 std::string SprayParticleContainer::m_sprayDepNames[SPRAY_FUEL_NUM];
 Vector<std::string> SprayParticleContainer::m_sprayDeriveVars;
+SprayData* SprayParticleContainer::m_sprayData = nullptr;
+SprayData* SprayParticleContainer::d_sprayData = nullptr;
+SprayComps SprayParticleContainer::m_sprayIndx;
+Real SprayParticleContainer::spray_cfl = 0.5;
+bool SprayParticleContainer::write_ascii_files = false;
+bool SprayParticleContainer::plot_spray_src = false;
+std::string SprayParticleContainer::spray_init_file = "";
 
 void
 getInpCoef(
@@ -59,26 +66,25 @@ getInpVal(
 }
 
 void
-SprayParticleContainer::readSprayParams(
-  int& particle_verbose,
-  Real& particle_cfl,
-  int& write_spray_ascii_files,
-  int& plot_spray_src,
-  int& init_function,
-  std::string& init_file,
-  SprayData& sprayData,
-  const Real& max_cfl)
+SprayParticleContainer::readSprayParams(int& particle_verbose)
 {
+  m_sprayData = new SprayData{};
+  d_sprayData =
+    static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
   ParmParse pp("particles");
-  //
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
 
-  pp.query("mass_transfer", sprayData.mass_trans);
-  pp.query("mom_transfer", sprayData.mom_trans);
-  pp.query("fixed_parts", sprayData.fixed_parts);
-  pp.query("cfl", particle_cfl);
-  if (particle_cfl > max_cfl) {
+  pp.query("mass_transfer", m_sprayData->mass_trans);
+  pp.query("mom_transfer", m_sprayData->mom_trans);
+  pp.query("fixed_parts", m_sprayData->fixed_parts);
+#ifdef PELELM_USE_SPRAY
+  int max_cfl = 2.;
+#else
+  int max_cfl = 0.5;
+#endif
+  pp.query("cfl", spray_cfl);
+  if (spray_cfl > max_cfl) {
     Abort("particles.cfl must be <= " + std::to_string(max_cfl));
   }
   // Number of fuel species in spray droplets
@@ -97,15 +103,15 @@ SprayParticleContainer::readSprayParams(
       has_dep_spec = true;
       pp.getarr("dep_fuel_species", dep_fuel_names);
     }
-    getInpVal(sprayData.critT.data(), pp, fuel_names.data(), "crit_temp");
-    getInpVal(sprayData.boilT.data(), pp, fuel_names.data(), "boil_temp");
-    getInpVal(sprayData.cp.data(), pp, fuel_names.data(), "cp");
-    getInpVal(sprayData.ref_latent.data(), pp, fuel_names.data(), "latent");
+    getInpVal(m_sprayData->critT.data(), pp, fuel_names.data(), "crit_temp");
+    getInpVal(m_sprayData->boilT.data(), pp, fuel_names.data(), "boil_temp");
+    getInpVal(m_sprayData->cp.data(), pp, fuel_names.data(), "cp");
+    getInpVal(m_sprayData->ref_latent.data(), pp, fuel_names.data(), "latent");
 
-    getInpCoef(sprayData.lambda_coef.data(), pp, fuel_names.data(), "lambda");
-    getInpCoef(sprayData.psat_coef.data(), pp, fuel_names.data(), "psat");
-    getInpCoef(sprayData.rho_coef.data(), pp, fuel_names.data(), "rho", true);
-    getInpCoef(sprayData.mu_coef.data(), pp, fuel_names.data(), "mu");
+    getInpCoef(m_sprayData->lambda_coef.data(), pp, fuel_names.data(), "lambda");
+    getInpCoef(m_sprayData->psat_coef.data(), pp, fuel_names.data(), "psat");
+    getInpCoef(m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
+    getInpCoef(m_sprayData->mu_coef.data(), pp, fuel_names.data(), "mu");
     for (int i = 0; i < nfuel; ++i) {
       m_sprayFuelNames[i] = fuel_names[i];
       if (has_dep_spec) {
@@ -113,7 +119,7 @@ SprayParticleContainer::readSprayParams(
       } else {
         m_sprayDepNames[i] = m_sprayFuelNames[i];
       }
-      sprayData.latent[i] = sprayData.ref_latent[i];
+      m_sprayData->latent[i] = m_sprayData->ref_latent[i];
     }
   }
 
@@ -178,29 +184,25 @@ SprayParticleContainer::readSprayParams(
   //
   // Set if spray ascii files should be written
   //
-  pp.query("write_ascii_files", write_spray_ascii_files);
+  pp.query("write_ascii_files", m_writeASCIIFiles);
   //
   // Set if gas phase spray source term should be written
   //
-  pp.query("plot_src", plot_spray_src);
+  pp.query("plot_src", m_plotSpraySrc);
   //
   // Used in initData() on startup to read in a file of particles.
   //
-  pp.query("init_file", init_file);
-  //
-  // Used in initData() on startup to set the particle field using the
-  // SprayParticlesInitInsert.cpp problem specific function
-  //
-  pp.query("init_function", init_function);
+  pp.query("init_file", m_initFile);
 #ifdef AMREX_USE_EB
   //
   // Spray source terms are only added to cells with a volume fraction higher
   // than this value
   //
-  pp.query("min_eb_vfrac", sprayData.min_eb_vfrac);
+  pp.query("min_eb_vfrac", m_sprayData->min_eb_vfrac);
 #endif
 
-  sprayData.ref_T = spray_ref_T;
+  m_sprayData->num_ppp = parcel_size;
+  m_sprayData->ref_T = spray_ref_T;
 
   // List of known derived spray quantities
   std::vector<std::string> derive_names = {
@@ -247,7 +249,7 @@ SprayParticleContainer::readSprayParams(
 }
 
 void
-SprayParticleContainer::spraySetup(SprayData& sprayData, const Real* body_force)
+SprayParticleContainer::spraySetup(const Real* body_force)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
@@ -257,34 +259,61 @@ SprayParticleContainer::spraySetup(SprayData& sprayData, const Real* body_force)
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
       std::string gas_spec = spec_names[ns];
       if (gas_spec == m_sprayFuelNames[i]) {
-        sprayData.indx[i] = ns;
+        m_sprayData->indx[i] = ns;
       }
       if (gas_spec == m_sprayDepNames[i]) {
-        sprayData.dep_indx[i] = ns;
+        m_sprayData->dep_indx[i] = ns;
       }
     }
-    if (sprayData.indx[i] < 0) {
+    if (m_sprayData->indx[i] < 0) {
       Abort("Fuel " + m_sprayFuelNames[i] + " not found in species list");
     }
-    if (sprayData.dep_indx[i] < 0) {
+    if (m_sprayData->dep_indx[i] < 0) {
       Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
     }
   }
 #else
-  sprayData.indx[0] = 0;
-  sprayData.dep_indx[0] = 0;
+  m_sprayData->indx[0] = 0;
+  m_sprayData->dep_indx[0] = 0;
 #endif
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
   auto eos = pele::physics::PhysicsType::eos();
-  eos.T2Hi(sprayData.ref_T, fuelEnth.data());
+  eos.T2Hi(m_sprayData->ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
-    const int fspec = sprayData.indx[ns];
-    sprayData.latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
+    const int fspec = m_sprayData->indx[ns];
+    m_sprayData->latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
   }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    sprayData.body_force[dir] = body_force[dir];
+    m_sprayData->body_force[dir] = body_force[dir];
   }
+  Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
   Gpu::streamSynchronize();
   ParallelDescriptor::Barrier();
+}
+
+void SprayParticleContainer::SprayInitialize(
+#ifdef PELELM_USE_SPRAY
+    ProbParm const& prob_parm,
+#else
+    ProbParmHost const& prob_parm,
+    ProbParmDevice const& prob_parm_d,
+#endif
+    const std::string& restart_dir)
+{
+  bool init_sprays = false;
+  if (restart_dir.empty() && spray_init_file.empty()) {
+    init_sprays = true;
+  }
+  InitSprayParticles(init_part, prob_parm
+#ifndef PELELM_USE_SPRAY
+                     , prob_parm_d
+#endif
+                     );
+  if (!spray_init_file.empty()) {
+    InitFromAsciiFile(spray_init_file, NSR_SPR);
+  } else if (!restart_dir.empty()) {
+    Restart(restart_dir, "particles");
+  }
+  PostInitRestart(restart_dir);
 }

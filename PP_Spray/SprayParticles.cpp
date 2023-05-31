@@ -87,14 +87,14 @@ SprayParticleContainer::moveKickDrift(
 }
 
 Real
-SprayParticleContainer::estTimestep(int level, Real cfl) const
+SprayParticleContainer::estTimestep(int level) const
 {
   BL_PROFILE("ParticleContainer::estTimestep()");
   Real dt = std::numeric_limits<Real>::max();
   if (level >= this->GetParticles().size() || m_sprayData->fixed_parts) {
     return -1.;
   }
-
+  const Real cfl = SprayParticleContainer::spray_cfl;
   const auto dx = Geom(level).CellSizeArray();
   const auto dxi = Geom(level).InvCellSizeArray();
   {
