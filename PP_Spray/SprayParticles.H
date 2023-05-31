@@ -88,7 +88,8 @@ public:
 
   /// \brief Spray particle write routine, writes plot, checkpoint, ascii, and
   /// injection data files
-  void SprayParticleIO(const int level, const bool is_checkpoint, const std::string& dir);
+  void SprayParticleIO(
+    const int level, const bool is_checkpoint, const std::string& dir);
 
   /// \brief Derive grid variables related to sprays
   void computeDerivedVars(
@@ -322,7 +323,8 @@ public:
 #endif
   );
 
-  /// \brief Generalized initializer routine. Calls #InitSprayParticles and #PostInitRestart
+  /// \brief Generalized initializer routine. Calls #InitSprayParticles and
+  /// #PostInitRestart
   void SprayInitialize(
 #ifdef PELELM_USE_SPRAY
     ProbParm const& prob_parm,
@@ -330,8 +332,7 @@ public:
     ProbParmHost const& prob_parm,
     ProbParmDevice const& prob_parm_d,
 #endif
-    const std::string& restart_dir = ""
-  );
+    const std::string& restart_dir = "");
 
   /// \brief Problem specific initialization routine. Typically initializes the
   /// SprayJet pointers or calls #uniformSprayInit
@@ -364,27 +365,15 @@ public:
   }
 
   /// \brief Return host spray data pointer
-  static SprayData* getSprayData()
-  {
-    return m_sprayData;
-  }
+  static SprayData* getSprayData() { return m_sprayData; }
 
   /// \brief Return fuel species index
-  static int getFuelIndx(const int spf)
-  {
-    return m_sprayData->dep_indx[spf];
-  }
+  static int getFuelIndx(const int spf) { return m_sprayData->dep_indx[spf]; }
 
   /// \brief Return spray indices
-  static SprayComps getSprayComps()
-  {
-    return m_sprayIndx;
-  }
+  static SprayComps getSprayComps() { return m_sprayIndx; }
 
-  static void AssignSprayComps(SprayComps scomps)
-  {
-    m_sprayIndx = scomps;
-  }
+  static void AssignSprayComps(SprayComps scomps) { m_sprayIndx = scomps; }
 
   static std::string m_sprayFuelNames[SPRAY_FUEL_NUM];
   static std::string m_sprayDepNames[SPRAY_FUEL_NUM];

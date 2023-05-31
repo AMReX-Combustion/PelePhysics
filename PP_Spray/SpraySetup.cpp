@@ -108,9 +108,11 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     getInpVal(m_sprayData->cp.data(), pp, fuel_names.data(), "cp");
     getInpVal(m_sprayData->ref_latent.data(), pp, fuel_names.data(), "latent");
 
-    getInpCoef(m_sprayData->lambda_coef.data(), pp, fuel_names.data(), "lambda");
+    getInpCoef(
+      m_sprayData->lambda_coef.data(), pp, fuel_names.data(), "lambda");
     getInpCoef(m_sprayData->psat_coef.data(), pp, fuel_names.data(), "psat");
-    getInpCoef(m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
+    getInpCoef(
+      m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
     getInpCoef(m_sprayData->mu_coef.data(), pp, fuel_names.data(), "mu");
     for (int i = 0; i < nfuel; ++i) {
       m_sprayFuelNames[i] = fuel_names[i];
@@ -292,24 +294,27 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   ParallelDescriptor::Barrier();
 }
 
-void SprayParticleContainer::SprayInitialize(
+void
+SprayParticleContainer::SprayInitialize(
 #ifdef PELELM_USE_SPRAY
-    ProbParm const& prob_parm,
+  ProbParm const& prob_parm,
 #else
-    ProbParmHost const& prob_parm,
-    ProbParmDevice const& prob_parm_d,
+  ProbParmHost const& prob_parm,
+  ProbParmDevice const& prob_parm_d,
 #endif
-    const std::string& restart_dir)
+  const std::string& restart_dir)
 {
   bool init_sprays = false;
   if (restart_dir.empty() && spray_init_file.empty()) {
     init_sprays = true;
   }
-  InitSprayParticles(init_part, prob_parm
+  InitSprayParticles(
+    init_part, prob_parm
 #ifndef PELELM_USE_SPRAY
-                     , prob_parm_d
+    ,
+    prob_parm_d
 #endif
-                     );
+  );
   if (!spray_init_file.empty()) {
     InitFromAsciiFile(spray_init_file, NSR_SPR);
   } else if (!restart_dir.empty()) {

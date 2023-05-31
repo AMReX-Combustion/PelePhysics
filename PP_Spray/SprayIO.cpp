@@ -5,9 +5,7 @@ using namespace amrex;
 
 void
 SprayParticleContainer::SprayParticleIO(
-  const int level,
-  const bool is_checkpoint,
-  const std::string& dir)
+  const int level, const bool is_checkpoint, const std::string& dir)
 {
   Vector<std::string> real_comp_names(NSR_SPR);
   AMREX_D_TERM(real_comp_names[SprayComps::pstateVel] = "xvel";
