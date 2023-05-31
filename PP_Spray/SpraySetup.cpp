@@ -79,9 +79,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
 #ifdef PELELM_USE_SPRAY
-  int max_cfl = 2.;
+  Real max_cfl = 2.;
 #else
-  int max_cfl = 0.5;
+  Real max_cfl = 0.5;
 #endif
   pp.query("cfl", spray_cfl);
   if (spray_cfl > max_cfl) {
