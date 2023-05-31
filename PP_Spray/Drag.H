@@ -333,8 +333,6 @@ calculateSpraySource(
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           // Species index
           const int fspec = fdat.indx[spf];
-          // Gas species index, might be the same
-          const int fdspec = fdat.dep_indx[spf];
           if (X_vapor[spf] > 0.) {
             mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
             m_dot += mi_dot[spf];

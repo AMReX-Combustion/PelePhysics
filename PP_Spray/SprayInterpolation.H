@@ -547,7 +547,7 @@ eb_interp(
       }
     }
     // Normalize weighting
-    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+    for (aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
       weights[aindx] /= sum_wt;
     }
     ijkc = indx_array[closest_aindx];
