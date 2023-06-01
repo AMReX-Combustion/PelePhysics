@@ -1750,7 +1750,38 @@ def red_dip(spec, species_transport):
         )
     )
 
-
+def write_global_array(fstream, species_info, values, var_text):
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment(var_text))
+    cw.writer(
+        fstream,
+        "AMREX_GPU_CONSTANT const amrex::Real "
+        f"d_{var_text}[{species_info.n_species}]={{",
+    )
+    for i in range(0, species_info.n_species):
+        species = species_info.nonqssa_species[i]
+        text = f"{values[i]:.15e},"
+        cw.writer(fstream, text + cw.comment(f"{species.name}"))
+    cw.writer(fstream, "};")
+    cw.writer(
+        fstream,
+        "const amrex::Real "
+        f"h_{var_text}[{species_info.n_species}]={{",
+    )
+    for i in range(0, species_info.n_species):
+        species = species_info.nonqssa_species[i]
+        text = f"{values[i]:.15e},"
+        cw.writer(fstream, text + cw.comment(f"{species.name}"))
+    cw.writer(fstream, "};")
+    cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
+    cw.writer(fstream, f"amrex::Real {var_text}(const int n){{")
+    cw.writer(fstream, "#if AMREX_DEVICE_COMPILE")
+    cw.writer(fstream, f"return d_{var_text}[n];")
+    cw.writer(fstream, "#else")
+    cw.writer(fstream, f"return h_{var_text}[n];")
+    cw.writer(fstream, "#endif")
+    cw.writer(fstream, "}")
+    
 def critical_parameters(fstream, mechanism, species_info):
     """Write the critical parameters."""
     tabulated_critical_params = {
@@ -1981,31 +2012,19 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("compute the critical parameter quantities for each species for SRK")
     )
-    cw.writer(
-        fstream,
-        (
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " GET_CRITPARAMS_SRK(amrex::Real *  sqrtOneOverTc, amrex::Real *  sqrtAsti,"
-            " amrex::Real *  Bi, amrex::Real *  Fomega)"
-        ),
-    )
 
-    cw.writer(fstream, "{")
     # Loop over species to compute quantities
+    Fomega = []
+    sqrtAsti =[]
+    sqrtOneOverTc = []
+    Bi = []
     for species in species_info.nonqssa_species:
-        cw.writer(fstream)
-        cw.writer(
-            fstream,
-            cw.comment(f"species {species.idx}: {species.name}"),
-        )
         if species.name in tabulated_critical_params:
-            cw.writer(fstream, cw.comment("Imported from NIST"))
             Tci = tabulated_critical_params[species.name]['Tci']
             ai = 1e6 * 0.42748 * Rcst**2 *Tci**2 /(tabulated_critical_params[species.name]['wt']**2 * tabulated_critical_params[species.name]['Pci'])
             bi = 0.08664 * Rcst * Tci / (tabulated_critical_params[species.name]['wt'] * tabulated_critical_params[species.name]['Pci'])
             omega = tabulated_critical_params[species.name]['acentric_factor']
         else :
-            cw.writer(fstream, cw.comment("Computed from Lennard-Jones"))
             EPS = float(species_transport[species][1])
             SIG = float(species_transport[species][2])
             wt = species.weight
@@ -2013,14 +2032,16 @@ def critical_parameters(fstream, mechanism, species_info):
             ai = 5.55 * avogadro**2 * EPS * boltzmann * 1e-24 * SIG**3 / wt**2
             bi = 0.855 * avogadro * 1e-24 * SIG**3 / wt
             omega = 0.0
-        sqrtOneOverTc = np.sqrt(1.0/Tci)
-        sqrtAsti = np.sqrt(ai)
-        Fomega = f0 + omega * (f1 + f2 * omega)
-
-        cw.writer(fstream, f"sqrtOneOverTc[{species.idx}] = {sqrtOneOverTc:.13e};")
-        cw.writer(fstream, f"sqrtAsti[{species.idx}] = {sqrtAsti:.13e};")
-        cw.writer(fstream, f"Bi[{species.idx}] = {bi:.13e};")
-        cw.writer(fstream, f"Fomega[{species.idx}] = {Fomega:.13e};")
+        sqrtOneOverTc.append(np.sqrt(1.0/Tci))
+        sqrtAsti.append(np.sqrt(ai))
+        Fomega.append(f0 + omega * (f1 + f2 * omega))
+        Bi.append(bi)
 
     cw.writer(fstream)
-    cw.writer(fstream, "}")
+    cw.writer(fstream, "#if USE_SRK_EOS")
+    write_global_array(fstream, species_info, Fomega, "Fomega")
+    write_global_array(fstream, species_info, Bi, "Bi")
+    write_global_array(fstream, species_info, sqrtAsti, "sqrtAsti")
+    write_global_array(fstream, species_info, sqrtOneOverTc, "sqrtOneOverTc")
+    cw.writer(fstream)
+    cw.writer(fstream, "#endif")

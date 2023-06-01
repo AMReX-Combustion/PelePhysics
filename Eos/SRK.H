@@ -34,8 +34,8 @@ struct SRK
     // in second loop
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
-      bm += Y[ii] * Bi[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
+      bm += Y[ii] * Bi(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -59,7 +59,7 @@ struct SRK
     // in second loop
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -75,7 +75,7 @@ struct SRK
   {
     bm = 0.0;
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      bm += Y[ii] * Bi[ii];
+      bm += Y[ii] * Bi(ii);
     }
   }
 
@@ -93,9 +93,9 @@ struct SRK
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
       amlocder[ii] =
-        -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT * sqrtOneOverTc[ii];
+        -0.5 * Fomega(ii) * sqrtAsti(ii) * oneOverT * sqrtT * sqrtOneOverTc(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -120,7 +120,7 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       dAmdY[ii] = 0.0;
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -143,7 +143,7 @@ struct SRK
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -169,9 +169,9 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       d2AmdTY[ii] = 0.0;
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
       amlocder[ii] =
-        -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT * sqrtOneOverTc[ii];
+        -0.5 * Fomega(ii) * sqrtAsti(ii) * oneOverT * sqrtT * sqrtOneOverTc(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -241,9 +241,9 @@ struct SRK
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
       amlocder[ii] =
-        -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT * sqrtOneOverTc[ii];
+        -0.5 * Fomega(ii) * sqrtAsti(ii) * oneOverT * sqrtT * sqrtOneOverTc(ii);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -274,9 +274,9 @@ struct SRK
     // Compute species-dependent intermediates
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amloc[ii] =
-        (1.0 + Fomega[ii] * (1.0 - sqrtT * sqrtOneOverTc[ii])) * sqrtAsti[ii];
+        (1.0 + Fomega(ii) * (1.0 - sqrtT * sqrtOneOverTc(ii))) * sqrtAsti(ii);
       amlocder[ii] =
-        Fomega[ii] * sqrtAsti[ii] * sqrtOneOverTc[ii]; // *-0.5*oneOverT*sqrtT
+        Fomega(ii) * sqrtAsti(ii) * sqrtOneOverTc(ii); // *-0.5*oneOverT*sqrtT
     }
 
     // intialize sums to 0
@@ -580,8 +580,8 @@ struct SRK
       acti[ii] =
         (exp(
            (mw(ii) * InvRuT) *
-           (RmT * InvEosT1Denom * Bi[ii] - K1 * dAmdY[ii] +
-            am * InvBm * K1 * Bi[ii] - am * InvEosT3Denom * Bi[ii] * InvBm)) *
+           (RmT * InvEosT1Denom * Bi(ii) - K1 * dAmdY[ii] +
+            am * InvBm * K1 * Bi(ii) - am * InvEosT3Denom * Bi(ii) * InvBm)) *
          Y[ii] * imw(ii) * InvEosT1Denom);
     }
   }
@@ -648,7 +648,7 @@ struct SRK
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       Ei[ii] += (T * d2AmdTY[ii] - dAmdY[ii]) * K1;
-      Ei[ii] += (T * dAmdT - am) * Bi[ii] * (InvEosT3Denom - K1) * inv_bm;
+      Ei[ii] += (T * dAmdT - am) * Bi(ii) * (InvEosT3Denom - K1) * inv_bm;
     }
   }
 
@@ -799,14 +799,14 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amrex::Real Rmk = Constants::RU * imw(ii);
       amrex::Real dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
-                          Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
+                          Bi(ii) * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                                     am * InvEosT2Denom * InvEosT3Denom);
       amrex::Real dhmdYk =
         Hi[ii] + (T * d2AmdTY[ii] - dAmdY[ii]) * K1 -
-        Bi[ii] * (T * dAmdT - am) * (K1 / bm - InvEosT3Denom / bm) +
-        am * Bi[ii] * InvEosT3Denom * InvEosT3Denom -
+        Bi(ii) * (T * dAmdT - am) * (K1 / bm - InvEosT3Denom / bm) +
+        am * Bi(ii) * InvEosT3Denom * InvEosT3Denom -
         InvEosT3Denom * dAmdY[ii] + Rmk * T * bm * InvEosT1Denom +
-        Rm * T * Bi[ii] * (InvEosT1Denom + bm * InvEosT1Denom * InvEosT1Denom);
+        Rm * T * Bi(ii) * (InvEosT1Denom + bm * InvEosT1Denom * InvEosT1Denom);
       Hi[ii] = dhmdYk - (dhmdtau / dpdtau) * dpdYk;
     }
   }
@@ -1014,16 +1014,16 @@ struct SRK
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       amrex::Real Rmk = Constants::RU * imw(ii);
       dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
-                  Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
+                  Bi(ii) * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                             am * InvEosT2Denom * InvEosT3Denom);
     }
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
 
       diP[ii] = (Y[ii] * wbar / (Rm * T) *
-                 ((dAmdY[ii] - am * Bi[ii] * InvBm) * InvEosT2Denom +
-                  am * Bi[ii] * InvBm * InvEosT1Denom * InvEosT1Denom)) -
-                Y[ii] * (Bi[ii] * InvEosT1Denom * InvEosT1Denom +
+                 ((dAmdY[ii] - am * Bi(ii) * InvBm) * InvEosT2Denom +
+                  am * Bi(ii) * InvBm * InvEosT1Denom * InvEosT1Denom)) -
+                Y[ii] * (Bi(ii) * InvEosT1Denom * InvEosT1Denom +
                          wbar * imw(ii) * InvEosT1Denom);
       diP[ii] /= dpdtau;
 
@@ -1034,17 +1034,17 @@ struct SRK
       for (int jj = 0; jj < NUM_SPECIES; jj++) {
         dijY[ii][jj] +=
           -diP[ii] * dpdYk[jj] +
-          wbar * Y[ii] * InvEosT1Denom * (Bi[ii] * imw(jj) + Bi[jj] * imw(ii)) +
-          Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi[ii] * Bi[jj] +
+          wbar * Y[ii] * InvEosT1Denom * (Bi(ii) * imw(jj) + Bi(jj) * imw(ii)) +
+          Y[ii] * InvEosT1Denom * InvEosT1Denom * Bi(ii) * Bi(jj) +
           Y[ii] / (Rm * T) *
-            ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi[ii] * InvBm -
+            ((K1 - InvEosT3Denom) * dAmdY[jj] * Bi(ii) * InvBm -
              K1 * d2AmdY2[ii][jj] +
-             (K1 * dAmdY[ii] - InvEosT3Denom) * Bi[ii] * InvBm +
-             ((-2.0 * am * K1 + am * InvEosT3Denom) * Bi[ii] * Bi[jj] * InvBm *
+             (K1 * dAmdY[ii] - InvEosT3Denom) * Bi(ii) * InvBm +
+             ((-2.0 * am * K1 + am * InvEosT3Denom) * Bi(ii) * Bi(jj) * InvBm *
               InvBm) +
              ((am * InvEosT3Denom * InvBm +
                am * InvEosT3Denom * InvEosT3Denom) *
-              Bi[ii] * Bi[jj] * InvBm));
+              Bi(ii) * Bi(jj) * InvBm));
       }
     }
   }
@@ -1052,18 +1052,12 @@ struct SRK
   template <class... Args>
   AMREX_GPU_HOST_DEVICE explicit SRK(Args... /*unused*/)
   {
-    GET_CRITPARAMS_SRK(sqrtOneOverTc, sqrtAsti, Bi, Fomega);
   }
 
   // Constants for SRK
   static constexpr amrex::Real convCritP = 1e-4;
   static constexpr amrex::Real convCritT = 1e-6;
   static constexpr int maxIter = 2000;
-
-  amrex::Real Bi[NUM_SPECIES];
-  amrex::Real sqrtOneOverTc[NUM_SPECIES];
-  amrex::Real sqrtAsti[NUM_SPECIES];
-  amrex::Real Fomega[NUM_SPECIES];
 };
 } // namespace pele::physics::eos
 #endif
