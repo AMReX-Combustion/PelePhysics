@@ -127,9 +127,9 @@ SprayParticleContainer::estTimestep(int level) const
   }
   // Check if the velocity of particles being injected is greater than existing
   // particle velocities
-  for (auto& sj : m_sprayJets) {
-    if (sj->jet_vel() > 0.) {
-      dt = amrex::min(dt, cfl * dx[0] / sj->jet_vel());
+  for (const auto& sj : m_sprayJets) {
+    if (sj->max_jet_vel() > 0.) {
+      dt = amrex::min(dt, cfl * dx[0] / sj->max_jet_vel());
     }
   }
   ParallelDescriptor::ReduceRealMin(dt);

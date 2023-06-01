@@ -33,14 +33,34 @@ public:
   // Constructor where parameters are set from input file
   SprayJet(const std::string& jet_name, const amrex::Geometry& geom);
 
+  void readROI(
+    const std::string roi_file,
+    const amrex::Real rho_part,
+    const amrex::Real cd);
+
   virtual ~SprayJet() = default;
 
   inline const amrex::RealVect& jet_norm() const { return m_norm; }
   inline const amrex::RealVect& jet_cent() const { return m_cent; }
-  inline const amrex::Real& jet_vel() const { return m_jetVel; }
+  inline amrex::Real jet_vel(const amrex::Real time) const
+  {
+    if (m_useROI) {
+      return interpolateVel(time);
+    } else {
+      return m_jetVel;
+    }
+  }
+  inline const amrex::Real& max_jet_vel() const { return m_maxJetVel; }
   inline const amrex::Real& jet_dia() const { return m_jetDia; }
   inline const amrex::Real& spread_angle() const { return m_spreadAngle; }
-  inline const amrex::Real& mass_flow_rate() const { return m_massFlow; }
+  inline amrex::Real mass_flow_rate(const amrex::Real time) const
+  {
+    if (m_useROI) {
+      return interpolateMdot(time);
+    } else {
+      return m_massFlow;
+    }
+  }
   inline const amrex::Real& Y(const int spf) const { return m_jetY[spf]; }
   inline const amrex::Real& T() const { return m_jetT; }
   inline const amrex::Real& start_time() const { return m_startTime; }
@@ -51,9 +71,7 @@ public:
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
   {
-    if (m_massFlow < 0.) {
-      amrex::Abort("Jet mass flow rate is not set");
-    } else if (m_jetDia < 0.) {
+    if (m_jetDia < 0.) {
       amrex::Abort("Jet diameter is not set");
     } else if (m_avgDia < 0.) {
       amrex::Abort("Average droplet diameter is not set");
@@ -213,6 +231,32 @@ public:
     part_vel *= umag;
   }
 
+  inline amrex::Real
+  interpolateROI(const amrex::Real& time, const amrex::Real* vals) const
+  {
+    int i = 0;
+    amrex::Real ctime = inject_time[0];
+    while (ctime < time) {
+      ctime = inject_time[++i];
+    }
+    const amrex::Real time1 = inject_time[i - 1];
+    const amrex::Real time2 = inject_time[i];
+    const amrex::Real invt = (time - time1) / (time2 - time1);
+    const amrex::Real val1 = vals[i - 1];
+    const amrex::Real val2 = vals[i];
+    return val1 + (val2 - val1) * invt;
+  }
+
+  inline amrex::Real interpolateMdot(const amrex::Real time) const
+  {
+    return interpolateROI(time, inject_mdot.dataPtr());
+  }
+
+  inline amrex::Real interpolateVel(const amrex::Real time) const
+  {
+    return interpolateROI(time, inject_vel.dataPtr());
+  }
+
   amrex::Real m_sumInjMass = -1.;
   amrex::Real m_sumInjTime = -1.;
   // Minimum parcels to inject at a time
@@ -227,6 +271,7 @@ protected:
   amrex::Real m_swirlAngle = 0.;
   amrex::Real m_jetDia = -1.;
   amrex::Real m_jetVel = -1.;
+  amrex::Real m_maxJetVel = -1.;
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
@@ -237,6 +282,10 @@ protected:
   bool m_hollowSpray = false;
   amrex::Real m_hollowSpread = 0.;
   int m_proc = 0;
+  bool m_useROI = false;
+  amrex::Vector<amrex::Real> inject_time;
+  amrex::Vector<amrex::Real> inject_mass;
+  amrex::Vector<amrex::Real> inject_vel;
 };
 
 #endif

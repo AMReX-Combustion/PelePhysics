@@ -1,6 +1,7 @@
 
 #include "SprayJet.H"
 #include <AMReX_ParmParse.H>
+#include "SprayParticles.H"
 
 // Constructor where parameters are set from input file
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
@@ -36,8 +37,11 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   }
   m_swirlAngle *= M_PI / 180.;
   ps.get("T", m_jetT);
+  amrex::Real rho_part = 0.;
+  SprayData* fdat = SprayParticleContainer::getSprayData();
   if (SPRAY_FUEL_NUM == 1) {
     m_jetY[0] = 1.;
+    rho_part = fdat->rhoL(m_jetT, 0);
   } else {
     std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
     ps.getarr("Y", in_Y_jet);
@@ -45,16 +49,33 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       m_jetY[spf] = in_Y_jet[spf];
       sumY += in_Y_jet[spf];
+      rho_part += m_jetY[spf] / fdat->rhoL(m_jetT, spf);
     }
+    rho_part = 1. / rho_part;
     if (std::abs(sumY - 1.) > 1.E-8) {
       amrex::Abort(ppspray + ".Y must sum to 1");
     }
   }
-  ps.query("start_time", m_startTime);
-  ps.query("end_time", m_endTime);
-  ps.get("jet_vel", m_jetVel);
-  ps.get("mass_flow_rate", m_massFlow);
-  ps.query("inject_ppp", m_numPPP);
+  // If a rate shape profile is generated at
+  // https://www.cmt.upv.es/#/ecn/download/InjectionRateGenerator/InjectionRateGenerator,
+  // it can be provided here for use
+  if (ps.contains("roi_file")) {
+    amrex::Real cd = 0.;
+    ps.get("discharge_coeff", cd);
+    std::string roi_file;
+    ps.get("roi_file", roi_file);
+    readROI(roi_file, rho_part, cd);
+    m_useROI = true;
+  } else {
+    ps.query("start_time", m_startTime);
+    ps.query("end_time", m_endTime);
+    ps.get("jet_vel", m_jetVel);
+    m_maxJetVel = m_jetVel;
+    ps.get("mass_flow_rate", m_massFlow);
+    if (m_jetVel < 0. || m_massFlow < 0.) {
+      amrex::Abort("Jet u, T, and mdot must be greater than 0");
+    }
+  }
   ps.query("hollow_spray", m_hollowSpray);
   if (m_hollowSpray) {
     ps.query("hollow_spread", m_hollowSpread);
@@ -62,9 +83,6 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
       amrex::Abort("'hollow_spread' must be between 0 and 180");
     }
     m_hollowSpread *= M_PI / 180.;
-  }
-  if (m_jetVel < 0. || m_jetT < 0. || m_massFlow < 0.) {
-    amrex::Abort("Jet u, T, and mdot must be greater than 0");
   }
 }
 
@@ -93,6 +111,7 @@ SprayJet::SprayJet(
     m_swirlAngle(phi_swirl * M_PI / 180.),
     m_jetDia(jet_dia),
     m_jetVel(jet_vel),
+    m_maxJetVel(jet_vel),
     m_massFlow(mass_flow),
     m_jetT(jet_temp),
     m_startTime(start_time),
@@ -155,10 +174,82 @@ SprayJet::get_new_particle(
   phi_swirl = m_swirlAngle;
   dia_part = m_dropDist->get_dia();
   T_part = m_jetT;
-  umag = m_jetVel;
+  umag = jet_vel(time);
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = m_jetY[spf];
   }
-  amrex::ignore_unused(phi_radial, time);
+  amrex::ignore_unused(phi_radial);
   return true;
+}
+
+std::string
+read_inject_file(std::ifstream& in)
+{
+  return static_cast<std::stringstream const&>(
+           std::stringstream() << in.rdbuf())
+    .str();
+}
+
+void
+SprayJet::readROI(
+  const std::string roi_file, const amrex::Real rho_part, const amrex::Real cd)
+{
+  amrex::Real jet_area = 0.25 * M_PI * std::pow(m_jetDia, 2);
+  std::string firstline, remaininglines;
+
+  std::ifstream infile(roi_file);
+  const std::string memfile = read_inject_file(infile);
+  if (!amrex::FileSystem::Exists(roi_file)) {
+    amrex::Abort("ROI file does not exists");
+  }
+  infile.close();
+  std::istringstream iss(memfile);
+
+  std::getline(iss, firstline);
+  // Time is given in ms
+  amrex::Real tconv = 1.E-3;
+#ifdef PELELM_USE_SPRAY
+  amrex::Real mconv = 1.E-3;
+#else
+  amrex::Real mconv = 1.;
+#endif
+  m_maxJetVel = 0.;
+  bool jet_started = false;
+  amrex::Real prev_time = 0.;
+  while (std::getline(iss, remaininglines)) {
+    // Replace any semi-colons with spaces
+    std::size_t pos = remaininglines.find(";");
+    while (pos != std::string::npos) {
+      remaininglines.replace(pos, 1, " ");
+      pos = remaininglines.find(";");
+    }
+    std::istringstream sinput(remaininglines);
+    amrex::Real time, mdot;
+    sinput >> time;
+    sinput >> mdot;
+    time *= tconv;
+    mdot *= mconv;
+    if (mdot > 0.) {
+      if (!jet_started) {
+        jet_started = true;
+        m_startTime = time;
+        inject_time.push_back(prev_time);
+        inject_mass.push_back(0.);
+        inject_vel.push_back(0.);
+      }
+      amrex::Real vel = mdot / (rho_part * jet_area * cd);
+      m_maxJetVel = amrex::max(m_maxJetVel, vel);
+      inject_time.push_back(time);
+      inject_mass.push_back(mdot);
+      inject_vel.push_back(vel);
+      m_endTime = time;
+    } else if (jet_started) {
+      m_endTime = time;
+      inject_time.push_back(time);
+      inject_mass.push_back(0.);
+      inject_vel.push_back(0.);
+      break;
+    }
+    prev_time = time;
+  }
 }

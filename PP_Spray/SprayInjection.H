@@ -45,7 +45,7 @@ SprayParticleContainer::sprayInjection(
   // Minimum number of parcels we want injected at a time
   amrex::Real min_inj_parcel = spray_jet->m_minParcel;
   amrex::Real dt = sim_dt;
-  amrex::Real mdot = spray_jet->mass_flow_rate();
+  amrex::Real mdot = spray_jet->mass_flow_rate(time);
   amrex::Real inject_mass = mdot * sim_dt;
   // See if there is uninjected mass from previous time steps
   if (spray_jet->m_sumInjMass > 0.) {

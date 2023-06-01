@@ -12,7 +12,7 @@ SprayComps SprayParticleContainer::m_sprayIndx;
 Real SprayParticleContainer::spray_cfl = 0.5;
 bool SprayParticleContainer::write_ascii_files = false;
 bool SprayParticleContainer::plot_spray_src = false;
-std::string SprayParticleContainer::spray_init_file = "";
+std::string SprayParticleContainer::spray_init_file;
 
 void
 getInpCoef(

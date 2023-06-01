@@ -286,7 +286,7 @@ public:
 
   /// \brief Add spray source term data with components pstateNum to data
   /// containing total number of conservative variables
-  inline void addSpraySrc(
+  static void addSpraySrc(
     const amrex::Box& vbox,
     amrex::Array4<const amrex::Real> const& tmp_array,
     amrex::Array4<amrex::Real> const& act_array)
