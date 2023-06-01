@@ -408,6 +408,32 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   nfit = -1; /*Why do you need this anyway ?  */
 }
 
+// Quantities for SRK EOS - not implemented for Null
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+sqrtOneOverTc(const int n)
+{
+  amrex::Abort("sqrtOneOverTc is not implemented for Null chemsitry");
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+sqrtAsti(const int n)
+{
+  amrex::Abort("sqrtAsti is not implemented for Null chemsitry");
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+Bi(const int n)
+{
+  amrex::Abort("Bi is not implemented for Null chemsitry");
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+Fomega(const int n)
+{
+  amrex::Abort("Fomega is not implemented for Null chemsitry");
+}
+
 #endif
 
 /* End of file  */

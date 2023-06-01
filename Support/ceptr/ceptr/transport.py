@@ -2068,10 +2068,7 @@ def critical_parameters(fstream, mechanism, species_info):
         bis.append(bi)
 
     cw.writer(fstream)
-    cw.writer(fstream, "#if USE_SRK_EOS")
     write_global_array(fstream, species_info, fomega, "Fomega")
     write_global_array(fstream, species_info, bis, "Bi")
     write_global_array(fstream, species_info, sqrtasti, "sqrtAsti")
     write_global_array(fstream, species_info, sqrtoneovertc, "sqrtOneOverTc")
-    cw.writer(fstream)
-    cw.writer(fstream, "#endif")
