@@ -422,10 +422,10 @@ struct SRK
     // a reasonable initial guess.
     amrex::Real Tn;
     amrex::Real bm, am, dAmdT, d2AmdT2;
-    amrex::Real K1, ei_ig[NUM_SPECIES], Cv = 0.0;
+    amrex::Real K1, Cv = 0.0;
     int nIter = 0;
     amrex::Real fzero = 1.0;
-
+    amrex::Real Eig = 0.0;
     MixingRuleBm(Y, bm);
     K1 = (1.0 / bm) * log1p(bm * R);
 
@@ -438,11 +438,7 @@ struct SRK
       nIter++;
       Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
       // ideal gas internal energy
-      CKUMS(Tn, ei_ig);
-      amrex::Real Eig = 0.0;
-      for (int ii = 0; ii < NUM_SPECIES; ii++) {
-        Eig += Y[ii] * ei_ig[ii];
-      };
+      CKUBMS(Tn, Y, Eig);
       // ideal gas heat capacity
       CKCVBS(Tn, Y, Cv);
       // real gas heat capacity
