@@ -46,9 +46,8 @@ public:
   {
     if (m_useROI) {
       return interpolateVel(time);
-    } else {
-      return m_jetVel;
     }
+    return m_jetVel;
   }
   inline const amrex::Real& max_jet_vel() const { return m_maxJetVel; }
   inline const amrex::Real& jet_dia() const { return m_jetDia; }
@@ -57,9 +56,8 @@ public:
   {
     if (m_useROI) {
       return interpolateMdot(time);
-    } else {
-      return m_massFlow;
     }
+    return m_massFlow;
   }
   inline const amrex::Real& Y(const int spf) const { return m_jetY[spf]; }
   inline const amrex::Real& T() const { return m_jetT; }
