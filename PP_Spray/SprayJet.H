@@ -249,7 +249,7 @@ public:
 
   inline amrex::Real interpolateMdot(const amrex::Real time) const
   {
-    return interpolateROI(time, inject_mdot.dataPtr());
+    return interpolateROI(time, inject_mass.dataPtr());
   }
 
   inline amrex::Real interpolateVel(const amrex::Real time) const
