@@ -1750,7 +1750,9 @@ def red_dip(spec, species_transport):
         )
     )
 
+
 def write_global_array(fstream, species_info, values, var_text):
+    """Write global arrays and accessor functions for some data."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment(var_text))
     cw.writer(
@@ -1765,8 +1767,7 @@ def write_global_array(fstream, species_info, values, var_text):
     cw.writer(fstream, "};")
     cw.writer(
         fstream,
-        "const amrex::Real "
-        f"h_{var_text}[{species_info.n_species}]={{",
+        "const amrex::Real " f"h_{var_text}[{species_info.n_species}]={{",
     )
     for i in range(0, species_info.n_species):
         species = species_info.nonqssa_species[i]
@@ -1781,7 +1782,8 @@ def write_global_array(fstream, species_info, values, var_text):
     cw.writer(fstream, f"return h_{var_text}[n];")
     cw.writer(fstream, "#endif")
     cw.writer(fstream, "}")
-    
+
+
 def critical_parameters(fstream, mechanism, species_info):
     """Write the critical parameters."""
     tabulated_critical_params = {
@@ -1998,10 +2000,10 @@ def critical_parameters(fstream, mechanism, species_info):
 
     # Critical parameters pre-evaluations necessary for SRK
     # SRK parameters - CGS for constants
-    f0 = 0.48508e+0
-    f1 = 1.5517e+0
-    f2 = -0.151613e+0
-    Rcst = 83.144598
+    f0 = 0.48508e0
+    f1 = 1.5517e0
+    f2 = -0.151613e0
+    rcst = 83.144598
     avogadro = 6.02214199e23
     boltzmann = 1.3806503e-16
     species_transport = analyze_transport(mechanism, species_info)
@@ -2010,38 +2012,66 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(
-        fstream, cw.comment("compute the critical parameter quantities for each species for SRK")
+        fstream,
+        cw.comment(
+            "compute the critical parameter quantities for each species for SRK"
+        ),
     )
 
     # Loop over species to compute quantities
-    Fomega = []
-    sqrtAsti =[]
-    sqrtOneOverTc = []
-    Bi = []
+    fomega = []
+    sqrtasti = []
+    sqrtoneovertc = []
+    bis = []
     for species in species_info.nonqssa_species:
         if species.name in tabulated_critical_params:
-            Tci = tabulated_critical_params[species.name]['Tci']
-            ai = 1e6 * 0.42748 * Rcst**2 *Tci**2 /(tabulated_critical_params[species.name]['wt']**2 * tabulated_critical_params[species.name]['Pci'])
-            bi = 0.08664 * Rcst * Tci / (tabulated_critical_params[species.name]['wt'] * tabulated_critical_params[species.name]['Pci'])
-            omega = tabulated_critical_params[species.name]['acentric_factor']
-        else :
-            EPS = float(species_transport[species][1])
-            SIG = float(species_transport[species][2])
+            tci = tabulated_critical_params[species.name]["Tci"]
+            ai = (
+                1e6
+                * 0.42748
+                * rcst**2
+                * tci**2
+                / (
+                    tabulated_critical_params[species.name]["wt"] ** 2
+                    * tabulated_critical_params[species.name]["Pci"]
+                )
+            )
+            bi = (
+                0.08664
+                * rcst
+                * tci
+                / (
+                    tabulated_critical_params[species.name]["wt"]
+                    * tabulated_critical_params[species.name]["Pci"]
+                )
+            )
+            omega = tabulated_critical_params[species.name]["acentric_factor"]
+        else:
+            eps = float(species_transport[species][1])
+            sig = float(species_transport[species][2])
             wt = species.weight
-            Tci = 1.316 * EPS
-            ai = 5.55 * avogadro**2 * EPS * boltzmann * 1e-24 * SIG**3 / wt**2
-            bi = 0.855 * avogadro * 1e-24 * SIG**3 / wt
+            tci = 1.316 * eps
+            ai = (
+                5.55
+                * avogadro**2
+                * eps
+                * boltzmann
+                * 1e-24
+                * sig**3
+                / wt**2
+            )
+            bi = 0.855 * avogadro * 1e-24 * sig**3 / wt
             omega = 0.0
-        sqrtOneOverTc.append(np.sqrt(1.0/Tci))
-        sqrtAsti.append(np.sqrt(ai))
-        Fomega.append(f0 + omega * (f1 + f2 * omega))
-        Bi.append(bi)
+        sqrtoneovertc.append(np.sqrt(1.0 / tci))
+        sqrtasti.append(np.sqrt(ai))
+        fomega.append(f0 + omega * (f1 + f2 * omega))
+        bis.append(bi)
 
     cw.writer(fstream)
     cw.writer(fstream, "#if USE_SRK_EOS")
-    write_global_array(fstream, species_info, Fomega, "Fomega")
-    write_global_array(fstream, species_info, Bi, "Bi")
-    write_global_array(fstream, species_info, sqrtAsti, "sqrtAsti")
-    write_global_array(fstream, species_info, sqrtOneOverTc, "sqrtOneOverTc")
+    write_global_array(fstream, species_info, fomega, "Fomega")
+    write_global_array(fstream, species_info, bis, "Bi")
+    write_global_array(fstream, species_info, sqrtasti, "sqrtAsti")
+    write_global_array(fstream, species_info, sqrtoneovertc, "sqrtOneOverTc")
     cw.writer(fstream)
     cw.writer(fstream, "#endif")
