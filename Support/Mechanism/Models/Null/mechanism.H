@@ -412,7 +412,8 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 
 // get mean internal energy in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKUBMS(const amrex::Real /*T*/, const amrex::Real* /*y[]*/, amrex::Real& /*ubms*/)
+CKUBMS(
+  const amrex::Real /*T*/, const amrex::Real* /*y[]*/, amrex::Real& /*ubms*/)
 {
   amrex::Abort("CKUMBS is not implemented for Null chemsitry");
 }
