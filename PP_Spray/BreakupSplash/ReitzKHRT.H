@@ -13,14 +13,15 @@ updateBreakupKHRT(
   const amrex::Real& Reyn_d,
   const amrex::Real& dt,
   const amrex::Real* cBoilT,
-  const amrex::Real& avg_inject_d3,
+  const amrex::Real& avg_inject_mass,
   const amrex::Real B0,
   const amrex::Real B1,
   const amrex::Real C3,
   GasPhaseVals& gpv,
   const SprayData& fdat,
   splash_breakup* N_SB,
-  const SBPtrs& rf)
+  const SBPtrs& rf,
+  bool make_new_drops)
 {
   // Percent of mass lost before new parcel is formed
   const amrex::Real massperc = 0.03;
@@ -44,7 +45,6 @@ updateBreakupKHRT(
     mu_part += Y_part * fdat.muL(minT, spf);
   }
   rho_part = 1. / rho_part;
-  const amrex::Real rjet3 = avg_inject_d3 / 8.;
   const amrex::Real min_rad =
     std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
   amrex::Real r30 =
@@ -137,10 +137,14 @@ updateBreakupKHRT(
       rt_time = 0.;
       amrex::Real shed_mass = N0 * (r30 - rp3);
       amrex::Real ns = shed_mass / rs3;
-      amrex::Real removed_perc = shed_mass / (N0 * r30);
-      amrex::Real Utan = A1 * omega_KH * lam_KH;
-      // If removed mass is greater than 3%, break particle up
+      amrex::Real removed_perc = 0.;
+      if (make_new_drops) {
+        removed_perc = 8. * shed_mass / avg_inject_mass;
+      }
+      // If removed mass is greater than 3% of injected particle mass, break
+      // particle up
       if (ns > 1. && ns > num_dens && removed_perc > massperc) {
+        amrex::Real Utan = A1 * omega_KH * lam_KH;
         N_SB[pid] = splash_breakup::breakup_KH;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
@@ -168,7 +172,7 @@ updateBreakupKHRT(
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
-  p.rdata(SprayComps::pstateBM1) = d0;
+  p.rdata(SprayComps::pstateBM1) = m0;
   p.rdata(SprayComps::pstateBM2) = rt_time;
   return;
 }

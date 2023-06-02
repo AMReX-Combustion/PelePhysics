@@ -158,11 +158,11 @@ SprayParticleContainer::updateParticles(
   AMREX_ASSERT(OnSameGrids(level, source));
   bool isActive = !(isVirt || isGhost);
   bool do_splash = (m_sprayData->do_splash && isActive && do_move);
-  bool do_breakup = (m_sprayData->do_breakup > 0 && isActive && do_move);
-  Real B0 = B0_KHRT;
-  Real B1 = B1_KHRT;
-  Real C3 = C3_KHRT;
-  Real max_ppp = max_num_ppp;
+  bool do_breakup = (m_sprayData->do_breakup > 0);
+  Real B0 = m_khrtB0;
+  Real B1 = m_khrtB1;
+  Real C3 = m_khrtC3;
+  Real max_ppp = m_maxNumPPP;
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -210,12 +210,14 @@ SprayParticleContainer::updateParticles(
     num_iter = static_cast<int>(std::ceil(spray_cfl_lev / sub_cfl));
     sub_dt = flow_dt / static_cast<Real>(num_iter);
   }
-  Real avg_inject_d3 = 0.;
-  if (isActive && m_sprayData->do_breakup == 2) {
+  Real avg_inject_mass = 0.;
+  if (isActive && m_sprayData->do_breakup == 2 && isActive) {
     int numJets = static_cast<int>(m_sprayJets.size());
     for (int jindx = 0; jindx < numJets; ++jindx) {
-      Real injDia = m_sprayJets[jindx].get()->get_avg_dia();
-      avg_inject_d3 += std::pow(injDia, 3) / static_cast<Real>(numJets);
+      Real injDia = m_sprayJets[jindx]->get_avg_dia();
+      Real injN = m_sprayJets[jindx]->num_ppp();
+      avg_inject_mass +=
+        injN * std::pow(injDia, 3) / static_cast<Real>(numJets);
     }
   }
   // Particle components indices
@@ -270,6 +272,38 @@ SprayParticleContainer::updateParticles(
         volfrac_fab = volfrac->array(pti);
       }
 #endif
+      bool do_splash_box = (do_splash && (eb_in_box || at_bounds));
+      FArrayBox wf_fab;
+      Array4<Real> wf_arr;
+      if (do_splash_box) {
+        wf_fab.resize(src_box, 1, The_Async_Arena());
+        wf_fab.setVal<RunOn::Device>(0.);
+        wf_arr = wf_fab.array();
+        // TODO: Adjust this for EB faces
+        Real face_area = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+        amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
+          ParticleType& p = pstruct[pid];
+          if (p.id() > 0 && p.rdata(SprayComps::pstateFilmHght) > 0.) {
+            fillFilmFab(wf_arr, p, face_area, plo, dx);
+          }
+        });
+      }
+      // Data structures for creating new particles during splashing/breakup
+      Gpu::HostVector<splash_breakup> N_SB_h;
+      Gpu::DeviceVector<splash_breakup> N_SB_d;
+      SBVects refv;
+      SBPtrs rf_d;
+      bool make_new_drops =
+        ((do_breakup || do_splash_box) && isActive && do_move);
+      if (make_new_drops) {
+        N_SB_h.assign(Np, splash_breakup::no_change);
+        N_SB_d.resize(Np);
+        Gpu::copyAsync(
+          Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
+        refv.build(Np);
+        refv.fillPtrs_d(rf_d);
+      }
+      auto N_SB = N_SB_d.dataPtr();
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
@@ -325,6 +359,24 @@ SprayParticleContainer::updateParticles(
             calculateSpraySource(sub_dt, gpv, *fdat, p, ltransparm);
             IntVect cur_indx = ijkc;
             Real cvol = inv_vol;
+            if (p.id() > 0 && do_breakup) {
+              // Update breakup variables and determine if breakup occurs
+              if (fdat->do_breakup == 1) {
+                Utan_total += updateBreakupTAB(
+                  Reyn_d, sub_dt, cBoilT.data(), gpv, *fdat, p);
+              }
+              if (cur_iter == num_iter - 1) {
+                if (fdat->do_breakup == 1 && make_new_drops) {
+                  // Determine if parcel must be split into multiple parcels
+                  splitDropletTAB(pid, p, max_ppp, N_SB, rf_d, Utan_total);
+                } else {
+                  // Update breakup for KH-RT model
+                  updateBreakupKHRT(
+                    pid, p, Reyn_d, flow_dt, cBoilT.data(), avg_inject_mas, B0,
+                    B1, C3, gpv, *fdat, N_SB, rf_d, make_new_drops);
+                }
+              }
+            }
 #ifdef AMREX_USE_EB
             if (flags_array(cur_indx).isSingleValued()) {
               cvol *= 1. / (volfrac_fab(cur_indx));
@@ -395,6 +447,22 @@ SprayParticleContainer::updateParticles(
           } // End of subcycle loop
         }   // End of p.id() > 0 check
       });   // End of loop over particles
-    }       // for (int MyParIter pti..
+      if (make_new_drops) {
+        Gpu::copy(
+          Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
+        bool get_new_parts = false;
+        for (Long n = 0; n < Np; n++) {
+          if (N_SB_h[n] != splash_breakup::no_change) {
+            get_new_parts = true;
+          }
+        }
+        if (get_new_parts) {
+          refv.retrieve_data();
+          SBPtrs rfh;
+          refv.fillPtrs_h(rfh);
+          CreateSBDroplets(Np, N_SB_h.data(), rfh, level);
+        }
+      }
+    } // for (int MyParIter pti..
   }
 }
