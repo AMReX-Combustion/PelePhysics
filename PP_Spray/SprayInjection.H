@@ -215,6 +215,7 @@ SprayParticleContainer::uniformSprayInit(
   }
   part_vals[SprayComps::pstateT] = T_part;
   part_vals[SprayComps::pstateDia] = dia_part;
+  const SprayData* fdat = m_sprayData;
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     part_vals[SprayComps::pstateY + spf] = Y_part[spf];
