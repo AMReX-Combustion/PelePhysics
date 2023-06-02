@@ -47,8 +47,8 @@ updateBreakupKHRT(
   rho_part = 1. / rho_part;
   const amrex::Real min_rad =
     std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
-  amrex::Real r30 =
-    3. * p.rdata(SprayComps::pstateBM1) / (4. * M_PI * rho_part);
+  amrex::Real m0 = p.rdata(SprayComps::pstateBM1);
+  amrex::Real r30 = 3. * m0 / (4. * M_PI * rho_part);
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
@@ -174,7 +174,6 @@ updateBreakupKHRT(
   p.rdata(SprayComps::pstateNumDens) = num_dens;
   p.rdata(SprayComps::pstateBM1) = m0;
   p.rdata(SprayComps::pstateBM2) = rt_time;
-  return;
 }
 
 #endif
