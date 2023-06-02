@@ -257,7 +257,8 @@ droplet_splashing(
       }
       p.rdata(SprayComps::pstateDia) = new_dia;
       if (fdat.do_breakup == 2) {
-        p.rdata(SprayComps::pstateBM1) = new_dia;
+        p.rdata(SprayComps::pstateBM1) =
+          M_PI / 6. * rho_part * std::pow(new_dia, 3);
       } else {
         p.rdata(SprayComps::pstateBM1) = 0.;
       }

@@ -111,7 +111,7 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBM1) = dia_part;
+            p.rdata(SprayComps::pstateBM1) = new_mass;
           } else {
             p.rdata(SprayComps::pstateBM1) = 0.;
           }
@@ -135,6 +135,7 @@ SprayParticleContainer::CreateSBDroplets(
         Real N_s = std::pow(num_dens0, m_breakupPPPFact);
         int N_d = amrex::max(1, static_cast<int>(num_dens0 / N_s));
         N_s = num_dens0 / static_cast<Real>(N_d);
+        Real new_mass = M_PI / 6. * rho_part * std::pow(dmean, 3);
 #if AMREX_SPACEDIM == 3
         RealVect testvec(1., 0., 0.);
         if (testvec.crossProduct(normal).vectorLength() < 1.E-5) {
@@ -158,7 +159,7 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBM1) = dmean;
+            p.rdata(SprayComps::pstateBM1) = new_mass;
             p.rdata(SprayComps::pstateBM2) = 0.;
           } else {
             p.rdata(SprayComps::pstateBM1) = phi2;

@@ -437,6 +437,10 @@ calculateSpraySource(
                , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
   p.rdata(SprayComps::pstateT) = T_part;
   p.rdata(SprayComps::pstateDia) = dia_part;
+  // If using KHRT, adjust initial mass by what is evaporated
+  if (fdat.do_breakup == 2) {
+    p.rdata(SprayComps::pstateBM1) -= (pmass - startmass);
+  }
   return Reyn;
 }
 

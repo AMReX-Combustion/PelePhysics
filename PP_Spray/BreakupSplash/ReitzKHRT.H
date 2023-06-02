@@ -47,13 +47,13 @@ updateBreakupKHRT(
   const amrex::Real rjet3 = avg_inject_d3 / 8.;
   const amrex::Real min_rad =
     std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
-  amrex::Real d0 = p.rdata(SprayComps::pstateBM1);
-  amrex::Real r0 = 0.5 * d0;
-  amrex::Real N0 = num_dens * std::pow(dia_part / d0, 3);
+  amrex::Real r30 =
+    3. * p.rdata(SprayComps::pstateBM1) / (4. * M_PI * rho_part);
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::Real rad_part3 = std::pow(rad_part, 3);
+  amrex::Real N0 = num_dens * rad_part3 / r30;
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
   amrex::Real vel_mag = diff_vel.vectorLength();
   amrex::Real vel_sq = vel_mag * vel_mag;
@@ -127,7 +127,7 @@ updateBreakupKHRT(
                            ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
                            std::sqrt(sigma / (rho_part * rad_part3));
     amrex::Real tau_KH = 3.726 * B1 * rad_part / (lam_KH * omega_KH);
-    amrex::Real rs = B0 * lam_KH;
+    amrex::Real rs = amrex::max(1.1 * min_rad, B0 * lam_KH);
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
       amrex::Real rp = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
@@ -135,12 +135,12 @@ updateBreakupKHRT(
       amrex::Real rs3 = rs * rs * rs;
       amrex::Real np = num_dens * rad_part3 / rp3;
       rt_time = 0.;
-      amrex::Real shed_mass = rp3 * (np - N0);
+      amrex::Real shed_mass = N0 * (r30 - rp3);
       amrex::Real ns = shed_mass / rs3;
-      amrex::Real removed_perc = (std::pow(r0, 3) - rp3) / rjet3;
+      amrex::Real removed_perc = shed_mass / (N0 * r30);
       amrex::Real Utan = A1 * omega_KH * lam_KH;
       // If removed mass is greater than 3%, break particle up
-      if (ns > 1. && ns > num_dens && removed_perc > massperc && rs > min_rad) {
+      if (ns > 1. && ns > num_dens && removed_perc > massperc) {
         N_SB[pid] = splash_breakup::breakup_KH;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
@@ -160,7 +160,7 @@ updateBreakupKHRT(
         }
 #endif
         np = (np * rp3 - ns * rs3) / rp3;
-        d0 = 2. * rp; // Reset original diameter
+        m0 = 4. * M_PI / 3. * rho_part * rp3;
       }
       rad_part = rp;
       num_dens = np;
