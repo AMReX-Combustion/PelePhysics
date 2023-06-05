@@ -18,7 +18,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void MixingRuleAmBm(
+  static void MixingRuleAmBm(
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real& am,
@@ -47,7 +47,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void MixingRuleAm(
+  static void MixingRuleAm(
     const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& am)
   {
     am = 0.0;
@@ -71,7 +71,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void MixingRuleBm(const amrex::Real Y[NUM_SPECIES], amrex::Real& bm)
+  static void MixingRuleBm(const amrex::Real Y[NUM_SPECIES], amrex::Real& bm)
   {
     bm = 0.0;
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -81,7 +81,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_dAmdT(
+  static void Calc_dAmdT(
     const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& dAmdT)
   {
     dAmdT = 0.0;
@@ -108,7 +108,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_dAmdY(
+  static void Calc_dAmdY(
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real dAmdY[NUM_SPECIES])
@@ -132,7 +132,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_d2AmdY2(
+  static void Calc_d2AmdY2(
     const amrex::Real T,
     const amrex::Real* /*Y[]*/,
     amrex::Real d2AmdY2[NUM_SPECIES][NUM_SPECIES])
@@ -155,7 +155,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_d2AmdTY(
+  static void Calc_d2AmdTY(
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real d2AmdTY[NUM_SPECIES])
@@ -227,7 +227,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_d2AmdT2(
+  static void Calc_d2AmdT2(
     const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& d2AmdT2)
   {
     AMREX_ASSERT(T > 0.0);
@@ -257,7 +257,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Calc_Am_and_derivs(
+  static void Calc_Am_and_derivs(
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
     amrex::Real& am,
