@@ -211,7 +211,7 @@ SprayParticleContainer::updateParticles(
     sub_dt = flow_dt / static_cast<Real>(num_iter);
   }
   Real avg_inject_mass = 0.;
-  if (isActive && m_sprayData->do_breakup == 2 && isActive) {
+  if (isActive && m_sprayData->do_breakup == 2) {
     int numJets = static_cast<int>(m_sprayJets.size());
     for (int jindx = 0; jindx < numJets; ++jindx) {
       Real injDia = m_sprayJets[jindx]->get_avg_dia();
@@ -293,8 +293,12 @@ SprayParticleContainer::updateParticles(
       Gpu::DeviceVector<splash_breakup> N_SB_d;
       SBVects refv;
       SBPtrs rf_d;
-      bool make_new_drops =
-        ((do_breakup || do_splash_box) && isActive && do_move);
+      bool make_new_drops = ((do_breakup || do_splash_box) && isActive);
+#ifdef PELEC_USE_SPRAY
+      if (do_move) {
+        make_new_drops = false;
+      }
+#endif
       if (make_new_drops) {
         N_SB_h.assign(Np, splash_breakup::no_change);
         N_SB_d.resize(Np);
