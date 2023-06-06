@@ -124,18 +124,15 @@ SprayParticleContainer::sprayInjection(
         p.pos(dir) =
           part_loc[dir] + pmov * dt * p.rdata(SprayComps::pstateVel + dir);
       }
-      // If KHRT breakup is used, BM1 is starting mass
       amrex::Real pmass = Pi_six * rho_part * std::pow(dia_part, 3);
-      if (m_sprayData->do_breakup == 2) {
-        p.rdata(SprayComps::pstateBM1) = pmass;
-      } else {
-        // If TAB is used, BM1 is y
-        p.rdata(SprayComps::pstateBM1) = 0.;
-      }
+      // If KHRT is used, BM1 is shed mass
+      // If TAB is used, BM1 is y
+      p.rdata(SprayComps::pstateBM1) = 0.;
       // If KHRT is used, BM2 is RT time
       // If TAB is used, BM2 is y dot
       p.rdata(SprayComps::pstateBM2) = 0.;
       p.rdata(SprayComps::pstateFilmHght) = 0.;
+      p.rdata(SprayComps::pstateN0) = num_ppp;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
       amrex::Real new_mass = cur_mass + num_ppp * pmass;
       bool where = Where(p, pld);
@@ -223,12 +220,8 @@ SprayParticleContainer::uniformSprayInit(
   }
   rho_part = 1. / rho_part;
   part_vals[SprayComps::pstateNumDens] = num_ppp;
-  if (m_sprayData->do_breakup == 2) {
-    part_vals[SprayComps::pstateBM1] =
-      M_PI / 6. * rho_part * std::pow(dia_part, 3);
-  } else {
-    part_vals[SprayComps::pstateBM1] = 0.;
-  }
+  part_vals[SprayComps::pstateN0] = num_ppp;
+  part_vals[SprayComps::pstateBM1] = 0.;
   part_vals[SprayComps::pstateBM2] = 0.;
   part_vals[SprayComps::pstateFilmHght] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(

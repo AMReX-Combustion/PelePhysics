@@ -47,13 +47,12 @@ updateBreakupKHRT(
   rho_part = 1. / rho_part;
   const amrex::Real min_rad =
     std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
-  amrex::Real m0 = p.rdata(SprayComps::pstateBM1);
-  amrex::Real r30 = 3. * m0 / (4. * M_PI * rho_part);
+  amrex::Real shed_mass = p.rdata(SprayComps::pstateBM1);
+  amrex::Real N0 = p.rdata(SprayComps::pstateN0);
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::Real rad_part3 = std::pow(rad_part, 3);
-  amrex::Real N0 = num_dens * rad_part3 / r30;
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
   amrex::Real vel_mag = diff_vel.vectorLength();
   amrex::Real vel_sq = vel_mag * vel_mag;
@@ -135,7 +134,7 @@ updateBreakupKHRT(
       amrex::Real rs3 = rs * rs * rs;
       amrex::Real np = num_dens * rad_part3 / rp3;
       rt_time = 0.;
-      amrex::Real shed_mass = N0 * (r30 - rp3);
+      shed_mass += N0 * (rad_part3 - rp3);
       amrex::Real ns = shed_mass / rs3;
       amrex::Real removed_perc = 0.;
       if (make_new_drops) {
@@ -164,7 +163,8 @@ updateBreakupKHRT(
         }
 #endif
         np = (np * rp3 - ns * rs3) / rp3;
-        m0 = 4. * M_PI / 3. * rho_part * rp3;
+        N0 = np;
+        shed_mass = 0.;
       }
       rad_part = rp;
       num_dens = np;
@@ -172,7 +172,8 @@ updateBreakupKHRT(
   }
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
-  p.rdata(SprayComps::pstateBM1) = m0;
+  p.rdata(SprayComps::pstateN0) = N0;
+  p.rdata(SprayComps::pstateBM1) = shed_mass;
   p.rdata(SprayComps::pstateBM2) = rt_time;
 }
 

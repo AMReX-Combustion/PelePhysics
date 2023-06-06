@@ -256,12 +256,7 @@ droplet_splashing(
         vel_part[dir] = Ut_splash * tanBeta[dir] + Un_splash * normal[dir];
       }
       p.rdata(SprayComps::pstateDia) = new_dia;
-      if (fdat.do_breakup == 2) {
-        p.rdata(SprayComps::pstateBM1) =
-          M_PI / 6. * rho_part * std::pow(new_dia, 3);
-      } else {
-        p.rdata(SprayComps::pstateBM1) = 0.;
-      }
+      p.rdata(SprayComps::pstateBM1) = 0.;
       p.rdata(SprayComps::pstateBM2) = 0.;
     }
   }
@@ -287,6 +282,7 @@ droplet_splashing(
     // Assume film is a cylinder
     amrex::Real film_hght = film_vol / (0.25 * M_PI * film_dia * film_dia);
     p.rdata(SprayComps::pstateFilmHght) = film_hght;
+    p.rdata(SprayComps::pstateN0) = 1.;
     p.rdata(SprayComps::pstateNumDens) = 1.;
     normpos -= (1. + film_hght / dx[0]) * par_dot * vel_part / U0norm;
     vel_part = amrex::RealVect::TheZeroVector();

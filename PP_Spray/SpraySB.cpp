@@ -110,13 +110,10 @@ SprayParticleContainer::CreateSBDroplets(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
-          if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBM1) = new_mass;
-          } else {
-            p.rdata(SprayComps::pstateBM1) = 0.;
-          }
+          p.rdata(SprayComps::pstateBM1) = 0.;
           p.rdata(SprayComps::pstateBM2) = 0.;
           p.rdata(SprayComps::pstateFilmHght) = 0.;
+          p.rdata(SprayComps::pstateN0) = num_dens0;
           p.rdata(SprayComps::pstateNumDens) = num_dens0;
           bool where = Where(p, pld);
           if (!where) {
@@ -159,7 +156,7 @@ SprayParticleContainer::CreateSBDroplets(
             p.rdata(SprayComps::pstateY + spf) = Y0[spf];
           }
           if (m_sprayData->do_breakup == 2) {
-            p.rdata(SprayComps::pstateBM1) = new_mass;
+            p.rdata(SprayComps::pstateBM1) = 0.;
             p.rdata(SprayComps::pstateBM2) = 0.;
           } else {
             p.rdata(SprayComps::pstateBM1) = phi2;
@@ -167,6 +164,7 @@ SprayParticleContainer::CreateSBDroplets(
           }
 
           p.rdata(SprayComps::pstateFilmHght) = 0.;
+          p.rdata(SprayComps::pstateN0) = N_s;
           p.rdata(SprayComps::pstateNumDens) = N_s;
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3

@@ -18,11 +18,12 @@ SprayParticleContainer::SprayParticleIO(
       "spray_mf_" + m_sprayFuelNames[sp];
   }
   real_comp_names[SprayComps::pstateNumDens] = "number_density";
+  real_comp_names[SprayComps::pstateN0] = "num_dens0";
   if (m_sprayData->do_breakup == 1) {
     real_comp_names[SprayComps::pstateBM1] = "Y_TAB";
     real_comp_names[SprayComps::pstateBM2] = "Ydot_TAB";
   } else if (m_sprayData->do_breakup == 2) {
-    real_comp_names[SprayComps::pstateBM1] = "m0";
+    real_comp_names[SprayComps::pstateBM1] = "shed_mass";
     real_comp_names[SprayComps::pstateBM2] = "rt_time";
   } else {
     real_comp_names[SprayComps::pstateBM1] = "unused1";

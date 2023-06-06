@@ -12,8 +12,9 @@ struct SprayComps
   static const int pstateDia = pstateT + 1;
   static const int pstateY = pstateDia + 1;
   static const int pstateNumDens = pstateY + SPRAY_FUEL_NUM;
-  static const int pstateBM1 = pstateNumDens + 1; // Breakup model variables
-  static const int pstateBM2 = pstateBM1 + 1;     // Breakup model variables
+  static const int pstateN0 = pstateNumDens + 1;
+  static const int pstateBM1 = pstateN0 + 1;  // Breakup model variables
+  static const int pstateBM2 = pstateBM1 + 1; // Breakup model variables
   static const int pstateFilmHght = pstateBM2 + 1;
   static const int pstateNum = pstateFilmHght + 1;
   int rhoIndx; // Component indices for conservative variable data structure
