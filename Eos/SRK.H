@@ -334,7 +334,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cp(
+  static void RTY2Cp(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -378,7 +378,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cv(
+  static void RTY2Cv(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -411,7 +411,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void REY2T(
+  static void REY2T(
     const amrex::Real R,
     const amrex::Real E,
     const amrex::Real Y[NUM_SPECIES],
@@ -476,7 +476,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2P(
+  static void RTY2P(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -491,7 +491,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RYET2P(
+  static void RYET2P(
     const amrex::Real R,
     const amrex::Real Y[NUM_SPECIES],
     const amrex::Real E,
@@ -511,7 +511,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RYP2T(
+  static void RYP2T(
     const amrex::Real R,
     const amrex::Real Y[NUM_SPECIES],
     const amrex::Real P,
@@ -554,7 +554,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2C(
+  static void RTY2C(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -588,7 +588,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2WDOT(
+  static void RTY2WDOT(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -624,7 +624,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Ei(
+  static void RTY2Ei(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -655,7 +655,7 @@ struct SRK
   // Function added for SRK
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2E(
+  static void RTY2E(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -695,7 +695,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void PYT2RE(
+  static void PYT2RE(
     const amrex::Real P,
     const amrex::Real Y[NUM_SPECIES],
     const amrex::Real T,
@@ -723,7 +723,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void PYT2R(
+  static void PYT2R(
     const amrex::Real P,
     const amrex::Real Y[NUM_SPECIES],
     const amrex::Real T,
@@ -738,7 +738,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RYP2E(
+  static void RYP2E(
     const amrex::Real R,
     const amrex::Real Y[NUM_SPECIES],
     const amrex::Real P,
@@ -761,7 +761,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Hi(
+  static void RTY2Hi(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -825,7 +825,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2G(
+  static void RTY2G(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -868,7 +868,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RPY2Cs(
+  static void RPY2Cs(
     const amrex::Real R,
     const amrex::Real P,
     const amrex::Real Y[NUM_SPECIES],
@@ -884,7 +884,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cs(
+  static void RTY2Cs(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -909,7 +909,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2H(
+  static void RTY2H(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -953,7 +953,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2dpde_dpdre(
+  static void RTY2dpde_dpdre(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
@@ -983,7 +983,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2transport(
+  static void RTY2transport(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
