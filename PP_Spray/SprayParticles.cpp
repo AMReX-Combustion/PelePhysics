@@ -293,12 +293,8 @@ SprayParticleContainer::updateParticles(
       Gpu::DeviceVector<splash_breakup> N_SB_d;
       SBVects refv;
       SBPtrs rf_d;
-      bool make_new_drops = ((do_breakup || do_splash_box) && isActive);
-#ifdef PELEC_USE_SPRAY
-      if (do_move) {
-        make_new_drops = false;
-      }
-#endif
+      bool make_new_drops =
+        ((do_breakup || do_splash_box) && isActive && do_move);
       if (make_new_drops) {
         N_SB_h.assign(Np, splash_breakup::no_change);
         N_SB_d.resize(Np);
@@ -465,7 +461,7 @@ SprayParticleContainer::updateParticles(
           refv.retrieve_data();
           SBPtrs rfh;
           refv.fillPtrs_h(rfh);
-          CreateSBDroplets(Np, N_SB_h.data(), rfh, level);
+          CreateSBDroplets(Np, sub_dt, N_SB_h.data(), rfh, level);
         }
       }
     } // for (int MyParIter pti..

@@ -9,6 +9,7 @@ using namespace amrex;
 void
 SprayParticleContainer::CreateSBDroplets(
   const int Np,
+  const Real sub_dt,
   const splash_breakup* N_SB_h,
   const SBPtrs& rfh,
   const int level)
@@ -175,7 +176,7 @@ SprayParticleContainer::CreateSBDroplets(
             Real sgn = std::copysign(1., 0.5 - rand);
             Real pvel = vel0[dir] + sgn * Utan * tanBeta[dir];
 #endif
-            p.pos(dir) = loc0[dir];
+            p.pos(dir) = loc0[dir] + sub_dt * pvel;
             p.rdata(SprayComps::pstateVel + dir) = pvel;
           }
           bool where = Where(p, pld);

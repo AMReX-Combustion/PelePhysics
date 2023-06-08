@@ -86,6 +86,14 @@ public:
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);
 
+  /// \brief Create droplets from splashing or breakup
+  void CreateSBDroplets(
+    const int Np,
+    const int sub_dt,
+    const splash_breakup* N_SB_h,
+    const SBPtrs& rfh,
+    const int level);
+
   /// \brief Spray particle write routine, writes plot, checkpoint, ascii, and
   /// injection data files
   void SprayParticleIO(
