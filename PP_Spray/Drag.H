@@ -76,7 +76,7 @@ calcVaporState(
     const int fdspec = fdat.dep_indx[spf];
     const amrex::Real boilT_ref = fdat.boilT[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
-    amrex::Real T_part = amrex::min(T_in, 0.999 * cBoilT[spf]);
+    amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
     // Compute latent heat
     amrex::Real part_latent =
       h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
@@ -202,15 +202,14 @@ calculateSpraySource(
   amrex::RealVect part_vel_src;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
-    amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
+    amrex::Real Tboil = 0.;   // Liquid mixture boiling temperature
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Tcrit += Y_part[spf] * fdat.critT[spf];
+      Tboil += Y_part[spf] * cBoilT[spf];
       cp_part += Y_part[spf] * fdat.cp[spf];
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }
     mw_part = 1. / mw_part;
-    T_part = amrex::min(0.999 * Tcrit, T_part);
     // Model the fuel vapor using the one-third rule
     amrex::Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     amrex::Real T_skin = gpv.T_fluid;
@@ -339,6 +338,9 @@ calculateSpraySource(
             sumL += mi_dot[spf] * L_fuel[spf];
           }
         }
+      } else {
+        // Still do convective heat transfer for saturated gas
+        Nu_num = Nu_0;
       }
       amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * Nu_num;
       gpv.fluid_eng_src += num_ppp * conv_src;
@@ -367,10 +369,11 @@ calculateSpraySource(
                    , vel_part[2] += part_dt * part_vel_src[2];);
     }
     if (fdat.mass_trans) {
-      T_part += part_dt * part_temp_src;
-      T_part = amrex::min(0.999 * Tcrit, T_part);
+      amrex::Real newT = T_part + part_dt * part_temp_src;
       amrex::Real new_mass = pmass + m_dot * part_dt;
-      if (new_mass > min_mass) {
+      // If droplet is still reasonable size and temperature
+      if (new_mass > min_mass && newT < Tboil) {
+        T_part = newT;
         if (SPRAY_FUEL_NUM > 1) {
           rho_part = 0.;
           amrex::Real sumY = 0.;

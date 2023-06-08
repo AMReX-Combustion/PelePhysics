@@ -63,7 +63,7 @@ struct SprayUnits
   amrex::Real pres_conv = 1.;
   amrex::Real len_conv = 1.;
 #endif
-  amrex::Real min_mass = 1.E-12 * mass_conv;
+  amrex::Real min_mass = 1.E-13 * mass_conv;
 };
 
 // Structure that contains the interpolated gas phase state
