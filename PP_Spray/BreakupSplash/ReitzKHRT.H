@@ -51,7 +51,7 @@ updateBreakupKHRT(
   // Should not create child droplets that are near to or less than the minimum
   // allowable mass to avoid unphysical evaporation of mass
   amrex::Real min_rad =
-    10. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
+    4. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
   amrex::Real shed_mass = p.rdata(SprayComps::pstateBM1);
   amrex::Real N0 = p.rdata(SprayComps::pstateN0);
   // To prolong RT breakup, rt_time is set to -1 on injection. RT breakup can
