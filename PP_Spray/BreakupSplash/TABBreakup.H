@@ -50,7 +50,7 @@ updateBreakupTAB(
   amrex::Real Utan_total = 0.;
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
-  amrex::Real min_rad = 10. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part)));
+  amrex::Real min_rad = 10. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
   if (rad_part < min_rad) {
     return 0.;
   }

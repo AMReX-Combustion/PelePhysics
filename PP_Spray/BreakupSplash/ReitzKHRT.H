@@ -151,7 +151,7 @@ updateBreakupKHRT(
         // Percent of shed mass relative to total mass
         amrex::Real rel_shed_drop = shed_mass / (num_dens * rad_part3);
         // Percent of shed mass relative to injected droplet mass
-	amrex::Real rel_shed_jet = 8. * shed_mass / avg_inject_mass;
+        amrex::Real rel_shed_jet = 8. * shed_mass / avg_inject_mass;
         // Too much mass has been shed, must split droplet up and delete droplet
         if (rel_shed_drop > mthresh_drop) {
           create_child_drops = true;
@@ -160,12 +160,14 @@ updateBreakupKHRT(
           rs3 = rs * rs * rs;
           ns = shed_mass / rs3;
           p.id() = -1;
-        } else if (rel_shed_jet > mthresh_jet && rs > min_rad && ns > num_dens) {
+        } else if (
+          rel_shed_jet > mthresh_jet && rs > min_rad && ns > num_dens) {
           create_child_drops = true;
           np = (np * rp3 - ns * rs3) / rp3;
           N0 = np;
           shed_mass = 0.;
         }
+      }
       if (create_child_drops) {
         amrex::Real Utan = A1 * omega_KH * lam_KH;
         N_SB[pid] = splash_breakup::breakup_KH;
@@ -186,11 +188,11 @@ updateBreakupKHRT(
             p.rdata(SprayComps::pstateY + spf);
         }
 #endif
-      }
+      } // if (create_child_drops)...
       rad_part = rp;
       num_dens = np;
-    }
-  }
+    } // if (rs < rad_part && We_g > We_crit)...
+  }   // if (!breakupRT)...
   p.rdata(SprayComps::pstateDia) = 2. * rad_part;
   p.rdata(SprayComps::pstateNumDens) = num_dens;
   p.rdata(SprayComps::pstateN0) = N0;
