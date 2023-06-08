@@ -16,7 +16,7 @@ updateBreakupTAB(
   const amrex::Real& Reyn_d,
   const amrex::Real& dt,
   const amrex::Real* cBoilT,
-  GasPhaseVals& gpv,
+  const GasPhaseVals& gpv,
   const SprayData& fdat,
   SprayParticleContainer::ParticleType& p)
 {
@@ -50,6 +50,10 @@ updateBreakupTAB(
   amrex::Real Utan_total = 0.;
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
+  amrex::Real min_rad = 10. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part)));
+  if (rad_part < min_rad) {
+    return 0.;
+  }
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
   amrex::Real We_div_r = gpv.rho_fluid * diff_vel.radSquared() / sigma;
   amrex::Real We_crit = C_k * C_b / C_F;
@@ -129,26 +133,7 @@ updateBreakupTAB(
         amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
         amrex::Real etb = std::acos(etheta) / omega;
         amrex::Real rchild = rad_part * std::exp(-Kbr * etb);
-        amrex::Real child_mass =
-          4. * M_PI / 3. * rho_part * std::pow(rchild, 3);
         num_dens *= std::pow(rad_part / rchild, 3);
-        // If mass is too small and evaporation is on, assume droplet totally
-        // evaporates
-        if (child_mass < SPU.min_mass && fdat.mass_trans) {
-          auto eos = pele::physics::PhysicsType::eos();
-          amrex::GpuArray<amrex::Real, NUM_SPECIES> h_part;
-          eos.T2Hi(T_part, h_part.data());
-          amrex::Real mass_src = num_dens * child_mass / dt;
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            const int fdspec = fdat.dep_indx[spf];
-            amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
-            gpv.fluid_Y_dot[spf] += Y_part * mass_src;
-            gpv.fluid_eng_src += Y_part * mass_src * h_part[fdspec];
-          }
-          gpv.fluid_mass_src += mass_src;
-          p.id() = -1;
-          return 0.;
-        }
         amrex::Real rsmr = std::sqrt(std::pow(rad_part, 3) / (rchild * rchild));
         amrex::Real AE2 =
           3. * (1. - rad_part / rsmr + 5. * C_D * We / 72.) * omega2;

@@ -376,8 +376,9 @@ SprayParticleContainer::updateParticles(
                 } else {
                   // Update breakup for KH-RT model
                   updateBreakupKHRT(
-                    pid, p, Reyn_d, flow_dt, cBoilT.data(), avg_inject_mass, B0,
-                    B1, C3, gpv, *fdat, N_SB, rf_d, make_new_drops);
+                    pid, p, Reyn_d, fdat->dtmod * flow_dt, cBoilT.data(),
+                    avg_inject_mass, B0, B1, C3, gpv, *fdat, N_SB, rf_d,
+                    make_new_drops);
                 }
               }
             }

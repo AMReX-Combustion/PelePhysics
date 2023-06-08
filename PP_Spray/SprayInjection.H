@@ -42,6 +42,11 @@ SprayParticleContainer::sprayInjection(
     amrex::Abort(
       "Average droplet size too small, floating point issues expected");
   }
+  amrex::Real initial_bm2 = 0.;
+  if (fdat->do_breakup == 2) {
+    // If KHRT is used, BM2 is RT time
+    initial_bm2 = -1.;
+  }
   // Minimum number of parcels we want injected at a time
   amrex::Real min_inj_parcel = spray_jet->m_minParcel;
   amrex::Real dt = sim_dt;
@@ -128,9 +133,7 @@ SprayParticleContainer::sprayInjection(
       // If KHRT is used, BM1 is shed mass
       // If TAB is used, BM1 is y
       p.rdata(SprayComps::pstateBM1) = 0.;
-      // If KHRT is used, BM2 is RT time
-      // If TAB is used, BM2 is y dot
-      p.rdata(SprayComps::pstateBM2) = 0.;
+      p.rdata(SprayComps::pstateBM2) = initial_bm2;
       p.rdata(SprayComps::pstateFilmHght) = 0.;
       p.rdata(SprayComps::pstateN0) = num_ppp;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
@@ -213,16 +216,15 @@ SprayParticleContainer::uniformSprayInit(
   part_vals[SprayComps::pstateT] = T_part;
   part_vals[SprayComps::pstateDia] = dia_part;
   const SprayData* fdat = m_sprayData;
-  amrex::Real rho_part = 0.;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    part_vals[SprayComps::pstateY + spf] = Y_part[spf];
-    rho_part += Y_part[spf] / fdat->rhoL(T_part, spf);
+  amrex::Real initial_bm2 = 0.;
+  if (fdat->do_breakup == 2) {
+    // If KHRT is used, BM2 is RT time
+    initial_bm2 = -1.;
   }
-  rho_part = 1. / rho_part;
   part_vals[SprayComps::pstateNumDens] = num_ppp;
   part_vals[SprayComps::pstateN0] = num_ppp;
   part_vals[SprayComps::pstateBM1] = 0.;
-  part_vals[SprayComps::pstateBM2] = 0.;
+  part_vals[SprayComps::pstateBM2] = initial_bm2;
   part_vals[SprayComps::pstateFilmHght] = 0.;
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),

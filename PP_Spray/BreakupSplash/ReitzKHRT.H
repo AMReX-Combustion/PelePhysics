@@ -21,10 +21,12 @@ updateBreakupKHRT(
   const SprayData& fdat,
   splash_breakup* N_SB,
   const SBPtrs& rf,
-  bool make_new_drops)
+  const bool make_new_drops)
 {
-  // Percent of mass lost before new parcel is formed
-  const amrex::Real massperc = 0.03;
+  // Threshold to make new droplets normally
+  const amrex::Real mthresh_jet = 0.03;
+  // Threshold for when shedding mass is too high
+  const amrex::Real mthresh_drop = 0.9;
   const amrex::Real We_crit = 6.;
   // RT model constants
   const amrex::Real A1 = 0.188;
@@ -45,13 +47,21 @@ updateBreakupKHRT(
     mu_part += Y_part * fdat.muL(minT, spf);
   }
   rho_part = 1. / rho_part;
-  const amrex::Real min_rad =
-    std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
+  // Minimum droplet radius for child droplets
+  // Should not create child droplets that are near to or less than the minimum
+  // allowable mass to avoid unphysical evaporation of mass
+  amrex::Real min_rad =
+    10. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
   amrex::Real shed_mass = p.rdata(SprayComps::pstateBM1);
   amrex::Real N0 = p.rdata(SprayComps::pstateN0);
+  // To prolong RT breakup, rt_time is set to -1 on injection. RT breakup can
+  // then only occur after KH breakup happens at least once
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
+  if (rad_part < min_rad) {
+    return;
+  }
   amrex::Real rad_part3 = std::pow(rad_part, 3);
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
   amrex::Real vel_mag = diff_vel.vectorLength();
@@ -126,7 +136,7 @@ updateBreakupKHRT(
                            ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
                            std::sqrt(sigma / (rho_part * rad_part3));
     amrex::Real tau_KH = 3.726 * B1 * rad_part / (lam_KH * omega_KH);
-    amrex::Real rs = amrex::max(1.1 * min_rad, B0 * lam_KH);
+    amrex::Real rs = B0 * lam_KH;
     // KH breakup occurs
     if (rs < rad_part && We_g > We_crit) {
       amrex::Real rp = (dt / tau_KH * rs + rad_part) / (1. + dt / tau_KH);
@@ -136,13 +146,27 @@ updateBreakupKHRT(
       rt_time = 0.;
       shed_mass += N0 * (rad_part3 - rp3);
       amrex::Real ns = shed_mass / rs3;
-      amrex::Real removed_perc = 0.;
+      bool create_child_drops = false;
       if (make_new_drops) {
-        removed_perc = 8. * shed_mass / avg_inject_mass;
-      }
-      // If removed mass is greater than 3% of injected particle mass, break
-      // particle up
-      if (ns > 1. && ns > num_dens && removed_perc > massperc) {
+        // Percent of shed mass relative to total mass
+        amrex::Real rel_shed_drop = shed_mass / (num_dens * rad_part3);
+        // Percent of shed mass relative to injected droplet mass
+	amrex::Real rel_shed_jet = 8. * shed_mass / avg_inject_mass;
+        // Too much mass has been shed, must split droplet up and delete droplet
+        if (rel_shed_drop > mthresh_drop) {
+          create_child_drops = true;
+          shed_mass = num_dens * rad_part3;
+          rs = amrex::max(rs, min_rad);
+          rs3 = rs * rs * rs;
+          ns = shed_mass / rs3;
+          p.id() = -1;
+        } else if (rel_shed_jet > mthresh_jet && rs > min_rad && ns > num_dens) {
+          create_child_drops = true;
+          np = (np * rp3 - ns * rs3) / rp3;
+          N0 = np;
+          shed_mass = 0.;
+        }
+      if (create_child_drops) {
         amrex::Real Utan = A1 * omega_KH * lam_KH;
         N_SB[pid] = splash_breakup::breakup_KH;
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -162,9 +186,6 @@ updateBreakupKHRT(
             p.rdata(SprayComps::pstateY + spf);
         }
 #endif
-        np = (np * rp3 - ns * rs3) / rp3;
-        N0 = np;
-        shed_mass = 0.;
       }
       rad_part = rp;
       num_dens = np;
