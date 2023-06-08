@@ -339,9 +339,6 @@ calculateSpraySource(
             sumL += mi_dot[spf] * L_fuel[spf];
           }
         }
-        // If gas phase is saturated, only convective heat transfer
-      } else {
-        Nu_num = Nu_0;
       }
       amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * Nu_num;
       gpv.fluid_eng_src += num_ppp * conv_src;
