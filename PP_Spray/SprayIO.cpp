@@ -130,7 +130,7 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
       Vector<Real> in_total_time(in_numjets);
       for (int i = 0; i < in_numjets; ++i) {
         JetDataFile >> in_jet_names[i] >> in_inj_mass[i] >> in_inj_time[i] >>
-          in_min_parcel[i] >> in_total_mass >> in_total_time;
+          in_min_parcel[i] >> in_total_mass[i] >> in_total_time[i];
       }
       for (int ijets = 0; ijets < in_numjets; ++ijets) {
         std::string in_name = in_jet_names[ijets];
