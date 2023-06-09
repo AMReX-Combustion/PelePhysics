@@ -260,6 +260,10 @@ public:
   // Minimum parcels to inject at a time
   amrex::Real m_minParcel = 1.;
 
+  // Total injection mass and time
+  amrex::Real m_totalInjMass = 0.;
+  amrex::Real m_totalInjTime = 0.;
+
 protected:
   // Member data
   std::string m_jetName;

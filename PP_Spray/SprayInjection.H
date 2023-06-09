@@ -153,6 +153,8 @@ SprayParticleContainer::sprayInjection(
   if (est_mdot - mdot > 0.5 * mdot) {
     spray_jet->m_minParcel += 1.;
   }
+  spray_jet->m_totalInjMass += cur_mass;
+  spray_jet->m_totalInjTime += dt;
   for (auto& kv : host_particles) {
     auto grid = kv.first.first;
     auto tile = kv.first.second;
