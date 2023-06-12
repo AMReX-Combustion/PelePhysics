@@ -88,9 +88,9 @@ get_splash_vels(
     uPsi_coeff = 0.02 * U0tan;
     usNorm = 0.03 * U0tan;
   }
-};
+}
 
-void
+inline void
 get_ms_theta(
   const amrex::Real alpha,
   const amrex::Real ms,
