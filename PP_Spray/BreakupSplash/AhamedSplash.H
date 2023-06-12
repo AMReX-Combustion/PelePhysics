@@ -112,7 +112,7 @@ get_ms_theta(
     ms_thetas[0] = ms_psi_pih;
     ms_thetas[1] = ms_psi_0;
     ms_thetas[2] = ms_psi_pih;
-    ms_thetas[3] = ms - ms_psi_0 - 2. ms_psi_pih;
+    ms_thetas[3] = ms - ms_psi_0 - 2. * ms_psi_pih;
   } else {
     amrex::Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
     ms_thetas[0] = 0.25 * ms;
