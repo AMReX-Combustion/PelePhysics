@@ -78,20 +78,23 @@ SprayParticleContainer::CreateSBDroplets(
         Real U0norm = normal.dotProduct(vel0);
         Real alpha =
           amrex::max(M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
+        Real alpha_d = alpha * 180. / M_PI;
         Real U0tan = std::sqrt(U0mag * U0mag - U0norm * U0norm);
         Real uBeta_0, uBeta_half, uBeta_pi, uPsi_coeff, usNorm;
         get_splash_vels(
           U0norm, U0tan, Kv, del_film, uBeta_0, uBeta_half, uBeta_pi,
           uPsi_coeff, usNorm);
-        int Nsint = 4;
-        Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
-        // Note: Must be -pi < psi < pi, not 0 < psi < 2 pi for symmetry
+        const int Nsint = 4;
+        // Secondary mass for drops in each direction, -pi/2, 0, pi/2, and pi
+        Real ms_thetas[Nsint];
+        get_ms_theta(alpha, ms, del_film, ms_thetas);
+        // Note: Must be -pi/2 < psi < pi, not 0 < psi < pi for symmetry
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
           Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
-          Real new_mass = 0.25 * ms * (1. + tanterm * std::cos(psi));
+          Real new_mass = ms_thetas[new_parts];
           Real dia_part = std::cbrt(6. * new_mass / (M_PI * rho_part));
           p.rdata(SprayComps::pstateDia) = dia_part;
           Real utBeta = uBeta_half;

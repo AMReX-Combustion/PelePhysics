@@ -90,6 +90,38 @@ get_splash_vels(
   }
 };
 
+void
+get_ms_theta(
+  const amrex::Real alpha,
+  const amrex::Real ms,
+  const amrex::Real del_film,
+  amrex::Real* ms_thetas)
+{
+  // Indices: 0: psi = -pi/2, 1: psi = 0, 2: psi = pi/2, 3: psi = pi
+  if (del_film > 0.) {
+    amrex::Real alpha_d = alpha * 180. / M_PI;
+    amrex::Real ms_psi_0, ms_psi_pih;
+    if (del_film > 0.1) {
+      ms_psi_0 = (1.9E-4 * alpha_d * alpha_d + 0.0202 * alpha_d - 0.0107) * ms;
+      ms_psi_pih =
+        (6.4E-5 * alpha_d * alpha_d - 7.6E-3 * alpha_d + 0.4176) * ms;
+    } else {
+      ms_psi_0 = (-2.3E-4 * alpha_d * alpha_d + 0.0236 * alpha_d) * ms;
+      ms_psi_pih = (6.E-5 * alpha_d * alpha_d - 6.8E-3 * alpha_d + 0.3619) * ms;
+    }
+    ms_thetas[0] = ms_psi_pih;
+    ms_thetas[1] = ms_psi_0;
+    ms_thetas[2] = ms_psi_pih;
+    ms_thetas[3] = ms - ms_pis_0 - 2. ms_psi_pi;
+  } else {
+    amrex::Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
+    ms_thetas[0] = 0.25 * ms;
+    ms_thetas[1] = 0.25 * ms * (1. + tanterm);
+    ms_thetas[2] = 0.25 * ms;
+    ms_thetas[3] = 0.25 * ms * (1. - tanterm);
+  }
+}
+
 // Determine the type of particle impact at the wall
 AMREX_GPU_DEVICE
 AMREX_INLINE
@@ -137,7 +169,23 @@ splash_criteria(
         A = 10.42 * del_film + 0.32;
         B = 8.75 * del_film - 0.107;
       }
-      ms = A * (1. - std::exp(-0.003 * (Kv - Kcrit_wet))) + B;
+      amrex::Real ms0 = A * (1. - std::exp(-0.003 * (Kv - Kcrit_wet))) + B;
+      amrex::Real alpha_deg = alpha * 180. / M_PI;
+      if (del_film > 0.1) {
+        if (alpha_d > 45.) {
+          ms = ms0 * (-0.0305 * alpha_d + 3.7496);
+        } else {
+          ms = ms0 * 0.0525 * alpha_d;
+        }
+      } else {
+        if (alpha_d > 45.) {
+          ms = ms0 * (-7.2E-3 * alpha_d + 1.6389);
+        } else {
+          ms = ms0 * (-4.6E-4 * alpha_d * alpha_d + 0.05 * alpha_d);
+        }
+      }
+      // Do not allow mass to exceed one for now, should be fixed
+      ms = amrex::min(ms, 1.);
     } else {
       crit = splash_type::spread;
       // All mass becomes part of the wall film
@@ -149,7 +197,6 @@ splash_criteria(
 }
 
 // Determine if droplet is splashing, fill SB data if it is
-// TODO: Add wet wall droplet splashing functions
 AMREX_GPU_DEVICE
 AMREX_INLINE
 void
