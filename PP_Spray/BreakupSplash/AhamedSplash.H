@@ -112,7 +112,7 @@ get_ms_theta(
     ms_thetas[0] = ms_psi_pih;
     ms_thetas[1] = ms_psi_0;
     ms_thetas[2] = ms_psi_pih;
-    ms_thetas[3] = ms - ms_pis_0 - 2. ms_psi_pi;
+    ms_thetas[3] = ms - ms_psi_0 - 2. ms_psi_pi;
   } else {
     amrex::Real tanterm = 0.4 * std::tan(M_PI / 2. - alpha);
     ms_thetas[0] = 0.25 * ms;
@@ -170,7 +170,7 @@ splash_criteria(
         B = 8.75 * del_film - 0.107;
       }
       amrex::Real ms0 = A * (1. - std::exp(-0.003 * (Kv - Kcrit_wet))) + B;
-      amrex::Real alpha_deg = alpha * 180. / M_PI;
+      amrex::Real alpha_d = alpha * 180. / M_PI;
       if (del_film > 0.1) {
         if (alpha_d > 45.) {
           ms = ms0 * (-0.0305 * alpha_d + 3.7496);
