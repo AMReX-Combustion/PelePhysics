@@ -157,9 +157,9 @@ SprayParticleContainer::updateParticles(
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   if (m_verbose > 2 && ParallelDescriptor::IOProcessor()) {
-    std::string move_str = "MK";
+    std::string move_string = "MK";
     if (do_move) {
-      move_str = "MKD";
+      move_string = "MKD";
     }
     std::string part_type = "Active";
     if (isGhost) {
