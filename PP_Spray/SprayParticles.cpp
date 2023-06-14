@@ -156,13 +156,20 @@ SprayParticleContainer::updateParticles(
   BL_PROFILE("SprayParticleContainer::updateParticles()");
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
-  bool isActive = !(isVirt || isGhost);
-  bool do_splash = (m_sprayData->do_splash && isActive && do_move);
-  bool do_breakup = (m_sprayData->do_breakup > 0);
-  Real B0 = m_khrtB0;
-  Real B1 = m_khrtB1;
-  Real C3 = m_khrtC3;
-  Real max_ppp = m_maxNumPPP;
+  if (m_verbose > 2 && ParallelDescriptor::IOProcessor()) {
+    std::string move_str = "MK";
+    if (do_move) {
+      move_str = "MKD";
+    }
+    std::string part_type = "Active";
+    if (isGhost) {
+      part_type = "Ghost";
+    } else if (isVirt) {
+      part_type = "Virtual";
+    }
+    Print() << move_string << " on " << part_type << " particles on level "
+            << level << std::endl;
+  }
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
   const auto dxarr = this->Geom(level).CellSizeArray();
   const auto ploarr = this->Geom(level).ProbLoArray();
@@ -448,22 +455,7 @@ SprayParticleContainer::updateParticles(
           } // End of subcycle loop
         }   // End of p.id() > 0 check
       });   // End of loop over particles
-      if (make_new_drops) {
-        Gpu::copy(
-          Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());
-        bool get_new_parts = false;
-        for (Long n = 0; n < Np; n++) {
-          if (N_SB_h[n] != splash_breakup::no_change) {
-            get_new_parts = true;
-          }
-        }
-        if (get_new_parts) {
-          refv.retrieve_data();
-          SBPtrs rfh;
-          refv.fillPtrs_h(rfh);
-          CreateSBDroplets(Np, sub_dt, N_SB_h.data(), rfh, level);
-        }
-      }
+      Gpu::streamSynchronize();
     } // for (int MyParIter pti..
   }
 }
