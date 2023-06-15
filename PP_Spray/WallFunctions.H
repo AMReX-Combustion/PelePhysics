@@ -176,7 +176,7 @@ AMREX_GPU_DEVICE
 AMREX_INLINE
 void
 impose_wall(
-  bool isActive,
+  bool do_splash,
   int pid,
   SprayParticleContainer::ParticleType& p,
   const amrex::RealVect& dx,
@@ -214,11 +214,9 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm,
 #endif
     par_dot, normal);
-  int bounce = 0;
-  int max_bounce = 5;
   amrex::IntVect refl_prev = ijkc;
   bool do_deposit = false;
-  while (do_refl) {
+  if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     // Reflect the particle to see if it interacts with another surface or
     // leaves the domain
@@ -239,45 +237,18 @@ impose_wall(
       refl_prev, refl_vel, use_EB, flags, bcent, bnorm,
 #endif
       refl_par_dot, refl_normal);
-    if (fdat.do_splash) {
-      // If it reflects again, deposit particle at wall
-      if (do_refl) {
-        do_deposit = true;
-        do_refl = false;
-      } else {
-        // If not bouncing and splash model is on
-        if (isActive) {
-          droplet_splashing(
-            p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal,
-            cBoilT, N_SB, rf, film_h);
-        } else {
-          // Otherwise, just reflect particle
-          normpos = refl_pos;
-          vel_part = refl_vel;
-        }
-      }
-    } else {
-      if (!use_EB) {
-        refl_prev = normpos.floor();
-      }
-#ifdef AMREX_USE_EB
-      else if (!flags(ijkc).isCovered()) {
-        refl_prev = normpos.floor();
-      }
-#endif
-      normpos = refl_pos;
-      vel_part = refl_vel;
+    if (do_splash) {
+      // If not bouncing and splash model is on
+      droplet_splashing(
+        p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal,
+        cBoilT, N_SB, rf, film_h);
+    } else if (do_refl) {
+      // Otherwise, just deposit particle
+      do_deposit = true;
       normal = refl_normal;
       par_dot = refl_par_dot;
-      if (do_refl) {
-        bounce++;
-        if (bounce >= max_bounce) {
-          do_deposit = true;
-          do_refl = false;
-        }
-      }
     }
-  } // while (do_refl)
+  } // if (do_refl)
   if (do_deposit) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     normpos -= 1.1 * par_dot * vel_part / Nw_Vp;

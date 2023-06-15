@@ -111,6 +111,7 @@ struct SBVects
       amrex::Gpu::hostToDevice, phi2_h.begin(), phi2_h.end(), phi2_d.begin());
     amrex::Gpu::copyAsync(
       amrex::Gpu::hostToDevice, phi3_h.begin(), phi3_h.end(), phi3_d.begin());
+    amrex::Gpu::streamSynchronize();
   }
 
   SBVects(const SBVects&) = delete;
