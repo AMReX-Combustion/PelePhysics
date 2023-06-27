@@ -268,6 +268,17 @@ GET_CRITPARAMS(
   amrex::Abort("GET_CRITPARAMS not implemented for Null chemistry.");
 }
 
+// compute the critical parameter quantities for each species for SRK
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+GET_CRITPARAMS_SRK(
+  amrex::Real* /*sqrtOneOverTc*/,
+  amrex::Real* /*sqrtAsti*/,
+  amrex::Real* /*Bi*/,
+  amrex::Real* /*Fomega*/)
+{
+  amrex::Abort("GET_CRITPARAMS_SRK not implemented for Null chemistry.");
+}
+
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 egtransetLENIMC(int* /*LENIMC*/)
 {
