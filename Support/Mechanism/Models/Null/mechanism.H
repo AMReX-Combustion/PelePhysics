@@ -202,6 +202,14 @@ CKUMS(const amrex::Real /*T*/, amrex::Real* /*ums*/)
   amrex::Abort("CKUMS not implemented for Null chemistry.");
 }
 
+// get mean internal energy in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKUBMS(
+  const amrex::Real /*T*/, const amrex::Real* /*y[]*/, amrex::Real& /*ubms*/)
+{
+  amrex::Abort("CKUMBS is not implemented for Null chemsitry");
+}
+
 /*convert y[species] (mass fracs) to x[species] (mole fracs) */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real* /*y*/, amrex::Real* /*x*/)
