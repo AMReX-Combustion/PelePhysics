@@ -115,35 +115,37 @@ InterpolateGasPhase(
 #endif
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
   for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-    amrex::IntVect cur_indx = indx_array[aindx];
-    if (!state_box.contains(cur_indx)) {
-      amrex::Abort(
-        "SprayParticleContainer::updateParticles() -- state box too small");
-    }
     amrex::Real cw = weights[aindx];
-    amrex::Real cur_rho = rhoarr(cur_indx);
-    gpv.rho_fluid += cw * cur_rho;
-    amrex::Real inv_rho = 1. / cur_rho;
-    for (int n = 0; n < NUM_SPECIES; ++n) {
-      amrex::Real cur_mf = rhoYarr(cur_indx, n) * inv_rho;
-      gpv.Y_fluid[n] += cw * cur_mf;
-      mass_frac[n] = cur_mf;
-    }
+    if (cw > 0.) {
+      amrex::IntVect cur_indx = indx_array[aindx];
+      if (!state_box.contains(cur_indx)) {
+        amrex::Abort(
+          "SprayParticleContainer::updateParticles() -- state box too small");
+      }
+      amrex::Real cur_rho = rhoarr(cur_indx);
+      gpv.rho_fluid += cw * cur_rho;
+      amrex::Real inv_rho = 1. / cur_rho;
+      for (int n = 0; n < NUM_SPECIES; ++n) {
+        amrex::Real cur_mf = rhoYarr(cur_indx, n) * inv_rho;
+        gpv.Y_fluid[n] += cw * cur_mf;
+        mass_frac[n] = cur_mf;
+      }
 #ifdef PELELM_USE_SPRAY
-    inv_rho = 1.;
+      inv_rho = 1.;
 #endif
-    amrex::Real ke = 0.;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      amrex::Real vel = momarr(cur_indx, dir) * inv_rho;
-      gpv.vel_fluid[dir] += cw * vel;
-      ke += vel * vel / 2.;
-    }
-    amrex::Real T_i = Tarr(cur_indx);
+      amrex::Real ke = 0.;
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        amrex::Real vel = momarr(cur_indx, dir) * inv_rho;
+        gpv.vel_fluid[dir] += cw * vel;
+        ke += vel * vel / 2.;
+      }
+      amrex::Real T_i = Tarr(cur_indx);
 #ifndef PELELM_USE_SPRAY
-    amrex::Real intEng = engarr(cur_indx) * inv_rho - ke;
-    eos.EY2T(intEng, mass_frac.data(), T_i);
+      amrex::Real intEng = engarr(cur_indx) * inv_rho - ke;
+      eos.EY2T(intEng, mass_frac.data(), T_i);
 #endif
-    gpv.T_fluid += cw * T_i;
+      gpv.T_fluid += cw * T_i;
+    }
   }
 }
 
