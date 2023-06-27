@@ -64,7 +64,7 @@ SprayParticleContainer::computeDerivedVars(
       bar_fab = bar->array(pti);
     }
 #endif
-    amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
+    amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(Long pid) noexcept {
       const ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
         RealVect lxc = (p.pos() - plo) * dxi;

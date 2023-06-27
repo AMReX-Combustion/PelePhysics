@@ -279,39 +279,7 @@ SprayParticleContainer::updateParticles(
         volfrac_fab = volfrac->array(pti);
       }
 #endif
-      bool do_splash_box = (do_splash && (eb_in_box || at_bounds));
-      FArrayBox wf_fab;
-      Array4<Real> wf_arr;
-      if (do_splash_box) {
-        wf_fab.resize(src_box, 1, The_Async_Arena());
-        wf_fab.setVal<RunOn::Device>(0.);
-        wf_arr = wf_fab.array();
-        // TODO: Adjust this for EB faces
-        Real face_area = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
-        amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
-          ParticleType& p = pstruct[pid];
-          if (p.id() > 0 && p.rdata(SprayComps::pstateFilmHght) > 0.) {
-            fillFilmFab(wf_arr, p, face_area, plo, dx);
-          }
-        });
-      }
-      // Data structures for creating new particles during splashing/breakup
-      Gpu::HostVector<splash_breakup> N_SB_h;
-      Gpu::DeviceVector<splash_breakup> N_SB_d;
-      SBVects refv;
-      SBPtrs rf_d;
-      bool make_new_drops =
-        ((do_breakup || do_splash_box) && isActive && do_move);
-      if (make_new_drops) {
-        N_SB_h.assign(Np, splash_breakup::no_change);
-        N_SB_d.resize(Np);
-        Gpu::copyAsync(
-          Gpu::hostToDevice, N_SB_h.begin(), N_SB_h.end(), N_SB_d.begin());
-        refv.build(Np);
-        refv.fillPtrs_d(rf_d);
-      }
-      auto N_SB = N_SB_d.dataPtr();
-      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
+      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(Long pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           auto eos = pele::physics::PhysicsType::eos();
