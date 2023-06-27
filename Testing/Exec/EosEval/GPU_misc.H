@@ -69,7 +69,7 @@ initialize_data(
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf_pt[n] = mf(i, j, k, n);
   }
-  eos.RTY2E(rho(i,j,k), temp(i, j, k), mf_pt.arr, energy(i,j,k));
+  eos.RTY2E(rho(i, j, k), temp(i, j, k), mf_pt.arr, energy(i, j, k));
 #if (AMREX_SPACEDIM == 1)
   energy(i, j, k) = energy(i, j, k);
 #else
@@ -96,7 +96,7 @@ get_cp(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.RTY2Cp(rho(i,j,k), temp(i, j, k), mf_pt.arr, cp(i, j, k));
+  eos.RTY2Cp(rho(i, j, k), temp(i, j, k), mf_pt.arr, cp(i, j, k));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -118,7 +118,7 @@ get_cv(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.RTY2Cv(rho(i,j,k), temp(i, j, k), mf_pt.arr, cv(i, j, k));
+  eos.RTY2Cv(rho(i, j, k), temp(i, j, k), mf_pt.arr, cv(i, j, k));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -140,7 +140,7 @@ get_T_from_EY(
   }
 
   auto eos = pele::physics::PhysicsType::eos();
-  eos.REY2T(rho(i,j,k), energy(i, j, k), mf_pt.arr, temp(i, j, k));
+  eos.REY2T(rho(i, j, k), energy(i, j, k), mf_pt.arr, temp(i, j, k));
 }
 
 #endif
