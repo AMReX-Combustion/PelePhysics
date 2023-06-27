@@ -1254,10 +1254,10 @@ ReactorCvode::react(
 #endif
 
   // Set of SUNDIALs objects needed for Cvode
-  SUNMatrix A = nullptr;                      // Jacobian matrix
-  CVODEUserData* udata = new CVODEUserData{}; // Userdata container
-  SUNNonlinearSolver NLS = nullptr;           // Non-linear solver
-  SUNLinearSolver LS = nullptr;               // Linear solver
+  SUNMatrix A = nullptr;             // Jacobian matrix
+  auto* udata = new CVODEUserData{}; // Userdata container
+  SUNNonlinearSolver NLS = nullptr;  // Non-linear solver
+  SUNLinearSolver LS = nullptr;      // Linear solver
 
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
@@ -1471,10 +1471,10 @@ ReactorCvode::react(
   amrex::Real CvodeActual_time_final = 0.0;
 
   // Set of SUNDIALs objects needed for Cvode
-  SUNMatrix A = nullptr;                      // Jacobian matrix
-  CVODEUserData* udata = new CVODEUserData{}; // Userdata container
-  SUNNonlinearSolver NLS = nullptr;           // Non-linear solver
-  SUNLinearSolver LS = nullptr;               // Linear solver
+  SUNMatrix A = nullptr;             // Jacobian matrix
+  auto* udata = new CVODEUserData{}; // Userdata container
+  SUNNonlinearSolver NLS = nullptr;  // Non-linear solver
+  SUNLinearSolver LS = nullptr;      // Linear solver
 
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
