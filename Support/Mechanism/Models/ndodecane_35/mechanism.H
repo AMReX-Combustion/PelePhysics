@@ -12436,6 +12436,261 @@ GET_CRITPARAMS(
   acentric_i[34] = 0.037200;
 }
 
+// compute the critical parameter quantities for each species for SRK
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+GET_CRITPARAMS_SRK(
+  amrex::Real* sqrtOneOverTc,
+  amrex::Real* sqrtAsti,
+  amrex::Real* Bi,
+  amrex::Real* Fomega)
+{
+
+  // species 0: NC12H26
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[0] = 3.1014444518975e-02;
+  sqrtAsti[0] = 5.1456132490395e+04;
+  Bi[0] = 1.0578236621500e+00;
+  Fomega[0] = 4.8508000000000e-01;
+
+  // species 1: H
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[1] = 7.2391579785311e-02;
+  sqrtAsti[1] = 5.8451221185793e+05;
+  Bi[1] = 4.4006634563410e+00;
+  Fomega[1] = 4.8508000000000e-01;
+
+  // species 2: O
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[2] = 9.7460146948181e-02;
+  sqrtAsti[2] = 4.2500156012386e+04;
+  Bi[2] = 6.6930234851885e-01;
+  Fomega[2] = 4.8508000000000e-01;
+
+  // species 3: OH
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[3] = 9.7460146948181e-02;
+  sqrtAsti[3] = 3.9981183985545e+04;
+  Bi[3] = 6.2963299076575e-01;
+  Fomega[3] = 4.8508000000000e-01;
+
+  // species 4: HO2
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[4] = 8.4114315417892e-02;
+  sqrtAsti[4] = 3.3657825710980e+04;
+  Bi[4] = 6.4505861132042e-01;
+  Fomega[4] = 4.8508000000000e-01;
+
+  // species 5: H2
+  // Imported from NIST
+  sqrtOneOverTc[5] = 1.7369646834812e-01;
+  sqrtAsti[5] = 2.4824229305911e+05;
+  Bi[5] = 9.1362254169923e+00;
+  Fomega[5] = 1.3798618890700e-01;
+
+  // species 6: H2O
+  // Imported from NIST
+  sqrtOneOverTc[6] = 3.9311140369715e-02;
+  sqrtAsti[6] = 1.3145468419592e+05;
+  Bi[6] = 1.1727204136223e+00;
+  Fomega[6] = 1.0013577274636e+00;
+
+  // species 7: H2O2
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[7] = 8.4114315417892e-02;
+  sqrtAsti[7] = 3.2660380884830e+04;
+  Bi[7] = 6.2594239211036e-01;
+  Fomega[7] = 4.8508000000000e-01;
+
+  // species 8: O2
+  // Imported from NIST
+  sqrtOneOverTc[8] = 8.0430717653241e-02;
+  sqrtAsti[8] = 3.6980081924740e+04;
+  Bi[8] = 6.9005216444999e-01;
+  Fomega[8] = 5.1945301904908e-01;
+
+  // species 9: CH3
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[9] = 7.2642504557751e-02;
+  sqrtAsti[9] = 9.8558148656101e+04;
+  Bi[9] = 1.8791630452967e+00;
+  Fomega[9] = 4.8508000000000e-01;
+
+  // species 10: CH4
+  // Imported from NIST
+  sqrtOneOverTc[10] = 7.2440948474968e-02;
+  sqrtAsti[10] = 9.5215046085708e+04;
+  Bi[10] = 1.8605203320660e+00;
+  Fomega[10] = 5.0213035482700e-01;
+
+  // species 11: CH2O
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[11] = 3.9062261583604e-02;
+  sqrtAsti[11] = 8.4274889632487e+04;
+  Bi[11] = 7.9341968505345e-01;
+  Fomega[11] = 4.8508000000000e-01;
+
+  // species 12: CO
+  // Imported from NIST
+  sqrtOneOverTc[12] = 8.6759935530451e-02;
+  sqrtAsti[12] = 4.3619324712923e+04;
+  Bi[12] = 9.7786303823350e-01;
+  Fomega[12] = 5.5459948367500e-01;
+
+  // species 13: CO2
+  // Imported from NIST
+  sqrtOneOverTc[13] = 5.7342616962522e-02;
+  sqrtAsti[13] = 4.3745610142919e+04;
+  Bi[13] = 6.7506167841745e-01;
+  Fomega[13] = 8.2653709187500e-01;
+
+  // species 14: C2H2
+  // Imported from NIST
+  sqrtOneOverTc[14] = 5.6952558345025e-02;
+  sqrtAsti[14] = 8.2318059295808e+04;
+  Bi[14] = 1.3950602011188e+00;
+  Fomega[14] = 7.7293553202700e-01;
+
+  // species 15: C2H4
+  // Imported from NIST
+  sqrtOneOverTc[15] = 5.9513267432530e-02;
+  sqrtAsti[15] = 7.7056842134487e+04;
+  Bi[15] = 1.4381805192666e+00;
+  Fomega[15] = 6.1893034120300e-01;
+
+  // species 16: C2H6
+  // Imported from NIST
+  sqrtOneOverTc[16] = 5.7229819101749e-02;
+  sqrtAsti[16] = 7.9078494187583e+04;
+  Bi[16] = 1.5012924285481e+00;
+  Fomega[16] = 6.3721234098700e-01;
+
+  // species 17: CH2CHO
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[17] = 4.1747340173827e-02;
+  sqrtAsti[17] = 6.3965473795593e+04;
+  Bi[17] = 7.4845537905146e-01;
+  Fomega[17] = 4.8508000000000e-01;
+
+  // species 18: aC3H5
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[18] = 5.3367780663448e-02;
+  sqrtAsti[18] = 7.3719333603301e+04;
+  Bi[18] = 1.5501433096373e+00;
+  Fomega[18] = 4.8508000000000e-01;
+
+  // species 19: C3H6
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[19] = 5.3367780663448e-02;
+  sqrtAsti[19] = 7.1953475180922e+04;
+  Bi[19] = 1.5130114815887e+00;
+  Fomega[19] = 4.8508000000000e-01;
+
+  // species 20: C2H3CHO
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[20] = 4.6135788482041e-02;
+  sqrtAsti[20] = 6.6157754759138e+04;
+  Bi[20] = 1.2735494969810e+00;
+  Fomega[20] = 4.8508000000000e-01;
+
+  // species 21: C4H7
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[21] = 4.6135788482041e-02;
+  sqrtAsti[21] = 6.7315215296122e+04;
+  Bi[21] = 1.2958308348229e+00;
+  Fomega[21] = 4.8508000000000e-01;
+
+  // species 22: C4H81
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[22] = 4.6135788482041e-02;
+  sqrtAsti[22] = 6.6105873722398e+04;
+  Bi[22] = 1.2725507770503e+00;
+  Fomega[22] = 4.8508000000000e-01;
+
+  // species 23: C5H9
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[23] = 4.1161098668794e-02;
+  sqrtAsti[23] = 6.3056889132792e+04;
+  Bi[23] = 1.1354840738966e+00;
+  Fomega[23] = 4.8508000000000e-01;
+
+  // species 24: C5H10
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[24] = 4.1161098668794e-02;
+  sqrtAsti[24] = 6.2150617738397e+04;
+  Bi[24] = 1.1191645765488e+00;
+  Fomega[24] = 4.8508000000000e-01;
+
+  // species 25: C6H12
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[25] = 3.8804844986539e-02;
+  sqrtAsti[25] = 5.9407396038950e+04;
+  Bi[25] = 1.0905945541772e+00;
+  Fomega[25] = 4.8508000000000e-01;
+
+  // species 26: C7H14
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[26] = 3.6904181877360e-02;
+  sqrtAsti[26] = 5.7120979432138e+04;
+  Bi[26] = 1.0638971124616e+00;
+  Fomega[26] = 4.8508000000000e-01;
+
+  // species 27: C8H16
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[27] = 3.5338331985524e-02;
+  sqrtAsti[27] = 5.5208418427035e+04;
+  Bi[27] = 1.0414821401872e+00;
+  Fomega[27] = 4.8508000000000e-01;
+
+  // species 28: C9H18
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[28] = 3.4050394668680e-02;
+  sqrtAsti[28] = 5.3850581531838e+04;
+  Bi[28] = 1.0349675658670e+00;
+  Fomega[28] = 4.8508000000000e-01;
+
+  // species 29: PXC9H19
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[29] = 3.3930445313395e-02;
+  sqrtAsti[29] = 5.5349654184140e+04;
+  Bi[29] = 1.0943707698953e+00;
+  Fomega[29] = 4.8508000000000e-01;
+
+  // species 30: C10H20
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[30] = 3.2991829049137e-02;
+  sqrtAsti[30] = 5.2976223699251e+04;
+  Bi[30] = 1.0448018099258e+00;
+  Fomega[30] = 4.8508000000000e-01;
+
+  // species 31: C12H24
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[31] = 3.1306811898358e-02;
+  sqrtAsti[31] = 5.2059003377425e+04;
+  Bi[31] = 1.0902090135340e+00;
+  Fomega[31] = 4.8508000000000e-01;
+
+  // species 32: C12H25O2
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[32] = 3.0723150843303e-02;
+  sqrtAsti[32] = 4.4463960034668e+04;
+  Bi[32] = 9.1611631219699e-01;
+  Fomega[32] = 4.8508000000000e-01;
+
+  // species 33: OC12H23OOH
+  // Computed from Lennard-Jones
+  sqrtOneOverTc[33] = 3.0088533807312e-02;
+  sqrtAsti[33] = 4.3790717178360e+04;
+  Bi[33] = 9.1571259283709e-01;
+  Fomega[33] = 4.8508000000000e-01;
+
+  // species 34: N2
+  // Imported from NIST
+  sqrtOneOverTc[34] = 8.9019282240563e-02;
+  sqrtAsti[34] = 4.2022983929562e+04;
+  Bi[34] = 9.5560052221563e-01;
+  Fomega[34] = 5.4259343186608e-01;
+}
+
 // gauss-jordan solver external routine
 // Replace this routine with the one generated by the Gauss Jordan solver of DW
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void

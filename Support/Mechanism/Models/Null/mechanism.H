@@ -202,6 +202,14 @@ CKUMS(const amrex::Real /*T*/, amrex::Real* /*ums*/)
   amrex::Abort("CKUMS not implemented for Null chemistry.");
 }
 
+// get mean internal energy in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKUBMS(
+  const amrex::Real /*T*/, const amrex::Real* /*y[]*/, amrex::Real& /*ubms*/)
+{
+  amrex::Abort("CKUMBS is not implemented for Null chemsitry");
+}
+
 /*convert y[species] (mass fracs) to x[species] (mole fracs) */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real* /*y*/, amrex::Real* /*x*/)
@@ -258,6 +266,17 @@ GET_CRITPARAMS(
   amrex::Real* /*acentric_i*/)
 {
   amrex::Abort("GET_CRITPARAMS not implemented for Null chemistry.");
+}
+
+// compute the critical parameter quantities for each species for SRK
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+GET_CRITPARAMS_SRK(
+  amrex::Real* /*sqrtOneOverTc*/,
+  amrex::Real* /*sqrtAsti*/,
+  amrex::Real* /*Bi*/,
+  amrex::Real* /*Fomega*/)
+{
+  amrex::Abort("GET_CRITPARAMS_SRK not implemented for Null chemistry.");
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
