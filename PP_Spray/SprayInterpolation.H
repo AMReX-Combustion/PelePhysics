@@ -492,10 +492,6 @@ eb_interp(
   // Virtual particles can inadvertently be placed behind EB walls on lower
   // levels. For these situations, simply move the particle to the other side
   // of EB. Otherwise, something has gone wrong
-  if (bad_part && !isVirt) {
-    // If the droplet is still behind EB, throw an error
-    amrex::Abort("Particle has penetrated EB boundary");
-  }
 
   // Check if one or more adjacent cells are covered
   bool near_covered = (covered > 0);
@@ -517,6 +513,7 @@ eb_interp(
     // Minimum distance to nearest acceptable cell center (meaning non-covered
     // with large enough volume fraction)
     amrex::Real min_dis = 1.E12;
+    bool at_cent = false;
     // Loop over neighboring cells
     for (int kk = ks; kk <= ke; kk++) {
       for (int jj = jc - 1; jj <= jc; jj++) {
@@ -537,6 +534,7 @@ eb_interp(
               std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
             if (len == 0.) {
               weights[aindx] = 1.;
+	      at_cent = true;
             } else {
               weights[aindx] = 1. / len;
               sum_wt += 1. / len;
@@ -553,8 +551,14 @@ eb_interp(
       }
     }
     // Normalize weighting
-    for (aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-      weights[aindx] /= sum_wt;
+    if (at_cent) {
+      for (aindx = 1; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+	weights[aindx] = 0.;
+      }
+    } else {
+      for (aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+	weights[aindx] /= sum_wt;
+      }
     }
     ijkc = indx_array[closest_aindx];
     // If bad particle, move to near closest boundary face. Should only be
@@ -562,7 +566,7 @@ eb_interp(
     // implementation doesn't work
     if (bad_part) {
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        p.po(dir) =
+        p.pos(dir) =
           (static_cast<amrex::Real>(ijkc[dir]) + 0.5 + bcent(ijkc, dir)) *
             dx[dir] +
           plo[dir];
