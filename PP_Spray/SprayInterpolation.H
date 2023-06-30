@@ -535,8 +535,12 @@ eb_interp(
                                           ccent(ii, jj, kk, 2)););
             amrex::Real len =
               std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
-            weights[aindx] = 1. / len;
-            sum_wt += 1. / len;
+            if (len == 0.) {
+              weights[aindx] = 1.;
+            } else {
+              weights[aindx] = 1. / len;
+              sum_wt += 1. / len;
+            }
             if (len < min_dis) {
               closest_aindx = aindx;
               min_dis = len;
@@ -558,8 +562,10 @@ eb_interp(
     // implementation doesn't work
     if (bad_part) {
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        normal[dir] = -bnorm(ijkc, dir);
-        p.pos(dir) = bcent(ijkc, dir) + normal[dir] * 0.01 * dx[dir];
+        p.po(dir) =
+          (static_cast<amrex::Real>(ijkc[dir]) + 0.5 + bcent(ijkc, dir)) *
+            dx[dir] +
+          plo[dir];
       }
     }
   } else {

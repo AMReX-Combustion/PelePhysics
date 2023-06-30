@@ -193,20 +193,21 @@ impose_wall(
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
 #endif
-  const amrex::IntVect& ijkc_prev,
-  splash_breakup* N_SB,
-  const SBPtrs& rf,
-  const amrex::Real film_h)
+  const amrex::IntVect ijkc,
+  const amrex::IntVect ijkc_prev)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
-  // Normalize positions
-  amrex::RealVect normphi = (phi - plo) / dx;
-  amrex::RealVect normpos = (p.pos() - plo) / dx;
-  amrex::IntVect ijkc = normpos.floor();
+  amrex::RealVect normphi;
+  amrex::RealVect normpos;
+  // Normalize pos
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    normpos[dir] = (p.pos(dir) - plo[dir]) / dx[dir];
+    normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
+  }
   // Check if particle is behind a wall
   bool do_refl = check_wall(
     normpos, bflags, ijkc,
@@ -214,50 +215,12 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm,
 #endif
     par_dot, normal);
-  amrex::IntVect refl_prev = ijkc;
-  bool do_deposit = false;
   if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    // Reflect the particle to see if it interacts with another surface or
-    // leaves the domain
-    amrex::RealVect refl_pos = normpos - 1.8 * par_dot * normal;
-    amrex::RealVect refl_vel = vel_part - 1.8 * Nw_Vp * normal;
-    amrex::IntVect refl_ijkc = refl_pos.floor();
-    bool left_dom =
-      check_bounds_norm(refl_pos, normphi, bndry_lo, bndry_hi, bflags);
-    if (left_dom) {
-      p.id() = -1;
-      return;
+    vel_part -= 2. * Nw_Vp * normal;
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) -= 2. * par_dot * normal[dir];
     }
-    amrex::Real refl_par_dot = 2.;
-    amrex::RealVect refl_normal;
-    do_refl = check_wall(
-      refl_pos, bflags, refl_ijkc,
-#ifdef AMREX_USE_EB
-      refl_prev, refl_vel, use_EB, flags, bcent, bnorm,
-#endif
-      refl_par_dot, refl_normal);
-    if (do_splash) {
-      // If not bouncing and splash model is on
-      droplet_splashing(
-        p, pid, dx, plo, fdat, p_fluid, normpos, vel_part, par_dot, normal,
-        cBoilT, N_SB, rf, film_h);
-    } else if (do_refl) {
-      // Otherwise, just deposit particle
-      do_deposit = true;
-      normal = refl_normal;
-      par_dot = refl_par_dot;
-    }
-  } // if (do_refl)
-  if (do_deposit) {
-    amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    normpos -= 1.1 * par_dot * vel_part / Nw_Vp;
-    vel_part = amrex::RealVect::TheZeroVector();
-  }
-  // Undo normalization and set new location and velocity
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    p.pos(dir) = normpos[dir] * dx[dir] + plo[dir];
-    p.rdata(SprayComps::pstateVel + dir) = vel_part[dir];
   }
 }
 #endif // WALLFUNCTIONS_H

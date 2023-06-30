@@ -240,7 +240,7 @@ SprayParticleContainer::updateParticles(
       const Box src_box = pti.growntilebox(source_ghosts);
       const Box state_box = pti.growntilebox(state_ghosts);
       bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
-      const Long Np = pti.numParticles();
+      const int Np = pti.numParticles();
       if (Np == 0) {
         continue;
       }
@@ -279,7 +279,7 @@ SprayParticleContainer::updateParticles(
         volfrac_fab = volfrac->array(pti);
       }
 #endif
-      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(Long pid) noexcept {
+      amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           auto eos = pele::physics::PhysicsType::eos();
