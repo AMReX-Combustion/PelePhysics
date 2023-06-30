@@ -108,9 +108,9 @@ SprayParticleContainer::estTimestep(int level) const
       for (MyParConstIter pti(*this, level); pti.isValid(); ++pti) {
         const AoS& pbox = pti.GetArrayOfStructs();
         const ParticleType* pstruct = pbox().data();
-        const Long n = pbox.numParticles();
+        const int n = pbox.numParticles();
         reduce_op.eval(
-          n, reduce_data, [=] AMREX_GPU_DEVICE(const Long i) -> ReduceTuple {
+          n, reduce_data, [=] AMREX_GPU_DEVICE(const int i) -> ReduceTuple {
             const ParticleType& p = pstruct[i];
             if (p.id() > 0) {
               const Real max_mag_vdx = amrex::max(AMREX_D_DECL(
