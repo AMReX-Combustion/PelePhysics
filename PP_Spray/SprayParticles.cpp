@@ -315,9 +315,9 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_USE_EB
             if (eb_in_box) {
               do_fe_interp = eb_interp(
-                p, isVirt, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array,
-                ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
-                fdat->min_eb_vfrac, indx_array.data(), weights.data());
+                p, ijkc, ijk, dx, dxi, lx, plo, bflags, flags_array, ccent_fab,
+                bcent_fab, bnorm_fab, volfrac_fab, fdat->min_eb_vfrac,
+                indx_array.data(), weights.data());
             } else
 #endif
             {
@@ -403,13 +403,12 @@ SprayParticleContainer::updateParticles(
                 } else {
                   // Next reflect particles off BC or EB walls if necessary
                   impose_wall(
-                    do_splash_box, pid, p, *fdat, dx, plo, phi, bndry_lo,
-                    bndry_hi, bflags, cBoilT.data(), gpv.p_fluid, eb_in_box,
+                    p, dx, plo, phi, bflags, eb_in_box,
 #ifdef AMREX_USE_EB
                     flags_array, bcent_fab, bnorm_fab, volfrac_fab,
-                    fdat->min_eb_vfrac,
+                    fdat->min_eb_vfrac, ijkc_prev,
 #endif
-                    ijkc, ijkc_prev);
+                    ijkc);
                   lx = (p.pos() - plo) * dxi + 0.5;
                   ijk = lx.floor();
                   lxc = (p.pos() - plo) * dxi;

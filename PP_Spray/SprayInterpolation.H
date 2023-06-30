@@ -395,7 +395,6 @@ get_interp_mapping(
 AMREX_GPU_DEVICE AMREX_INLINE bool
 eb_interp(
   SprayParticleContainer::ParticleType& p,
-  const bool isVirt,
   amrex::IntVect& ijkc,
   const amrex::IntVect& ijk,
   const amrex::RealVect& dx,
@@ -534,7 +533,7 @@ eb_interp(
               std::sqrt(AMREX_D_TERM(dlx * dlx, +dly * dly, +dlz * dlz));
             if (len == 0.) {
               weights[aindx] = 1.;
-	      at_cent = true;
+              at_cent = true;
             } else {
               weights[aindx] = 1. / len;
               sum_wt += 1. / len;
@@ -553,11 +552,11 @@ eb_interp(
     // Normalize weighting
     if (at_cent) {
       for (aindx = 1; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-	weights[aindx] = 0.;
+        weights[aindx] = 0.;
       }
     } else {
       for (aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-	weights[aindx] /= sum_wt;
+        weights[aindx] /= sum_wt;
       }
     }
     ijkc = indx_array[closest_aindx];

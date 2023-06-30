@@ -182,8 +182,6 @@ impose_wall(
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
   const amrex::RealVect& phi,
-  const amrex::IntVect bndry_lo,
-  const amrex::IntVect bndry_hi,
   amrex::IntVect& bflags,
   const amrex::Real* cBoilT,
   const amrex::Real p_fluid,
@@ -192,9 +190,11 @@ impose_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
+  amrex::Array4<amrex::Real const> const& vfrac,
+  const amrex::Real min_eb_vfrac,
+  const amrex::IntVect ijkc_prev,
 #endif
-  const amrex::IntVect ijkc,
-  const amrex::IntVect ijkc_prev)
+  const amrex::IntVect ijkc)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
