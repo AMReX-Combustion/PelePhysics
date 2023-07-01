@@ -2,15 +2,10 @@
 #ifndef SOOTMODEL_H
 #define SOOTMODEL_H
 
-// Standard libray includes
-#include <array>
-
 // AMReX include statements
-#include <AMReX_REAL.H>
-#include <AMReX_Box.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Arena.H>
+#include <AMReX_Gpu.H>
 
+// PeleMP include statements
 #include "Constants_Soot.H"
 #include "SootData.H"
 #include "SootReactions.H"

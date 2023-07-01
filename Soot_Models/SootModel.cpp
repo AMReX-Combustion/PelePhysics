@@ -1,15 +1,6 @@
 
-// Standard library includes
-#include <string>
-#include <map>
-
 // AMReX include statements
-#include <AMReX_ParmParse.H>
-#include <AMReX_Utility.H>
-#include <AMReX_Print.H>
-#include <AMReX_Vector.H>
-#include <AMReX_CONSTANTS.H>
-#include <AMReX_FArrayBox.H>
+#include <AMReX_Reduce.H>
 
 // PelePhysics include statements
 #include "PelePhysics.H"
@@ -479,7 +470,9 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
       Real* momentsPtr = moments.data();
       GpuArray<Real, NUM_SOOT_MOMENTS + 2> mom_fv;
       Real* mom_fvPtr = mom_fv.data();
+#ifndef PELELM_USE_SOOT
       const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
+#endif
       const Real T = Qstate(i, j, k, qTempIndx);
       if (T < Tcutoff) {
         return 1.E20;

@@ -1,8 +1,6 @@
 #ifndef CONSTANTS_SOOT_H
 #define CONSTANTS_SOOT_H
 
-#include <AMReX_REAL.H>
-#include <AMReX_GpuQualifiers.H>
 #include "PhysicsConstants.H"
 
 // Note: These will change if a different soot surface chemistry model is

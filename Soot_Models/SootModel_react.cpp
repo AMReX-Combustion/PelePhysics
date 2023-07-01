@@ -1,9 +1,4 @@
 
-// AMReX include statements
-#include <AMReX_Utility.H>
-#include <AMReX_Print.H>
-#include <AMReX_Vector.H>
-
 // PeleMP include statements
 #include "SootModel.H"
 
