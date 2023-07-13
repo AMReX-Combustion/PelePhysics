@@ -96,18 +96,19 @@ struct SootConst
   amrex::Real V0 =
     SootMolarMass / (pele::physics::Constants::Avna * SootDensity);
   // Surface area of smallest soot particles, units L^2
-  amrex::Real S0 = pow(36. * M_PI, 1. / 3.) * pow(V0, 2. / 3.);
+  constexpr amrex::Real S0 =
+    std::pow(36. * M_PI, 1. / 3.) * std::pow(V0, 2. / 3.);
   // Surface density (mol of C)
   amrex::Real SootDensityC = SootChi * S0;
   // Pi*R/(2*A*rho_soot)
   amrex::Real colFact = M_PI * pele::physics::Constants::RU /
                         (2. * pele::physics::Constants::Avna * SootDensity);
   // (M_soot/(A*rho_soot))^2/3
-  amrex::Real colFact23 = pow(V0, 2. / 3.);
+  constexpr amrex::Real colFact23 = std::pow(V0, 2. / 3.);
   // (M_soot/(A*rho_soot))^1/6, units sqrt(L)
-  amrex::Real colFact16 = pow(V0, 1. / 6.);
+  constexpr amrex::Real colFact16 = std::pow(V0, 1. / 6.);
   // (6/Pi)^2/3
-  amrex::Real colFactPi23 = pow(6. / M_PI, 2. / 3.);
+  constexpr amrex::Real colFactPi23 = std::pow(6. / M_PI, 2. / 3.);
 };
 
 #endif
