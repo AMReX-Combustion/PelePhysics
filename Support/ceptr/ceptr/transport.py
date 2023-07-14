@@ -1964,3 +1964,93 @@ def critical_parameters(fstream, mechanism, species_info):
 
     cw.writer(fstream)
     cw.writer(fstream, "}")
+
+    # Critical parameters pre-evaluations necessary for SRK
+    # SRK parameters - CGS for constants
+    f0 = 0.48508e0
+    f1 = 1.5517e0
+    f2 = -0.151613e0
+    rcst = 83.144598
+    avogadro = 6.02214199e23
+    boltzmann = 1.3806503e-16
+    species_transport = analyze_transport(mechanism, species_info)
+
+    n_species = species_info.n_species
+    cw.writer(fstream)
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        cw.comment(
+            "compute the critical parameter quantities for each species for SRK"
+        ),
+    )
+    cw.writer(
+        fstream,
+        (
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+            " GET_CRITPARAMS_SRK(amrex::Real *  sqrtOneOverTc, amrex::Real *  sqrtAsti,"
+            " amrex::Real *  Bi, amrex::Real *  Fomega)"
+        ),
+    )
+
+    cw.writer(fstream, "{")
+    # Loop over species to compute quantities
+    for species in species_info.nonqssa_species:
+        cw.writer(fstream)
+        cw.writer(
+            fstream,
+            cw.comment(f"species {species.idx}: {species.name}"),
+        )
+        if species.name in tabulated_critical_params:
+            cw.writer(fstream, cw.comment("Imported from NIST"))
+            tci = tabulated_critical_params[species.name]["Tci"]
+            ai = (
+                1e6
+                * 0.42748
+                * rcst**2
+                * tci**2
+                / (
+                    tabulated_critical_params[species.name]["wt"] ** 2
+                    * tabulated_critical_params[species.name]["Pci"]
+                )
+            )
+            bi = (
+                0.08664
+                * rcst
+                * tci
+                / (
+                    tabulated_critical_params[species.name]["wt"]
+                    * tabulated_critical_params[species.name]["Pci"]
+                )
+            )
+            omega = tabulated_critical_params[species.name]["acentric_factor"]
+        else:
+            cw.writer(fstream, cw.comment("Computed from Lennard-Jones"))
+            eps = float(species_transport[species][1])
+            sig = float(species_transport[species][2])
+            wt = species.weight
+            tci = 1.316 * eps
+            ai = (
+                5.55
+                * avogadro**2
+                * eps
+                * boltzmann
+                * 1e-24
+                * sig**3
+                / wt**2
+            )
+            bi = 0.855 * avogadro * 1e-24 * sig**3 / wt
+            omega = 0.0
+        sqrt_oneovertc = np.sqrt(1.0 / tci)
+        sqrt_asti = np.sqrt(ai)
+        fomega = f0 + omega * (f1 + f2 * omega)
+
+        cw.writer(
+            fstream, f"sqrtOneOverTc[{species.idx}] = {sqrt_oneovertc:.13e};"
+        )
+        cw.writer(fstream, f"sqrtAsti[{species.idx}] = {sqrt_asti:.13e};")
+        cw.writer(fstream, f"Bi[{species.idx}] = {bi:.13e};")
+        cw.writer(fstream, f"Fomega[{species.idx}] = {fomega:.13e};")
+
+    cw.writer(fstream)
+    cw.writer(fstream, "}")

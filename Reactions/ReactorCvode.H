@@ -166,7 +166,7 @@ private:
     amrex::gpuStream_t stream
 #endif
   ) const;
-  void freeUserData(CVODEUserData* data_wk);
+  static void freeUserData(CVODEUserData* data_wk);
 
   amrex::Real relTol{1e-6};
   amrex::Real absTol{1e-10};
