@@ -263,9 +263,9 @@ SootModel::computeSootSourceTerm(
 
   const SootData* sd = d_sootData;
   const SootReaction* sr = d_sootReact;
+  SootConst sc;
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     auto eos = pele::physics::PhysicsType::eos();
-    SootConst sc;
     GpuArray<Real, NUM_SPECIES> mw_fluidF;
     GpuArray<Real, NUM_SOOT_GS> mw_fluid;
     eos.molecular_weight(mw_fluidF.data());
@@ -454,12 +454,12 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
   ReduceData<Real> reduce_data(reduce_op);
   using ReduceTuple = typename decltype(reduce_data)::Type;
   Real soot_dt = std::numeric_limits<Real>::max();
+  SootConst sc;
   BL_PROFILE("estSootDt()");
   reduce_op.eval(
     vbox, reduce_data,
     [=] AMREX_GPU_DEVICE(int i, int j, int k) -> ReduceTuple {
       auto eos = pele::physics::PhysicsType::eos();
-      SootConst sc;
       GpuArray<Real, NUM_SPECIES> mw_fluidF;
       GpuArray<Real, NUM_SOOT_GS> mw_fluid;
       eos.molecular_weight(mw_fluidF.data());
