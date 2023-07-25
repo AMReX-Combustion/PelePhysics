@@ -21,7 +21,7 @@ cvode.solve_type = GMRES
 
 # If solve_type = precGMRES -> select preconditioner
 # Options are [CPU] dense_simplified_AJacobian / sparse_simplified_AJacobian / custom_simplified_AJacobian
-              [GPU] cuSparse_simplified_AJacobian
+#              [GPU] cuSparse_simplified_AJacobian
 cvode.precond_type = cuSparse_simplified_AJacobian
 cvode.max_order = 4
 
