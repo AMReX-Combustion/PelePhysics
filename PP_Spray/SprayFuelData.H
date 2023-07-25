@@ -89,6 +89,7 @@ struct GasPhaseVals
     T_fluid = 0.;
     rho_fluid = 0.;
     fluid_eng_src = 0.;
+    fluid_mass_src = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_fluid[n] = 0.;
     }
