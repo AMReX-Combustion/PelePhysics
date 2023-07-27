@@ -637,9 +637,9 @@ DiagFramePlane::Write2DMFHeader(
 
     MFHdrFile << hdr.m_min.size() << "," << hdr.m_min[0].size() << '\n';
     MFHdrFile.precision(16);
-    for (auto & i : hdr.m_min) {
-      for (int j = 0; j < i.size(); ++j) {
-        MFHdrFile << i[j] << ",";
+    for (auto & hdr_i : hdr.m_min) {
+      for (double j : hdr_i) {
+        MFHdrFile << j << ",";
       }
       MFHdrFile << "\n";
     }
@@ -647,9 +647,9 @@ DiagFramePlane::Write2DMFHeader(
     MFHdrFile << "\n";
 
     MFHdrFile << hdr.m_max.size() << "," << hdr.m_max[0].size() << '\n';
-    for (auto & i : hdr.m_max) {
-      for (int j = 0; j < i.size(); ++j) {
-        MFHdrFile << i[j] << ",";
+    for (auto & hdr_i : hdr.m_max) {
+      for (double j : hdr_i) {
+        MFHdrFile << j << ",";
       }
       MFHdrFile << "\n";
     }
@@ -723,8 +723,7 @@ DiagFramePlane::Find2FOffsets(
       nfi.FileNumbersWriteOrder();
 
     for (const auto & fn : fileNumbersWriteOrder) {
-      for (int ri(0); ri < fn.size(); ++ri) {
-        int rank(fn[ri]);
+      for (int rank : fn) {
         auto rboIter = rankBoxOrder.find(rank);
 
         if (rboIter != rankBoxOrder.end()) {
