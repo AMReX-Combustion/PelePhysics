@@ -13,12 +13,12 @@ jobs:
       - name: Clone
         uses: actions/checkout@v3
       - name: Check formatting
-        uses: DoozyX/clang-format-lint-action@v0.14
+        uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
           source: './Eos ./Transport ./Reactions ./Source ./Utility ./Testing ./Support/Mechanism/Models'
           exclude: '.'
           extensions: 'H,h,cpp'
-          clangFormatVersion: 14
+          clangFormatVersion: 16
 
   CEPTR:
     runs-on: ubuntu-latest

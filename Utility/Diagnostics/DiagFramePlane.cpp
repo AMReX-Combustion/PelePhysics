@@ -395,7 +395,7 @@ DiagFramePlane::Write2DPlotfileHeader(
 
   HeaderFile << versionName << '\n';
   HeaderFile << varnames.size() << '\n';
-  for (const auto & varname : varnames) {
+  for (const auto& varname : varnames) {
     HeaderFile << varname << "\n";
   }
   HeaderFile << lowerSpaceDim << '\n';
@@ -637,7 +637,7 @@ DiagFramePlane::Write2DMFHeader(
 
     MFHdrFile << hdr.m_min.size() << "," << hdr.m_min[0].size() << '\n';
     MFHdrFile.precision(16);
-    for (auto & hdr_i : hdr.m_min) {
+    for (auto& hdr_i : hdr.m_min) {
       for (double j : hdr_i) {
         MFHdrFile << j << ",";
       }
@@ -647,7 +647,7 @@ DiagFramePlane::Write2DMFHeader(
     MFHdrFile << "\n";
 
     MFHdrFile << hdr.m_max.size() << "," << hdr.m_max[0].size() << '\n';
-    for (auto & hdr_i : hdr.m_max) {
+    for (auto& hdr_i : hdr.m_max) {
       for (double j : hdr_i) {
         MFHdrFile << j << ",";
       }
@@ -722,7 +722,7 @@ DiagFramePlane::Find2FOffsets(
     const amrex::Vector<amrex::Vector<int>>& fileNumbersWriteOrder =
       nfi.FileNumbersWriteOrder();
 
-    for (const auto & fn : fileNumbersWriteOrder) {
+    for (const auto& fn : fileNumbersWriteOrder) {
       for (int rank : fn) {
         auto rboIter = rankBoxOrder.find(rank);
 

@@ -54,7 +54,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       AMREX_ASSERT_WITH_MESSAGE(
         turb_center.size() == AMREX_SPACEDIM - 1,
         "turb_center must have AMREX_SPACEDIM-1 elements");
-      for (double & tc : turb_center) {
+      for (double& tc : turb_center) {
         tc *= tp[n].turb_scale_loc;
       }
 
@@ -163,7 +163,7 @@ TurbInflow::add_turb(
   v.setVal<amrex::RunOn::Device>(0);
 
   // Add turbulence from all the tp acting on this face
-  for (auto & tpn : tp) {
+  for (auto& tpn : tp) {
 
     if (tpn.dir == dir && tpn.side == side) {
 
