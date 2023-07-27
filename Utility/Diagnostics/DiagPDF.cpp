@@ -154,8 +154,8 @@ DiagPDF::MFVecMin(
 {
   // TODO: skip fine-covered in search
   amrex::Real mmin{AMREX_REAL_MAX};
-  for (int lev = 0; lev < a_state.size(); ++lev) {
-    mmin = std::min(mmin, a_state[lev]->min(comp, 0, true));
+  for (auto st : a_state) {
+    mmin = std::min(mmin, st->min(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMin(mmin);
@@ -168,8 +168,8 @@ DiagPDF::MFVecMax(
 {
   // TODO: skip fine-covered in search
   amrex::Real mmax{AMREX_REAL_LOWEST};
-  for (int lev = 0; lev < a_state.size(); ++lev) {
-    mmax = std::max(mmax, a_state[lev]->max(comp, 0, true));
+  for (auto st : a_state) {
+    mmax = std::max(mmax, st->max(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMax(mmax);

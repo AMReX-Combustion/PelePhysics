@@ -395,8 +395,8 @@ DiagFramePlane::Write2DPlotfileHeader(
 
   HeaderFile << versionName << '\n';
   HeaderFile << varnames.size() << '\n';
-  for (int ivar = 0; ivar < varnames.size(); ++ivar) {
-    HeaderFile << varnames[ivar] << "\n";
+  for (const auto & varname : varnames) {
+    HeaderFile << varname << "\n";
   }
   HeaderFile << lowerSpaceDim << '\n';
   HeaderFile << time << '\n';
@@ -481,8 +481,8 @@ DiagFramePlane::VisMF2D(
   const amrex::Vector<int>& pmap = a_mf.DistributionMap().ProcessorMap();
   std::set<int> procsWithData;
   amrex::Vector<int> procsWithDataVector;
-  for (int i(0); i < pmap.size(); ++i) {
-    procsWithData.insert(pmap[i]);
+  for (int i : pmap) {
+    procsWithData.insert(i);
   }
   if (static_cast<int>(procsWithData.size()) < nOutFiles) {
     useSparseFPP = true;
@@ -637,9 +637,9 @@ DiagFramePlane::Write2DMFHeader(
 
     MFHdrFile << hdr.m_min.size() << "," << hdr.m_min[0].size() << '\n';
     MFHdrFile.precision(16);
-    for (int i = 0; i < hdr.m_min.size(); ++i) {
-      for (int j = 0; j < hdr.m_min[i].size(); ++j) {
-        MFHdrFile << hdr.m_min[i][j] << ",";
+    for (auto & i : hdr.m_min) {
+      for (int j = 0; j < i.size(); ++j) {
+        MFHdrFile << i[j] << ",";
       }
       MFHdrFile << "\n";
     }
@@ -647,9 +647,9 @@ DiagFramePlane::Write2DMFHeader(
     MFHdrFile << "\n";
 
     MFHdrFile << hdr.m_max.size() << "," << hdr.m_max[0].size() << '\n';
-    for (int i = 0; i < hdr.m_max.size(); ++i) {
-      for (int j = 0; j < hdr.m_max[i].size(); ++j) {
-        MFHdrFile << hdr.m_max[i][j] << ",";
+    for (auto & i : hdr.m_max) {
+      for (int j = 0; j < i.size(); ++j) {
+        MFHdrFile << i[j] << ",";
       }
       MFHdrFile << "\n";
     }
@@ -722,9 +722,9 @@ DiagFramePlane::Find2FOffsets(
     const amrex::Vector<amrex::Vector<int>>& fileNumbersWriteOrder =
       nfi.FileNumbersWriteOrder();
 
-    for (int fn(0); fn < fileNumbersWriteOrder.size(); ++fn) {
-      for (int ri(0); ri < fileNumbersWriteOrder[fn].size(); ++ri) {
-        int rank(fileNumbersWriteOrder[fn][ri]);
+    for (const auto & fn : fileNumbersWriteOrder) {
+      for (int ri(0); ri < fn.size(); ++ri) {
+        int rank(fn[ri]);
         auto rboIter = rankBoxOrder.find(rank);
 
         if (rboIter != rankBoxOrder.end()) {
@@ -733,12 +733,12 @@ DiagFramePlane::Find2FOffsets(
           whichFileName = amrex::VisMF::BaseName(
             amrex::NFilesIter::FileName(whichFileNumber, filePrefix));
 
-          for (int i(0); i < index.size(); ++i) {
-            hdr.m_fod[index[i]].m_name = whichFileName;
-            hdr.m_fod[index[i]].m_head = currentOffset[whichFileNumber];
+          for (int idx : index) {
+            hdr.m_fod[idx].m_name = whichFileName;
+            hdr.m_fod[idx].m_head = currentOffset[whichFileNumber];
             currentOffset[whichFileNumber] +=
-              mf.fabbox(index[i]).numPts() * nComps * whichRDBytes +
-              fabHeaderBytes[index[i]];
+              mf.fabbox(idx).numPts() * nComps * whichRDBytes +
+              fabHeaderBytes[idx];
           }
         }
       }
