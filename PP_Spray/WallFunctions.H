@@ -217,8 +217,8 @@ impose_wall(
     par_dot, normal);
   if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    vel_part -= 2. * Nw_Vp * normal;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.rdata(SprayComps::pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
       p.pos(dir) -= 2. * par_dot * normal[dir];
     }
   }
