@@ -220,9 +220,16 @@ impose_wall(
     par_dot, normal);
   if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      p.rdata(SprayComps::pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
-      p.pos(dir) -= 2. * par_dot * normal[dir];
+    if (do_splash) {
+      // If splash model is on
+      droplet_splashing(
+        p, pid, dx, plo, fdat, p_fluid, vel_part, par_dot, normal, cBoilT, N_SB,
+        rf, film_h);
+    } else {
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        p.rdata(SprayComps::pstateVel + dir) -= 2. * Nw_Vp * normal[dir];
+        p.pos(dir) -= 2. * par_dot * normal[dir];
+      }
     }
   }
 }
