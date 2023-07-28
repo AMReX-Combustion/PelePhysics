@@ -160,7 +160,8 @@ check_wall(
     const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
     // Projection of vector pointing from EB centroid to particle onto EB normal
     par_dot = AMREX_D_TERM(
-      (pos[0] - bcentv[0]) * dx[0] * normal[0], +(pos[1] - bcentv[1]) * dx[1] * normal[1],
+      (pos[0] - bcentv[0]) * dx[0] * normal[0],
+      +(pos[1] - bcentv[1]) * dx[1] * normal[1],
       +(pos[2] - bcentv[2]) * dx[2] * normal[2]);
     if (par_dot < tolerance) {
       refl_check = true;
