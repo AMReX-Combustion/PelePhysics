@@ -90,10 +90,10 @@ AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 bool
 check_wall(
-  const amrex::RealVect pos,
-  const amrex::IntVect bflags,
+  const amrex::RealVect& pos,
+  const amrex::IntVect& bflags,
   const amrex::RealVect dx,
-  const amrex::IntVect ijkc,
+  const amrex::IntVect& ijkc,
 #ifdef AMREX_USE_EB
   const amrex::IntVect& ijkc_prev,
   const amrex::RealVect& vel_part,
