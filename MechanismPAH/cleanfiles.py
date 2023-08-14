@@ -47,6 +47,7 @@ def cleanfiles(speciesnames, thermfile, transfile, newthermfile, newtransfile):
                         spname = line.split()[0]
                         for sp in speciesnames:
                             if (sp == spname):
+                                foundnames.append(sp)
                                 foundspecs += 1
                                 outfile.write(line)
     if (foundspecs != len(speciesnames)):
