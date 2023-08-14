@@ -35,15 +35,16 @@ def getspecnames(mechfile):
                         spline = next(infile)
                     break
     return speciesnames
-def checkyaml(mechfile, newthermo, newtransport):
+def checkyaml(mechfile, newthermo, newtransport,permissive):
     cky_final = cky.Parser()
+    if(permissive):
+        cky_final.warning_as_error = False
     cky_final.load_chemkin_file(mechfile)
     cky_final.load_chemkin_file(newthermo)
     cky_final.load_chemkin_file(newtransport)
     numMechreacts = len(cky_final.reactions)
     yamlfile = os.path.splitext(mechfile)[0] + '.yaml'
     surf = cky_final.write_yaml('gas', yamlfile)
-    cky_final.warning_as_error = False
     logger = logging.getLogger(__name__)
     dupreacts = []
     dupeq = []
@@ -72,6 +73,7 @@ def checkyaml(mechfile, newthermo, newtransport):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--plotH", help="Flag to plot enthalpy values", type=bool, default=False)
+parser.add_argument("--permissive", help="Flag to allow some recoverable parsin errors", type=bool, default=False)
 parser.add_argument("--mech", help="Mechanism input file", type=str, required=True)
 parser.add_argument("--thermo", help="Thermodynamic input file", type=str, required=True)
 parser.add_argument("--transport", help="Transport input file", type=str, required=True)
@@ -109,7 +111,7 @@ addnewtransdata(pahtrans, args.newtransport, newPAHspec)
 [modpahreacts, fullmechfile] = updatemechfile(args.mech, args.newmech, pahmech, newPAHspec, modnamePAH, modnameMech)
 # Use Cantera to import the newly created mechanism and check for duplicate reactions
 removed = 0
-[found_error, dupreact, dupeq] = checkyaml(args.newmech, args.newthermo, args.newtransport)
+[found_error, dupreact, dupeq] = checkyaml(args.newmech, args.newthermo, args.newtransport, args.permissive)
 while (found_error):
     removed += 1
     pahindx = max(dupreact)
@@ -121,13 +123,13 @@ while (found_error):
         for line in modpahreacts:
             infile.write(line)
         infile.write("END\n")
-    [found_error, dupreact, numMechreacts] = checkyaml(args.newmech, args.newthermo, args.newtransport)
+    [found_error, dupreact, numMechreacts] = checkyaml(args.newmech, args.newthermo, args.newtransport, args.permissive)
 print("Removed " + str(removed) + " reactions due to duplication")
 
 
 newyamlfile = os.path.splitext(args.newmech)[0] + '.yaml'
 # Create a YAML from original mechanism
-[found_error, dupreact, numMechreacts] = checkyaml(args.mech, args.thermo, args.transport)
+[found_error, dupreact, numMechreacts] = checkyaml(args.mech, args.thermo, args.transport, args.permissive)
 origyamlfile = os.path.splitext(args.mech)[0] + '.yaml'
 # Test the ignition delay time at 1 atm and 20 atm
 # Output values into a plot file
