@@ -111,7 +111,7 @@ set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
-    amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -138,16 +138,17 @@ set_sundials_solver_tols(
         }
       });
 #else
-    amrex::launch<32>((NUM_SPECIES+1)*ncells, [=] AMREX_GPU_DEVICE (int id) noexcept
-    {
-        const int k = id/ncells;
-        if (k > NUM_SPECIES) return;
+    amrex::launch<32>(
+      (NUM_SPECIES + 1) * ncells, [=] AMREX_GPU_DEVICE(int id) noexcept {
+        const int k = id / ncells;
+        if (k > NUM_SPECIES)
+          return;
 
         amrex::Real T = typ_vals[k] * absTol;
-        const int icell = id - k*ncells;
-        
+        const int icell = id - k * ncells;
+
         ratol[vec_index<OrderType>(k, icell, ncells)] = T;
-    });
+      });
 #endif
   } else {
     // cppcheck-suppress knownConditionTrueFalse
@@ -167,11 +168,11 @@ set_sundials_solver_tols(
         }
       });
 #else
-    amrex::launch<1>(neq_tot, [=] AMREX_GPU_DEVICE (int i) noexcept
-    {
-        if (i >= neq_tot) return;
+    amrex::launch<1>(neq_tot, [=] AMREX_GPU_DEVICE(int i) noexcept {
+      if (i >= neq_tot)
+        return;
 
-        ratol[i] = absTol;
+      ratol[i] = absTol;
     });
 #endif
   }
