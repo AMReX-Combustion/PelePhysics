@@ -178,6 +178,7 @@ set_sundials_solver_tols(
       if (i >= neq_tot) {
         return;
       }
+      ratol[i] = absTol;
     });
 #else
     for (int i = 0; i < neq_tot; i++) {
