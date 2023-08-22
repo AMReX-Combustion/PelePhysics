@@ -147,6 +147,8 @@ set_sundials_solver_tols(
 
         amrex::Real T = typ_vals[k] * absTol;
         const int icell = id - k * ncells;
+
+        ratol[vec_index<OrderType>(k, icell, ncells)] = T;
       });
 #else
     for (int k = 0; k < NUM_SPECIES + 1; k++) {
@@ -178,6 +180,7 @@ set_sundials_solver_tols(
       if (i >= neq_tot) {
         return;
       }
+
       ratol[i] = absTol;
     });
 #else
