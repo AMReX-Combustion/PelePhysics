@@ -111,7 +111,7 @@ set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
-  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -136,6 +136,17 @@ set_sundials_solver_tols(
             ratol[vec_index<OrderType>(k, icell, ncells)] = arr[k] * absTol;
           }
         }
+      });
+#elif defined(AMREX_USE_SYCL)
+    amrex::launch<32>(
+      (NUM_SPECIES + 1) * ncells, [=] AMREX_GPU_DEVICE(int id) noexcept {
+        const int k = id / ncells;
+        if (k > NUM_SPECIES) {
+          return;
+        }
+
+        amrex::Real T = typ_vals[k] * absTol;
+        const int icell = id - k * ncells;
       });
 #else
     for (int k = 0; k < NUM_SPECIES + 1; k++) {
@@ -162,16 +173,18 @@ set_sundials_solver_tols(
           ratol[icell] = absTol;
         }
       });
+#elif defined(AMREX_USE_SYCL)
+    amrex::launch<1>(neq_tot, [=] AMREX_GPU_DEVICE(int i) noexcept {
+      if (i >= neq_tot) {
+        return;
+      }
+    });
 #else
     for (int i = 0; i < neq_tot; i++) {
       ratol[i] = absTol;
     }
 #endif
   }
-
-#if defined(AMREX_USE_SYCL)
-  N_VCopyToDevice_Sycl(atol);
-#endif
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances
