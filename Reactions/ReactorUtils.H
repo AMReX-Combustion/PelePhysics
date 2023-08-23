@@ -111,7 +111,7 @@ set_sundials_solver_tols(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(), sunctx);
-  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
+  amrex::Real* ratol = N_VGetDeviceArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot, sunctx);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -124,27 +124,12 @@ set_sundials_solver_tols(
                      << " tolerances with TypVals rtol = " << relTol
                      << " atolfact = " << absTol << " in PelePhysics \n";
     }
-#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
-    const int nbThreads = 256;
-    const int nbBlocks = std::max(1, neq_tot / nbThreads);
-    auto arr = typ_vals;
-    amrex::launch_global<256>
-      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
-        const int icell = blockDim.x * blockIdx.x + threadIdx.x;
-        if (icell < ncells) {
-          for (int k = 0; k < NUM_SPECIES + 1; k++) {
-            ratol[vec_index<OrderType>(k, icell, ncells)] = arr[k] * absTol;
-          }
-        }
-      });
-#else
-    for (int k = 0; k < NUM_SPECIES + 1; k++) {
-      amrex::Real T = typ_vals[k] * absTol;
-      for (int icell = 0; icell < ncells; icell++) {
-        ratol[vec_index<OrderType>(k, icell, ncells)] = T;
+
+    amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) {
+      for (int k = 0; k < NUM_SPECIES + 1; k++) {
+        ratol[vec_index<OrderType>(k, icell, ncells)] = typ_vals[k] * absTol;
       }
-    }
-#endif
+    });
   } else {
     // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
@@ -152,26 +137,9 @@ set_sundials_solver_tols(
                      << " tolerances rtol = " << relTol << " atol = " << absTol
                      << " in PelePhysics \n";
     }
-#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
-    const int nbThreads = 256;
-    const int nbBlocks = std::max(1, neq_tot / nbThreads);
-    amrex::launch_global<256>
-      <<<nbBlocks, 256>>>([=] AMREX_GPU_DEVICE() noexcept {
-        int icell = blockDim.x * blockIdx.x + threadIdx.x;
-        if (icell < neq_tot) {
-          ratol[icell] = absTol;
-        }
-      });
-#else
-    for (int i = 0; i < neq_tot; i++) {
-      ratol[i] = absTol;
-    }
-#endif
+    amrex::ParallelFor(
+      neq_tot, [=] AMREX_GPU_DEVICE(int i) { ratol[i] = absTol; });
   }
-
-#if defined(AMREX_USE_SYCL)
-  N_VCopyToDevice_Sycl(atol);
-#endif
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances
