@@ -1733,7 +1733,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] data_wk->Jdata;
     SUNMatDestroy(A);
     SUNMatDestroy((data_wk->PS)[0]);
-    delete[](data_wk->PS);
+    delete[] (data_wk->PS);
 #endif
   } else if (data_wk->solve_type == cvode::customDirect) {
     //    SUNMatDestroy(A);
@@ -1748,13 +1748,13 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
       SUNDlsMat_destroyArray((data_wk->pivot)[i][i]);
     }
     for (int i = 0; i < data_wk->ncells; ++i) {
-      delete[](data_wk->P)[i];
-      delete[](data_wk->Jbd)[i];
-      delete[](data_wk->pivot)[i];
+      delete[] (data_wk->P)[i];
+      delete[] (data_wk->Jbd)[i];
+      delete[] (data_wk->pivot)[i];
     }
-    delete[](data_wk->P);
-    delete[](data_wk->Jbd);
-    delete[](data_wk->pivot);
+    delete[] (data_wk->P);
+    delete[] (data_wk->Jbd);
+    delete[] (data_wk->pivot);
   } else if (data_wk->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
     delete[] data_wk->colPtrs;
