@@ -16,9 +16,7 @@ def identify_removals(mechanism, reaction_info, qssa_species):
             list(reaction.reactants.keys()), qssa_species
         )
         sum_coeff = sum(
-            v
-            for k, v in reaction.reactants.items()
-            if k in qssa_species_involved
+            v for k, v in reaction.reactants.items() if k in qssa_species_involved
         )
         if sum_coeff > 1:
             if orig_idx not in reactions_to_remove:
@@ -29,9 +27,7 @@ def identify_removals(mechanism, reaction_info, qssa_species):
                 list(reaction.products.keys()), qssa_species
             )
             sum_coeff = sum(
-                v
-                for k, v in reaction.products.items()
-                if k in qssa_species_involved
+                v for k, v in reaction.products.items() if k in qssa_species_involved
             )
             if sum_coeff > 1:
                 if orig_idx not in reactions_to_remove:
@@ -76,16 +72,12 @@ def remove_quadratic_method_0(mechanism, qssa_species):
     qssa_species_remove = ordered[0]
 
     # Make new set of qssa species
-    new_qssa_species = [
-        x for x in qssa_species if x not in qssa_species_remove
-    ]
+    new_qssa_species = [x for x in qssa_species if x not in qssa_species_remove]
     print(f"New set of QSSA species: {new_qssa_species}")
     return new_qssa_species
 
 
-def remove_quadratic_method_1(
-    mechanism, reaction_info, candidates_for_removal
-):
+def remove_quadratic_method_1(mechanism, reaction_info, candidates_for_removal):
     """Remove all reactions that generate quadratic coupling.
 
     Method 1 removes forward and backwards reactions.
@@ -98,9 +90,7 @@ def remove_quadratic_method_1(
     return reactions_to_keep
 
 
-def remove_quadratic_method_2(
-    mechanism, reaction_info, candidates_for_removal
-):
+def remove_quadratic_method_2(mechanism, reaction_info, candidates_for_removal):
     """Remove all reactions that generate quadratic coupling.
 
     Method 2 removes forward, backward or both reactions.
@@ -137,9 +127,7 @@ def qssa_coupling(mechanism, qssa_species, forward_to_remove=None):
             list(reaction.reactants.keys()), qssa_species
         )
         sum_coeff = sum(
-            v
-            for k, v in reaction.reactants.items()
-            if k in qssa_species_involved
+            v for k, v in reaction.reactants.items() if k in qssa_species_involved
         )
         if sum_coeff > 1:
             return True
@@ -148,9 +136,7 @@ def qssa_coupling(mechanism, qssa_species, forward_to_remove=None):
                 list(reaction.products.keys()), qssa_species
             )
             sum_coeff = sum(
-                v
-                for k, v in reaction.products.items()
-                if k in qssa_species_involved
+                v for k, v in reaction.products.items() if k in qssa_species_involved
             )
             if sum_coeff > 1:
                 return True
@@ -165,9 +151,7 @@ def identify_qssa_coupling(mechanism, qssa_species):
             list(reaction.reactants.keys()), qssa_species
         )
         sum_coeff = sum(
-            v
-            for k, v in reaction.reactants.items()
-            if k in qssa_species_involved
+            v for k, v in reaction.reactants.items() if k in qssa_species_involved
         )
         if sum_coeff > 1:
             qssa_problematic += qssa_species_involved
@@ -176,9 +160,7 @@ def identify_qssa_coupling(mechanism, qssa_species):
                 list(reaction.products.keys()), qssa_species
             )
             sum_coeff = sum(
-                v
-                for k, v in reaction.products.items()
-                if k in qssa_species_involved
+                v for k, v in reaction.products.items() if k in qssa_species_involved
             )
             if sum_coeff > 1:
                 qssa_problematic += qssa_species_involved
@@ -193,6 +175,4 @@ def visualize_qssa(mechanism, reaction_info, qssa_species):
     links, quadratic_reactions, problematic_species = cqg.qssa_quadratic_graph(
         mechanism, reaction_info, qssa_species
     )
-    cqg.plot_quadratic_graph(
-        mechanism, links, quadratic_reactions, problematic_species
-    )
+    cqg.plot_quadratic_graph(mechanism, links, quadratic_reactions, problematic_species)

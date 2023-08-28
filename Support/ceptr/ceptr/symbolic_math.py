@@ -32,29 +32,18 @@ class SymbolicMath:
         self.remove_pow10 = params.inputs["Arithmetic"]["remove_pow10"].value
 
         self.min_op_count = params.inputs["Replacement"]["min_op_count"].value
-        self.min_op_count_all = params.inputs["Replacement"][
-            "min_op_count_all"
-        ].value
-        self.gradual_op_count = params.inputs["Replacement"][
-            "gradual_op_count"
-        ].value
+        self.min_op_count_all = params.inputs["Replacement"]["min_op_count_all"].value
+        self.gradual_op_count = params.inputs["Replacement"]["gradual_op_count"].value
         self.remove_single_symbols_cse = params.inputs["Replacement"][
             "remove_single_symbols_cse"
         ].value
 
         self.recycle_cse = params.inputs["Recycle"]["recycle_cse"].value
-        self.store_in_jacobian = params.inputs["Recycle"][
-            "store_in_jacobian"
-        ].value
-        if (
-            2 * reaction_info.n_qssa_reactions
-            > (species_info.n_species + 1) ** 2
-        ):
+        self.store_in_jacobian = params.inputs["Recycle"]["store_in_jacobian"].value
+        if 2 * reaction_info.n_qssa_reactions > (species_info.n_species + 1) ** 2:
             self.store_in_jacobian = False
 
-        self.round_decimals = params.inputs["Characters"][
-            "round_decimals"
-        ].value
+        self.round_decimals = params.inputs["Characters"]["round_decimals"].value
 
         # Set to False to use bottom up approach
         self.top_bottom = True
@@ -91,18 +80,10 @@ class SymbolicMath:
         self.refCinv_smp = sme.symbols("refCinv")
         self.refC_smp = sme.symbols("refC")
 
-        self.sc_smp = [
-            sme.symbols("sc[" + str(i) + "]") for i in range(n_species)
-        ]
-        self.g_RT_smp = [
-            sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
-        ]
-        self.h_RT_smp = [
-            sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
-        ]
-        self.wdot_smp = [
-            sme.symbols("wdot[" + str(i) + "]") for i in range(n_species)
-        ]
+        self.sc_smp = [sme.symbols("sc[" + str(i) + "]") for i in range(n_species)]
+        self.g_RT_smp = [sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)]
+        self.h_RT_smp = [sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)]
+        self.wdot_smp = [sme.symbols("wdot[" + str(i) + "]") for i in range(n_species)]
         self.jac_smp = [
             sme.symbols(f"J[{str(i)}][{str(j)}]")
             for i in range(n_species)
@@ -150,34 +131,26 @@ class SymbolicMath:
             n_qssa_reactions = reaction_info.n_qssa_reactions
 
             self.sc_qss_smp = [
-                sme.symbols("sc_qss[" + str(i) + "]")
-                for i in range(n_qssa_species)
+                sme.symbols("sc_qss[" + str(i) + "]") for i in range(n_qssa_species)
             ]
             self.kf_qss_smp = [
-                sme.symbols("kf_qss[" + str(i) + "]")
-                for i in range(n_qssa_reactions)
+                sme.symbols("kf_qss[" + str(i) + "]") for i in range(n_qssa_reactions)
             ]
             self.qf_qss_smp = [
-                sme.symbols("qf_qss[" + str(i) + "]")
-                for i in range(n_qssa_reactions)
+                sme.symbols("qf_qss[" + str(i) + "]") for i in range(n_qssa_reactions)
             ]
             self.qr_qss_smp = [
-                sme.symbols("qr_qss[" + str(i) + "]")
-                for i in range(n_qssa_reactions)
+                sme.symbols("qr_qss[" + str(i) + "]") for i in range(n_qssa_reactions)
             ]
             self.g_RT_qss_smp = [
-                sme.symbols("g_RT_qss[" + str(i) + "]")
-                for i in range(n_qssa_species)
+                sme.symbols("g_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
             ]
             self.h_RT_qss_smp = [
-                sme.symbols("h_RT_qss[" + str(i) + "]")
-                for i in range(n_qssa_species)
+                sme.symbols("h_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
             ]
 
             # temporary symbols that contain temperature dependence
-            qss_species_coeffs = cth.analyze_thermodynamics(
-                mechanism, species_info, 1
-            )
+            qss_species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 1)
             low_temp, high_temp, midpoints = qss_species_coeffs
             self.midpointsQSSList = []
             for mid_temp, _ in list(midpoints.items()):
@@ -208,8 +181,7 @@ class SymbolicMath:
                 ]
 
             self.kf_qss_smp_tmp = [
-                sme.symbols("kf_qss[" + str(i) + "]")
-                for i in range(n_qssa_reactions)
+                sme.symbols("kf_qss[" + str(i) + "]") for i in range(n_qssa_reactions)
             ]
 
             # Create dict to hold end of chain rule dscqssdsc terms
@@ -263,13 +235,9 @@ class SymbolicMath:
                 (
                     lambda b, e: (e.is_Integer or e.is_Float)
                     and (
-                        abs(e - 1) < 1e-16
-                        or abs(e - 2) < 1e-16
-                        or abs(e - 3) < 1e-16
+                        abs(e - 1) < 1e-16 or abs(e - 2) < 1e-16 or abs(e - 3) < 1e-16
                     ),
-                    lambda b, e: "("
-                    + "*".join(["(" + b + ")"] * int(float(e)))
-                    + ")",
+                    lambda b, e: "(" + "*".join(["(" + b + ")"] * int(float(e))) + ")",
                 )
             )
             # Negative exponents
@@ -277,9 +245,7 @@ class SymbolicMath:
                 (
                     lambda b, e: (e.is_Integer or e.is_Float)
                     and (
-                        abs(e + 1) < 1e-16
-                        or abs(e + 2) < 1e-16
-                        or abs(e + 3) < 1e-16
+                        abs(e + 1) < 1e-16 or abs(e + 2) < 1e-16 or abs(e + 3) < 1e-16
                     ),
                     lambda b, e: "("
                     + "1.0/"
@@ -299,8 +265,7 @@ class SymbolicMath:
                 #    + "",
                 # ),
                 (
-                    lambda b, e: (b.is_Integer or b.is_Float)
-                    and (abs(b - 10) < 1e-16),
+                    lambda b, e: (b.is_Integer or b.is_Float) and (abs(b - 10) < 1e-16),
                     lambda b, e: "" + "exp(M_LN10 * (" + e + "))" + "",
                 )
             )
@@ -341,11 +306,7 @@ class SymbolicMath:
     def convert_number_to_int(self, number):
         """Convert number to int if possible."""
         factor = float(number)
-        if (
-            self.remove_1
-            and abs(factor) < 1.1
-            and abs(factor - int(factor)) < 1e-16
-        ):
+        if self.remove_1 and abs(factor) < 1.1 and abs(factor - int(factor)) < 1e-16:
             factor = int(factor)
         return factor
 
@@ -545,11 +506,7 @@ class SymbolicMath:
                     is_single_symbol = False
             if is_float or is_single_symbol:
                 replacements.append(i)
-                ind = [
-                    j + i
-                    for j, s in enumerate(common_expr_symbols[i:])
-                    if lhs in s
-                ]
+                ind = [j + i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
                 for j in ind:
                     common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
                     # common_expr_symbols[j].remove(lhs)
@@ -589,14 +546,8 @@ class SymbolicMath:
         for i, (lhs, rhs) in enumerate(zip(common_expr_lhs, common_expr_rhs)):
             op_count = sme.count_ops(rhs)
             # count how many times the expression is used later
-            ind_rhs = [
-                j + i
-                for j, s in enumerate(common_expr_symbols[i:])
-                if lhs in s
-            ]
-            ind_final_expr = [
-                j for j, s in enumerate(final_expr_symbols) if lhs in s
-            ]
+            ind_rhs = [j + i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
+            ind_final_expr = [j for j, s in enumerate(final_expr_symbols) if lhs in s]
             rec_count = 0
             for ind in ind_rhs:
                 rec_count += smp.sympify(common_expr_rhs[ind]).count(lhs)
@@ -613,11 +564,7 @@ class SymbolicMath:
                 is_float = False
             if total_op < count_lim or is_float:
                 replacements.append(i)
-                ind = [
-                    j + i
-                    for j, s in enumerate(common_expr_symbols[i:])
-                    if lhs in s
-                ]
+                ind = [j + i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
                 for j in ind:
                     common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
                     common_expr_symbols[j].remove(lhs)
@@ -664,11 +611,7 @@ class SymbolicMath:
                 is_float = False
             if op_count < count_lim or is_float:
                 replacements.append(i)
-                ind = [
-                    j + i
-                    for j, s in enumerate(common_expr_symbols[i:])
-                    if lhs in s
-                ]
+                ind = [j + i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
                 for j in ind:
                     common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
                     common_expr_symbols[j].remove(lhs)
@@ -717,11 +660,7 @@ class SymbolicMath:
                 is_float = False
             if op_count < count_lim or is_float:
                 replacements.append(i)
-                ind = [
-                    j + i
-                    for j, s in enumerate(common_expr_symbols[i:])
-                    if lhs in s
-                ]
+                ind = [j + i for j, s in enumerate(common_expr_symbols[i:]) if lhs in s]
                 for j in ind:
                     common_expr_rhs[j] = common_expr_rhs[j].subs(lhs, rhs)
                     common_expr_symbols[j].remove(lhs)
@@ -763,9 +702,7 @@ class SymbolicMath:
 
         # Figure out which symbols may be recycled
         for isymb, symb in enumerate(common_expr_lhs):
-            ind_final = [
-                j for j, s in enumerate(final_expr_symbols) if symb in s
-            ]
+            ind_final = [j for j, s in enumerate(final_expr_symbols) if symb in s]
             if not ind_final:
                 ind_cse = [
                     j + isymb
@@ -793,19 +730,13 @@ class SymbolicMath:
         # Use the recycling list to actually recycle
         for isr, symb_replace in enumerate(to_replace):
             ind_rhs = [
-                j
-                for j, s in enumerate(common_expr_symbols)
-                if symb_replace in s
+                j for j, s in enumerate(common_expr_symbols) if symb_replace in s
             ]
             for ind in ind_rhs:
                 common_expr_rhs[ind] = common_expr_rhs[ind].subs(
                     symb_replace, sme.symbols(replace_with[isr].name)
                 )
-            ind_exp = [
-                j
-                for j, s in enumerate(final_expr_symbols)
-                if symb_replace in s
-            ]
+            ind_exp = [j for j, s in enumerate(final_expr_symbols) if symb_replace in s]
             for ind in ind_exp:
                 final_expr[ind] = final_expr[ind].subs(
                     symb_replace, sme.symbols(replace_with[isr].name)
@@ -821,9 +752,7 @@ class SymbolicMath:
             replace_with,
         )
 
-    def write_array_to_cpp(
-        self, list_smp, array_str, cw, fstream, index_list=None
-    ):
+    def write_array_to_cpp(self, list_smp, array_str, cw, fstream, index_list=None):
         """Convert sympy array to C code compatible string."""
         n = len(list_smp)
 
@@ -864,9 +793,7 @@ class SymbolicMath:
         """Write dscqss terms as functions of common subexpressions."""
         n_dscqssdscqss = len(self.dscqssdscqss)
 
-        list_smp = list(self.dscqssdscqss.values()) + list(
-            self.dscqssdsc.values()
-        )
+        list_smp = list(self.dscqssdscqss.values()) + list(self.dscqssdsc.values())
         n_total = len(list_smp)
 
         dscqssdscqss_tuples = list(self.dscqssdscqss.keys())
@@ -902,18 +829,12 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dscqss{num_idx}dscqss{den_idx} = {cpp_str};",
                 )
             else:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dscqss{num_idx}dsc{den_idx} = {cpp_str};",
                 )
 
         cw.writer(fstream, cw.comment("Write chain rule terms..."))
@@ -939,10 +860,8 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    (
-                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
-                        f" = {final_string};"
-                    ),
+                    f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                    f" = {final_string};",
                 )
 
     def write_symjac_to_cpp_cpu(self, species_info, cw, fstream):
@@ -1030,34 +949,22 @@ class SymbolicMath:
             if i < n_dscqssdscqss:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dscqss{num_idx}dscqss{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dscqss{num_idx}dscqss{den_idx} = {cpp_str};",
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dscqss{num_idx}dsc{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dscqss{num_idx}dsc{den_idx} = {cpp_str};",
                 )
             elif i < n_dscqssdscqss + n_dscqssdsc + n_dwdotdscqss:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dwdot{num_idx}dscqss{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dwdot{num_idx}dscqss{den_idx} = {cpp_str};",
                 )
             else:
                 cw.writer(
                     fstream,
-                    (
-                        f"const amrex::Real dwdot{num_idx}dsc{den_idx} ="
-                        f" {cpp_str};"
-                    ),
+                    f"const amrex::Real dwdot{num_idx}dsc{den_idx} = {cpp_str};",
                 )
 
         cw.writer(fstream, cw.comment("Write dscqss_dsc terms..."))
@@ -1083,10 +990,8 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    (
-                        f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
-                        f" = {final_string};"
-                    ),
+                    f"dscqss_dsc[{species_info.n_species * item['number'] + scnum}]"
+                    f" = {final_string};",
                 )
 
         # Now write the full jacobian expression
@@ -1108,10 +1013,8 @@ class SymbolicMath:
 
                 cw.writer(
                     fstream,
-                    (
-                        f"J[{(species_info.n_species + 1) * scnum + item['number']}]"
-                        f" = {final_string};"
-                    ),
+                    f"J[{(species_info.n_species + 1) * scnum + item['number']}]"
+                    f" = {final_string};",
                 )
 
     def write_symjac_to_cpp_gpu(self, species_info, cw, fstream):
@@ -1190,15 +1093,12 @@ class SymbolicMath:
                 )
 
         # Compute dscqss_dsc strings from CSEs
-        dscqss_dsc = [""] * (
-            species_info.n_species * species_info.n_qssa_species
-        )
+        dscqss_dsc = [""] * (species_info.n_species * species_info.n_qssa_species)
 
         for _, scqss_item in species_info.scqss_df.iterrows():
             for _, sc_item in species_info.sc_df.iterrows():
                 dscqss_dsc_idx = (
-                    species_info.n_species * scqss_item["number"]
-                    + sc_item["number"]
+                    species_info.n_species * scqss_item["number"] + sc_item["number"]
                 )
 
                 # Identify the CSE index of dscqssdsc term
@@ -1224,19 +1124,13 @@ class SymbolicMath:
                         (scqss_item["number"], scqssdepnum),
                     )
                     # Append the dscqssdscqss CSE to chain list
-                    cse_string = self.convert_to_cpp(
-                        final_expr[dscqssdscqss_cse_idx]
-                    )
+                    cse_string = self.convert_to_cpp(final_expr[dscqssdscqss_cse_idx])
                     dscqssdsc_string = dscqss_dsc[
-                        species_info.n_species * scqssdepnum
-                        + sc_item["number"]
+                        species_info.n_species * scqssdepnum + sc_item["number"]
                     ]
 
                     # only append the term if it is NOT multiplied by 0
-                    if (
-                        not dscqssdsc_string == "0"
-                        and not str(cse_string) == "0"
-                    ):
+                    if not dscqssdsc_string == "0" and not str(cse_string) == "0":
                         chain_string.append(
                             f"""({cse_string}) * ({dscqssdsc_string})"""
                         )
@@ -1274,20 +1168,13 @@ class SymbolicMath:
                         jac_df, "dwdotdscqss", (wdot_item["number"], scqssnum)
                     )
                     # Append the dwdotdscqss * dscqssdsc term to the chain lise
-                    cse_string = self.convert_to_cpp(
-                        final_expr[dwdotdscqss_cse_idx]
-                    )
+                    cse_string = self.convert_to_cpp(final_expr[dwdotdscqss_cse_idx])
                     dscqssdsc_string = dscqss_dsc[
                         species_info.n_species * scqssnum + sc_item["number"]
                     ]
                     # only append the term if it is NOT multiplied by 0
-                    if (
-                        not dscqssdsc_string == "0"
-                        and not str(cse_string) == "0"
-                    ):
-                        chain_string.append(
-                            f"""({cse_string})*({dscqssdsc_string})"""
-                        )
+                    if not dscqssdsc_string == "0" and not str(cse_string) == "0":
+                        chain_string.append(f"""({cse_string})*({dscqssdsc_string})""")
                 if chain_string:
                     final_string = f"""{start_string}+{chain_string[0]}"""
                     for ics in range(len(chain_string) - 1):
@@ -1295,12 +1182,12 @@ class SymbolicMath:
                 else:
                     final_string = start_string
 
-                idx = (species_info.n_species + 1) * sc_item[
+                idx = (species_info.n_species + 1) * sc_item["number"] + wdot_item[
                     "number"
-                ] + wdot_item["number"]
+                ]
                 cw.writer(
                     fstream,
-                    (f"J[{idx}]" f" = {final_string};"),
+                    f"J[{idx}] = {final_string};",
                 )
 
     def write_array_to_cpp_no_cse(
@@ -1417,15 +1304,12 @@ class SymbolicMath:
     def compute_jacobian(self, species_info):
         """Routine that computes the Jacobian without chain ruling."""
         # Create intermediate vectors
-        dscqss_dsc = [0.0] * (
-            species_info.n_species * species_info.n_qssa_species
-        )
+        dscqss_dsc = [0.0] * (species_info.n_species * species_info.n_qssa_species)
 
         for _, scqss_item in species_info.scqss_df.iterrows():
             for _, sc_item in species_info.sc_df.iterrows():
                 dscqss_dsc_idx = (
-                    species_info.n_species * scqss_item["number"]
-                    + sc_item["number"]
+                    species_info.n_species * scqss_item["number"] + sc_item["number"]
                 )
 
                 for scqss_dep in scqss_item["scqss_dep"]:
@@ -1433,8 +1317,7 @@ class SymbolicMath:
                     dscqss_dsc[dscqss_dsc_idx] += (
                         self.dscqssdscqss[(scqss_item["number"], scqssdepnum)]
                         * dscqss_dsc[
-                            species_info.n_species * scqssdepnum
-                            + sc_item["number"]
+                            species_info.n_species * scqssdepnum + sc_item["number"]
                         ]
                     )
 
@@ -1452,12 +1335,9 @@ class SymbolicMath:
                     self.jacobian[(wdot_idx, sc_idx)] += (
                         self.dwdotdscqss[(wdot_idx, scqssnum)]
                         * dscqss_dsc[
-                            species_info.n_species * scqssnum
-                            + sc_item["number"]
+                            species_info.n_species * scqssnum + sc_item["number"]
                         ]
                     )
 
                 # add in the non-chain derivative term
-                self.jacobian[(wdot_idx, sc_idx)] += self.dwdotdsc[
-                    (wdot_idx, sc_idx)
-                ]
+                self.jacobian[(wdot_idx, sc_idx)] += self.dwdotdsc[(wdot_idx, sc_idx)]
