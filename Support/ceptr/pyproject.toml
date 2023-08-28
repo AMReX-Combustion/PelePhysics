@@ -6,7 +6,7 @@ authors = ["Marc Henry de Frahan <marc.henrydefrahan@nrel.gov>", "Lucas Esclapez
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-Cantera = ">=2.6.0"
+Cantera = ">=2.6.0,<3.0.0"
 Pint = "^0.19.1"
 PyYAML = "^6.0"
 networkx = "^2.8"
