@@ -155,7 +155,7 @@ AMReX_buildInfo.cpp:
           --COMP "$(COMP)" --COMP_VERSION "$(COMP_VERSION)" \
           --FCOMP "$(FCOMP)" --FCOMP_VERSION "$(FCOMP_VERSION)" \
           --MODULES "$(MNAMES)" \
-          --GIT "$(PELE_PHYSICS_HOME) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
+          --GIT "$(PELE_PHYSICS_HOME) $(AMREX_HOME) $(SUNDIALS_HOME)"
 
 TPL:
 	@echo "==> Building SUNDIALS library"
