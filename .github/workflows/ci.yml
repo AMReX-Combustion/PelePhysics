@@ -95,6 +95,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: PelePhysics-${{matrix.comp}}
+      - name: Clone SUNDIALS
+        uses: actions/checkout@v3
+        with:
+          repository: LLNL/sundials
+          path: sundials-${{matrix.comp}}
       - name: Clone AMReX
         uses: actions/checkout@v3
         with:
@@ -103,6 +108,7 @@ jobs:
       - name: Set Environment Variables
         run: |
           echo "AMREX_HOME=${{github.workspace}}/AMReX-${{matrix.comp}}" >> $GITHUB_ENV
+          echo "SUNDIALS_HOME=${{github.workspace}}/sundials-${{matrix.comp}}" >> $GITHUB_ENV
           echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
           echo "TRANSPORT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/TranEval" >> $GITHUB_ENV
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
