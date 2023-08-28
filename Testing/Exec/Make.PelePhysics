@@ -1,12 +1,11 @@
-AMREX_HOME        ?= ../../../../../amrex
 PELE_HOME         ?= ../../../..
-PELE_PHYSICS_HOME ?= $(PELE_HOME)/PelePhysics
+AMREX_HOME        ?= $(abspath $(lastword $(PELE_HOME)/Submodules/amrex))
+PELE_PHYSICS_HOME ?= $(abspath $(lastword $(PELE_HOME)/Submodules/PelePhysics))
+SUNDIALS_HOME     ?= $(abspath $(lastword $(PELE_HOME)/Submodules/sundials))
 
-TOP := $(PELE_PHYSICS_HOME)
-
-EOS_HOME     ?= $(PELE_PHYSICS_HOME)/Eos
-REACTIONS_HOME ?= $(PELE_PHYSICS_HOME)/Reactions
-TRAN_HOME    ?= $(PELE_PHYSICS_HOME)/Transport
+EOS_HOME          ?= $(PELE_PHYSICS_HOME)/Eos
+REACTIONS_HOME    ?= $(PELE_PHYSICS_HOME)/Reactions
+TRAN_HOME         ?= $(PELE_PHYSICS_HOME)/Transport
 
 EBASE = Pele
 BL_NO_FORT = TRUE
@@ -156,7 +155,7 @@ AMReX_buildInfo.cpp:
           --COMP "$(COMP)" --COMP_VERSION "$(COMP_VERSION)" \
           --FCOMP "$(FCOMP)" --FCOMP_VERSION "$(FCOMP_VERSION)" \
           --MODULES "$(MNAMES)" \
-          --GIT "$(TOP) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
+          --GIT "$(PELE_PHYSICS_HOME) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
 
 TPL:
 	@echo "==> Building SUNDIALS library"
