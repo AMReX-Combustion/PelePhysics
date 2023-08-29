@@ -81,9 +81,7 @@ def create_ss_net(mechanism, species_info, reaction_info):
                 # we should not use the original indices, but the reordered one
                 species_info.qssa_info.ssnet[
                     species_info.ordered_idx_map[s1] - species_info.n_species
-                ][
-                    species_info.ordered_idx_map[s2] - species_info.n_species
-                ] = 1
+                ][species_info.ordered_idx_map[s2] - species_info.n_species] = 1
 
 
 def create_sr_net(mechanism, species_info, reaction_info):
@@ -136,19 +134,14 @@ def qssa_validation(mechanism, species_info, reaction_info):
         for orig_idx in species_info.qssa_info.sr_rj[species_info.sr_si == i]:
             reaction = mechanism.reaction(orig_idx)
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
-            if any(
-                reactant == symbol
-                for reactant, _ in reaction.reactants.items()
-            ):
+            if any(reactant == symbol for reactant, _ in reaction.reactants.items()):
                 if remove_forward:
                     consumed += 0
                 else:
                     consumed += 1
                 if reaction.reversible:
                     produced += 1
-            if any(
-                product == symbol for product, _ in reaction.products.items()
-            ):
+            if any(product == symbol for product, _ in reaction.products.items()):
                 if remove_forward:
                     produced += 0
                 else:
@@ -174,9 +167,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
 
     species_info.qssa_info.scnet = species_info.qssa_info.ssnet
     for i in range(species_info.n_qssa_species):
-        for j in species_info.qssa_info.ss_sj[
-            species_info.qssa_info.ss_si == i
-        ]:
+        for j in species_info.qssa_info.ss_sj[species_info.qssa_info.ss_si == i]:
             if j != i:
                 count = 0
                 for r in species_info.qssa_info.sr_rj[species_info.sr_si == j]:
@@ -195,8 +186,8 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             sys.exit(
                                 "Species "
                                 + species_info.qssa_species_list[j]
-                                + " appears as both prod and reacts. Check"
-                                " reaction " + reaction.equation
+                                + " appears as both prod and reacts. Check reaction "
+                                + reaction.equation
                             )
 
                     # we know j is in reaction r. Options are
@@ -222,11 +213,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 is_coupling = True
                                 if r not in list_coupling_reactions:
                                     coupling_reactions += (
-                                        "R"
-                                        + str(r)
-                                        + " "
-                                        + reaction.equation
-                                        + "\n"
+                                        "R" + str(r) + " " + reaction.equation + "\n"
                                     )
                                     list_coupling_reactions.append(r)
                                 print(
@@ -255,11 +242,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 is_coupling = True
                                 if r not in list_coupling_reactions:
                                     coupling_reactions += (
-                                        "R"
-                                        + str(r)
-                                        + " "
-                                        + reaction.equation
-                                        + "\n"
+                                        "R" + str(r) + " " + reaction.equation + "\n"
                                     )
                                     list_coupling_reactions.append(r)
                                 print(
@@ -292,11 +275,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 is_coupling = True
                                 if r not in list_coupling_reactions:
                                     coupling_reactions += (
-                                        "R"
-                                        + str(r)
-                                        + " "
-                                        + reaction.equation
-                                        + "\n"
+                                        "R" + str(r) + " " + reaction.equation + "\n"
                                     )
                                     list_coupling_reactions.append(r)
                                 print(
@@ -337,8 +316,8 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             sys.exit(
                                 "Species "
                                 + species_info.qssa_species_list[j]
-                                + " appears as both prod and reacts. Check"
-                                " reaction " + reaction.equation
+                                + " appears as both prod and reacts. Check reaction "
+                                + reaction.equation
                             )
 
                     if reaction.reversible:
@@ -350,9 +329,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             for spec, coeff in reaction.reactants.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
-                                    if (coeff > 1.0) or (
-                                        species_appearances > 1
-                                    ):
+                                    if (coeff > 1.0) or (species_appearances > 1):
                                         is_coupling = True
                                         if r not in list_coupling_reactions:
                                             coupling_reactions += (
@@ -375,9 +352,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             for spec, coeff in reaction.products.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
-                                    if (coeff > 1.0) or (
-                                        species_appearances > 1
-                                    ):
+                                    if (coeff > 1.0) or (species_appearances > 1):
                                         is_coupling = True
                                         if r not in list_coupling_reactions:
                                             coupling_reactions += (
@@ -404,9 +379,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             for spec, coeff in reaction.reactants.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
-                                    if (coeff > 1.0) or (
-                                        species_appearances > 1
-                                    ):
+                                    if (coeff > 1.0) or (species_appearances > 1):
                                         is_coupling = True
                                         if r not in list_coupling_reactions:
                                             coupling_reactions += (
@@ -443,18 +416,12 @@ def set_qssa_needs(mechanism, species_info, reaction_info):
     for i in range(species_info.n_qssa_species):
         needs_species = []
         count = 0
-        for j in species_info.qssa_info.sc_sj[
-            species_info.qssa_info.sc_si == i
-        ]:
+        for j in species_info.qssa_info.sc_sj[species_info.qssa_info.sc_si == i]:
             if j != i:
                 needs_species.append(species_info.qssa_species_list[j])
                 count += 1
-        species_info.qssa_info.needs[
-            species_info.qssa_species_list[i]
-        ] = needs_species
-        species_info.qssa_info.needs_count[
-            species_info.qssa_species_list[i]
-        ] = count
+        species_info.qssa_info.needs[species_info.qssa_species_list[i]] = needs_species
+        species_info.qssa_info.needs_count[species_info.qssa_species_list[i]] = count
 
     species_info.qssa_info.needs_running = species_info.qssa_info.needs.copy()
     species_info.qssa_info.needs_count_running = (
@@ -470,22 +437,18 @@ def set_qssa_isneeded(mechanism, species_info, reaction_info):
     for i in range(species_info.n_qssa_species):
         is_needed_species = []
         count = 0
-        for j in species_info.qssa_info.sc_si[
-            species_info.qssa_info.sc_sj == i
-        ]:
+        for j in species_info.qssa_info.sc_si[species_info.qssa_info.sc_sj == i]:
             if j != i:
                 is_needed_species.append(species_info.qssa_species_list[j])
                 count += 1
-        species_info.qssa_info.is_needed[
-            species_info.qssa_species_list[i]
-        ] = is_needed_species
-        species_info.qssa_info.is_needed_count[
-            species_info.qssa_species_list[i]
-        ] = count
+        species_info.qssa_info.is_needed[species_info.qssa_species_list[i]] = (
+            is_needed_species
+        )
+        species_info.qssa_info.is_needed_count[species_info.qssa_species_list[i]] = (
+            count
+        )
 
-    species_info.qssa_info.is_needed_running = (
-        species_info.qssa_info.is_needed.copy()
-    )
+    species_info.qssa_info.is_needed_running = species_info.qssa_info.is_needed.copy()
     species_info.qssa_info.is_needed_count_running = (
         species_info.qssa_info.is_needed_count.copy()
     )
@@ -522,17 +485,15 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
             print("- dealing with group: ", member)
             find_closed_cycle(mechanism, species_info, member)
 
-    print(
-        "** Groups of coupled species are: ", species_info.qssa_info.all_groups
-    )
+    print("** Groups of coupled species are: ", species_info.qssa_info.all_groups)
 
     group_count = 0
     # Rename and only store strongly connected components involving 2 or more species as groups
     for group in species_info.qssa_info.all_groups:
         if len(species_info.qssa_info.all_groups[group]) > 1:
-            species_info.qssa_info.group[
-                "group_" + str(group_count)
-            ] = species_info.qssa_info.all_groups[group]
+            species_info.qssa_info.group["group_" + str(group_count)] = (
+                species_info.qssa_info.all_groups[group]
+            )
             group_count += 1
     print()
     print("** Final clean self groups are: ", species_info.qssa_info.group)
@@ -555,9 +516,7 @@ def find_closed_cycle(mechanism, species_info, species):
     # and give it a lowest link value The species location in the
     # lowest link value dictionary denotes its discovery order, or id
     species_info.qssa_info.potential_group.append(species)
-    species_info.qssa_info.lowest_link[
-        species
-    ] = species_info.qssa_info.discovery_order
+    species_info.qssa_info.lowest_link[species] = species_info.qssa_info.discovery_order
     species_info.qssa_info.discovery_order += 1
     parent = species
 
@@ -586,10 +545,8 @@ def find_closed_cycle(mechanism, species_info, species):
             find_closed_cycle(mechanism, species_info, child)
 
             print(
-                (
-                    "         xx We've finished a recursion! The child that"
-                    " was passed in was: "
-                ),
+                "         xx We've finished a recursion! The child that"
+                " was passed in was: ",
                 child,
                 " with parent ",
                 parent,
@@ -618,10 +575,8 @@ def find_closed_cycle(mechanism, species_info, species):
                 )
 
             print(
-                (
-                    "         ** Therefore, the lowest link value of the"
-                    " parent then becomes: "
-                ),
+                "         ** Therefore, the lowest link value of the"
+                " parent then becomes: ",
                 species_info.qssa_info.lowest_link[parent],
             )
             print(
@@ -659,10 +614,8 @@ def find_closed_cycle(mechanism, species_info, species):
 
             print()
             print(
-                (
-                    "         **** Therefore, the lowest link value of the"
-                    " parent then becomes: "
-                ),
+                "         **** Therefore, the lowest link value of the"
+                " parent then becomes: ",
                 species_info.qssa_info.lowest_link[parent],
             )
             print(
@@ -745,10 +698,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
                         member == need
                         for member in species_info.qssa_info.group[other_group]
                     ):
-                        print(
-                            "        it is found in a different group."
-                            " Adding it."
-                        )
+                        print("        it is found in a different group. Adding it.")
                         not_in_group = False
                         update_needs.append(other_group)
                         update_needs_count += 1
@@ -779,9 +729,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
                 set(species_info.qssa_info.is_needed_running[spec])
                 - set(species_info.qssa_info.group[group_key])
             ):
-                print(
-                    "        An additional not-in-group is-needed is " + needed
-                )
+                print("        An additional not-in-group is-needed is " + needed)
                 not_in_group = True
                 # for the other groups
                 for other_group in other_groups:
@@ -793,10 +741,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
                         member == needed
                         for member in species_info.qssa_info.group[other_group]
                     ):
-                        print(
-                            "        it is found in a different group."
-                            " Adding it."
-                        )
+                        print("        it is found in a different group. Adding it.")
                         not_in_group = False
                         update_is_needed.append(other_group)
                         update_needed_count += 1
@@ -829,9 +774,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
         species_info.qssa_info.needs_running.update(group_needs)
         species_info.qssa_info.needs_count_running.update(group_needs_count)
         species_info.qssa_info.is_needed_running.update(group_is_needed)
-        species_info.qssa_info.is_needed_count_running.update(
-            group_is_needed_count
-        )
+        species_info.qssa_info.is_needed_count_running.update(group_is_needed_count)
 
         print("So, ", group_key, " needs ", update_needs)
         print("So, ", group_key, " is-needed is ", update_is_needed)
@@ -861,9 +804,7 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
     solo_needs = species_info.qssa_info.needs_running.copy()
     solo_needs_count = species_info.qssa_info.needs_count_running.copy()
     solo_is_needed = species_info.qssa_info.is_needed_running.copy()
-    solo_is_needed_count = (
-        species_info.qssa_info.is_needed_count_running.copy()
-    )
+    solo_is_needed_count = species_info.qssa_info.is_needed_count_running.copy()
 
     # remove the groups because we're just dealing with things that aren't in groups now
     for group in list(species_info.qssa_info.group.keys()):
@@ -883,16 +824,14 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
             not_in_group = True
             for group in list(species_info.qssa_info.group.keys()):
                 if group not in update_needs and any(
-                    member == need
-                    for member in species_info.qssa_info.group[group]
+                    member == need for member in species_info.qssa_info.group[group]
                 ):
                     print("        this species is in group: ", group)
                     not_in_group = False
                     update_needs.append(group)
                     update_needs_count += 1
                 elif group in update_needs and any(
-                    member == need
-                    for member in species_info.qssa_info.group[group]
+                    member == need for member in species_info.qssa_info.group[group]
                 ):
                     print(
                         "        this group was already put in the list"
@@ -913,16 +852,14 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
             not_in_group = True
             for group in list(species_info.qssa_info.group.keys()):
                 if group not in update_is_needed and any(
-                    member == needed
-                    for member in species_info.qssa_info.group[group]
+                    member == needed for member in species_info.qssa_info.group[group]
                 ):
                     print("        this species is in group: ", group)
                     not_in_group = False
                     update_is_needed.append(group)
                     update_needed_count += 1
                 if group in update_is_needed and any(
-                    member == needed
-                    for member in species_info.qssa_info.group[group]
+                    member == needed for member in species_info.qssa_info.group[group]
                 ):
                     print(
                         "        this group was already put in the list"
@@ -1067,14 +1004,10 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                 # Check if all QSSA are only reactants
                 all_qssa_reactants = True
                 if any(
-                    product == other_qssa
-                    for product, _ in reaction.products.items()
+                    product == other_qssa for product, _ in reaction.products.items()
                 ):
                     all_qssa_reactants = False
-                if any(
-                    product == symbol
-                    for product, _ in reaction.products.items()
-                ):
+                if any(product == symbol for product, _ in reaction.products.items()):
                     all_qssa_reactants = False
 
             if len(coupled) < 2:
@@ -1094,14 +1027,10 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             species_appearances += coeff
 
                     coeff_hold.append(
-                        "-qf_co["
-                        + str(reaction_info.qfqr_co_idx_map.index(r))
-                        + "]"
+                        "-qf_co[" + str(reaction_info.qfqr_co_idx_map.index(r)) + "]"
                     )
                     coeff_hold_smp.append(
-                        -syms.qf_qss_smp[
-                            reaction_info.qfqr_co_idx_map.index(r)
-                        ]
+                        -syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                     )
                     if reaction.reversible:
                         rhs_hold.append(
@@ -1116,9 +1045,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                         )
                         rhs_hold_smp.append(
                             species_appearances
-                            * syms.qr_qss_smp[
-                                reaction_info.qfqr_co_idx_map.index(r)
-                            ]
+                            * syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                         )
                 # if QSSA species is a product
                 elif direction == 1:
@@ -1146,9 +1073,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                     )
                     rhs_hold_smp.append(
                         species_appearances
-                        * syms.qf_qss_smp[
-                            reaction_info.qfqr_co_idx_map.index(r)
-                        ]
+                        * syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                     )
                     if reaction.reversible:
                         coeff_hold.append(
@@ -1157,9 +1082,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             + "]"
                         )
                         coeff_hold_smp.append(
-                            -syms.qr_qss_smp[
-                                reaction_info.qfqr_co_idx_map.index(r)
-                            ]
+                            -syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                         )
 
             elif len(coupled) >= 2 and all_qssa_reactants and remove_forward:
@@ -1184,16 +1107,12 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                     )
                     rhs_hold_smp.append(
                         species_appearances
-                        * syms.qr_qss_smp[
-                            reaction_info.qfqr_co_idx_map.index(r)
-                        ]
+                        * syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                     )
 
             else:
                 # note in this case there can only be 2 QSSA in one reac
-                coupled_qssa = [
-                    species_info.qssa_species_list[j] for j in coupled
-                ]
+                coupled_qssa = [species_info.qssa_species_list[j] for j in coupled]
                 print(
                     "        this reaction couples the following QSSA: ",
                     coupled_qssa,
@@ -1227,8 +1146,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                     ):
                         all_qssa_reactants = False
                     if any(
-                        product == symbol
-                        for product, _ in reaction.products.items()
+                        product == symbol for product, _ in reaction.products.items()
                     ):
                         all_qssa_reactants = False
 
@@ -1244,8 +1162,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             " are both reactants",
                         )
                         print(
-                            "        this reaction does not contribute to any"
-                            " QSSA" + "coefficients and is thus ignored"
+                            "        this reaction does not contribute to any QSSA"
+                            + "coefficients and is thus ignored"
                         )
 
                     else:
@@ -1268,9 +1186,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             + "]"
                         )
                         coeff_hold_smp.append(
-                            -syms.qf_qss_smp[
-                                reaction_info.qfqr_co_idx_map.index(r)
-                            ]
+                            -syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                         )
                         if reaction.reversible:
                             group_coeff_hold[other_qssa].append(
@@ -1295,8 +1211,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                 # is a reactant (not guaranteed; must check that QSSA
                 # are on opposite sides of equation)
                 elif direction == 1 and any(
-                    reactant == other_qssa
-                    for reactant, _ in reaction.reactants.items()
+                    reactant == other_qssa for reactant, _ in reaction.reactants.items()
                 ):
                     print(
                         "        species ",
@@ -1326,9 +1241,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                     )
                     group_coeff_hold_smp[other_qssa][0] += (
                         species_appearances
-                        * syms.qf_qss_smp[
-                            reaction_info.qfqr_co_idx_map.index(r)
-                        ]
+                        * syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                     )
                     if reaction.reversible:
                         coeff_hold.append(
@@ -1337,9 +1250,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
                             + "]"
                         )
                         coeff_hold_smp.append(
-                            -syms.qr_qss_smp[
-                                reaction_info.qfqr_co_idx_map.index(r)
-                            ]
+                            -syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                         )
                 # last option is that BOTH QSSA are products, but the
                 # reaction is only one way, so it doesn't matter. This
@@ -1391,21 +1302,17 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
             if j != i:
                 other_qssa = species_info.qssa_species_list[j]
                 if other_qssa in group_coeff_hold:
-                    species_info.qssa_info.qssa_coeff[symbol][
-                        other_qssa
-                    ] = " ".join(group_coeff_hold[other_qssa])
-                    species_info.qssa_info.qssa_coeff_smp[symbol][
-                        other_qssa
-                    ] = group_coeff_hold_smp[other_qssa]
+                    species_info.qssa_info.qssa_coeff[symbol][other_qssa] = " ".join(
+                        group_coeff_hold[other_qssa]
+                    )
+                    species_info.qssa_info.qssa_coeff_smp[symbol][other_qssa] = (
+                        group_coeff_hold_smp[other_qssa]
+                    )
                     print(species_info.qssa_info.qssa_coeff[symbol])
                     print(species_info.qssa_info.qssa_coeff_smp[symbol])
                 else:
-                    species_info.qssa_info.qssa_coeff[symbol][
-                        other_qssa
-                    ] = "0.0"
-                    species_info.qssa_info.qssa_coeff_smp[symbol][
-                        other_qssa
-                    ] = 0.0
+                    species_info.qssa_info.qssa_coeff[symbol][other_qssa] = "0.0"
+                    species_info.qssa_info.qssa_coeff_smp[symbol][other_qssa] = 0.0
 
         print("Here is everything: ")
         print()
@@ -1425,9 +1332,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
     print()
 
 
-def qssa_coeff_functions(
-    fstream, mechanism, species_info, reaction_info, syms
-):
+def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
     """QSSA coeff functions."""
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
@@ -1498,13 +1403,9 @@ def qssa_coeff_functions(
             )
             nlindemann_qssa += 1
             if lindemann_first:
-                ilindemann_qssa[0] = reaction_info.qssa_reactions.index(
-                    reac_id
-                )
+                ilindemann_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
                 lindemann_first = False
-            ilindemann_qssa[1] = (
-                reaction_info.qssa_reactions.index(reac_id) + 1
-            )
+            ilindemann_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
         if reac_id >= i3body[0] and reac_id < i3body[1]:
             print(
                 "reaction ",
@@ -1547,8 +1448,7 @@ def qssa_coeff_functions(
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
         + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const"
         " amrex::Real * sc,"
-        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real *"
-        " g_RT_qss)",
+        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
     )
     cw.writer(fstream, "{")
 
@@ -1560,17 +1460,13 @@ def qssa_coeff_functions(
     else:
         cw.writer(
             fstream,
-            cw.comment(
-                "reference concentration: P_atm / (RT) in inverse mol/m^3"
-            ),
+            cw.comment("reference concentration: P_atm / (RT) in inverse mol/m^3"),
         )
         cw.writer(
             fstream,
-            (
-                f"const amrex::Real refC = {cc.Patm_pa:g} /"
-                f" {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} *"
-                " invT;"
-            ),
+            f"const amrex::Real refC = {cc.Patm_pa:g} /"
+            f" {cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m:g} *"
+            " invT;",
         )
         # coeff1 = cc.Patm_pa
         # coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
@@ -1594,10 +1490,11 @@ def qssa_coeff_functions(
         remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
         idx = i
         dim = cu.phase_space_units(reaction.reactants)
-        third_body = reaction.reaction_type == "three-body"
-        falloff = reaction.reaction_type == "falloff"
-        is_troe = False
-        # is_sri = False
+        third_body = reaction.third_body is not None
+        falloff = reaction.rate.type == "falloff"
+        is_troe = reaction.rate.sub_type == "Troe"
+        is_sri = reaction.rate.sub_type == "Sri"
+        is_lindemann = reaction.rate.sub_type == "Lindemann"
         aeuc = cu.activation_energy_units()
         if not third_body and not falloff:
             # Case 3 !PD, !TB
@@ -1621,37 +1518,36 @@ def qssa_coeff_functions(
             # Case 2 !PD, TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
             # pef = (
-            # reaction.high_rate.pre_exponential_factor * ctuc
+            # reaction.rate.high_rate.pre_exponential_factor * ctuc
             # ).to_base_units()
-            beta = reaction.high_rate.temperature_exponent
+            beta = reaction.rate.high_rate.temperature_exponent
             # ae = (
-            # reaction.high_rate.activation_energy
+            # reaction.rate.high_rate.activation_energy
             # * cc.ureg.joule
             # / cc.ureg.kmol
             # ).to(aeuc)
 
             low_pef = (
-                reaction.low_rate.pre_exponential_factor * ctuc
+                reaction.rate.low_rate.pre_exponential_factor * ctuc
             ).to_base_units()
-            low_beta = reaction.low_rate.temperature_exponent
+            low_beta = reaction.rate.low_rate.temperature_exponent
             low_ae = (
-                reaction.low_rate.activation_energy
-                * cc.ureg.joule
-                / cc.ureg.kmol
+                reaction.rate.low_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
             ).to(aeuc)
-            if reaction.rate.type == "Troe":
+            if is_troe:
                 troe = reaction.rate.falloff_coeffs
                 ntroe = len(troe)
-                is_troe = True
-            elif reaction.rate.type == "Sri":
+            elif is_sri:
                 pass
                 # sri = reaction.rate.falloff_coeffs
                 # nsri = len(sri)
-                # is_sri = True
-            elif reaction.rate.type == "Lindemann":
+            elif is_lindemann:
                 pass
             else:
-                print(f"Unrecognized reaction rate type: {reaction.equation}")
+                print(
+                    f"Unrecognized reaction rate type {reaction.rate.type},"
+                    f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
+                )
                 sys.exit(1)
 
             beta = syms.convert_number_to_int(beta)
@@ -1704,8 +1600,8 @@ def qssa_coeff_functions(
 
         elif (
             not falloff
-            and len(reaction.efficiencies) == 1
-            and isclose(reaction.default_efficiency, 0.0)
+            and len(reaction.third_body.efficiencies) == 1
+            and isclose(reaction.third_body.default_efficiency, 0.0)
         ):
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
@@ -1723,18 +1619,14 @@ def qssa_coeff_functions(
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
         elif not falloff:
-            alpha, alpha_smp = cu.enhancement_d(
-                mechanism, species_info, reaction, syms
-            )
+            alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction, syms)
             cw.writer(fstream, f"const amrex::Real Corr = {alpha};")
             corr_smp = alpha_smp
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(
-                        f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"
-                    ),
+                    cw.comment(f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
@@ -1743,40 +1635,28 @@ def qssa_coeff_functions(
                     fstream,
                     f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});",
                 )
-                syms.qf_qss_smp[idx] = (
-                    corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
-                )
+                syms.qf_qss_smp[idx] = corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
         else:
-            alpha, alpha_smp = cu.enhancement_d(
-                mechanism, species_info, reaction, syms
-            )
+            alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction, syms)
             cw.writer(fstream, f"amrex::Real Corr = {alpha};")
             corr_smp = alpha_smp
             cw.writer(
                 fstream,
-                (
-                    f"const amrex::Real redP = Corr / k_f[{idx}] *"
-                    f" {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} "
-                ),
+                f"const amrex::Real redP = Corr / k_f[{idx}] *"
+                f" {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
             )
             coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
             redp_smp = corr_smp / syms.kf_qss_smp[idx] * coeff
             cw.writer(
                 fstream,
-                (
-                    f"           * exp({low_beta:.15g}  * tc[0] -"
-                    f" {(1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m:.15g} *"
-                    " invT);"
-                ),
+                f"           * exp({low_beta:.15g}  * tc[0] -"
+                f" {(1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m:.15g} *"
+                " invT);",
             )
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
-            redp_smp *= sme.exp(
-                low_beta * syms.tc_smp[0] - coeff * syms.invT_smp
-            )
+            redp_smp *= sme.exp(low_beta * syms.tc_smp[0] - coeff * syms.invT_smp)
             if is_troe:
-                cw.writer(
-                    fstream, "const amrex::Real F = redP / (1.0 + redP);"
-                )
+                cw.writer(fstream, "const amrex::Real F = redP / (1.0 + redP);")
                 f_smp = redp_smp / (1.0 + redp_smp)
                 cw.writer(fstream, "const amrex::Real logPred = log10(redP);")
                 log_pred_smp = sme.log(redp_smp, 10)
@@ -1786,17 +1666,11 @@ def qssa_coeff_functions(
                     if 1.0 - troe[0] != 0:
                         cw.writer(
                             fstream,
-                            (
-                                f"    {1.0 - troe[0]:.15g} * exp(-tc[1] *"
-                                f" {1 / troe[1]:.15g})"
-                            ),
+                            f"    {1.0 - troe[0]:.15g} * exp(-tc[1] *"
+                            f" {1 / troe[1]:.15g})",
                         )
-                        first_factor = syms.convert_number_to_int(
-                            1.0 - troe[0]
-                        )
-                        second_factor = syms.convert_number_to_int(
-                            -1 / troe[1]
-                        )
+                        first_factor = syms.convert_number_to_int(1.0 - troe[0])
+                        second_factor = syms.convert_number_to_int(-1 / troe[1])
                         int_smp += first_factor * sme.exp(
                             syms.tc_smp[1] * second_factor
                         )
@@ -1807,15 +1681,10 @@ def qssa_coeff_functions(
                     if troe[0] != 0:
                         cw.writer(
                             fstream,
-                            (
-                                f"    + {troe[0]:.15g} * exp(-tc[1] *"
-                                f" {1 / troe[2]:.15g})"
-                            ),
+                            f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
                         )
                         first_factor = syms.convert_number_to_int(troe[0])
-                        second_factor = syms.convert_number_to_int(
-                            -1 / troe[2]
-                        )
+                        second_factor = syms.convert_number_to_int(-1 / troe[2])
                         int_smp += first_factor * sme.exp(
                             syms.tc_smp[1] * second_factor
                         )
@@ -1862,23 +1731,17 @@ def qssa_coeff_functions(
                 )
                 cw.writer(
                     fstream,
-                    (
-                        "const amrex::Real F_troe = exp(M_LN10 * logFcent /"
-                        " (1.0 + troe * troe));"
-                    ),
+                    "const amrex::Real F_troe = exp(M_LN10 * logFcent /"
+                    " (1.0 + troe * troe));",
                 )
-                f_troe_smp = 10 ** (
-                    log_fcent_smp / (1.0 + troe_smp * troe_smp)
-                )
+                f_troe_smp = 10 ** (log_fcent_smp / (1.0 + troe_smp * troe_smp))
                 cw.writer(fstream, "Corr = F * F_troe;")
                 corr_smp = f_smp * f_troe_smp
                 if remove_forward:
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
                         fstream,
-                        cw.comment(
-                            f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});"
-                        ),
+                        cw.comment(f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});"),
                     )
                     cw.writer(fstream, f"qf[{idx}]  = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
@@ -1897,9 +1760,7 @@ def qssa_coeff_functions(
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
                         fstream,
-                        cw.comment(
-                            f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"
-                        ),
+                        cw.comment(f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"),
                     )
                     cw.writer(fstream, f"qf[{idx}] = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
@@ -1922,10 +1783,8 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
-                            f" ({kc_conv_inv}) * ({reverse_sc});"
-                        ),
+                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                        f" ({kc_conv_inv}) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     syms.kf_qss_smp[idx]
@@ -1942,11 +1801,9 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"qr[{idx}] = Corr * k_f[{idx}] *"
-                            f" exp(-({kc_exp_arg})) * ({kc_conv_inv}) *"
-                            f" ({reverse_sc});"
-                        ),
+                        f"qr[{idx}] = Corr * k_f[{idx}] *"
+                        f" exp(-({kc_exp_arg})) * ({kc_conv_inv}) *"
+                        f" ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -1965,15 +1822,11 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
-                            f" ({reverse_sc});"
-                        ),
+                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                        f" ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
-                    syms.kf_qss_smp[idx]
-                    * sme.exp(-kc_exp_arg_smp)
-                    * reverse_sc_smp
+                    syms.kf_qss_smp[idx] * sme.exp(-kc_exp_arg_smp) * reverse_sc_smp
                 )
             else:
                 if reverse_sc_smp == 0.0:
@@ -1984,10 +1837,8 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"qr[{idx}] = Corr * k_f[{idx}] *"
-                            f" exp(-({kc_exp_arg})) * ({reverse_sc});"
-                        ),
+                        f"qr[{idx}] = Corr * k_f[{idx}] *"
+                        f" exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
                     corr_smp
@@ -2084,13 +1935,9 @@ def qssa_component_functions(
             )
             nlindemann_qssa += 1
             if lindemann_first:
-                ilindemann_qssa[0] = reaction_info.qssa_reactions.index(
-                    reac_id
-                )
+                ilindemann_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
                 lindemann_first = False
-            ilindemann_qssa[1] = (
-                reaction_info.qssa_reactions.index(reac_id) + 1
-            )
+            ilindemann_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
         if reac_id >= i3body[0] and reac_id < i3body[1]:
             print(
                 "reaction ",
@@ -2142,63 +1989,63 @@ def qssa_component_functions(
         )
 
         dim = cu.phase_space_units(reaction.reactants)
-        third_body = reaction.reaction_type == "three-body"
-        falloff = reaction.reaction_type == "falloff"
-        # is_troe = False
-        # is_sri = False
+        third_body = reaction.third_body is not None
+        falloff = reaction.rate.type == "falloff"
+        is_troe = reaction.rate.sub_type == "Troe"
+        is_sri = reaction.rate.sub_type == "Sri"
+        is_lindemann = reaction.rate.sub_type == "Lindemann"
         aeuc = cu.activation_energy_units()
         if not third_body and not falloff:
             # Case 3 !PD, !TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
             pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
             beta = reaction.rate.temperature_exponent
-            ae = (
-                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
-            ).to(aeuc)
+            ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(
+                aeuc
+            )
         elif not falloff:
             # Case 2 !PD, TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
             pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
             beta = reaction.rate.temperature_exponent
-            ae = (
-                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
-            ).to(aeuc)
+            ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(
+                aeuc
+            )
         else:
             # Case 2 !PD, TB
             ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
             pef = (
-                reaction.high_rate.pre_exponential_factor * ctuc
+                reaction.rate.high_rate.pre_exponential_factor * ctuc
             ).to_base_units()
-            beta = reaction.high_rate.temperature_exponent
+            beta = reaction.rate.high_rate.temperature_exponent
             ae = (
-                reaction.high_rate.activation_energy
-                * cc.ureg.joule
-                / cc.ureg.kmol
+                reaction.rate.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
             ).to(aeuc)
 
             # low_pef = (
-            # reaction.low_rate.pre_exponential_factor * ctuc
+            # reaction.rate.low_rate.pre_exponential_factor * ctuc
             # ).to_base_units()
-            # low_beta = reaction.low_rate.temperature_exponent
+            # low_beta = reaction.rate.low_rate.temperature_exponent
             # low_ae = (
-            # reaction.low_rate.activation_energy
+            # reaction.rate.low_rate.activation_energy
             # * cc.ureg.joule
             # / cc.ureg.kmol
             # ).to(aeuc)
-            if reaction.rate.type == "Troe":
+            if is_troe:
                 pass
                 # troe = reaction.rate.falloff_coeffs
                 # ntroe = len(troe)
-                # is_troe = True
-            elif reaction.rate.type == "Sri":
+            elif is_sri:
                 pass
                 # sri = reaction.rate.falloff_coeffs
                 # nsri = len(sri)
-                # is_sri = True
-            elif reaction.rate.type == "Lindemann":
+            elif is_lindemann:
                 pass
             else:
-                print(f"Unrecognized reaction rate type: {reaction.equation}")
+                print(
+                    f"Unrecognized reaction rate type {reaction.rate.type},"
+                    f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
+                )
                 sys.exit(1)
 
         cw.writer(fstream, f"k_f[{index}] = {pef.m:.15g}")
@@ -2213,11 +2060,9 @@ def qssa_component_functions(
             elif beta == 0:
                 cw.writer(
                     fstream,
-                    (
-                        "           *"
-                        f" exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) *"
-                        " invT);"
-                    ),
+                    "           *"
+                    f" exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) *"
+                    " invT);",
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                 syms.kf_qss_smp_tmp[index] *= sme.exp(-coeff * syms.invT_smp)
@@ -2225,10 +2070,8 @@ def qssa_component_functions(
             else:
                 cw.writer(
                     fstream,
-                    (
-                        f"           * exp(({beta:.15g}) * tc[0] -"
-                        f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);"
-                    ),
+                    f"           * exp(({beta:.15g}) * tc[0] -"
+                    f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                 syms.kf_qss_smp_tmp[index] *= sme.exp(
@@ -2285,19 +2128,17 @@ def qssa_component_functions(
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
             numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[symbol]
-            syms.intermediate_terms_smp[
-                numerator
-            ] = species_info.qssa_info.rhs_smp[symbol]
+            syms.intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
+                symbol
+            ]
             len_long_line = len(long_line_elements)
             # if we have more than 7 elements
             if len_long_line > 7:
                 # treat first line separately with the epsilon
                 cw.writer(
                     fstream,
-                    (
-                        f"amrex::Real {numerator} = epsilon"
-                        f" {' '.join(long_line_elements[0:7])}"
-                    ),
+                    f"amrex::Real {numerator} = epsilon"
+                    f" {' '.join(long_line_elements[0:7])}",
                 )
                 # proceed by strides of 7
                 for kk in range(7, len_long_line, 7):
@@ -2305,10 +2146,8 @@ def qssa_component_functions(
                     if len(long_line_elements[kk : kk + 7]) < 7:
                         cw.writer(
                             fstream,
-                            (
-                                "                   "
-                                f" {' '.join(long_line_elements[kk:kk + 7])};"
-                            ),
+                            "                   "
+                            f" {' '.join(long_line_elements[kk:kk + 7])};",
                         )
                     # if there are 7 elems we are ...
                     else:
@@ -2316,48 +2155,38 @@ def qssa_component_functions(
                         if len(long_line_elements[kk:]) > 7:
                             cw.writer(
                                 fstream,
-                                (
-                                    "                   "
-                                    f" {' '.join(long_line_elements[kk:kk + 7])}"
-                                ),
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 7])}",
                             )
                         # or at the end but list number was a multiple of 7
                         else:
                             cw.writer(
                                 fstream,
-                                (
-                                    "                   "
-                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
-                                ),
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 7])};",
                             )
             # if we have less than 7 elements just write them
             else:
                 cw.writer(
                     fstream,
-                    (
-                        f"amrex::Real {numerator} = epsilon"
-                        f" {species_info.qssa_info.rhs[symbol]};"
-                    ),
+                    f"amrex::Real {numerator} = epsilon"
+                    f" {species_info.qssa_info.rhs[symbol]};",
                 )
             # COEFF
             cw.writer(
                 fstream,
-                (
-                    f"amrex::Real {denominator} = epsilon"
-                    f" {species_info.qssa_info.coeff[symbol]};"
-                ),
+                f"amrex::Real {denominator} = epsilon"
+                f" {species_info.qssa_info.coeff[symbol]};",
             )
             denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[symbol]
-            syms.intermediate_terms_smp[
-                denominator
-            ] = species_info.qssa_info.coeff_smp[symbol]
+            syms.intermediate_terms_smp[denominator] = species_info.qssa_info.coeff_smp[
+                symbol
+            ]
             cw.writer(fstream)
             cw.writer(
                 fstream,
-                (
-                    f"sc_qss[{species_info.qssa_species_list.index(symbol)}] ="
-                    f" - {numerator}/{denominator};"
-                ),
+                f"sc_qss[{species_info.qssa_species_list.index(symbol)}] ="
+                f" - {numerator}/{denominator};",
             )
             syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = (
                 -numerator_smp / denominator_smp
@@ -2416,24 +2245,20 @@ def qssa_component_functions(
 
                 # RHS
                 # cut line if too big !
-                long_line_elements = (
-                    species_info.qssa_info.rhs[species]
-                ).split()
+                long_line_elements = (species_info.qssa_info.rhs[species]).split()
 
                 len_long_line = len(long_line_elements)
                 numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[species]
-                syms.intermediate_terms_smp[
-                    numerator
-                ] = species_info.qssa_info.rhs_smp[species]
+                syms.intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
+                    species
+                ]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
                     cw.writer(
                         fstream,
-                        (
-                            f"amrex::Real {numerator} = epsilon"
-                            f" {' '.join(long_line_elements[0:7])}"
-                        ),
+                        f"amrex::Real {numerator} = epsilon"
+                        f" {' '.join(long_line_elements[0:7])}",
                     )
                     # proceed by strides of 7
                     for kk in range(7, len_long_line, 7):
@@ -2441,10 +2266,8 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 7]) < 7:
                             cw.writer(
                                 fstream,
-                                (
-                                    "                   "
-                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
-                                ),
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 7])};",
                             )
                         # if there are 7 elems we are ...
                         else:
@@ -2452,50 +2275,38 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 7:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 7])}"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])}",
                                 )
                             # or at the end but list number was a multiple of 7
                             else:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 7])};"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])};",
                                 )
                 # if we have less than 7 elements just write them
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"amrex::Real {numerator} = epsilon"
-                            f" {species_info.qssa_info.rhs[species]};"
-                        ),
+                        f"amrex::Real {numerator} = epsilon"
+                        f" {species_info.qssa_info.rhs[species]};",
                     )
                 # COEFF
                 # cut line if too big !
-                long_line_elements = (
-                    species_info.qssa_info.coeff[species]
-                ).split()
+                long_line_elements = (species_info.qssa_info.coeff[species]).split()
                 len_long_line = len(long_line_elements)
-                denominator_smp = (
-                    1e-12 + species_info.qssa_info.coeff_smp[species]
+                denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[species]
+                syms.intermediate_terms_smp[denominator] = (
+                    species_info.qssa_info.coeff_smp[species]
                 )
-                syms.intermediate_terms_smp[
-                    denominator
-                ] = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
                     cw.writer(
                         fstream,
-                        (
-                            f"amrex::Real {denominator} = epsilon"
-                            f" {' '.join(long_line_elements[0:7])}"
-                        ),
+                        f"amrex::Real {denominator} = epsilon"
+                        f" {' '.join(long_line_elements[0:7])}",
                     )
                     # proceed by strides of 7
                     for kk in range(7, len_long_line, 7):
@@ -2503,10 +2314,8 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 7]) < 7:
                             cw.writer(
                                 fstream,
-                                (
-                                    "                   "
-                                    f" {' '.join(long_line_elements[kk:kk + 7])};"
-                                ),
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 7])};",
                             )
                         # if there are 7 elems we are ...
                         else:
@@ -2514,28 +2323,22 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 7:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 7])}"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])}",
                                 )
                             # or at the end but list number was a multiple of 7
                             else:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 7])};"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 7])};",
                                 )
                 # if we have less than 7 elements just write them
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"amrex::Real {denominator} = epsilon"
-                            f" {species_info.qssa_info.coeff[species]};"
-                        ),
+                        f"amrex::Real {denominator} = epsilon"
+                        f" {species_info.qssa_info.coeff[species]};",
                     )
                 # RHS
                 cw.writer(
@@ -2550,9 +2353,9 @@ def qssa_component_functions(
                 )
                 # species_rhs_smp = -numerator_smp / denominator_smp
 
-                syms.intermediate_terms_smp[
-                    cf.format_species(species) + "_rhs"
-                ] = (-numerator_smp / denominator_smp)
+                syms.intermediate_terms_smp[cf.format_species(species) + "_rhs"] = (
+                    -numerator_smp / denominator_smp
+                )
                 cw.writer(fstream)
 
                 for j in range(len(gr_species)):
@@ -2561,9 +2364,7 @@ def qssa_component_functions(
                         coeff_submatrix_smp[index][j] = 1
                     else:
                         if (
-                            species_info.qssa_info.qssa_coeff[species][
-                                gr_species[j]
-                            ]
+                            species_info.qssa_info.qssa_coeff[species][gr_species[j]]
                             != "0.0"
                         ):
                             coeff_submatrix[index][j] = (
@@ -2593,13 +2394,11 @@ def qssa_component_functions(
                                 + cf.format_species(gr_species[j])
                             ] = (
                                 1e-12
-                                + species_info.qssa_info.qssa_coeff_smp[
-                                    species
-                                ][gr_species[j]][0]
+                                + species_info.qssa_info.qssa_coeff_smp[species][
+                                    gr_species[j]
+                                ][0]
                             ) / denominator_smp
-                            coeff_submatrix_smp[index][
-                                j
-                            ] = syms.intermediate_terms_smp[
+                            coeff_submatrix_smp[index][j] = syms.intermediate_terms_smp[
                                 cf.format_species(species)
                                 + "_"
                                 + cf.format_species(gr_species[j])
@@ -2641,10 +2440,7 @@ def qssa_component_functions(
 
             cw.writer(fstream, cw.comment("Putting it all together"))
             for helper in intermediate_helpers:
-                if (
-                    helper
-                    in species_info.qssa_info.list_of_intermediate_helpers
-                ):
+                if helper in species_info.qssa_info.list_of_intermediate_helpers:
                     cw.writer(
                         fstream,
                         f"{helper} = {intermediate_helpers[helper]};",
@@ -2653,16 +2449,11 @@ def qssa_component_functions(
                 else:
                     cw.writer(
                         fstream,
-                        (
-                            f"amrex::Real {helper} ="
-                            f" {intermediate_helpers[helper]};"
-                        ),
+                        f"amrex::Real {helper} = {intermediate_helpers[helper]};",
                     )
                     # print(helper  + "  ->  " +intermediate_helpers[helper])
                     # print(intermediate_helpers[helper])
-                    species_info.qssa_info.list_of_intermediate_helpers.append(
-                        helper
-                    )
+                    species_info.qssa_info.list_of_intermediate_helpers.append(helper)
             # stop
             for count in range(len(gr_species)):
                 max_index = len(gr_species) - 1
@@ -2672,9 +2463,9 @@ def qssa_component_functions(
                 long_line_elements = x[max_index - count].split()
                 len_long_line = len(long_line_elements)
                 # print("SPECIES "+ str(count) + " = ")
-                syms.sc_qss_smp[
-                    species_info.qssa_species_list.index(species)
-                ] = x_smp[max_index - count]
+                syms.sc_qss_smp[species_info.qssa_species_list.index(species)] = x_smp[
+                    max_index - count
+                ]
                 # print(long_line_elements)
                 # if we have more than 4 elements
                 if len_long_line > 4:
@@ -2692,10 +2483,8 @@ def qssa_component_functions(
                         if len(long_line_elements[kk : kk + 4]) < 4:
                             cw.writer(
                                 fstream,
-                                (
-                                    "                   "
-                                    f" {' '.join(long_line_elements[kk:kk + 4])};"
-                                ),
+                                "                   "
+                                f" {' '.join(long_line_elements[kk:kk + 4])};",
                             )
                         # if there are 4 elems we are ...
                         else:
@@ -2703,19 +2492,15 @@ def qssa_component_functions(
                             if len(long_line_elements[kk:]) > 4:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 4])}"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 4])}",
                                 )
                             # or at the end but list number was a multiple of 4
                             else:
                                 cw.writer(
                                     fstream,
-                                    (
-                                        "                   "
-                                        f" {' '.join(long_line_elements[kk:kk + 4])};"
-                                    ),
+                                    "                   "
+                                    f" {' '.join(long_line_elements[kk:kk + 4])};",
                                 )
                 # if we have less than 4 elements just write them
                 else:
@@ -2826,10 +2611,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
             # print("num_smp = ", num_smp)
 
             if num == "0":
-                print(
-                    "        !! No need to do anything, already zeroed ..."
-                    " skip"
-                )
+                print("        !! No need to do anything, already zeroed ... skip")
                 continue
             b = list(b)
             print("          - B starts with: ")
@@ -2844,13 +2626,9 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         # helper_smp = sme.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
-                        b[i + 1] = (
-                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
-                        )
+                        b[i + 1] = b[i + 1] + " -" + b[int(k)] + "*" + helper_name
 
-                        b_smp[i + 1] = (
-                            b_smp[i + 1] - b_smp[int(k)] * helper_smp
-                        )
+                        b_smp[i + 1] = b_smp[i + 1] - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
@@ -2862,12 +2640,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
-                        b[i + 1] = (
-                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
-                        )
-                        b_smp[i + 1] = (
-                            b_smp[i + 1] - b_smp[int(k)] * helper_smp
-                        )
+                        b[i + 1] = b[i + 1] + " -" + b[int(k)] + "*" + helper_name
+                        b_smp[i + 1] = b_smp[i + 1] - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                 else:
@@ -2879,12 +2653,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         # helper_smp = sme.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
-                        b[i + 1] = (
-                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
-                        )
-                        b_smp[i + 1] = (
-                            b_smp[i + 1] - b_smp[int(k)] * helper_smp
-                        )
+                        b[i + 1] = b[i + 1] + " -" + b[int(k)] + "*" + helper_name
+                        b_smp[i + 1] = b_smp[i + 1] - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
@@ -2922,16 +2692,12 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                                             + helper_name
                                         )
                                         a_smp[i + 1][j] = (
-                                            a_smp[i + 1][j]
-                                            - a_smp[k][j] * helper_smp
+                                            a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         )
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
-                                        print(
-                                            " IN THIS CASE !! CHECK THAT ITS"
-                                            " OK !! "
-                                        )
+                                        print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
                                         a[i + 1][j] = (
                                             a[i + 1][j]
                                             + " -"
@@ -2940,8 +2706,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                                             + helper_name
                                         )
                                         a_smp[i + 1][j] = (
-                                            a_smp[i + 1][j]
-                                            - a_smp[k][j] * helper_smp
+                                            a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         )
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
@@ -2955,53 +2720,33 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                                             + helper_name
                                         )
                                         a_smp[i + 1][j] = (
-                                            a_smp[i + 1][j]
-                                            - a_smp[k][j] * helper_smp
+                                            a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         )
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
-                                        a[i + 1][j] = (
-                                            a[i + 1][j] + " -" + a[k][j]
-                                        )
-                                        a_smp[i + 1][j] = (
-                                            a_smp[i + 1][j] - a_smp[k][j]
-                                        )
+                                        a[i + 1][j] = a[i + 1][j] + " -" + a[k][j]
+                                        a_smp[i + 1][j] = a_smp[i + 1][j] - a_smp[k][j]
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                     else:
                         if num != "0":
                             if pivot != "1":
                                 if num != "1":
                                     if a[k][j] != "0":
-                                        a[i + 1][j] = (
-                                            " -" + a[k][j] + "*" + helper_name
-                                        )
-                                        a_smp[i + 1][j] = (
-                                            -a_smp[k][j] * helper_smp
-                                        )
+                                        a[i + 1][j] = " -" + a[k][j] + "*" + helper_name
+                                        a_smp[i + 1][j] = -a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
-                                        print(
-                                            " IN THIS CASE !! CHECK THAT ITS"
-                                            " OK !! "
-                                        )
-                                        a[i + 1][j] = (
-                                            " -" + a[k][j] + "*" + helper_name
-                                        )
-                                        a_smp[i + 1][j] = (
-                                            -a_smp[k][j] * helper_smp
-                                        )
+                                        print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
+                                        a[i + 1][j] = " -" + a[k][j] + "*" + helper_name
+                                        a_smp[i + 1][j] = -a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
                                 if num != "1":
                                     if a[k][j] != "0":
-                                        a[i + 1][j] = (
-                                            " -" + a[k][j] + "*" + helper_name
-                                        )
-                                        a_smp[i + 1][j] = (
-                                            -a_smp[k][j] * helper_smp
-                                        )
+                                        a[i + 1][j] = " -" + a[k][j] + "*" + helper_name
+                                        a_smp[i + 1][j] = -a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
@@ -3090,12 +2835,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                 x[n - i] = b[n - i] + " -(" + sumprod + ")"
                 x_smp[n - i] = b_smp[n - i] - (sumprod_smp)
             else:
-                x[n - i] = (
-                    "(" + b[n - i] + " -(" + sumprod + "))/" + a[n - i][n - i]
-                )
-                x_smp[n - i] = (b_smp[n - i] - (sumprod_smp)) / a_smp[n - i][
-                    n - i
-                ]
+                x[n - i] = "(" + b[n - i] + " -(" + sumprod + "))/" + a[n - i][n - i]
+                x_smp[n - i] = (b_smp[n - i] - (sumprod_smp)) / a_smp[n - i][n - i]
     print()
     print()
 
@@ -3104,15 +2845,18 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
 
 def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
     """QSSA coefficient."""
-    if hasattr(reaction, "efficiencies"):
-        if len(reaction.efficiencies) == 1:
-            if isclose(reaction.default_efficiency, 0.0):
+    if reaction.third_body:
+        if len(reaction.third_body.efficiencies) == 1:
+            if isclose(reaction.third_body.default_efficiency, 0.0):
                 reagents = copy.deepcopy(
                     dict(
                         sum(
                             (
                                 Counter(x)
-                                for x in [reagents, reaction.efficiencies]
+                                for x in [
+                                    reagents,
+                                    reaction.third_body.efficiencies,
+                                ]
                             ),
                             Counter(),
                         )
@@ -3140,9 +2884,9 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
                         f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
                         f" {float(coefficient):f})"
                     )
-                conc_smp = syms.sc_smp[
-                    species_info.ordered_idx_map[symbol]
-                ] ** float(coefficient)
+                conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]] ** float(
+                    coefficient
+                )
             phi += [conc]
             phi_smp += [conc_smp]
         if len(phi) < 1:

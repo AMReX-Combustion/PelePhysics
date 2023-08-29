@@ -51,9 +51,7 @@ def analyze_thermodynamics(mechanism, species_info, qss_flag):
             high_range = model.coeffs[1:8]
             low_range = model.coeffs[8:15]
 
-            midpoints.setdefault(mid, []).append(
-                (species, low_range, high_range)
-            )
+            midpoints.setdefault(mid, []).append((species, low_range, high_range))
 
     else:
         for symbol in species_info.nonqssa_species_list:
@@ -74,9 +72,7 @@ def analyze_thermodynamics(mechanism, species_info, qss_flag):
             high_range = model.coeffs[1:8]
             low_range = model.coeffs[8:15]
 
-            midpoints.setdefault(mid, []).append(
-                (species, low_range, high_range)
-            )
+            midpoints.setdefault(mid, []).append((species, low_range, high_range))
 
     species_info.low_temp = low_temp
     species_info.high_temp = high_temp
@@ -100,10 +96,8 @@ def generate_thermo_routine(
     if not inline:
         cw.writer(
             fstream,
-            (
-                f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real"
-                " * species, const amrex::Real *  tc)"
-            ),
+            f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real"
+            " * species, const amrex::Real *  tc)",
         )
 
     syms_g_rt = False
@@ -142,19 +136,12 @@ def generate_thermo_routine(
         for species, low_range, _ in species_list:
             if qss_flag:
                 idx = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
-                cw.writer(
-                    lostream, cw.comment(f"species {idx}: {species.name}")
-                )
+                cw.writer(lostream, cw.comment(f"species {idx}: {species.name}"))
                 cw.writer(
                     lostream,
-                    (
-                        f"result += y[{idx}] * ("
-                        if inline
-                        else f"species[{idx}] ="
-                    ),
+                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
                 )
             else:
                 idx = species_info.ordered_idx_map[species.name]
@@ -164,11 +151,7 @@ def generate_thermo_routine(
                 )
                 cw.writer(
                     lostream,
-                    (
-                        f"result += y[{idx}] * ("
-                        if inline
-                        else f"species[{idx}] ="
-                    ),
+                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
@@ -177,12 +160,11 @@ def generate_thermo_routine(
                 )
             elif syms_g_rt_qss:
                 index = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
-                syms.g_RT_qss_smp_tmp[mid_temp]["m"][
-                    index
-                ] = expression_generator(lostream, low_range, syms)
+                syms.g_RT_qss_smp_tmp[mid_temp]["m"][index] = expression_generator(
+                    lostream, low_range, syms
+                )
             elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
@@ -190,12 +172,11 @@ def generate_thermo_routine(
                 )
             elif syms_h_rt_qss:
                 index = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
-                syms.h_RT_qss_smp_tmp[mid_temp]["m"][
-                    index
-                ] = expression_generator(lostream, low_range, syms)
+                syms.h_RT_qss_smp_tmp[mid_temp]["m"][index] = expression_generator(
+                    lostream, low_range, syms
+                )
             else:
                 expression_generator(lostream, low_range)
             if inline:
@@ -209,8 +190,7 @@ def generate_thermo_routine(
         for species, _, high_range in species_list:
             if qss_flag:
                 idx = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
                 cw.writer(
                     histream,
@@ -218,11 +198,7 @@ def generate_thermo_routine(
                 )
                 cw.writer(
                     histream,
-                    (
-                        f"result += y[{idx}] * ("
-                        if inline
-                        else f"species[{idx}] ="
-                    ),
+                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
                 )
             else:
                 idx = species_info.ordered_idx_map[species.name]
@@ -232,11 +208,7 @@ def generate_thermo_routine(
                 )
                 cw.writer(
                     histream,
-                    (
-                        f"result += y[{idx}] * ("
-                        if inline
-                        else f"species[{idx}] ="
-                    ),
+                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
                 )
             if syms_g_rt:
                 index = species_info.ordered_idx_map[species.name]
@@ -245,12 +217,11 @@ def generate_thermo_routine(
                 )
             elif syms_g_rt_qss:
                 index = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
-                syms.g_RT_qss_smp_tmp[mid_temp]["p"][
-                    index
-                ] = expression_generator(histream, high_range, syms)
+                syms.g_RT_qss_smp_tmp[mid_temp]["p"][index] = expression_generator(
+                    histream, high_range, syms
+                )
             elif syms_h_rt:
                 index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
@@ -258,12 +229,11 @@ def generate_thermo_routine(
                 )
             elif syms_h_rt_qss:
                 index = (
-                    species_info.ordered_idx_map[species.name]
-                    - species_info.n_species
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
                 )
-                syms.h_RT_qss_smp_tmp[mid_temp]["p"][
-                    index
-                ] = expression_generator(histream, high_range, syms)
+                syms.h_RT_qss_smp_tmp[mid_temp]["p"][index] = expression_generator(
+                    histream, high_range, syms
+                )
             else:
                 expression_generator(histream, high_range)
             if inline:
@@ -303,18 +273,14 @@ def cv(fstream, species_info, species_coeffs):
     """Write cv."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
-    generate_thermo_routine(
-        fstream, species_info, "cv_R", cv_nasa, species_coeffs, 0
-    )
+    generate_thermo_routine(fstream, species_info, "cv_R", cv_nasa, species_coeffs, 0)
 
 
 def cp(fstream, species_info, species_coeffs):
     """Write cp."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
-    generate_thermo_routine(
-        fstream, species_info, "cp_R", cp_nasa, species_coeffs, 0
-    )
+    generate_thermo_routine(fstream, species_info, "cp_R", cp_nasa, species_coeffs, 0)
 
 
 def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
@@ -324,9 +290,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
     else:
         name = "gibbs"
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("compute the g/(RT) at the given temperature")
-    )
+    cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     if syms is None:
         generate_thermo_routine(
             fstream,
@@ -353,9 +317,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
 def helmholtz(fstream, species_info, species_coeffs):
     """Write Helmholtz."""
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("compute the a/(RT) at the given temperature")
-    )
+    cw.writer(fstream, cw.comment("compute the a/(RT) at the given temperature"))
     generate_thermo_routine(
         fstream,
         species_info,
@@ -370,9 +332,7 @@ def helmholtz(fstream, species_info, species_coeffs):
 def species_internal_energy(fstream, species_info, species_coeffs):
     """Write species internal energy."""
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("compute the e/(RT) at the given temperature")
-    )
+    cw.writer(fstream, cw.comment("compute the e/(RT) at the given temperature"))
     generate_thermo_routine(
         fstream,
         species_info,
@@ -384,9 +344,7 @@ def species_internal_energy(fstream, species_info, species_coeffs):
     )
 
 
-def species_enthalpy(
-    fstream, species_info, species_coeffs, qss_flag, syms=None
-):
+def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None):
     """Write species enthalpy."""
     if qss_flag:
         name = "speciesEnthalpy_qss"
@@ -424,9 +382,7 @@ def species_enthalpy(
 def species_entropy(fstream, species_info, species_coeffs):
     """Write species entropy."""
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("compute the S/R at the given temperature (Eq 21)")
-    )
+    cw.writer(fstream, cw.comment("compute the S/R at the given temperature (Eq 21)"))
     generate_thermo_routine(
         fstream,
         species_info,
@@ -448,9 +404,7 @@ def dcvpdtemp(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        cw.comment(
-            "compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature"
-        ),
+        cw.comment("compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature"),
     )
     generate_thermo_routine(
         fstream, species_info, "dcvpRdT", dcpdtemp_nasa, species_coeffs, 0

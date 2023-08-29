@@ -35,37 +35,34 @@ def sort_reactions(mechanism):
     # troe
     for k, r in enumerate(reaction_info.rs_unsorted):
         if r not in reaction_info.rs:
-            if r.reaction_type == "falloff":
-                if r.rate.type == "Troe":
-                    reaction_info.idxmap[k] = i
-                    reaction_info.rs.append(r)
-                    i += 1
+            if r.reaction_type == "falloff-Troe":
+                reaction_info.idxmap[k] = i
+                reaction_info.rs.append(r)
+                i += 1
     reaction_info.index.append(i)
 
     # sri
     for k, r in enumerate(reaction_info.rs_unsorted):
         if r not in reaction_info.rs:
-            if r.reaction_type == "falloff":
-                if r.rate.type == "Sri":
-                    reaction_info.idxmap[k] = i
-                    reaction_info.rs.append(r)
-                    i += 1
+            if r.reaction_type == "falloff-Sri":
+                reaction_info.idxmap[k] = i
+                reaction_info.rs.append(r)
+                i += 1
     reaction_info.index.append(i)
 
     # lindemann
     for k, r in enumerate(reaction_info.rs_unsorted):
         if r not in reaction_info.rs:
-            if r.reaction_type == "falloff":
-                if r.rate.type == "Lindemann":
-                    reaction_info.idxmap[k] = i
-                    reaction_info.rs.append(r)
-                    i += 1
+            if r.reaction_type == "falloff-Lindemann":
+                reaction_info.idxmap[k] = i
+                reaction_info.rs.append(r)
+                i += 1
     reaction_info.index.append(i)
 
     # three-body
     for k, r in enumerate(reaction_info.rs_unsorted):
         if r not in reaction_info.rs:
-            if r.reaction_type == "three-body":
+            if r.third_body is not None:
                 reaction_info.idxmap[k] = i
                 reaction_info.rs.append(r)
                 i += 1
@@ -74,7 +71,7 @@ def sort_reactions(mechanism):
     # simplest case
     for k, r in enumerate(reaction_info.rs_unsorted):
         if r not in reaction_info.rs:
-            if r.reaction_type != "three-body":
+            if r.third_body is None:
                 reaction_info.idxmap[k] = i
                 reaction_info.rs.append(r)
                 i += 1
