@@ -6,6 +6,10 @@ on:
    pull_request:
      branches: [development]
 
+concurrency:
+  group: ${{github.ref}}-${{github.head_ref}}-ci
+  cancel-in-progress: true
+
 jobs:
   Formatting:
     runs-on: ubuntu-latest
@@ -87,14 +91,16 @@ jobs:
         uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: ${{matrix.poetry-version}}
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.6.0
-        with:
-          access_token: ${{github.token}}
       - name: Clone PelePhysics
         uses: actions/checkout@v3
         with:
           path: PelePhysics-${{matrix.comp}}
+      - name: Clone SUNDIALS
+        uses: actions/checkout@v3
+        with:
+          repository: LLNL/sundials
+          ref: 'v6.5.1'
+          path: sundials-${{matrix.comp}}
       - name: Clone AMReX
         uses: actions/checkout@v3
         with:
@@ -103,6 +109,7 @@ jobs:
       - name: Set Environment Variables
         run: |
           echo "AMREX_HOME=${{github.workspace}}/AMReX-${{matrix.comp}}" >> $GITHUB_ENV
+          echo "SUNDIALS_HOME=${{github.workspace}}/sundials-${{matrix.comp}}" >> $GITHUB_ENV
           echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
           echo "TRANSPORT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/TranEval" >> $GITHUB_ENV
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
