@@ -54,7 +54,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       AMREX_ASSERT_WITH_MESSAGE(
         turb_center.size() == AMREX_SPACEDIM - 1,
         "turb_center must have AMREX_SPACEDIM-1 elements");
-      for (double& tc : turb_center) {
+      for (amrex::Real& tc : turb_center) {
         tc *= tp[n].turb_scale_loc;
       }
 
