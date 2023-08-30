@@ -70,9 +70,7 @@ class SpeciesInfo:
     def create_dicts(self):
         """Create species dicts for ease of use."""
         self.dict_species = {v: i for i, v in enumerate(self.all_species_list)}
-        self.dict_qss_species = {
-            v: i for i, v in enumerate(self.qssa_species_list)
-        }
+        self.dict_qss_species = {v: i for i, v in enumerate(self.qssa_species_list)}
         self.dict_nonqss_species = {
             v: i for i, v in enumerate(self.nonqssa_species_list)
         }
@@ -87,9 +85,7 @@ class SpeciesInfo:
         self.dict_qssdepend_kr = {}
         self.sc_qss_chain_stop = []
         for symbol in self.dict_qss_species:
-            free_symb = syms.sc_qss_smp[
-                self.dict_qss_species[symbol]
-            ].free_symbols
+            free_symb = syms.sc_qss_smp[self.dict_qss_species[symbol]].free_symbols
             qss_symb = []
             sc_symb = []
             g_rt_qss_symb = []
@@ -129,9 +125,7 @@ class SpeciesInfo:
         self.dict_nonqssdepend_kf = {}
         self.dict_nonqssdepend_kr = {}
         for symbol in self.dict_nonqss_species:
-            free_symb = syms.sc_smp[
-                self.dict_nonqss_species[symbol]
-            ].free_symbols
+            free_symb = syms.sc_smp[self.dict_nonqss_species[symbol]].free_symbols
             qss_symb = []
             sc_symb = []
             g_rt_qss_symb = []
@@ -251,9 +245,7 @@ class SpeciesInfo:
         # Add in a few more attributes for easy of use
         for idx, item in scqss_df.iterrows():
             scqss_df.at[idx, "sc_dep"] = self.dict_qssdepend_sc[item["symbol"]]
-            scqss_df.at[idx, "scqss_dep"] = self.dict_qssdepend_scqss[
-                item["symbol"]
-            ]
+            scqss_df.at[idx, "scqss_dep"] = self.dict_qssdepend_scqss[item["symbol"]]
 
         # Return a deepcopy to self
         self.scqss_df = scqss_df.copy(deep=True)

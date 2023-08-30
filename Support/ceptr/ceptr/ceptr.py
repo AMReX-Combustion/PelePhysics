@@ -76,9 +76,7 @@ def main():
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--fname", help="Mechanism file", type=str)
-    group.add_argument(
-        "-l", "--lst", help="Mechanism directory file list", type=str
-    )
+    group.add_argument("-l", "--lst", help="Mechanism directory file list", type=str)
     group.add_argument(
         "-lq", "--lst_qss", help="QSS mechanism directory file list", type=str
     )

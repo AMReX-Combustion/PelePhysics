@@ -166,13 +166,9 @@ else
   SYCLSuffix=
 endif
 
-SUNDIALS_VERSION ?= 6.5.1
-SUNDIALS_DIST_FILE ?= v$(SUNDIALS_VERSION).tar.gz
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
-SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
 SUNDIALS_BUILD_DIR=$(SUNDIALS_BUILD_PREFIX)/build/$(tp_suffix)
-ONE_SUNDIALS_SRC_FILE=$(SUNDIALS_SOURCE_DIR)/include/sundials/sundials_config.in
 ONE_SUNDIALS_LIB_FILE=$(INSTALL_PREFIX)/lib/libsundials_cvode.a
 
 sundials: $(ONE_SUNDIALS_LIB_FILE)
@@ -180,7 +176,7 @@ sundials: $(ONE_SUNDIALS_LIB_FILE)
 tp_suffix:
 	@echo $(tp_suffix)
 
-$(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGMA_LIB_FILE)
+$(ONE_SUNDIALS_LIB_FILE): $(ONE_SS_LIB_FILE) $(ONE_MAGMA_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
 	cd $(SUNDIALS_BUILD_DIR) && \
         cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON \
@@ -208,7 +204,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
           -DSUNDIALS_INDEX_SIZE:INT=32 \
           $(CUDA_DEFINES) $(HIP_DEFINES) $(SYCL_DEFINES) \
           $(KLU_DEFINES) $(MAGMA_DEFINES) \
-          $(SUNDIALS_SOURCE_DIR)/sundials-$(SUNDIALS_VERSION) && \
+          $(SUNDIALS_HOME) && \
         cmake --build $(SUNDIALS_BUILD_DIR) --parallel 16 && \
         cmake --install $(SUNDIALS_BUILD_DIR)
 
@@ -239,10 +235,6 @@ $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
 $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
 	@mkdir -p $(MAGMA_DIST_DIR)
 	@cd $(MAGMA_DIST_DIR); wget https://icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
-
-$(ONE_SUNDIALS_SRC_FILE):
-	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@cd $(SUNDIALS_SOURCE_DIR)/..; wget https://github.com/LLNL/sundials/archive/refs/tags/$(SUNDIALS_DIST_FILE) ; tar xf $(SUNDIALS_DIST_FILE) -C src
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)

@@ -128,9 +128,7 @@ def main():
     group.add_argument(
         "-lq", "--lst_qss", help="QSS mechanism directory file list", type=str
     )
-    parser.add_argument(
-        "-n", "--nqssa", help="Non-QSSA species list", type=str
-    )
+    parser.add_argument("-n", "--nqssa", help="Non-QSSA species list", type=str)
     parser.add_argument(
         "-m",
         "--method",

@@ -61,11 +61,7 @@ def analyze_transport(mechanism, species_info):
         eps = (m1.well_depth * cc.ureg.joule).to(cc.ureg.erg).m / cc.kb
         sig = (m1.diameter * cc.ureg.meter).to(cc.ureg.angstrom).m
         dip = (m1.dipole * cc.ureg.coulomb * cc.ureg.m).to(cc.ureg.debye).m
-        pol = (
-            (m1.polarizability * cc.ureg.meter**3)
-            .to(cc.ureg.angstrom**3)
-            .m
-        )
+        pol = (m1.polarizability * cc.ureg.meter**3).to(cc.ureg.angstrom**3).m
         zrot = m1.rotational_relaxation
 
         transdata[spec] = [lin, eps, sig, dip, pol, zrot]
@@ -172,10 +168,7 @@ def generate_trans_routine_simple(
     for spec in species_info.nonqssa_species:
         cw.writer(
             fstream,
-            (
-                f"{nametab[4]}[{spec.idx}] ="
-                f" {float(species_transport[spec][idx]):.8E};"
-            ),
+            f"{nametab[4]}[{spec.idx}] = {float(species_transport[spec][idx]):.8E};",
         )
     cw.writer(fstream, "}")
 
@@ -419,18 +412,14 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
             # note: the T corr is not applied in CANTERA
             b = float(species_transport[spec][5]) * f_corr(
                 298.0, float(species_transport[spec][1])
-            ) / f_corr(t, float(species_transport[spec][1])) + (
-                2.0 / np.pi
-            ) * (
+            ) / f_corr(t, float(species_transport[spec][1])) + (2.0 / np.pi) * (
                 (5.0 / 3.0) * cv_rot_r + f_vib
             )
             # eq. (18)
             f_rot = f_vib * (1.0 + 2.0 / np.pi * a / b)
             # eq. (17)
             cv_trans_r = 3.0 / 2.0
-            f_trans = (
-                5.0 / 2.0 * (1.0 - 2.0 / np.pi * a / b * cv_rot_r / cv_trans_r)
-            )
+            f_trans = 5.0 / 2.0 * (1.0 - 2.0 / np.pi * a / b * cv_rot_r / cv_trans_r)
             if int(species_transport[spec][0]) == 0:
                 cond = ((visc * ru / spec.weight)) * (5.0 / 2.0) * cv_trans_r
             else:
@@ -459,10 +448,7 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
         for i in range(4):
             cw.writer(
                 fstream,
-                (
-                    f"{'COFETA'}[{spec.idx * 4 + i}] ="
-                    f" {cofeta[spec.idx][3 - i]:.8E};"
-                ),
+                f"{'COFETA'}[{spec.idx * 4 + i}] = {cofeta[spec.idx][3 - i]:.8E};",
             )
 
     cw.writer(fstream, "}")
@@ -470,9 +456,7 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
     # header for cond
     cw.writer(fstream)
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("Poly fits for the conductivities, dim NO*KK")
-    )
+    cw.writer(fstream, cw.comment("Poly fits for the conductivities, dim NO*KK"))
 
     # visco coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -482,10 +466,7 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
         for i in range(4):
             cw.writer(
                 fstream,
-                (
-                    f"{'COFLAM'}[{spec.idx * 4 + i}] ="
-                    f" {coflam[spec.idx][3 - i]:.8E};"
-                ),
+                f"{'COFLAM'}[{spec.idx * 4 + i}] = {coflam[spec.idx][3 - i]:.8E};",
             )
 
     cw.writer(fstream, "}")
@@ -531,12 +512,7 @@ def diffcoefs(fstream, species_info, species_transport, ntfit):
                 * a2cm
             ) * xi(spec1, spec2, species_transport) ** (1.0 / 6.0)
             # eq. (4)
-            m_red = (
-                spec1.weight
-                * spec2.weight
-                / (spec1.weight + spec2.weight)
-                / na
-            )
+            m_red = spec1.weight * spec2.weight / (spec1.weight + spec2.weight) / na
             # eq. (8) & (14)
             epsm_k = (
                 np.sqrt(
@@ -605,19 +581,15 @@ def diffcoefs(fstream, species_info, species_transport, ntfit):
             for k in range(4):
                 cw.writer(
                     fstream,
-                    (
-                        f"{'COFD'}[{i * n_species * 4 + j * 4 + k}] ="
-                        f" {cofd[i][j][3 - k]:.8E};"
-                    ),
+                    f"{'COFD'}[{i * n_species * 4 + j * 4 + k}] ="
+                    f" {cofd[i][j][3 - k]:.8E};",
                 )
         for j, _ in enumerate(spec_ordered[i + 1 :]):
             for k in range(4):
                 cw.writer(
                     fstream,
-                    (
-                        f"{'COFD'}[{i * n_species * 4 + (j + i + 1) * 4 + k}]"
-                        f" = {cofd[j + i + 1][i][3 - k]:.8E};"
-                    ),
+                    f"{'COFD'}[{i * n_species * 4 + (j + i + 1) * 4 + k}]"
+                    f" = {cofd[j + i + 1][i][3 - k]:.8E};",
                 )
 
     cw.writer(fstream, "}")
@@ -628,9 +600,7 @@ def light_specs(fstream, speclist):
     # header
     cw.writer(fstream)
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("List of specs with small weight, dim NLITE")
-    )
+    cw.writer(fstream, cw.comment("List of specs with small weight, dim NLITE"))
 
     # coefs
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -692,18 +662,14 @@ def thermaldiffratios(
                     print("Problem in _thermaldiffratios computation")
                     sys.exit(1)
                 # eq. (53)
-                wji = (spec2.weight - spec1.weight) / (
-                    spec1.weight + spec2.weight
-                )
+                wji = (spec2.weight - spec1.weight) / (spec1.weight + spec2.weight)
                 epsj = float(species_transport[spec2][1]) * cc.kb
                 sigj = float(species_transport[spec2][2]) * a2cm
                 dipj = float(species_transport[spec2][3]) * debye2cgs
                 # eq. (13)
                 dipj_red = dipj / np.sqrt(epsj * sigj**3)
                 eps_ratio = epsj / epsi
-                tse = 1.0 + 0.25 * poli_red * dipj_red**2 * np.sqrt(
-                    eps_ratio
-                )
+                tse = 1.0 + 0.25 * poli_red * dipj_red**2 * np.sqrt(eps_ratio)
                 eok = tse**2 * np.sqrt(
                     float(species_transport[spec1][1])
                     * float(species_transport[spec2][1])
@@ -723,11 +689,7 @@ def thermaldiffratios(
                         * (6.0 * cstar(tslog) - 5.0)
                         / (
                             astar(tslog)
-                            * (
-                                16.0 * astar(tslog)
-                                - 12.0 * bstar(tslog)
-                                + 55.0
-                            )
+                            * (16.0 * astar(tslog) - 12.0 * bstar(tslog) + 55.0)
                         )
                     )
 
@@ -757,10 +719,8 @@ def thermaldiffratios(
             for k in range(4):
                 cw.writer(
                     fstream,
-                    (
-                        f"{'COFTD'}[{i * 4 * n_species + j * 4 + k}] ="
-                        f" {coftd[i][j][3 - k]:.8E};"
-                    ),
+                    f"{'COFTD'}[{i * 4 * n_species + j * 4 + k}] ="
+                    f" {coftd[i][j][3 - k]:.8E};",
                 )
 
     cw.writer(fstream, "}")
@@ -1173,12 +1133,7 @@ def om22_chemkin(tr, dst):
 
     # First test on tr
     if tr > 75.0:
-        omeg12 = (
-            0.703
-            - 0.146e-2 * tr
-            + 0.357e-5 * tr * tr
-            - 0.343e-8 * tr * tr * tr
-        )
+        omeg12 = 0.703 - 0.146e-2 * tr + 0.357e-5 * tr * tr - 0.343e-8 * tr * tr * tr
     else:
         # Find tr idx in tr_tab
         if tr <= 0.2:
@@ -1574,12 +1529,7 @@ def om11_chemkin(tr, dst):
 
     # First test on tr
     if tr > 75.0:
-        omeg12 = (
-            0.623
-            - 0.136e-2 * tr
-            + 0.346e-5 * tr * tr
-            - 0.343e-8 * tr * tr * tr
-        )
+        omeg12 = 0.623 - 0.136e-2 * tr + 0.346e-5 * tr * tr - 0.343e-8 * tr * tr * tr
     else:
         # Find tr idx in tr_tab
         if tr <= 0.2:
@@ -1685,8 +1635,7 @@ def xi(spec1, spec2, species_transport):
         xi = 1.0 + 1.0 / 4.0 * red_pol(spec2, species_transport) * red_dip(
             spec1, species_transport
         ) * red_dip(spec1, species_transport) * np.sqrt(
-            float(species_transport[spec1][1])
-            / float(species_transport[spec2][1])
+            float(species_transport[spec1][1]) / float(species_transport[spec2][1])
         )
     # 1 is nonpolar, 2 is polar
     elif (float(species_transport[spec2][3]) > dipmin) and (
@@ -1695,8 +1644,7 @@ def xi(spec1, spec2, species_transport):
         xi = 1.0 + 1.0 / 4.0 * red_pol(spec1, species_transport) * red_dip(
             spec2, species_transport
         ) * red_dip(spec2, species_transport) * np.sqrt(
-            float(species_transport[spec2][1])
-            / float(species_transport[spec1][1])
+            float(species_transport[spec2][1]) / float(species_transport[spec1][1])
         )
     # normal case, either both polar or both nonpolar
     else:
@@ -1728,10 +1676,7 @@ def xi_bool(spec1, spec2, species_transport):
 
 def red_pol(spec, species_transport):
     """Compute polarization value."""
-    return (
-        float(species_transport[spec][4])
-        / float(species_transport[spec][2]) ** 3.0
-    )
+    return float(species_transport[spec][4]) / float(species_transport[spec][2]) ** 3.0
 
 
 def red_dip(spec, species_transport):
@@ -1745,8 +1690,7 @@ def red_dip(spec, species_transport):
         convert
         * float(species_transport[spec][3])
         / np.sqrt(
-            float(species_transport[spec][1])
-            * float(species_transport[spec][2]) ** 3.0
+            float(species_transport[spec][1]) * float(species_transport[spec][2]) ** 3.0
         )
     )
 
@@ -1855,16 +1799,12 @@ def critical_parameters(fstream, mechanism, species_info):
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream)
-    cw.writer(
-        fstream, cw.comment("compute the critical parameters for each species")
-    )
+    cw.writer(fstream, cw.comment("compute the critical parameters for each species"))
     cw.writer(
         fstream,
-        (
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai,"
-            " amrex::Real *  bi, amrex::Real *  acentric_i)"
-        ),
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai,"
+        " amrex::Real *  bi, amrex::Real *  acentric_i)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream)
@@ -1872,9 +1812,7 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(fstream, f"amrex::Real   EPS[{n_species}];")
     cw.writer(fstream, f"amrex::Real   SIG[{n_species}];")
     cw.writer(fstream, f"amrex::Real    wt[{n_species}];")
-    cw.writer(
-        fstream, "amrex::Real Rcst = 83.144598;" + cw.comment("in bar [CGS] !")
-    )
+    cw.writer(fstream, "amrex::Real Rcst = 83.144598;" + cw.comment("in bar [CGS] !"))
     if not all(
         (species.name in tabulated_critical_params)
         for species in species_info.nonqssa_species
@@ -1882,8 +1820,7 @@ def critical_parameters(fstream, mechanism, species_info):
         cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
         cw.writer(
             fstream,
-            "amrex::Real boltzmann = 1.3806503e-16;"
-            + cw.comment("we work in CGS"),
+            "amrex::Real boltzmann = 1.3806503e-16;" + cw.comment("we work in CGS"),
         )
 
     cw.writer(fstream)
@@ -1902,35 +1839,27 @@ def critical_parameters(fstream, mechanism, species_info):
             cw.writer(fstream, cw.comment("Imported from NIST"))
             cw.writer(
                 fstream,
-                (
-                    f"Tci[{species.idx}] ="
-                    f" {tabulated_critical_params[species.name]['Tci']:f} ; "
-                ),
+                f"Tci[{species.idx}] ="
+                f" {tabulated_critical_params[species.name]['Tci']:f} ; ",
             )
             cw.writer(
                 fstream,
-                (
-                    f"ai[{species.idx}] = 1e6 * 0.42748 * Rcst * Rcst *"
-                    f" Tci[{species.idx}] * Tci[{species.idx}] /"
-                    f" ({tabulated_critical_params[species.name]['wt']:f} *"
-                    f" {tabulated_critical_params[species.name]['wt']:f} *"
-                    f" {tabulated_critical_params[species.name]['Pci']:f}); "
-                ),
+                f"ai[{species.idx}] = 1e6 * 0.42748 * Rcst * Rcst *"
+                f" Tci[{species.idx}] * Tci[{species.idx}] /"
+                f" ({tabulated_critical_params[species.name]['wt']:f} *"
+                f" {tabulated_critical_params[species.name]['wt']:f} *"
+                f" {tabulated_critical_params[species.name]['Pci']:f}); ",
             )
             cw.writer(
                 fstream,
-                (
-                    f"bi[{species.idx}] = 0.08664 * Rcst * Tci[{species.idx}]"
-                    f" / ({tabulated_critical_params[species.name]['wt']:f} *"
-                    f" {tabulated_critical_params[species.name]['Pci']:f}); "
-                ),
+                f"bi[{species.idx}] = 0.08664 * Rcst * Tci[{species.idx}]"
+                f" / ({tabulated_critical_params[species.name]['wt']:f} *"
+                f" {tabulated_critical_params[species.name]['Pci']:f}); ",
             )
             cw.writer(
                 fstream,
-                (
-                    f"acentric_i[{species.idx}] ="
-                    f" {tabulated_critical_params[species.name]['acentric_factor']:f} ;"
-                ),
+                f"acentric_i[{species.idx}] ="
+                f" {tabulated_critical_params[species.name]['acentric_factor']:f} ;",
             )
         else:
             cw.writer(fstream)
@@ -1944,21 +1873,17 @@ def critical_parameters(fstream, mechanism, species_info):
             )
             cw.writer(
                 fstream,
-                (
-                    f"ai[{species.idx}] = (5.55 * avogadro * avogadro *"
-                    f" EPS[{species.idx}]*boltzmann * 1e-24 *"
-                    f" SIG[{species.idx}] * SIG[{species.idx}] *"
-                    f" SIG[{species.idx}] ) / (wt[{species.idx}] *"
-                    f" wt[{species.idx}]); "
-                ),
+                f"ai[{species.idx}] = (5.55 * avogadro * avogadro *"
+                f" EPS[{species.idx}]*boltzmann * 1e-24 *"
+                f" SIG[{species.idx}] * SIG[{species.idx}] *"
+                f" SIG[{species.idx}] ) / (wt[{species.idx}] *"
+                f" wt[{species.idx}]); ",
             )
             cw.writer(
                 fstream,
-                (
-                    f"bi[{species.idx}] = 0.855 * avogadro * 1e-24 *"
-                    f" SIG[{species.idx}] * SIG[{species.idx}] *"
-                    f" SIG[{species.idx}] / (wt[{species.idx}]); "
-                ),
+                f"bi[{species.idx}] = 0.855 * avogadro * 1e-24 *"
+                f" SIG[{species.idx}] * SIG[{species.idx}] *"
+                f" SIG[{species.idx}] / (wt[{species.idx}]); ",
             )
             cw.writer(fstream, f"acentric_i[{species.idx}] = 0.0 ;")
 
@@ -1986,11 +1911,9 @@ def critical_parameters(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        (
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-            " GET_CRITPARAMS_SRK(amrex::Real *  sqrtOneOverTc, amrex::Real *  sqrtAsti,"
-            " amrex::Real *  Bi, amrex::Real *  Fomega)"
-        ),
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " GET_CRITPARAMS_SRK(amrex::Real *  sqrtOneOverTc, amrex::Real *  sqrtAsti,"
+        " amrex::Real *  Bi, amrex::Real *  Fomega)",
     )
 
     cw.writer(fstream, "{")
@@ -2030,24 +1953,14 @@ def critical_parameters(fstream, mechanism, species_info):
             sig = float(species_transport[species][2])
             wt = species.weight
             tci = 1.316 * eps
-            ai = (
-                5.55
-                * avogadro**2
-                * eps
-                * boltzmann
-                * 1e-24
-                * sig**3
-                / wt**2
-            )
+            ai = 5.55 * avogadro**2 * eps * boltzmann * 1e-24 * sig**3 / wt**2
             bi = 0.855 * avogadro * 1e-24 * sig**3 / wt
             omega = 0.0
         sqrt_oneovertc = np.sqrt(1.0 / tci)
         sqrt_asti = np.sqrt(ai)
         fomega = f0 + omega * (f1 + f2 * omega)
 
-        cw.writer(
-            fstream, f"sqrtOneOverTc[{species.idx}] = {sqrt_oneovertc:.13e};"
-        )
+        cw.writer(fstream, f"sqrtOneOverTc[{species.idx}] = {sqrt_oneovertc:.13e};")
         cw.writer(fstream, f"sqrtAsti[{species.idx}] = {sqrt_asti:.13e};")
         cw.writer(fstream, f"Bi[{species.idx}] = {bi:.13e};")
         cw.writer(fstream, f"Fomega[{species.idx}] = {fomega:.13e};")

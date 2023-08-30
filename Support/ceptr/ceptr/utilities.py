@@ -12,22 +12,23 @@ def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
 
-def qss_sorted_phase_space(
-    mechanism, species_info, reaction, reagents, syms=None
-):
+def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=None):
     """Get string of phase space."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
-    if hasattr(reaction, "efficiencies"):
-        if len(reaction.efficiencies) == 1:
-            if isclose(reaction.default_efficiency, 0.0):
+    if reaction.third_body:
+        if len(reaction.third_body.efficiencies) == 1:
+            if isclose(reaction.third_body.default_efficiency, 0.0):
                 reagents = copy.deepcopy(
                     dict(
                         sum(
                             (
                                 Counter(x)
-                                for x in [reagents, reaction.efficiencies]
+                                for x in [
+                                    reagents,
+                                    reaction.third_body.efficiencies,
+                                ]
                             ),
                             Counter(),
                         )
@@ -51,9 +52,7 @@ def qss_sorted_phase_space(
             else:
                 if coefficient.is_integer():
                     conc = "*".join(
-                        [
-                            f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"
-                        ]
+                        [f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"]
                         * int(coefficient)
                     )
                 else:
@@ -75,9 +74,7 @@ def qss_sorted_phase_space(
             if float(coefficient) == 1.0:
                 conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                 if record_symbolic_operations:
-                    conc_smp = syms.sc_smp[
-                        species_info.ordered_idx_map[symbol]
-                    ]
+                    conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
                 if float(coefficient) == 2.0:
                     conc = (
@@ -335,13 +332,13 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
     if syms is None:
         record_symbolic_operations = False
 
-    third_body = reaction.reaction_type == "three-body"
-    falloff = reaction.reaction_type == "falloff"
+    third_body = reaction.third_body is not None
+    falloff = reaction.rate.type == "falloff"
     if not third_body and not falloff:
         print("enhancement_d called for a reaction without a third body")
         sys.exit(1)
 
-    if not hasattr(reaction, "efficiencies"):
+    if not reaction.third_body:
         print("FIXME EFFICIENCIES")
         sys.exit(1)
         species, coefficient = third_body
@@ -358,14 +355,12 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
         else:
             return f"sc[{species_info.ordered_idx_map[species]}]"
 
-    efficiencies = reaction.efficiencies
+    efficiencies = reaction.third_body.efficiencies
     alpha = ["mixture"]
     if record_symbolic_operations:
         alpha_smp = [syms.mixture_smp]
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
-    sorted_efficiencies = sorted(
-        efficiencies.keys(), key=lambda v: dict_species[v]
-    )
+    sorted_efficiencies = sorted(efficiencies.keys(), key=lambda v: dict_species[v])
     for symbol in sorted_efficiencies:
         efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
@@ -375,9 +370,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
             if (efficiency - 1) != 0:
                 conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                 if record_symbolic_operations:
-                    conc_smp = syms.sc_smp[
-                        species_info.ordered_idx_map[symbol]
-                    ]
+                    conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
                 if (efficiency - 1) == 1:
                     alpha.append(f"{conc}")
                     if record_symbolic_operations:

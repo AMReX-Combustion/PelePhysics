@@ -63,9 +63,7 @@ def plot_directed_graph(mechanism, links):
     black_edges = [edge for edge in graph.edges()]
 
     pos = nx.spring_layout(graph)
-    nx.draw_networkx_nodes(
-        graph, pos, node_size=node_size, node_color=node_color
-    )
+    nx.draw_networkx_nodes(graph, pos, node_size=node_size, node_color=node_color)
     nx.draw_networkx_labels(graph, pos, labels, font_size=14, font_color="k")
     nx.draw_networkx_edges(graph, pos, edgelist=black_edges, arrows=True)
     plt.tight_layout()
@@ -103,11 +101,7 @@ def qssa_quadratic_graph(mechanism, reaction_info, qssa_species):
                     links.append((reac, "R" + str(orig_idx)))
                     for prod in prod_qssa_involved:
                         links.append(("R" + str(orig_idx), prod))
-        if (
-            (not prod_qssa_involved)
-            and (reac_qssa_involved)
-            and reac_sum_coeff > 1
-        ):
+        if (not prod_qssa_involved) and (reac_qssa_involved) and reac_sum_coeff > 1:
             for reac in reac_qssa_involved:
                 links.append(("F" + str(orig_idx), reac))
         if (
@@ -134,9 +128,7 @@ def qssa_quadratic_graph(mechanism, reaction_info, qssa_species):
     return links, quadratic_reaction, problematic_qssa_species
 
 
-def plot_quadratic_graph(
-    mechanism, links, quadratic_reactions, problematic_species
-):
+def plot_quadratic_graph(mechanism, links, quadratic_reactions, problematic_species):
     """Plot QSSA quadratic graph."""
     mechpath = pathlib.Path(mechanism.source)
     fname = mechpath.parents[0] / "qssa_quadratic_graph.png"

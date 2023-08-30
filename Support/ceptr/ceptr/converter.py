@@ -54,30 +54,18 @@ class Converter:
             cqc.set_qssa_reactions(
                 self.mechanism, self.species_info, self.reaction_info
             )
-            cqc.get_qssa_networks(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.get_qssa_networks(self.mechanism, self.species_info, self.reaction_info)
             # sets up QSS subnetwork
-            cqc.get_qssa_networks(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.get_qssa_networks(self.mechanism, self.species_info, self.reaction_info)
             # Perform tests to ensure QSSA species are good candidates
-            cqc.qssa_validation(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.qssa_validation(self.mechanism, self.species_info, self.reaction_info)
             # No quad coupling and fill SC network
-            cqc.qssa_coupling(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.qssa_coupling(self.mechanism, self.species_info, self.reaction_info)
             # Fill "need" dict (which species a species depends upon)
             print("QSSA initialization needs dictionary")
-            cqc.set_qssa_needs(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.set_qssa_needs(self.mechanism, self.species_info, self.reaction_info)
             # Fill "is_needed" dict (which species needs that particular species)
-            cqc.set_qssa_isneeded(
-                self.mechanism, self.species_info, self.reaction_info
-            )
+            cqc.set_qssa_isneeded(self.mechanism, self.species_info, self.reaction_info)
         # Initialize symbolic variables
         self.syms = csm.SymbolicMath(
             self.species_info,
@@ -197,9 +185,7 @@ class Converter:
             cw.writer(cpp, self.mechanism_cpp_includes())
             cri.rmap(cpp, self.mechanism, self.reaction_info)
             cri.get_rmap(cpp, self.mechanism)
-            cck.ckinu(
-                cpp, self.mechanism, self.species_info, self.reaction_info
-            )
+            cck.ckinu(cpp, self.mechanism, self.species_info, self.reaction_info)
             cck.ckkfkr(cpp, self.mechanism, self.species_info)
             cp.progress_rate_fr(
                 cpp, self.mechanism, self.species_info, self.reaction_info
@@ -471,10 +457,7 @@ class Converter:
             spr.run([clexec, "-i", self.hdrname])
             spr.run([clexec, "-i", self.cppname])
         else:
-            print(
-                "Clang-format not found. C++ files will be hard to parse by a"
-                " human."
-            )
+            print("Clang-format not found. C++ files will be hard to parse by a human.")
 
     def atomic_weight(self, fstream):
         """Write the atomic weight."""
@@ -485,9 +468,7 @@ class Converter:
         for elem in self.mechanism.element_names:
             idx = self.mechanism.element_index(elem)
             aw = self.mechanism.atomic_weight(elem)
-            cw.writer(
-                fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}")
-            )
+            cw.writer(fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}"))
         cw.writer(fstream, "}")
 
     def molecular_weights(self, fstream):
@@ -506,8 +487,7 @@ class Converter:
         cw.writer(fstream, "};")
         cw.writer(
             fstream,
-            "const amrex::Real "
-            f"h_global_imw[{self.species_info.n_species}]={{",
+            f"const amrex::Real h_global_imw[{self.species_info.n_species}]={{",
         )
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
@@ -529,8 +509,7 @@ class Converter:
         cw.writer(fstream, "};")
         cw.writer(
             fstream,
-            "const amrex::Real "
-            f"h_global_mw[{self.species_info.n_species}]={{",
+            f"const amrex::Real h_global_mw[{self.species_info.n_species}]={{",
         )
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
@@ -591,16 +570,10 @@ class Converter:
         cw.writer(fstream, cw.comment(" MISC "))
         cw.writer(fstream, "void CKAWT(amrex::Real *  awt);")
         cw.writer(fstream, "void CKNCF(int * ncf);")
-        cw.writer(
-            fstream, "void CKSYME_STR(amrex::Vector<std::string>& ename);"
-        )
-        cw.writer(
-            fstream, "void CKSYMS_STR(amrex::Vector<std::string>& kname);"
-        )
+        cw.writer(fstream, "void CKSYME_STR(amrex::Vector<std::string>& ename);")
+        cw.writer(fstream, "void CKSYMS_STR(amrex::Vector<std::string>& kname);")
         cw.writer(fstream, "void GET_RMAP(int * _rmap);")
-        cw.writer(
-            fstream, "void CKINU(const int i, int &nspec, int * ki, int * nu);"
-        )
+        cw.writer(fstream, "void CKINU(const int i, int &nspec, int * ki, int * nu);")
         cw.writer(
             fstream,
             "void CKKFKR(const amrex::Real P, const amrex::Real T,"
@@ -618,52 +591,36 @@ class Converter:
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int"
-                " NCELLS);"
-            ),
+            "void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int NCELLS);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int *"
-                " consP);"
-            ),
+            "void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int * consP);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const"
-                " int * consP, int NCELLS);"
-            ),
+            "void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const"
+            " int * consP, int NCELLS);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const"
-                " int * consP, int NCELLS, int base);"
-            ),
+            "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const"
+            " int * consP, int NCELLS, int base);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
-                " const int * consP, int NCELLS, int base);"
-            ),
+            "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs,"
+            " const int * consP, int NCELLS, int base);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int"
-                " * colPtrs, int * indx, const int * consP);"
-            ),
+            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int"
+            " * colPtrs, int * indx, const int * consP);",
         )
         cw.writer(
             fstream,
-            (
-                "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int"
-                " * rowPtr, const int * consP, int base);"
-            ),
+            "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int"
+            " * rowPtr, const int * consP, int base);",
         )
 
     def mechanism_header_includes(self, fstream):
@@ -691,9 +648,7 @@ class Converter:
                 nb_ions += 1
         cw.writer(fstream)
         cw.writer(fstream, f"#define NUM_ELEMENTS {nb_elem}")
-        cw.writer(
-            fstream, f"#define NUM_SPECIES {self.species_info.n_species}"
-        )
+        cw.writer(fstream, f"#define NUM_SPECIES {self.species_info.n_species}")
         cw.writer(fstream, f"#define NUM_IONS {nb_ions}")
         cw.writer(
             fstream,
