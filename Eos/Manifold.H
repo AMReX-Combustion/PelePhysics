@@ -68,6 +68,15 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void RTY2E(const amrex::Real /*R*/, const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real E)
+  {
+    // TODO: HACK HACK HACK: FIXME (only here for EosEval utility)
+    // amrex::Error("RTY2E does not have significance for Manifold EOS");
+    E = 0.0;
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void T2Hi(const amrex::Real /*T*/, amrex::Real Hi[])
   {
     // TODO: HACK HACK HACK: FIXME (need to remove enthalpy calculations from PeleLM)
@@ -286,7 +295,7 @@ struct Manifold
   {
     amrex::Error("Manifold EOS must be initialized with table data or neural network via EosParm");
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   ~Manifold()
   {
