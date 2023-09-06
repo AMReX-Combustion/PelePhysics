@@ -41,7 +41,12 @@ else
              CCOMPILER = icx
              CXXCOMPILER = icpx
 	  else
+            ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel-llvm))
+               CCOMPILER = icx
+               CXXCOMPILER = icpx
+	    else
              $(error Unknown COMP setting)
+	    endif
 	  endif
         endif
       endif
