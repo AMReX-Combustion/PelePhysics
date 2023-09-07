@@ -577,7 +577,10 @@ def ajac_reaction_d(
     n_species = species_info.n_species
     remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
-    dim = cu.phase_space_units(reaction.reactants)
+    if bool(reaction.orders):
+        dim = cu.phase_space_units(reaction.orders)
+    else:
+        dim = cu.phase_space_units(reaction.reactants)
     third_body = reaction.third_body is not None
     falloff = reaction.rate.type == "falloff"
     is_troe = reaction.rate.sub_type == "Troe"

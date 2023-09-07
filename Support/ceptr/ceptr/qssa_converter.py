@@ -1489,7 +1489,10 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
         reaction = mechanism.reaction(orig_idx)
         remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
         idx = i
-        dim = cu.phase_space_units(reaction.reactants)
+        if bool(reaction.orders):
+            dim = cu.phase_space_units(reaction.orders)
+        else:
+            dim = cu.phase_space_units(reaction.reactants)
         third_body = reaction.third_body is not None
         falloff = reaction.rate.type == "falloff"
         is_troe = reaction.rate.sub_type == "Troe"
@@ -1988,7 +1991,10 @@ def qssa_component_functions(
             cw.comment(f"reaction {qssa_reac}: {reaction.equation}"),
         )
 
-        dim = cu.phase_space_units(reaction.reactants)
+        if bool(reaction.orders):
+            dim = cu.phase_space_units(reaction.orders)
+        else:
+            dim = cu.phase_space_units(reaction.reactants)
         third_body = reaction.third_body is not None
         falloff = reaction.rate.type == "falloff"
         is_troe = reaction.rate.sub_type == "Troe"
