@@ -192,9 +192,11 @@ def production_rate(
             is_sri = reaction.rate.sub_type == "Sri"
             is_lindemann = reaction.rate.sub_type == "Lindemann"
             aeuc = cu.activation_energy_units()
+
+            ctuc = cc.ureg(str(reaction.rate_coeff_units).replace("^", "**"))
+
             if not third_body and not falloff:
                 # Case 3 !PD, !TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
@@ -202,6 +204,7 @@ def production_rate(
                 ).to(aeuc)
             elif not falloff:
                 # Case 2 !PD, TB
+                # use cantera legacy behaviour for three-body rxns
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
@@ -210,7 +213,6 @@ def production_rate(
                 ).to(aeuc)
             else:
                 # Case 1 PD, TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
                     reaction.rate.high_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
@@ -559,9 +561,11 @@ def production_rate(
             is_sri = reaction.rate.sub_type == "Sri"
             is_lindemann = reaction.rate.sub_type == "Lindemann"
             aeuc = cu.activation_energy_units()
+
+            ctuc = cc.ureg(str(reaction.rate_coeff_units).replace("^", "**"))
+
             if not third_body and not falloff:
                 # Case 3 !PD, !TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
@@ -569,6 +573,7 @@ def production_rate(
                 ).to(aeuc)
             elif not falloff:
                 # Case 2 !PD, TB
+                # use cantera legacy behaviour for three-body rxns
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
@@ -577,7 +582,6 @@ def production_rate(
                 ).to(aeuc)
             else:
                 # Case 1 PD, TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
                     reaction.rate.high_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
@@ -1127,9 +1131,11 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             is_sri = reaction.rate.sub_type == "Sri"
             is_lindemann = reaction.rate.sub_type == "Lindemann"
             aeuc = cu.activation_energy_units()
+
+            ctuc = cc.ureg(str(reaction.rate_coeff_units).replace("^", "**"))
+
             if not third_body and not falloff:
                 # Case 3 !PD, !TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
@@ -1137,6 +1143,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 ).to(aeuc)
             elif not falloff:
                 # Case 2 !PD, TB
+                # use cantera legacy behaviour for three-body rxns
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
                 beta = reaction.rate.temperature_exponent
@@ -1145,7 +1152,6 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 ).to(aeuc)
             else:
                 # Case 1 PD, TB
-                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
                     reaction.rate.high_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
