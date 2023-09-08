@@ -7,7 +7,7 @@ description: |-
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 3.0.0
-date: Thu, 07 Sep 2023 12:36:22 -0600
+date: Thu, 07 Sep 2023 16:50:18 -0600
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 

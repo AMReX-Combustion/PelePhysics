@@ -2159,7 +2159,7 @@ aJacobian_precond(
   // reaction 0: 2 CH4 + 3 O2 => 2 CO + 4 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 3.000000) * (sc[2] * sc[2]);
+  phi_f = sc[0] * sc[2];
   k_f = 154500000 * exp(0.5 * tc[0] - (20075.8288822793) * invT);
   dlnkfdT = 0.5 * invT + (20075.8288822793) * invT2;
   // rate of progress
@@ -2171,13 +2171,13 @@ aJacobian_precond(
   wdot[2] -= 2 * q; // CH4
   wdot[3] += 2 * q; // CO
   // d()/d[O2]
-  dqdci = +k_f * 3.000000 * sc[0] * sc[0] * sc[2] * sc[2];
+  dqdci = +k_f * sc[2];
   J[0] += -3 * dqdci; // dwdot[O2]/d[O2]
   J[1] += 4 * dqdci;  // dwdot[H2O]/d[O2]
   J[2] += -2 * dqdci; // dwdot[CH4]/d[O2]
   J[3] += 2 * dqdci;  // dwdot[CO]/d[O2]
   // d()/d[CH4]
-  dqdci = +k_f * sc[0] * sc[0] * sc[0] * 2.000000 * sc[2];
+  dqdci = +k_f * sc[0];
   J[14] += -3 * dqdci; // dwdot[O2]/d[CH4]
   J[15] += 4 * dqdci;  // dwdot[H2O]/d[CH4]
   J[16] += -2 * dqdci; // dwdot[CH4]/d[CH4]
@@ -2191,7 +2191,7 @@ aJacobian_precond(
   // reaction 1: 2 CO + O2 => 2 CO2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = sc[0] * (sc[3] * sc[3]);
+  phi_f = pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3];
   k_f = 6296094821.39524 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
@@ -2202,12 +2202,19 @@ aJacobian_precond(
   wdot[3] -= 2 * q; // CO
   wdot[4] += 2 * q; // CO2
   // d()/d[O2]
-  dqdci = +k_f * sc[3] * sc[3];
+  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-12), -0.750000) *
+          pow(sc[1], 0.500000) * sc[3];
   J[0] -= dqdci;      // dwdot[O2]/d[O2]
   J[3] += -2 * dqdci; // dwdot[CO]/d[O2]
   J[4] += 2 * dqdci;  // dwdot[CO2]/d[O2]
+  // d()/d[H2O]
+  dqdci = +k_f * pow(sc[0], 0.250000) * 0.500000 *
+          pow(std::max(sc[1], 1e-12), -0.500000) * sc[3];
+  J[7] -= dqdci;       // dwdot[O2]/d[H2O]
+  J[10] += -2 * dqdci; // dwdot[CO]/d[H2O]
+  J[11] += 2 * dqdci;  // dwdot[CO2]/d[H2O]
   // d()/d[CO]
-  dqdci = +k_f * sc[0] * 2.000000 * sc[3];
+  dqdci = +k_f * pow(sc[0], 0.250000) * pow(sc[1], 0.500000);
   J[21] -= dqdci;      // dwdot[O2]/d[CO]
   J[24] += -2 * dqdci; // dwdot[CO]/d[CO]
   J[25] += 2 * dqdci;  // dwdot[CO2]/d[CO]
@@ -2219,7 +2226,7 @@ aJacobian_precond(
   // reaction 2: 2 CO2 => 2 CO + O2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = (sc[4] * sc[4]);
+  phi_f = sc[4];
   k_f = 250000000 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
@@ -2230,7 +2237,7 @@ aJacobian_precond(
   wdot[3] += 2 * q; // CO
   wdot[4] -= 2 * q; // CO2
   // d()/d[CO2]
-  dqdci = +k_f * 2.000000 * sc[4];
+  dqdci = +k_f;
   J[28] += dqdci;      // dwdot[O2]/d[CO2]
   J[31] += 2 * dqdci;  // dwdot[CO]/d[CO2]
   J[32] += -2 * dqdci; // dwdot[CO2]/d[CO2]
@@ -2353,7 +2360,7 @@ aJacobian(
   // reaction 0: 2 CH4 + 3 O2 => 2 CO + 4 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 3.000000) * (sc[2] * sc[2]);
+  phi_f = sc[0] * sc[2];
   k_f = 154500000 * exp(0.5 * tc[0] - (20075.8288822793) * invT);
   dlnkfdT = 0.5 * invT + (20075.8288822793) * invT2;
   // rate of progress
@@ -2365,13 +2372,13 @@ aJacobian(
   wdot[2] -= 2 * q; // CH4
   wdot[3] += 2 * q; // CO
   // d()/d[O2]
-  dqdci = +k_f * 3.000000 * sc[0] * sc[0] * sc[2] * sc[2];
+  dqdci = +k_f * sc[2];
   J[0] += -3 * dqdci; // dwdot[O2]/d[O2]
   J[1] += 4 * dqdci;  // dwdot[H2O]/d[O2]
   J[2] += -2 * dqdci; // dwdot[CH4]/d[O2]
   J[3] += 2 * dqdci;  // dwdot[CO]/d[O2]
   // d()/d[CH4]
-  dqdci = +k_f * sc[0] * sc[0] * sc[0] * 2.000000 * sc[2];
+  dqdci = +k_f * sc[0];
   J[14] += -3 * dqdci; // dwdot[O2]/d[CH4]
   J[15] += 4 * dqdci;  // dwdot[H2O]/d[CH4]
   J[16] += -2 * dqdci; // dwdot[CH4]/d[CH4]
@@ -2385,7 +2392,7 @@ aJacobian(
   // reaction 1: 2 CO + O2 => 2 CO2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = sc[0] * (sc[3] * sc[3]);
+  phi_f = pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3];
   k_f = 6296094821.39524 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
@@ -2396,12 +2403,19 @@ aJacobian(
   wdot[3] -= 2 * q; // CO
   wdot[4] += 2 * q; // CO2
   // d()/d[O2]
-  dqdci = +k_f * sc[3] * sc[3];
+  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-12), -0.750000) *
+          pow(sc[1], 0.500000) * sc[3];
   J[0] -= dqdci;      // dwdot[O2]/d[O2]
   J[3] += -2 * dqdci; // dwdot[CO]/d[O2]
   J[4] += 2 * dqdci;  // dwdot[CO2]/d[O2]
+  // d()/d[H2O]
+  dqdci = +k_f * pow(sc[0], 0.250000) * 0.500000 *
+          pow(std::max(sc[1], 1e-12), -0.500000) * sc[3];
+  J[7] -= dqdci;       // dwdot[O2]/d[H2O]
+  J[10] += -2 * dqdci; // dwdot[CO]/d[H2O]
+  J[11] += 2 * dqdci;  // dwdot[CO2]/d[H2O]
   // d()/d[CO]
-  dqdci = +k_f * sc[0] * 2.000000 * sc[3];
+  dqdci = +k_f * pow(sc[0], 0.250000) * pow(sc[1], 0.500000);
   J[21] -= dqdci;      // dwdot[O2]/d[CO]
   J[24] += -2 * dqdci; // dwdot[CO]/d[CO]
   J[25] += 2 * dqdci;  // dwdot[CO2]/d[CO]
@@ -2413,7 +2427,7 @@ aJacobian(
   // reaction 2: 2 CO2 => 2 CO + O2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = (sc[4] * sc[4]);
+  phi_f = sc[4];
   k_f = 250000000 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
@@ -2424,7 +2438,7 @@ aJacobian(
   wdot[3] += 2 * q; // CO
   wdot[4] -= 2 * q; // CO2
   // d()/d[CO2]
-  dqdci = +k_f * 2.000000 * sc[4];
+  dqdci = +k_f;
   J[28] += dqdci;      // dwdot[O2]/d[CO2]
   J[31] += 2 * dqdci;  // dwdot[CO]/d[CO2]
   J[32] += -2 * dqdci; // dwdot[CO2]/d[CO2]

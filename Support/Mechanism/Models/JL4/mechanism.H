@@ -2320,7 +2320,7 @@ aJacobian_precond(
   // reaction 0: 2 CH4 + O2 => 2 CO + 4 H2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = (sc[0] * sc[0]) * sc[1];
+  phi_f = pow(sc[0], 0.500000) * pow(sc[1], 1.250000);
   k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // rate of progress
@@ -2332,13 +2332,14 @@ aJacobian_precond(
   wdot[4] += 2 * q; // CO
   wdot[6] += 4 * q; // H2
   // d()/d[CH4]
-  dqdci = +k_f * 2.000000 * sc[0] * sc[1];
+  dqdci = +k_f * 0.500000 * pow(std::max(sc[0], 1e-12), -0.500000) *
+          pow(sc[1], 1.250000);
   J[0] += -2 * dqdci; // dwdot[CH4]/d[CH4]
   J[1] -= dqdci;      // dwdot[O2]/d[CH4]
   J[4] += 2 * dqdci;  // dwdot[CO]/d[CH4]
   J[6] += 4 * dqdci;  // dwdot[H2]/d[CH4]
   // d()/d[O2]
-  dqdci = +k_f * sc[0] * sc[0];
+  dqdci = +k_f * pow(sc[0], 0.500000) * 1.250000 * pow(sc[1], 0.250000);
   J[8] += -2 * dqdci; // dwdot[CH4]/d[O2]
   J[9] -= dqdci;      // dwdot[O2]/d[O2]
   J[12] += 2 * dqdci; // dwdot[CO]/d[O2]
@@ -2403,7 +2404,7 @@ aJacobian_precond(
   // reaction 2: 2 H2 + O2 => 2 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = sc[1] * (sc[6] * sc[6]);
+  phi_f = pow(sc[1], 1.500000) * pow(sc[6], 0.250000);
   k_f = 191159684557179 * exp(-1 * tc[0] - (20128.6666321888) * invT);
   dlnkfdT = -1 * invT + (20128.6666321888) * invT2;
   // rate of progress
@@ -2414,12 +2415,13 @@ aJacobian_precond(
   wdot[2] += 2 * q; // H2O
   wdot[6] -= 2 * q; // H2
   // d()/d[O2]
-  dqdci = +k_f * sc[6] * sc[6];
+  dqdci = +k_f * 1.500000 * pow(sc[1], 0.500000) * pow(sc[6], 0.250000);
   J[9] -= dqdci;       // dwdot[O2]/d[O2]
   J[10] += 2 * dqdci;  // dwdot[H2O]/d[O2]
   J[14] += -2 * dqdci; // dwdot[H2]/d[O2]
   // d()/d[H2]
-  dqdci = +k_f * sc[1] * 2.000000 * sc[6];
+  dqdci = +k_f * pow(sc[1], 1.500000) * 0.250000 *
+          pow(std::max(sc[6], 1e-12), -0.750000);
   J[49] -= dqdci;      // dwdot[O2]/d[H2]
   J[50] += 2 * dqdci;  // dwdot[H2O]/d[H2]
   J[54] += -2 * dqdci; // dwdot[H2]/d[H2]
@@ -2592,7 +2594,7 @@ aJacobian(
   // reaction 0: 2 CH4 + O2 => 2 CO + 4 H2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = (sc[0] * sc[0]) * sc[1];
+  phi_f = pow(sc[0], 0.500000) * pow(sc[1], 1.250000);
   k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // rate of progress
@@ -2604,13 +2606,14 @@ aJacobian(
   wdot[4] += 2 * q; // CO
   wdot[6] += 4 * q; // H2
   // d()/d[CH4]
-  dqdci = +k_f * 2.000000 * sc[0] * sc[1];
+  dqdci = +k_f * 0.500000 * pow(std::max(sc[0], 1e-12), -0.500000) *
+          pow(sc[1], 1.250000);
   J[0] += -2 * dqdci; // dwdot[CH4]/d[CH4]
   J[1] -= dqdci;      // dwdot[O2]/d[CH4]
   J[4] += 2 * dqdci;  // dwdot[CO]/d[CH4]
   J[6] += 4 * dqdci;  // dwdot[H2]/d[CH4]
   // d()/d[O2]
-  dqdci = +k_f * sc[0] * sc[0];
+  dqdci = +k_f * pow(sc[0], 0.500000) * 1.250000 * pow(sc[1], 0.250000);
   J[8] += -2 * dqdci; // dwdot[CH4]/d[O2]
   J[9] -= dqdci;      // dwdot[O2]/d[O2]
   J[12] += 2 * dqdci; // dwdot[CO]/d[O2]
@@ -2675,7 +2678,7 @@ aJacobian(
   // reaction 2: 2 H2 + O2 => 2 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = sc[1] * (sc[6] * sc[6]);
+  phi_f = pow(sc[1], 1.500000) * pow(sc[6], 0.250000);
   k_f = 191159684557179 * exp(-1 * tc[0] - (20128.6666321888) * invT);
   dlnkfdT = -1 * invT + (20128.6666321888) * invT2;
   // rate of progress
@@ -2686,12 +2689,13 @@ aJacobian(
   wdot[2] += 2 * q; // H2O
   wdot[6] -= 2 * q; // H2
   // d()/d[O2]
-  dqdci = +k_f * sc[6] * sc[6];
+  dqdci = +k_f * 1.500000 * pow(sc[1], 0.500000) * pow(sc[6], 0.250000);
   J[9] -= dqdci;       // dwdot[O2]/d[O2]
   J[10] += 2 * dqdci;  // dwdot[H2O]/d[O2]
   J[14] += -2 * dqdci; // dwdot[H2]/d[O2]
   // d()/d[H2]
-  dqdci = +k_f * sc[1] * 2.000000 * sc[6];
+  dqdci = +k_f * pow(sc[1], 1.500000) * 0.250000 *
+          pow(std::max(sc[6], 1e-12), -0.750000);
   J[49] -= dqdci;      // dwdot[O2]/d[H2]
   J[50] += 2 * dqdci;  // dwdot[H2O]/d[H2]
   J[54] += -2 * dqdci; // dwdot[H2]/d[H2]

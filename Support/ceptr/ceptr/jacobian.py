@@ -702,6 +702,7 @@ def ajac_reaction_d(
             rea_dict[k] = (symbol, coefficient + coe_old)
         else:
             rea_dict[k] = (symbol, coefficient)
+
     # Build pro_dict containing product species
     for symbol, coefficient in all_products.items():
         k = species_info.ordered_idx_map[symbol]
@@ -711,6 +712,7 @@ def ajac_reaction_d(
             pro_dict[k] = (symbol, coefficient + coe_old)
         else:
             pro_dict[k] = (symbol, coefficient)
+
     # Build the dict with species and coefficients
     for k in range(n_species):
         if k in rea_dict and k in pro_dict:
@@ -723,6 +725,9 @@ def ajac_reaction_d(
         elif k in pro_dict:
             sp, nup = pro_dict[k]
             all_dict[k] = (sp, nup)
+        elif species_info.all_species_list[k] in reaction.orders:
+            sp = species_info.all_species_list[k]
+            all_dict[k] = (sp, 0)
 
     # Build the dict including qss species
     for k in range(len(species_info.all_species_list)):
@@ -736,6 +741,9 @@ def ajac_reaction_d(
         elif k in pro_dict:
             sp, nup = pro_dict[k]
             all_wqss_dict[k] = (sp, nup)
+        elif species_info.all_species_list[k] in reaction.orders:
+            sp = species_info.all_species_list[k]
+            all_wqss_dict[k] = (sp, 0)
 
     sorted_reactants = sorted(rea_dict.values())
     sorted_products = sorted(pro_dict.values())
@@ -1190,6 +1198,7 @@ def ajac_reaction_d(
                     dqdc_s,
                     k,
                     remove_forward,
+                    reaction.orders,
                     syms,
                 )
                 if dqdc_s:
@@ -1237,6 +1246,7 @@ def ajac_reaction_d(
                 dqdc_s,
                 k,
                 remove_forward,
+                reaction.orders,
                 syms,
             )
             if dqdc_s:
@@ -1279,13 +1289,17 @@ def ajac_reaction_d(
                 "",
                 k,
                 remove_forward,
+                reaction.orders,
                 syms,
             )
-
             if dqdc_s:
                 cw.writer(fstream, cw.comment(f"d()/d[{all_wqss_dict[k][0]}]"))
                 cw.writer(fstream, f"dqdci = {dqdc_s};")
-                if reaction.reversible or k in rea_dict:
+                if (
+                    reaction.reversible
+                    or k in rea_dict
+                    or species_info.all_species_list[k] in reaction.orders
+                ):
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
                             s1 = (
@@ -1325,17 +1339,22 @@ def dqdc_d(
     dqdc_s,
     k,
     remove_forward,
+    reaction_orders,
     syms,
 ):
     """Write dqdc."""
     if dqdc_s == "0":
         dqdc_s = ""
-    if k in sorted(rea_dict.keys()):
+    if (
+        k in sorted(rea_dict.keys())
+        or species_info.all_species_list[k] in reaction.orders
+    ):
         dps = dphase_space(
             mechanism,
             species_info,
             sorted_reactants,
-            rea_dict[k][0],
+            species_info.all_species_list[k],
+            reaction_orders,
             syms,
         )
         if dps == "1.0":
@@ -1354,6 +1373,7 @@ def dqdc_d(
                 species_info,
                 sorted_products,
                 pro_dict[k][0],
+                reaction_orders,
                 syms,
             )
             if dps == "1.0":
@@ -1399,23 +1419,33 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
             return "1"
 
 
-def dphase_space(mechanism, species_info, reagents, r, syms):
+def dphase_space(mechanism, species_info, reagents, r, reaction_orders, syms):
     """Get string for phase space gradient."""
     reagents = {x[0]: x[1] for x in reagents}
+    if bool(reaction_orders):
+        list_ord = list(reaction_orders.keys())
+        for spec in list_ord:
+            if spec not in reagents:
+                reagents[spec] = 0.0
     phi = []
     sorted_reagents = sorted(
         reagents.keys(), key=lambda v: species_info.dict_species[v]
     )
+
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
+        if bool(reaction_orders):
+            order = reaction_orders[symbol]
+        else:
+            order = coefficient
         if symbol not in species_info.qssa_species_list:
             if symbol == r:
-                if coefficient > 1:
-                    phi += [f"{coefficient:f}"]
-                    if (coefficient - 1) == 1.0:
+                if order > 1:
+                    phi += [f"{order:f}"]
+                    if (order - 1) == 1.0:
                         conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                     else:
-                        exponent = coefficient - 1
+                        exponent = order - 1
                         if exponent.is_integer():
                             conc = "*".join(
                                 [f"sc[{species_info.ordered_idx_map[symbol]}]"]
@@ -1425,34 +1455,39 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
                             idx = species_info.ordered_idx_map[symbol]
                             conc = f"pow(sc[{idx}],{exponent:f})"
                     phi += [conc]
+                elif order < 1:
+                    phi += [f"{order:f}"]
+                    exponent = order - 1.0
+                    idx = species_info.ordered_idx_map[symbol]
+                    conc = f"pow(std::max(sc[{idx}], 1e-12),{exponent:f})"
+                    phi += [conc]
             else:
-                if coefficient == 1.0:
+                if order == 1.0:
                     conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                 else:
-                    if coefficient.is_integer():
+                    if order.is_integer():
                         conc = "*".join(
-                            [f"sc[{species_info.ordered_idx_map[symbol]}]"]
-                            * int(coefficient)
+                            [f"sc[{species_info.ordered_idx_map[symbol]}]"] * int(order)
                         )
                     else:
                         conc = (
                             f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
-                            f" {coefficient:f})"
+                            f" {order:f})"
                         )
                 phi += [conc]
         # Symbol is in qssa_species_list
         else:
             if symbol == r:
-                if coefficient > 1:
-                    phi += [f"{coefficient:f}"]
-                    if (coefficient - 1) == 1.0:
+                if order > 1:
+                    phi += [f"{order:f}"]
+                    if (order - 1) == 1.0:
                         idx = (
                             species_info.ordered_idx_map[symbol]
                             - species_info.n_species
                         )
                         conc = f"sc_qss[{idx}]"
                     else:
-                        exponent = coefficient - 1
+                        exponent = order - 1
                         if exponent.is_integer():
                             conc = "*".join(
                                 [f"sc[{species_info.ordered_idx_map[symbol]}]"]
@@ -1466,21 +1501,20 @@ def dphase_space(mechanism, species_info, reagents, r, syms):
                             conc = f"pow(sc_qss[{idx}],{exponent:f})"
                     phi += [conc]
             else:
-                if coefficient == 1.0:
+                if order == 1.0:
                     idx = species_info.ordered_idx_map[symbol] - species_info.n_species
                     conc = f"sc_qss[{idx}]"
                 else:
-                    if coefficient.is_integer():
+                    if order.is_integer():
                         conc = "*".join(
-                            [f"sc[{species_info.ordered_idx_map[symbol]}]"]
-                            * int(coefficient)
+                            [f"sc[{species_info.ordered_idx_map[symbol]}]"] * int(order)
                         )
                     else:
                         idx = (
                             species_info.ordered_idx_map[symbol]
                             - species_info.n_species
                         )
-                        conc = f"pow(sc_qss[{idx}], {coefficient:f})"
+                        conc = f"pow(sc_qss[{idx}], {order:f})"
                 phi += [conc]
 
     if phi:
