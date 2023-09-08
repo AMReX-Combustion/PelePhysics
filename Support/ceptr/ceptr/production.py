@@ -185,7 +185,10 @@ def production_rate(
             kc_exp_arg = cu.sorted_kc_exp_arg(mechanism, species_info, reaction)
             kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
 
-            dim = cu.phase_space_units(reaction.reactants)
+            if bool(reaction.orders):
+                dim = cu.phase_space_units(reaction.orders)
+            else:
+                dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.third_body is not None
             falloff = reaction.rate.type == "falloff"
             is_troe = reaction.rate.sub_type == "Troe"
@@ -552,7 +555,11 @@ def production_rate(
                 mechanism, species_info, reaction, syms
             )
 
-            dim = cu.phase_space_units(reaction.reactants)
+            if bool(reaction.orders):
+                dim = cu.phase_space_units(reaction.orders)
+            else:
+                dim = cu.phase_space_units(reaction.reactants)
+
             third_body = reaction.third_body is not None
             falloff = reaction.rate.type == "falloff"
             is_troe = reaction.rate.sub_type == "Troe"
@@ -1120,7 +1127,10 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
             kc_exp_arg = cu.sorted_kc_exp_arg(mechanism, species_info, reaction)
             kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
 
-            dim = cu.phase_space_units(reaction.reactants)
+            if bool(reaction.orders):
+                dim = cu.phase_space_units(reaction.orders)
+            else:
+                dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.third_body is not None
             falloff = reaction.rate.type == "falloff"
             is_troe = reaction.rate.sub_type == "Troe"
