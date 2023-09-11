@@ -17,6 +17,13 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
+
+    if bool(reaction.orders):
+        list_ord = list(reaction.orders.keys())
+        for spec in list_ord:
+            if spec not in reagents:
+                reagents[spec] = 0.0
+
     if reaction.third_body:
         if len(reaction.third_body.efficiencies) == 1:
             if isclose(reaction.third_body.default_efficiency, 0.0):
@@ -40,43 +47,48 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
     n_species = species_info.n_species
+
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
+        if bool(reaction.orders):
+            order = reaction.orders[symbol]
+        else:
+            order = coefficient
         if symbol in species_info.qssa_species_list:
-            if float(coefficient) == 1.0:
+            if float(order) == 1.0:
                 conc = f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"
                 if record_symbolic_operations:
                     conc_smp = syms.sc_qss_smp[
                         species_info.ordered_idx_map[symbol] - n_species
                     ]
             else:
-                if coefficient.is_integer():
+                if order.is_integer():
                     conc = "*".join(
                         [f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"]
-                        * int(coefficient)
+                        * int(order)
                     )
                 else:
                     conc = (
                         f"pow(sc_qss[{species_info.ordered_idx_map[symbol] - n_species}],"
-                        f" {float(coefficient):f})"
+                        f" {float(order):f})"
                     )
                 if record_symbolic_operations:
                     conc_smp = pow(
                         syms.sc_qss_smp[
                             species_info.ordered_idx_map[symbol] - n_species
                         ],
-                        float(coefficient),
+                        float(order),
                     )
             phi += [conc]
             if record_symbolic_operations:
                 phi_smp += [conc_smp]
         else:
-            if float(coefficient) == 1.0:
+            if float(order) == 1.0:
                 conc = f"sc[{species_info.ordered_idx_map[symbol]}]"
                 if record_symbolic_operations:
                     conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
-                if float(coefficient) == 2.0:
+                if float(order) == 2.0:
                     conc = (
                         f"(sc[{species_info.ordered_idx_map[symbol]}] *"
                         f" sc[{species_info.ordered_idx_map[symbol]}])"
@@ -89,12 +101,12 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
                 else:
                     conc = (
                         f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
-                        f" {float(coefficient):f})"
+                        f" {float(order):f})"
                     )
                     if record_symbolic_operations:
                         conc_smp = pow(
                             syms.sc_smp[species_info.ordered_idx_map[symbol]],
-                            float(coefficient),
+                            float(order),
                         )
             phi += [conc]
             if record_symbolic_operations:
