@@ -197,18 +197,22 @@ DiagPDF::writePDFToFile(
     std::ofstream pdfFile;
     pdfFile.open(diagfile.c_str(), std::ios::out);
     int prec = 8;
-    int width = 16;
+    size_t width = 16;
+    amrex::Vector<int> widths(2, width);
 
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    pdfFile << std::setw(width) << m_fieldName << " " << std::setw(width)
-            << m_fieldName + "_PDF"
+    widths[0] = amrex::max(width, m_fieldName.length() + 1);
+    widths[1] = amrex::max(width, m_fieldName.length() + 5);
+    pdfFile << std::setw(widths[0]) << m_fieldName << " "
+            << std::setw(widths[1]) << m_fieldName + "_PDF"
             << "\n";
 
     for (int i{0}; i < a_pdf.size(); ++i) {
-      pdfFile << std::setw(width) << std::setprecision(prec) << std::scientific
+      pdfFile << std::setw(widths[0]) << std::setprecision(prec)
+              << std::scientific
               << m_lowBnd + (static_cast<amrex::Real>(i) + 0.5) * binWidth
-              << " " << std::setw(width) << std::setprecision(prec)
+              << " " << std::setw(widths[1]) << std::setprecision(prec)
               << std::scientific << a_pdf[i] / a_sum / binWidth << "\n";
     }
 
