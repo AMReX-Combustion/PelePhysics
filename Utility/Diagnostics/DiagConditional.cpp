@@ -327,38 +327,44 @@ DiagConditional::writeAverageDataToFile(
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out);
     int prec = 8;
-    int width = 16;
+    size_t width = 16;
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    amrex::Vector<int> widths(3 + 2 * nProcessFields, width);
 
-    condFile << std::left << std::setw(width) << "BinCenter"
+    condFile << std::left << std::setw(widths[0]) << "BinCenter"
              << " ";
-    condFile << std::left << std::setw(width) << m_cFieldName << " ";
-    condFile << std::left << std::setw(width) << "Volume"
+    widths[1] = amrex::max(width, m_cFieldName.length() + 1);
+    condFile << std::left << std::setw(widths[1]) << m_cFieldName << " ";
+    condFile << std::left << std::setw(widths[2]) << "Volume"
              << " ";
-    for (auto& f : m_fieldNames) {
-      condFile << std::left << std::setw(width) << f + "_Avg"
+    for (int f{0}; f < nProcessFields; ++f) {
+      widths[3 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      condFile << std::left << std::setw(widths[3 + 2 * f])
+               << m_fieldNames[f] + "_Avg"
                << " ";
-      condFile << std::left << std::setw(width) << f + "_StdDev"
+      widths[4 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 7);
+      condFile << std::left << std::setw(widths[4 + 2 * f])
+               << m_fieldNames[f] + "_StdDev"
                << " ";
     }
     condFile << "\n";
 
     // Retrieve some data
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
     for (int n{0}; n < m_nBins; ++n) {
-      condFile << std::left << std::setw(width) << std::setprecision(prec)
+      condFile << std::left << std::setw(widths[0]) << std::setprecision(prec)
                << std::scientific << m_lowBnd + (n + 0.5) * binWidth << " ";
-      condFile << std::left << std::setw(width) << std::setprecision(prec)
+      condFile << std::left << std::setw(widths[1]) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
-      condFile << std::left << std::setw(width) << std::setprecision(prec)
+      condFile << std::left << std::setw(widths[2]) << std::setprecision(prec)
                << std::scientific << a_condVol[n] << " ";
       for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
-        condFile << std::left << std::setw(width) << std::setprecision(prec)
-                 << std::scientific << a_cond[binOffset + n] << " "
-                 << std::setw(width) << std::setprecision(prec)
-                 << std::scientific
+        condFile << std::left << std::setw(widths[3 + 2 * f])
+                 << std::setprecision(prec) << std::scientific
+                 << a_cond[binOffset + n] << " " << std::setw(widths[4 + 2 * f])
+                 << std::setprecision(prec) << std::scientific
                  << std::sqrt(std::abs(
                       a_condSq[binOffset + n] -
                       a_cond[binOffset + n] * a_cond[binOffset + n]))
@@ -392,25 +398,28 @@ DiagConditional::writeIntegralDataToFile(
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
     int prec = 8;
-    int width = 16;
+    size_t width = 16;
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    condFile << std::left << std::setw(width) << m_cFieldName << " ";
-    for (auto& f : m_fieldNames) {
-      condFile << std::left << std::setw(width) << f + "_Int"
+    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
+    for (int f{0}; f < nProcessFields; ++f) {
+      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      condFile << std::left << std::setw(widths[1 + f])
+               << m_fieldNames[f] + "_Int"
                << " ";
     }
     condFile << "\n";
 
-    // Retrieve some data
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
-
     for (int n{0}; n < m_nBins; ++n) {
-      condFile << std::left << std::setw(width) << std::setprecision(prec)
+      condFile << std::left << std::setw(widths[0]) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
       for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
-        condFile << std::left << std::setw(width) << std::setprecision(prec)
-                 << std::scientific << a_cond[binOffset + n] << " ";
+        condFile << std::left << std::setw(widths[1 + f])
+                 << std::setprecision(prec) << std::scientific
+                 << a_cond[binOffset + n] << " ";
       }
       condFile << "\n";
     }
@@ -440,25 +449,28 @@ DiagConditional::writeSumDataToFile(
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
     int prec = 8;
-    int width = 16;
+    size_t width = 16;
+    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    condFile << std::left << std::setw(width) << m_cFieldName << " ";
-    for (auto& f : m_fieldNames) {
-      condFile << std::left << std::setw(width) << f + "_Sum"
+    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
+    for (int f{0}; f < nProcessFields; ++f) {
+      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      condFile << std::left << std::setw(widths[1 + f])
+               << m_fieldNames[f] + "_Sum"
                << " ";
     }
     condFile << "\n";
 
-    // Retrieve some data
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
-
     for (int n{0}; n < m_nBins; ++n) {
-      condFile << std::left << std::setw(width) << std::setprecision(prec)
+      condFile << std::left << std::setw(widths[0]) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
       for (int f{0}; f < nProcessFields; ++f) {
         int binOffset = f * m_nBins;
-        condFile << std::left << std::setw(width) << std::setprecision(prec)
-                 << std::scientific << a_cond[binOffset + n] << " ";
+        condFile << std::left << std::setw(widths[1 + f])
+                 << std::setprecision(prec) << std::scientific
+                 << a_cond[binOffset + n] << " ";
       }
       condFile << "\n";
     }
