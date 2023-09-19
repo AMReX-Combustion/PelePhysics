@@ -22,11 +22,8 @@ echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/r
 sudo apt-get update
 sudo apt-get install -y \
     rocm-dev        \
-    roctracer-dev   \
-    rocprofiler-dev \
     rocrand-dev     \
-    rocprim-dev     \
-    rocm-libs
+    rocprim-dev
 
 source /etc/profile.d/rocm.sh
 which hipcc
