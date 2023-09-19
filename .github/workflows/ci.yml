@@ -77,7 +77,7 @@ jobs:
             amrex_build_args: 'COMP=gnu USE_CUDA=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_cuda.sh'
           - comp: hip
-            amrex_build_args: 'USE_HIP=TRUE AMD_ARCH=gfx908 LIBRARY_LOCATIONS=/opt/rocm/lib'
+            amrex_build_args: 'USE_HIP=TRUE AMD_ARCH=gfx90a LIBRARY_LOCATIONS=/opt/rocm/lib'
             dependency_cmds: '.github/workflows/dependencies/dependencies_hip.sh'
           - comp: sycl
             amrex_build_args: 'USE_SYCL=TRUE'
