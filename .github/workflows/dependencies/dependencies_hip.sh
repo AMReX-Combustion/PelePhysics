@@ -14,19 +14,13 @@ set -eu -o pipefail
 
 sudo wget https://repo.radeon.com/rocm/rocm.gpg.key
 sudo apt-key add rocm.gpg.key
-echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' \
+echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/5.6.1 ubuntu main' \
   | sudo tee /etc/apt/sources.list.d/rocm.list
 echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/rocm/opencl/bin:$PATH' \
   | sudo tee -a /etc/profile.d/rocm.sh
 
 sudo apt-get update
-sudo apt-get install -y \
-    rocm-dev        \
-    roctracer-dev   \
-    rocprofiler-dev \
-    rocrand-dev     \
-    rocprim-dev     \
-    rocm-libs
+sudo apt-get install -y rocm-dev rocrand-dev rocprim-dev
 
 source /etc/profile.d/rocm.sh
 which hipcc
