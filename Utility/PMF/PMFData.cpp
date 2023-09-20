@@ -56,7 +56,6 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 
   pmf_names.resize(variable_count);
   pos1 = 0;
-  pos2 = 0;
   for (int i = 0; i < variable_count; i++) {
     pos1 = firstline.find('"', pos1);
     pos2 = firstline.find('"', pos1 + 1);
