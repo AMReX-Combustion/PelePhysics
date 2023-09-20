@@ -7,7 +7,7 @@
 #include "SprayJet.H"
 
 #ifdef PELELM_USE_SPRAY
-#include "pelelm_prob_parm.H"
+#include "pelelmex_prob_parm.H"
 #else
 #include "prob_parm.H"
 #endif
