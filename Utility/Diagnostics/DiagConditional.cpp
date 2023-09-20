@@ -332,16 +332,16 @@ DiagConditional::writeAverageDataToFile(
 
     condFile << std::left << std::setw(widths[0]) << "BinCenter"
              << " ";
-    widths[1] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[1] = std::max(width, m_cFieldName.length() + 1);
     condFile << std::left << std::setw(widths[1]) << m_cFieldName << " ";
     condFile << std::left << std::setw(widths[2]) << "Volume"
              << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[3 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[3 + 2 * f] = std::max(width, m_fieldNames[f].length() + 5);
       condFile << std::left << std::setw(widths[3 + 2 * f])
                << m_fieldNames[f] + "_Avg"
                << " ";
-      widths[4 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 7);
+      widths[4 + 2 * f] = std::max(width, m_fieldNames[f].length() + 7);
       condFile << std::left << std::setw(widths[4 + 2 * f])
                << m_fieldNames[f] + "_StdDev"
                << " ";
@@ -400,10 +400,10 @@ DiagConditional::writeIntegralDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[0] = std::max(width, m_cFieldName.length() + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[1 + f] = std::max(width, m_fieldNames[f].length() + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Int"
                << " ";
@@ -450,10 +450,10 @@ DiagConditional::writeSumDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[0] = std::max(width, m_cFieldName.length() + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[1 + f] = std::max(width, m_fieldNames[f].length() + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Sum"
                << " ";
