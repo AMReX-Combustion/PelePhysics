@@ -24,9 +24,7 @@ checkQuotes(const std::string& str)
   return (count % 2) == 0;
 }
 
-namespace pele {
-namespace physics {
-namespace PMF {
+namespace pele::physics::PMF {
 
 void
 PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
@@ -39,12 +37,12 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   infile.close();
   std::istringstream iss(memfile);
 
-  std::string firstline{""};
+  std::string firstline;
   std::getline(iss, firstline);
   if (!checkQuotes(firstline)) {
     amrex::Abort("PMF file variable quotes unbalanced");
   }
-  std::string secondline{""};
+  std::string secondline;
   std::getline(iss, secondline);
   unsigned long pos1 = 0;
   unsigned long pos2 = 0;
@@ -78,7 +76,7 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   //  std::endl;
 
   int line_count = 0;
-  std::string remaininglines{""};
+  std::string remaininglines;
   while (std::getline(iss, remaininglines)) {
     line_count++;
   }
@@ -107,6 +105,4 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
     }
   }
 }
-} // namespace PMF
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::PMF
