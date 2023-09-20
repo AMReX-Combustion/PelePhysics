@@ -201,8 +201,8 @@ DiagPDF::writePDFToFile(
 
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    widths[0] = std::max(width, m_fieldName.length() + 1);
-    widths[1] = std::max(width, m_fieldName.length() + 5);
+    widths[0] = std::max(width, static_cast<int>(m_fieldName.length()) + 1);
+    widths[1] = std::max(width, static_cast<int>(m_fieldName.length()) + 5);
     pdfFile << std::setw(widths[0]) << m_fieldName << " "
             << std::setw(widths[1]) << m_fieldName + "_PDF"
             << "\n";
