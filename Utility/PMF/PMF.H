@@ -21,7 +21,7 @@ pmf(
 {
   // Average the PMF data between xlo and xhi
   // to get a true Finite Volume, cell-centered value
-  if (pmf_data->m_doAverage) {
+  if (pmf_data->m_doAverage != 0) {
     int lo_loside = -1;
     int lo_hiside = -1;
     if (xlo < pmf_data->pmf_X[0]) {
