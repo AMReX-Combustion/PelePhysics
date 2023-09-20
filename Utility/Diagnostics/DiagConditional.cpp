@@ -323,12 +323,11 @@ DiagConditional::writeAverageDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(3 + 2 * nProcessFields, width);
 
     condFile << std::left << std::setw(widths[0]) << "BinCenter"
@@ -394,12 +393,11 @@ DiagConditional::writeIntegralDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
     widths[0] = amrex::max(width, m_cFieldName.length() + 1);
@@ -445,12 +443,11 @@ DiagConditional::writeSumDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
     widths[0] = amrex::max(width, m_cFieldName.length() + 1);
