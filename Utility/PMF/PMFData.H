@@ -7,16 +7,14 @@
 #include <mechanism.H>
 
 // Define a class to hold/manage the PMF data,
-namespace pele {
-namespace physics {
-namespace PMF {
+namespace pele::physics::PMF {
 
 class PmfData
 {
 public:
-  PmfData() {}
+  PmfData() = default;
 
-  ~PmfData() {}
+  ~PmfData() = default;
 
   void initialize()
   {
@@ -37,8 +35,8 @@ public:
 
   struct DataContainer
   {
-    unsigned int m_nPoint;
-    unsigned int m_nVar;
+    int m_nPoint;
+    int m_nVar;
     int m_doAverage = 0;
     amrex::Real* pmf_X;
     amrex::Real* pmf_Y;
@@ -89,7 +87,5 @@ private:
   bool m_device_allocated{false};
   bool m_host_allocated{false};
 };
-} // namespace PMF
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::PMF
 #endif
