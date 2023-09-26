@@ -2,8 +2,6 @@
 #include <AMReX_Arena.H>
 #include <AMReX_Gpu.H>
 
-using namespace amrex;
-
 static std::string
 read_pmf_file(std::ifstream& in)
 {
@@ -64,15 +62,11 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   }
 
   // Check variable names
-
   amrex::Print() << variable_count << " variables found in PMF file"
                  << std::endl;
   if (variable_count != (NUM_SPECIES + 4)) {
     amrex::Abort("PMF file must have NUM_SPECIES+4 variables");
   }
-  // for (int i = 0; i < variable_count; i++)
-  //  amrex::Print() << "Variable found: " << PMF::pmf_names[i] <<
-  //  std::endl;
 
   int line_count = 0;
   std::string remaininglines;
@@ -95,11 +89,11 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
   iss.seekg(0, std::ios::beg);
   std::getline(iss, firstline);
   std::getline(iss, secondline);
-  for (unsigned int i = 0; i < m_data_h.m_nPoint; i++) {
+  for (int i = 0; i < m_data_h.m_nPoint; i++) {
     std::getline(iss, remaininglines);
     std::istringstream sinput(remaininglines);
     sinput >> m_data_h.pmf_X[i];
-    for (unsigned int j = 0; j < m_data_h.m_nVar; j++) {
+    for (int j = 0; j < m_data_h.m_nVar; j++) {
       sinput >> m_data_h.pmf_Y[j * m_data_h.m_nPoint + i];
     }
   }
