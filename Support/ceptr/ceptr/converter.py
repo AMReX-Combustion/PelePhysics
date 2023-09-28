@@ -475,6 +475,7 @@ class Converter:
         """Write the molecular weights."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment(" inverse molecular weights "))
+        cw.writer(fstream, "#ifdef AMREX_USE_GPU")
         cw.writer(
             fstream,
             "AMREX_GPU_CONSTANT const amrex::Real "
@@ -485,6 +486,7 @@ class Converter:
             text = f"{1.0 / species.weight:.16f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
+        cw.writer(fstream, "#endif")
         cw.writer(
             fstream,
             f"const amrex::Real h_global_imw[{self.species_info.n_species}]={{",
@@ -497,6 +499,7 @@ class Converter:
         cw.writer(fstream)
 
         cw.writer(fstream, cw.comment(" molecular weights "))
+        cw.writer(fstream, "#ifdef AMREX_USE_GPU")
         cw.writer(
             fstream,
             "AMREX_GPU_CONSTANT const amrex::Real "
@@ -507,6 +510,7 @@ class Converter:
             text = f"{species.weight:f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
+        cw.writer(fstream, "#endif")
         cw.writer(
             fstream,
             f"const amrex::Real h_global_mw[{self.species_info.n_species}]={{",
