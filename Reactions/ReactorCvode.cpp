@@ -1736,7 +1736,6 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] (data_wk->PS);
 #endif
   } else if (data_wk->solve_type == cvode::customDirect) {
-    //    SUNMatDestroy(A);
     SUNMatDestroy(data_wk->PSc);
   }
 

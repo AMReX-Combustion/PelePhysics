@@ -71,6 +71,7 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 }
 
 //  inverse molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_imw[7] = {
   0.0623324814560868, // CH4
   0.0312519532470779, // O2
@@ -80,6 +81,7 @@ AMREX_GPU_CONSTANT const amrex::Real global_imw[7] = {
   0.0227226249176305, // CO2
   0.4960317460317460, // H2
 };
+#endif
 const amrex::Real h_global_imw[7] = {
   0.0623324814560868, // CH4
   0.0312519532470779, // O2
@@ -91,6 +93,7 @@ const amrex::Real h_global_imw[7] = {
 };
 
 //  molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_mw[7] = {
   16.043000, // CH4
   31.998000, // O2
@@ -100,6 +103,7 @@ AMREX_GPU_CONSTANT const amrex::Real global_mw[7] = {
   44.009000, // CO2
   2.016000,  // H2
 };
+#endif
 const amrex::Real h_global_mw[7] = {
   16.043000, // CH4
   31.998000, // O2
