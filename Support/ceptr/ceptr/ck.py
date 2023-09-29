@@ -1302,7 +1302,7 @@ def ckmmwc(fstream, mechanism, species_info):
     cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
     cw.writer(fstream, "sumC += c[id];")
     cw.writer(fstream, "}")
-    cw.writer(fstream, cw.comment(" CK provides no guard against divison by zero"))
+    cw.writer(fstream, cw.comment(" CK provides no guard against division by zero"))
     cw.writer(fstream, "wtm = W/sumC;")
     cw.writer(fstream)
 

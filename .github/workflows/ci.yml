@@ -24,6 +24,26 @@ jobs:
           extensions: 'H,h,cpp'
           clangFormatVersion: 16
 
+  Codespell:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+      - name: Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Dependencies
+        run: |
+          # Install Python packages
+          python -m pip install --upgrade pip
+          pip install codespell
+      - name: Run codespell
+        run: codespell
+
   CEPTR:
     runs-on: ubuntu-latest
     strategy:

@@ -279,7 +279,7 @@ struct SRK
         Fomega[ii] * sqrtAsti[ii] * sqrtOneOverTc[ii]; // *-0.5*oneOverT*sqrtT
     }
 
-    // intialize sums to 0
+    // initialize sums to 0
     am = 0.0;
     dAmdT = 0.0;
     d2AmdT2 = 0.0;
@@ -527,7 +527,7 @@ struct SRK
     CKMMWY(Y, wbar);
     Rm = Constants::RU / wbar;
 
-    // Use ideal gas to get an inital guess
+    // Use ideal gas to get an initial guess
     T = P * tau / Rm;
     MixingRuleAmBm(T, Y, am, bm);
 
