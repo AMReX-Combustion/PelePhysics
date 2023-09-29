@@ -65,7 +65,7 @@ ReactorCvode::initCvode(
   int flag = CVodeSetUserData(a_cvode_mem, static_cast<void*>(a_udata));
 
   // Call CVodeInit to initialize the integrator memory and specify the user's
-  // right hand side function, the inital time, and initial dependent variable
+  // right hand side function, the initial time, and initial dependent variable
   // vector a_y.
   flag = CVodeInit(a_cvode_mem, cF_RHS, a_time, a_y);
   if (utils::check_flag(&flag, "CVodeInit", 1)) {
@@ -100,7 +100,7 @@ ReactorCvode::initCvode(
     }
 #else
     amrex::Abort(
-      "Shoudn't be there. solve_type sparse_direct only available with CUDA");
+      "Shouldn't be there. solve_type sparse_direct only available with CUDA");
 #endif
   } else if (a_udata->solve_type == cvode::customDirect) {
 #if defined(AMREX_USE_CUDA)
@@ -120,7 +120,7 @@ ReactorCvode::initCvode(
     }
 #else
     amrex::Abort(
-      "Shoudn't be there. solve_type custom_direct only available with CUDA");
+      "Shouldn't be there. solve_type custom_direct only available with CUDA");
 #endif
   } else if (a_udata->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
@@ -136,7 +136,7 @@ ReactorCvode::initCvode(
     }
 #else
     amrex::Abort(
-      "Shoudn't be there. solve_type magma_direct only available with "
+      "Shouldn't be there. solve_type magma_direct only available with "
       "PELE_USE_MAGMA = TRUE");
 #endif
   } else if (a_udata->solve_type == cvode::GMRES) {
@@ -242,7 +242,7 @@ ReactorCvode::initCvode(
   }
 
   // Call CVodeInit to initialize the integrator memory and specify the user's
-  // right hand side function, the inital time, and initial dependent variable
+  // right hand side function, the initial time, and initial dependent variable
   // vector a_y.
   flag = CVodeInit(a_cvode_mem, cF_RHS, a_time, a_y);
   if (utils::check_flag(&flag, "CVodeInit", 1) != 0) {
@@ -633,7 +633,7 @@ ReactorCvode::checkCvodeOptions(
 #endif
   }
 
-  // Print additionnal information
+  // Print additional information
   if (a_precond_type == cvode::sparseSimpleAJac) {
     int nJdata = 0;
     const int HP =

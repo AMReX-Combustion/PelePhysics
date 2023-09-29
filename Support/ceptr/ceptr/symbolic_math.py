@@ -712,7 +712,7 @@ class SymbolicMath:
                 if ind_cse:
                     # This is the symbol we would like to replace
                     target_replace = ind_cse[-1]
-                    # Make sure that we havent replaced it already
+                    # Make sure that we haven't replaced it already
                     while (
                         target_replace < n_cse
                         and common_expr_lhs[target_replace] in to_replace

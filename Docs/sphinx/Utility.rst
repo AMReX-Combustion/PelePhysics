@@ -18,7 +18,7 @@ This section provides relevant notes on using these utilities across the Pele fa
 Premixed Flame Initialization
 =============================
 
-Pre-computed profiles from 1D freely propogating premixed flames are used to initialize a wrinkled `flamesheet <https://amrex-combustion.github.io/PeleLMeX/manual/html/Tutorials_FlameSheet.html>`_ in PeleLMeX, among other problems. Right now, this capability is not used in PeleC, but similar code that accomplishes the same task using data files of the same format is applied in PeleC. The code has two parts, a data container defined in ``PMFData.{H,cpp}`` that loads and stores data from the pre-computed profile, and a function defined in ``PMF.H`` that, when provided this data structure and ther bounds of a cell of interest, returns temperature, velocity, and mole fractions from that location.
+Pre-computed profiles from 1D freely propagating premixed flames are used to initialize a wrinkled `flamesheet <https://amrex-combustion.github.io/PeleLMeX/manual/html/Tutorials_FlameSheet.html>`_ in PeleLMeX, among other problems. Right now, this capability is not used in PeleC, but similar code that accomplishes the same task using data files of the same format is applied in PeleC. The code has two parts, a data container defined in ``PMFData.{H,cpp}`` that loads and stores data from the pre-computed profile, and a function defined in ``PMF.H`` that, when provided this data structure and the bounds of a cell of interest, returns temperature, velocity, and mole fractions from that location.
 
 This code has two runtime parameters that may be set in the input file: ::
 

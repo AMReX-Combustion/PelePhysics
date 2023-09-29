@@ -47,7 +47,7 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
 
   amrex::ParmParse pp(a_prefix);
 
-  // Outputed variables
+  // Outputted variables
   int nOutFields = pp.countval("field_names");
   AMREX_ASSERT(nOutFields > 0);
   m_fieldNames.resize(nOutFields);

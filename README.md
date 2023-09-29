@@ -1,5 +1,5 @@
 # PelePhysics
-*A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
+*A repository of physics databases and implementation code for use with the `Pele` suite of of codes*
 
 ## CEPTR
 

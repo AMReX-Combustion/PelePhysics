@@ -44,7 +44,7 @@ The objective of this user-guide is to document the CVODE-based chemistry integr
 
 - ODE equations (`reactor type`)
 - Default settings (tolerances/order/...)
-- Linear solvers available --along with exemples of performance
+- Linear solvers available --along with examples of performance
 - Setting-up a `PelePhysics` test case
 - ...
 

@@ -463,11 +463,11 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
     this includes two-way dependencies: (s1 needs s2) and (s2 needs s1) => group
     and cyclical dependencies: (s1 needs s2) and (s2 needs s3) and (s3 needs s1) => group
 
-    This function along with find_closed_cycle is an implmentation of:
+    This function along with find_closed_cycle is an implementation of:
 
     Tarjan's Strongly Connected Components Algorithm (1972)
 
-    where node "index" is stored implictly via the location of the
+    where node "index" is stored implicitly via the location of the
     node in the lowest_link OrderedDict and boolean "onStack"
     information is stored implicitly by checking for node existence in
     potential_group
@@ -606,7 +606,7 @@ def find_closed_cycle(mechanism, species_info, species):
             # Since the child has been discovered already during this
             # search, that means it is in the group but still in the
             # recursion process, Update the parent's lowest link value
-            # with this childs discovery order
+            # with this child's discovery order
             species_info.qssa_info.lowest_link[parent] = min(
                 species_info.qssa_info.lowest_link[parent],
                 list(species_info.qssa_info.lowest_link.keys()).index(child),
@@ -733,7 +733,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
                 not_in_group = True
                 # for the other groups
                 for other_group in other_groups:
-                    # if the other group hasn't alredy been accounted
+                    # if the other group hasn't already been accounted
                     # for and the species is in that group, then that
                     # other group depends on a species in the current
                     # group
@@ -793,7 +793,7 @@ def update_group_needs(mechanism, species_info, reaction_info):
 
 
 def update_group_dependencies(mechanism, species_info, reaction_info):
-    """Update solo species dependendent on group members with group names.
+    """Update solo species dependent on group members with group names.
 
     species needs member -> species needs group
     species is needed by group member -> species is needed by group

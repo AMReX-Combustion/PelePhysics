@@ -6,7 +6,7 @@
 Transport
 *********
 
-PelePhysics supports computation of several transport coefficients: dyanmic viscosity (:math:`\mu`), bulk viscosity (:math:`\xi`), thermal conductivity (:math:`\lambda`), mixture-averaged species diffusion coefficients (:math:`D_i`), and Soret coefficients/thermal diffusion ratio (:math:`\chi_i`). There are three choices of model for computing these transport coefficients:
+PelePhysics supports computation of several transport coefficients: dynamic viscosity (:math:`\mu`), bulk viscosity (:math:`\xi`), thermal conductivity (:math:`\lambda`), mixture-averaged species diffusion coefficients (:math:`D_i`), and Soret coefficients/thermal diffusion ratio (:math:`\chi_i`). There are three choices of model for computing these transport coefficients:
 
 * ``Constant`` with user-specified values
 * ``Sutherland``, adding a simple temperature dependence to user-specified values
@@ -44,7 +44,7 @@ This is another minimal model, based on the temperature dependence of viscosity 
 
    \mu = \mu_{ref} \left(\frac{T}{T_{ref}} \right)^{3/2} \frac{T_{ref} + S} {T + S},
 
-where :math:`\mu_{ref}` is the dynamic viscosity at a reference temeprature :math:`T_{ref}` and :math:`S` is a constant. In the PelePhysics implementation, the thermal conductivity is then computed based on a user-specified Prandtl number, :math:`\lambda = \mu c_p / Pr`, where the heat capacity :math:`c_p` is evaluated using the EOS model. The user may specify constant values for the bulk viscosity and diffusvity (a single value for all species). Soret effects are not supported for this Transport model (:math:`\chi_i = 0`).
+where :math:`\mu_{ref}` is the dynamic viscosity at a reference temperature :math:`T_{ref}` and :math:`S` is a constant. In the PelePhysics implementation, the thermal conductivity is then computed based on a user-specified Prandtl number, :math:`\lambda = \mu c_p / Pr`, where the heat capacity :math:`c_p` is evaluated using the EOS model. The user may specify constant values for the bulk viscosity and diffusvity (a single value for all species). Soret effects are not supported for this Transport model (:math:`\chi_i = 0`).
 
 For Sutherland transport, there are several runtime parameters that may be specified in the input file: ::
 
