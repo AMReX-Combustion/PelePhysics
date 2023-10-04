@@ -139,6 +139,7 @@ ReactorBDF::react(
 #endif
 )
 {
+#if !defined(AMREX_USE_GPU) || (NUM_SPECIES < 50)
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
@@ -297,6 +298,10 @@ ReactorBDF::react(
 
   // return cost here
   return (int(avgsteps / amrex::Real(ncells)));
+#else
+  amrex::Abort(
+    "BDF reactor is not compatible with large mechanisms on the GPU.");
+#endif
 }
 
 int
@@ -317,6 +322,7 @@ ReactorBDF::react(
 #endif
 )
 {
+#if !defined(AMREX_USE_GPU) || (NUM_SPECIES < 50)
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
@@ -474,6 +480,10 @@ ReactorBDF::react(
     ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
     0);
   return (int(avgsteps / amrex::Real(ncells)));
+#else
+  amrex::Abort(
+    "BDF reactor is not compatible with large mechanisms on the GPU.");
+#endif
 }
 
 } // namespace pele::physics::reactions
