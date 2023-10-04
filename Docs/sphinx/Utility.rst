@@ -25,7 +25,7 @@ This code has two runtime parameters that may be set in the input file: ::
   pmf.datafile = pmf.dat
   pmf.do_cellAverage = 1
 
-The first parameter specifies the path to the PMF data file. This file contains a two-line header followed by whitespace-delimited data columns in the order: position (cm), temperature (K), velocity (cm/s), density(g/cm3), species mole fractions. Sample files are provided in the relevant PeleLMeX (and PeleC) examples, and the procedure to generate these files with a provided script is described below. The second parameter specifies whether the PMF code does a finite volume-style integral over the querried cell (``pmf.do_cellAverage = 1``) or whether the code finds an interpolated value at the midpoint of the querried cell (``pmf.do_cellAverage = 0``)
+The first parameter specifies the path to the PMF data file. This file contains a two-line header followed by whitespace-delimited data columns in the order: position (cm), temperature (K), velocity (cm/s), density(g/cm3), species mole fractions. Sample files are provided in the relevant PeleLMeX (and PeleC) examples, and the procedure to generate these files with a provided script is described below. The second parameter specifies whether the PMF code does a finite volume-style integral over the queried cell (``pmf.do_cellAverage = 1``) or whether the code finds an interpolated value at the midpoint of the querried cell (``pmf.do_cellAverage = 0``)
   
 Generating a PMF file
 ~~~~~~~~~~~~~~~~~~~~~
