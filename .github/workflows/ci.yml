@@ -190,6 +190,7 @@ jobs:
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          ccache -z
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
@@ -199,12 +200,18 @@ jobs:
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
+      - name: Transport ccache report
+        working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: Test EOS
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          ccache -z
           for TYPE in Fuego GammaLaw Soave-Redlich-Kwong; do \
             if [ "${TYPE}" == 'Fuego' ] || [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
@@ -216,12 +223,18 @@ jobs:
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
+      - name: EOS ccache report
+        working-directory: ${{env.EOS_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: Test Integration
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          ccache -z
           make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
@@ -242,6 +255,11 @@ jobs:
             done \
           fi
           make realclean
+      - name: Integration ccache report
+        working-directory: ${{env.REACT_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: Test Ignition delay
         working-directory: ${{env.IGNDELAY_WORKING_DIRECTORY}}
         run: |
@@ -249,17 +267,24 @@ jobs:
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               python -m pip install --upgrade pip
               pip install numpy
+              ccache -z
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
               bash exec_ignDelay.sh
               python check_ignDelay.py
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
           make realclean
+      - name: Ignition delay ccache report
+        working-directory: ${{env.IGNDELAY_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: Test Jacobian
         working-directory: ${{env.JAC_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+              ccache -z
               cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/ceptr
               poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Support/Mechanism/Models/dodecane_lu_qss/non_qssa_list.yaml
               poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
@@ -269,3 +294,8 @@ jobs:
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
           make realclean
+      - name: Jacobian ccache report
+        working-directory: ${{env.JAC_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
