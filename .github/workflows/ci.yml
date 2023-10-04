@@ -193,7 +193,7 @@ jobs:
           ccache -z
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
+            make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
             fi; \
@@ -216,7 +216,7 @@ jobs:
             if [ "${TYPE}" == 'Fuego' ] || [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
+            make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; \
             fi; \
@@ -235,7 +235,7 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
+          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
@@ -245,7 +245,7 @@ jobs:
             done \
           fi;
           make realclean
-          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
+          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
@@ -268,7 +268,7 @@ jobs:
               python -m pip install --upgrade pip
               pip install numpy
               ccache -z
-              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
+              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               bash exec_ignDelay.sh
               python check_ignDelay.py
               if [ $? -ne 0 ]; then exit 1; fi; \
@@ -289,7 +289,7 @@ jobs:
               poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Support/Mechanism/Models/dodecane_lu_qss/non_qssa_list.yaml
               poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
               cd ${{env.JAC_WORKING_DIRECTORY}}
-              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
+              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               ./Pele3d.${{matrix.comp}}.DEBUG.TPROF.ex; \
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
