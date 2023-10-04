@@ -445,7 +445,7 @@ ReactEval_C example with a subset of the various available CVODE linear solvers.
     +-------------------------------+-----------------+----------------+-------------+----------------+-----------------+
 
 
-The same series of tests are performed for a mixture of n-dodecane and air (see :ref:`sec:subsReactEvalCvode`), the configuration being otherwise the same as in the methane/air case. Results are sumarized in Table :numref:`tab:RunsReactEvalCvodeDOD`. The overall tendencies remain similar. Note that the non-preconditioned GMRES solver becomes very inefficient for this larger system. Here also, the direct sparse solve --which relies upon the KLU library, does not seem to provide additional time savings. The fill-in pattern is :math:`70 \%`.
+The same series of tests are performed for a mixture of n-dodecane and air (see :ref:`sec:subsReactEvalCvode`), the configuration being otherwise the same as in the methane/air case. Results are summarized in Table :numref:`tab:RunsReactEvalCvodeDOD`. The overall tendencies remain similar. Note that the non-preconditioned GMRES solver becomes very inefficient for this larger system. Here also, the direct sparse solve --which relies upon the KLU library, does not seem to provide additional time savings. The fill-in pattern is :math:`70 \%`.
 
 .. _tab:RunsReactEvalCvodeDOD:
 
@@ -663,7 +663,7 @@ The input file
 The Results
 ^^^^^^^^^^^
 
-Results are sumarized in Table :numref:`tab:RunsReactEvalCvodeDRMGPU`. 
+Results are summarized in Table :numref:`tab:RunsReactEvalCvodeDRMGPU`. 
 
 
 .. _tab:RunsReactEvalCvodeDRMGPU:
