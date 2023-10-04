@@ -46,7 +46,7 @@ struct CVODEUserData
   amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
   amrex::Real* rYsrc_ext = nullptr;   // External species forcing
   int* mask =
-    nullptr; // Masking tagging cells where integration should not be perfomed
+    nullptr; // Masking tagging cells where integration should not be performed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
   amrex::Real gamma;    // System Chem. jacobian coefficient
   int nbBlocks;         // GPU kernel launch parameter

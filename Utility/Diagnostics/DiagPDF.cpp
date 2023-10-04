@@ -193,17 +193,16 @@ DiagPDF::writePDFToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream pdfFile;
     pdfFile.open(diagfile.c_str(), std::ios::out);
-    int prec = 8;
-    size_t width = 16;
+    const int prec = 8;
+    const int width = 16;
     amrex::Vector<int> widths(2, width);
 
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    widths[0] = amrex::max(width, m_fieldName.length() + 1);
-    widths[1] = amrex::max(width, m_fieldName.length() + 5);
+    widths[0] = std::max(width, static_cast<int>(m_fieldName.length()) + 1);
+    widths[1] = std::max(width, static_cast<int>(m_fieldName.length()) + 5);
     pdfFile << std::setw(widths[0]) << m_fieldName << " "
             << std::setw(widths[1]) << m_fieldName + "_PDF"
             << "\n";

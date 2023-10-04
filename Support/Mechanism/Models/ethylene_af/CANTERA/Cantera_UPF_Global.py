@@ -109,7 +109,7 @@ C_W = 0.012
 H_W = 0.001
 O_W = 0.016
 N_W = 0.014
-#Bilger coefs pour formule
+#Bilger coefs pour formula
 Bilger_coefs 		= np.zeros(4,'d')
 Bilger_coefs[0]		= 2.0 / C_W
 Bilger_coefs[1]		= 1.0 / ( 2.0 * H_W )

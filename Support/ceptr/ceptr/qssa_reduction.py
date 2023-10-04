@@ -65,7 +65,7 @@ def remove_quadratic_method_0(mechanism, qssa_species):
     # Alphabetize, remove smallest set, break ties based on number of length of species name
     [x.sort() for x in qssa_remove_proposal]
     for x in qssa_remove_proposal:
-        print(f"Canditate QSSA species for removal: {x}")
+        print(f"Candidate QSSA species for removal: {x}")
     ordered = sorted(
         qssa_remove_proposal, key=lambda x: (len(x), sum([len(y) for y in x]))
     )

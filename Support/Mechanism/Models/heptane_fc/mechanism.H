@@ -116,6 +116,7 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 }
 
 //  inverse molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_imw[52] = {
   0.0356964374955379, // N2
   0.0625039064941559, // O
@@ -170,6 +171,7 @@ AMREX_GPU_CONSTANT const amrex::Real global_imw[52] = {
   0.0100809500287307, // C7H15X2
   0.0099795419390250, // NXC7H16
 };
+#endif
 const amrex::Real h_global_imw[52] = {
   0.0356964374955379, // N2
   0.0625039064941559, // O
@@ -226,6 +228,7 @@ const amrex::Real h_global_imw[52] = {
 };
 
 //  molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_mw[52] = {
   28.014000,  // N2
   15.999000,  // O
@@ -280,6 +283,7 @@ AMREX_GPU_CONSTANT const amrex::Real global_mw[52] = {
   99.197000,  // C7H15X2
   100.205000, // NXC7H16
 };
+#endif
 const amrex::Real h_global_mw[52] = {
   28.014000,  // N2
   15.999000,  // O
@@ -7834,7 +7838,7 @@ CKMMWC(const amrex::Real c[], amrex::Real& wtm)
   for (int id = 0; id < 52; ++id) {
     sumC += c[id];
   }
-  //  CK provides no guard against divison by zero
+  //  CK provides no guard against division by zero
   wtm = W / sumC;
 }
 

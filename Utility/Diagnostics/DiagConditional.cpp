@@ -323,26 +323,27 @@ DiagConditional::writeAverageDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(3 + 2 * nProcessFields, width);
 
     condFile << std::left << std::setw(widths[0]) << "BinCenter"
              << " ";
-    widths[1] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[1] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[1]) << m_cFieldName << " ";
     condFile << std::left << std::setw(widths[2]) << "Volume"
              << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[3 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[3 + 2 * f] =
+        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[3 + 2 * f])
                << m_fieldNames[f] + "_Avg"
                << " ";
-      widths[4 + 2 * f] = amrex::max(width, m_fieldNames[f].length() + 7);
+      widths[4 + 2 * f] =
+        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 7);
       condFile << std::left << std::setw(widths[4 + 2 * f])
                << m_fieldNames[f] + "_StdDev"
                << " ";
@@ -394,18 +395,18 @@ DiagConditional::writeIntegralDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[0] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[1 + f] =
+        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Int"
                << " ";
@@ -445,18 +446,18 @@ DiagConditional::writeSumDataToFile(
   diagfile = diagfile + ".dat";
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
-
     std::ofstream condFile;
     condFile.open(diagfile.c_str(), std::ios::out | std::ios::app);
-    int prec = 8;
-    size_t width = 16;
-    int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
+    const int prec = 8;
+    const int width = 16;
+    const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = amrex::max(width, m_cFieldName.length() + 1);
+    widths[0] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
-      widths[1 + f] = amrex::max(width, m_fieldNames[f].length() + 5);
+      widths[1 + f] =
+        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Sum"
                << " ";

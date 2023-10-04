@@ -1465,11 +1465,21 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the progress rate for each reaction"))
     cw.writer(fstream, cw.comment("USES progressRate : todo switch to GPU"))
-    cw.writer(
-        fstream,
-        "void progressRateFR"
-        + "(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real T)",
-    )
+    if n_reactions > 0:
+        cw.writer(
+            fstream,
+            "void progressRateFR"
+            + "(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc,"
+            " amrex::Real T)",
+        )
+    else:
+        cw.writer(
+            fstream,
+            "void progressRateFR"
+            + "(amrex::Real *  /*q_f*/, amrex::Real *  /*q_r*/, amrex::Real *  /*sc*/,"
+            " amrex::Real /*T*/)",
+        )
+
     cw.writer(fstream, "{")
 
     if n_reactions > 0:

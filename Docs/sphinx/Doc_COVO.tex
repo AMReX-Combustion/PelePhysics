@@ -80,7 +80,7 @@ The primary objective of this short note is to explain in details the switch tha
 \begin{itemize}
 \item ODE equations solved (\textit{reactor type})
 \item Default solver settings chosen (tolerances/order/...)
-\item Linear solvers available, along with exemples of performance
+\item Linear solvers available, along with examples of performance
 \item Changes in PelePhysics run settings
 \item Induced changes in the relying codes (such as PeleC)
 \end{itemize} 
@@ -112,7 +112,7 @@ The primary objective of this short note is to explain in details the switch tha
 %=========================================
 \section{Introduction to CVODE}
 %=========================================
-Cvode is part of a software family called sundials for SUite of Nonlinear and DIfferential/ALgebraic equation Solvers~\cite{hindmarsh2005sundials}. Currently, Cvode development version is v5.0.0, while the stable release version is v4.1.0. The version used with PelePhysics is v4.0.2. Cvode can be downladed off of \href{https://computation.llnl.gov/projects/sundials/sundials-software}{the internet}. In the following, details pertaining to the methods implemented in PelePhysics are provided. The interested user is referred to the very exhaustive Cvode User-guide~\cite{CVODE:2019} for more information.
+Cvode is part of a software family called sundials for SUite of Nonlinear and DIfferential/ALgebraic equation Solvers~\cite{hindmarsh2005sundials}. Currently, Cvode development version is v5.0.0, while the stable release version is v4.1.0. The version used with PelePhysics is v4.0.2. Cvode can be downloaded off of \href{https://computation.llnl.gov/projects/sundials/sundials-software}{the internet}. In the following, details pertaining to the methods implemented in PelePhysics are provided. The interested user is referred to the very exhaustive Cvode User-guide~\cite{CVODE:2019} for more information.
 
 \textit{Most of this section is adapted from the v4.1.0 Cvode Documentation.}
 
@@ -262,7 +262,7 @@ Choosing between DVODE/Cvode is done at compile time, via the GNUmakefile. On th
 \textbf{The user is in charge of installing the proper Cvode version, as well as installing and properly linking the KLU library if sparsity features are needed.}
 
 As previously said, the \textbf{Cvode version} employed to perform all tests presented in this document is \textbf{v4.0.2}. Cvode can be downloaded by following \href{https://computation.llnl.gov/projects/sundials/sundials-software}{this link}. \\ 
-An "INSTALL_GUIDE.pdf" will be present in the source files, explaining how to properly install and build the needed librairies. If the KLU library is to be used, then the proper flags should be set. With the version sub-mentioned, those are "-DKLU_ENABLE" (should be set to "ON")  "-DKLU_INCLUDE_DIR" (should point to the location where your "klu.h" file is) and "-DKLU_LIBRARY_DIR" (which should point to the location where your KLU library was generated). 
+An "INSTALL_GUIDE.pdf" will be present in the source files, explaining how to properly install and build the needed libraries. If the KLU library is to be used, then the proper flags should be set. With the version sub-mentioned, those are "-DKLU_ENABLE" (should be set to "ON")  "-DKLU_INCLUDE_DIR" (should point to the location where your "klu.h" file is) and "-DKLU_LIBRARY_DIR" (which should point to the location where your KLU library was generated). 
 
 The \textbf{KLU library is part of the \textit{SuiteSparse} distribution}~\cite{SuiteSparse:2019} that can be downloaded~\href{http://faculty.cse.tamu.edu/davis/suitesparse.html}{following this link}. The SuiteSparse version used for all tests presented in this document is \textbf{v4.5.0}, and we do not guarantee that the linking will properly work with subsequent releases. A "README" file will explain how to generate the KLU library.
 

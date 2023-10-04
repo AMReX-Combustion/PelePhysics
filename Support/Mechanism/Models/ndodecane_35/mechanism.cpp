@@ -46,7 +46,10 @@ CKKFKR(
 // USES progressRate : todo switch to GPU
 void
 progressRateFR(
-  amrex::Real* q_f, amrex::Real* q_r, amrex::Real* sc, amrex::Real T)
+  amrex::Real* /*q_f*/,
+  amrex::Real* /*q_r*/,
+  amrex::Real* /*sc*/,
+  amrex::Real /*T*/)
 {
 }
 

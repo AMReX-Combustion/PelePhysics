@@ -6,9 +6,7 @@
 #include <mechanism.H>
 #include <PMFData.H>
 
-namespace pele {
-namespace physics {
-namespace PMF {
+namespace pele::physics::PMF {
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -43,7 +41,7 @@ pmf(
       hi_hiside = pmf_data->m_nPoint - 1;
     }
     if (lo_loside == -1) {
-      for (unsigned int i = 0; i < pmf_data->m_nPoint - 1; i++) {
+      for (int i = 0; i < pmf_data->m_nPoint - 1; i++) {
         if ((xlo >= pmf_data->pmf_X[i]) && (xlo <= pmf_data->pmf_X[i + 1])) {
           lo_loside = i;
           lo_hiside = i + 1;
@@ -51,14 +49,14 @@ pmf(
       }
     }
     if (hi_loside == -1) {
-      for (unsigned int i = 0; i < pmf_data->m_nPoint - 1; i++) {
+      for (int i = 0; i < pmf_data->m_nPoint - 1; i++) {
         if ((xhi >= pmf_data->pmf_X[i]) && (xhi <= pmf_data->pmf_X[i + 1])) {
           hi_loside = i;
           hi_hiside = i + 1;
         }
       }
     }
-    for (unsigned int j = 0; j < pmf_data->m_nVar; j++) {
+    for (int j = 0; j < pmf_data->m_nVar; j++) {
       amrex::Real x1 = pmf_data->pmf_X[lo_loside];
       amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + lo_loside];
       amrex::Real x2 = pmf_data->pmf_X[lo_hiside];
@@ -108,14 +106,14 @@ pmf(
       hiside = pmf_data->m_nPoint - 1;
     }
     if (loside == -1) {
-      for (unsigned int i = 0; i < pmf_data->m_nPoint - 1; i++) {
+      for (int i = 0; i < pmf_data->m_nPoint - 1; i++) {
         if ((xmid >= pmf_data->pmf_X[i]) && (xmid <= pmf_data->pmf_X[i + 1])) {
           loside = i;
           hiside = i + 1;
         }
       }
     }
-    for (unsigned int j = 0; j < pmf_data->m_nVar; j++) {
+    for (int j = 0; j < pmf_data->m_nVar; j++) {
       amrex::Real x1 = pmf_data->pmf_X[loside];
       amrex::Real y1 = pmf_data->pmf_Y[pmf_data->m_nPoint * j + loside];
       amrex::Real x2 = pmf_data->pmf_X[hiside];
@@ -128,7 +126,5 @@ pmf(
     }
   }
 }
-} // namespace PMF
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::PMF
 #endif
