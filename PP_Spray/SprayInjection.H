@@ -33,9 +33,6 @@ SprayParticleContainer::sprayInjection(
   }
   rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;
-  // Number of particles per parcel
-  amrex::Real num_ppp = spray_jet->num_ppp();
-  const amrex::Real min_ppp = 0.01;
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
@@ -58,6 +55,15 @@ SprayParticleContainer::sprayInjection(
   if (spray_jet->m_sumInjMass > 0.) {
     dt += spray_jet->m_sumInjTime;
     inject_mass += spray_jet->m_sumInjMass;
+  }
+  // TODO: Add check to set particle number density so that the injected
+  // particle volume are less than 10% of the finest cell volume
+  // This is very important
+  amrex::Real num_ppp = spray_jet->num_ppp();
+  // Set initial injection number density
+  if (num_ppp < 0.) {
+    num_ppp = inject_mass / avg_mass;
+    spray_jet->set_num_ppp(num_ppp);
   }
   // If we can't get enough mass to create the desired minimum parcel injection,
   // accumulate mass injection over more time steps
