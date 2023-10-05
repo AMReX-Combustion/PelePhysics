@@ -41,17 +41,21 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* colVals, int* rowPtr, const int* consP, int base);
 
 //  inverse molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_imw[1] = {
   1.0,
 };
+#endif
 const amrex::Real h_global_imw[1] = {
   1.0,
 };
 
 //  molecular weights
+#ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_mw[1] = {
   1.0,
 };
+#endif
 const amrex::Real h_global_mw[1] = {
   1.0,
 };
