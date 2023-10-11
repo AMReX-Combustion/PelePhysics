@@ -31,6 +31,7 @@ get_rho_and_massfracs(
     massfrac[sp] = soln[sp] * rho_inv;
   }
 }
+
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 get_bdf_matrix_and_rhs(
   amrex::Real soln[NUM_SPECIES + 1],
@@ -48,7 +49,7 @@ get_bdf_matrix_and_rhs(
   amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1],
   amrex::Real rhs[NUM_SPECIES + 1])
 {
-
+#if !defined(AMREX_USE_GPU) || (NUM_SPECIES < 55)
   BDFParams bdfp;
 
   const int consP = (reactor_type == ReactorTypes::h_reactor_type);
@@ -102,6 +103,10 @@ get_bdf_matrix_and_rhs(
     rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][0] * ydot[ii];
     rhs[ii] += bdfp.FCOEFFMAT[tstepscheme][1] * ydot_n[ii];
   }
+#else
+  amrex::Abort(
+    "BDF reactor is not compatible with large mechanisms on the GPU.");
+#endif
 }
 
 int
@@ -139,6 +144,7 @@ ReactorBDF::react(
 #endif
 )
 {
+#if !defined(AMREX_USE_GPU) || (NUM_SPECIES < 55)
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
@@ -297,6 +303,10 @@ ReactorBDF::react(
 
   // return cost here
   return (int(avgsteps / amrex::Real(ncells)));
+#else
+  amrex::Abort(
+    "BDF reactor is not compatible with large mechanisms on the GPU.");
+#endif
 }
 
 int
@@ -317,6 +327,7 @@ ReactorBDF::react(
 #endif
 )
 {
+#if !defined(AMREX_USE_GPU) || (NUM_SPECIES < 55)
   BL_PROFILE("Pele::ReactorBDF::react()");
 
   amrex::Real time_init = time;
@@ -474,6 +485,10 @@ ReactorBDF::react(
     ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
     0);
   return (int(avgsteps / amrex::Real(ncells)));
+#else
+  amrex::Abort(
+    "BDF reactor is not compatible with large mechanisms on the GPU.");
+#endif
 }
 
 } // namespace pele::physics::reactions
