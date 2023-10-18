@@ -1,4 +1,5 @@
 """QSSA information."""
+
 from collections import OrderedDict
 
 

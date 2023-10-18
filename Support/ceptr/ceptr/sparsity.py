@@ -1,4 +1,5 @@
 """Sparsity patterns."""
+
 import ceptr.writer as cw
 
 

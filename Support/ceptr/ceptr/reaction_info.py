@@ -1,4 +1,5 @@
 """Reaction information."""
+
 from collections import OrderedDict
 
 import ceptr.constants as cc
