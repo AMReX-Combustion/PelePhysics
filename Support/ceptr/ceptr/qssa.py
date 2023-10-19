@@ -1,4 +1,5 @@
 """Generate QSSA chemistry file."""
+
 import argparse
 import pathlib
 import sys

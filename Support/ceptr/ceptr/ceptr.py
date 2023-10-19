@@ -1,4 +1,5 @@
 """Convert cantera mechanism to C++ files."""
+
 import argparse
 import pathlib
 import time
