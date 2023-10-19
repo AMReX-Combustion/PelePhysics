@@ -1,4 +1,5 @@
 """Species information."""
+
 from collections import OrderedDict
 
 import pandas as pd

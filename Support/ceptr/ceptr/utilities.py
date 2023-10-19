@@ -1,4 +1,5 @@
 """Utility functions used across ceptr."""
+
 import copy
 import sys
 from collections import Counter

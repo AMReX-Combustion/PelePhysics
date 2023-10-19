@@ -1,4 +1,5 @@
 """Graph utilities for QSSA."""
+
 import pathlib
 
 import matplotlib.pyplot as plt

@@ -1,4 +1,5 @@
 """Production functions."""
+
 import sys
 from math import isclose
 
@@ -696,9 +697,7 @@ def production_rate(
                     f" {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
                 )
                 redp_smp = (
-                    corr_smp
-                    / k_f_smp
-                    * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
+                    corr_smp / k_f_smp * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
                 )
                 if (low_beta == 0) and (low_ae.m == 0):
                     cw.writer(

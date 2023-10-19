@@ -1,4 +1,5 @@
 """Tests for cepter."""
+
 import pathlib
 
 import cantera as ct
