@@ -194,6 +194,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             dim_smp += coefficient
 
     conversion_smp = 1.0
+    sc_cutoff = "1e-14"
     if record_symbolic_operations and syms.remove_1:
         conversion_smp = 1
     if dim == 0:
@@ -210,7 +211,7 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp * syms.refCinv_smp
             else:
-                conversion = "*".join([f"pow(refCinv, {dim:f})"])
+                conversion = "*".join([f"pow(std::max(refCinv, {sc_cutoff}), {dim:f})"])
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp**dim
     else:
@@ -219,7 +220,10 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             if record_symbolic_operations:
                 conversion_smp *= syms.refC_smp
         else:
-            conversion = "*".join([f"pow(refC, {abs(dim):f})"])
+            if dim.is_integer():
+                conversion = "*".join([f"refC"] * int(dim))
+            else:
+                conversion = "*".join([f"pow(std::max(refC, {sc_cutoff}), {abs(dim):f})"])
             if record_symbolic_operations:
                 conversion_smp *= syms.refC_smp**dim
 
@@ -239,6 +243,7 @@ def kc_conv(mechanism, reaction):
     for _, coefficient in reaction.products.items():
         dim += coefficient
 
+    sc_cutoff = "1e-14"
     if dim == 0:
         conversion = ""
     elif dim > 0:
@@ -248,12 +253,18 @@ def kc_conv(mechanism, reaction):
             if dim == 2.0:
                 conversion = "*".join(["(refC * refC)"])
             else:
-                conversion = "*".join([f"pow(refC,{dim:f})"])
+                if dim.is_integer():
+                    conversion = "*".join([f"refC"] * int(dim))
+                else:
+                    conversion = "*".join([f"pow(std::max(refC, {sc_cutoff}),{dim:f})"])
     else:
         if dim == -1.0:
             conversion = "*".join(["refCinv"])
         else:
-            conversion = "*".join([f"pow(refCinv,{abs(dim):f})"])
+            if dim.is_integer():
+                conversion = "*".join([f"refCinv"] * int(dim))
+            else:
+                conversion = "*".join([f"pow(std::max(refCinv, {sc_cutoff}),{abs(dim):f})"])
 
     return conversion
 
