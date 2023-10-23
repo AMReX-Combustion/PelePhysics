@@ -2206,19 +2206,20 @@ aJacobian_precond(
   wdot[3] -= 2 * q; // CO
   wdot[4] += 2 * q; // CO2
   // d()/d[O2]
-  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-12), -0.750000) *
-          pow(sc[1], 0.500000) * sc[3];
+  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-14), -0.750000) *
+          std::sqrt(std::max(sc[1], 1e-14)) * sc[3];
   J[0] -= dqdci;      // dwdot[O2]/d[O2]
   J[3] += -2 * dqdci; // dwdot[CO]/d[O2]
   J[4] += 2 * dqdci;  // dwdot[CO2]/d[O2]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[0], 0.250000) * 0.500000 *
-          pow(std::max(sc[1], 1e-12), -0.500000) * sc[3];
+  dqdci = +k_f * pow(std::max(sc[0], 1e-14), 0.250000) * 0.500000 *
+          pow(std::max(sc[1], 1e-14), -0.500000) * sc[3];
   J[7] -= dqdci;       // dwdot[O2]/d[H2O]
   J[10] += -2 * dqdci; // dwdot[CO]/d[H2O]
   J[11] += 2 * dqdci;  // dwdot[CO2]/d[H2O]
   // d()/d[CO]
-  dqdci = +k_f * pow(sc[0], 0.250000) * pow(sc[1], 0.500000);
+  dqdci = +k_f * pow(std::max(sc[0], 1e-14), 0.250000) *
+          std::sqrt(std::max(sc[1], 1e-14));
   J[21] -= dqdci;      // dwdot[O2]/d[CO]
   J[24] += -2 * dqdci; // dwdot[CO]/d[CO]
   J[25] += 2 * dqdci;  // dwdot[CO2]/d[CO]
@@ -2407,19 +2408,20 @@ aJacobian(
   wdot[3] -= 2 * q; // CO
   wdot[4] += 2 * q; // CO2
   // d()/d[O2]
-  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-12), -0.750000) *
-          pow(sc[1], 0.500000) * sc[3];
+  dqdci = +k_f * 0.250000 * pow(std::max(sc[0], 1e-14), -0.750000) *
+          std::sqrt(std::max(sc[1], 1e-14)) * sc[3];
   J[0] -= dqdci;      // dwdot[O2]/d[O2]
   J[3] += -2 * dqdci; // dwdot[CO]/d[O2]
   J[4] += 2 * dqdci;  // dwdot[CO2]/d[O2]
   // d()/d[H2O]
-  dqdci = +k_f * pow(sc[0], 0.250000) * 0.500000 *
-          pow(std::max(sc[1], 1e-12), -0.500000) * sc[3];
+  dqdci = +k_f * pow(std::max(sc[0], 1e-14), 0.250000) * 0.500000 *
+          pow(std::max(sc[1], 1e-14), -0.500000) * sc[3];
   J[7] -= dqdci;       // dwdot[O2]/d[H2O]
   J[10] += -2 * dqdci; // dwdot[CO]/d[H2O]
   J[11] += 2 * dqdci;  // dwdot[CO2]/d[H2O]
   // d()/d[CO]
-  dqdci = +k_f * pow(sc[0], 0.250000) * pow(sc[1], 0.500000);
+  dqdci = +k_f * pow(std::max(sc[0], 1e-14), 0.250000) *
+          std::sqrt(std::max(sc[1], 1e-14));
   J[21] -= dqdci;      // dwdot[O2]/d[CO]
   J[24] += -2 * dqdci; // dwdot[CO]/d[CO]
   J[25] += 2 * dqdci;  // dwdot[CO2]/d[CO]
