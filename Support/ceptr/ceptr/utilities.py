@@ -55,6 +55,7 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
             order = reaction.orders[symbol]
         else:
             order = coefficient
+        sc_cutoff = "1e-14"
         if symbol in species_info.qssa_species_list:
             if float(order) == 1.0:
                 conc = f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"
@@ -68,10 +69,17 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
                         [f"sc_qss[{species_info.ordered_idx_map[symbol] - n_species}]"]
                         * int(order)
                     )
+                elif float(order) == 0.5:
+                    conc = (
+                        "std::sqrt(std::max(sc_qss"
+                        f"[{species_info.ordered_idx_map[symbol] - n_species}],"
+                        f" {sc_cutoff}))"
+                    )
                 else:
                     conc = (
-                        f"pow(sc_qss[{species_info.ordered_idx_map[symbol] - n_species}],"
-                        f" {float(order):f})"
+                        "pow(sc_qss[std::max("
+                        f"{species_info.ordered_idx_map[symbol] - n_species}],"
+                        f" {sc_cutoff}), {float(order):f})"
                     )
                 if record_symbolic_operations:
                     conc_smp = pow(
@@ -99,10 +107,29 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=Non
                             syms.sc_smp[species_info.ordered_idx_map[symbol]]
                             * syms.sc_smp[species_info.ordered_idx_map[symbol]]
                         )
+                elif order.is_integer():
+                    conc = "*".join(
+                        [f"sc[{species_info.ordered_idx_map[symbol]}]"] * int(order)
+                    )
+                    if record_symbolic_operations:
+                        conc_smp = syms.sc_smp[
+                            species_info.ordered_idx_map[symbol]
+                        ] ** int(order)
+                elif float(order) == 0.5:
+                    conc = (
+                        f"std::sqrt(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
+                        f" {sc_cutoff}))"
+                    )
+                    if record_symbolic_operations:
+                        # FIXME should be sqrt
+                        conc_smp = pow(
+                            syms.sc_smp[species_info.ordered_idx_map[symbol]],
+                            float(order),
+                        )
                 else:
                     conc = (
-                        f"pow(sc[{species_info.ordered_idx_map[symbol]}],"
-                        f" {float(order):f})"
+                        f"pow(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
+                        f" {sc_cutoff}), {float(order):f})"
                     )
                     if record_symbolic_operations:
                         conc_smp = pow(

@@ -1913,15 +1913,17 @@ comp_qfqr(
 {
 
   // reaction 0: 2 CH4 + O2 => 2 CO + 4 H2
-  qf[0] = pow(sc[0], 0.500000) * pow(sc[1], 1.250000);
+  qf[0] =
+    std::sqrt(std::max(sc[0], 1e-14)) * pow(std::max(sc[1], 1e-14), 1.250000);
   qr[0] = 0.0;
 
   // reaction 1: CH4 + H2O <=> CO + 3 H2
   qf[1] = sc[0] * sc[2];
-  qr[1] = sc[4] * pow(sc[6], 3.000000);
+  qr[1] = sc[4] * sc[6] * sc[6] * sc[6];
 
   // reaction 2: 2 H2 + O2 => 2 H2O
-  qf[2] = pow(sc[1], 1.500000) * pow(sc[6], 0.250000);
+  qf[2] = pow(std::max(sc[1], 1e-14), 1.500000) *
+          pow(std::max(sc[6], 1e-14), 0.250000);
   qr[2] = 0.0;
 
   // reaction 3: CO + H2O <=> CO2 + H2
@@ -1997,7 +1999,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   {
     // reaction 0:  2 CH4 + O2 => 2 CO + 4 H2
     const amrex::Real k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
-    const amrex::Real qf = k_f * (pow(sc[0], 0.500000) * pow(sc[1], 1.250000));
+    const amrex::Real qf = k_f * (std::sqrt(std::max(sc[0], 1e-14)) *
+                                  pow(std::max(sc[1], 1e-14), 1.250000));
     const amrex::Real qr = 0.0;
     const amrex::Real qdot = qf - qr;
     wdot[0] -= 2.000000 * qdot;
@@ -2012,7 +2015,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real qf = k_f * (sc[0] * sc[2]);
     const amrex::Real qr =
       k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6])) *
-      ((refCinv * refCinv)) * (sc[4] * pow(sc[6], 3.000000));
+      ((refCinv * refCinv)) * (sc[4] * sc[6] * sc[6] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[2] -= qdot;
@@ -2024,7 +2027,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 2:  2 H2 + O2 => 2 H2O
     const amrex::Real k_f =
       191159684557179 * exp((-1) * tc[0] - (20128.6666321888) * invT);
-    const amrex::Real qf = k_f * (pow(sc[1], 1.500000) * pow(sc[6], 0.250000));
+    const amrex::Real qf = k_f * (pow(std::max(sc[1], 1e-14), 1.500000) *
+                                  pow(std::max(sc[6], 1e-14), 0.250000));
     const amrex::Real qr = 0.0;
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
@@ -2324,7 +2328,8 @@ aJacobian_precond(
   // reaction 0: 2 CH4 + O2 => 2 CO + 4 H2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 0.500000) * pow(sc[1], 1.250000);
+  phi_f =
+    std::sqrt(std::max(sc[0], 1e-14)) * pow(std::max(sc[1], 1e-14), 1.250000);
   k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // rate of progress
@@ -2362,7 +2367,7 @@ aJacobian_precond(
   k_f = 300000 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // reverse
-  phi_r = sc[4] * pow(sc[6], 3.000000);
+  phi_r = sc[4] * sc[6] * sc[6] * sc[6];
   Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]);
   k_r = k_f / Kc;
   dlnKcdT =
@@ -2409,7 +2414,8 @@ aJacobian_precond(
   // reaction 2: 2 H2 + O2 => 2 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[1], 1.500000) * pow(sc[6], 0.250000);
+  phi_f = pow(std::max(sc[1], 1e-14), 1.500000) *
+          pow(std::max(sc[6], 1e-14), 0.250000);
   k_f = 191159684557179 * exp(-1 * tc[0] - (20128.6666321888) * invT);
   dlnkfdT = -1 * invT + (20128.6666321888) * invT2;
   // rate of progress
@@ -2600,7 +2606,8 @@ aJacobian(
   // reaction 0: 2 CH4 + O2 => 2 CO + 4 H2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 0.500000) * pow(sc[1], 1.250000);
+  phi_f =
+    std::sqrt(std::max(sc[0], 1e-14)) * pow(std::max(sc[1], 1e-14), 1.250000);
   k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // rate of progress
@@ -2638,7 +2645,7 @@ aJacobian(
   k_f = 300000 * exp(-(15096.4999741416) * invT);
   dlnkfdT = (15096.4999741416) * invT2;
   // reverse
-  phi_r = sc[4] * pow(sc[6], 3.000000);
+  phi_r = sc[4] * sc[6] * sc[6] * sc[6];
   Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]);
   k_r = k_f / Kc;
   dlnKcdT =
@@ -2685,7 +2692,8 @@ aJacobian(
   // reaction 2: 2 H2 + O2 => 2 H2O
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[1], 1.500000) * pow(sc[6], 0.250000);
+  phi_f = pow(std::max(sc[1], 1e-14), 1.500000) *
+          pow(std::max(sc[6], 1e-14), 0.250000);
   k_f = 191159684557179 * exp(-1 * tc[0] - (20128.6666321888) * invT);
   dlnkfdT = -1 * invT + (20128.6666321888) * invT2;
   // rate of progress

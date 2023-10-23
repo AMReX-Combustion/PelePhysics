@@ -1476,12 +1476,13 @@ def dphase_space(mechanism, species_info, reagents, r, reaction_orders, syms):
                         )
                     elif order == 0.5:
                         conc = (
-                            f"std::sqrt(std::max(sc[{species_info.ordered_idx_map[symbol]}], {sc_cutoff}))"
+                            f"std::sqrt(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
+                            f" {sc_cutoff}))"
                         )
                     else:
                         conc = (
-                            f"pow(std::max(sc[{species_info.ordered_idx_map[symbol]}], {sc_cutoff}),"
-                            f" {order:f})"
+                            f"pow(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
+                            f" {sc_cutoff}), {order:f})"
                         )
                 phi += [conc]
         # Symbol is in qssa_species_list

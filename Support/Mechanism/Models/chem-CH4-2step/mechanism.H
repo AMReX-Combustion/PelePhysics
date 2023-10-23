@@ -1787,7 +1787,8 @@ comp_qfqr(
   qr[0] = 0.0;
 
   // reaction 1: 2 CO + O2 => 2 CO2
-  qf[1] = pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3];
+  qf[1] = pow(std::max(sc[0], 1e-14), 0.250000) *
+          std::sqrt(std::max(sc[1], 1e-14)) * sc[3];
   qr[1] = 0.0;
 
   // reaction 2: 2 CO2 => 2 CO + O2
@@ -1872,8 +1873,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   {
     // reaction 1:  2 CO + O2 => 2 CO2
     const amrex::Real k_f = 6296094821.39524 * exp(-(20128.6666321888) * invT);
-    const amrex::Real qf =
-      k_f * (pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3]);
+    const amrex::Real qf = k_f * (pow(std::max(sc[0], 1e-14), 0.250000) *
+                                  std::sqrt(std::max(sc[1], 1e-14)) * sc[3]);
     const amrex::Real qr = 0.0;
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
@@ -2195,7 +2196,8 @@ aJacobian_precond(
   // reaction 1: 2 CO + O2 => 2 CO2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3];
+  phi_f = pow(std::max(sc[0], 1e-14), 0.250000) *
+          std::sqrt(std::max(sc[1], 1e-14)) * sc[3];
   k_f = 6296094821.39524 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
@@ -2397,7 +2399,8 @@ aJacobian(
   // reaction 1: 2 CO + O2 => 2 CO2
   // a non-third-body and non-pressure-fall-off reaction
   // forward
-  phi_f = pow(sc[0], 0.250000) * pow(sc[1], 0.500000) * sc[3];
+  phi_f = pow(std::max(sc[0], 1e-14), 0.250000) *
+          std::sqrt(std::max(sc[1], 1e-14)) * sc[3];
   k_f = 6296094821.39524 * exp(-(20128.6666321888) * invT);
   dlnkfdT = (20128.6666321888) * invT2;
   // rate of progress
