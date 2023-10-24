@@ -1440,7 +1440,6 @@ def dphase_space(mechanism, species_info, reagents, r, reaction_orders, syms):
         else:
             order = coefficient
         if symbol not in species_info.qssa_species_list:
-            sc_cutoff = "1e-14"
             if symbol == r:
                 if order > 1:
                     phi += [f"{order:f}"]
@@ -1455,16 +1454,24 @@ def dphase_space(mechanism, species_info, reagents, r, reaction_orders, syms):
                             )
                         elif exponent == 0.5:
                             idx = species_info.ordered_idx_map[symbol]
-                            conc = f"std::sqrt(std::max(sc[{idx}], {sc_cutoff}))"
+                            conc = (
+                                f"std::sqrt(std::max(sc[{idx}], {cu.sc_cutoff(0.5)}))"
+                            )
                         else:
                             idx = species_info.ordered_idx_map[symbol]
-                            conc = f"pow(std::max(sc[{idx}], {sc_cutoff}),{exponent:f})"
+                            conc = (
+                                f"pow(std::max(sc[{idx}],"
+                                f" {cu.sc_cutoff(exponent)}),{exponent:f})"
+                            )
                     phi += [conc]
                 elif order < 1:
                     phi += [f"{order:f}"]
                     exponent = order - 1.0
                     idx = species_info.ordered_idx_map[symbol]
-                    conc = f"pow(std::max(sc[{idx}], {sc_cutoff}),{exponent:f})"
+                    conc = (
+                        f"pow(std::max(sc[{idx}],"
+                        f" {cu.sc_cutoff(exponent)}),{exponent:f})"
+                    )
                     phi += [conc]
             else:
                 if order == 1.0:
@@ -1477,12 +1484,12 @@ def dphase_space(mechanism, species_info, reagents, r, reaction_orders, syms):
                     elif order == 0.5:
                         conc = (
                             f"std::sqrt(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
-                            f" {sc_cutoff}))"
+                            f" {cu.sc_cutoff(0.5)}))"
                         )
                     else:
                         conc = (
                             f"pow(std::max(sc[{species_info.ordered_idx_map[symbol]}],"
-                            f" {sc_cutoff}), {order:f})"
+                            f" {cu.sc_cutoff(order)}), {order:f})"
                         )
                 phi += [conc]
         # Symbol is in qssa_species_list
