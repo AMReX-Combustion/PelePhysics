@@ -74,7 +74,7 @@ ReactorCvode::initCvode(
 
   // Solver data
   if (a_udata->solve_type == cvode::fixedPoint) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     a_NLS = SUNNonlinSol_FixedPoint(
       a_y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag(
@@ -90,7 +90,7 @@ ReactorCvode::initCvode(
     amrex::Abort("solve_type=fixed_point only available with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::sparseDirect) {
-#if defined(AMREX_USE_CUDA) && !defined(USE_CYORDER)
+#if defined(AMREX_USE_CUDA) && !defined(PELE_USE_CYORDER)
     a_LS = SUNLinSol_cuSolverSp_batchQR(
       a_y, a_A, a_udata->cusolverHandle,
       *amrex::sundials::The_Sundials_Context());
@@ -107,7 +107,7 @@ ReactorCvode::initCvode(
       "solve_type=sparse_direct only available with CUDA with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::customDirect) {
-#if defined(AMREX_USE_CUDA) && !defined(USE_CYORDER)
+#if defined(AMREX_USE_CUDA) && !defined(PELE_USE_CYORDER)
     a_LS = cvode::SUNLinSol_dense_custom(
       a_y, a_A, stream, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag(
@@ -127,7 +127,7 @@ ReactorCvode::initCvode(
       "solve_type=custom_direct only available with CUDA with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::magmaDirect) {
-#if defined(PELE_USE_MAGMA) && !defined(USE_CYORDER)
+#if defined(PELE_USE_MAGMA) && !defined(PELE_USE_CYORDER)
     a_LS =
       SUNLinSol_MagmaDense(a_y, a_A, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag(
@@ -157,7 +157,7 @@ ReactorCvode::initCvode(
       return (1);
     }
   } else if (a_udata->solve_type == cvode::precGMRES) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     a_LS = SUNLinSol_SPGMR(
       a_y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag(static_cast<void*>(a_LS), "SUNLinSol_SPGMR", 0)) {
@@ -179,7 +179,7 @@ ReactorCvode::initCvode(
   // Analytical Jac. data for direct solver
   // Sparse/custom/magma direct uses the same Jacobian functions
   if (a_udata->analytical_jacobian == 1) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     flag = CVodeSetJacFn(a_cvode_mem, cvode::cJac);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1)) {
       return (1);
@@ -191,7 +191,7 @@ ReactorCvode::initCvode(
 
   // Analytical Jac. data for iterative solver preconditioner
   if (a_udata->precond_type == cvode::sparseSimpleAJac) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     flag = CVodeSetPreconditioner(a_cvode_mem, cvode::Precond, cvode::PSolve);
     if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1)) {
       return (1);
@@ -266,7 +266,7 @@ ReactorCvode::initCvode(
 
   // Linear solver data
   if (a_udata->solve_type == cvode::fixedPoint) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     a_NLS = SUNNonlinSol_FixedPoint(
       a_y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
     if (static_cast<bool>(utils::check_flag(
@@ -285,7 +285,7 @@ ReactorCvode::initCvode(
   } else if (
     a_udata->solve_type == cvode::denseFDDirect ||
     a_udata->solve_type == cvode::denseDirect) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     // Create dense SUNMatrix for use in linear solves
     a_A = SUNDenseMatrix(
       neq_tot, neq_tot, *amrex::sundials::The_Sundials_Context());
@@ -310,7 +310,7 @@ ReactorCvode::initCvode(
       "solve_type=dense_direct||dense_fddirect only available with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::sparseDirect) {
-#if defined(PELE_USE_KLU) && !defined(USE_CYORDER)
+#if defined(PELE_USE_KLU) && !defined(PELE_USE_CYORDER)
     // Create sparse SUNMatrix for use in linear solves
     a_A = SUNSparseMatrix(
       neq_tot, neq_tot, (a_udata->NNZ) * a_udata->ncells, CSC_MAT,
@@ -333,7 +333,7 @@ ReactorCvode::initCvode(
 #endif
 
   } else if (a_udata->solve_type == cvode::customDirect) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     // Create dense SUNMatrix for use in linear solves
     a_A = SUNSparseMatrix(
       neq_tot, neq_tot, (a_udata->NNZ) * a_udata->ncells, CSR_MAT,
@@ -375,7 +375,7 @@ ReactorCvode::initCvode(
       return (1);
     }
   } else if (a_udata->solve_type == cvode::precGMRES) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     // Create the GMRES linear solver object
     a_LS = SUNLinSol_SPGMR(
       a_y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
@@ -397,7 +397,7 @@ ReactorCvode::initCvode(
 
   // Analytical Jac. data for direct solver
   if (a_udata->analytical_jacobian == 1) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     if (a_udata->solve_type == cvode::denseDirect) {
       // Set the user-supplied Jacobian routine Jac
       flag = CVodeSetJacFn(a_cvode_mem, cvode::cJac);
@@ -409,7 +409,7 @@ ReactorCvode::initCvode(
     amrex::Abort("analytical_jacobian only available with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::sparseDirect) {
-#if defined(PELE_USE_KLU) && !defined(USE_CYORDER)
+#if defined(PELE_USE_KLU) && !defined(PELE_USE_CYORDER)
     // Set the user-supplied KLU Jacobian routine Jac
     flag = CVodeSetJacFn(a_cvode_mem, cvode::cJac_KLU);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
@@ -419,7 +419,7 @@ ReactorCvode::initCvode(
       "solve_type=sparse_direct not valid without KLU library and YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::customDirect) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     // Set the user-supplied Jacobian routine Jac
     flag = CVodeSetJacFn(a_cvode_mem, cvode::cJac_sps);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1) != 0) {
@@ -432,7 +432,7 @@ ReactorCvode::initCvode(
 
   // Analytical Jac. data for iterative solver preconditioner
   if (a_udata->precond_type == cvode::denseSimpleAJac) {
-#ifndef USE_CYORDER
+#ifndef PELE_USE_CYORDER
     // Set the JAcobian-times-vector function
     flag = CVodeSetJacTimes(a_cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1) != 0) {
@@ -447,7 +447,7 @@ ReactorCvode::initCvode(
     amrex::Abort("precond_type=denseSimpleAJac only available with YCOrder");
 #endif
   } else if (a_udata->precond_type == cvode::sparseSimpleAJac) {
-#if defined(PELE_USE_KLU) && !defined(USE_CYORDER)
+#if defined(PELE_USE_KLU) && !defined(PELE_USE_CYORDER)
     // Set the JAcobian-times-vector function
     flag = CVodeSetJacTimes(a_cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
@@ -518,7 +518,7 @@ ReactorCvode::checkCvodeOptions(
 {
   if (verbose > 0) {
     amrex::Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
-#ifdef USE_CYORDER
+#ifdef PELE_USE_CYORDER
     amrex::Print() << "Using CYOrder\n";
 #else
     amrex::Print() << "Using YCOrder\n";
@@ -590,7 +590,7 @@ ReactorCvode::checkCvodeOptions(
     a_solve_type = cvode::customDirect;
     a_ajac = 1;
 #ifdef AMREX_USE_GPU
-#if defined(AMREX_USE_CUDA) && !defined(USE_CYORDER)
+#if defined(AMREX_USE_CUDA) && !defined(PELE_USE_CYORDER)
     if (verbose > 0) {
       amrex::Print()
         << " Using a custom direct linear solve with analytical Jacobian\n";
@@ -1024,7 +1024,7 @@ ReactorCvode::allocUserData(
     amrex::Abort("solver_type=sparse_direct is only available with CUDA");
 #endif
   } else if (udata->solve_type == cvode::customDirect) {
-#if defined(AMREX_USE_CUDA) && !defined(USE_CYORDER)
+#if defined(AMREX_USE_CUDA) && !defined(PELE_USE_CYORDER)
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
     udata->csr_row_count_h =
       (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
