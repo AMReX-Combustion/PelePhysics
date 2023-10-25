@@ -1,4 +1,5 @@
 """Constants."""
+
 import cantera as ct
 from pint import UnitRegistry
 

@@ -1,4 +1,5 @@
 """Classes for toml input files."""
+
 import sys
 
 import toml

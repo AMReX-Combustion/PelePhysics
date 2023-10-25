@@ -1,4 +1,5 @@
 """QSSA utilities."""
+
 import itertools
 
 import ceptr.qssa_graphs as cqg

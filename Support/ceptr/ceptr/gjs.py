@@ -1,4 +1,5 @@
 """Gauss-Jordan functions."""
+
 import ceptr.writer as cw
 
 

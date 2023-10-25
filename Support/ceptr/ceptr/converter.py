@@ -1,4 +1,5 @@
 """Generate C++ files for a mechanism."""
+
 import pathlib
 import shutil
 import subprocess as spr
