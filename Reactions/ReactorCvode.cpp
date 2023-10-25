@@ -514,6 +514,13 @@ ReactorCvode::checkCvodeOptions(
 {
   if (verbose > 0) {
     amrex::Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
+#ifdef USE_CYORDER
+    amrex::Print() << "Using CYOrder"
+                   << "\n";
+#else
+    amrex::Print() << "Using YCOrder"
+                   << "\n";
+#endif
   }
 
   //-------------------------------------------------------------
