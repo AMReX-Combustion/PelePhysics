@@ -45,8 +45,9 @@
 #endif
 
 // CYOrder is faster on GPUs, but only works for cvode.solve_type=GMRES.
-// We default to CYOrder in this specific case,
-// but defining PELE_USE_CYORDER disables some solve_type options.
+// We default to CYOrder in the specific case below,
+// while defining PELE_USE_YCORDER enables more solvers but less GMRES
+// performance.
 #if !defined(AMREX_USE_GPU) || defined(PELE_USE_MAGMA)
 #define PELE_USE_YCORDER
 #endif
