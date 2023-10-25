@@ -29,7 +29,7 @@ else
       CCOMPILER = pgicc
       CXXCOMPILER = pgiCC
     else
-      ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),llvm))
+      ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),llvm clang clang++))
         CCOMPILER = clang
         CXXCOMPILER = clang++
       else
@@ -67,7 +67,7 @@ INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
   KLUSuffix   := .KLU
-  KLU_DEFINES=-DENABLE_KLU:BOOL=ON -DKLU_INCLUDE_DIR=${INSTALL_PREFIX}/include -DKLU_LIBRARY_DIR=${INSTALL_PREFIX}/lib 
+  KLU_DEFINES=-DENABLE_KLU:BOOL=ON -DKLU_INCLUDE_DIR=${INSTALL_PREFIX}/include -DKLU_LIBRARY_DIR=${INSTALL_PREFIX}/lib
   SS_BUILD_PREFIX=$(PWD)/BUILD/SUITESPARSE
 
   SS_DIST_DIR=$(SS_BUILD_PREFIX)/dist
