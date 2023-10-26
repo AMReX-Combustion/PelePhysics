@@ -98,9 +98,9 @@ def ajac(
 
             cw.writer(fstream)
 
-            cw.writer(fstream, "amrex::Real invT = 1.0 / T;")
-            cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
-            cw.writer(fstream, "amrex::Real logT = log(T);")
+            cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+            cw.writer(fstream, "const amrex::Real invT2 = invT * invT;")
+            cw.writer(fstream, "const amrex::Real logT = log(T);")
 
             cw.writer(fstream)
 

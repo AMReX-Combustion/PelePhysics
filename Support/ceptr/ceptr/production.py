@@ -1475,8 +1475,8 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "{")
 
     if n_reactions > 0:
-        cw.writer(fstream, "amrex::Real invT = 1.0 / T;")
-        cw.writer(fstream, "amrex::Real logT = log(T);")
+        cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+        cw.writer(fstream, "const amrex::Real logT = log(T);")
 
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
         cw.writer(fstream, f"amrex::Real g_RT[{species_info.n_species}];")
