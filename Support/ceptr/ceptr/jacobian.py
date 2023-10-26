@@ -397,14 +397,14 @@ def ajac_symbolic(
     cw.writer(fstream, "T_pert1 = T + pertT;")
     cw.writer(fstream)
     if syms.store_in_jacobian:
-        cw.writer(fstream, "invT = 1.0 / T_pert1;")
+        cw.writer(fstream, "const amrex::Real invT_pert1 = 1.0 / T_pert1;")
+        cw.writer(fstream, "const amrex::Real logT_pert1 = log(T_pert1);")
         cw.writer(
             fstream,
             "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss,"
             f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], T_pert1,"
-            " invT, logT);",
+            " invT_pert1, logT_pert1);",
         )
-        cw.writer(fstream, "invT = 1.0 / T;")
         cw.writer(
             fstream,
             "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss,"
