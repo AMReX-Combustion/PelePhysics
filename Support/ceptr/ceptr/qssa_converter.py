@@ -1454,6 +1454,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(fstream, "{")
 
     cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+    cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
     if mechanism.n_reactions == 0:
@@ -1977,7 +1978,8 @@ def qssa_component_functions(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss"
-        + "(const amrex::Real T, amrex::Real invT, amrex::Real * k_f)",
+        + "(const amrex::Real T, const amrex::Real invT, const amrex::Real logT,"
+        " amrex::Real * k_f)",
     )
     cw.writer(fstream, "{")
     for index, qssa_reac in enumerate(reaction_info.qssa_reactions):

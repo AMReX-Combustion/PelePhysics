@@ -161,7 +161,7 @@ def ajac(
                     f" qf_qss[{reaction_info.n_qssa_reactions}],"
                     f" qr_qss[{reaction_info.n_qssa_reactions}];",
                 )
-                cw.writer(fstream, "comp_k_f_qss(T, invT, kf_qss);")
+                cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
                 cw.writer(
                     fstream,
                     "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
@@ -338,7 +338,8 @@ def ajac_symbolic(
         cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
         cw.writer(fstream, "}")
 
-    cw.writer(fstream, "amrex::Real invT = 1.0 / T;")
+    cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+    cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
     if n_reactions == 0:
@@ -401,14 +402,14 @@ def ajac_symbolic(
             fstream,
             "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss,"
             f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], T_pert1,"
-            " invT);",
+            " invT, logT);",
         )
         cw.writer(fstream, "invT = 1.0 / T;")
         cw.writer(
             fstream,
             "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss,"
             f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], T,"
-            " invT);",
+            " invT, logT);",
         )
     else:
         cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
@@ -435,7 +436,7 @@ def ajac_symbolic(
         if species_info.n_qssa_species > 0:
             if not syms.store_in_jacobian:
                 cw.writer(fstream, cw.comment("Fill sc_qss here"))
-                cw.writer(fstream, "comp_k_f_qss(T, invT, kf_qss);")
+                cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
                 cw.writer(
                     fstream,
                     "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
