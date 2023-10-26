@@ -530,7 +530,7 @@ progressRateFR(
   amrex::Real sc_qss[33];
   // Fill sc_qss here
   amrex::Real kf_qss[397], qf_qss[397], qr_qss[397];
-  comp_k_f_qss(T, invT, kf_qss);
+  comp_k_f_qss(T, invT, logT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);
   comp_sc_qss(sc_qss, qf_qss, qr_qss);
   comp_qfqr(q_f, q_r, sc, sc_qss, T, invT, logT);

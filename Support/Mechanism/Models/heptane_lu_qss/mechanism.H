@@ -9558,6 +9558,7 @@ comp_qss_coeff(
   amrex::Real* g_RT_qss)
 {
   const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   const amrex::Real refC = 101325 / 8.31446 * invT;
@@ -11974,7 +11975,11 @@ comp_qss_coeff(
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-comp_k_f_qss(const amrex::Real T, amrex::Real invT, amrex::Real* k_f)
+comp_k_f_qss(
+  const amrex::Real T,
+  const amrex::Real invT,
+  const amrex::Real logT,
+  amrex::Real* k_f)
 {
   // reaction 8: ch3o (+M) <=> ch2o + h (+M)
   k_f[0] = 54500000000000 * exp(-(6793.42498836372) * invT);
@@ -19363,7 +19368,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   amrex::Real sc_qss[33];
   amrex::Real kf_qss[397], qf_qss[397], qr_qss[397];
   // Fill sc_qss here
-  comp_k_f_qss(T, invT, kf_qss);
+  comp_k_f_qss(T, invT, logT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);
   comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
@@ -27875,7 +27880,8 @@ productionRate_light(
   amrex::Real* qf_qss,
   amrex::Real* qr_qss,
   const amrex::Real T,
-  const amrex::Real invT)
+  const amrex::Real invT,
+  const amrex::Real logT)
 {
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   const amrex::Real refC = 101325 / 8.31446 * invT;
@@ -27896,7 +27902,7 @@ productionRate_light(
   gibbs_qss(g_RT_qss, T);
 
   // Fill sc_qss here
-  comp_k_f_qss(T, invT, kf_qss);
+  comp_k_f_qss(T, invT, logT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);
   comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
@@ -37149,7 +37155,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 {
 #if defined(PELE_COMPILE_AJACOBIAN) || !defined(AMREX_USE_HIP)
-  amrex::Real invT = 1.0 / T;
+  const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   const amrex::Real refC = 101325 / 8.31446 * invT;
@@ -37167,13 +37174,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   pertT = 1e-2;
   T_pert1 = T + pertT;
 
-  invT = 1.0 / T_pert1;
+  const amrex::Real invT_pert1 = 1.0 / T_pert1;
+  const amrex::Real logT_pert1 = log(T_pert1);
   productionRate_light(
     wdot_pert1, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[0], &J[397], T_pert1,
-    invT);
-  invT = 1.0 / T;
+    invT_pert1, logT_pert1);
   productionRate_light(
-    wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[0], &J[397], T, invT);
+    wdot, sc, g_RT, g_RT_qss, sc_qss, kf_qss, &J[0], &J[397], T, invT, logT);
 
   // compute the species enthalpy
   speciesEnthalpy(h_RT, T);
