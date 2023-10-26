@@ -113,25 +113,30 @@ DiagPDF::processDiag(
       auto* pdf_d_p = pdf_d.dataPtr();
       amrex::ParallelFor(
         *a_state[lev], amrex::IntVect(0),
-        [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
+        [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k) != 0) {
             int cbin = static_cast<int>(std::floor(
               (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
-            amrex::HostDevice::Atomic::Add(
-              &(pdf_d_p[cbin]), varrs[box_no](i, j, k));
+            if (cbin >= 0 && cbin < nBins) {
+              amrex::HostDevice::Atomic::Add(
+                &(pdf_d_p[cbin]), varrs[box_no](i, j, k));
+            }
           }
         });
     } else {
       auto* pdf_d_p = pdf_d.dataPtr();
       amrex::ParallelFor(
         *a_state[lev], amrex::IntVect(0),
-        [=, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
+        [=, nBins = m_nBins, lowBnd = m_lowBnd] AMREX_GPU_DEVICE(
           int box_no, int i, int j, int k) noexcept {
           if (marrs[box_no](i, j, k) != 0) {
             int cbin = static_cast<int>(std::floor(
               (sarrs[box_no](i, j, k, fieldIdx) - lowBnd) / binWidth));
-            amrex::HostDevice::Atomic::Add(&(pdf_d_p[cbin]), amrex::Real(1.0));
+            if (cbin >= 0 && cbin < nBins) {
+              amrex::HostDevice::Atomic::Add(
+                &(pdf_d_p[cbin]), amrex::Real(1.0));
+            }
           }
         });
     }
@@ -140,6 +145,7 @@ DiagPDF::processDiag(
 
   amrex::Gpu::copy(
     amrex::Gpu::deviceToHost, pdf_d.begin(), pdf_d.end(), pdf.begin());
+  amrex::Gpu::streamSynchronize();
   amrex::ParallelDescriptor::ReduceRealSum(
     pdf.data(), static_cast<int>(pdf.size()));
   auto sum =
