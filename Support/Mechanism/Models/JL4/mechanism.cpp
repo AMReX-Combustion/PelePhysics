@@ -69,8 +69,8 @@ void
 progressRateFR(
   amrex::Real* q_f, amrex::Real* q_r, amrex::Real* sc, amrex::Real T)
 {
-  amrex::Real invT = 1.0 / T;
-  amrex::Real logT = log(T);
+  const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
   gibbs(g_RT, T);

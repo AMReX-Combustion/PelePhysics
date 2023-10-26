@@ -8728,9 +8728,9 @@ aJacobian_precond(
     val = 0.0;
   }
 
-  amrex::Real invT = 1.0 / T;
-  amrex::Real invT2 = invT * invT;
-  amrex::Real logT = log(T);
+  const amrex::Real invT = 1.0 / T;
+  const amrex::Real invT2 = invT * invT;
+  const amrex::Real logT = log(T);
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 / T;
@@ -15610,9 +15610,9 @@ aJacobian(
     val = 0.0;
   }
 
-  amrex::Real invT = 1.0 / T;
-  amrex::Real invT2 = invT * invT;
-  amrex::Real logT = log(T);
+  const amrex::Real invT = 1.0 / T;
+  const amrex::Real invT2 = invT * invT;
+  const amrex::Real logT = log(T);
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 / T;
