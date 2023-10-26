@@ -1658,7 +1658,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 " invT);",
             )
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
-            redp_smp *= sme.exp(low_beta * syms.tc_smp[0] - coeff * syms.invT_smp)
+            redp_smp *= sme.exp(low_beta * syms.logT_smp - coeff * syms.invT_smp)
             if is_troe:
                 cw.writer(fstream, "const amrex::Real F = redP / (1.0 + redP);")
                 f_smp = redp_smp / (1.0 + redp_smp)
@@ -1674,9 +1674,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                         )
                         first_factor = syms.convert_number_to_int(1.0 - troe[0])
                         second_factor = syms.convert_number_to_int(-1 / troe[1])
-                        int_smp += first_factor * sme.exp(
-                            syms.tc_smp[1] * second_factor
-                        )
+                        int_smp += first_factor * sme.exp(syms.T_smp * second_factor)
                 else:
                     cw.writer(fstream, "     0.0 ")
                     int_smp += 0.0
@@ -1688,9 +1686,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                         )
                         first_factor = syms.convert_number_to_int(troe[0])
                         second_factor = syms.convert_number_to_int(-1 / troe[2])
-                        int_smp += first_factor * sme.exp(
-                            syms.tc_smp[1] * second_factor
-                        )
+                        int_smp += first_factor * sme.exp(syms.T_smp * second_factor)
                 else:
                     cw.writer(fstream, "     0.0 ")
                     int_smp += 0.0
@@ -2062,7 +2058,7 @@ def qssa_component_functions(
         else:
             if ae == 0:
                 cw.writer(fstream, f"           * exp(({beta:.15g}) * logT);")
-                syms.kf_qss_smp_tmp[index] *= sme.exp(beta * syms.tc_smp[0])
+                syms.kf_qss_smp_tmp[index] *= sme.exp(beta * syms.logT_smp)
             elif beta == 0:
                 cw.writer(
                     fstream,
@@ -2081,7 +2077,7 @@ def qssa_component_functions(
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                 syms.kf_qss_smp_tmp[index] *= sme.exp(
-                    beta * syms.tc_smp[0] - coeff * syms.invT_smp
+                    beta * syms.logT_smp - coeff * syms.invT_smp
                 )
 
     cw.writer(fstream)
