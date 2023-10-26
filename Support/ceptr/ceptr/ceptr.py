@@ -7,6 +7,24 @@ import time
 import cantera as ct
 
 import ceptr.converter as converter
+import ceptr.optional_mpi as ompi
+
+
+def parse_lst_file(lst):
+    """Parse a file containing a list of mechanism files."""
+    fnames = []
+    with open(lst, "r") as f:
+        for line in f:
+            if not line.startswith("#"):
+                fnames.append(line)
+
+    if ompi.use_mpi():
+        comm = ompi.world_comm()
+        rank = comm.Get_rank()
+        nprocs = comm.Get_size()
+        fnames = fnames[rank::nprocs]
+
+    return fnames
 
 
 def convert(
@@ -35,17 +53,16 @@ def convert_lst(
 ):
     """Convert mechanisms from a file containing a list of directories."""
     lpath = pathlib.Path(lst)
-    with open(lst, "r") as f:
-        for line in f:
-            if not line.startswith("#"):
-                mechname = lpath.parents[0] / line.strip()
-                print(f"""Converting file {mechname}""")
-                convert(
-                    mechname,
-                    jacobian,
-                    qss_format_input,
-                    qss_symbolic_jac,
-                )
+    lines = parse_lst_file(lst)
+    for line in lines:
+        mechname = lpath.parents[0] / line.strip()
+        print(f"""Converting file {mechname}""")
+        convert(
+            mechname,
+            jacobian,
+            qss_format_input,
+            qss_symbolic_jac,
+        )
 
 
 def convert_lst_qss(
@@ -54,19 +71,18 @@ def convert_lst_qss(
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
     lpath = pathlib.Path(lst)
-    with open(lst, "r") as f:
-        for line in f:
-            if not line.startswith("#"):
-                mech_file, format_file, _, _ = line.split()
-                mechname = lpath.parents[0] / mech_file.strip()
-                qss_format_input = lpath.parents[0] / format_file.strip()
-                print(f"""Converting file {mechname}""")
-                convert(
-                    mechname,
-                    jacobian,
-                    qss_format_input,
-                    True,
-                )
+    lines = parse_lst_file(lst)
+    for line in lines:
+        mech_file, format_file, _, _ = line.split()
+        mechname = lpath.parents[0] / mech_file.strip()
+        qss_format_input = lpath.parents[0] / format_file.strip()
+        print(f"""Converting file {mechname}""")
+        convert(
+            mechname,
+            jacobian,
+            qss_format_input,
+            True,
+        )
 
 
 def main():

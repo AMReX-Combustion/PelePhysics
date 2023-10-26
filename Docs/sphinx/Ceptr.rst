@@ -1,7 +1,7 @@
 .. highlight:: rst
 
 .. _sec:ceptr:
-               
+
 CEPTR: Chemistry Evaluation for Pele Through Recasting
 ======================================================
 
@@ -19,9 +19,11 @@ To install CEPTR dependencies::
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry update
 
-
 Usage
 -----
+
+Generating for a single chemistry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are three ways to use CEPTR to generate C++ mechanism files for a given chemistry
 
@@ -39,10 +41,22 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
      $ bash ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/converter.sh -f ./LiDryer/mechanism.yaml
 
 
+Batched generation
+^^^^^^^^^^^^^^^^^^
+
 For non-reduced chemistries, CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
 
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
+
+.. note::
+
+   If you are generating many mechanisms at once (e.g., a list of mechanism files), then you may want to consider using MPI. `mpi4py` is an optional dependency that can be installed and then used like this::
+
+     $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
+     $ poetry install -E mpi
+     $ poetry run mpirun -np 8 convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
+
 
 For reduced chemistries, CEPTR can take a file with a list of ``qssa.yaml`` and ``qssa_input.toml`` to convert::
 
@@ -99,5 +113,3 @@ The full list of options is::
 For a detailed description of these options and a further information on the way QSS mechanism are treated in `CEPTR` the reader may consult :ref:`the QSS section <sec_qss>`.
 
 See Tutorials (:ref:`Generating NC12H26 QSS mechanism with analytical jacobian <sec_tutqss1>` and :ref:`Generating NC12H26 QSS mechanism without analytical jacobian <sec_tutqss2>`) for generating QSS mechanisms from the ``.yaml`` files.
-
-
