@@ -21,7 +21,7 @@ ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
     CXXCOMPILER = g++
   endif
 else
-  ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
+  ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel-classic))
     CCOMPILER = icc
     CXXCOMPILER = icpc
   else
@@ -45,7 +45,11 @@ else
                CCOMPILER = icx
                CXXCOMPILER = icpx
 	    else
-             $(error Unknown COMP setting)
+              ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
+                $(error for intel, specify COMP as intel-classic or intel-llvm)
+              else
+                $(error Unknown COMP setting)
+              endif
 	    endif
 	  endif
         endif
