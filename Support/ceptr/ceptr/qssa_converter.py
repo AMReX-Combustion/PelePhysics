@@ -1449,11 +1449,11 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
         + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const"
         " amrex::Real * sc,"
-        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
+        + "const amrex::Real T, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
     )
     cw.writer(fstream, "{")
 
-    cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
     cw.writer(fstream)
 
     if mechanism.n_reactions == 0:
@@ -1653,7 +1653,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
             redp_smp = corr_smp / syms.kf_qss_smp[idx] * coeff
             cw.writer(
                 fstream,
-                f"           * exp({low_beta:.15g}  * tc[0] -"
+                f"           * exp({low_beta:.15g}  * logT -"
                 f" {(1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m:.15g} *"
                 " invT);",
             )
@@ -1670,8 +1670,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                     if 1.0 - troe[0] != 0:
                         cw.writer(
                             fstream,
-                            f"    {1.0 - troe[0]:.15g} * exp(-tc[1] *"
-                            f" {1 / troe[1]:.15g})",
+                            f"    {1.0 - troe[0]:.15g} * exp(-T * {1 / troe[1]:.15g})",
                         )
                         first_factor = syms.convert_number_to_int(1.0 - troe[0])
                         second_factor = syms.convert_number_to_int(-1 / troe[1])
@@ -1685,7 +1684,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                     if troe[0] != 0:
                         cw.writer(
                             fstream,
-                            f"    + {troe[0]:.15g} * exp(-tc[1] * {1 / troe[2]:.15g})",
+                            f"    + {troe[0]:.15g} * exp(-T * {1 / troe[2]:.15g})",
                         )
                         first_factor = syms.convert_number_to_int(troe[0])
                         second_factor = syms.convert_number_to_int(-1 / troe[2])
@@ -1982,7 +1981,7 @@ def qssa_component_functions(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss"
-        + "(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)",
+        + "(const amrex::Real T, amrex::Real invT, amrex::Real * k_f)",
     )
     cw.writer(fstream, "{")
     for index, qssa_reac in enumerate(reaction_info.qssa_reactions):
@@ -2062,7 +2061,7 @@ def qssa_component_functions(
             cw.writer(fstream, "           ;")
         else:
             if ae == 0:
-                cw.writer(fstream, f"           * exp(({beta:.15g}) * tc[0]);")
+                cw.writer(fstream, f"           * exp(({beta:.15g}) * logT);")
                 syms.kf_qss_smp_tmp[index] *= sme.exp(beta * syms.tc_smp[0])
             elif beta == 0:
                 cw.writer(
@@ -2077,7 +2076,7 @@ def qssa_component_functions(
             else:
                 cw.writer(
                     fstream,
-                    f"           * exp(({beta:.15g}) * tc[0] -"
+                    f"           * exp(({beta:.15g}) * logT -"
                     f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
                 )
                 coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude

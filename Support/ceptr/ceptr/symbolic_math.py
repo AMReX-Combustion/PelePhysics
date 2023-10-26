@@ -54,14 +54,13 @@ class SymbolicMath:
 
         self.T_smp = sme.symbols("T")
         # Keep tc as symbols so we don't compute powers all the time
-        # self.tc_smp = [
-        #    sme.log(self.T_smp),
-        #    self.T_smp,
-        #    self.T_smp**2,
-        #    self.T_smp**3,
-        #    self.T_smp**4,
-        # ]
-        self.tc_smp = [sme.symbols("tc[" + str(i) + "]") for i in range(5)]
+        self.tc_smp = [
+            sme.log(self.T_smp),
+            self.T_smp,
+            self.T_smp**2,
+            self.T_smp**3,
+            self.T_smp**4,
+        ]
         # Keep invT as symbol so we don't do division all the time
         # self.invT_smp = 1.0 / self.tc_smp[1]
         self.invT_smp = sme.symbols("invT")
