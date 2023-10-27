@@ -44,19 +44,15 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
 Batched generation
 ^^^^^^^^^^^^^^^^^^
 
+.. note::
+
+   If you are using batched generation as outlined here, it will automatically use multiprocessing to generate the files in parallel using all CPUs detected on the machine. If you want to change that you can pass the optional argument ``-n NPCU``, wheren ``NCPU`` is an integer indicating the number of processes you want to use.
+
+
 For non-reduced chemistries, CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
 
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
-
-.. note::
-
-   If you are generating many mechanisms at once (e.g., a list of mechanism files), then you may want to consider using MPI. `mpi4py` is an optional dependency that can be installed and then used like this::
-
-     $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
-     $ poetry install -E mpi
-     $ poetry run mpirun -np 8 convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
-
 
 For reduced chemistries, CEPTR can take a file with a list of ``qssa.yaml`` and ``qssa_input.toml`` to convert::
 

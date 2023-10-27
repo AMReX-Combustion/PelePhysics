@@ -3,28 +3,37 @@
 import argparse
 import pathlib
 import time
+from itertools import repeat
+from multiprocessing import Pool, cpu_count
 
 import cantera as ct
 
 import ceptr.converter as converter
-import ceptr.optional_mpi as ompi
 
 
 def parse_lst_file(lst):
-    """Parse a file containing a list of mechanism files."""
+    """Return mechanism paths give a file containing a list of mechanism files."""
+    lpath = pathlib.Path(lst)
+    fnames = []
+    with open(lst, "r") as f:
+        for line in f:
+            if not line.startswith("#"):
+                fnames.append(line)
+    return [lpath.parents[0] / fn.strip() for fn in fnames]
+
+
+def parse_qss_lst_file(lst):
+    """Return mechanism paths give a file containing a list of qss mechanism files."""
+    lpath = pathlib.Path(lst)
     fnames = []
     with open(lst, "r") as f:
         for line in f:
             if not line.startswith("#"):
                 fnames.append(line)
 
-    if ompi.use_mpi():
-        comm = ompi.world_comm()
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-        fnames = fnames[rank::nprocs]
-
-    return fnames
+    mechnames = [lpath.parents[0] / fn.split()[0].strip() for fn in fnames]
+    qss_format_inputs = [lpath.parents[0] / fn.split()[1].strip() for fn in fnames]
+    return mechnames, qss_format_inputs
 
 
 def convert(
@@ -34,6 +43,7 @@ def convert(
     qss_symbolic_jac,
 ):
     """Convert a mechanism file."""
+    print(f"""Converting file {fname}""")
     mechanism = ct.Solution(fname)
     conv = converter.Converter(
         mechanism,
@@ -50,38 +60,35 @@ def convert_lst(
     jacobian,
     qss_format_input,
     qss_symbolic_jac,
+    ncpu,
 ):
     """Convert mechanisms from a file containing a list of directories."""
-    lpath = pathlib.Path(lst)
-    lines = parse_lst_file(lst)
-    for line in lines:
-        mechname = lpath.parents[0] / line.strip()
-        print(f"""Converting file {mechname}""")
-        convert(
-            mechname,
-            jacobian,
-            qss_format_input,
-            qss_symbolic_jac,
+    mechnames = parse_lst_file(lst)
+    print(f"Using {ncpu} processes")
+    with Pool(ncpu) as pool:
+        pool.starmap(
+            convert,
+            zip(
+                mechnames,
+                repeat(jacobian),
+                repeat(qss_format_input),
+                repeat(qss_symbolic_jac),
+            ),
         )
 
 
 def convert_lst_qss(
     lst,
     jacobian,
+    ncpu,
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
-    lpath = pathlib.Path(lst)
-    lines = parse_lst_file(lst)
-    for line in lines:
-        mech_file, format_file, _, _ = line.split()
-        mechname = lpath.parents[0] / mech_file.strip()
-        qss_format_input = lpath.parents[0] / format_file.strip()
-        print(f"""Converting file {mechname}""")
-        convert(
-            mechname,
-            jacobian,
-            qss_format_input,
-            True,
+    mechnames, qss_format_inputs = parse_qss_lst_file(lst)
+    print(f"Using {ncpu} processes")
+    with Pool(ncpu) as pool:
+        pool.starmap(
+            convert,
+            zip(mechnames, repeat(jacobian), qss_format_inputs, repeat(True)),
         )
 
 
@@ -120,6 +127,10 @@ def main():
         help="Do not generate a jacobian",
     )
 
+    parser.add_argument(
+        "-n", "--ncpu", help="Number of processes to use", type=int, default=cpu_count()
+    )
+
     args = parser.parse_args()
 
     if args.fname:
@@ -135,11 +146,13 @@ def main():
             not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
+            args.ncpu,
         )
     elif args.lst_qss:
         convert_lst_qss(
             args.lst_qss,
             not args.no_jacobian,
+            args.ncpu,
         )
     end = time.time()
     print(f"CEPTR run time: {end-start:.2f} s")
