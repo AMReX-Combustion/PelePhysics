@@ -98,13 +98,9 @@ def ajac(
 
             cw.writer(fstream)
 
-            cw.writer(
-                fstream,
-                "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
-                + cw.comment("temperature cache"),
-            )
-            cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
-            cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
+            cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+            cw.writer(fstream, "const amrex::Real invT2 = invT * invT;")
+            cw.writer(fstream, "const amrex::Real logT = log(T);")
 
             cw.writer(fstream)
 
@@ -131,25 +127,25 @@ def ajac(
 
             cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
             cw.writer(fstream, f"amrex::Real g_RT[{n_species}];")
-            cw.writer(fstream, "gibbs(g_RT, tc);")
+            cw.writer(fstream, "gibbs(g_RT, T);")
             if species_info.n_qssa_species > 0:
                 cw.writer(
                     fstream,
                     f"amrex::Real g_RT_qss[{species_info.n_qssa_species}];",
                 )
-                cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+                cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
 
             cw.writer(fstream)
 
             cw.writer(fstream, cw.comment("compute the species enthalpy"))
             cw.writer(fstream, f"amrex::Real h_RT[{n_species}];")
-            cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+            cw.writer(fstream, "speciesEnthalpy(h_RT, T);")
             if species_info.n_qssa_species > 0:
                 cw.writer(
                     fstream,
                     f"amrex::Real h_RT_qss[{species_info.n_qssa_species}];",
                 )
-                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, T);")
 
             if species_info.n_qssa_species > 0:
                 cw.writer(fstream)
@@ -165,10 +161,10 @@ def ajac(
                     f" qf_qss[{reaction_info.n_qssa_reactions}],"
                     f" qr_qss[{reaction_info.n_qssa_reactions}];",
                 )
-                cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+                cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
                 cw.writer(
                     fstream,
-                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
+                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
                 )
                 cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
                 cw.writer(fstream)
@@ -227,16 +223,16 @@ def ajac(
             else:
                 cw.writer(fstream, "if (consP == 1) {")
 
-            cw.writer(fstream, "cp_R(c_R, tc);")
-            cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+            cw.writer(fstream, "cp_R(c_R, T);")
+            cw.writer(fstream, "dcvpRdT(dcRdT, T);")
             cw.writer(fstream, "eh_RT = &h_RT[0];")
 
             cw.writer(fstream, "}")
             cw.writer(fstream, "else {")
 
-            cw.writer(fstream, "cv_R(c_R, tc);")
-            cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
-            cw.writer(fstream, "speciesInternalEnergy(e_RT, tc);")
+            cw.writer(fstream, "cv_R(c_R, T);")
+            cw.writer(fstream, "dcvpRdT(dcRdT, T);")
+            cw.writer(fstream, "speciesInternalEnergy(e_RT, T);")
             cw.writer(fstream, "eh_RT = &e_RT[0];")
 
             cw.writer(fstream, "}")
@@ -342,12 +338,8 @@ def ajac_symbolic(
         cw.writer(fstream, "dscqss_dsc[i] = 0.0;")
         cw.writer(fstream, "}")
 
-    cw.writer(
-        fstream,
-        "amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
-        + cw.comment("temperature cache"),
-    )
-    cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+    cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
     if n_reactions == 0:
@@ -405,29 +397,19 @@ def ajac_symbolic(
     cw.writer(fstream, "T_pert1 = T + pertT;")
     cw.writer(fstream)
     if syms.store_in_jacobian:
-        cw.writer(fstream, "tc[0] = log(T_pert1);")
-        cw.writer(fstream, "tc[1] = T_pert1;")
-        cw.writer(fstream, "tc[2] = T_pert1*T_pert1;")
-        cw.writer(fstream, "tc[3] = T_pert1*T_pert1*T_pert1;")
-        cw.writer(fstream, "tc[4] = T_pert1*T_pert1*T_pert1*T_pert1;")
-        cw.writer(fstream, "invT = 1.0 / tc[1];")
+        cw.writer(fstream, "const amrex::Real invT_pert1 = 1.0 / T_pert1;")
+        cw.writer(fstream, "const amrex::Real logT_pert1 = log(T_pert1);")
         cw.writer(
             fstream,
             "productionRate_light(wdot_pert1, sc, g_RT, g_RT_qss, sc_qss,"
-            f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], tc,"
-            " invT);",
+            f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], T_pert1,"
+            " invT_pert1, logT_pert1);",
         )
-        cw.writer(fstream, "tc[0] = log(T);")
-        cw.writer(fstream, "tc[1] = T;")
-        cw.writer(fstream, "tc[2] = T*T;")
-        cw.writer(fstream, "tc[3] = T*T*T;")
-        cw.writer(fstream, "tc[4] = T*T*T*T;")
-        cw.writer(fstream, "invT = 1.0 / tc[1];")
         cw.writer(
             fstream,
             "productionRate_light(wdot, sc, g_RT, g_RT_qss, sc_qss,"
-            f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], tc,"
-            " invT);",
+            f" kf_qss, &J[{0}], &J[{reaction_info.n_qssa_reactions}], T,"
+            " invT, logT);",
         )
     else:
         cw.writer(fstream, "productionRate(wdot_pert1, sc, T_pert1);")
@@ -441,23 +423,23 @@ def ajac_symbolic(
         # Kc stuff
         if not syms.store_in_jacobian:
             cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
-            cw.writer(fstream, "gibbs(g_RT, tc);")
+            cw.writer(fstream, "gibbs(g_RT, T);")
             if species_info.n_qssa_species > 0:
-                cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+                cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
             cw.writer(fstream)
         cw.writer(fstream, cw.comment("compute the species enthalpy"))
-        cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+        cw.writer(fstream, "speciesEnthalpy(h_RT, T);")
         if not syms.store_in_jacobian:
             if species_info.n_qssa_species > 0:
-                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+                cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, T);")
 
         if species_info.n_qssa_species > 0:
             if not syms.store_in_jacobian:
                 cw.writer(fstream, cw.comment("Fill sc_qss here"))
-                cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+                cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
                 cw.writer(
                     fstream,
-                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
+                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
                 )
                 cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
                 cw.writer(fstream)
@@ -499,16 +481,16 @@ def ajac_symbolic(
 
     cw.writer(fstream, "if (consP == 1) {")
 
-    cw.writer(fstream, "cp_R(c_R, tc);")
-    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
+    cw.writer(fstream, "cp_R(c_R, T);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, T);")
     cw.writer(fstream, "eh_RT = &h_RT[0];")
 
     cw.writer(fstream, "}")
     cw.writer(fstream, "else {")
 
-    cw.writer(fstream, "cv_R(c_R, tc);")
-    cw.writer(fstream, "dcvpRdT(dcRdT, tc);")
-    cw.writer(fstream, "speciesInternalEnergy(e_RT, tc);")
+    cw.writer(fstream, "cv_R(c_R, T);")
+    cw.writer(fstream, "dcvpRdT(dcRdT, T);")
+    cw.writer(fstream, "speciesInternalEnergy(e_RT, T);")
     cw.writer(fstream, "eh_RT = &e_RT[0];")
 
     cw.writer(fstream, "}")
@@ -794,7 +776,7 @@ def ajac_reaction_d(
     elif ae.m == 0:
         cw.writer(
             fstream,
-            f"            * exp({beta:.15g} * tc[0]);",
+            f"            * exp({beta:.15g} * logT);",
         )
     elif beta == 0:
         cw.writer(
@@ -805,7 +787,7 @@ def ajac_reaction_d(
     else:
         cw.writer(
             fstream,
-            f"            * exp({beta:.15g} * tc[0] -"
+            f"            * exp({beta:.15g} * logT -"
             f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
         )
     if remove_forward:
@@ -852,7 +834,7 @@ def ajac_reaction_d(
             cw.writer(
                 fstream,
                 f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g} *"
-                f" exp({low_beta:.15g} * tc[0]);",
+                f" exp({low_beta:.15g} * logT);",
             )
         elif low_beta == 0:
             cw.writer(
@@ -865,7 +847,7 @@ def ajac_reaction_d(
             cw.writer(
                 fstream,
                 f"k_0 = {low_pef.m * 10 ** 3 ** dim:.15g} *"
-                f" exp({low_beta:.15g} * tc[0] -"
+                f" exp({low_beta:.15g} * logT -"
                 f" ({(1.0 / cc.Rc / cc.ureg.kelvin * low_ae).m:.15g}) *"
                 " invT);",
             )

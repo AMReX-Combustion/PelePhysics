@@ -53,19 +53,12 @@ class SymbolicMath:
         n_qssa_species = species_info.n_qssa_species
 
         self.T_smp = sme.symbols("T")
-        # Keep tc as symbols so we don't compute powers all the time
-        # self.tc_smp = [
-        #    sme.log(self.T_smp),
-        #    self.T_smp,
-        #    self.T_smp**2,
-        #    self.T_smp**3,
-        #    self.T_smp**4,
-        # ]
-        self.tc_smp = [sme.symbols("tc[" + str(i) + "]") for i in range(5)]
-        # Keep invT as symbol so we don't do division all the time
-        # self.invT_smp = 1.0 / self.tc_smp[1]
         self.invT_smp = sme.symbols("invT")
         self.invT2_smp = self.invT_smp * self.invT_smp
+        self.logT_smp = sme.symbols("logT")
+        self.T2_smp = sme.symbols("T2")
+        self.T3_smp = sme.symbols("T3")
+        self.T4_smp = sme.symbols("T4")
 
         # Keep refC and refCinv as symbols to avoid doing divisions all the time
         # coeff1 = cc.Patm_pa

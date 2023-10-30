@@ -88,6 +88,7 @@ def generate_thermo_routine(
     species_coeffs,
     qss_flag,
     needs_inv_temp=0,
+    needs_log_temp=False,
     syms=None,
     inline=False,
 ):
@@ -98,7 +99,7 @@ def generate_thermo_routine(
         cw.writer(
             fstream,
             f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real"
-            " * species, const amrex::Real *  tc)",
+            " * species, const amrex::Real T)",
         )
 
     syms_g_rt = False
@@ -116,15 +117,16 @@ def generate_thermo_routine(
 
     if not inline:
         cw.writer(fstream, "{")
-        # declarations
-        cw.writer(fstream)
-        cw.writer(fstream, cw.comment("temperature"))
-        cw.writer(fstream, "const amrex::Real T = tc[1];")
 
+    cw.writer(fstream, "const amrex::Real T2 = T*T;")
+    cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
+    cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
     if needs_inv_temp != 0:
         cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
     if needs_inv_temp == 2:
         cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
+    if needs_log_temp:
+        cw.writer(fstream, "const amrex::Real logT = log(T);")
 
     # if name=="gibbs_qss":
     #    print("name = ", name)
@@ -258,10 +260,9 @@ def generate_thermo_routine(
                 fstream,
                 cw.comment(f"species with midpoint at T={mid_temp:g} kelvin"),
             )
-            tvar = "tT" if inline else "T"
             cw.writer(
                 fstream,
-                f"""if ({tvar} < {mid_temp:g}) {{\n{lostr}}} else {{\n{histr}}}""",
+                f"""if (T < {mid_temp:g}) {{\n{lostr}}} else {{\n{histr}}}""",
             )
         lostream.close()
         histream.close()
@@ -294,13 +295,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     if syms is None:
         generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            gibbs_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
+            fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True
         )
     else:
         generate_thermo_routine(
@@ -311,6 +306,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
             species_coeffs,
             qss_flag,
             1,
+            True,
             syms,
         )
 
@@ -327,6 +323,7 @@ def helmholtz(fstream, species_info, species_coeffs):
         species_coeffs,
         0,
         1,
+        True,
     )
 
 
@@ -376,6 +373,7 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None)
             species_coeffs,
             qss_flag,
             1,
+            False,
             syms,
         )
 
@@ -391,6 +389,8 @@ def species_entropy(fstream, species_info, species_coeffs):
         entropy_nasa,
         species_coeffs,
         0,
+        0,
+        True,
     )
 
 
@@ -415,27 +415,27 @@ def dcvpdtemp(fstream, species_info, species_coeffs):
 def dcpdtemp_nasa(fstream, parameters):
     """Write NASA polynomial for dcpdtemp."""
     cw.writer(fstream, f"{parameters[1]:+15.8e}")
-    cw.writer(fstream, f"{(parameters[2] * 2.0):+15.8e} * tc[1]")
-    cw.writer(fstream, f"{(parameters[3] * 3.0):+15.8e} * tc[2]")
-    cw.writer(fstream, f"{(parameters[4] * 4.0):+15.8e} * tc[3]")
+    cw.writer(fstream, f"{(parameters[2] * 2.0):+15.8e} * T")
+    cw.writer(fstream, f"{(parameters[3] * 3.0):+15.8e} * T2")
+    cw.writer(fstream, f"{(parameters[4] * 4.0):+15.8e} * T3")
 
 
 def cv_nasa(fstream, parameters):
     """Write NASA polynomial for cv."""
     cw.writer(fstream, f"{(parameters[0] - 1.0):+15.8e}")
-    cw.writer(fstream, f"{parameters[1]:+15.8e} * tc[1]")
-    cw.writer(fstream, f"{parameters[2]:+15.8e} * tc[2]")
-    cw.writer(fstream, f"{parameters[3]:+15.8e} * tc[3]")
-    cw.writer(fstream, f"{parameters[4]:+15.8e} * tc[4]")
+    cw.writer(fstream, f"{parameters[1]:+15.8e} * T")
+    cw.writer(fstream, f"{parameters[2]:+15.8e} * T2")
+    cw.writer(fstream, f"{parameters[3]:+15.8e} * T3")
+    cw.writer(fstream, f"{parameters[4]:+15.8e} * T4")
 
 
 def cp_nasa(fstream, parameters):
     """Write NASA polynomial for cp."""
     cw.writer(fstream, f"{parameters[0]:+15.8e}")
-    cw.writer(fstream, f"{parameters[1]:+15.8e} * tc[1]")
-    cw.writer(fstream, f"{parameters[2]:+15.8e} * tc[2]")
-    cw.writer(fstream, f"{parameters[3]:+15.8e} * tc[3]")
-    cw.writer(fstream, f"{parameters[4]:+15.8e} * tc[4]")
+    cw.writer(fstream, f"{parameters[1]:+15.8e} * T")
+    cw.writer(fstream, f"{parameters[2]:+15.8e} * T2")
+    cw.writer(fstream, f"{parameters[3]:+15.8e} * T3")
+    cw.writer(fstream, f"{parameters[4]:+15.8e} * T4")
 
 
 def gibbs_nasa(fstream, parameters, syms=None):
@@ -453,21 +453,21 @@ def gibbs_nasa(fstream, parameters, syms=None):
     cw.writer(fstream, f"{(parameters[0] - parameters[6]):+20.15e}")
     if record_symbolic_operations:
         symb_smp += parameters[0] - parameters[6]
-    cw.writer(fstream, f"{(-parameters[0]):+20.15e} * tc[0]")
+    cw.writer(fstream, f"{(-parameters[0]):+20.15e} * logT")
     if record_symbolic_operations:
-        symb_smp += (-parameters[0]) * syms.tc_smp[0]
-    cw.writer(fstream, f"{((-parameters[1] / 2)):+20.15e} * tc[1]")
+        symb_smp += (-parameters[0]) * syms.logT_smp
+    cw.writer(fstream, f"{((-parameters[1] / 2)):+20.15e} * T")
     if record_symbolic_operations:
-        symb_smp += (-parameters[1] / 2) * syms.tc_smp[1]
-    cw.writer(fstream, f"{((-parameters[2] / 6)):+20.15e} * tc[2]")
+        symb_smp += (-parameters[1] / 2) * syms.T_smp
+    cw.writer(fstream, f"{((-parameters[2] / 6)):+20.15e} * T2")
     if record_symbolic_operations:
-        symb_smp += (-parameters[2] / 6) * syms.tc_smp[2]
-    cw.writer(fstream, f"{((-parameters[3] / 12)):+20.15e} * tc[3]")
+        symb_smp += (-parameters[2] / 6) * syms.T2_smp
+    cw.writer(fstream, f"{((-parameters[3] / 12)):+20.15e} * T3")
     if record_symbolic_operations:
-        symb_smp += (-parameters[3] / 12) * syms.tc_smp[3]
-    cw.writer(fstream, f"{((-parameters[4] / 20)):+20.15e} * tc[4]")
+        symb_smp += (-parameters[3] / 12) * syms.T3_smp
+    cw.writer(fstream, f"{((-parameters[4] / 20)):+20.15e} * T4")
     if record_symbolic_operations:
-        symb_smp += (-parameters[4] / 20) * syms.tc_smp[4]
+        symb_smp += (-parameters[4] / 20) * syms.T4_smp
 
     if record_symbolic_operations:
         return symb_smp
@@ -488,21 +488,21 @@ def helmholtz_nasa(fstream, parameters, syms=None):
     cw.writer(fstream, f"{(parameters[0] - parameters[6] - 1.0):+15.8e}")
     if record_symbolic_operations:
         symb_smp += parameters[0] - parameters[6] - 1.0
-    cw.writer(fstream, f"{(-parameters[0]):+15.8e} * tc[0]")
+    cw.writer(fstream, f"{(-parameters[0]):+15.8e} * logT")
     if record_symbolic_operations:
-        symb_smp += (-parameters[0]) * syms.tc_smp[0]
-    cw.writer(fstream, f"{((-parameters[1] / 2)):+15.8e} * tc[1]")
+        symb_smp += (-parameters[0]) * syms.logT_smp
+    cw.writer(fstream, f"{((-parameters[1] / 2)):+15.8e} * T")
     if record_symbolic_operations:
-        symb_smp += (-parameters[1] / 2) * syms.tc_smp[1]
-    cw.writer(fstream, f"{((-parameters[2] / 6)):+15.8e} * tc[2]")
+        symb_smp += (-parameters[1] / 2) * syms.T_smp
+    cw.writer(fstream, f"{((-parameters[2] / 6)):+15.8e} * T2")
     if record_symbolic_operations:
-        symb_smp += (-parameters[2] / 6) * syms.tc_smp[2]
-    cw.writer(fstream, f"{((-parameters[3] / 12)):+15.8e} * tc[3]")
+        symb_smp += (-parameters[2] / 6) * syms.T2_smp
+    cw.writer(fstream, f"{((-parameters[3] / 12)):+15.8e} * T3")
     if record_symbolic_operations:
-        symb_smp += (-parameters[3] / 12) * syms.tc_smp[3]
-    cw.writer(fstream, f"{((-parameters[4] / 20)):+15.8e} * tc[4]")
+        symb_smp += (-parameters[3] / 12) * syms.T3_smp
+    cw.writer(fstream, f"{((-parameters[4] / 20)):+15.8e} * T4")
     if record_symbolic_operations:
-        symb_smp += (-parameters[4] / 20) * syms.tc_smp[4]
+        symb_smp += (-parameters[4] / 20) * syms.T4_smp
 
     if record_symbolic_operations:
         return symb_smp
@@ -520,18 +520,18 @@ def internal_energy(fstream, parameters, syms=None):
     cw.writer(fstream, f"{(parameters[0] - 1.0):+15.8e}")
     if record_symbolic_operations:
         symb_smp += parameters[0] - 1.0
-    cw.writer(fstream, f"{((parameters[1] / 2)):+15.8e} * tc[1]")
+    cw.writer(fstream, f"{((parameters[1] / 2)):+15.8e} * T")
     if record_symbolic_operations:
-        symb_smp += (parameters[1] / 2) * syms.tc_smp[1]
-    cw.writer(fstream, f"{((parameters[2] / 3)):+15.8e} * tc[2]")
+        symb_smp += (parameters[1] / 2) * syms.T_smp
+    cw.writer(fstream, f"{((parameters[2] / 3)):+15.8e} * T2")
     if record_symbolic_operations:
-        symb_smp += (parameters[2] / 3) * syms.tc_smp[2]
-    cw.writer(fstream, f"{((parameters[3] / 4)):+15.8e} * tc[3]")
+        symb_smp += (parameters[2] / 3) * syms.T2_smp
+    cw.writer(fstream, f"{((parameters[3] / 4)):+15.8e} * T3")
     if record_symbolic_operations:
-        symb_smp += (parameters[3] / 4) * syms.tc_smp[3]
-    cw.writer(fstream, f"{((parameters[4] / 5)):+15.8e} * tc[4]")
+        symb_smp += (parameters[3] / 4) * syms.T3_smp
+    cw.writer(fstream, f"{((parameters[4] / 5)):+15.8e} * T4")
     if record_symbolic_operations:
-        symb_smp += (parameters[4] / 5) * syms.tc_smp[4]
+        symb_smp += (parameters[4] / 5) * syms.T4_smp
     cw.writer(fstream, f"{(parameters[5]):+15.8e} * invT")
     if record_symbolic_operations:
         symb_smp += (parameters[5]) * syms.invT_smp
@@ -552,18 +552,18 @@ def enthalpy_nasa(fstream, parameters, syms=None):
     cw.writer(fstream, f"{parameters[0]:+15.8e}")
     if record_symbolic_operations:
         symb_smp += parameters[0]
-    cw.writer(fstream, f"{((parameters[1] / 2)):+15.8e} * tc[1]")
+    cw.writer(fstream, f"{((parameters[1] / 2)):+15.8e} * T")
     if record_symbolic_operations:
-        symb_smp += (parameters[1] / 2) * syms.tc_smp[1]
-    cw.writer(fstream, f"{((parameters[2] / 3)):+15.8e} * tc[2]")
+        symb_smp += (parameters[1] / 2) * syms.T_smp
+    cw.writer(fstream, f"{((parameters[2] / 3)):+15.8e} * T2")
     if record_symbolic_operations:
-        symb_smp += (parameters[2] / 3) * syms.tc_smp[2]
-    cw.writer(fstream, f"{((parameters[3] / 4)):+15.8e} * tc[3]")
+        symb_smp += (parameters[2] / 3) * syms.T2_smp
+    cw.writer(fstream, f"{((parameters[3] / 4)):+15.8e} * T3")
     if record_symbolic_operations:
-        symb_smp += (parameters[3] / 4) * syms.tc_smp[3]
-    cw.writer(fstream, f"{((parameters[4] / 5)):+15.8e} * tc[4]")
+        symb_smp += (parameters[3] / 4) * syms.T3_smp
+    cw.writer(fstream, f"{((parameters[4] / 5)):+15.8e} * T4")
     if record_symbolic_operations:
-        symb_smp += (parameters[4] / 5) * syms.tc_smp[4]
+        symb_smp += (parameters[4] / 5) * syms.T4_smp
     cw.writer(fstream, f"{(parameters[5]):+15.8e} * invT")
     if record_symbolic_operations:
         symb_smp += (parameters[5]) * syms.invT_smp
@@ -581,21 +581,21 @@ def entropy_nasa(fstream, parameters, syms=None):
     if record_symbolic_operations:
         symb_smp = 0.0
 
-    cw.writer(fstream, f"{parameters[0]:+15.8e} * tc[0]")
+    cw.writer(fstream, f"{parameters[0]:+15.8e} * logT")
     if record_symbolic_operations:
-        symb_smp += (parameters[0]) * syms.tc_smp[0]
-    cw.writer(fstream, f"{(parameters[1]):+15.8e} * tc[1]")
+        symb_smp += (parameters[0]) * syms.logT_smp
+    cw.writer(fstream, f"{(parameters[1]):+15.8e} * T")
     if record_symbolic_operations:
-        symb_smp += (parameters[1]) * syms.tc_smp[1]
-    cw.writer(fstream, f"{((parameters[2] / 2)):+15.8e} * tc[2]")
+        symb_smp += (parameters[1]) * syms.T_smp
+    cw.writer(fstream, f"{((parameters[2] / 2)):+15.8e} * T2")
     if record_symbolic_operations:
-        symb_smp += (parameters[2] / 2) * syms.tc_smp[2]
-    cw.writer(fstream, f"{((parameters[3] / 3)):+15.8e} * tc[3]")
+        symb_smp += (parameters[2] / 2) * syms.T2_smp
+    cw.writer(fstream, f"{((parameters[3] / 3)):+15.8e} * T3")
     if record_symbolic_operations:
-        symb_smp += (parameters[3] / 3) * syms.tc_smp[3]
-    cw.writer(fstream, f"{((parameters[4] / 4)):+15.8e} * tc[4]")
+        symb_smp += (parameters[3] / 3) * syms.T3_smp
+    cw.writer(fstream, f"{((parameters[4] / 4)):+15.8e} * T4")
     if record_symbolic_operations:
-        symb_smp += (parameters[4] / 4) * syms.tc_smp[4]
+        symb_smp += (parameters[4] / 4) * syms.T4_smp
     cw.writer(fstream, f"{(parameters[6]):+15.8e}")
     if record_symbolic_operations:
         symb_smp += parameters[6]

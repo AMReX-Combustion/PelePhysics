@@ -69,15 +69,14 @@ void
 progressRateFR(
   amrex::Real* q_f, amrex::Real* q_r, amrex::Real* sc, amrex::Real T)
 {
-  const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
-  amrex::Real invT = 1.0 / tc[1];
+  const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
-  gibbs(g_RT, tc);
+  gibbs(g_RT, T);
 
   amrex::Real sc_qss[1];
-  comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+  comp_qfqr(q_f, q_r, sc, sc_qss, T, invT, logT);
 }
 
 // save atomic weights into array
