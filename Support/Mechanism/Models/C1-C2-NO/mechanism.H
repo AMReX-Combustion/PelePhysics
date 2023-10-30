@@ -3368,7 +3368,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   result += y[0] *
             (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
@@ -3849,7 +3849,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   result += y[0] *
             (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
@@ -4331,7 +4331,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   result +=
     y[0] *
@@ -4902,7 +4902,7 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   result +=
     y[0] *

@@ -1086,7 +1086,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   result += y[0] *
             (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
@@ -1097,6 +1097,11 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
             (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
              0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
             0.0250312891113892;
+  // species 10: HE
+  result += y[10] *
+            (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+             0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
+            0.2498374807187924;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1140,11 +1145,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               (+3.29867700e+00 + 1.40824000e-03 * T - 3.96322200e-06 * T2 +
                5.64151500e-09 * T3 - 2.44485500e-12 * T4) *
               0.0356964374955379;
-    // species 10: HE
-    result += y[10] *
-              (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              0.2498374807187924;
     // species 11: CO
     result += y[11] *
               (+3.26245200e+00 + 1.51194100e-03 * T - 3.88175500e-06 * T2 +
@@ -1196,11 +1196,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               (+2.92664000e+00 + 1.48797700e-03 * T - 5.68476100e-07 * T2 +
                1.00970400e-10 * T3 - 6.75335100e-15 * T4) *
               0.0356964374955379;
-    // species 10: HE
-    result += y[10] *
-              (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              0.2498374807187924;
     // species 11: CO
     result += y[11] *
               (+3.02507800e+00 + 1.44268900e-03 * T - 5.63082800e-07 * T2 +
@@ -1242,7 +1237,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   result += y[0] *
             (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
@@ -1253,6 +1248,11 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
             (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
              0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
             0.0250312891113892;
+  // species 10: HE
+  result += y[10] *
+            (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+             0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
+            0.2498374807187924;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1296,11 +1296,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               (+2.29867700e+00 + 1.40824000e-03 * T - 3.96322200e-06 * T2 +
                5.64151500e-09 * T3 - 2.44485500e-12 * T4) *
               0.0356964374955379;
-    // species 10: HE
-    result += y[10] *
-              (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              0.2498374807187924;
     // species 11: CO
     result += y[11] *
               (+2.26245200e+00 + 1.51194100e-03 * T - 3.88175500e-06 * T2 +
@@ -1352,11 +1347,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               (+1.92664000e+00 + 1.48797700e-03 * T - 5.68476100e-07 * T2 +
                1.00970400e-10 * T3 - 6.75335100e-15 * T4) *
               0.0356964374955379;
-    // species 10: HE
-    result += y[10] *
-              (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              0.2498374807187924;
     // species 11: CO
     result += y[11] *
               (+2.02507800e+00 + 1.44268900e-03 * T - 5.63082800e-07 * T2 +
@@ -1399,7 +1389,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   result +=
     y[0] *
@@ -1412,6 +1402,12 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
     (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
      0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
     0.0250312891113892;
+  // species 10: HE
+  result +=
+    y[10] *
+    (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+     0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
+    0.2498374807187924;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1463,12 +1459,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
       (+3.29867700e+00 + 7.04120000e-04 * T - 1.32107400e-06 * T2 +
        1.41037875e-09 * T3 - 4.88971000e-13 * T4 - 1.02090000e+03 * invT) *
       0.0356964374955379;
-    // species 10: HE
-    result +=
-      y[10] *
-      (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      0.2498374807187924;
     // species 11: CO
     result +=
       y[11] *
@@ -1530,12 +1520,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
       (+2.92664000e+00 + 7.43988500e-04 * T - 1.89492033e-07 * T2 +
        2.52426000e-11 * T3 - 1.35067020e-15 * T4 - 9.22797700e+02 * invT) *
       0.0356964374955379;
-    // species 10: HE
-    result +=
-      y[10] *
-      (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      0.2498374807187924;
     // species 11: CO
     result +=
       y[11] *
@@ -1582,7 +1566,7 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   result +=
     y[0] *
@@ -1595,6 +1579,12 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
     (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
      0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
     0.0250312891113892;
+  // species 10: HE
+  result +=
+    y[10] *
+    (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+     0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
+    0.2498374807187924;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1646,12 +1636,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
       (+2.29867700e+00 + 7.04120000e-04 * T - 1.32107400e-06 * T2 +
        1.41037875e-09 * T3 - 4.88971000e-13 * T4 - 1.02090000e+03 * invT) *
       0.0356964374955379;
-    // species 10: HE
-    result +=
-      y[10] *
-      (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      0.2498374807187924;
     // species 11: CO
     result +=
       y[11] *
@@ -1713,12 +1697,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
       (+1.92664000e+00 + 7.43988500e-04 * T - 1.89492033e-07 * T2 +
        2.52426000e-11 * T3 - 1.35067020e-15 * T4 - 9.22797700e+02 * invT) *
       0.0356964374955379;
-    // species 10: HE
-    result +=
-      y[10] *
-      (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      0.2498374807187924;
     // species 11: CO
     result +=
       y[11] *

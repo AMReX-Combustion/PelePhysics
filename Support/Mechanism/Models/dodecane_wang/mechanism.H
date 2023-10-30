@@ -4776,6 +4776,21 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               0.0356964374955379;
   }
 
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 53: C6H11
+    result += y[53] *
+              (-1.55544944e+00 + 6.76865602e-02 * T - 4.47048635e-05 * T2 +
+               1.52236630e-08 * T3 - 2.14346377e-12 * T4) *
+              0.0120258796930996;
+  } else {
+    // species 53: C6H11
+    result += y[53] *
+              (+1.77336550e+01 + 2.48934775e-02 * T - 8.59991450e-06 * T2 +
+               1.34412828e-09 * T3 - 7.83475666e-14 * T4) *
+              0.0120258796930996;
+  }
+
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
     // species 51: NC12H26
@@ -4814,21 +4829,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               (+1.45851539e+01 + 2.24072471e-02 * T - 7.63348025e-06 * T2 +
                1.18188966e-09 * T3 - 6.84385139e-14 * T4) *
               0.0142582162971412;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 53: C6H11
-    result += y[53] *
-              (-1.55544944e+00 + 6.76865602e-02 * T - 4.47048635e-05 * T2 +
-               1.52236630e-08 * T3 - 2.14346377e-12 * T4) *
-              0.0120258796930996;
-  } else {
-    // species 53: C6H11
-    result += y[53] *
-              (+1.77336550e+01 + 2.48934775e-02 * T - 8.59991450e-06 * T2 +
-               1.34412828e-09 * T3 - 7.83475666e-14 * T4) *
-              0.0120258796930996;
   }
 
   cpbs = result * 8.31446261815324e+07;
@@ -5385,6 +5385,21 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               0.0356964374955379;
   }
 
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 53: C6H11
+    result += y[53] *
+              (-2.55544944e+00 + 6.76865602e-02 * T - 4.47048635e-05 * T2 +
+               1.52236630e-08 * T3 - 2.14346377e-12 * T4) *
+              0.0120258796930996;
+  } else {
+    // species 53: C6H11
+    result += y[53] *
+              (+1.67336550e+01 + 2.48934775e-02 * T - 8.59991450e-06 * T2 +
+               1.34412828e-09 * T3 - 7.83475666e-14 * T4) *
+              0.0120258796930996;
+  }
+
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
     // species 51: NC12H26
@@ -5423,21 +5438,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               (+1.35851539e+01 + 2.24072471e-02 * T - 7.63348025e-06 * T2 +
                1.18188966e-09 * T3 - 6.84385139e-14 * T4) *
               0.0142582162971412;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 53: C6H11
-    result += y[53] *
-              (-2.55544944e+00 + 6.76865602e-02 * T - 4.47048635e-05 * T2 +
-               1.52236630e-08 * T3 - 2.14346377e-12 * T4) *
-              0.0120258796930996;
-  } else {
-    // species 53: C6H11
-    result += y[53] *
-              (+1.67336550e+01 + 2.48934775e-02 * T - 8.59991450e-06 * T2 +
-               1.34412828e-09 * T3 - 7.83475666e-14 * T4) *
-              0.0120258796930996;
   }
 
   cvbs = result * 8.31446261815324e+07;
@@ -6099,6 +6099,23 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
       0.0356964374955379;
   }
 
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 53: C6H11
+    result +=
+      y[53] *
+      (-1.55544944e+00 + 3.38432801e-02 * T - 1.49016212e-05 * T2 +
+       3.80591575e-09 * T3 - 4.28692754e-13 * T4 + 9.66316695e+03 * invT) *
+      0.0120258796930996;
+  } else {
+    // species 53: C6H11
+    result +=
+      y[53] *
+      (+1.77336550e+01 + 1.24467388e-02 * T - 2.86663817e-06 * T2 +
+       3.36032070e-10 * T3 - 1.56695133e-14 * T4 + 2.68017174e+03 * invT) *
+      0.0120258796930996;
+  }
+
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
     // species 51: NC12H26
@@ -6143,23 +6160,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
       (+1.45851539e+01 + 1.12036235e-02 * T - 2.54449342e-06 * T2 +
        2.95472415e-10 * T3 - 1.36877028e-14 * T4 - 1.00898205e+04 * invT) *
       0.0142582162971412;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 53: C6H11
-    result +=
-      y[53] *
-      (-1.55544944e+00 + 3.38432801e-02 * T - 1.49016212e-05 * T2 +
-       3.80591575e-09 * T3 - 4.28692754e-13 * T4 + 9.66316695e+03 * invT) *
-      0.0120258796930996;
-  } else {
-    // species 53: C6H11
-    result +=
-      y[53] *
-      (+1.77336550e+01 + 1.24467388e-02 * T - 2.86663817e-06 * T2 +
-       3.36032070e-10 * T3 - 1.56695133e-14 * T4 + 2.68017174e+03 * invT) *
-      0.0120258796930996;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
@@ -6823,6 +6823,23 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
       0.0356964374955379;
   }
 
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 53: C6H11
+    result +=
+      y[53] *
+      (-2.55544944e+00 + 3.38432801e-02 * T - 1.49016212e-05 * T2 +
+       3.80591575e-09 * T3 - 4.28692754e-13 * T4 + 9.66316695e+03 * invT) *
+      0.0120258796930996;
+  } else {
+    // species 53: C6H11
+    result +=
+      y[53] *
+      (+1.67336550e+01 + 1.24467388e-02 * T - 2.86663817e-06 * T2 +
+       3.36032070e-10 * T3 - 1.56695133e-14 * T4 + 2.68017174e+03 * invT) *
+      0.0120258796930996;
+  }
+
   // species with midpoint at T=1391 kelvin
   if (T < 1391) {
     // species 51: NC12H26
@@ -6867,23 +6884,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
       (+1.35851539e+01 + 1.12036235e-02 * T - 2.54449342e-06 * T2 +
        2.95472415e-10 * T3 - 1.36877028e-14 * T4 - 1.00898205e+04 * invT) *
       0.0142582162971412;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 53: C6H11
-    result +=
-      y[53] *
-      (-2.55544944e+00 + 3.38432801e-02 * T - 1.49016212e-05 * T2 +
-       3.80591575e-09 * T3 - 4.28692754e-13 * T4 + 9.66316695e+03 * invT) *
-      0.0120258796930996;
-  } else {
-    // species 53: C6H11
-    result +=
-      y[53] *
-      (+1.67336550e+01 + 1.24467388e-02 * T - 2.86663817e-06 * T2 +
-       3.36032070e-10 * T3 - 1.56695133e-14 * T4 + 2.68017174e+03 * invT) *
-      0.0120258796930996;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T

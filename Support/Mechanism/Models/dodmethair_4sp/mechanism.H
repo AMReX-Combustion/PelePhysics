@@ -583,21 +583,6 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC12H26
-    result += y[0] *
-              (-2.62181594e+00 + 1.47237711e-01 * T - 9.43970271e-05 * T2 +
-               3.07441268e-08 * T3 - 4.03602230e-12 * T4) *
-              0.0058706117177410;
-  } else {
-    // species 0: NC12H26
-    result += y[0] *
-              (+3.85095037e+01 + 5.63550048e-02 * T - 1.91493200e-05 * T2 +
-               2.96024862e-09 * T3 - 1.71244150e-13 * T4) *
-              0.0058706117177410;
-  }
-
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 1: CH4
@@ -633,6 +618,21 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               0.0356964374955379;
   }
 
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC12H26
+    result += y[0] *
+              (-2.62181594e+00 + 1.47237711e-01 * T - 9.43970271e-05 * T2 +
+               3.07441268e-08 * T3 - 4.03602230e-12 * T4) *
+              0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result += y[0] *
+              (+3.85095037e+01 + 5.63550048e-02 * T - 1.91493200e-05 * T2 +
+               2.96024862e-09 * T3 - 1.71244150e-13 * T4) *
+              0.0058706117177410;
+  }
+
   cpbs = result * 8.31446261815324e+07;
 }
 
@@ -661,21 +661,6 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   const amrex::Real T2 = T * T;
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC12H26
-    result += y[0] *
-              (-3.62181594e+00 + 1.47237711e-01 * T - 9.43970271e-05 * T2 +
-               3.07441268e-08 * T3 - 4.03602230e-12 * T4) *
-              0.0058706117177410;
-  } else {
-    // species 0: NC12H26
-    result += y[0] *
-              (+3.75095037e+01 + 5.63550048e-02 * T - 1.91493200e-05 * T2 +
-               2.96024862e-09 * T3 - 1.71244150e-13 * T4) *
-              0.0058706117177410;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -712,6 +697,21 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               0.0356964374955379;
   }
 
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC12H26
+    result += y[0] *
+              (-3.62181594e+00 + 1.47237711e-01 * T - 9.43970271e-05 * T2 +
+               3.07441268e-08 * T3 - 4.03602230e-12 * T4) *
+              0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result += y[0] *
+              (+3.75095037e+01 + 5.63550048e-02 * T - 1.91493200e-05 * T2 +
+               2.96024862e-09 * T3 - 1.71244150e-13 * T4) *
+              0.0058706117177410;
+  }
+
   cvbs = result * 8.31446261815324e+07;
 }
 
@@ -741,23 +741,6 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC12H26
-    result +=
-      y[0] *
-      (-2.62181594e+00 + 7.36188555e-02 * T - 3.14656757e-05 * T2 +
-       7.68603170e-09 * T3 - 8.07204460e-13 * T4 - 4.00654253e+04 * invT) *
-      0.0058706117177410;
-  } else {
-    // species 0: NC12H26
-    result +=
-      y[0] *
-      (+3.85095037e+01 + 2.81775024e-02 * T - 6.38310667e-06 * T2 +
-       7.40062155e-10 * T3 - 3.42488300e-14 * T4 - 5.48843465e+04 * invT) *
-      0.0058706117177410;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -800,6 +783,23 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
       0.0356964374955379;
   }
 
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (-2.62181594e+00 + 7.36188555e-02 * T - 3.14656757e-05 * T2 +
+       7.68603170e-09 * T3 - 8.07204460e-13 * T4 - 4.00654253e+04 * invT) *
+      0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (+3.85095037e+01 + 2.81775024e-02 * T - 6.38310667e-06 * T2 +
+       7.40062155e-10 * T3 - 3.42488300e-14 * T4 - 5.48843465e+04 * invT) *
+      0.0058706117177410;
+  }
+
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
 
   hbms = result * RT;
@@ -831,23 +831,6 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC12H26
-    result +=
-      y[0] *
-      (-3.62181594e+00 + 7.36188555e-02 * T - 3.14656757e-05 * T2 +
-       7.68603170e-09 * T3 - 8.07204460e-13 * T4 - 4.00654253e+04 * invT) *
-      0.0058706117177410;
-  } else {
-    // species 0: NC12H26
-    result +=
-      y[0] *
-      (+3.75095037e+01 + 2.81775024e-02 * T - 6.38310667e-06 * T2 +
-       7.40062155e-10 * T3 - 3.42488300e-14 * T4 - 5.48843465e+04 * invT) *
-      0.0058706117177410;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -888,6 +871,23 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
       (+1.92664000e+00 + 7.43988400e-04 * T - 1.89492000e-07 * T2 +
        2.52425950e-11 * T3 - 1.35067020e-15 * T4 - 9.22797700e+02 * invT) *
       0.0356964374955379;
+  }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (-3.62181594e+00 + 7.36188555e-02 * T - 3.14656757e-05 * T2 +
+       7.68603170e-09 * T3 - 8.07204460e-13 * T4 - 4.00654253e+04 * invT) *
+      0.0058706117177410;
+  } else {
+    // species 0: NC12H26
+    result +=
+      y[0] *
+      (+3.75095037e+01 + 2.81775024e-02 * T - 6.38310667e-06 * T2 +
+       7.40062155e-10 * T3 - 3.42488300e-14 * T4 - 5.48843465e+04 * invT) *
+      0.0058706117177410;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
