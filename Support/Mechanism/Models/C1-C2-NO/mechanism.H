@@ -438,7 +438,7 @@ cv_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4;
@@ -725,7 +725,7 @@ cp_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4;
@@ -1014,7 +1014,7 @@ gibbs(amrex::Real* species, const amrex::Real T)
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
                2.500000000000000e+00 * logT - 0.000000000000000e+00 * T -
@@ -1477,7 +1477,7 @@ helmholtz(amrex::Real* species, const amrex::Real T)
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = -7.45375000e+02 * invT - 2.86600000e+00 - 2.50000000e+00 * logT -
                0.00000000e+00 * T - 0.00000000e+00 * T2 - 0.00000000e+00 * T3 -
@@ -1938,7 +1938,7 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4 -
@@ -2313,7 +2313,7 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4 -
@@ -2688,7 +2688,7 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +2.50000000e+00 * logT + 0.00000000e+00 * T +
                0.00000000e+00 * T2 + 0.00000000e+00 * T3 + 0.00000000e+00 * T4 +
@@ -3062,7 +3062,7 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: AR
   species[0] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3;

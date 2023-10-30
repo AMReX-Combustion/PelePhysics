@@ -402,10 +402,32 @@ cv_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = +4.68097447e+00 - 5.39434751e-03 * T + 6.49472750e-05 * T2 -
+                  8.05065318e-08 * T3 + 3.27474018e-11 * T4;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = -1.69184454e-01 + 2.69173263e-02 * T - 1.38874777e-05 * T2 +
+                  3.47515079e-09 * T3 - 3.41706784e-13 * T4;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = +3.61197920e+00 - 3.12037600e-03 * T + 3.55316800e-05 * T2 -
+                  4.93793980e-08 * T3 + 2.20272470e-11 * T4;
+  } else {
+    // species 17: CH2OH
+    species[17] = +2.74691030e+00 + 8.86461210e-03 * T - 4.25807220e-06 * T2 +
+                  1.00880400e-09 * T3 - 9.45015610e-14 * T4;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -555,15 +577,15 @@ cv_R(amrex::Real* species, const amrex::Real T)
                   1.61113030e-10 * T3 + 2.85667350e-14 * T4;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = +3.61197920e+00 - 3.12037600e-03 * T + 3.55316800e-05 * T2 -
-                  4.93793980e-08 * T3 + 2.20272470e-11 * T4;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +2.94199159e+00 + 2.43434884e-02 * T - 1.65595560e-05 * T2 +
+                  4.58537411e-09 * T3 - 3.31795708e-13 * T4;
   } else {
-    // species 17: CH2OH
-    species[17] = +2.74691030e+00 + 8.86461210e-03 * T - 4.25807220e-06 * T2 +
-                  1.00880400e-09 * T3 - 9.45015610e-14 * T4;
+    // species 28: CH3OCO
+    species[28] = +1.20877600e+01 + 4.53544950e-03 * T - 1.65096364e-06 * T2 +
+                  2.67197277e-10 * T3 - 1.59576863e-14 * T4;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -583,15 +605,48 @@ cv_R(amrex::Real* species, const amrex::Real T)
                   2.89719163e-10 * T3 - 1.70892199e-14 * T4;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = +4.68097447e+00 - 5.39434751e-03 * T + 6.49472750e-05 * T2 -
-                  8.05065318e-08 * T3 + 3.27474018e-11 * T4;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +2.47935703e+00 + 4.02952392e-02 * T - 3.30109296e-05 * T2 +
+                  1.34360117e-08 * T3 - 2.18601580e-12 * T4;
   } else {
-    // species 26: CH3OCH3
-    species[26] = -1.69184454e-01 + 2.69173263e-02 * T - 1.38874777e-05 * T2 +
-                  3.47515079e-09 * T3 - 3.41706784e-13 * T4;
+    // species 36: HO2CH2OCHO
+    species[36] = +1.54584298e+01 + 8.52683511e-03 * T - 3.04113500e-06 * T2 +
+                  4.85596908e-10 * T3 - 2.87316334e-14 * T4;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +1.21029612e+00 + 3.68877454e-02 * T - 2.82561555e-05 * T2 +
+                  1.15730533e-08 * T3 - 1.97130470e-12 * T4;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.14249729e+01 + 1.18705986e-02 * T - 4.07906532e-06 * T2 +
+                  6.35310809e-10 * T3 - 3.69427867e-14 * T4;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.52895507e+00 + 4.24128290e-02 * T - 3.73406386e-05 * T2 +
+                  1.66639333e-08 * T3 - 2.96443312e-12 * T4;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.41191783e+01 + 9.23718883e-03 * T - 3.19127505e-06 * T2 +
+                  4.99114678e-10 * T3 - 2.91162488e-14 * T4;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +9.96405510e-01 + 5.83226232e-02 * T - 5.53259778e-05 * T2 +
+                  2.59810540e-08 * T3 - 4.77141005e-12 * T4;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.82038046e+01 + 1.04394841e-02 * T - 3.60582939e-06 * T2 +
+                  5.63792843e-10 * T3 - 3.28807214e-14 * T4;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -605,15 +660,26 @@ cv_R(amrex::Real* species, const amrex::Real T)
                   3.84879712e-10 * T3 - 2.21778689e-14 * T4;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +2.94199159e+00 + 2.43434884e-02 * T - 1.65595560e-05 * T2 +
-                  4.58537411e-09 * T3 - 3.31795708e-13 * T4;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +4.19690837e+00 + 1.58839723e-02 * T + 3.53540547e-07 * T2 -
+                  6.10456923e-09 * T3 + 1.94661801e-12 * T4;
   } else {
-    // species 28: CH3OCO
-    species[28] = +1.20877600e+01 + 4.53544950e-03 * T - 1.65096364e-06 * T2 +
-                  2.67197277e-10 * T3 - 1.59576863e-14 * T4;
+    // species 32: OCH2OCHO
+    species[32] = +1.10233916e+01 + 8.11262659e-03 * T - 2.91356462e-06 * T2 +
+                  4.67340384e-10 * T3 - 2.77375525e-14 * T4;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +5.08180801e+00 + 1.28768359e-02 * T + 2.04419418e-06 * T2 -
+                  6.10154921e-09 * T3 + 1.79820559e-12 * T4;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +1.03737391e+01 + 8.17663898e-03 * T - 2.92034021e-06 * T2 +
+                  4.66695616e-10 * T3 - 2.76276823e-14 * T4;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -648,72 +714,6 @@ cv_R(amrex::Real* species, const amrex::Real T)
     species[31] = +7.70981570e+00 + 1.53602372e-02 * T - 5.41003788e-06 * T2 +
                   8.60573446e-10 * T3 - 5.08819752e-14 * T4;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +4.19690837e+00 + 1.58839723e-02 * T + 3.53540547e-07 * T2 -
-                  6.10456923e-09 * T3 + 1.94661801e-12 * T4;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +1.10233916e+01 + 8.11262659e-03 * T - 2.91356462e-06 * T2 +
-                  4.67340384e-10 * T3 - 2.77375525e-14 * T4;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +5.08180801e+00 + 1.28768359e-02 * T + 2.04419418e-06 * T2 -
-                  6.10154921e-09 * T3 + 1.79820559e-12 * T4;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +1.03737391e+01 + 8.17663898e-03 * T - 2.92034021e-06 * T2 +
-                  4.66695616e-10 * T3 - 2.76276823e-14 * T4;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +1.21029612e+00 + 3.68877454e-02 * T - 2.82561555e-05 * T2 +
-                  1.15730533e-08 * T3 - 1.97130470e-12 * T4;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.14249729e+01 + 1.18705986e-02 * T - 4.07906532e-06 * T2 +
-                  6.35310809e-10 * T3 - 3.69427867e-14 * T4;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.52895507e+00 + 4.24128290e-02 * T - 3.73406386e-05 * T2 +
-                  1.66639333e-08 * T3 - 2.96443312e-12 * T4;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.41191783e+01 + 9.23718883e-03 * T - 3.19127505e-06 * T2 +
-                  4.99114678e-10 * T3 - 2.91162488e-14 * T4;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +2.47935703e+00 + 4.02952392e-02 * T - 3.30109296e-05 * T2 +
-                  1.34360117e-08 * T3 - 2.18601580e-12 * T4;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +1.54584298e+01 + 8.52683511e-03 * T - 3.04113500e-06 * T2 +
-                  4.85596908e-10 * T3 - 2.87316334e-14 * T4;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +9.96405510e-01 + 5.83226232e-02 * T - 5.53259778e-05 * T2 +
-                  2.59810540e-08 * T3 - 4.77141005e-12 * T4;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.82038046e+01 + 1.04394841e-02 * T - 3.60582939e-06 * T2 +
-                  5.63792843e-10 * T3 - 3.28807214e-14 * T4;
-  }
 }
 
 // compute Cp/R at the given temperature
@@ -724,10 +724,32 @@ cp_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = +5.68097447e+00 - 5.39434751e-03 * T + 6.49472750e-05 * T2 -
+                  8.05065318e-08 * T3 + 3.27474018e-11 * T4;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = +8.30815546e-01 + 2.69173263e-02 * T - 1.38874777e-05 * T2 +
+                  3.47515079e-09 * T3 - 3.41706784e-13 * T4;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = +4.61197920e+00 - 3.12037600e-03 * T + 3.55316800e-05 * T2 -
+                  4.93793980e-08 * T3 + 2.20272470e-11 * T4;
+  } else {
+    // species 17: CH2OH
+    species[17] = +3.74691030e+00 + 8.86461210e-03 * T - 4.25807220e-06 * T2 +
+                  1.00880400e-09 * T3 - 9.45015610e-14 * T4;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -877,15 +899,15 @@ cp_R(amrex::Real* species, const amrex::Real T)
                   1.61113030e-10 * T3 + 2.85667350e-14 * T4;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = +4.61197920e+00 - 3.12037600e-03 * T + 3.55316800e-05 * T2 -
-                  4.93793980e-08 * T3 + 2.20272470e-11 * T4;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +3.94199159e+00 + 2.43434884e-02 * T - 1.65595560e-05 * T2 +
+                  4.58537411e-09 * T3 - 3.31795708e-13 * T4;
   } else {
-    // species 17: CH2OH
-    species[17] = +3.74691030e+00 + 8.86461210e-03 * T - 4.25807220e-06 * T2 +
-                  1.00880400e-09 * T3 - 9.45015610e-14 * T4;
+    // species 28: CH3OCO
+    species[28] = +1.30877600e+01 + 4.53544950e-03 * T - 1.65096364e-06 * T2 +
+                  2.67197277e-10 * T3 - 1.59576863e-14 * T4;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -905,15 +927,48 @@ cp_R(amrex::Real* species, const amrex::Real T)
                   2.89719163e-10 * T3 - 1.70892199e-14 * T4;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = +5.68097447e+00 - 5.39434751e-03 * T + 6.49472750e-05 * T2 -
-                  8.05065318e-08 * T3 + 3.27474018e-11 * T4;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +3.47935703e+00 + 4.02952392e-02 * T - 3.30109296e-05 * T2 +
+                  1.34360117e-08 * T3 - 2.18601580e-12 * T4;
   } else {
-    // species 26: CH3OCH3
-    species[26] = +8.30815546e-01 + 2.69173263e-02 * T - 1.38874777e-05 * T2 +
-                  3.47515079e-09 * T3 - 3.41706784e-13 * T4;
+    // species 36: HO2CH2OCHO
+    species[36] = +1.64584298e+01 + 8.52683511e-03 * T - 3.04113500e-06 * T2 +
+                  4.85596908e-10 * T3 - 2.87316334e-14 * T4;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +2.21029612e+00 + 3.68877454e-02 * T - 2.82561555e-05 * T2 +
+                  1.15730533e-08 * T3 - 1.97130470e-12 * T4;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.24249729e+01 + 1.18705986e-02 * T - 4.07906532e-06 * T2 +
+                  6.35310809e-10 * T3 - 3.69427867e-14 * T4;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +2.52895507e+00 + 4.24128290e-02 * T - 3.73406386e-05 * T2 +
+                  1.66639333e-08 * T3 - 2.96443312e-12 * T4;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.51191783e+01 + 9.23718883e-03 * T - 3.19127505e-06 * T2 +
+                  4.99114678e-10 * T3 - 2.91162488e-14 * T4;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.99640551e+00 + 5.83226232e-02 * T - 5.53259778e-05 * T2 +
+                  2.59810540e-08 * T3 - 4.77141005e-12 * T4;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.92038046e+01 + 1.04394841e-02 * T - 3.60582939e-06 * T2 +
+                  5.63792843e-10 * T3 - 3.28807214e-14 * T4;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -927,15 +982,26 @@ cp_R(amrex::Real* species, const amrex::Real T)
                   3.84879712e-10 * T3 - 2.21778689e-14 * T4;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +3.94199159e+00 + 2.43434884e-02 * T - 1.65595560e-05 * T2 +
-                  4.58537411e-09 * T3 - 3.31795708e-13 * T4;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +5.19690837e+00 + 1.58839723e-02 * T + 3.53540547e-07 * T2 -
+                  6.10456923e-09 * T3 + 1.94661801e-12 * T4;
   } else {
-    // species 28: CH3OCO
-    species[28] = +1.30877600e+01 + 4.53544950e-03 * T - 1.65096364e-06 * T2 +
-                  2.67197277e-10 * T3 - 1.59576863e-14 * T4;
+    // species 32: OCH2OCHO
+    species[32] = +1.20233916e+01 + 8.11262659e-03 * T - 2.91356462e-06 * T2 +
+                  4.67340384e-10 * T3 - 2.77375525e-14 * T4;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +6.08180801e+00 + 1.28768359e-02 * T + 2.04419418e-06 * T2 -
+                  6.10154921e-09 * T3 + 1.79820559e-12 * T4;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +1.13737391e+01 + 8.17663898e-03 * T - 2.92034021e-06 * T2 +
+                  4.66695616e-10 * T3 - 2.76276823e-14 * T4;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -970,72 +1036,6 @@ cp_R(amrex::Real* species, const amrex::Real T)
     species[31] = +8.70981570e+00 + 1.53602372e-02 * T - 5.41003788e-06 * T2 +
                   8.60573446e-10 * T3 - 5.08819752e-14 * T4;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +5.19690837e+00 + 1.58839723e-02 * T + 3.53540547e-07 * T2 -
-                  6.10456923e-09 * T3 + 1.94661801e-12 * T4;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +1.20233916e+01 + 8.11262659e-03 * T - 2.91356462e-06 * T2 +
-                  4.67340384e-10 * T3 - 2.77375525e-14 * T4;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +6.08180801e+00 + 1.28768359e-02 * T + 2.04419418e-06 * T2 -
-                  6.10154921e-09 * T3 + 1.79820559e-12 * T4;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +1.13737391e+01 + 8.17663898e-03 * T - 2.92034021e-06 * T2 +
-                  4.66695616e-10 * T3 - 2.76276823e-14 * T4;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +2.21029612e+00 + 3.68877454e-02 * T - 2.82561555e-05 * T2 +
-                  1.15730533e-08 * T3 - 1.97130470e-12 * T4;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.24249729e+01 + 1.18705986e-02 * T - 4.07906532e-06 * T2 +
-                  6.35310809e-10 * T3 - 3.69427867e-14 * T4;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +2.52895507e+00 + 4.24128290e-02 * T - 3.73406386e-05 * T2 +
-                  1.66639333e-08 * T3 - 2.96443312e-12 * T4;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.51191783e+01 + 9.23718883e-03 * T - 3.19127505e-06 * T2 +
-                  4.99114678e-10 * T3 - 2.91162488e-14 * T4;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +3.47935703e+00 + 4.02952392e-02 * T - 3.30109296e-05 * T2 +
-                  1.34360117e-08 * T3 - 2.18601580e-12 * T4;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +1.64584298e+01 + 8.52683511e-03 * T - 3.04113500e-06 * T2 +
-                  4.85596908e-10 * T3 - 2.87316334e-14 * T4;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.99640551e+00 + 5.83226232e-02 * T - 5.53259778e-05 * T2 +
-                  2.59810540e-08 * T3 - 4.77141005e-12 * T4;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.92038046e+01 + 1.04394841e-02 * T - 3.60582939e-06 * T2 +
-                  5.63792843e-10 * T3 - 3.28807214e-14 * T4;
-  }
 }
 
 // compute the g/(RT) at the given temperature
@@ -1048,12 +1048,42 @@ gibbs(amrex::Real* species, const amrex::Real T)
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +2.547163000000000e+04 * invT + 2.960117600000000e+00 -
                2.500000000000000e+00 * logT - 0.000000000000000e+00 * T -
                0.000000000000000e+00 * T2 - 0.000000000000000e+00 * T3 -
                0.000000000000000e+00 * T4;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = -2.397554550000000e+04 * invT + 6.317929965999999e+00 -
+                  5.680974470000000e+00 * logT + 2.697173755000000e-03 * T -
+                  1.082454583333333e-05 * T2 + 6.708877650000000e-09 * T3 -
+                  1.637370090000000e-12 * T4;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = -2.341209750000000e+04 * invT - 1.938662045400000e+01 -
+                  8.308155460000000e-01 * logT - 1.345866315000000e-02 * T +
+                  2.314579616666667e-06 * T2 - 2.895958991666667e-10 * T3 +
+                  1.708533920000000e-14 * T4;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = -3.604073400000000e+03 * invT + 1.776839300000000e+00 -
+                  4.611979200000000e+00 * logT + 1.560188000000000e-03 * T -
+                  5.921946666666667e-06 * T2 + 4.114949833333334e-09 * T3 -
+                  1.101362350000000e-12 * T4;
+  } else {
+    // species 17: CH2OH
+    species[17] = -3.666482400000000e+03 * invT - 1.681199200000000e+00 -
+                  3.746910300000000e+00 * logT - 4.432306050000000e-03 * T +
+                  7.096787000000000e-07 * T2 - 8.406699999999999e-11 * T3 +
+                  4.725078050000000e-15 * T4;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1295,19 +1325,19 @@ gibbs(amrex::Real* species, const amrex::Real T)
                   1.428336750000000e-15 * T4;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = -3.604073400000000e+03 * invT + 1.776839300000000e+00 -
-                  4.611979200000000e+00 * logT + 1.560188000000000e-03 * T -
-                  5.921946666666667e-06 * T2 + 4.114949833333334e-09 * T3 -
-                  1.101362350000000e-12 * T4;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = -2.144048290000000e+04 * invT - 1.275344461000000e+01 -
+                  3.941991590000000e+00 * logT - 1.217174420000000e-02 * T +
+                  2.759926000000000e-06 * T2 - 3.821145091666667e-10 * T3 +
+                  1.658978540000000e-14 * T4;
   } else {
-    // species 17: CH2OH
-    species[17] = -3.666482400000000e+03 * invT - 1.681199200000000e+00 -
-                  3.746910300000000e+00 * logT - 4.432306050000000e-03 * T +
-                  7.096787000000000e-07 * T2 - 8.406699999999999e-11 * T3 +
-                  4.725078050000000e-15 * T4;
+    // species 28: CH3OCO
+    species[28] = -2.466164000000000e+04 * invT + 4.587916509999999e+01 -
+                  1.308776000000000e+01 * logT - 2.267724750000000e-03 * T +
+                  2.751606066666667e-07 * T2 - 2.226643975000000e-11 * T3 +
+                  7.978843150000000e-16 * T4;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -1335,19 +1365,64 @@ gibbs(amrex::Real* species, const amrex::Real T)
                   8.544609950000001e-16 * T4;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = -2.397554550000000e+04 * invT + 6.317929965999999e+00 -
-                  5.680974470000000e+00 * logT + 2.697173755000000e-03 * T -
-                  1.082454583333333e-05 * T2 + 6.708877650000000e-09 * T3 -
-                  1.637370090000000e-12 * T4;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = -5.806299340000000e+04 * invT - 1.177278217000000e+01 -
+                  3.479357030000000e+00 * logT - 2.014761960000000e-02 * T +
+                  5.501821600000000e-06 * T2 - 1.119667641666667e-09 * T3 +
+                  1.093007900000000e-13 * T4;
   } else {
-    // species 26: CH3OCH3
-    species[26] = -2.341209750000000e+04 * invT - 1.938662045400000e+01 -
-                  8.308155460000000e-01 * logT - 1.345866315000000e-02 * T +
-                  2.314579616666667e-06 * T2 - 2.895958991666667e-10 * T3 +
-                  1.708533920000000e-14 * T4;
+    // species 36: HO2CH2OCHO
+    species[36] = -6.239596080000000e+04 * invT + 7.035084370000000e+01 -
+                  1.645842980000000e+01 * logT - 4.263417555000000e-03 * T +
+                  5.068558333333334e-07 * T2 - 4.046640900000000e-11 * T3 +
+                  1.436581670000000e-15 * T4;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = -1.949409400000000e+04 * invT - 1.693606398000000e+01 -
+                  2.210296120000000e+00 * logT - 1.844387270000000e-02 * T +
+                  4.709359250000000e-06 * T2 - 9.644211083333333e-10 * T3 +
+                  9.856523500000001e-14 * T4;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = -2.296792380000000e+04 * invT + 4.779898740000000e+01 -
+                  1.242497290000000e+01 * logT - 5.935299300000000e-03 * T +
+                  6.798442200000000e-07 * T2 - 5.294256741666666e-11 * T3 +
+                  1.847139335000000e-15 * T4;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = -1.442933060000000e+04 * invT - 1.516097003000000e+01 -
+                  2.528955070000000e+00 * logT - 2.120641450000000e-02 * T +
+                  6.223439766666667e-06 * T2 - 1.388661108333333e-09 * T3 +
+                  1.482216560000000e-13 * T4;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = -1.841148670000000e+04 * invT + 6.368984010000000e+01 -
+                  1.511917830000000e+01 * logT - 4.618594415000000e-03 * T +
+                  5.318791750000000e-07 * T2 - 4.159288983333333e-11 * T3 +
+                  1.455812440000000e-15 * T4;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = -3.276287420000000e+04 * invT - 2.242509499000000e+01 -
+                  1.996405510000000e+00 * logT - 2.916131160000000e-02 * T +
+                  9.220996300000001e-06 * T2 - 2.165087833333333e-09 * T3 +
+                  2.385705025000000e-13 * T4;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = -3.792070550000000e+04 * invT + 8.438853190000000e+01 -
+                  1.920380460000000e+01 * logT - 5.219742050000000e-03 * T +
+                  6.009715650000000e-07 * T2 - 4.698273691666667e-11 * T3 +
+                  1.644036070000000e-15 * T4;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -1365,19 +1440,34 @@ gibbs(amrex::Real* species, const amrex::Real T)
                   1.108893445000000e-15 * T4;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = -2.144048290000000e+04 * invT - 1.275344461000000e+01 -
-                  3.941991590000000e+00 * logT - 1.217174420000000e-02 * T +
-                  2.759926000000000e-06 * T2 - 3.821145091666667e-10 * T3 +
-                  1.658978540000000e-14 * T4;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = -4.022427920000000e+04 * invT - 9.195499099999997e-01 -
+                  5.196908370000000e+00 * logT - 7.941986150000000e-03 * T -
+                  5.892342450000000e-08 * T2 + 5.087141025000000e-10 * T3 -
+                  9.733090050000001e-14 * T4;
   } else {
-    // species 28: CH3OCO
-    species[28] = -2.466164000000000e+04 * invT + 4.587916509999999e+01 -
-                  1.308776000000000e+01 * logT - 2.267724750000000e-03 * T +
-                  2.751606066666667e-07 * T2 - 2.226643975000000e-11 * T3 +
-                  7.978843150000000e-16 * T4;
+    // species 32: OCH2OCHO
+    species[32] = -4.336472310000000e+04 * invT + 4.539257250000000e+01 -
+                  1.202339160000000e+01 * logT - 4.056313295000000e-03 * T +
+                  4.855941033333334e-07 * T2 - 3.894503200000000e-11 * T3 +
+                  1.386877625000000e-15 * T4;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = -4.395261830000000e+04 * invT + 3.541263520000000e+00 -
+                  6.081808010000000e+00 * logT - 6.438417950000000e-03 * T -
+                  3.406990300000000e-07 * T2 + 5.084624341666666e-10 * T3 -
+                  8.991027950000001e-14 * T4;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = -4.655757430000000e+04 * invT + 3.997726560000000e+01 -
+                  1.137373910000000e+01 * logT - 4.088319490000000e-03 * T +
+                  4.867233683333334e-07 * T2 - 3.889130133333334e-11 * T3 +
+                  1.381384115000000e-15 * T4;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -1424,96 +1514,6 @@ gibbs(amrex::Real* species, const amrex::Real T)
                   9.016729800000000e-07 * T2 - 7.171445383333333e-11 * T3 +
                   2.544098760000000e-15 * T4;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = -4.022427920000000e+04 * invT - 9.195499099999997e-01 -
-                  5.196908370000000e+00 * logT - 7.941986150000000e-03 * T -
-                  5.892342450000000e-08 * T2 + 5.087141025000000e-10 * T3 -
-                  9.733090050000001e-14 * T4;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = -4.336472310000000e+04 * invT + 4.539257250000000e+01 -
-                  1.202339160000000e+01 * logT - 4.056313295000000e-03 * T +
-                  4.855941033333334e-07 * T2 - 3.894503200000000e-11 * T3 +
-                  1.386877625000000e-15 * T4;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = -4.395261830000000e+04 * invT + 3.541263520000000e+00 -
-                  6.081808010000000e+00 * logT - 6.438417950000000e-03 * T -
-                  3.406990300000000e-07 * T2 + 5.084624341666666e-10 * T3 -
-                  8.991027950000001e-14 * T4;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = -4.655757430000000e+04 * invT + 3.997726560000000e+01 -
-                  1.137373910000000e+01 * logT - 4.088319490000000e-03 * T +
-                  4.867233683333334e-07 * T2 - 3.889130133333334e-11 * T3 +
-                  1.381384115000000e-15 * T4;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = -1.949409400000000e+04 * invT - 1.693606398000000e+01 -
-                  2.210296120000000e+00 * logT - 1.844387270000000e-02 * T +
-                  4.709359250000000e-06 * T2 - 9.644211083333333e-10 * T3 +
-                  9.856523500000001e-14 * T4;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = -2.296792380000000e+04 * invT + 4.779898740000000e+01 -
-                  1.242497290000000e+01 * logT - 5.935299300000000e-03 * T +
-                  6.798442200000000e-07 * T2 - 5.294256741666666e-11 * T3 +
-                  1.847139335000000e-15 * T4;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = -1.442933060000000e+04 * invT - 1.516097003000000e+01 -
-                  2.528955070000000e+00 * logT - 2.120641450000000e-02 * T +
-                  6.223439766666667e-06 * T2 - 1.388661108333333e-09 * T3 +
-                  1.482216560000000e-13 * T4;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = -1.841148670000000e+04 * invT + 6.368984010000000e+01 -
-                  1.511917830000000e+01 * logT - 4.618594415000000e-03 * T +
-                  5.318791750000000e-07 * T2 - 4.159288983333333e-11 * T3 +
-                  1.455812440000000e-15 * T4;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = -5.806299340000000e+04 * invT - 1.177278217000000e+01 -
-                  3.479357030000000e+00 * logT - 2.014761960000000e-02 * T +
-                  5.501821600000000e-06 * T2 - 1.119667641666667e-09 * T3 +
-                  1.093007900000000e-13 * T4;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = -6.239596080000000e+04 * invT + 7.035084370000000e+01 -
-                  1.645842980000000e+01 * logT - 4.263417555000000e-03 * T +
-                  5.068558333333334e-07 * T2 - 4.046640900000000e-11 * T3 +
-                  1.436581670000000e-15 * T4;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = -3.276287420000000e+04 * invT - 2.242509499000000e+01 -
-                  1.996405510000000e+00 * logT - 2.916131160000000e-02 * T +
-                  9.220996300000001e-06 * T2 - 2.165087833333333e-09 * T3 +
-                  2.385705025000000e-13 * T4;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = -3.792070550000000e+04 * invT + 8.438853190000000e+01 -
-                  1.920380460000000e+01 * logT - 5.219742050000000e-03 * T +
-                  6.009715650000000e-07 * T2 - 4.698273691666667e-11 * T3 +
-                  1.644036070000000e-15 * T4;
-  }
 }
 
 // compute the a/(RT) at the given temperature
@@ -1526,11 +1526,41 @@ helmholtz(amrex::Real* species, const amrex::Real T)
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +2.54716300e+04 * invT + 1.96011760e+00 - 2.50000000e+00 * logT -
                0.00000000e+00 * T - 0.00000000e+00 * T2 - 0.00000000e+00 * T3 -
                0.00000000e+00 * T4;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = -2.39755455e+04 * invT + 5.31792997e+00 -
+                  5.68097447e+00 * logT + 2.69717376e-03 * T -
+                  1.08245458e-05 * T2 + 6.70887765e-09 * T3 -
+                  1.63737009e-12 * T4;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = -2.34120975e+04 * invT - 2.03866205e+01 -
+                  8.30815546e-01 * logT - 1.34586631e-02 * T +
+                  2.31457962e-06 * T2 - 2.89595899e-10 * T3 +
+                  1.70853392e-14 * T4;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = -3.60407340e+03 * invT + 7.76839300e-01 -
+                  4.61197920e+00 * logT + 1.56018800e-03 * T -
+                  5.92194667e-06 * T2 + 4.11494983e-09 * T3 -
+                  1.10136235e-12 * T4;
+  } else {
+    // species 17: CH2OH
+    species[17] = -3.66648240e+03 * invT - 2.68119920e+00 -
+                  3.74691030e+00 * logT - 4.43230605e-03 * T +
+                  7.09678700e-07 * T2 - 8.40670000e-11 * T3 +
+                  4.72507805e-15 * T4;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1772,19 +1802,19 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                   1.42833675e-15 * T4;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = -3.60407340e+03 * invT + 7.76839300e-01 -
-                  4.61197920e+00 * logT + 1.56018800e-03 * T -
-                  5.92194667e-06 * T2 + 4.11494983e-09 * T3 -
-                  1.10136235e-12 * T4;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = -2.14404829e+04 * invT - 1.37534446e+01 -
+                  3.94199159e+00 * logT - 1.21717442e-02 * T +
+                  2.75992600e-06 * T2 - 3.82114509e-10 * T3 +
+                  1.65897854e-14 * T4;
   } else {
-    // species 17: CH2OH
-    species[17] = -3.66648240e+03 * invT - 2.68119920e+00 -
-                  3.74691030e+00 * logT - 4.43230605e-03 * T +
-                  7.09678700e-07 * T2 - 8.40670000e-11 * T3 +
-                  4.72507805e-15 * T4;
+    // species 28: CH3OCO
+    species[28] = -2.46616400e+04 * invT + 4.48791651e+01 -
+                  1.30877600e+01 * logT - 2.26772475e-03 * T +
+                  2.75160607e-07 * T2 - 2.22664398e-11 * T3 +
+                  7.97884315e-16 * T4;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -1812,19 +1842,64 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                   8.54460995e-16 * T4;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = -2.39755455e+04 * invT + 5.31792997e+00 -
-                  5.68097447e+00 * logT + 2.69717376e-03 * T -
-                  1.08245458e-05 * T2 + 6.70887765e-09 * T3 -
-                  1.63737009e-12 * T4;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = -5.80629934e+04 * invT - 1.27727822e+01 -
+                  3.47935703e+00 * logT - 2.01476196e-02 * T +
+                  5.50182160e-06 * T2 - 1.11966764e-09 * T3 +
+                  1.09300790e-13 * T4;
   } else {
-    // species 26: CH3OCH3
-    species[26] = -2.34120975e+04 * invT - 2.03866205e+01 -
-                  8.30815546e-01 * logT - 1.34586631e-02 * T +
-                  2.31457962e-06 * T2 - 2.89595899e-10 * T3 +
-                  1.70853392e-14 * T4;
+    // species 36: HO2CH2OCHO
+    species[36] = -6.23959608e+04 * invT + 6.93508437e+01 -
+                  1.64584298e+01 * logT - 4.26341756e-03 * T +
+                  5.06855833e-07 * T2 - 4.04664090e-11 * T3 +
+                  1.43658167e-15 * T4;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = -1.94940940e+04 * invT - 1.79360640e+01 -
+                  2.21029612e+00 * logT - 1.84438727e-02 * T +
+                  4.70935925e-06 * T2 - 9.64421108e-10 * T3 +
+                  9.85652350e-14 * T4;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = -2.29679238e+04 * invT + 4.67989874e+01 -
+                  1.24249729e+01 * logT - 5.93529930e-03 * T +
+                  6.79844220e-07 * T2 - 5.29425674e-11 * T3 +
+                  1.84713933e-15 * T4;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = -1.44293306e+04 * invT - 1.61609700e+01 -
+                  2.52895507e+00 * logT - 2.12064145e-02 * T +
+                  6.22343977e-06 * T2 - 1.38866111e-09 * T3 +
+                  1.48221656e-13 * T4;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = -1.84114867e+04 * invT + 6.26898401e+01 -
+                  1.51191783e+01 * logT - 4.61859441e-03 * T +
+                  5.31879175e-07 * T2 - 4.15928898e-11 * T3 +
+                  1.45581244e-15 * T4;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = -3.27628742e+04 * invT - 2.34250950e+01 -
+                  1.99640551e+00 * logT - 2.91613116e-02 * T +
+                  9.22099630e-06 * T2 - 2.16508783e-09 * T3 +
+                  2.38570502e-13 * T4;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = -3.79207055e+04 * invT + 8.33885319e+01 -
+                  1.92038046e+01 * logT - 5.21974205e-03 * T +
+                  6.00971565e-07 * T2 - 4.69827369e-11 * T3 +
+                  1.64403607e-15 * T4;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -1842,19 +1917,34 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                   1.10889344e-15 * T4;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = -2.14404829e+04 * invT - 1.37534446e+01 -
-                  3.94199159e+00 * logT - 1.21717442e-02 * T +
-                  2.75992600e-06 * T2 - 3.82114509e-10 * T3 +
-                  1.65897854e-14 * T4;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = -4.02242792e+04 * invT - 1.91954991e+00 -
+                  5.19690837e+00 * logT - 7.94198615e-03 * T -
+                  5.89234245e-08 * T2 + 5.08714103e-10 * T3 -
+                  9.73309005e-14 * T4;
   } else {
-    // species 28: CH3OCO
-    species[28] = -2.46616400e+04 * invT + 4.48791651e+01 -
-                  1.30877600e+01 * logT - 2.26772475e-03 * T +
-                  2.75160607e-07 * T2 - 2.22664398e-11 * T3 +
-                  7.97884315e-16 * T4;
+    // species 32: OCH2OCHO
+    species[32] = -4.33647231e+04 * invT + 4.43925725e+01 -
+                  1.20233916e+01 * logT - 4.05631329e-03 * T +
+                  4.85594103e-07 * T2 - 3.89450320e-11 * T3 +
+                  1.38687762e-15 * T4;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = -4.39526183e+04 * invT + 2.54126352e+00 -
+                  6.08180801e+00 * logT - 6.43841795e-03 * T -
+                  3.40699030e-07 * T2 + 5.08462434e-10 * T3 -
+                  8.99102795e-14 * T4;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = -4.65575743e+04 * invT + 3.89772656e+01 -
+                  1.13737391e+01 * logT - 4.08831949e-03 * T +
+                  4.86723368e-07 * T2 - 3.88913013e-11 * T3 +
+                  1.38138412e-15 * T4;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -1901,96 +1991,6 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                   9.01672980e-07 * T2 - 7.17144538e-11 * T3 +
                   2.54409876e-15 * T4;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = -4.02242792e+04 * invT - 1.91954991e+00 -
-                  5.19690837e+00 * logT - 7.94198615e-03 * T -
-                  5.89234245e-08 * T2 + 5.08714103e-10 * T3 -
-                  9.73309005e-14 * T4;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = -4.33647231e+04 * invT + 4.43925725e+01 -
-                  1.20233916e+01 * logT - 4.05631329e-03 * T +
-                  4.85594103e-07 * T2 - 3.89450320e-11 * T3 +
-                  1.38687762e-15 * T4;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = -4.39526183e+04 * invT + 2.54126352e+00 -
-                  6.08180801e+00 * logT - 6.43841795e-03 * T -
-                  3.40699030e-07 * T2 + 5.08462434e-10 * T3 -
-                  8.99102795e-14 * T4;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = -4.65575743e+04 * invT + 3.89772656e+01 -
-                  1.13737391e+01 * logT - 4.08831949e-03 * T +
-                  4.86723368e-07 * T2 - 3.88913013e-11 * T3 +
-                  1.38138412e-15 * T4;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = -1.94940940e+04 * invT - 1.79360640e+01 -
-                  2.21029612e+00 * logT - 1.84438727e-02 * T +
-                  4.70935925e-06 * T2 - 9.64421108e-10 * T3 +
-                  9.85652350e-14 * T4;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = -2.29679238e+04 * invT + 4.67989874e+01 -
-                  1.24249729e+01 * logT - 5.93529930e-03 * T +
-                  6.79844220e-07 * T2 - 5.29425674e-11 * T3 +
-                  1.84713933e-15 * T4;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = -1.44293306e+04 * invT - 1.61609700e+01 -
-                  2.52895507e+00 * logT - 2.12064145e-02 * T +
-                  6.22343977e-06 * T2 - 1.38866111e-09 * T3 +
-                  1.48221656e-13 * T4;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = -1.84114867e+04 * invT + 6.26898401e+01 -
-                  1.51191783e+01 * logT - 4.61859441e-03 * T +
-                  5.31879175e-07 * T2 - 4.15928898e-11 * T3 +
-                  1.45581244e-15 * T4;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = -5.80629934e+04 * invT - 1.27727822e+01 -
-                  3.47935703e+00 * logT - 2.01476196e-02 * T +
-                  5.50182160e-06 * T2 - 1.11966764e-09 * T3 +
-                  1.09300790e-13 * T4;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = -6.23959608e+04 * invT + 6.93508437e+01 -
-                  1.64584298e+01 * logT - 4.26341756e-03 * T +
-                  5.06855833e-07 * T2 - 4.04664090e-11 * T3 +
-                  1.43658167e-15 * T4;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = -3.27628742e+04 * invT - 2.34250950e+01 -
-                  1.99640551e+00 * logT - 2.91613116e-02 * T +
-                  9.22099630e-06 * T2 - 2.16508783e-09 * T3 +
-                  2.38570502e-13 * T4;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = -3.79207055e+04 * invT + 8.33885319e+01 -
-                  1.92038046e+01 * logT - 5.21974205e-03 * T +
-                  6.00971565e-07 * T2 - 4.69827369e-11 * T3 +
-                  1.64403607e-15 * T4;
-  }
 }
 
 // compute the e/(RT) at the given temperature
@@ -2002,11 +2002,37 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4 +
                2.54716300e+04 * invT;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = +4.68097447e+00 - 2.69717376e-03 * T + 2.16490917e-05 * T2 -
+                  2.01266330e-08 * T3 + 6.54948036e-12 * T4 -
+                  2.39755455e+04 * invT;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = -1.69184454e-01 + 1.34586631e-02 * T - 4.62915923e-06 * T2 +
+                  8.68787697e-10 * T3 - 6.83413568e-14 * T4 -
+                  2.34120975e+04 * invT;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = +3.61197920e+00 - 1.56018800e-03 * T + 1.18438933e-05 * T2 -
+                  1.23448495e-08 * T3 + 4.40544940e-12 * T4 -
+                  3.60407340e+03 * invT;
+  } else {
+    // species 17: CH2OH
+    species[17] = +2.74691030e+00 + 4.43230605e-03 * T - 1.41935740e-06 * T2 +
+                  2.52201000e-10 * T3 - 1.89003122e-14 * T4 -
+                  3.66648240e+03 * invT;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -2202,17 +2228,17 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   1.62301730e+04 * invT;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = +3.61197920e+00 - 1.56018800e-03 * T + 1.18438933e-05 * T2 -
-                  1.23448495e-08 * T3 + 4.40544940e-12 * T4 -
-                  3.60407340e+03 * invT;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +2.94199159e+00 + 1.21717442e-02 * T - 5.51985200e-06 * T2 +
+                  1.14634353e-09 * T3 - 6.63591416e-14 * T4 -
+                  2.14404829e+04 * invT;
   } else {
-    // species 17: CH2OH
-    species[17] = +2.74691030e+00 + 4.43230605e-03 * T - 1.41935740e-06 * T2 +
-                  2.52201000e-10 * T3 - 1.89003122e-14 * T4 -
-                  3.66648240e+03 * invT;
+    // species 28: CH3OCO
+    species[28] = +1.20877600e+01 + 2.26772475e-03 * T - 5.50321213e-07 * T2 +
+                  6.67993193e-11 * T3 - 3.19153726e-15 * T4 -
+                  2.46616400e+04 * invT;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -2236,17 +2262,56 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   4.83995400e+04 * invT;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = +4.68097447e+00 - 2.69717376e-03 * T + 2.16490917e-05 * T2 -
-                  2.01266330e-08 * T3 + 6.54948036e-12 * T4 -
-                  2.39755455e+04 * invT;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +2.47935703e+00 + 2.01476196e-02 * T - 1.10036432e-05 * T2 +
+                  3.35900293e-09 * T3 - 4.37203160e-13 * T4 -
+                  5.80629934e+04 * invT;
   } else {
-    // species 26: CH3OCH3
-    species[26] = -1.69184454e-01 + 1.34586631e-02 * T - 4.62915923e-06 * T2 +
-                  8.68787697e-10 * T3 - 6.83413568e-14 * T4 -
-                  2.34120975e+04 * invT;
+    // species 36: HO2CH2OCHO
+    species[36] = +1.54584298e+01 + 4.26341756e-03 * T - 1.01371167e-06 * T2 +
+                  1.21399227e-10 * T3 - 5.74632668e-15 * T4 -
+                  6.23959608e+04 * invT;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +1.21029612e+00 + 1.84438727e-02 * T - 9.41871850e-06 * T2 +
+                  2.89326332e-09 * T3 - 3.94260940e-13 * T4 -
+                  1.94940940e+04 * invT;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.14249729e+01 + 5.93529930e-03 * T - 1.35968844e-06 * T2 +
+                  1.58827702e-10 * T3 - 7.38855734e-15 * T4 -
+                  2.29679238e+04 * invT;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.52895507e+00 + 2.12064145e-02 * T - 1.24468795e-05 * T2 +
+                  4.16598332e-09 * T3 - 5.92886624e-13 * T4 -
+                  1.44293306e+04 * invT;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.41191783e+01 + 4.61859441e-03 * T - 1.06375835e-06 * T2 +
+                  1.24778670e-10 * T3 - 5.82324976e-15 * T4 -
+                  1.84114867e+04 * invT;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +9.96405510e-01 + 2.91613116e-02 * T - 1.84419926e-05 * T2 +
+                  6.49526350e-09 * T3 - 9.54282010e-13 * T4 -
+                  3.27628742e+04 * invT;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.82038046e+01 + 5.21974205e-03 * T - 1.20194313e-06 * T2 +
+                  1.40948211e-10 * T3 - 6.57614428e-15 * T4 -
+                  3.79207055e+04 * invT;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -2262,17 +2327,30 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   2.47500385e+04 * invT;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +2.94199159e+00 + 1.21717442e-02 * T - 5.51985200e-06 * T2 +
-                  1.14634353e-09 * T3 - 6.63591416e-14 * T4 -
-                  2.14404829e+04 * invT;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +4.19690837e+00 + 7.94198615e-03 * T + 1.17846849e-07 * T2 -
+                  1.52614231e-09 * T3 + 3.89323602e-13 * T4 -
+                  4.02242792e+04 * invT;
   } else {
-    // species 28: CH3OCO
-    species[28] = +1.20877600e+01 + 2.26772475e-03 * T - 5.50321213e-07 * T2 +
-                  6.67993193e-11 * T3 - 3.19153726e-15 * T4 -
-                  2.46616400e+04 * invT;
+    // species 32: OCH2OCHO
+    species[32] = +1.10233916e+01 + 4.05631329e-03 * T - 9.71188207e-07 * T2 +
+                  1.16835096e-10 * T3 - 5.54751050e-15 * T4 -
+                  4.33647231e+04 * invT;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +5.08180801e+00 + 6.43841795e-03 * T + 6.81398060e-07 * T2 -
+                  1.52538730e-09 * T3 + 3.59641118e-13 * T4 -
+                  4.39526183e+04 * invT;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +1.03737391e+01 + 4.08831949e-03 * T - 9.73446737e-07 * T2 +
+                  1.16673904e-10 * T3 - 5.52553646e-15 * T4 -
+                  4.65575743e+04 * invT;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -2313,84 +2391,6 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   2.15143362e-10 * T3 - 1.01763950e-14 * T4 -
                   4.76607115e+04 * invT;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +4.19690837e+00 + 7.94198615e-03 * T + 1.17846849e-07 * T2 -
-                  1.52614231e-09 * T3 + 3.89323602e-13 * T4 -
-                  4.02242792e+04 * invT;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +1.10233916e+01 + 4.05631329e-03 * T - 9.71188207e-07 * T2 +
-                  1.16835096e-10 * T3 - 5.54751050e-15 * T4 -
-                  4.33647231e+04 * invT;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +5.08180801e+00 + 6.43841795e-03 * T + 6.81398060e-07 * T2 -
-                  1.52538730e-09 * T3 + 3.59641118e-13 * T4 -
-                  4.39526183e+04 * invT;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +1.03737391e+01 + 4.08831949e-03 * T - 9.73446737e-07 * T2 +
-                  1.16673904e-10 * T3 - 5.52553646e-15 * T4 -
-                  4.65575743e+04 * invT;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +1.21029612e+00 + 1.84438727e-02 * T - 9.41871850e-06 * T2 +
-                  2.89326332e-09 * T3 - 3.94260940e-13 * T4 -
-                  1.94940940e+04 * invT;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.14249729e+01 + 5.93529930e-03 * T - 1.35968844e-06 * T2 +
-                  1.58827702e-10 * T3 - 7.38855734e-15 * T4 -
-                  2.29679238e+04 * invT;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.52895507e+00 + 2.12064145e-02 * T - 1.24468795e-05 * T2 +
-                  4.16598332e-09 * T3 - 5.92886624e-13 * T4 -
-                  1.44293306e+04 * invT;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.41191783e+01 + 4.61859441e-03 * T - 1.06375835e-06 * T2 +
-                  1.24778670e-10 * T3 - 5.82324976e-15 * T4 -
-                  1.84114867e+04 * invT;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +2.47935703e+00 + 2.01476196e-02 * T - 1.10036432e-05 * T2 +
-                  3.35900293e-09 * T3 - 4.37203160e-13 * T4 -
-                  5.80629934e+04 * invT;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +1.54584298e+01 + 4.26341756e-03 * T - 1.01371167e-06 * T2 +
-                  1.21399227e-10 * T3 - 5.74632668e-15 * T4 -
-                  6.23959608e+04 * invT;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +9.96405510e-01 + 2.91613116e-02 * T - 1.84419926e-05 * T2 +
-                  6.49526350e-09 * T3 - 9.54282010e-13 * T4 -
-                  3.27628742e+04 * invT;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.82038046e+01 + 5.21974205e-03 * T - 1.20194313e-06 * T2 +
-                  1.40948211e-10 * T3 - 6.57614428e-15 * T4 -
-                  3.79207055e+04 * invT;
-  }
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
@@ -2402,11 +2402,37 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3 + 0.00000000e+00 * T4 +
                2.54716300e+04 * invT;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = +5.68097447e+00 - 2.69717376e-03 * T + 2.16490917e-05 * T2 -
+                  2.01266330e-08 * T3 + 6.54948036e-12 * T4 -
+                  2.39755455e+04 * invT;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = +8.30815546e-01 + 1.34586631e-02 * T - 4.62915923e-06 * T2 +
+                  8.68787697e-10 * T3 - 6.83413568e-14 * T4 -
+                  2.34120975e+04 * invT;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = +4.61197920e+00 - 1.56018800e-03 * T + 1.18438933e-05 * T2 -
+                  1.23448495e-08 * T3 + 4.40544940e-12 * T4 -
+                  3.60407340e+03 * invT;
+  } else {
+    // species 17: CH2OH
+    species[17] = +3.74691030e+00 + 4.43230605e-03 * T - 1.41935740e-06 * T2 +
+                  2.52201000e-10 * T3 - 1.89003122e-14 * T4 -
+                  3.66648240e+03 * invT;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -2602,17 +2628,17 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   1.62301730e+04 * invT;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = +4.61197920e+00 - 1.56018800e-03 * T + 1.18438933e-05 * T2 -
-                  1.23448495e-08 * T3 + 4.40544940e-12 * T4 -
-                  3.60407340e+03 * invT;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +3.94199159e+00 + 1.21717442e-02 * T - 5.51985200e-06 * T2 +
+                  1.14634353e-09 * T3 - 6.63591416e-14 * T4 -
+                  2.14404829e+04 * invT;
   } else {
-    // species 17: CH2OH
-    species[17] = +3.74691030e+00 + 4.43230605e-03 * T - 1.41935740e-06 * T2 +
-                  2.52201000e-10 * T3 - 1.89003122e-14 * T4 -
-                  3.66648240e+03 * invT;
+    // species 28: CH3OCO
+    species[28] = +1.30877600e+01 + 2.26772475e-03 * T - 5.50321213e-07 * T2 +
+                  6.67993193e-11 * T3 - 3.19153726e-15 * T4 -
+                  2.46616400e+04 * invT;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -2636,17 +2662,56 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   4.83995400e+04 * invT;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = +5.68097447e+00 - 2.69717376e-03 * T + 2.16490917e-05 * T2 -
-                  2.01266330e-08 * T3 + 6.54948036e-12 * T4 -
-                  2.39755455e+04 * invT;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +3.47935703e+00 + 2.01476196e-02 * T - 1.10036432e-05 * T2 +
+                  3.35900293e-09 * T3 - 4.37203160e-13 * T4 -
+                  5.80629934e+04 * invT;
   } else {
-    // species 26: CH3OCH3
-    species[26] = +8.30815546e-01 + 1.34586631e-02 * T - 4.62915923e-06 * T2 +
-                  8.68787697e-10 * T3 - 6.83413568e-14 * T4 -
-                  2.34120975e+04 * invT;
+    // species 36: HO2CH2OCHO
+    species[36] = +1.64584298e+01 + 4.26341756e-03 * T - 1.01371167e-06 * T2 +
+                  1.21399227e-10 * T3 - 5.74632668e-15 * T4 -
+                  6.23959608e+04 * invT;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +2.21029612e+00 + 1.84438727e-02 * T - 9.41871850e-06 * T2 +
+                  2.89326332e-09 * T3 - 3.94260940e-13 * T4 -
+                  1.94940940e+04 * invT;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.24249729e+01 + 5.93529930e-03 * T - 1.35968844e-06 * T2 +
+                  1.58827702e-10 * T3 - 7.38855734e-15 * T4 -
+                  2.29679238e+04 * invT;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +2.52895507e+00 + 2.12064145e-02 * T - 1.24468795e-05 * T2 +
+                  4.16598332e-09 * T3 - 5.92886624e-13 * T4 -
+                  1.44293306e+04 * invT;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.51191783e+01 + 4.61859441e-03 * T - 1.06375835e-06 * T2 +
+                  1.24778670e-10 * T3 - 5.82324976e-15 * T4 -
+                  1.84114867e+04 * invT;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.99640551e+00 + 2.91613116e-02 * T - 1.84419926e-05 * T2 +
+                  6.49526350e-09 * T3 - 9.54282010e-13 * T4 -
+                  3.27628742e+04 * invT;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.92038046e+01 + 5.21974205e-03 * T - 1.20194313e-06 * T2 +
+                  1.40948211e-10 * T3 - 6.57614428e-15 * T4 -
+                  3.79207055e+04 * invT;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -2662,17 +2727,30 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   2.47500385e+04 * invT;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +3.94199159e+00 + 1.21717442e-02 * T - 5.51985200e-06 * T2 +
-                  1.14634353e-09 * T3 - 6.63591416e-14 * T4 -
-                  2.14404829e+04 * invT;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +5.19690837e+00 + 7.94198615e-03 * T + 1.17846849e-07 * T2 -
+                  1.52614231e-09 * T3 + 3.89323602e-13 * T4 -
+                  4.02242792e+04 * invT;
   } else {
-    // species 28: CH3OCO
-    species[28] = +1.30877600e+01 + 2.26772475e-03 * T - 5.50321213e-07 * T2 +
-                  6.67993193e-11 * T3 - 3.19153726e-15 * T4 -
-                  2.46616400e+04 * invT;
+    // species 32: OCH2OCHO
+    species[32] = +1.20233916e+01 + 4.05631329e-03 * T - 9.71188207e-07 * T2 +
+                  1.16835096e-10 * T3 - 5.54751050e-15 * T4 -
+                  4.33647231e+04 * invT;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +6.08180801e+00 + 6.43841795e-03 * T + 6.81398060e-07 * T2 -
+                  1.52538730e-09 * T3 + 3.59641118e-13 * T4 -
+                  4.39526183e+04 * invT;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +1.13737391e+01 + 4.08831949e-03 * T - 9.73446737e-07 * T2 +
+                  1.16673904e-10 * T3 - 5.52553646e-15 * T4 -
+                  4.65575743e+04 * invT;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -2713,84 +2791,6 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   2.15143362e-10 * T3 - 1.01763950e-14 * T4 -
                   4.76607115e+04 * invT;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +5.19690837e+00 + 7.94198615e-03 * T + 1.17846849e-07 * T2 -
-                  1.52614231e-09 * T3 + 3.89323602e-13 * T4 -
-                  4.02242792e+04 * invT;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +1.20233916e+01 + 4.05631329e-03 * T - 9.71188207e-07 * T2 +
-                  1.16835096e-10 * T3 - 5.54751050e-15 * T4 -
-                  4.33647231e+04 * invT;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +6.08180801e+00 + 6.43841795e-03 * T + 6.81398060e-07 * T2 -
-                  1.52538730e-09 * T3 + 3.59641118e-13 * T4 -
-                  4.39526183e+04 * invT;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +1.13737391e+01 + 4.08831949e-03 * T - 9.73446737e-07 * T2 +
-                  1.16673904e-10 * T3 - 5.52553646e-15 * T4 -
-                  4.65575743e+04 * invT;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +2.21029612e+00 + 1.84438727e-02 * T - 9.41871850e-06 * T2 +
-                  2.89326332e-09 * T3 - 3.94260940e-13 * T4 -
-                  1.94940940e+04 * invT;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.24249729e+01 + 5.93529930e-03 * T - 1.35968844e-06 * T2 +
-                  1.58827702e-10 * T3 - 7.38855734e-15 * T4 -
-                  2.29679238e+04 * invT;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +2.52895507e+00 + 2.12064145e-02 * T - 1.24468795e-05 * T2 +
-                  4.16598332e-09 * T3 - 5.92886624e-13 * T4 -
-                  1.44293306e+04 * invT;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.51191783e+01 + 4.61859441e-03 * T - 1.06375835e-06 * T2 +
-                  1.24778670e-10 * T3 - 5.82324976e-15 * T4 -
-                  1.84114867e+04 * invT;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +3.47935703e+00 + 2.01476196e-02 * T - 1.10036432e-05 * T2 +
-                  3.35900293e-09 * T3 - 4.37203160e-13 * T4 -
-                  5.80629934e+04 * invT;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +1.64584298e+01 + 4.26341756e-03 * T - 1.01371167e-06 * T2 +
-                  1.21399227e-10 * T3 - 5.74632668e-15 * T4 -
-                  6.23959608e+04 * invT;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.99640551e+00 + 2.91613116e-02 * T - 1.84419926e-05 * T2 +
-                  6.49526350e-09 * T3 - 9.54282010e-13 * T4 -
-                  3.27628742e+04 * invT;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.92038046e+01 + 5.21974205e-03 * T - 1.20194313e-06 * T2 +
-                  1.40948211e-10 * T3 - 6.57614428e-15 * T4 -
-                  3.79207055e+04 * invT;
-  }
 }
 
 // compute the S/R at the given temperature (Eq 21)
@@ -2802,11 +2802,37 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real logT = log(T);
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +2.50000000e+00 * logT + 0.00000000e+00 * T +
                0.00000000e+00 * T2 + 0.00000000e+00 * T3 + 0.00000000e+00 * T4 -
                4.60117600e-01;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = +5.68097447e+00 * logT - 5.39434751e-03 * T +
+                  3.24736375e-05 * T2 - 2.68355106e-08 * T3 +
+                  8.18685045e-12 * T4 - 6.36955496e-01;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = +8.30815546e-01 * logT + 2.69173263e-02 * T -
+                  6.94373885e-06 * T2 + 1.15838360e-09 * T3 -
+                  8.54266960e-14 * T4 + 2.02174360e+01;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = +4.61197920e+00 * logT - 3.12037600e-03 * T +
+                  1.77658400e-05 * T2 - 1.64597993e-08 * T3 +
+                  5.50681175e-12 * T4 + 2.83513990e+00;
+  } else {
+    // species 17: CH2OH
+    species[17] = +3.74691030e+00 * logT + 8.86461210e-03 * T -
+                  2.12903610e-06 * T2 + 3.36268000e-10 * T3 -
+                  2.36253903e-14 * T4 + 5.42810950e+00;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -3002,17 +3028,17 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   7.14168375e-15 * T4 - 5.12138130e+00;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = +4.61197920e+00 * logT - 3.12037600e-03 * T +
-                  1.77658400e-05 * T2 - 1.64597993e-08 * T3 +
-                  5.50681175e-12 * T4 + 2.83513990e+00;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +3.94199159e+00 * logT + 2.43434884e-02 * T -
+                  8.27977800e-06 * T2 + 1.52845804e-09 * T3 -
+                  8.29489270e-14 * T4 + 1.66954362e+01;
   } else {
-    // species 17: CH2OH
-    species[17] = +3.74691030e+00 * logT + 8.86461210e-03 * T -
-                  2.12903610e-06 * T2 + 3.36268000e-10 * T3 -
-                  2.36253903e-14 * T4 + 5.42810950e+00;
+    // species 28: CH3OCO
+    species[28] = +1.30877600e+01 * logT + 4.53544950e-03 * T -
+                  8.25481820e-07 * T2 + 8.90657590e-11 * T3 -
+                  3.98942157e-15 * T4 - 3.27914051e+01;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -3036,17 +3062,56 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   4.27230498e-15 * T4 - 1.13104798e+01;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = +5.68097447e+00 * logT - 5.39434751e-03 * T +
-                  3.24736375e-05 * T2 - 2.68355106e-08 * T3 +
-                  8.18685045e-12 * T4 - 6.36955496e-01;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +3.47935703e+00 * logT + 4.02952392e-02 * T -
+                  1.65054648e-05 * T2 + 4.47867057e-09 * T3 -
+                  5.46503950e-13 * T4 + 1.52521392e+01;
   } else {
-    // species 26: CH3OCH3
-    species[26] = +8.30815546e-01 * logT + 2.69173263e-02 * T -
-                  6.94373885e-06 * T2 + 1.15838360e-09 * T3 -
-                  8.54266960e-14 * T4 + 2.02174360e+01;
+    // species 36: HO2CH2OCHO
+    species[36] = +1.64584298e+01 * logT + 8.52683511e-03 * T -
+                  1.52056750e-06 * T2 + 1.61865636e-10 * T3 -
+                  7.18290835e-15 * T4 - 5.38924139e+01;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +2.21029612e+00 * logT + 3.68877454e-02 * T -
+                  1.41280778e-05 * T2 + 3.85768443e-09 * T3 -
+                  4.92826175e-13 * T4 + 1.91463601e+01;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.24249729e+01 * logT + 1.18705986e-02 * T -
+                  2.03953266e-06 * T2 + 2.11770270e-10 * T3 -
+                  9.23569667e-15 * T4 - 3.53740145e+01;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +2.52895507e+00 * logT + 4.24128290e-02 * T -
+                  1.86703193e-05 * T2 + 5.55464443e-09 * T3 -
+                  7.41108280e-13 * T4 + 1.76899251e+01;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +1.51191783e+01 * logT + 9.23718883e-03 * T -
+                  1.59563753e-06 * T2 + 1.66371559e-10 * T3 -
+                  7.27906220e-15 * T4 - 4.85706618e+01;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.99640551e+00 * logT + 5.83226232e-02 * T -
+                  2.76629889e-05 * T2 + 8.66035133e-09 * T3 -
+                  1.19285251e-12 * T4 + 2.44215005e+01;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.92038046e+01 * logT + 1.04394841e-02 * T -
+                  1.80291469e-06 * T2 + 1.87930948e-10 * T3 -
+                  8.22018035e-15 * T4 - 6.51847273e+01;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -3062,17 +3127,30 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   5.54446722e-15 * T4 - 7.29290847e+00;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +3.94199159e+00 * logT + 2.43434884e-02 * T -
-                  8.27977800e-06 * T2 + 1.52845804e-09 * T3 -
-                  8.29489270e-14 * T4 + 1.66954362e+01;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +5.19690837e+00 * logT + 1.58839723e-02 * T +
+                  1.76770274e-07 * T2 - 2.03485641e-09 * T3 +
+                  4.86654503e-13 * T4 + 6.11645828e+00;
   } else {
-    // species 28: CH3OCO
-    species[28] = +1.30877600e+01 * logT + 4.53544950e-03 * T -
-                  8.25481820e-07 * T2 + 8.90657590e-11 * T3 -
-                  3.98942157e-15 * T4 - 3.27914051e+01;
+    // species 32: OCH2OCHO
+    species[32] = +1.20233916e+01 * logT + 8.11262659e-03 * T -
+                  1.45678231e-06 * T2 + 1.55780128e-10 * T3 -
+                  6.93438812e-15 * T4 - 3.33691809e+01;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +6.08180801e+00 * logT + 1.28768359e-02 * T +
+                  1.02209709e-06 * T2 - 2.03384974e-09 * T3 +
+                  4.49551398e-13 * T4 + 2.54054449e+00;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +1.13737391e+01 * logT + 8.17663898e-03 * T -
+                  1.46017011e-06 * T2 + 1.55565205e-10 * T3 -
+                  6.90692057e-15 * T4 - 2.86035265e+01;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -3113,84 +3191,6 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   2.70501894e-06 * T2 + 2.86857815e-10 * T3 -
                   1.27204938e-14 * T4 - 1.80226702e+01;
   }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +5.19690837e+00 * logT + 1.58839723e-02 * T +
-                  1.76770274e-07 * T2 - 2.03485641e-09 * T3 +
-                  4.86654503e-13 * T4 + 6.11645828e+00;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +1.20233916e+01 * logT + 8.11262659e-03 * T -
-                  1.45678231e-06 * T2 + 1.55780128e-10 * T3 -
-                  6.93438812e-15 * T4 - 3.33691809e+01;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +6.08180801e+00 * logT + 1.28768359e-02 * T +
-                  1.02209709e-06 * T2 - 2.03384974e-09 * T3 +
-                  4.49551398e-13 * T4 + 2.54054449e+00;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +1.13737391e+01 * logT + 8.17663898e-03 * T -
-                  1.46017011e-06 * T2 + 1.55565205e-10 * T3 -
-                  6.90692057e-15 * T4 - 2.86035265e+01;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +2.21029612e+00 * logT + 3.68877454e-02 * T -
-                  1.41280778e-05 * T2 + 3.85768443e-09 * T3 -
-                  4.92826175e-13 * T4 + 1.91463601e+01;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.24249729e+01 * logT + 1.18705986e-02 * T -
-                  2.03953266e-06 * T2 + 2.11770270e-10 * T3 -
-                  9.23569667e-15 * T4 - 3.53740145e+01;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +2.52895507e+00 * logT + 4.24128290e-02 * T -
-                  1.86703193e-05 * T2 + 5.55464443e-09 * T3 -
-                  7.41108280e-13 * T4 + 1.76899251e+01;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +1.51191783e+01 * logT + 9.23718883e-03 * T -
-                  1.59563753e-06 * T2 + 1.66371559e-10 * T3 -
-                  7.27906220e-15 * T4 - 4.85706618e+01;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +3.47935703e+00 * logT + 4.02952392e-02 * T -
-                  1.65054648e-05 * T2 + 4.47867057e-09 * T3 -
-                  5.46503950e-13 * T4 + 1.52521392e+01;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +1.64584298e+01 * logT + 8.52683511e-03 * T -
-                  1.52056750e-06 * T2 + 1.61865636e-10 * T3 -
-                  7.18290835e-15 * T4 - 5.38924139e+01;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.99640551e+00 * logT + 5.83226232e-02 * T -
-                  2.76629889e-05 * T2 + 8.66035133e-09 * T3 -
-                  1.19285251e-12 * T4 + 2.44215005e+01;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.92038046e+01 * logT + 1.04394841e-02 * T -
-                  1.80291469e-06 * T2 + 1.87930948e-10 * T3 -
-                  8.22018035e-15 * T4 - 6.51847273e+01;
-  }
 }
 
 // compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
@@ -3201,10 +3201,32 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 0: H
   species[0] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
                0.00000000e+00 * T3;
+
+  // species with midpoint at T=710 kelvin
+  if (T < 710) {
+    // species 26: CH3OCH3
+    species[26] = -5.39434751e-03 + 1.29894550e-04 * T - 2.41519595e-07 * T2 +
+                  1.30989607e-10 * T3;
+  } else {
+    // species 26: CH3OCH3
+    species[26] = +2.69173263e-02 - 2.77749554e-05 * T + 1.04254524e-08 * T2 -
+                  1.36682714e-12 * T3;
+  }
+
+  // species with midpoint at T=750 kelvin
+  if (T < 750) {
+    // species 17: CH2OH
+    species[17] = -3.12037600e-03 + 7.10633600e-05 * T - 1.48138194e-07 * T2 +
+                  8.81089880e-11 * T3;
+  } else {
+    // species 17: CH2OH
+    species[17] = +8.86461210e-03 - 8.51614440e-06 * T + 3.02641200e-09 * T2 -
+                  3.78006244e-13 * T3;
+  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -3354,15 +3376,15 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
                   1.14266940e-13 * T3;
   }
 
-  // species with midpoint at T=750 kelvin
-  if (T < 750) {
-    // species 17: CH2OH
-    species[17] = -3.12037600e-03 + 7.10633600e-05 * T - 1.48138194e-07 * T2 +
-                  8.81089880e-11 * T3;
+  // species with midpoint at T=1362 kelvin
+  if (T < 1362) {
+    // species 28: CH3OCO
+    species[28] = +2.43434884e-02 - 3.31191120e-05 * T + 1.37561223e-08 * T2 -
+                  1.32718283e-12 * T3;
   } else {
-    // species 17: CH2OH
-    species[17] = +8.86461210e-03 - 8.51614440e-06 * T + 3.02641200e-09 * T2 -
-                  3.78006244e-13 * T3;
+    // species 28: CH3OCO
+    species[28] = +4.53544950e-03 - 3.30192728e-06 * T + 8.01591831e-10 * T2 -
+                  6.38307452e-14 * T3;
   }
 
   // species with midpoint at T=1376 kelvin
@@ -3382,15 +3404,48 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
                   6.83568796e-14 * T3;
   }
 
-  // species with midpoint at T=710 kelvin
-  if (T < 710) {
-    // species 26: CH3OCH3
-    species[26] = -5.39434751e-03 + 1.29894550e-04 * T - 2.41519595e-07 * T2 +
-                  1.30989607e-10 * T3;
+  // species with midpoint at T=1387 kelvin
+  if (T < 1387) {
+    // species 36: HO2CH2OCHO
+    species[36] = +4.02952392e-02 - 6.60218592e-05 * T + 4.03080351e-08 * T2 -
+                  8.74406320e-12 * T3;
   } else {
-    // species 26: CH3OCH3
-    species[26] = +2.69173263e-02 - 2.77749554e-05 * T + 1.04254524e-08 * T2 -
-                  1.36682714e-12 * T3;
+    // species 36: HO2CH2OCHO
+    species[36] = +8.52683511e-03 - 6.08227000e-06 * T + 1.45679072e-09 * T2 -
+                  1.14926534e-13 * T3;
+  }
+
+  // species with midpoint at T=1389 kelvin
+  if (T < 1389) {
+    // species 34: CH3OCH2O2
+    species[34] = +3.68877454e-02 - 5.65123110e-05 * T + 3.47191599e-08 * T2 -
+                  7.88521880e-12 * T3;
+  } else {
+    // species 34: CH3OCH2O2
+    species[34] = +1.18705986e-02 - 8.15813064e-06 * T + 1.90593243e-09 * T2 -
+                  1.47771147e-13 * T3;
+  }
+
+  // species with midpoint at T=1393 kelvin
+  if (T < 1393) {
+    // species 35: CH2OCH2O2H
+    species[35] = +4.24128290e-02 - 7.46812772e-05 * T + 4.99917999e-08 * T2 -
+                  1.18577325e-11 * T3;
+  } else {
+    // species 35: CH2OCH2O2H
+    species[35] = +9.23718883e-03 - 6.38255010e-06 * T + 1.49734403e-09 * T2 -
+                  1.16464995e-13 * T3;
+  }
+
+  // species with midpoint at T=1402 kelvin
+  if (T < 1402) {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +5.83226232e-02 - 1.10651956e-04 * T + 7.79431620e-08 * T2 -
+                  1.90856402e-11 * T3;
+  } else {
+    // species 37: O2CH2OCH2O2H
+    species[37] = +1.04394841e-02 - 7.21165878e-06 * T + 1.69137853e-09 * T2 -
+                  1.31522886e-13 * T3;
   }
 
   // species with midpoint at T=1452 kelvin
@@ -3404,15 +3459,26 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
                   8.87114756e-14 * T3;
   }
 
-  // species with midpoint at T=1362 kelvin
-  if (T < 1362) {
-    // species 28: CH3OCO
-    species[28] = +2.43434884e-02 - 3.31191120e-05 * T + 1.37561223e-08 * T2 -
-                  1.32718283e-12 * T3;
+  // species with midpoint at T=1475 kelvin
+  if (T < 1475) {
+    // species 32: OCH2OCHO
+    species[32] = +1.58839723e-02 + 7.07081094e-07 * T - 1.83137077e-08 * T2 +
+                  7.78647204e-12 * T3;
   } else {
-    // species 28: CH3OCO
-    species[28] = +4.53544950e-03 - 3.30192728e-06 * T + 8.01591831e-10 * T2 -
-                  6.38307452e-14 * T3;
+    // species 32: OCH2OCHO
+    species[32] = +8.11262659e-03 - 5.82712924e-06 * T + 1.40202115e-09 * T2 -
+                  1.10950210e-13 * T3;
+  }
+
+  // species with midpoint at T=1603 kelvin
+  if (T < 1603) {
+    // species 33: HOCH2OCO
+    species[33] = +1.28768359e-02 + 4.08838836e-06 * T - 1.83046476e-08 * T2 +
+                  7.19282236e-12 * T3;
+  } else {
+    // species 33: HOCH2OCO
+    species[33] = +8.17663898e-03 - 5.84068042e-06 * T + 1.40008685e-09 * T2 -
+                  1.10510729e-13 * T3;
   }
 
   // species with midpoint at T=1686 kelvin
@@ -3446,72 +3512,6 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
     // species 31: CH3OCH2OH
     species[31] = +1.53602372e-02 - 1.08200758e-05 * T + 2.58172034e-09 * T2 -
                   2.03527901e-13 * T3;
-  }
-
-  // species with midpoint at T=1475 kelvin
-  if (T < 1475) {
-    // species 32: OCH2OCHO
-    species[32] = +1.58839723e-02 + 7.07081094e-07 * T - 1.83137077e-08 * T2 +
-                  7.78647204e-12 * T3;
-  } else {
-    // species 32: OCH2OCHO
-    species[32] = +8.11262659e-03 - 5.82712924e-06 * T + 1.40202115e-09 * T2 -
-                  1.10950210e-13 * T3;
-  }
-
-  // species with midpoint at T=1603 kelvin
-  if (T < 1603) {
-    // species 33: HOCH2OCO
-    species[33] = +1.28768359e-02 + 4.08838836e-06 * T - 1.83046476e-08 * T2 +
-                  7.19282236e-12 * T3;
-  } else {
-    // species 33: HOCH2OCO
-    species[33] = +8.17663898e-03 - 5.84068042e-06 * T + 1.40008685e-09 * T2 -
-                  1.10510729e-13 * T3;
-  }
-
-  // species with midpoint at T=1389 kelvin
-  if (T < 1389) {
-    // species 34: CH3OCH2O2
-    species[34] = +3.68877454e-02 - 5.65123110e-05 * T + 3.47191599e-08 * T2 -
-                  7.88521880e-12 * T3;
-  } else {
-    // species 34: CH3OCH2O2
-    species[34] = +1.18705986e-02 - 8.15813064e-06 * T + 1.90593243e-09 * T2 -
-                  1.47771147e-13 * T3;
-  }
-
-  // species with midpoint at T=1393 kelvin
-  if (T < 1393) {
-    // species 35: CH2OCH2O2H
-    species[35] = +4.24128290e-02 - 7.46812772e-05 * T + 4.99917999e-08 * T2 -
-                  1.18577325e-11 * T3;
-  } else {
-    // species 35: CH2OCH2O2H
-    species[35] = +9.23718883e-03 - 6.38255010e-06 * T + 1.49734403e-09 * T2 -
-                  1.16464995e-13 * T3;
-  }
-
-  // species with midpoint at T=1387 kelvin
-  if (T < 1387) {
-    // species 36: HO2CH2OCHO
-    species[36] = +4.02952392e-02 - 6.60218592e-05 * T + 4.03080351e-08 * T2 -
-                  8.74406320e-12 * T3;
-  } else {
-    // species 36: HO2CH2OCHO
-    species[36] = +8.52683511e-03 - 6.08227000e-06 * T + 1.45679072e-09 * T2 -
-                  1.14926534e-13 * T3;
-  }
-
-  // species with midpoint at T=1402 kelvin
-  if (T < 1402) {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +5.83226232e-02 - 1.10651956e-04 * T + 7.79431620e-08 * T2 -
-                  1.90856402e-11 * T3;
-  } else {
-    // species 37: O2CH2OCH2O2H
-    species[37] = +1.04394841e-02 - 7.21165878e-06 * T + 1.69137853e-09 * T2 -
-                  1.31522886e-13 * T3;
   }
 }
 

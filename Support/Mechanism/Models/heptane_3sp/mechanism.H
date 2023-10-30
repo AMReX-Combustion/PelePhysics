@@ -150,17 +150,6 @@ cv_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
 
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -2.26836187e+00 + 8.54355820e-02 * T - 5.25346786e-05 * T2 +
-                 1.62945721e-08 * T3 - 2.02394925e-12 * T4;
-  } else {
-    // species 0: NC7H16
-    species[0] = +2.12148969e+01 + 3.47675750e-02 * T - 1.18407129e-05 * T2 +
-                 1.83298478e-09 * T3 - 1.06130266e-13 * T4;
-  }
-
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 1: O2
@@ -177,6 +166,17 @@ cv_R(amrex::Real* species, const amrex::Real T)
     species[2] = +1.92664000e+00 + 1.48797700e-03 * T - 5.68476100e-07 * T2 +
                  1.00970400e-10 * T3 - 6.75335100e-15 * T4;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -2.26836187e+00 + 8.54355820e-02 * T - 5.25346786e-05 * T2 +
+                 1.62945721e-08 * T3 - 2.02394925e-12 * T4;
+  } else {
+    // species 0: NC7H16
+    species[0] = +2.12148969e+01 + 3.47675750e-02 * T - 1.18407129e-05 * T2 +
+                 1.83298478e-09 * T3 - 1.06130266e-13 * T4;
+  }
 }
 
 // compute Cp/R at the given temperature
@@ -186,17 +186,6 @@ cp_R(amrex::Real* species, const amrex::Real T)
   const amrex::Real T2 = T * T;
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -1.26836187e+00 + 8.54355820e-02 * T - 5.25346786e-05 * T2 +
-                 1.62945721e-08 * T3 - 2.02394925e-12 * T4;
-  } else {
-    // species 0: NC7H16
-    species[0] = +2.22148969e+01 + 3.47675750e-02 * T - 1.18407129e-05 * T2 +
-                 1.83298478e-09 * T3 - 1.06130266e-13 * T4;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -214,6 +203,17 @@ cp_R(amrex::Real* species, const amrex::Real T)
     species[2] = +2.92664000e+00 + 1.48797700e-03 * T - 5.68476100e-07 * T2 +
                  1.00970400e-10 * T3 - 6.75335100e-15 * T4;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -1.26836187e+00 + 8.54355820e-02 * T - 5.25346786e-05 * T2 +
+                 1.62945721e-08 * T3 - 2.02394925e-12 * T4;
+  } else {
+    // species 0: NC7H16
+    species[0] = +2.22148969e+01 + 3.47675750e-02 * T - 1.18407129e-05 * T2 +
+                 1.83298478e-09 * T3 - 1.06130266e-13 * T4;
+  }
 }
 
 // compute the g/(RT) at the given temperature
@@ -225,21 +225,6 @@ gibbs(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -2.565865650000000e+04 * invT - 3.664165307000000e+01 +
-                 1.268361870000000e+00 * logT - 4.271779100000000e-02 * T +
-                 8.755779766666667e-06 * T2 - 1.357881008333333e-09 * T3 +
-                 1.011974625000000e-13 * T4;
-  } else {
-    // species 0: NC7H16
-    species[0] = -3.427600810000000e+04 * invT + 1.145189165000000e+02 -
-                 2.221489690000000e+01 * logT - 1.738378750000000e-02 * T +
-                 1.973452150000000e-06 * T2 - 1.527487316666667e-10 * T3 +
-                 5.306513300000000e-15 * T4;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -265,6 +250,21 @@ gibbs(amrex::Real* species, const amrex::Real T)
                  9.474601666666666e-08 * T2 - 8.414199999999999e-12 * T3 +
                  3.376675500000000e-16 * T4;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -2.565865650000000e+04 * invT - 3.664165307000000e+01 +
+                 1.268361870000000e+00 * logT - 4.271779100000000e-02 * T +
+                 8.755779766666667e-06 * T2 - 1.357881008333333e-09 * T3 +
+                 1.011974625000000e-13 * T4;
+  } else {
+    // species 0: NC7H16
+    species[0] = -3.427600810000000e+04 * invT + 1.145189165000000e+02 -
+                 2.221489690000000e+01 * logT - 1.738378750000000e-02 * T +
+                 1.973452150000000e-06 * T2 - 1.527487316666667e-10 * T3 +
+                 5.306513300000000e-15 * T4;
+  }
 }
 
 // compute the a/(RT) at the given temperature
@@ -276,21 +276,6 @@ helmholtz(amrex::Real* species, const amrex::Real T)
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -2.56586565e+04 * invT - 3.76416531e+01 +
-                 1.26836187e+00 * logT - 4.27177910e-02 * T +
-                 8.75577977e-06 * T2 - 1.35788101e-09 * T3 +
-                 1.01197462e-13 * T4;
-  } else {
-    // species 0: NC7H16
-    species[0] = -3.42760081e+04 * invT + 1.13518917e+02 -
-                 2.22148969e+01 * logT - 1.73837875e-02 * T +
-                 1.97345215e-06 * T2 - 1.52748732e-10 * T3 +
-                 5.30651330e-15 * T4;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -316,6 +301,21 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                  9.47460167e-08 * T2 - 8.41420000e-12 * T3 +
                  3.37667550e-16 * T4;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -2.56586565e+04 * invT - 3.76416531e+01 +
+                 1.26836187e+00 * logT - 4.27177910e-02 * T +
+                 8.75577977e-06 * T2 - 1.35788101e-09 * T3 +
+                 1.01197462e-13 * T4;
+  } else {
+    // species 0: NC7H16
+    species[0] = -3.42760081e+04 * invT + 1.13518917e+02 -
+                 2.22148969e+01 * logT - 1.73837875e-02 * T +
+                 1.97345215e-06 * T2 - 1.52748732e-10 * T3 +
+                 5.30651330e-15 * T4;
+  }
 }
 
 // compute the e/(RT) at the given temperature
@@ -326,19 +326,6 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -2.26836187e+00 + 4.27177910e-02 * T - 1.75115595e-05 * T2 +
-                 4.07364302e-09 * T3 - 4.04789850e-13 * T4 -
-                 2.56586565e+04 * invT;
-  } else {
-    // species 0: NC7H16
-    species[0] = +2.12148969e+01 + 1.73837875e-02 * T - 3.94690430e-06 * T2 +
-                 4.58246195e-10 * T3 - 2.12260532e-14 * T4 -
-                 3.42760081e+04 * invT;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -360,6 +347,19 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                  2.52426000e-11 * T3 - 1.35067020e-15 * T4 -
                  9.22797700e+02 * invT;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -2.26836187e+00 + 4.27177910e-02 * T - 1.75115595e-05 * T2 +
+                 4.07364302e-09 * T3 - 4.04789850e-13 * T4 -
+                 2.56586565e+04 * invT;
+  } else {
+    // species 0: NC7H16
+    species[0] = +2.12148969e+01 + 1.73837875e-02 * T - 3.94690430e-06 * T2 +
+                 4.58246195e-10 * T3 - 2.12260532e-14 * T4 -
+                 3.42760081e+04 * invT;
+  }
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
@@ -370,19 +370,6 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -1.26836187e+00 + 4.27177910e-02 * T - 1.75115595e-05 * T2 +
-                 4.07364302e-09 * T3 - 4.04789850e-13 * T4 -
-                 2.56586565e+04 * invT;
-  } else {
-    // species 0: NC7H16
-    species[0] = +2.22148969e+01 + 1.73837875e-02 * T - 3.94690430e-06 * T2 +
-                 4.58246195e-10 * T3 - 2.12260532e-14 * T4 -
-                 3.42760081e+04 * invT;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -404,6 +391,19 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                  2.52426000e-11 * T3 - 1.35067020e-15 * T4 -
                  9.22797700e+02 * invT;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -1.26836187e+00 + 4.27177910e-02 * T - 1.75115595e-05 * T2 +
+                 4.07364302e-09 * T3 - 4.04789850e-13 * T4 -
+                 2.56586565e+04 * invT;
+  } else {
+    // species 0: NC7H16
+    species[0] = +2.22148969e+01 + 1.73837875e-02 * T - 3.94690430e-06 * T2 +
+                 4.58246195e-10 * T3 - 2.12260532e-14 * T4 -
+                 3.42760081e+04 * invT;
+  }
 }
 
 // compute the S/R at the given temperature (Eq 21)
@@ -414,19 +414,6 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
   const amrex::Real logT = log(T);
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = -1.26836187e+00 * logT + 8.54355820e-02 * T -
-                 2.62673393e-05 * T2 + 5.43152403e-09 * T3 -
-                 5.05987313e-13 * T4 + 3.53732912e+01;
-  } else {
-    // species 0: NC7H16
-    species[0] = +2.22148969e+01 * logT + 3.47675750e-02 * T -
-                 5.92035645e-06 * T2 + 6.10994927e-10 * T3 -
-                 2.65325665e-14 * T4 - 9.23040196e+01;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -448,6 +435,19 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                  2.84238050e-07 * T2 + 3.36568000e-11 * T3 -
                  1.68833775e-15 * T4 + 5.98052800e+00;
   }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = -1.26836187e+00 * logT + 8.54355820e-02 * T -
+                 2.62673393e-05 * T2 + 5.43152403e-09 * T3 -
+                 5.05987313e-13 * T4 + 3.53732912e+01;
+  } else {
+    // species 0: NC7H16
+    species[0] = +2.22148969e+01 * logT + 3.47675750e-02 * T -
+                 5.92035645e-06 * T2 + 6.10994927e-10 * T3 -
+                 2.65325665e-14 * T4 - 9.23040196e+01;
+  }
 }
 
 // compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
@@ -457,17 +457,6 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
   const amrex::Real T2 = T * T;
   const amrex::Real T3 = T * T * T;
   const amrex::Real T4 = T * T * T * T;
-
-  // species with midpoint at T=1391 kelvin
-  if (T < 1391) {
-    // species 0: NC7H16
-    species[0] = +8.54355820e-02 - 1.05069357e-04 * T + 4.88837163e-08 * T2 -
-                 8.09579700e-12 * T3;
-  } else {
-    // species 0: NC7H16
-    species[0] = +3.47675750e-02 - 2.36814258e-05 * T + 5.49895434e-09 * T2 -
-                 4.24521064e-13 * T3;
-  }
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -484,6 +473,17 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
     // species 2: N2
     species[2] = +1.48797700e-03 - 1.13695220e-06 * T + 3.02911200e-10 * T2 -
                  2.70134040e-14 * T3;
+  }
+
+  // species with midpoint at T=1391 kelvin
+  if (T < 1391) {
+    // species 0: NC7H16
+    species[0] = +8.54355820e-02 - 1.05069357e-04 * T + 4.88837163e-08 * T2 -
+                 8.09579700e-12 * T3;
+  } else {
+    // species 0: NC7H16
+    species[0] = +3.47675750e-02 - 2.36814258e-05 * T + 5.49895434e-09 * T2 -
+                 4.24521064e-13 * T3;
   }
 }
 
