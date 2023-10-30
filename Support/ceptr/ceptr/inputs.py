@@ -1,7 +1,5 @@
 """Classes for toml input files."""
 
-import sys
-
 import toml
 
 
@@ -37,13 +35,13 @@ class Parameter:
         elif value is None:
             self.value = value
         else:
-            sys.exit(
+            raise TypeError(
                 f"Type does not match for {self.name} ({self.typer} is not"
                 f" {type(value)})"
             )
 
         if (self.choices is not None) and (value not in self.choices):
-            sys.exit(
+            raise ValueError(
                 f"Value {value} is not part of the available choices {self.choices}"
             )
 

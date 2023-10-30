@@ -87,7 +87,7 @@ class SymbolicMath:
         # temporary symbols that contain temperature dependence
 
         species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
-        low_temp, high_temp, midpoints = species_coeffs
+        midpoints = species_coeffs
         self.midpointsList = []
         for mid_temp, _ in list(midpoints.items()):
             self.midpointsList.append(mid_temp)
@@ -145,7 +145,7 @@ class SymbolicMath:
 
             # temporary symbols that contain temperature dependence
             qss_species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 1)
-            low_temp, high_temp, midpoints = qss_species_coeffs
+            midpoints = qss_species_coeffs
             self.midpointsQSSList = []
             for mid_temp, _ in list(midpoints.items()):
                 self.midpointsQSSList.append(mid_temp)

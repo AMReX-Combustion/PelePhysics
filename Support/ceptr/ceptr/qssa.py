@@ -2,7 +2,6 @@
 
 import argparse
 import pathlib
-import sys
 import time
 
 import cantera as ct
@@ -28,9 +27,10 @@ def process_qss(fname, nqssa, visualize, method):
             False in f_non_qssa_species["species"]
             or True in f_non_qssa_species["species"]
         ):
-            print("Some species in non qssa list interpreted as Boolean.")
-            print("Use quotation marks to avoid this issue.")
-            sys.exit(1)
+            raise ValueError(
+                "Some species in non qssa list interpreted as Boolean."
+                "Use quotation marks to avoid this issue."
+            )
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
     qssa_species = sorted(list(set(all_species) - set(non_qssa_species)))
@@ -69,8 +69,7 @@ def process_qss(fname, nqssa, visualize, method):
     )
 
     if cqr.qssa_coupling(qssa, qssa_species, forward_to_remove):
-        print("Failure to generate QSSA mechanism.")
-        sys.exit(1)
+        raise ValueError("Failure to generate QSSA mechanism.")
 
     qssa.update_user_header({"description": f"QSSA of {mechanism.name}"})
     qssa.update_user_data(

@@ -1,7 +1,6 @@
 """Thermodynamics functions."""
 
 import io
-import sys
 from collections import OrderedDict
 
 import ceptr.writer as cw
@@ -28,56 +27,26 @@ def thermo(fstream, mechanism, species_info, syms=None):
 
 def analyze_thermodynamics(mechanism, species_info, qss_flag):
     """Extract information from the thermodynamics model."""
-    low_temp = 0.0
-    high_temp = 1000000.0
-
     midpoints = OrderedDict()
 
-    if qss_flag:
-        for symbol in species_info.qssa_species_list:
-            species = mechanism.species(symbol)
-            model = species.thermo
+    spec_list = (
+        species_info.qssa_species_list
+        if qss_flag
+        else species_info.nonqssa_species_list
+    )
+    for symbol in spec_list:
+        species = mechanism.species(symbol)
+        model = species.thermo
 
-            if not model.n_coeffs == 15:
-                print("Unsupported thermo model.")
-                sys.exit(1)
+        assert model.n_coeffs == 15, "Unsupported thermo model."
 
-            lo_temp = model.min_temp
-            hi_temp = model.max_temp
-            if low_temp < lo_temp:
-                low_temp = lo_temp
-            if hi_temp < high_temp:
-                high_temp = hi_temp
-            mid = model.coeffs[0]
-            high_range = model.coeffs[1:8]
-            low_range = model.coeffs[8:15]
+        mid = model.coeffs[0]
+        high_range = model.coeffs[1:8]
+        low_range = model.coeffs[8:15]
 
-            midpoints.setdefault(mid, []).append((species, low_range, high_range))
+        midpoints.setdefault(mid, []).append((species, low_range, high_range))
 
-    else:
-        for symbol in species_info.nonqssa_species_list:
-            species = mechanism.species(symbol)
-            model = species.thermo
-
-            if not model.n_coeffs == 15:
-                print("Unsupported thermo model.")
-                sys.exit(1)
-
-            lo_temp = model.min_temp
-            hi_temp = model.max_temp
-            if low_temp < lo_temp:
-                low_temp = lo_temp
-            if hi_temp < high_temp:
-                high_temp = hi_temp
-            mid = model.coeffs[0]
-            high_range = model.coeffs[1:8]
-            low_range = model.coeffs[8:15]
-
-            midpoints.setdefault(mid, []).append((species, low_range, high_range))
-
-    species_info.low_temp = low_temp
-    species_info.high_temp = high_temp
-    return low_temp, high_temp, midpoints
+    return midpoints
 
 
 def generate_thermo_routine(
@@ -93,7 +62,7 @@ def generate_thermo_routine(
     inline=False,
 ):
     """Write a thermodynamics routine."""
-    low_temp, high_temp, midpoints = species_coeffs
+    midpoints = species_coeffs
 
     if not inline:
         cw.writer(
@@ -128,55 +97,32 @@ def generate_thermo_routine(
     if needs_log_temp:
         cw.writer(fstream, "const amrex::Real logT = log(T);")
 
-    # if name=="gibbs_qss":
-    #    print("name = ", name)
-    #    for mid_temp, species_list in list(midpoints.items()):
-    #        print("midpoints = ", mid_temp)
-    #    stop
-    # stop
     for mid_temp, species_list in list(midpoints.items()):
         lostream = io.StringIO()
         for species, low_range, _ in species_list:
-            if qss_flag:
-                idx = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
-                cw.writer(lostream, cw.comment(f"species {idx}: {species.name}"))
-                cw.writer(
-                    lostream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
-                )
-            else:
-                idx = species_info.ordered_idx_map[species.name]
-                cw.writer(
-                    lostream,
-                    cw.comment(f"species {idx}: {species.name}"),
-                )
-                cw.writer(
-                    lostream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
-                )
+            index = (
+                species_info.ordered_idx_map[species.name] - species_info.n_species
+                if qss_flag
+                else species_info.ordered_idx_map[species.name]
+            )
+            cw.writer(lostream, cw.comment(f"species {index}: {species.name}"))
+            cw.writer(
+                lostream,
+                (f"result += y[{index}] * (" if inline else f"species[{index}] ="),
+            )
             if syms_g_rt:
-                index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     lostream, low_range, syms
                 )
             elif syms_g_rt_qss:
-                index = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
                 syms.g_RT_qss_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     lostream, low_range, syms
                 )
             elif syms_h_rt:
-                index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     lostream, low_range, syms
                 )
             elif syms_h_rt_qss:
-                index = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
                 syms.h_RT_qss_smp_tmp[mid_temp]["m"][index] = expression_generator(
                     lostream, low_range, syms
                 )
@@ -191,49 +137,32 @@ def generate_thermo_routine(
 
         histream = io.StringIO()
         for species, _, high_range in species_list:
-            if qss_flag:
-                idx = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
-                cw.writer(
-                    histream,
-                    cw.comment(f"species {idx}: {species.name}"),
-                )
-                cw.writer(
-                    histream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
-                )
-            else:
-                idx = species_info.ordered_idx_map[species.name]
-                cw.writer(
-                    histream,
-                    cw.comment(f"species {idx}: {species.name}"),
-                )
-                cw.writer(
-                    histream,
-                    (f"result += y[{idx}] * (" if inline else f"species[{idx}] ="),
-                )
+            index = (
+                species_info.ordered_idx_map[species.name] - species_info.n_species
+                if qss_flag
+                else species_info.ordered_idx_map[species.name]
+            )
+            cw.writer(
+                histream,
+                cw.comment(f"species {index}: {species.name}"),
+            )
+            cw.writer(
+                histream,
+                (f"result += y[{index}] * (" if inline else f"species[{index}] ="),
+            )
             if syms_g_rt:
-                index = species_info.ordered_idx_map[species.name]
                 syms.g_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     histream, high_range, syms
                 )
             elif syms_g_rt_qss:
-                index = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
                 syms.g_RT_qss_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     histream, high_range, syms
                 )
             elif syms_h_rt:
-                index = species_info.ordered_idx_map[species.name]
                 syms.h_RT_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     histream, high_range, syms
                 )
             elif syms_h_rt_qss:
-                index = (
-                    species_info.ordered_idx_map[species.name] - species_info.n_species
-                )
                 syms.h_RT_qss_smp_tmp[mid_temp]["p"][index] = expression_generator(
                     histream, high_range, syms
                 )
@@ -293,22 +222,9 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
         name = "gibbs"
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
-    if syms is None:
-        generate_thermo_routine(
-            fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True
-        )
-    else:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            gibbs_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-            True,
-            syms,
-        )
+    generate_thermo_routine(
+        fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True, syms
+    )
 
 
 def helmholtz(fstream, species_info, species_coeffs):
@@ -354,28 +270,17 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None)
         cw.comment("compute the h/(RT) at the given temperature (Eq 20)"),
     )
 
-    if syms is None:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            enthalpy_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-        )
-    else:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            enthalpy_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-            False,
-            syms,
-        )
+    generate_thermo_routine(
+        fstream,
+        species_info,
+        name,
+        enthalpy_nasa,
+        species_coeffs,
+        qss_flag,
+        1,
+        False,
+        syms,
+    )
 
 
 def species_entropy(fstream, species_info, species_coeffs):

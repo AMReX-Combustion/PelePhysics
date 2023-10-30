@@ -1,6 +1,5 @@
 """Production functions."""
 
-import sys
 from math import isclose
 
 import symengine as sme
@@ -22,9 +21,7 @@ def production_rate(
     n_qss_species = species_info.n_qssa_species
     n_reactions = mechanism.n_reactions
 
-    if len(reaction_info.index) != 7:
-        print("\n\nCheck this!!!\n")
-        sys.exit(1)
+    assert len(reaction_info.index) == 7
 
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
@@ -243,11 +240,10 @@ def production_rate(
                 elif is_lindemann:
                     pass
                 else:
-                    print(
+                    raise ValueError(
                         f"Unrecognized reaction rate type {reaction.rate.type},"
                         f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
                     )
-                    sys.exit(1)
 
             cw.writer(
                 fstream,
@@ -609,11 +605,10 @@ def production_rate(
                 elif is_lindemann:
                     pass
                 else:
-                    print(
+                    raise ValueError(
                         f"Unrecognized reaction rate type {reaction.rate.type},"
                         f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
                     )
-                    sys.exit(1)
 
                 low_beta = syms.convert_number_to_int(low_beta)
 
@@ -811,7 +806,7 @@ def production_rate(
                             f" exp({-sri[1]:.15g} * invT)",
                         )
                         if syms is not None:
-                            sys.exit("Not done for now")
+                            raise NotImplementedError("Not done for now")
                     else:
                         cw.writer(
                             fstream,
@@ -819,22 +814,22 @@ def production_rate(
                             f" exp(-{sri[1]:.15g} * invT)",
                         )
                         if syms is not None:
-                            sys.exit("Not done for now")
+                            raise NotImplementedError("Not done for now")
                     if sri[2] > 1.0e-100:
                         cw.writer(fstream, f"   +  exp(logT / {sri[2]:.15g}) ")
                         if syms is not None:
-                            sys.exit("Not done for now")
+                            raise NotImplementedError("Not done for now")
                     else:
                         cw.writer(fstream, "   +  0. ")
                         if syms is not None:
-                            sys.exit("Not done for now")
+                            raise NotImplementedError("Not done for now")
                     cw.writer(
                         fstream,
                         f"   *  ({nsri} > 3 ? {sri[3]:.15g} *"
                         f" exp({sri[4]:.15g} * logT) : 1.0);",
                     )
                     if syms is not None:
-                        sys.exit("Not done for now")
+                        raise NotImplementedError("Not done for now")
                     cw.writer(fstream, "Corr = F * F_sri;")
                     cw.writer(
                         fstream,
@@ -932,11 +927,9 @@ def production_rate(
                 key=lambda v, dict_species=dict_species: dict_species[v[0]],
             )
             # Check for duplicates
-            if len(agents) != len(set(agents)):
-                message = f"Reaction {reaction} contains duplicate agents\n"
-                message += "This will create an issue for productionRate\n"
-                print(message)
-                sys.exit(1)
+            assert len(agents) == len(
+                set(agents)
+            ), f"Reaction {reaction} contains duplicate agents"
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)
@@ -1000,9 +993,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
     n_species = species_info.n_species
     n_reactions = mechanism.n_reactions
 
-    if len(reaction_info.index) != 7:
-        print("\n\nCheck this!!!\n")
-        sys.exit(1)
+    assert len(reaction_info.index) == 7
 
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
@@ -1179,11 +1170,10 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 elif is_lindemann:
                     pass
                 else:
-                    print(
+                    raise ValueError(
                         f"Unrecognized reaction rate type {reaction.rate.type},"
                         f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
                     )
-                    sys.exit(1)
 
             cw.writer(
                 fstream,
@@ -1398,11 +1388,9 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
                 key=lambda v, dict_species=dict_species: dict_species[v[0]],
             )
             # Check for duplicates
-            if len(agents) != len(set(agents)):
-                message = f"Reaction {reaction} contains duplicate agents\n"
-                message += "This will create an issue for productionRate_light\n"
-                print(message)
-                sys.exit(1)
+            assert len(agents) == len(
+                set(agents)
+            ), f"Reaction {reaction} contains duplicate agents"
             # note that a species might appear as both reactant and product
             # a species might also appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)
@@ -1451,9 +1439,7 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     """Write progress rates."""
     n_reactions = mechanism.n_reactions
 
-    if len(reaction_info.index) != 7:
-        print("\n\nCheck this!!!\n")
-        sys.exit(1)
+    assert len(reaction_info.index) == 7
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the progress rate for each reaction"))
@@ -1523,12 +1509,10 @@ def enhancement_d_with_qss(mechanism, species_info, reaction, syms=None):
     third_body = reaction.third_body is not None
     falloff = reaction.rate.type == "falloff"
     if not third_body and not falloff:
-        print("enhancement_d called for a reaction without a third body")
-        sys.exit(1)
+        raise ValueError("enhancement_d called for a reaction without a third body")
 
     if not reaction.third_body:
-        print("FIXME EFFICIENCIES")
-        sys.exit(1)
+        raise NotImplementedError("FIXME EFFICIENCIES")
         species, coefficient = third_body
         if species == "<mixture>":
             if record_symbolic_operations:

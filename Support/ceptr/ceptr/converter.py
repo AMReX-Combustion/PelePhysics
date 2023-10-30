@@ -178,6 +178,7 @@ class Converter:
                 " ",
                 all_species.weight,
             )
+        self.species_info.set_low_high_temperatures(self.mechanism)
 
     def writer(self):
         """Write out the C++ files."""
