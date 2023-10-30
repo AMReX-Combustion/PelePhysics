@@ -192,8 +192,6 @@ def ckcpbs(fstream, mechanism, species_info):
         "cp_R",
         models,
         0,
-        0,
-        False,
         None,
         True,
     )
@@ -269,8 +267,6 @@ def ckcvbs(fstream, mechanism, species_info):
         "cv_R",
         models,
         0,
-        0,
-        False,
         None,
         True,
     )
@@ -351,8 +347,6 @@ def ckhbms(fstream, mechanism, species_info):
         "speciesEnthalpy",
         models,
         0,
-        1,
-        False,
         None,
         True,
     )
@@ -431,8 +425,6 @@ def ckubms(fstream, mechanism, species_info):
         "speciesInternalEnergy",
         models,
         0,
-        1,
-        False,
         None,
         True,
     )

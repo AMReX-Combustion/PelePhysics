@@ -29,18 +29,27 @@ def thermo(fstream, mechanism, species_info, syms=None):
     dcvpdtemp(fstream, species_info, models)
 
 
-def generator(name):
+def generator_attributes(name):
+    """Return the attributes for a thermo function generator."""
     dct = {
-        "cv_R": cv_nasa7,
-        "cp_R": cp_nasa7,
-        "gibbs": gibbs_nasa7,
-        "gibbs_qss": gibbs_nasa7,
-        "helmholtz": helmholtz_nasa7,
-        "speciesInternalEnergy": internal_energy,
-        "speciesEnthalpy": enthalpy_nasa7,
-        "speciesEnthalpy_qss": enthalpy_nasa7,
-        "speciesEntropy": entropy_nasa7,
-        "dcvpRdT": dcpdtemp_nasa7,
+        "cv_R": {"name": cv_nasa7, "inv_temp": 0, "log_temp": False},
+        "cp_R": {"name": cp_nasa7, "inv_temp": 0, "log_temp": False},
+        "gibbs": {"name": gibbs_nasa7, "inv_temp": 1, "log_temp": True},
+        "gibbs_qss": {"name": gibbs_nasa7, "inv_temp": 1, "log_temp": True},
+        "helmholtz": {"name": helmholtz_nasa7, "inv_temp": 1, "log_temp": True},
+        "speciesInternalEnergy": {
+            "name": internal_energy,
+            "inv_temp": 1,
+            "log_temp": False,
+        },
+        "speciesEnthalpy": {"name": enthalpy_nasa7, "inv_temp": 1, "log_temp": False},
+        "speciesEnthalpy_qss": {
+            "name": enthalpy_nasa7,
+            "inv_temp": 1,
+            "log_temp": False,
+        },
+        "speciesEntropy": {"name": entropy_nasa7, "inv_temp": 0, "log_temp": True},
+        "dcvpRdT": {"name": dcpdtemp_nasa7, "inv_temp": 0, "log_temp": False},
     }
     return dct[name]
 
@@ -70,6 +79,7 @@ def analyze_thermodynamics_old(mechanism, species_info, qss_flag):
 
 
 def analyze_thermodynamics(mechanism, species_info):
+    """Extract information from the thermodynamics model."""
     models = []
     for symbol in species_info.nonqssa_species_list:
         species = mechanism.species(symbol)
@@ -96,12 +106,12 @@ def generate_thermo_routine(
     name,
     models,
     qss_flag,
-    needs_inv_temp=0,
-    needs_log_temp=False,
     syms=None,
     inline=False,
 ):
-    expression_generator = generator(name)
+    """Write a thermodynamics routine."""
+    gen = generator_attributes(name)
+    expression_generator = gen["name"]
 
     if not inline:
         cw.writer(
@@ -120,11 +130,11 @@ def generate_thermo_routine(
     cw.writer(fstream, "const amrex::Real T2 = T*T;")
     cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
     cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
-    if needs_inv_temp != 0:
+    if gen["inv_temp"] != 0:
         cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
-    if needs_inv_temp == 2:
+    if gen["inv_temp"] == 2:
         cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
-    if needs_log_temp:
+    if gen["log_temp"]:
         cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
@@ -360,9 +370,7 @@ def gibbs(fstream, species_info, models, qss_flag, syms=None):
         name = "gibbs"
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
-    generate_thermo_routine(
-        fstream, species_info, name, models, qss_flag, 1, True, syms
-    )
+    generate_thermo_routine(fstream, species_info, name, models, qss_flag, syms)
 
 
 def gibbs_old(fstream, species_info, species_coeffs, qss_flag, syms=None):
@@ -396,8 +404,6 @@ def helmholtz(fstream, species_info, models):
         "helmholtz",
         models,
         0,
-        1,
-        True,
     )
 
 
@@ -411,7 +417,6 @@ def species_internal_energy(fstream, species_info, models):
         "speciesInternalEnergy",
         models,
         0,
-        1,
     )
 
 
@@ -433,8 +438,6 @@ def species_enthalpy(fstream, species_info, models, qss_flag, syms=None):
         name,
         models,
         qss_flag,
-        1,
-        False,
         syms,
     )
 
@@ -474,8 +477,6 @@ def species_entropy(fstream, species_info, models):
         "speciesEntropy",
         models,
         0,
-        0,
-        True,
     )
 
 
