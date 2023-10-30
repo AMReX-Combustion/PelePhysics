@@ -23,6 +23,7 @@ def thermo(fstream, mechanism, species_info, syms=None):
     if species_info.n_qssa_species > 0:
         species_enthalpy(fstream, species_info, qss_species_coeffs, 1, syms)
     species_entropy(fstream, species_info, species_coeffs)
+    dcvpdtemp(fstream, species_info, species_coeffs)
 
 
 def analyze_thermodynamics(mechanism, species_info, qss_flag):
@@ -297,12 +298,6 @@ def species_entropy(fstream, species_info, species_coeffs):
         0,
         True,
     )
-
-
-def dthermodtemp(fstream, mechanism, species_info):
-    """Write gradient of thermodynamics quantity wrt temperature."""
-    species_coeffs = analyze_thermodynamics(mechanism, species_info, 0)
-    dcvpdtemp(fstream, species_info, species_coeffs)
 
 
 def dcvpdtemp(fstream, species_info, species_coeffs):

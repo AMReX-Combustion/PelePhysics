@@ -525,6 +525,49 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                1.17208122e+01;
 }
 
+// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+dcvpRdT(amrex::Real* species, const amrex::Real T)
+{
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
+
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: O2
+    species[0] = +1.12748635e-03 - 1.15123009e-06 * T + 3.94163169e-09 * T2 -
+                 3.50742157e-12 * T3;
+    // species 1: N2
+    species[1] = +1.40824000e-03 - 7.92644400e-06 * T + 1.69245450e-08 * T2 -
+                 9.77942000e-12 * T3;
+    // species 3: On
+    species[3] = -1.69804907e-03 + 5.96139910e-06 * T - 7.31505381e-09 * T2 +
+                 3.04491724e-12 * T3;
+    // species 4: O2n
+    species[4] = -9.28741138e-04 + 1.29095416e-05 * T - 2.32411014e-08 * T2 +
+                 1.17333065e-11 * T3;
+  } else {
+    // species 0: O2
+    species[0] = +6.13519689e-04 - 2.51768398e-07 * T + 5.32584444e-11 * T2 -
+                 4.54574124e-15 * T3;
+    // species 1: N2
+    species[1] = +1.48797700e-03 - 1.13695220e-06 * T + 3.02911200e-10 * T2 -
+                 2.70134040e-14 * T3;
+    // species 3: On
+    species[3] = -4.66695513e-05 + 3.69824714e-08 * T - 9.54477669e-12 * T2 +
+                 7.95851824e-16 * T3;
+    // species 4: O2n
+    species[4] = +5.98141823e-04 - 4.24267810e-07 * T + 1.08980274e-10 * T2 -
+                 8.99956912e-15 * T3;
+  }
+
+  // species with no change at a midpoint T
+  // species 2: E
+  species[2] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+               0.00000000e+00 * T3;
+}
+
 // Returns the mean specific heat at CP (Eq. 33)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
@@ -1704,49 +1747,6 @@ CKCHRGMASS(amrex::Real zk[])
   for (int id = 0; id < 5; ++id) {
     zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
-}
-
-// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-dcvpRdT(amrex::Real* species, const amrex::Real T)
-{
-  const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
-
-  // species with midpoint at T=1000 kelvin
-  if (T < 1000) {
-    // species 0: O2
-    species[0] = +1.12748635e-03 - 1.15123009e-06 * T + 3.94163169e-09 * T2 -
-                 3.50742157e-12 * T3;
-    // species 1: N2
-    species[1] = +1.40824000e-03 - 7.92644400e-06 * T + 1.69245450e-08 * T2 -
-                 9.77942000e-12 * T3;
-    // species 3: On
-    species[3] = -1.69804907e-03 + 5.96139910e-06 * T - 7.31505381e-09 * T2 +
-                 3.04491724e-12 * T3;
-    // species 4: O2n
-    species[4] = -9.28741138e-04 + 1.29095416e-05 * T - 2.32411014e-08 * T2 +
-                 1.17333065e-11 * T3;
-  } else {
-    // species 0: O2
-    species[0] = +6.13519689e-04 - 2.51768398e-07 * T + 5.32584444e-11 * T2 -
-                 4.54574124e-15 * T3;
-    // species 1: N2
-    species[1] = +1.48797700e-03 - 1.13695220e-06 * T + 3.02911200e-10 * T2 -
-                 2.70134040e-14 * T3;
-    // species 3: On
-    species[3] = -4.66695513e-05 + 3.69824714e-08 * T - 9.54477669e-12 * T2 +
-                 7.95851824e-16 * T3;
-    // species 4: O2n
-    species[4] = +5.98141823e-04 - 4.24267810e-07 * T + 1.08980274e-10 * T2 -
-                 8.99956912e-15 * T3;
-  }
-
-  // species with no change at a midpoint T
-  // species 2: E
-  species[2] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3;
 }
 
 // compute an approx to the reaction Jacobian

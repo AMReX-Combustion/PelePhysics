@@ -967,6 +967,91 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                4.60117600e-01;
 }
 
+// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+dcvpRdT(amrex::Real* species, const amrex::Real T)
+{
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
+
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: H2
+    species[0] = +8.24944200e-04 - 1.62860300e-06 * T - 2.84263020e-10 * T2 +
+                 1.65394880e-12 * T3;
+    // species 1: O2
+    species[1] = +1.12748600e-03 - 1.15123000e-06 * T + 3.94163100e-09 * T2 -
+                 3.50742160e-12 * T3;
+    // species 2: O
+    species[2] = -1.63816600e-03 + 4.84206400e-06 * T - 4.80852900e-09 * T2 +
+                 1.55627840e-12 * T3;
+    // species 3: OH
+    species[3] = -3.22544939e-03 + 1.30552938e-05 * T - 1.73956093e-08 * T2 +
+                 8.24949516e-12 * T3;
+    // species 4: H2O
+    species[4] = +3.47498200e-03 - 1.27093920e-05 * T + 2.09057430e-08 * T2 -
+                 1.00263520e-11 * T3;
+    // species 6: HO2
+    species[6] = -4.74912051e-03 + 4.23165782e-05 * T - 7.28291682e-08 * T2 +
+                 3.71690050e-11 * T3;
+    // species 7: H2O2
+    species[7] = +6.56922600e-03 - 2.97002600e-07 * T - 1.38774180e-08 * T2 +
+                 9.88606000e-12 * T3;
+    // species 8: CO
+    species[8] = +1.51194100e-03 - 7.76351000e-06 * T + 1.67458320e-08 * T2 -
+                 9.89980400e-12 * T3;
+    // species 9: CO2
+    species[9] = +9.92207200e-03 - 2.08182200e-05 * T + 2.06000610e-08 * T2 -
+                 8.46912000e-12 * T3;
+    // species 10: HCO
+    species[10] = +6.19914700e-03 - 1.92461680e-05 * T + 3.26947500e-08 * T2 -
+                  1.82995400e-11 * T3;
+    // species 11: N2
+    species[11] = +1.40824000e-03 - 7.92644400e-06 * T + 1.69245450e-08 * T2 -
+                  9.77942000e-12 * T3;
+  } else {
+    // species 0: H2
+    species[0] = +7.00064400e-04 - 1.12676580e-07 * T - 2.76947340e-11 * T2 +
+                 6.33100800e-15 * T3;
+    // species 1: O2
+    species[1] = +6.13519700e-04 - 2.51768400e-07 * T + 5.32584300e-11 * T2 -
+                 4.54574000e-15 * T3;
+    // species 2: O
+    species[2] = -2.75506200e-05 - 6.20560600e-09 * T + 1.36532010e-11 * T2 -
+                 1.74722080e-15 * T3;
+    // species 3: OH
+    species[3] = +1.05650448e-03 - 5.18165516e-07 * T + 9.15656022e-11 * T2 -
+                 5.32783504e-15 * T3;
+    // species 4: H2O
+    species[4] = +3.05629300e-03 - 1.74605200e-06 * T + 3.60298800e-10 * T2 -
+                 2.55664720e-14 * T3;
+    // species 6: HO2
+    species[6] = +2.23982013e-03 - 1.26731630e-06 * T + 3.42739110e-10 * T2 -
+                 4.31634140e-14 * T3;
+    // species 7: H2O2
+    species[7] = +4.33613600e-03 - 2.94937800e-06 * T + 7.04671200e-10 * T2 -
+                 5.72661600e-14 * T3;
+    // species 8: CO
+    species[8] = +1.44268900e-03 - 1.12616560e-06 * T + 3.05574300e-10 * T2 -
+                 2.76438080e-14 * T3;
+    // species 9: CO2
+    species[9] = +3.14016900e-03 - 2.55682200e-06 * T + 7.18199100e-10 * T2 -
+                 6.67613200e-14 * T3;
+    // species 10: HCO
+    species[10] = +3.34557300e-03 - 2.67001200e-06 * T + 7.41171900e-10 * T2 -
+                  6.85540400e-14 * T3;
+    // species 11: N2
+    species[11] = +1.48797700e-03 - 1.13695220e-06 * T + 3.02911200e-10 * T2 -
+                  2.70134040e-14 * T3;
+  }
+
+  // species with no change at a midpoint T
+  // species 5: H
+  species[5] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
+               0.00000000e+00 * T3;
+}
+
 // Returns the mean specific heat at CP (Eq. 33)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
@@ -3281,91 +3366,6 @@ CKCHRGMASS(amrex::Real zk[])
   for (int id = 0; id < 12; ++id) {
     zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
-}
-
-// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-dcvpRdT(amrex::Real* species, const amrex::Real T)
-{
-  const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
-
-  // species with midpoint at T=1000 kelvin
-  if (T < 1000) {
-    // species 0: H2
-    species[0] = +8.24944200e-04 - 1.62860300e-06 * T - 2.84263020e-10 * T2 +
-                 1.65394880e-12 * T3;
-    // species 1: O2
-    species[1] = +1.12748600e-03 - 1.15123000e-06 * T + 3.94163100e-09 * T2 -
-                 3.50742160e-12 * T3;
-    // species 2: O
-    species[2] = -1.63816600e-03 + 4.84206400e-06 * T - 4.80852900e-09 * T2 +
-                 1.55627840e-12 * T3;
-    // species 3: OH
-    species[3] = -3.22544939e-03 + 1.30552938e-05 * T - 1.73956093e-08 * T2 +
-                 8.24949516e-12 * T3;
-    // species 4: H2O
-    species[4] = +3.47498200e-03 - 1.27093920e-05 * T + 2.09057430e-08 * T2 -
-                 1.00263520e-11 * T3;
-    // species 6: HO2
-    species[6] = -4.74912051e-03 + 4.23165782e-05 * T - 7.28291682e-08 * T2 +
-                 3.71690050e-11 * T3;
-    // species 7: H2O2
-    species[7] = +6.56922600e-03 - 2.97002600e-07 * T - 1.38774180e-08 * T2 +
-                 9.88606000e-12 * T3;
-    // species 8: CO
-    species[8] = +1.51194100e-03 - 7.76351000e-06 * T + 1.67458320e-08 * T2 -
-                 9.89980400e-12 * T3;
-    // species 9: CO2
-    species[9] = +9.92207200e-03 - 2.08182200e-05 * T + 2.06000610e-08 * T2 -
-                 8.46912000e-12 * T3;
-    // species 10: HCO
-    species[10] = +6.19914700e-03 - 1.92461680e-05 * T + 3.26947500e-08 * T2 -
-                  1.82995400e-11 * T3;
-    // species 11: N2
-    species[11] = +1.40824000e-03 - 7.92644400e-06 * T + 1.69245450e-08 * T2 -
-                  9.77942000e-12 * T3;
-  } else {
-    // species 0: H2
-    species[0] = +7.00064400e-04 - 1.12676580e-07 * T - 2.76947340e-11 * T2 +
-                 6.33100800e-15 * T3;
-    // species 1: O2
-    species[1] = +6.13519700e-04 - 2.51768400e-07 * T + 5.32584300e-11 * T2 -
-                 4.54574000e-15 * T3;
-    // species 2: O
-    species[2] = -2.75506200e-05 - 6.20560600e-09 * T + 1.36532010e-11 * T2 -
-                 1.74722080e-15 * T3;
-    // species 3: OH
-    species[3] = +1.05650448e-03 - 5.18165516e-07 * T + 9.15656022e-11 * T2 -
-                 5.32783504e-15 * T3;
-    // species 4: H2O
-    species[4] = +3.05629300e-03 - 1.74605200e-06 * T + 3.60298800e-10 * T2 -
-                 2.55664720e-14 * T3;
-    // species 6: HO2
-    species[6] = +2.23982013e-03 - 1.26731630e-06 * T + 3.42739110e-10 * T2 -
-                 4.31634140e-14 * T3;
-    // species 7: H2O2
-    species[7] = +4.33613600e-03 - 2.94937800e-06 * T + 7.04671200e-10 * T2 -
-                 5.72661600e-14 * T3;
-    // species 8: CO
-    species[8] = +1.44268900e-03 - 1.12616560e-06 * T + 3.05574300e-10 * T2 -
-                 2.76438080e-14 * T3;
-    // species 9: CO2
-    species[9] = +3.14016900e-03 - 2.55682200e-06 * T + 7.18199100e-10 * T2 -
-                 6.67613200e-14 * T3;
-    // species 10: HCO
-    species[10] = +3.34557300e-03 - 2.67001200e-06 * T + 7.41171900e-10 * T2 -
-                  6.85540400e-14 * T3;
-    // species 11: N2
-    species[11] = +1.48797700e-03 - 1.13695220e-06 * T + 3.02911200e-10 * T2 -
-                  2.70134040e-14 * T3;
-  }
-
-  // species with no change at a midpoint T
-  // species 5: H
-  species[5] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3;
 }
 
 // compute an approx to the reaction Jacobian
