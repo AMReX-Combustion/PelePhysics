@@ -222,22 +222,9 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
         name = "gibbs"
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
-    if syms is None:
-        generate_thermo_routine(
-            fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True
-        )
-    else:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            gibbs_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-            True,
-            syms,
-        )
+    generate_thermo_routine(
+        fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True, syms
+    )
 
 
 def helmholtz(fstream, species_info, species_coeffs):
@@ -283,28 +270,17 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None)
         cw.comment("compute the h/(RT) at the given temperature (Eq 20)"),
     )
 
-    if syms is None:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            enthalpy_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-        )
-    else:
-        generate_thermo_routine(
-            fstream,
-            species_info,
-            name,
-            enthalpy_nasa,
-            species_coeffs,
-            qss_flag,
-            1,
-            False,
-            syms,
-        )
+    generate_thermo_routine(
+        fstream,
+        species_info,
+        name,
+        enthalpy_nasa,
+        species_coeffs,
+        qss_flag,
+        1,
+        False,
+        syms,
+    )
 
 
 def species_entropy(fstream, species_info, species_coeffs):
