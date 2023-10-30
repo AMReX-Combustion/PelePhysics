@@ -1,6 +1,5 @@
 """Transport routines."""
 
-import sys
 from collections import OrderedDict
 
 import numpy as np
@@ -57,8 +56,7 @@ def analyze_transport(mechanism, species_info):
         elif m1.geometry == "nonlinear":
             lin = 2
         else:
-            print("Unrecognized species geometry in transport")
-            sys.exit(1)
+            raise ValueError("Unrecognized species geometry in transport")
         eps = (m1.well_depth * cc.ureg.joule).to(cc.ureg.erg).m / cc.kb
         sig = (m1.diameter * cc.ureg.meter).to(cc.ureg.angstrom).m
         dip = (m1.dipole * cc.ureg.coulomb * cc.ureg.m).to(cc.ureg.debye).m
@@ -496,13 +494,9 @@ def diffcoefs(fstream, species_info, species_transport, ntfit):
     cofd = []
     for i, spec1 in enumerate(spec_ordered):
         cofd.append([])
-        if i != spec1.idx:
-            print("Problem in _diffcoefs computation")
-            sys.exit(1)
+        assert i == spec1.idx
         for j, spec2 in enumerate(spec_ordered[0 : i + 1]):
-            if j != spec2.idx:
-                print("Problem in _diffcoefs computation")
-                sys.exit(1)
+            assert j == spec2.idx
             # eq. (9)
             sigm = (
                 0.5
@@ -644,14 +638,10 @@ def thermaldiffratios(
     coftd = []
     k = -1
     for i, spec1 in enumerate(spec_ordered):
-        if i != spec1.idx:
-            print("Problem in _thermaldiffratios computation")
-            sys.exit(1)
+        assert i == spec1.idx
         if spec1.idx in light_spec_list:
             k = k + 1
-            if light_spec_list[k] != spec1.idx:
-                print("Problem in  _thermaldiffratios computation")
-                sys.exit(1)
+            assert light_spec_list[k] == spec1.idx
             coftd.append([])
             epsi = float(species_transport[spec1][1]) * cc.kb
             sigi = float(species_transport[spec1][2]) * a2cm
@@ -659,9 +649,7 @@ def thermaldiffratios(
             # eq. (12)
             poli_red = poli / sigi**3
             for j, spec2 in enumerate(spec_ordered):
-                if j != spec2.idx:
-                    print("Problem in _thermaldiffratios computation")
-                    sys.exit(1)
+                assert j == spec2.idx
                 # eq. (53)
                 wji = (spec2.weight - spec1.weight) / (spec1.weight + spec2.weight)
                 epsj = float(species_transport[spec2][1]) * cc.kb
@@ -1592,9 +1580,7 @@ def qinterp(x0, x, y):
 def get_cv_dr_species(mechanism, t, species):
     """Get the parameters of a thermo model."""
     model = mechanism.species(species.name).thermo
-    if not model.n_coeffs == 15:
-        print("Unsupported thermo model.")
-        sys.exit(1)
+    assert model.n_coeffs == 15, "Unsupported thermo model."
 
     mid = model.coeffs[0]
     high_range = model.coeffs[1:8]

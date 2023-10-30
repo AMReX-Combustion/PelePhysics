@@ -1,7 +1,6 @@
 """QSSA functions needed for conversion."""
 
 import copy
-import sys
 from collections import Counter, OrderedDict, defaultdict
 from math import isclose
 
@@ -123,8 +122,7 @@ def qssa_validation(mechanism, species_info, reaction_info):
     # Check that QSSA species are all species used in the given mechanism
     for s in species_info.qssa_species_list:
         if s not in species_info.all_species_list:
-            text = "species " + s + " is not in the mechanism"
-            sys.exit(text)
+            raise ValueError(f"species {s} is not in the mechanism")
 
     # Check that QSSA species are consumed/produced at least once to
     # ensure theoretically valid QSSA option (There is more to it than
@@ -151,13 +149,11 @@ def qssa_validation(mechanism, species_info, reaction_info):
                     consumed += 1
 
         if consumed == 0 or produced == 0:
-            text = (
-                "Uh Oh! QSSA species "
-                + symbol
-                + " does not have a balanced consumption/production"
-                + "relationship in mechanism => bad QSSA choice"
+            raise ValueError(
+                f"Uh Oh! QSSA species {symbol}"
+                " does not have a balanced consumption/production"
+                "relationship in mechanism => bad QSSA choice"
             )
-            sys.exit(text)
 
 
 def qssa_coupling(mechanism, species_info, reaction_info):
@@ -184,11 +180,10 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             product == species_info.qssa_species_list[j]
                             for product, _ in reaction.products.items()
                         ):
-                            sys.exit(
-                                "Species "
-                                + species_info.qssa_species_list[j]
-                                + " appears as both prod and reacts. Check reaction "
-                                + reaction.equation
+                            raise ValueError(
+                                f"Species {species_info.qssa_species_list[j]} appears"
+                                " as both prod and reacts. Check reaction"
+                                f" {reaction.equation}"
                             )
 
                     # we know j is in reaction r. Options are
@@ -314,11 +309,10 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             product == species_info.qssa_species_list[j]
                             for product, _ in reaction.products.items()
                         ):
-                            sys.exit(
-                                "Species "
-                                + species_info.qssa_species_list[j]
-                                + " appears as both prod and reacts. Check reaction "
-                                + reaction.equation
+                            raise ValueError(
+                                f"Species {species_info.qssa_species_list[j]} appears"
+                                " as both prod and reacts. Check reaction"
+                                f" {reaction.equation}"
                             )
 
                     if reaction.reversible:
@@ -405,7 +399,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
     print("\n\n SC network for QSSA: ")
     print(species_info.qssa_info.scnet)
     if is_coupling:
-        sys.exit(
+        raise ValueError(
             "There is some quadratic coupling in mechanism."
             + "Here is the list of reactions to check: \n"
             + coupling_reactions
@@ -1438,9 +1432,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 special_first = False
             ispecial_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
 
-    if len(reaction_info.index) != 7:
-        print("\n\nCheck this!!!\n")
-        sys.exit(1)
+    assert len(reaction_info.index) == 7
 
     # qssa coefficients
     cw.writer(fstream)
@@ -1549,11 +1541,10 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
             elif is_lindemann:
                 pass
             else:
-                print(
+                raise ValueError(
                     f"Unrecognized reaction rate type {reaction.rate.type},"
                     f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
                 )
-                sys.exit(1)
 
             beta = syms.convert_number_to_int(beta)
             low_beta = syms.convert_number_to_int(low_beta)
@@ -1969,9 +1960,7 @@ def qssa_component_functions(
                 special_first = False
             ispecial_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
 
-    if len(reaction_info.index) != 7:
-        print("\n\nCheck this!!!\n")
-        sys.exit(1)
+    assert len(reaction_info.index) == 7
 
     # k_f_qssa function
     cw.writer(fstream)
@@ -2046,11 +2035,10 @@ def qssa_component_functions(
             elif is_lindemann:
                 pass
             else:
-                print(
+                raise ValueError(
                     f"Unrecognized reaction rate type {reaction.rate.type},"
                     f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
                 )
-                sys.exit(1)
 
         cw.writer(fstream, f"k_f[{index}] = {pef.m:.15g}")
         syms.kf_qss_smp_tmp[index] = pef.m
@@ -2195,16 +2183,6 @@ def qssa_component_functions(
             syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = (
                 -numerator_smp / denominator_smp
             )
-            # print(f"Starting simplification of fraction for {symbol}...")
-            # times = time.time()
-            # syms.sc_qss_smp[
-            #    species_info.qssa_species_list.index(symbol)
-            # ] = smp.cancel(
-            #    syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)]
-            # )
-            # timee = time.time()
-            # print(f"Time to simplify = {timee-times}")
-            # exit()
             cw.writer(fstream)
         # This case happens for dodecane_lu_qss
         if symbol in list(species_info.qssa_info.group.keys()):

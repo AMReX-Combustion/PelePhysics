@@ -313,3 +313,12 @@ class SpeciesInfo:
 
         # Return a deepcopy to self
         self.wdot_df = wdot_df.copy(deep=True)
+
+    def set_low_high_temperatures(self, mechanism):
+        """Set low and high temperatures."""
+        self.low_temp = max(
+            mechanism.species(s).thermo.min_temp for s in self.nonqssa_species_list
+        )
+        self.high_temp = min(
+            mechanism.species(s).thermo.max_temp for s in self.nonqssa_species_list
+        )

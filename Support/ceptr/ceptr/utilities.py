@@ -1,7 +1,6 @@
 """Utility functions used across ceptr."""
 
 import copy
-import sys
 from collections import Counter
 from math import isclose
 
@@ -398,12 +397,10 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
     third_body = reaction.third_body is not None
     falloff = reaction.rate.type == "falloff"
     if not third_body and not falloff:
-        print("enhancement_d called for a reaction without a third body")
-        sys.exit(1)
+        raise ValueError("enhancement_d called for a reaction without a third body")
 
     if not reaction.third_body:
-        print("FIXME EFFICIENCIES")
-        sys.exit(1)
+        raise NotImplementedError("FIXME EFFICIENCIES")
         species, coefficient = third_body
         if species == "<mixture>":
             if record_symbolic_operations:

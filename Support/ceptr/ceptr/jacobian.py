@@ -1,7 +1,6 @@
 """Write jacobian functions."""
 
 import copy
-import sys
 from collections import Counter, OrderedDict
 from math import isclose
 
@@ -193,8 +192,6 @@ def ajac(
             cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
 
             for orig_idx, _ in reaction_info.idxmap.items():
-                # if orig_idx == 35:
-                #     exit()
                 reaction = mechanism.reaction(orig_idx)
 
                 cw.writer(
@@ -618,11 +615,10 @@ def ajac_reaction_d(
         elif is_lindemann:
             pass
         else:
-            print(
+            raise ValueError(
                 f"Unrecognized reaction rate type {reaction.rate.type},"
                 f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
             )
-            sys.exit(1)
 
     has_alpha = False
     corr_s = ""
@@ -882,8 +878,7 @@ def ajac_reaction_d(
         #
         if is_sri:
             cw.writer(fstream, cw.comment("SRI form"))
-            print("FIXME: sri not supported in _ajac_reaction yet")
-            sys.exit(1)
+            raise NotImplementedError("FIXME: sri not supported in _ajac_reaction yet")
         elif is_troe:
             cw.writer(fstream, cw.comment("Troe form"))
             troe = reaction.rate.falloff_coeffs
@@ -1372,12 +1367,10 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
     third_body = reaction.third_body is not None
     falloff = reaction.rate.type == "falloff"
     if not third_body and not falloff:
-        print("denhancement_d called for a reaction without a third body")
-        sys.exit(1)
+        raise ValueError("denhancement_d called for a reaction without a third body")
 
     if not reaction.third_body:
-        print("FIXME")
-        sys.exit(1)
+        raise NotImplementedError("FIXME")
         species, coefficient = third_body
         if species == "<mixture>":
             if cons_p:
