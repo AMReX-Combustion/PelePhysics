@@ -17,17 +17,17 @@ def thermo(fstream, mechanism, species_info, syms=None):
         qss_species_coeffs = analyze_thermodynamics(mechanism, species_info, 1)
 
     cv(fstream, species_info, models)
-    cp(fstream, species_info, species_coeffs)
-    gibbs(fstream, species_info, species_coeffs, 0, syms)
+    cp(fstream, species_info, models)
+    gibbs(fstream, species_info, models, 0, syms)
     if species_info.n_qssa_species > 0:
-        gibbs(fstream, species_info, qss_species_coeffs, 1, syms)
-    helmholtz(fstream, species_info, species_coeffs)
-    species_internal_energy(fstream, species_info, species_coeffs)
-    species_enthalpy(fstream, species_info, species_coeffs, 0, syms)
+        gibbs2(fstream, species_info, qss_species_coeffs, 1, syms)
+    helmholtz(fstream, species_info, models)
+    species_internal_energy(fstream, species_info, models)
+    species_enthalpy(fstream, species_info, models, 0, syms)
     if species_info.n_qssa_species > 0:
-        species_enthalpy(fstream, species_info, qss_species_coeffs, 1, syms)
-    species_entropy(fstream, species_info, species_coeffs)
-    dcvpdtemp(fstream, species_info, species_coeffs)
+        species_enthalpy2(fstream, species_info, qss_species_coeffs, 1, syms)
+    species_entropy(fstream, species_info, models)
+    dcvpdtemp(fstream, species_info, models)
 
 
 def analyze_thermodynamics(mechanism, species_info, qss_flag):
@@ -104,6 +104,12 @@ def generate_thermo_routine2(
     cw.writer(fstream, "const amrex::Real T2 = T*T;")
     cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
     cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
+    if needs_inv_temp != 0:
+        cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
+    if needs_inv_temp == 2:
+        cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
+    if needs_log_temp:
+        cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
     intervals = sorted([x["interval"] for x in models])
@@ -323,14 +329,27 @@ def cv(fstream, species_info, models):
     generate_thermo_routine2(fstream, species_info, "cv_R", cv_nasa7, models, 0)
 
 
-def cp(fstream, species_info, species_coeffs):
+def cp(fstream, species_info, models):
     """Write cp."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
-    generate_thermo_routine(fstream, species_info, "cp_R", cp_nasa7, species_coeffs, 0)
+    generate_thermo_routine2(fstream, species_info, "cp_R", cp_nasa7, models, 0)
 
 
-def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
+def gibbs(fstream, species_info, models, qss_flag, syms=None):
+    """Write Gibbs."""
+    if qss_flag:
+        name = "gibbs_qss"
+    else:
+        name = "gibbs"
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
+    generate_thermo_routine2(
+        fstream, species_info, name, gibbs_nasa7, models, qss_flag, 1, True, syms
+    )
+
+
+def gibbs2(fstream, species_info, species_coeffs, qss_flag, syms=None):
     """Write Gibbs."""
     if qss_flag:
         name = "gibbs_qss"
@@ -339,42 +358,75 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     generate_thermo_routine(
-        fstream, species_info, name, gibbs_nasa7, species_coeffs, qss_flag, 1, True, syms
+        fstream,
+        species_info,
+        name,
+        gibbs_nasa7,
+        species_coeffs,
+        qss_flag,
+        1,
+        True,
+        syms,
     )
 
 
-def helmholtz(fstream, species_info, species_coeffs):
+def helmholtz(fstream, species_info, models):
     """Write Helmholtz."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the a/(RT) at the given temperature"))
-    generate_thermo_routine(
+    generate_thermo_routine2(
         fstream,
         species_info,
         "helmholtz",
         helmholtz_nasa7,
-        species_coeffs,
+        models,
         0,
         1,
         True,
     )
 
 
-def species_internal_energy(fstream, species_info, species_coeffs):
+def species_internal_energy(fstream, species_info, models):
     """Write species internal energy."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the e/(RT) at the given temperature"))
-    generate_thermo_routine(
+    generate_thermo_routine2(
         fstream,
         species_info,
         "speciesInternalEnergy",
         internal_energy,
-        species_coeffs,
+        models,
         0,
         1,
     )
 
 
-def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None):
+def species_enthalpy(fstream, species_info, models, qss_flag, syms=None):
+    """Write species enthalpy."""
+    if qss_flag:
+        name = "speciesEnthalpy_qss"
+    else:
+        name = "speciesEnthalpy"
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        cw.comment("compute the h/(RT) at the given temperature (Eq 20)"),
+    )
+
+    generate_thermo_routine2(
+        fstream,
+        species_info,
+        name,
+        enthalpy_nasa7,
+        models,
+        qss_flag,
+        1,
+        False,
+        syms,
+    )
+
+
+def species_enthalpy2(fstream, species_info, species_coeffs, qss_flag, syms=None):
     """Write species enthalpy."""
     if qss_flag:
         name = "speciesEnthalpy_qss"
@@ -399,31 +451,31 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None)
     )
 
 
-def species_entropy(fstream, species_info, species_coeffs):
+def species_entropy(fstream, species_info, models):
     """Write species entropy."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the S/R at the given temperature (Eq 21)"))
-    generate_thermo_routine(
+    generate_thermo_routine2(
         fstream,
         species_info,
         "speciesEntropy",
         entropy_nasa7,
-        species_coeffs,
+        models,
         0,
         0,
         True,
     )
 
 
-def dcvpdtemp(fstream, species_info, species_coeffs):
+def dcvpdtemp(fstream, species_info, models):
     """Write gradient of cp/cv wrt temperature."""
     cw.writer(fstream)
     cw.writer(
         fstream,
         cw.comment("compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature"),
     )
-    generate_thermo_routine(
-        fstream, species_info, "dcvpRdT", dcpdtemp_nasa7, species_coeffs, 0
+    generate_thermo_routine2(
+        fstream, species_info, "dcvpRdT", dcpdtemp_nasa7, models, 0
     )
 
 
