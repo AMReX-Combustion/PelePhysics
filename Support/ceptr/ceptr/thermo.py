@@ -1,7 +1,10 @@
 """Thermodynamics functions."""
 
 import io
+import itertools
 from collections import OrderedDict
+
+import numpy as np
 
 import ceptr.writer as cw
 
@@ -9,10 +12,11 @@ import ceptr.writer as cw
 def thermo(fstream, mechanism, species_info, syms=None):
     """Write thermodynamics routines."""
     species_coeffs = analyze_thermodynamics(mechanism, species_info, 0)
+    models = at2(mechanism, species_info)
     if species_info.n_qssa_species > 0:
         qss_species_coeffs = analyze_thermodynamics(mechanism, species_info, 1)
 
-    cv(fstream, species_info, species_coeffs)
+    cv(fstream, species_info, models)
     cp(fstream, species_info, species_coeffs)
     gibbs(fstream, species_info, species_coeffs, 0, syms)
     if species_info.n_qssa_species > 0:
@@ -48,6 +52,117 @@ def analyze_thermodynamics(mechanism, species_info, qss_flag):
         midpoints.setdefault(mid, []).append((species, low_range, high_range))
 
     return midpoints
+
+
+def at2(mechanism, species_info):
+    models = []
+    for symbol in species_info.nonqssa_species_list:
+        species = mechanism.species(symbol)
+        model = species.thermo
+        dct = {"species": species}
+
+        # for nasa7
+        interval = []
+        coeffs = [model.coeffs[1:8]]
+        if not np.allclose(model.coeffs[1:8], model.coeffs[8:15], atol=1e-22):
+            interval = [model.coeffs[0]]
+            coeffs = [model.coeffs[8:15], model.coeffs[1:8]]
+
+        dct["interval"] = interval
+        dct["coefficients"] = coeffs
+        models.append(dct)
+
+    return models
+
+
+def generate_thermo_routine2(
+    fstream,
+    species_info,
+    name,
+    expression_generator,
+    models,
+    qss_flag,
+    needs_inv_temp=0,
+    needs_log_temp=False,
+    syms=None,
+    inline=False,
+):
+    if not inline:
+        cw.writer(
+            fstream,
+            f"AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void {name}(amrex::Real"
+            " * species, const amrex::Real T)",
+        )
+
+    syms_g_rt = name == "gibbs" and not (syms is None)
+    syms_g_rt_qss = name == "gibbs_qss" and not (syms is None)
+    syms_h_rt = name == "speciesEnthalpy" and not (syms is None)
+    syms_h_rt_qss = name == "speciesEnthalpy_qss" and not (syms is None)
+
+    if not inline:
+        cw.writer(fstream, "{")
+    cw.writer(fstream, "const amrex::Real T2 = T*T;")
+    cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
+    cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
+    cw.writer(fstream)
+
+    intervals = sorted([x["interval"] for x in models])
+    intervals = list(intervals for intervals, _ in itertools.groupby(intervals))
+
+    for interval in intervals:
+        cw.writer(fstream)
+        if len(interval) == 0:
+            cw.writer(
+                fstream,
+                cw.comment("species with no change across T"),
+            )
+        elif len(interval) == 1:
+            cw.writer(
+                fstream,
+                cw.comment(f"species with midpoint at T={interval[0]:g} kelvin"),
+            )
+        for k in range(len(interval) + 1):
+            if len(interval) == 1:
+                if k == 0:
+                    cw.writer(
+                        fstream,
+                        f"""if (T < {interval[0]:g}) {{""",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "else {",
+                    )
+
+            for model in [x for x in models if x["interval"] == interval]:
+                species = model["species"]
+
+                index = (
+                    species_info.ordered_idx_map[species.name] - species_info.n_species
+                    if qss_flag
+                    else species_info.ordered_idx_map[species.name]
+                )
+                cw.writer(fstream, cw.comment(f"species {index}: {species.name}"))
+                cw.writer(
+                    fstream,
+                    (f"result += y[{index}] * (" if inline else f"species[{index}] ="),
+                )
+                expression_generator(fstream, model["coefficients"][k])
+                if inline:
+                    spec_idx = species_info.ordered_idx_map[species.name]
+                    sp = species_info.nonqssa_species[spec_idx]
+                    imw = 1.0 / sp.weight
+                    cw.writer(fstream, f")* {imw:.16f}")
+                cw.writer(fstream, ";")
+
+            if len(interval) == 1:
+                cw.writer(
+                    fstream,
+                    "}",
+                )
+
+    if not inline:
+        cw.writer(fstream, "}")
 
 
 def generate_thermo_routine(
@@ -201,18 +316,18 @@ def generate_thermo_routine(
         cw.writer(fstream, "}")
 
 
-def cv(fstream, species_info, species_coeffs):
+def cv(fstream, species_info, models):
     """Write cv."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
-    generate_thermo_routine(fstream, species_info, "cv_R", cv_nasa, species_coeffs, 0)
+    generate_thermo_routine2(fstream, species_info, "cv_R", cv_nasa7, models, 0)
 
 
 def cp(fstream, species_info, species_coeffs):
     """Write cp."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
-    generate_thermo_routine(fstream, species_info, "cp_R", cp_nasa, species_coeffs, 0)
+    generate_thermo_routine(fstream, species_info, "cp_R", cp_nasa7, species_coeffs, 0)
 
 
 def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
@@ -224,7 +339,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag, syms=None):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     generate_thermo_routine(
-        fstream, species_info, name, gibbs_nasa, species_coeffs, qss_flag, 1, True, syms
+        fstream, species_info, name, gibbs_nasa7, species_coeffs, qss_flag, 1, True, syms
     )
 
 
@@ -236,7 +351,7 @@ def helmholtz(fstream, species_info, species_coeffs):
         fstream,
         species_info,
         "helmholtz",
-        helmholtz_nasa,
+        helmholtz_nasa7,
         species_coeffs,
         0,
         1,
@@ -275,7 +390,7 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag, syms=None)
         fstream,
         species_info,
         name,
-        enthalpy_nasa,
+        enthalpy_nasa7,
         species_coeffs,
         qss_flag,
         1,
@@ -292,7 +407,7 @@ def species_entropy(fstream, species_info, species_coeffs):
         fstream,
         species_info,
         "speciesEntropy",
-        entropy_nasa,
+        entropy_nasa7,
         species_coeffs,
         0,
         0,
@@ -308,20 +423,20 @@ def dcvpdtemp(fstream, species_info, species_coeffs):
         cw.comment("compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature"),
     )
     generate_thermo_routine(
-        fstream, species_info, "dcvpRdT", dcpdtemp_nasa, species_coeffs, 0
+        fstream, species_info, "dcvpRdT", dcpdtemp_nasa7, species_coeffs, 0
     )
 
 
-def dcpdtemp_nasa(fstream, parameters):
-    """Write NASA polynomial for dcpdtemp."""
+def dcpdtemp_nasa7(fstream, parameters):
+    """Write NASA7 polynomial for dcpdtemp."""
     cw.writer(fstream, f"{parameters[1]:+15.8e}")
     cw.writer(fstream, f"{(parameters[2] * 2.0):+15.8e} * T")
     cw.writer(fstream, f"{(parameters[3] * 3.0):+15.8e} * T2")
     cw.writer(fstream, f"{(parameters[4] * 4.0):+15.8e} * T3")
 
 
-def cv_nasa(fstream, parameters):
-    """Write NASA polynomial for cv."""
+def cv_nasa7(fstream, parameters):
+    """Write NASA7 polynomial for cv."""
     cw.writer(fstream, f"{(parameters[0] - 1.0):+15.8e}")
     cw.writer(fstream, f"{parameters[1]:+15.8e} * T")
     cw.writer(fstream, f"{parameters[2]:+15.8e} * T2")
@@ -329,8 +444,8 @@ def cv_nasa(fstream, parameters):
     cw.writer(fstream, f"{parameters[4]:+15.8e} * T4")
 
 
-def cp_nasa(fstream, parameters):
-    """Write NASA polynomial for cp."""
+def cp_nasa7(fstream, parameters):
+    """Write NASA7 polynomial for cp."""
     cw.writer(fstream, f"{parameters[0]:+15.8e}")
     cw.writer(fstream, f"{parameters[1]:+15.8e} * T")
     cw.writer(fstream, f"{parameters[2]:+15.8e} * T2")
@@ -338,8 +453,8 @@ def cp_nasa(fstream, parameters):
     cw.writer(fstream, f"{parameters[4]:+15.8e} * T4")
 
 
-def gibbs_nasa(fstream, parameters, syms=None):
-    """Write NASA polynomial for Gibbs."""
+def gibbs_nasa7(fstream, parameters, syms=None):
+    """Write NASA7 polynomial for Gibbs."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
@@ -373,8 +488,8 @@ def gibbs_nasa(fstream, parameters, syms=None):
         return symb_smp
 
 
-def helmholtz_nasa(fstream, parameters, syms=None):
-    """Write NASA polynomial for Helmholtz."""
+def helmholtz_nasa7(fstream, parameters, syms=None):
+    """Write NASA7 polynomial for Helmholtz."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
@@ -409,7 +524,7 @@ def helmholtz_nasa(fstream, parameters, syms=None):
 
 
 def internal_energy(fstream, parameters, syms=None):
-    """Write NASA polynomial for internal energy."""
+    """Write NASA7 polynomial for internal energy."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
@@ -440,8 +555,8 @@ def internal_energy(fstream, parameters, syms=None):
         return symb_smp
 
 
-def enthalpy_nasa(fstream, parameters, syms=None):
-    """Write NASA polynomial for enthalpy."""
+def enthalpy_nasa7(fstream, parameters, syms=None):
+    """Write NASA7 polynomial for enthalpy."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
@@ -472,8 +587,8 @@ def enthalpy_nasa(fstream, parameters, syms=None):
         return symb_smp
 
 
-def entropy_nasa(fstream, parameters, syms=None):
-    """Write NASA polynomial for entropy."""
+def entropy_nasa7(fstream, parameters, syms=None):
+    """Write NASA7 polynomial for entropy."""
     record_symbolic_operations = True
     if syms is None:
         record_symbolic_operations = False
