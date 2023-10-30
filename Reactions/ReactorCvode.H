@@ -44,6 +44,14 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
+// CYOrder is faster on GPUs, but only works for cvode.solve_type=GMRES.
+// We default to CYOrder in the specific case below,
+// while defining PELE_CVODE_FORCE_YCORDER enables more solvers but less GMRES
+// performance.
+#if !defined(AMREX_USE_GPU) || defined(PELE_USE_MAGMA)
+#define PELE_CVODE_FORCE_YCORDER
+#endif
+
 namespace pele::physics::reactions {
 
 class ReactorCvode : public ReactorBase::Register<ReactorCvode>
@@ -51,7 +59,11 @@ class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 public:
   static std::string identifier() { return "ReactorCvode"; }
 
+#ifdef PELE_CVODE_FORCE_YCORDER
   using Ordering = utils::YCOrder;
+#else
+  using Ordering = utils::CYOrder;
+#endif
 
   int init(int reactor_type, int ncells) override;
 
