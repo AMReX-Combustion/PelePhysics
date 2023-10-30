@@ -120,10 +120,10 @@ def generate_thermo_routine(
             " * species, const amrex::Real T)",
         )
 
-    syms_g_rt = name == "gibbs" and not (syms is None)
-    syms_g_rt_qss = name == "gibbs_qss" and not (syms is None)
-    syms_h_rt = name == "speciesEnthalpy" and not (syms is None)
-    syms_h_rt_qss = name == "speciesEnthalpy_qss" and not (syms is None)
+    # syms_g_rt = name == "gibbs" and not (syms is None)
+    # syms_g_rt_qss = name == "gibbs_qss" and not (syms is None)
+    # syms_h_rt = name == "speciesEnthalpy" and not (syms is None)
+    # syms_h_rt_qss = name == "speciesEnthalpy_qss" and not (syms is None)
 
     if not inline:
         cw.writer(fstream, "{")
