@@ -13,7 +13,7 @@ def thermo(fstream, mechanism, species_info, syms=None):
     """Write thermodynamics routines."""
     models = analyze_thermodynamics(mechanism, species_info)
     if species_info.n_qssa_species > 0:
-        qss_species_coeffs = analyze_thermodynamics(mechanism, species_info, 1)
+        qss_species_coeffs = analyze_thermodynamics_old(mechanism, species_info, 1)
 
     cv(fstream, species_info, models)
     cp(fstream, species_info, models)
