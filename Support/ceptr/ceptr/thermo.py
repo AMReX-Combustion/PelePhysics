@@ -11,7 +11,7 @@ import ceptr.writer as cw
 
 def thermo(fstream, mechanism, species_info, syms=None):
     """Write thermodynamics routines."""
-    models = analyze_thermodynamics(mechanism, species_info)
+    models = analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     if species_info.n_qssa_species > 0:
         qss_species_coeffs = analyze_thermodynamics_old(mechanism, species_info, 1)
 
@@ -130,15 +130,16 @@ def analyze_thermodynamics_old(mechanism, species_info, qss_flag):
     return midpoints
 
 
-def analyze_thermodynamics(mechanism, species_info):
+def analyze_thermodynamics(mechanism, species_list):
     """Extract information from the thermodynamics model."""
     models = []
-    for symbol in species_info.nonqssa_species_list:
+    for symbol in species_list:
         species = mechanism.species(symbol)
         model = species.thermo
         dct = {"species": species}
 
         # for nasa7
+        assert model.n_coeffs == 15, "Unsupported thermo model."
         interval = []
         coeffs = [model.coeffs[1:8]]
         if not np.allclose(model.coeffs[1:8], model.coeffs[8:15], atol=1e-22):
@@ -417,10 +418,7 @@ def cp(fstream, species_info, models):
 
 def gibbs(fstream, species_info, models, qss_flag, syms=None):
     """Write Gibbs."""
-    if qss_flag:
-        name = "gibbs_qss"
-    else:
-        name = "gibbs"
+    name = "gibbs_qss" if qss_flag else "gibbs"
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     generate_thermo_routine(fstream, species_info, name, models, qss_flag, syms)
@@ -428,10 +426,7 @@ def gibbs(fstream, species_info, models, qss_flag, syms=None):
 
 def gibbs_old(fstream, species_info, species_coeffs, qss_flag, syms=None):
     """Write Gibbs."""
-    if qss_flag:
-        name = "gibbs_qss"
-    else:
-        name = "gibbs"
+    name = "gibbs_qss" if qss_flag else "gibbs"
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute the g/(RT) at the given temperature"))
     generate_thermo_routine_old(
@@ -475,10 +470,7 @@ def species_internal_energy(fstream, species_info, models):
 
 def species_enthalpy(fstream, species_info, models, qss_flag, syms=None):
     """Write species enthalpy."""
-    if qss_flag:
-        name = "speciesEnthalpy_qss"
-    else:
-        name = "speciesEnthalpy"
+    name = "speciesEnthalpy_qss" if qss_flag else "speciesEnthalpy"
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -497,10 +489,7 @@ def species_enthalpy(fstream, species_info, models, qss_flag, syms=None):
 
 def species_enthalpy_old(fstream, species_info, species_coeffs, qss_flag, syms=None):
     """Write species enthalpy."""
-    if qss_flag:
-        name = "speciesEnthalpy_qss"
-    else:
-        name = "speciesEnthalpy"
+    name = "speciesEnthalpy_qss" if qss_flag else "speciesEnthalpy"
     cw.writer(fstream)
     cw.writer(
         fstream,

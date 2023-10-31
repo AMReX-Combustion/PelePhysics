@@ -184,7 +184,7 @@ def ckcpbs(fstream, mechanism, species_info):
 
     cw.writer(fstream)
 
-    models = cth.analyze_thermodynamics(mechanism, species_info)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
     cth.generate_thermo_routine(
         fstream,
@@ -259,7 +259,7 @@ def ckcvbs(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0; ")
 
-    models = cth.analyze_thermodynamics(mechanism, species_info)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
     cth.generate_thermo_routine(
         fstream,
@@ -340,7 +340,7 @@ def ckhbms(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0;")
 
-    models = cth.analyze_thermodynamics(mechanism, species_info)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cth.generate_thermo_routine(
         fstream,
         species_info,
@@ -418,7 +418,7 @@ def ckubms(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0;")
 
-    models = cth.analyze_thermodynamics(mechanism, species_info)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cth.generate_thermo_routine(
         fstream,
         species_info,
