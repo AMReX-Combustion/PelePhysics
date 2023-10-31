@@ -32,24 +32,76 @@ def thermo(fstream, mechanism, species_info, syms=None):
 def generator_attributes(name):
     """Return the attributes for a thermo function generator."""
     dct = {
-        "cv_R": {"name": cv_nasa7, "inv_temp": 0, "log_temp": False},
-        "cp_R": {"name": cp_nasa7, "inv_temp": 0, "log_temp": False},
-        "gibbs": {"name": gibbs_nasa7, "inv_temp": 1, "log_temp": True},
-        "gibbs_qss": {"name": gibbs_nasa7, "inv_temp": 1, "log_temp": True},
-        "helmholtz": {"name": helmholtz_nasa7, "inv_temp": 1, "log_temp": True},
+        "cv_R": {
+            "name": cv_nasa7,
+            "T4": True,
+            "inv_temp": False,
+            "inv_temp2": False,
+            "log_temp": False,
+        },
+        "cp_R": {
+            "name": cp_nasa7,
+            "T4": True,
+            "inv_temp": False,
+            "inv_temp2": False,
+            "log_temp": False,
+        },
+        "gibbs": {
+            "name": gibbs_nasa7,
+            "T4": True,
+            "inv_temp": 1,
+            "inv_temp2": False,
+            "log_temp": True,
+        },
+        "gibbs_qss": {
+            "name": gibbs_nasa7,
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": False,
+            "log_temp": True,
+        },
+        "helmholtz": {
+            "name": helmholtz_nasa7,
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": False,
+            "log_temp": True,
+        },
         "speciesInternalEnergy": {
             "name": internal_energy,
-            "inv_temp": 1,
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": False,
             "log_temp": False,
         },
-        "speciesEnthalpy": {"name": enthalpy_nasa7, "inv_temp": 1, "log_temp": False},
+        "speciesEnthalpy": {
+            "name": enthalpy_nasa7,
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": False,
+            "log_temp": False,
+        },
         "speciesEnthalpy_qss": {
             "name": enthalpy_nasa7,
-            "inv_temp": 1,
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": False,
             "log_temp": False,
         },
-        "speciesEntropy": {"name": entropy_nasa7, "inv_temp": 0, "log_temp": True},
-        "dcvpRdT": {"name": dcpdtemp_nasa7, "inv_temp": 0, "log_temp": False},
+        "speciesEntropy": {
+            "name": entropy_nasa7,
+            "T4": True,
+            "inv_temp": False,
+            "inv_temp2": False,
+            "log_temp": True,
+        },
+        "dcvpRdT": {
+            "name": dcpdtemp_nasa7,
+            "T4": False,
+            "inv_temp": False,
+            "inv_temp2": False,
+            "log_temp": False,
+        },
     }
     return dct[name]
 
@@ -129,10 +181,11 @@ def generate_thermo_routine(
         cw.writer(fstream, "{")
     cw.writer(fstream, "const amrex::Real T2 = T*T;")
     cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
-    cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
-    if gen["inv_temp"] != 0:
+    if gen["T4"]:
+        cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
+    if gen["inv_temp"]:
         cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
-    if gen["inv_temp"] == 2:
+    if gen["inv_temp2"]:
         cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
     if gen["log_temp"]:
         cw.writer(fstream, "const amrex::Real logT = log(T);")

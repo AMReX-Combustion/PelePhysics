@@ -1512,7 +1512,6 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
   const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
 
   // species with no change across T
   // species 2: H
