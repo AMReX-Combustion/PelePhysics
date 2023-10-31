@@ -354,7 +354,6 @@ class Converter:
                 cck.ckwxr(hdr, self.mechanism, self.species_info)
                 cck.ckchrg(hdr, self)
                 cck.ckchrgmass(hdr, self.species_info)
-                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
 
                 # Approx analytical jacobian
                 cj.ajac(
@@ -410,7 +409,6 @@ class Converter:
                 cck.ckwxr(hdr, self.mechanism, self.species_info)
                 cck.ckchrg(hdr, self)
                 cck.ckchrgmass(hdr, self.species_info)
-                cth.dthermodtemp(hdr, self.mechanism, self.species_info)
                 # Approx analytical jacobian
                 cj.ajac(
                     hdr,
