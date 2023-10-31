@@ -549,6 +549,33 @@ def cv_nasa7(fstream, parameters):
     cw.writer(fstream, f"{parameters[4]:+15.8e} * T4")
 
 
+def eval_cv_species(mechanism, species, temp):
+    """Evaluate cv."""
+    model = mechanism.species(species.name).thermo
+    return eval_cv_species_nasa7(model, temp)
+
+
+def eval_cv_species_nasa7(model, temp):
+    """Evaluate cv with NASA7 polynomial."""
+    assert model.n_coeffs == 15, "Unsupported thermo model."
+    mid = model.coeffs[0]
+    high_range = model.coeffs[1:8]
+    low_range = model.coeffs[8:15]
+
+    if temp < mid:
+        parameters = low_range
+    else:
+        parameters = high_range
+
+    return (
+        (parameters[0] - 1.0)
+        + parameters[1] * temp
+        + parameters[2] * temp * temp
+        + parameters[3] * temp * temp * temp
+        + parameters[4] * temp * temp * temp * temp
+    )
+
+
 def cp_nasa7(fstream, parameters):
     """Write NASA7 polynomial for cp."""
     cw.writer(fstream, f"{parameters[0]:+15.8e}")
