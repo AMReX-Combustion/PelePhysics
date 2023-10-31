@@ -33,70 +33,70 @@ def generator_attributes(name):
     """Return the attributes for a thermo function generator."""
     dct = {
         "cv_R": {
-            "name": cv_nasa7,
+            "function": cv_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
             "log_temp": False,
         },
         "cp_R": {
-            "name": cp_nasa7,
+            "function": cp_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
             "log_temp": False,
         },
         "gibbs": {
-            "name": gibbs_nasa7,
+            "function": gibbs_nasa7,
             "T4": True,
             "inv_temp": 1,
             "inv_temp2": False,
             "log_temp": True,
         },
         "gibbs_qss": {
-            "name": gibbs_nasa7,
+            "function": gibbs_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
             "log_temp": True,
         },
         "helmholtz": {
-            "name": helmholtz_nasa7,
+            "function": helmholtz_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
             "log_temp": True,
         },
         "speciesInternalEnergy": {
-            "name": internal_energy,
+            "function": internal_energy,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
             "log_temp": False,
         },
         "speciesEnthalpy": {
-            "name": enthalpy_nasa7,
+            "function": enthalpy_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
             "log_temp": False,
         },
         "speciesEnthalpy_qss": {
-            "name": enthalpy_nasa7,
+            "function": enthalpy_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
             "log_temp": False,
         },
         "speciesEntropy": {
-            "name": entropy_nasa7,
+            "function": entropy_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
             "log_temp": True,
         },
         "dcvpRdT": {
-            "name": dcpdtemp_nasa7,
+            "function": dcpdtemp_nasa7,
             "T4": False,
             "inv_temp": False,
             "inv_temp2": False,
@@ -164,7 +164,7 @@ def generate_thermo_routine(
 ):
     """Write a thermodynamics routine."""
     gen = generator_attributes(name)
-    expression_generator = gen["name"]
+    expression_generator = gen["function"]
 
     if not inline:
         cw.writer(
