@@ -559,8 +559,7 @@ cv_R(amrex::Real* species, const amrex::Real T)
                   7.26483330e-26 * T3 + 1.30662470e-30 * T4;
   } else {
     // species 25: E
-    species[25] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-                  0.00000000e+00 * T3 + 0.00000000e+00 * T4;
+    species[25] = +1.50000000e+00;
   }
 }
 
@@ -819,8 +818,7 @@ cp_R(amrex::Real* species, const amrex::Real T)
                   7.26483330e-26 * T3 + 1.30662470e-30 * T4;
   } else {
     // species 25: E
-    species[25] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-                  0.00000000e+00 * T3 + 0.00000000e+00 * T4;
+    species[25] = +2.50000000e+00;
   }
 }
 
@@ -1184,9 +1182,7 @@ gibbs(amrex::Real* species, const amrex::Real T)
   } else {
     // species 25: E
     species[25] = -7.453750000000000e+02 * invT + 1.423397500000000e+01 -
-                  2.500000000000000e+00 * logT - 0.000000000000000e+00 * T -
-                  0.000000000000000e+00 * T2 - 0.000000000000000e+00 * T3 -
-                  0.000000000000000e+00 * T4;
+                  2.500000000000000e+00 * logT;
   }
 }
 
@@ -1549,10 +1545,8 @@ helmholtz(amrex::Real* species, const amrex::Real T)
                   6.53312350e-32 * T4;
   } else {
     // species 25: E
-    species[25] = -7.45375000e+02 * invT + 1.32339750e+01 -
-                  2.50000000e+00 * logT - 0.00000000e+00 * T -
-                  0.00000000e+00 * T2 - 0.00000000e+00 * T3 -
-                  0.00000000e+00 * T4;
+    species[25] =
+      -7.45375000e+02 * invT + 1.32339750e+01 - 2.50000000e+00 * logT;
   }
 }
 
@@ -1863,9 +1857,7 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   7.45375000e+02 * invT;
   } else {
     // species 25: E
-    species[25] = +1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-                  0.00000000e+00 * T3 + 0.00000000e+00 * T4 -
-                  7.45375000e+02 * invT;
+    species[25] = +1.50000000e+00 - 7.45375000e+02 * invT;
   }
 }
 
@@ -2176,9 +2168,7 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   7.45375000e+02 * invT;
   } else {
     // species 25: E
-    species[25] = +2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-                  0.00000000e+00 * T3 + 0.00000000e+00 * T4 -
-                  7.45375000e+02 * invT;
+    species[25] = +2.50000000e+00 - 7.45375000e+02 * invT;
   }
 }
 
@@ -2489,9 +2479,7 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   3.26656175e-31 * T4 - 1.17339750e+01;
   } else {
     // species 25: E
-    species[25] = +2.50000000e+00 * logT + 0.00000000e+00 * T +
-                  0.00000000e+00 * T2 + 0.00000000e+00 * T3 +
-                  0.00000000e+00 * T4 - 1.17339750e+01;
+    species[25] = +2.50000000e+00 * logT - 1.17339750e+01;
   }
 }
 
@@ -2749,8 +2737,7 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
                   5.22649880e-30 * T3;
   } else {
     // species 25: E
-    species[25] = +0.00000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-                  0.00000000e+00 * T3;
+    species[25] = 0.0;
   }
 }
 
@@ -3130,10 +3117,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
               1822.8884868472639482;
   } else {
     // species 25: E
-    result += y[25] *
-              (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              1822.8884868472639482;
+    result += y[25] * (+2.50000000e+00) * 1822.8884868472639482;
   }
 
   cpbs = result * 8.31446261815324e+07;
@@ -3514,10 +3498,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
               1822.8884868472639482;
   } else {
     // species 25: E
-    result += y[25] *
-              (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-               0.00000000e+00 * T3 + 0.00000000e+00 * T4) *
-              1822.8884868472639482;
+    result += y[25] * (+1.50000000e+00) * 1822.8884868472639482;
   }
 
   cvbs = result * 8.31446261815324e+07;
@@ -3951,10 +3932,7 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
   } else {
     // species 25: E
     result +=
-      y[25] *
-      (+2.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      1822.8884868472639482;
+      y[25] * (+2.50000000e+00 - 7.45375000e+02 * invT) * 1822.8884868472639482;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
@@ -4390,10 +4368,7 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
   } else {
     // species 25: E
     result +=
-      y[25] *
-      (+1.50000000e+00 + 0.00000000e+00 * T + 0.00000000e+00 * T2 +
-       0.00000000e+00 * T3 + 0.00000000e+00 * T4 - 7.45375000e+02 * invT) *
-      1822.8884868472639482;
+      y[25] * (+1.50000000e+00 - 7.45375000e+02 * invT) * 1822.8884868472639482;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
