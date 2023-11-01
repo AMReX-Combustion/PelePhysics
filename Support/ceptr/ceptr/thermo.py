@@ -322,6 +322,7 @@ def dcvpdtemp(fstream, species_info, models):
 
 
 def param2str(param, sfx="", fmt="+15.8e"):
+    """Convert a parameter to a string."""
     return f"{param:{fmt}} {sfx}" if param != 0.0 else ""
 
 
