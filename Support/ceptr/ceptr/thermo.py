@@ -1,8 +1,10 @@
 """Thermodynamics functions."""
 
+import bisect
 import itertools
 
 import numpy as np
+from cantera.speciesthermo import Nasa9PolyMultiTempRegion, NasaPoly2
 
 import ceptr.writer as cw
 
@@ -27,77 +29,202 @@ def thermo(fstream, mechanism, species_info, syms=None):
     dcvpdtemp(fstream, species_info, models)
 
 
-def generator_attributes(name):
-    """Return the attributes for a thermo function generator."""
+def model_type(model):
+    """Return string for the model type."""
+    if isinstance(model, NasaPoly2):
+        assert model.n_coeffs == 15, "Unexpected coefficient form."
+        return "nasa7"
+    elif isinstance(model, Nasa9PolyMultiTempRegion):
+        return "nasa9"
+    else:
+        raise TypeError(
+            f"Model {model.__class__} is not supported. CEPTR supports NASA7 and NASA9"
+            " models."
+        )
+
+
+def expression_map_nasa7(name):
+    """Return the function generator for NASA7 polynomials."""
+    dct = {
+        "cv_R": cv_nasa7,
+        "cp_R": cp_nasa7,
+        "gibbs": gibbs_nasa7,
+        "gibbs_qss": gibbs_nasa7,
+        "helmholtz": helmholtz_nasa7,
+        "speciesInternalEnergy": internal_energy_nasa7,
+        "speciesEnthalpy": enthalpy_nasa7,
+        "speciesEnthalpy_qss": enthalpy_nasa7,
+        "speciesEntropy": entropy_nasa7,
+        "dcvpRdT": dcpdtemp_nasa7,
+    }
+    return dct[name]
+
+
+def expression_map_nasa9(name):
+    """Return the function generator for NASA7 polynomials."""
+    dct = {
+        "cv_R": cv_nasa9,
+        "cp_R": cp_nasa9,
+        "gibbs": gibbs_nasa9,
+        "gibbs_qss": gibbs_nasa9,
+        "helmholtz": helmholtz_nasa9,
+        "speciesInternalEnergy": internal_energy_nasa9,
+        "speciesEnthalpy": enthalpy_nasa9,
+        "speciesEnthalpy_qss": enthalpy_nasa9,
+        "speciesEntropy": entropy_nasa9,
+        "dcvpRdT": dcpdtemp_nasa9,
+    }
+    return dct[name]
+
+
+def variables_nasa7(name):
+    """Return the variables needed for NASA7 polynomials."""
     dct = {
         "cv_R": {
-            "function": cv_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": False,
         },
         "cp_R": {
-            "function": cp_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": False,
         },
         "gibbs": {
-            "function": gibbs_nasa7,
             "T4": True,
-            "inv_temp": 1,
+            "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": True,
         },
         "gibbs_qss": {
-            "function": gibbs_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": True,
         },
         "helmholtz": {
-            "function": helmholtz_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": True,
         },
         "speciesInternalEnergy": {
-            "function": internal_energy,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": False,
         },
         "speciesEnthalpy": {
-            "function": enthalpy_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": False,
         },
         "speciesEnthalpy_qss": {
-            "function": enthalpy_nasa7,
             "T4": True,
             "inv_temp": True,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": False,
         },
         "speciesEntropy": {
-            "function": entropy_nasa7,
             "T4": True,
             "inv_temp": False,
             "inv_temp2": False,
+            "inv_temp3": False,
             "log_temp": True,
         },
         "dcvpRdT": {
-            "function": dcpdtemp_nasa7,
             "T4": False,
             "inv_temp": False,
             "inv_temp2": False,
+            "inv_temp3": False,
+            "log_temp": False,
+        },
+    }
+    return dct[name]
+
+
+def variables_nasa9(name):
+    """Return the variables needed for NASA9 polynomials."""
+    dct = {
+        "cv_R": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": False,
+        },
+        "cp_R": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": False,
+        },
+        "gibbs": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "gibbs_qss": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "helmholtz": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "speciesInternalEnergy": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "speciesEnthalpy": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "speciesEnthalpy_qss": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "speciesEntropy": {
+            "T4": True,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": False,
+            "log_temp": True,
+        },
+        "dcvpRdT": {
+            "T4": False,
+            "inv_temp": True,
+            "inv_temp2": True,
+            "inv_temp3": True,
             "log_temp": False,
         },
     }
@@ -110,19 +237,31 @@ def analyze_thermodynamics(mechanism, species_list):
     for symbol in species_list:
         species = mechanism.species(symbol)
         model = species.thermo
-        dct = {"species": species}
+        mtype = model_type(model)
+        dct = {"species": species, "interval": [], "coefficients": [], "type": mtype}
 
-        # for nasa7
-        assert model.n_coeffs == 15, "Unsupported thermo model."
-        interval = []
-        coeffs = [model.coeffs[1:8]]
-        if not np.allclose(model.coeffs[1:8], model.coeffs[8:15], atol=1e-22):
-            interval = [model.coeffs[0]]
-            coeffs = [model.coeffs[8:15], model.coeffs[1:8]]
+        if mtype == "nasa7":
+            dct["coefficients"] = [model.coeffs[1:8]]
+            if not np.allclose(model.coeffs[1:8], model.coeffs[8:15], atol=1e-22):
+                dct["interval"] = [model.coeffs[0]]
+                dct["coefficients"] = [model.coeffs[8:15], model.coeffs[1:8]]
+        elif mtype == "nasa9":
+            nzones = int(model.coeffs[0])
+            dct["coefficients"] = [
+                model.coeffs[3 + 11 * x : 12 + 11 * x] for x in range(nzones)
+            ]
+            for c in dct["coefficients"]:
+                assert len(c) == 9, "NASA9 polynomial coefficients must be of length 9."
+            min_bounds = [model.coeffs[1 + 11 * x] for x in range(nzones)]
+            max_bounds = [model.coeffs[2 + 11 * x] for x in range(nzones)]
+            dct["interval"] = sorted(list(set(min_bounds) & set(max_bounds)))
 
-        dct["interval"] = interval
-        dct["coefficients"] = coeffs
         models.append(dct)
+
+    if (not all(x["type"] == "nasa7" for x in models)) and (
+        not all(x["type"] == "nasa9" for x in models)
+    ):
+        raise ValueError("Thermodynamics models are not all of the same type.")
 
     return models
 
@@ -137,8 +276,12 @@ def generate_thermo_routine(
     inline=False,
 ):
     """Write a thermodynamics routine."""
-    gen = generator_attributes(name)
-    expression_generator = gen["function"]
+    if all(x["type"] == "nasa7" for x in models):
+        expression_generator = expression_map_nasa7(name)
+        variables = variables_nasa7(name)
+    elif all(x["type"] == "nasa9" for x in models):
+        expression_generator = expression_map_nasa9(name)
+        variables = variables_nasa9(name)
 
     if not inline:
         cw.writer(
@@ -151,13 +294,15 @@ def generate_thermo_routine(
         cw.writer(fstream, "{")
     cw.writer(fstream, "const amrex::Real T2 = T*T;")
     cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
-    if gen["T4"]:
+    if variables["T4"]:
         cw.writer(fstream, "const amrex::Real T4 = T*T*T*T;")
-    if gen["inv_temp"]:
+    if variables["inv_temp"]:
         cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
-    if gen["inv_temp2"]:
+    if variables["inv_temp2"]:
         cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
-    if gen["log_temp"]:
+    if variables["inv_temp3"]:
+        cw.writer(fstream, "const amrex::Real invT3 = invT*invT*invT;")
+    if variables["log_temp"]:
         cw.writer(fstream, "const amrex::Real logT = log(T);")
     cw.writer(fstream)
 
@@ -176,12 +321,35 @@ def generate_thermo_routine(
                 fstream,
                 cw.comment(f"species with midpoint at T={interval[0]:g} kelvin"),
             )
+        elif len(interval) > 1:
+            cw.writer(
+                fstream,
+                cw.comment(
+                    f"species with inflection points at T = {*interval,} kelvin"
+                ),
+            )
         for k in range(len(interval) + 1):
             if len(interval) == 1:
                 if k == 0:
                     cw.writer(
                         fstream,
                         f"""if (T < {interval[0]:g}) {{""",
+                    )
+                else:
+                    cw.writer(
+                        fstream,
+                        "else {",
+                    )
+            elif len(interval) > 1:
+                if k == 0:
+                    cw.writer(
+                        fstream,
+                        f"""if (T < {interval[0]:g}) {{""",
+                    )
+                elif 0 < k and k < len(interval):
+                    cw.writer(
+                        fstream,
+                        f"""else if ( ({interval[k-1]:g} <= T) && (T < {interval[k]:g})) {{""",
                     )
                 else:
                     cw.writer(
@@ -221,7 +389,7 @@ def generate_thermo_routine(
                     cw.writer(fstream, f")* {imw:.16f}")
                 cw.writer(fstream, ";")
 
-            if len(interval) == 1:
+            if len(interval) >= 1:
                 cw.writer(
                     fstream,
                     "}",
@@ -326,15 +494,14 @@ def param2str(param, sfx="", fmt="+15.8e"):
     return f"{param:{fmt}} {sfx}" if param != 0.0 else ""
 
 
-def dcpdtemp_nasa7(fstream, parameters):
-    """Write NASA7 polynomial for dcpdtemp."""
-    expression = (
-        param2str(parameters[1])
-        + param2str(parameters[2] * 2.0, "* T")
-        + param2str(parameters[3] * 3.0, "* T2")
-        + param2str(parameters[4] * 4.0, "* T3")
-    )
-    cw.writer(fstream, expression if expression else "0.0")
+def eval_cv_species(mechanism, species, temp):
+    """Evaluate cv."""
+    model = mechanism.species(species.name).thermo
+    mtype = model_type(model)
+    if mtype == "nasa7":
+        return eval_cv_species_nasa7(model, temp)
+    elif mtype == "nasa9":
+        return eval_cv_species_nasa9(model, temp)
 
 
 def cv_nasa7(fstream, parameters):
@@ -347,12 +514,6 @@ def cv_nasa7(fstream, parameters):
         + param2str(parameters[4], "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
-
-
-def eval_cv_species(mechanism, species, temp):
-    """Evaluate cv."""
-    model = mechanism.species(species.name).thermo
-    return eval_cv_species_nasa7(model, temp)
 
 
 def eval_cv_species_nasa7(model, temp):
@@ -384,6 +545,17 @@ def cp_nasa7(fstream, parameters):
         + param2str(parameters[2], "* T2")
         + param2str(parameters[3], "* T3")
         + param2str(parameters[4], "* T4")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+
+def dcpdtemp_nasa7(fstream, parameters):
+    """Write NASA7 polynomial for dcpdtemp."""
+    expression = (
+        param2str(parameters[1])
+        + param2str(parameters[2] * 2.0, "* T")
+        + param2str(parameters[3] * 3.0, "* T2")
+        + param2str(parameters[4] * 4.0, "* T3")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -441,7 +613,7 @@ def helmholtz_nasa7(fstream, parameters, syms=None):
         )
 
 
-def internal_energy(fstream, parameters, syms=None):
+def internal_energy_nasa7(fstream, parameters, syms=None):
     """Write NASA7 polynomial for internal energy."""
     expression = (
         param2str(parameters[0] - 1.0, "")
@@ -508,4 +680,211 @@ def entropy_nasa7(fstream, parameters, syms=None):
             + (parameters[3] / 3) * syms.T3_smp
             + (parameters[4] / 4) * syms.T4_smp
             + parameters[6]
+        )
+
+
+def cv_nasa9(fstream, parameters):
+    """Write NASA9 polynomial for cv."""
+    expression = (
+        param2str(parameters[0], "* invT2")
+        + param2str(parameters[1], "* invT")
+        + param2str(parameters[2] - 1.0)
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4], " * T2")
+        + param2str(parameters[5], "* T3")
+        + param2str(parameters[6], "* T4")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+
+def eval_cv_species_nasa9(model, temp):
+    """Evaluate cv with NASA9 polynomial."""
+    nzones = int(model.coeffs[0])
+    coeffs = [model.coeffs[3 + 11 * x : 12 + 11 * x] for x in range(nzones)]
+    for c in coeffs:
+        assert len(c) == 9, "NASA9 polynomial coefficients must be of length 9."
+    min_bounds = [model.coeffs[1 + 11 * x] for x in range(nzones)]
+    max_bounds = [model.coeffs[2 + 11 * x] for x in range(nzones)]
+    interval = sorted(list(set(min_bounds) & set(max_bounds)))
+    idx = bisect.bisect_left(interval, temp)
+    parameters = coeffs[idx]
+
+    return (
+        parameters[0] * 1.0 / (temp * temp)
+        + parameters[1] * 1.0 / (temp)
+        + (parameters[2] - 1.0)
+        + parameters[3] * temp
+        + parameters[4] * temp * temp
+        + parameters[5] * temp * temp * temp
+        + parameters[6] * temp * temp * temp * temp
+    )
+
+
+def cp_nasa9(fstream, parameters):
+    """Write NASA9 polynomial for cp."""
+    expression = (
+        param2str(parameters[0], "* invT2")
+        + param2str(parameters[1], "* invT")
+        + param2str(parameters[2])
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4], " * T2")
+        + param2str(parameters[5], "* T3")
+        + param2str(parameters[6], "* T4")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+
+def dcpdtemp_nasa9(fstream, parameters):
+    """Write NASA9 polynomial for dcpdtemp."""
+    expression = (
+        param2str(-parameters[0] * 2.0, "* invT3")
+        + param2str(-parameters[1], "* invT2")
+        + param2str(parameters[3])
+        + param2str(parameters[4] * 2.0, "* T")
+        + param2str(parameters[5] * 3.0, "* T2")
+        + param2str(parameters[6] * 4.0, "* T3")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+
+def gibbs_nasa9(fstream, parameters, syms=None):
+    """Write NASA9 polynomial for Gibbs."""
+    expression = (
+        param2str(-parameters[0] / 2, "* invT2", "+20.15e")
+        + param2str(parameters[7] + parameters[1], "* invT", "+20.15e")
+        + param2str(parameters[1], "* logT * invT", "+20.15e")
+        + param2str(-parameters[2], "* logT", "+20.15e")
+        + param2str(parameters[2] - parameters[8], "", "+20.15e")
+        + param2str((-parameters[3] / 2), "* T", "+20.15e")
+        + param2str((-parameters[4] / 6), "* T2", "+20.15e")
+        + param2str((-parameters[5] / 12), "* T3", "+20.15e")
+        + param2str((-parameters[6] / 20), "* T4", "+20.15e")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+    if syms:
+        return (
+            -parameters[0] / 2 * syms.invT2_smp
+            + (parameters[7] + parameters[1]) * syms.invT_smp
+            + parameters[1] * syms.logT_smp * syms.invT_smp
+            + (-parameters[2]) * syms.logT_smp
+            + parameters[2]
+            - parameters[8]
+            + (-parameters[3] / 2) * syms.T_smp
+            + (-parameters[4] / 6) * syms.T2_smp
+            + (-parameters[5] / 12) * syms.T3_smp
+            + (-parameters[6] / 20) * syms.T4_smp
+        )
+
+
+def helmholtz_nasa9(fstream, parameters, syms=None):
+    """Write NASA9 polynomial for Helmholtz."""
+    expression = (
+        param2str(-parameters[0] / 2, "* invT2")
+        + param2str(parameters[7] + parameters[1], "* invT")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(-parameters[2], "* logT")
+        + param2str(parameters[2] - parameters[8] - 1.0, "")
+        + param2str((-parameters[3] / 2), "* T")
+        + param2str((-parameters[4] / 6), "* T2")
+        + param2str((-parameters[5] / 12), "* T3")
+        + param2str((-parameters[6] / 20), "* T4")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+    if syms:
+        return (
+            -parameters[0] / 2 * syms.invT2_smp
+            + (parameters[7] + parameters[1]) * syms.invT_smp
+            + parameters[1] * syms.logT_smp * syms.invT_smp
+            + (-parameters[2]) * syms.logT_smp
+            + parameters[2]
+            - parameters[8]
+            - 1.0
+            + (-parameters[3] / 2) * syms.T_smp
+            + (-parameters[4] / 6) * syms.T2_smp
+            + (-parameters[5] / 12) * syms.T3_smp
+            + (-parameters[6] / 20) * syms.T4_smp
+        )
+
+
+def internal_energy_nasa9(fstream, parameters, syms=None):
+    """Write NASA9 polynomial for internal energy."""
+    expression = (
+        param2str(-parameters[0], "* invT2")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(parameters[2] - 1.0)
+        + param2str(parameters[3] / 2, "* T")
+        + param2str(parameters[4] / 3, "* T2")
+        + param2str(parameters[5] / 4, "* T3")
+        + param2str(parameters[6] / 5, "* T4")
+        + param2str(parameters[7], "* invT")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+    if syms:
+        return (
+            -parameters[0] * syms.invT2_smp
+            + parameters[1] * syms.logT_smp * syms.invT_smp
+            + parameters[2]
+            - 1.0
+            + (parameters[3] / 2) * syms.T_smp
+            + (parameters[4] / 3) * syms.T2_smp
+            + (parameters[5] / 4) * syms.T3_smp
+            + (parameters[6] / 5) * syms.T4_smp
+            + parameters[7] * syms.invT_smp
+        )
+
+
+def enthalpy_nasa9(fstream, parameters, syms=None):
+    """Write NASA9 polynomial for enthalpy."""
+    expression = (
+        param2str(-parameters[0], "* invT2")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(parameters[2])
+        + param2str(parameters[3] / 2, "* T")
+        + param2str(parameters[4] / 3, "* T2")
+        + param2str(parameters[5] / 4, "* T3")
+        + param2str(parameters[6] / 5, "* T4")
+        + param2str(parameters[7], "* invT")
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+    if syms:
+        return (
+            -parameters[0] * syms.invT2_smp
+            + parameters[1] * syms.logT_smp * syms.invT_smp
+            + parameters[2]
+            + (parameters[3] / 2) * syms.T_smp
+            + (parameters[4] / 3) * syms.T2_smp
+            + (parameters[5] / 4) * syms.T3_smp
+            + (parameters[6] / 5) * syms.T4_smp
+            + parameters[7] * syms.invT_smp
+        )
+
+
+def entropy_nasa9(fstream, parameters, syms=None):
+    """Write NASA9 polynomial for entropy."""
+    expression = (
+        param2str(-parameters[0] / 2, "* invT2")
+        + param2str(-parameters[1], "* invT")
+        + param2str(parameters[2], "* logT")
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4] / 2, "* T2")
+        + param2str(parameters[5] / 3, "* T3")
+        + param2str(parameters[6] / 4, "* T4")
+        + param2str(parameters[8])
+    )
+    cw.writer(fstream, expression if expression else "0.0")
+
+    if syms:
+        return (
+            (-parameters[0] / 2) * syms.invT2_smp
+            + (-parameters[1]) * syms.invT_smp
+            + (parameters[2]) * syms.logT_smp
+            + (parameters[3]) * syms.T_smp
+            + (parameters[4] / 2) * syms.T2_smp
+            + (parameters[5] / 3) * syms.T3_smp
+            + (parameters[6] / 4) * syms.T4_smp
+            + parameters[8]
         )

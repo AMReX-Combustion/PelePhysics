@@ -1,0 +1,56 @@
+generator: ck2yaml
+input-files: [mechanism.inp, tran.dat]
+cantera-version: 3.0.0
+date: Thu, 02 Nov 2023 12:03:25 -0600
+
+units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
+
+phases:
+- name: gas
+  thermo: ideal-gas
+  elements: [C, O]
+  species: [CO, CO2]
+  transport: mixture-averaged
+  state: {T: 300.0, P: 1 atm}
+
+species:
+- name: CO
+  composition: {C: 1, O: 1}
+  thermo:
+    model: NASA9
+    temperature-ranges: [200.0, 1000.0, 6000.0, 2.0e+04]
+    data:
+    - [1.489045326e+04, -292.2285939, 5.72452717, -8.17623503e-03, 1.456903469e-05,
+      -1.087746302e-08, 3.027941827e-12, -1.303131878e+04, -7.85924135]
+    - [4.61919725e+05, -1944.704863, 5.91671418, -5.66428283e-04, 1.39881454e-07,
+      -1.787680361e-11, 9.62093557e-16, -2466.261084, -13.87413108]
+    - [8.86866296e+08, -7.50037784e+05, 249.5474979, -0.039563511, 3.29777208e-06,
+      -1.318409933e-10, 1.998937948e-15, 5.70142113e+06, -2060.704786]
+    note: Gurvich,1979 pt1 p25 pt2 p29. [tpis79]
+  transport:
+    model: gas
+    geometry: linear
+    well-depth: 98.1
+    diameter: 3.65
+    polarizability: 1.95
+    rotational-relaxation: 1.8
+- name: CO2
+  composition: {C: 1, O: 2}
+  thermo:
+    model: NASA9
+    temperature-ranges: [200.0, 1000.0, 6000.0, 2.0e+04]
+    data:
+    - [4.94365054e+04, -626.411601, 5.30172524, 2.503813816e-03, -2.127308728e-07,
+      -7.68998878e-10, 2.849677801e-13, -4.52819846e+04, -7.04827944]
+    - [1.176962419e+05, -1788.791477, 8.29152319, -9.22315678e-05, 4.86367688e-09,
+      -1.891053312e-12, 6.33003659e-16, -3.90835059e+04, -26.52669281]
+    - [-1.544423287e+09, 1.016847056e+06, -256.140523, 0.0336940108, -2.181184337e-06,
+      6.99142084e-11, -8.8423515e-16, -8.04321451e+06, 2254.177493]
+    note: Gurvich,1991 pt1 p27 pt2 p24. [g 9/99]
+  transport:
+    model: gas
+    geometry: linear
+    well-depth: 244.0
+    diameter: 3.763
+    polarizability: 2.65
+    rotational-relaxation: 2.1
