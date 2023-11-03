@@ -258,11 +258,6 @@ def analyze_thermodynamics(mechanism, species_list):
 
         models.append(dct)
 
-    if (not all(x["type"] == "nasa7" for x in models)) and (
-        not all(x["type"] == "nasa9" for x in models)
-    ):
-        raise ValueError("Thermodynamics models are not all of the same type.")
-
     return models
 
 
@@ -276,13 +271,6 @@ def generate_thermo_routine(
     inline=False,
 ):
     """Write a thermodynamics routine."""
-    if all(x["type"] == "nasa7" for x in models):
-        expression_generator = expression_map_nasa7(name)
-        variables = variables_nasa7(name)
-    elif all(x["type"] == "nasa9" for x in models):
-        expression_generator = expression_map_nasa9(name)
-        variables = variables_nasa9(name)
-
     if not inline:
         cw.writer(
             fstream,
@@ -292,6 +280,23 @@ def generate_thermo_routine(
 
     if not inline:
         cw.writer(fstream, "{")
+
+    variables = {
+        "T4": False,
+        "inv_temp": False,
+        "inv_temp2": False,
+        "inv_temp3": False,
+        "log_temp": False,
+    }
+    for model in models:
+        if model["type"] == "nasa7":
+            mvars = variables_nasa7(name)
+        elif model["type"] == "nasa9":
+            mvars = variables_nasa9(name)
+
+        for k, v in mvars.items():
+            variables[k] = v if v else variables[k]
+
     cw.writer(fstream, "const amrex::Real T2 = T*T;")
     cw.writer(fstream, "const amrex::Real T3 = T*T*T;")
     if variables["T4"]:
@@ -359,6 +364,10 @@ def generate_thermo_routine(
 
             for model in [x for x in models if x["interval"] == interval]:
                 species = model["species"]
+                if model["type"] == "nasa7":
+                    expression_generator = expression_map_nasa7(name)
+                elif model["type"] == "nasa9":
+                    expression_generator = expression_map_nasa9(name)
 
                 index = (
                     species_info.ordered_idx_map[species.name] - species_info.n_species

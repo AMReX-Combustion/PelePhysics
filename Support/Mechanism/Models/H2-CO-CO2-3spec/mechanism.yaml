@@ -1,19 +1,37 @@
 generator: ck2yaml
 input-files: [mechanism.inp, tran.dat]
 cantera-version: 3.0.0
-date: Fri, 03 Nov 2023 08:19:30 -0600
+date: Fri, 03 Nov 2023 12:17:12 -0600
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
 phases:
 - name: gas
   thermo: ideal-gas
-  elements: [C, O]
-  species: [CO, CO2]
+  elements: [H, C, O]
+  species: [H2, CO, CO2]
   transport: mixture-averaged
   state: {T: 300.0, P: 1 atm}
 
 species:
+- name: H2
+  composition: {H: 2}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1000.0, 5000.0]
+    data:
+    - [3.29812431, 8.24944174e-04, -8.14301529e-07, -9.47543433e-11, 4.13487224e-13,
+      -1012.52087, -3.29409409]
+    - [2.99142337, 7.00064411e-04, -5.63382869e-08, -9.23157818e-12, 1.58275179e-15,
+      -835.033997, -1.35511017]
+    note: '121286'
+  transport:
+    model: gas
+    geometry: linear
+    well-depth: 38.0
+    diameter: 2.92
+    polarizability: 0.79
+    rotational-relaxation: 280.0
 - name: CO
   composition: {C: 1, O: 1}
   thermo:
