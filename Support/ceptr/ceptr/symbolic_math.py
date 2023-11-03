@@ -84,33 +84,20 @@ class SymbolicMath:
             for j in range(n_species + 1)
         ]
 
-        # temporary symbols that contain temperature dependence
-
-        species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
-        midpoints = species_coeffs
-        self.midpointsList = []
-        for mid_temp, _ in list(midpoints.items()):
-            self.midpointsList.append(mid_temp)
-        self.midpointsList_sorted = sorted(self.midpointsList)
-
-        self.g_RT_smp_tmp = {}
-        self.h_RT_smp_tmp = {}
-
-        for mid_temp in self.midpointsList_sorted:
-            self.g_RT_smp_tmp[mid_temp] = {}
-            self.h_RT_smp_tmp[mid_temp] = {}
-            self.g_RT_smp_tmp[mid_temp]["m"] = [
-                sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
-            ]
-            self.g_RT_smp_tmp[mid_temp]["p"] = [
-                sme.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
-            ]
-            self.h_RT_smp_tmp[mid_temp]["m"] = [
-                sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
-            ]
-            self.h_RT_smp_tmp[mid_temp]["p"] = [
-                sme.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
-            ]
+        models = cth.analyze_thermodynamics(
+            mechanism, species_info.nonqssa_species_list
+        )
+        self.models_smp_tmp = [
+            {
+                "species": x["species"],
+                "interval": x["interval"],
+                "gibbs": [None] * len(x["coefficients"]),
+                "gibbs_qss": [None] * len(x["coefficients"]),
+                "speciesEnthalpy": [None] * len(x["coefficients"]),
+                "speciesEnthalpy_qss": [None] * len(x["coefficients"]),
+            }
+            for x in models
+        ]
 
         # mixture (useful for third body reactions)
         self.mixture_smp = 0.0
@@ -143,36 +130,20 @@ class SymbolicMath:
                 sme.symbols("h_RT_qss[" + str(i) + "]") for i in range(n_qssa_species)
             ]
 
-            # temporary symbols that contain temperature dependence
-            qss_species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 1)
-            midpoints = qss_species_coeffs
-            self.midpointsQSSList = []
-            for mid_temp, _ in list(midpoints.items()):
-                self.midpointsQSSList.append(mid_temp)
-            self.midpointsQSSList_sorted = sorted(self.midpointsQSSList)
-
-            self.g_RT_qss_smp_tmp = {}
-            self.h_RT_qss_smp_tmp = {}
-
-            for mid_temp in self.midpointsQSSList_sorted:
-                self.g_RT_qss_smp_tmp[mid_temp] = {}
-                self.h_RT_qss_smp_tmp[mid_temp] = {}
-                self.g_RT_qss_smp_tmp[mid_temp]["m"] = [
-                    sme.symbols("g_RT_qss[" + str(i) + "]")
-                    for i in range(n_qssa_species)
-                ]
-                self.g_RT_qss_smp_tmp[mid_temp]["p"] = [
-                    sme.symbols("g_RT_qss[" + str(i) + "]")
-                    for i in range(n_qssa_species)
-                ]
-                self.h_RT_qss_smp_tmp[mid_temp]["m"] = [
-                    sme.symbols("h_RT_qss[" + str(i) + "]")
-                    for i in range(n_qssa_species)
-                ]
-                self.h_RT_qss_smp_tmp[mid_temp]["p"] = [
-                    sme.symbols("h_RT_qss[" + str(i) + "]")
-                    for i in range(n_qssa_species)
-                ]
+            models = cth.analyze_thermodynamics(
+                mechanism, species_info.qssa_species_list
+            )
+            self.models_qss_smp_tmp = [
+                {
+                    "species": x["species"],
+                    "interval": x["interval"],
+                    "gibbs": [None] * len(x["coefficients"]),
+                    "gibbs_qss": [None] * len(x["coefficients"]),
+                    "speciesEnthalpy": [None] * len(x["coefficients"]),
+                    "speciesEnthalpy_qss": [None] * len(x["coefficients"]),
+                }
+                for x in models
+            ]
 
             self.kf_qss_smp_tmp = [
                 sme.symbols("kf_qss[" + str(i) + "]") for i in range(n_qssa_reactions)

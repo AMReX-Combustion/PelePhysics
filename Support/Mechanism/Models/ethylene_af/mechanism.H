@@ -508,7 +508,7 @@ cv_R(amrex::Real* species, const amrex::Real T)
                   2.66555672e-09 * T3 - 2.82120078e-13 * T4;
     // species 28: C2H5O
     species[28] = +1.46262349e+00 + 2.09503959e-02 * T - 9.39291750e-06 * T2 +
-                  1.56440627e-09 * T3 + 0.00000000e+00 * T4;
+                  1.56440627e-09 * T3;
   }
 }
 
@@ -696,7 +696,7 @@ cp_R(amrex::Real* species, const amrex::Real T)
                   2.66555672e-09 * T3 - 2.82120078e-13 * T4;
     // species 28: C2H5O
     species[28] = +2.46262349e+00 + 2.09503959e-02 * T - 9.39291750e-06 * T2 +
-                  1.56440627e-09 * T3 + 0.00000000e+00 * T4;
+                  1.56440627e-09 * T3;
   }
 }
 
@@ -1001,8 +1001,7 @@ gibbs(amrex::Real* species, const amrex::Real T)
     // species 28: C2H5O
     species[28] = -3.839326580000000e+03 * invT - 1.041126121000000e+01 -
                   2.462623490000000e+00 * logT - 1.047519795000000e-02 * T +
-                  1.565486250000000e-06 * T2 - 1.303671891666667e-10 * T3 -
-                  0.000000000000000e+00 * T4;
+                  1.565486250000000e-06 * T2 - 1.303671891666667e-10 * T3;
   }
 }
 
@@ -1307,8 +1306,7 @@ helmholtz(amrex::Real* species, const amrex::Real T)
     // species 28: C2H5O
     species[28] = -3.83932658e+03 * invT - 1.14112612e+01 -
                   2.46262349e+00 * logT - 1.04751979e-02 * T +
-                  1.56548625e-06 * T2 - 1.30367189e-10 * T3 -
-                  0.00000000e+00 * T4;
+                  1.56548625e-06 * T2 - 1.30367189e-10 * T3;
   }
 }
 
@@ -1554,8 +1552,7 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
                   8.33106990e+02 * invT;
     // species 28: C2H5O
     species[28] = +1.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
-                  3.91101567e-10 * T3 + 0.00000000e+00 * T4 -
-                  3.83932658e+03 * invT;
+                  3.91101567e-10 * T3 - 3.83932658e+03 * invT;
   }
 }
 
@@ -1801,8 +1798,7 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real T)
                   8.33106990e+02 * invT;
     // species 28: C2H5O
     species[28] = +2.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
-                  3.91101567e-10 * T3 + 0.00000000e+00 * T4 -
-                  3.83932658e+03 * invT;
+                  3.91101567e-10 * T3 - 3.83932658e+03 * invT;
   }
 }
 
@@ -2048,8 +2044,7 @@ speciesEntropy(amrex::Real* species, const amrex::Real T)
                   7.05300195e-14 * T4 + 1.26038737e+01;
     // species 28: C2H5O
     species[28] = +2.46262349e+00 * logT + 2.09503959e-02 * T -
-                  4.69645875e-06 * T2 + 5.21468757e-10 * T3 +
-                  0.00000000e+00 * T4 + 1.28738847e+01;
+                  4.69645875e-06 * T2 + 5.21468757e-10 * T3 + 1.28738847e+01;
   }
 }
 
@@ -2059,7 +2054,6 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
   const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -2236,8 +2230,7 @@ dcvpRdT(amrex::Real* species, const amrex::Real T)
     species[27] = +1.72400021e-02 - 1.95426424e-05 * T + 7.99667016e-09 * T2 -
                   1.12848031e-12 * T3;
     // species 28: C2H5O
-    species[28] = +2.09503959e-02 - 1.87858350e-05 * T + 4.69321881e-09 * T2 +
-                  0.00000000e+00 * T3;
+    species[28] = +2.09503959e-02 - 1.87858350e-05 * T + 4.69321881e-09 * T2;
   }
 }
 
@@ -2559,7 +2552,7 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
     // species 28: C2H5O
     result += y[28] *
               (+2.46262349e+00 + 2.09503959e-02 * T - 9.39291750e-06 * T2 +
-               1.56440627e-09 * T3 + 0.00000000e+00 * T4) *
+               1.56440627e-09 * T3) *
               0.0221921395441735;
   }
 
@@ -2883,7 +2876,7 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
     // species 28: C2H5O
     result += y[28] *
               (+1.46262349e+00 + 2.09503959e-02 * T - 9.39291750e-06 * T2 +
-               1.56440627e-09 * T3 + 0.00000000e+00 * T4) *
+               1.56440627e-09 * T3) *
               0.0221921395441735;
   }
 
@@ -3263,11 +3256,10 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
        6.66389180e-10 * T3 - 5.64240156e-14 * T4 + 8.33106990e+02 * invT) *
       0.0232315019165989;
     // species 28: C2H5O
-    result +=
-      y[28] *
-      (+2.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
-       3.91101567e-10 * T3 + 0.00000000e+00 * T4 - 3.83932658e+03 * invT) *
-      0.0221921395441735;
+    result += y[28] *
+              (+2.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
+               3.91101567e-10 * T3 - 3.83932658e+03 * invT) *
+              0.0221921395441735;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
@@ -3648,11 +3640,10 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
        6.66389180e-10 * T3 - 5.64240156e-14 * T4 + 8.33106990e+02 * invT) *
       0.0232315019165989;
     // species 28: C2H5O
-    result +=
-      y[28] *
-      (+1.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
-       3.91101567e-10 * T3 + 0.00000000e+00 * T4 - 3.83932658e+03 * invT) *
-      0.0221921395441735;
+    result += y[28] *
+              (+1.46262349e+00 + 1.04751979e-02 * T - 3.13097250e-06 * T2 +
+               3.91101567e-10 * T3 - 3.83932658e+03 * invT) *
+              0.0221921395441735;
   }
 
   const amrex::Real RT = 8.31446261815324e+07 * T; // R*T

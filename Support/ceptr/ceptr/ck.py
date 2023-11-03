@@ -184,17 +184,14 @@ def ckcpbs(fstream, mechanism, species_info):
 
     cw.writer(fstream)
 
-    species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
     cth.generate_thermo_routine(
         fstream,
         species_info,
         "cp_R",
-        cth.cp_nasa,
-        species_coeffs,
+        models,
         0,
-        0,
-        False,
         None,
         True,
     )
@@ -262,17 +259,14 @@ def ckcvbs(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0; ")
 
-    species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
     cth.generate_thermo_routine(
         fstream,
         species_info,
         "cv_R",
-        cth.cv_nasa,
-        species_coeffs,
+        models,
         0,
-        0,
-        False,
         None,
         True,
     )
@@ -346,16 +340,13 @@ def ckhbms(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0;")
 
-    species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cth.generate_thermo_routine(
         fstream,
         species_info,
         "speciesEnthalpy",
-        cth.enthalpy_nasa,
-        species_coeffs,
+        models,
         0,
-        1,
-        False,
         None,
         True,
     )
@@ -427,16 +418,13 @@ def ckubms(fstream, mechanism, species_info):
 
     cw.writer(fstream, "amrex::Real result = 0.0;")
 
-    species_coeffs = cth.analyze_thermodynamics(mechanism, species_info, 0)
+    models = cth.analyze_thermodynamics(mechanism, species_info.nonqssa_species_list)
     cth.generate_thermo_routine(
         fstream,
         species_info,
         "speciesInternalEnergy",
-        cth.internal_energy,
-        species_coeffs,
+        models,
         0,
-        1,
-        False,
         None,
         True,
     )
