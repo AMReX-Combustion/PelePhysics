@@ -1,7 +1,7 @@
 generator: ck2yaml
 input-files: [mechanism.inp, tran.dat]
 cantera-version: 3.0.0
-date: Thu, 02 Nov 2023 12:03:25 -0600
+date: Fri, 03 Nov 2023 08:19:30 -0600
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
