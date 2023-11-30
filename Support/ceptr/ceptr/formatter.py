@@ -1,5 +1,6 @@
 """Helper functions for CPP formatting."""
 
+
 def format_species(species):
     """Remove characters not allowed in preprocessor defines."""
     s = species.strip()
