@@ -215,9 +215,9 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp * syms.refCinv_smp
             else:
-                conversion = "*".join(
-                    [f"pow(std::max(refCinv, {sc_cutoff(dim)}), {dim:f})"]
-                )
+                conversion = "*".join([
+                    f"pow(std::max(refCinv, {sc_cutoff(dim)}), {dim:f})"
+                ])
                 if record_symbolic_operations:
                     conversion_smp *= syms.refCinv_smp**dim
     else:
@@ -229,9 +229,9 @@ def fkc_conv_inv(self, mechanism, reaction, syms=None):
             if dim.is_integer():
                 conversion = "*".join(["refC"] * int(dim))
             else:
-                conversion = "*".join(
-                    [f"pow(std::max(refC, {sc_cutoff(abs(dim))}), {abs(dim):f})"]
-                )
+                conversion = "*".join([
+                    f"pow(std::max(refC, {sc_cutoff(abs(dim))}), {abs(dim):f})"
+                ])
             if record_symbolic_operations:
                 conversion_smp *= syms.refC_smp**dim
 
@@ -263,9 +263,9 @@ def kc_conv(mechanism, reaction):
                 if dim.is_integer():
                     conversion = "*".join(["refC"] * int(dim))
                 else:
-                    conversion = "*".join(
-                        [f"pow(std::max(refC, {sc_cutoff(dim)}),{dim:f})"]
-                    )
+                    conversion = "*".join([
+                        f"pow(std::max(refC, {sc_cutoff(dim)}),{dim:f})"
+                    ])
     else:
         if dim == -1.0:
             conversion = "*".join(["refCinv"])
@@ -273,9 +273,9 @@ def kc_conv(mechanism, reaction):
             if dim.is_integer():
                 conversion = "*".join(["refCinv"] * int(dim))
             else:
-                conversion = "*".join(
-                    [f"pow(std::max(refCinv, {sc_cutoff(abs(dim))}),{abs(dim):f})"]
-                )
+                conversion = "*".join([
+                    f"pow(std::max(refCinv, {sc_cutoff(abs(dim))}),{abs(dim):f})"
+                ])
 
     return conversion
 

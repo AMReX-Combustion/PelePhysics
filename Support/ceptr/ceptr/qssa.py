@@ -72,9 +72,9 @@ def process_qss(fname, nqssa, visualize, method):
         raise ValueError("Failure to generate QSSA mechanism.")
 
     qssa.update_user_header({"description": f"QSSA of {mechanism.name}"})
-    qssa.update_user_data(
-        {"qssa_species": qssa_species, "n_qssa_species": len(qssa_species)}
-    )
+    qssa.update_user_data({
+        "qssa_species": qssa_species, "n_qssa_species": len(qssa_species)
+    })
     forward_to_remove_idx = []
     if forward_to_remove:
         for fr in forward_to_remove:
