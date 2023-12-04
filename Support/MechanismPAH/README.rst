@@ -12,7 +12,7 @@ You need to have the NumPy, Cantera, and MatPlotLib python modules. In order to 
 
 where `origmech.inp`, `origthermo.dat`, and `origtrans.dat` are the initial mechanism, thermodynamic, and transport files to have the PAH module amended to.
 
-Disclamer
-~~~~~~~~~
+Disclaimer
+~~~~~~~~~~
 
 The resulting IDT should be studied to determine if the new mechanism is now compromised with the addition of the PAH module. This is left up to the user's discretion. This has only been tested on a few mechanisms and might have bugs.

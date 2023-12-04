@@ -73,7 +73,7 @@ def checkyaml(mechfile, newthermo, newtransport,permissive):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--plotH", help="Flag to plot enthalpy values", type=bool, default=False)
-parser.add_argument("--permissive", help="Flag to allow some recoverable parsin errors", type=bool, default=False)
+parser.add_argument("--permissive", help="Flag to allow some recoverable parsing errors", type=bool, default=False)
 parser.add_argument("--mech", help="Mechanism input file", type=str, required=True)
 parser.add_argument("--thermo", help="Thermodynamic input file", type=str, required=True)
 parser.add_argument("--transport", help="Transport input file", type=str, required=True)
