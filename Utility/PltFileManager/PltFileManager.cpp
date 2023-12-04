@@ -191,7 +191,8 @@ PltFileManager::fillPatchFromPlt(
   int pltComp,
   int dataComp,
   int nComp,
-  MultiFab& a_mf)
+  MultiFab& a_mf,
+  int interp_type)
 {
   // If we haven't yet, read the plot data on all levels
   if (!m_dataLoaded) {
@@ -211,6 +212,14 @@ PltFileManager::fillPatchFromPlt(
         dummyBCRec[n].setHi(idim, BCType::foextrap);
       }
     }
+  }
+
+  // Interpolator (need EB version ?)
+  InterpBase* mapper;
+  if (interp_type == 1) {
+    mapper = &mf_cell_cons_interp;
+  } else {
+    mapper = &mf_pc_interp;
   }
 
   // There might be a number of problems related to proper nesting of the
@@ -236,9 +245,6 @@ PltFileManager::fillPatchFromPlt(
 
       // Our level 0 is finer than the PltFile one.
     } else if (lev0rr.max() > 1) {
-
-      // Interpolator (need EB version ?)
-      InterpBase* mapper = &mf_cell_cons_interp;
 
       // Start by filling all the data with a coarseInterp. We've checked that
       // the geom RealBoxes match already, so PltFile level 0 is good to interp.
@@ -294,9 +300,6 @@ PltFileManager::fillPatchFromPlt(
   } else {
     // Check the refRatio between PltFile level 0 and the current level
     IntVect lev0rr = a_level_geom.Domain().size() / m_geoms[0].Domain().size();
-
-    // Interpolator (need EB version ?)
-    InterpBase* mapper = &mf_cell_cons_interp;
 
     // Start by filling the entire level with level 0 from PltFile, to ensure we
     // have some data everywhere

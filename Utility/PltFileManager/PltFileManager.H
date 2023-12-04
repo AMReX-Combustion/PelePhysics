@@ -26,13 +26,15 @@ public:
     int pltComp,
     int dataComp,
     int ncomp,
-    amrex::MultiFab& a_mf);
+    amrex::MultiFab& a_mf,
+    int interp_type = 1);
 
   amrex::Vector<std::string> getVariableList() { return m_vars; }
   int getNlev() const { return m_nlevels; }
   amrex::Real getTime() const { return m_time; }
   const amrex::BoxArray& getGrid(int a_lev) { return m_grids[a_lev]; }
   const amrex::Geometry& getGeom(int a_lev) { return m_geoms[a_lev]; }
+  int getRefRatio(int a_lev) { return m_refRatio[a_lev]; }
 
 protected:
   // Plot metadata
