@@ -14,7 +14,7 @@ In addition to routines for evaluating chemical reactions, transport properties,
 * Output of runtime ``Diagnostics``
 
 This section provides relevant notes on using these utilities across the Pele family of codes. There may be additional subtleties based on the code-specific implementation of these capabilities, in which case it will be necessary to refer to the documentation of the code of interest.
-  
+
 Premixed Flame Initialization
 =============================
 
@@ -26,7 +26,7 @@ This code has two runtime parameters that may be set in the input file: ::
   pmf.do_cellAverage = 1
 
 The first parameter specifies the path to the PMF data file. This file contains a two-line header followed by whitespace-delimited data columns in the order: position (cm), temperature (K), velocity (cm/s), density(g/cm3), species mole fractions. Sample files are provided in the relevant PeleLMeX (and PeleC) examples, and the procedure to generate these files with a provided script is described below. The second parameter specifies whether the PMF code does a finite volume-style integral over the queried cell (``pmf.do_cellAverage = 1``) or whether the code finds an interpolated value at the midpoint of the queried cell (``pmf.do_cellAverage = 0``)
-  
+
 Generating a PMF file
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -48,7 +48,7 @@ An additional script is provided to allow plotting of the PMF solutions. This sc
 Turbulent Inflows
 =================
 
-Placeholder. PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data. 
+Placeholder. PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data.
 
 Generating a turbulence file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,3 +64,50 @@ Diagnostics
 ===========
 
 Placeholder. Once the porting of diagnostics from PeleLMeX to PelePhysics/PeleC is complete, documentation can be added here.
+
+Filter
+======
+
+A utility for filtering data stored in AMReX data structures. When initializing the ``Filter`` class, the filter type
+and filter width to grid ratio are specified. A variety of filter types are supported:
+
+* ``type = 0``: no filtering
+* ``type = 1``: standard box filter
+* ``type = 2``: standard Gaussian filter
+
+We have also implemented a set of filters defined in Sagaut & Grohens (1999) Int. J. Num. Meth. Fluids:
+
+* ``type = 3``: 3 point box filter approximation (Eq. 26)
+* ``type = 4``: 5 point box filter approximation (Eq. 27)
+* ``type = 5``: 3 point box filter optimized approximation (Table 1)
+* ``type = 6``: 5 point box filter optimized approximation (Table 1)
+* ``type = 7``: 3 point Gaussian filter approximation
+* ``type = 8``: 5 point Gaussian filter approximation (Eq. 29)
+* ``type = 9``: 3 point Gaussian filter optimized approximation (Table 1)
+* ``type = 10``: 5 point Gaussian filter optimized approximation (Table 1)
+
+.. warning:: This utility is not aware of EB or domain boundaries. If the filter stencil extends across these boundaries,
+             the boundary cells are treated as if they are fluid cells.
+             It is up to the user to ensure an adequate number of ghost cells in the arrays are appropriately populated,
+             using the ``get_filter_ngrow()`` member function of the class to determine the required number of ghost cells.
+
+
+Developing
+~~~~~~~~~~
+
+The weights for these filters are set in ``Filter.cpp``. To add a
+filter type, one needs to add an enum to the ``filter_types`` and
+define a corresponding ``set_NAME_weights`` function to be called at
+initialization.
+
+The application of a filter can be done on a Fab or MultiFab. The loop nesting
+ordering was chosen to be performant on existing HPC architectures and
+discussed in PeleC milestone reports. An example call to the filtering operation is
+
+::
+
+   les_filter = Filter(les_filter_type, les_filter_fgr);
+   ...
+   les_filter.apply_filter(bxtmp, flux[i], filtered_flux[i], Density, NUM_STATE);
+
+The user must ensure that the correct number of grow cells is present in the Fab or MultiFab.
