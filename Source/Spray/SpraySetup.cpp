@@ -12,6 +12,11 @@ SprayComps SprayParticleContainer::m_sprayIndx;
 Real SprayParticleContainer::spray_cfl = 0.5;
 bool SprayParticleContainer::write_ascii_files = false;
 bool SprayParticleContainer::plot_spray_src = false;
+Real SprayParticleContainer::m_maxNumPPP = 100.;
+Real SprayParticleContainer::m_breakupPPPFact = 0.5;
+Real SprayParticleContainer::m_khrtB0 = 0.61;
+Real SprayParticleContainer::m_khrtB1 = 7.;
+Real SprayParticleContainer::m_khrtC3 = 1.;
 std::string SprayParticleContainer::spray_init_file;
 
 void
@@ -131,13 +136,12 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   //
   // Set the number of particles per parcel
   //
-  pp.query("max_parcel_size", max_num_ppp);
   pp.query("use_splash_model", splash_model);
   std::string breakup_model_str = "None";
   pp.query("use_breakup_model", breakup_model_str);
   if (breakup_model_str == "TAB") {
     breakup_model = 1;
-    pp.query("max_parcel_size", max_num_ppp);
+    pp.query("max_parcel_size", m_maxNumPPP);
   } else if (breakup_model_str == "KHRT") {
     breakup_model = 2;
     pp.query("KHRT_B0", m_khrtB0);
@@ -150,8 +154,8 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
           "'None'");
   }
   if (splash_model || (breakup_model > 0)) {
-    pp.query("breakup_parcel_factor", breakup_ppp_fact);
-    if (breakup_ppp_fact > 1. || breakup_ppp_fact < 0.) {
+    pp.query("breakup_parcel_factor", m_breakupPPPFact);
+    if (m_breakupPPPFact > 1. || m_breakupPPPFact < 0.) {
       Abort("'breakup_parcel_factor' must be between 0 and 1");
     }
     bool wrong_data = false;
@@ -167,18 +171,18 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     }
     if (splash_model) {
       // TODO: Have this retrieved from proper boundary data
-      pp.get("wall_temp", sprayData.wall_T);
+      pp.get("wall_temp", m_sprayData->wall_T);
       Real theta_c_deg = -1.;
       pp.get("contact_angle", theta_c_deg);
       if (theta_c_deg < 0. || theta_c_deg > 180.) {
         Abort("'contact_angle' must be between 0 and 180");
       }
-      sprayData.theta_c = theta_c_deg * M_PI / 180.;
+      m_sprayData->theta_c = theta_c_deg * M_PI / 180.;
     }
     // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", sprayData.sigma);
-    sprayData.do_splash = splash_model;
-    sprayData.do_breakup = breakup_model;
+    pp.get("fuel_sigma", m_sprayData->sigma);
+    m_sprayData->do_splash = splash_model;
+    m_sprayData->do_breakup = breakup_model;
   }
 
   // Must use same reference temperature for all fuels
@@ -203,7 +207,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   pp.query("min_eb_vfrac", m_sprayData->min_eb_vfrac);
 #endif
 
-  m_sprayData->num_ppp = parcel_size;
   m_sprayData->ref_T = spray_ref_T;
 
   // List of known derived spray quantities
@@ -244,7 +247,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     }
 #endif
     Print() << std::endl;
-    Print() << "Number of particles per parcel " << parcel_size << std::endl;
   }
   Gpu::streamSynchronize();
   ParallelDescriptor::Barrier();

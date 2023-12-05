@@ -39,7 +39,7 @@ SprayParticleContainer::CreateSBDroplets(
 
       // Splashing: ms, splash amount
       // TAB Breakup: TAB y value
-      // KH-RT Breakup: Parent parcel number density
+      // KH-RT Breakup: Unused
       Real phi2 = rfh.phi2[n];
 
       // Splashing: film thickness / droplet diameter

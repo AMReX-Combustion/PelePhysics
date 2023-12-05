@@ -107,15 +107,15 @@ SprayParticleContainer::sprayInjection(
       time, phi_radial, cur_rad, umag, theta_spread, phi_swirl, dia_part,
       T_part, Y_part);
     if (make_new_part && dia_part > min_dia && umag > 0.) {
-      amrex::RealVect part_loc, part_vel;
+      amrex::RealVect part_loc, vel_part;
       spray_jet->transform_loc_vel(
         theta_spread, phi_radial, cur_rad, umag, phi_swirl, vel_part, part_loc);
       ParticleType p;
       p.id() = ParticleType::NextID();
       p.cpu() = amrex::ParallelDescriptor::MyProc();
-      AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = part_vel[0];
-                   , p.rdata(SprayComps::pstateVel + 1) = part_vel[1];
-                   , p.rdata(SprayComps::pstateVel + 2) = part_vel[2];);
+      AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
+                   , p.rdata(SprayComps::pstateVel + 1) = vel_part[1];
+                   , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
       p.rdata(SprayComps::pstateT) = T_part;
       // Never add particle with less than minimum mass
       p.rdata(SprayComps::pstateDia) = dia_part;
@@ -203,7 +203,8 @@ SprayParticleContainer::uniformSprayInit(
   const amrex::Real T_part,
   const amrex::Real* Y_part,
   const int level,
-  const int num_redist)
+  const int num_redist,
+  const amrex::Real num_ppp)
 {
   const int MyProc = amrex::ParallelDescriptor::MyProc();
   const int NProcs = amrex::ParallelDescriptor::NProcs();

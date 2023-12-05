@@ -27,52 +27,6 @@ fillFilmFab(
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-bool
-interpolateFilm(
-  const amrex::IntVect& ijkc,
-  const amrex::IntVect& bflags,
-  amrex::RealVect& film_normal,
-#ifdef AMREX_USE_EB
-  bool eb_in_box,
-  amrex::Array4<const amrex::EBCellFlag> const& flags,
-  amrex::Array4<const amrex::Real> const& bnorm,
-#endif
-  amrex::IntVect* indx_array,
-  amrex::Real* weights)
-{
-  bool do_fe_interp = false;
-#ifdef AMREX_USE_EB
-  if (eb_in_box) {
-    if (flags(ijkc).isSingleValued()) {
-      do_fe_interp = true;
-      film_normal = {AMREX_D_DECL(bnorm(ijkc, 0), bnorm(ijkc, 1), bnorm(ijkc, 2))};
-    }
-  } else
-#endif
-  {
-    amrex::Real magsum = 0.;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      if (bflags[dir] < 0) {
-        film_normal[dir] = 1.;
-        magsum += 1.;
-      } else if (bflags[dir] > 0) {
-        film_normal[dir] = -1.;
-        magsum += 1.;
-      }
-    }
-    film_normal /= std::sqrt(magsum);
-  }
-  // TODO: Consider providing more indices in case in a small vol cell
-  for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-    indx_array[aindx] = ijkc;
-    weights[aindx] = 0.;
-  }
-  weights[0] = 1.;
-  return do_fe_interp;
-}
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
 void
 calculateFilmSource(
   const amrex::Real flow_dt,
@@ -102,12 +56,13 @@ calculateFilmSource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film; // Liquid mass fractions
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat = {{0.0}};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor = {{0.0}};
   amrex::Real T_film = p.rdata(SprayComps::pstateT);
   amrex::Real rho_film = 0.;
   amrex::Real Tcrit = 0.;
   amrex::Real cp_film = 0.;
   amrex::Real lambda_film = 0.;
+  amrex::Real mw_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     amrex::Real minT = amrex::min(T_film, cBoilT[spf]);
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
@@ -115,7 +70,9 @@ calculateFilmSource(
     cp_film += Y_film[spf] * fdat.cp[spf];
     lambda_film += Y_film[spf] * fdat.lambdaL(minT, spf);
     Tcrit += Y_film[spf] * fdat.critT[spf];
+    mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];
   }
+  mw_film = 1. / mw_film;
   rho_film = 1. / rho_film;
   T_film = amrex::min(0.999 * Tcrit, T_film);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
@@ -140,11 +97,11 @@ calculateFilmSource(
   amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
   amrex::Real mw_skin = 0.; // Average molar mass of skin phase
   amrex::Real B_M = 0.;     // Mass Spalding number
-  amrex::Real sumXVap = 0.; // Sum of Y_L Psat_f / mw_f
+  amrex::Real sumXVap = 0.; // Sum of X_v
   calcVaporState(
-    fdat, gpv, rule, T_film, C_eps, Y_film.data(), h_film.data(), cp_n.data(),
-    cBoilT, Y_skin.data(), Psat.data(), L_fuel.data(), B_M, sumXVap, cp_skin,
-    mw_skin);
+    fdat, gpv, rule, T_film, C_eps, mw_film, Y_film.data(), h_film.data(),
+    cp_n.data(), cBoilT, Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M,
+    sumXVap, cp_skin, mw_skin);
   amrex::Real lambda_skin = 0.;
   amrex::Real mu_skin = 0.;
   amrex::Real xi_skin = 0.;
@@ -185,8 +142,7 @@ calculateFilmSource(
       Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SPU.rhod_conv;
       if (X_vapor[spf] > 0.) {
         // Normalize mass diffusivity by fuel vapor molar fraction
-        amrex::Real cur_rhoD =
-          Ddiag[fspec] * Y_film[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
+        amrex::Real cur_rhoD = X_vapor[spf] * Ddiag[fspec] / sumXVap;
         mi_dot[spf] = -amrex::max(h_mass * std::pow(cur_rhoD, 2. / 3.), 0.);
         m_dot += mi_dot[spf];
         sumL += mi_dot[spf] * L_fuel[spf];

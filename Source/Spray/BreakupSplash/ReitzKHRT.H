@@ -102,29 +102,6 @@ updateBreakupKHRT(
       num_dens *= std::pow(rad_part / lam_RT, 3);
       rad_part = lam_RT;
       breakupRT = true;
-      if (num_dens > 1.) {
-        N_SB[pid] = splash_breakup::breakup_RT;
-        amrex::Real Utan = A1 * omega_RT * lam_RT;
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-          rf.loc[AMREX_SPACEDIM * pid + dir] = p.pos(dir);
-          rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
-          rf.norm[AMREX_SPACEDIM * pid + dir] = vel_part[dir] / vel_mag;
-        }
-        rf.numDens[pid] = num_dens;
-        rf.ref_dia[pid] = 2. * rad_part;
-        rf.phi1[pid] = Utan;
-        rf.phi2[pid] = N0;
-        rf.phi3[pid] = 0.; // Unused
-        rf.T0[pid] = T_part;
-#if SPRAY_FUEL_NUM > 1
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          rf.Y0[SPRAY_FUEL_NUM * pid + spf] =
-            p.rdata(SprayComps::pstateY + spf);
-        }
-#endif
-        p.id() = -1;
-        return;
-      }
     }
   }
   if (!breakupRT) {

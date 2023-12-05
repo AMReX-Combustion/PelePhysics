@@ -63,6 +63,7 @@ public:
   inline const amrex::Real& T() const { return m_jetT; }
   inline const amrex::Real& start_time() const { return m_startTime; }
   inline const amrex::Real& end_time() const { return m_endTime; }
+  inline const amrex::Real& num_ppp() const { return m_numPPP; }
   inline const std::string& jet_name() const { return m_jetName; }
   inline int Proc() const { return m_proc; }
 
@@ -283,6 +284,7 @@ protected:
   amrex::Real m_endTime = 1.E8;
   bool m_hollowSpray = false;
   amrex::Real m_hollowSpread = 0.;
+  amrex::Real m_numPPP = -1.;
   int m_proc = 0;
   bool m_useROI = false;
   amrex::Vector<amrex::Real> inject_time;

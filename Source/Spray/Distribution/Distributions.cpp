@@ -103,8 +103,7 @@ Weibull::init(const amrex::Real& mean, const amrex::Real& k)
 amrex::Real
 Weibull::get_dia()
 {
-  amrex::Real fact =
-    -std::log(0.5 * (1. - std::erf(amrex::Random() / std::sqrt(2.))));
+  amrex::Real fact = -std::log(1. - amrex::Random());
   return m_mean * std::pow(fact, 1. / m_k);
 }
 

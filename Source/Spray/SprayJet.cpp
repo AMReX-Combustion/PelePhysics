@@ -56,6 +56,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
       amrex::Abort(ppspray + ".Y must sum to 1");
     }
   }
+  ps.query("inject_ppp", m_numPPP);
   // If a rate shape profile is generated at
   // https://www.cmt.upv.es/#/ecn/download/InjectionRateGenerator/InjectionRateGenerator,
   // it can be provided here for use

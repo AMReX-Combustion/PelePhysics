@@ -182,6 +182,7 @@ impose_wall(
   bool do_splash,
   int pid,
   SprayParticleContainer::ParticleType& p,
+  const SprayData& fdat,
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
   const amrex::RealVect& phi,
@@ -193,24 +194,20 @@ impose_wall(
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
-  amrex::Array4<amrex::Real const> const& vfrac,
-  const amrex::Real min_eb_vfrac,
-  const amrex::IntVect ijkc_prev,
 #endif
-  const amrex::IntVect ijkc)
+  const amrex::IntVect& ijkc_prev,
+  splash_breakup* N_SB,
+  const SBPtrs& rf,
+  const amrex::Real film_h)
 {
   amrex::Real par_dot = 2.;
   amrex::RealVect normal;
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
-  amrex::RealVect normphi;
-  amrex::RealVect normpos;
-  // Normalize pos
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    normpos[dir] = (p.pos(dir) - plo[dir]) / dx[dir];
-    normphi[dir] = (phi[dir] - plo[dir]) / dx[dir];
-  }
+  // Normalize positions
+  amrex::RealVect normpos = (p.pos() - plo) / dx;
+  amrex::IntVect ijkc = normpos.floor();
   // Check if particle is behind a wall
   bool do_refl = check_wall(
     normpos, bflags, dx, ijkc,
@@ -218,6 +215,8 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm,
 #endif
     par_dot, normal);
+  amrex::IntVect refl_prev = ijkc;
+  bool do_deposit = false;
   if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     if (do_splash) {

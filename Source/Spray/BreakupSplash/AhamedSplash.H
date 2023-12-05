@@ -207,8 +207,7 @@ droplet_splashing(
   const amrex::RealVect& plo,
   const SprayData& fdat,
   const amrex::Real p_gas,
-  amrex::RealVect& normpos,
-  amrex::RealVect& vel_part,
+  const amrex::RealVect& vel_part,
   const amrex::Real par_dot,
   const amrex::RealVect& normal,
   const amrex::Real* cBoilT,
@@ -259,19 +258,20 @@ droplet_splashing(
   amrex::Real ms = 0.;
   // Ratio of mass that deposits into wall film
   amrex::Real dm = 0.;
+  amrex::RealVect impact_loc = p.pos() - par_dot * vel_part / U0norm;
   splash_type splash_flag =
     splash_criteria(Kv, Tstar, alpha, Kcrit, del_film, N_SB[pid], ms, dm);
   if (splash_flag == splash_type::rebound) {
     amrex::Real rbound = 0.823 * std::exp(-1.9835E-3 * std::pow(Kv, 1.6));
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      normpos[dir] -= (1. + rbound) * par_dot * vel_part[dir] / U0norm;
-      vel_part[dir] -= U0norm * (1. + rbound) * normal[dir];
+      p.pos(dir) -= (1. + rbound) * par_dot * normal[dir];
+      p.rdata(SprayComps::pstateVel + dir) -=
+        U0norm * (1. + rbound) * normal[dir];
     }
   } else if (ms > 0.) {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      // Save unnormalized location where droplet hit wall
-      rf.loc[AMREX_SPACEDIM * pid + dir] =
-        (normpos[dir] - par_dot * vel_part[dir] / U0norm) * dx[dir] + plo[dir];
+      // Save location where droplet hit wall
+      rf.loc[AMREX_SPACEDIM * pid + dir] = impact_loc[dir];
       rf.norm[AMREX_SPACEDIM * pid + dir] = normal[dir];
       rf.vel[AMREX_SPACEDIM * pid + dir] = vel_part[dir];
     }
@@ -298,9 +298,9 @@ droplet_splashing(
       // pi) is the integral of cos(theta/3) from -pi to pi
       amrex::Real Ut_splash = 1.5 * std::sqrt(3.) * U0tan / M_PI;
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        normpos[dir] -=
-          (1. + new_dia / dx[dir]) * par_dot * vel_part[dir] / U0norm;
-        vel_part[dir] = Ut_splash * tanBeta[dir] + Un_splash * normal[dir];
+        p.pos(dir) = impact_loc[dir];
+        p.rdata(SprayComps::pstateVel + dir) =
+          Ut_splash * tanBeta[dir] + Un_splash * normal[dir];
       }
       p.rdata(SprayComps::pstateDia) = new_dia;
       p.rdata(SprayComps::pstateBM1) = 0.;
@@ -331,8 +331,10 @@ droplet_splashing(
     p.rdata(SprayComps::pstateFilmHght) = film_hght;
     p.rdata(SprayComps::pstateN0) = 1.;
     p.rdata(SprayComps::pstateNumDens) = 1.;
-    normpos -= (1. + film_hght / dx[0]) * par_dot * vel_part / U0norm;
-    vel_part = amrex::RealVect::TheZeroVector();
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      p.pos(dir) = impact_loc[dir];
+      p.rdata(SprayComps::pstateVel + dir) = 0.;
+    }
   }
 }
 

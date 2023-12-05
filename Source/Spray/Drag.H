@@ -172,8 +172,7 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
-    cBoilT; // Boiling temperature at current pressure
+  const amrex::Real num_ppp = p.rdata(SprayComps::pstateNumDens);
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));
@@ -199,6 +198,7 @@ calculateSpraySource(
   int nsub = 1;
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
+  amrex::Real Reyn;
   amrex::RealVect part_vel_src;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
@@ -231,8 +231,8 @@ calculateSpraySource(
     if (fdat.mass_trans) {
       calcVaporState(
         fdat, gpv, rule, T_part, C_eps, mw_part, Y_part.data(), h_part.data(),
-        cp_n.data(), cBoilT.data(), Y_skin.data(), X_vapor.data(),
-        L_fuel.data(), B_M, sumXVap, cp_skin, mw_skin);
+        cp_n.data(), cBoilT, Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M,
+        sumXVap, cp_skin, mw_skin);
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
