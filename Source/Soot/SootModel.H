@@ -153,7 +153,7 @@ public:
 
   // Maximum allowable concentration for adjusting time step
   amrex::Real m_Xcutoff = 1.E-12;
-  // Temperature cutoff, any temparatures below this will not be solved
+  // Temperature cutoff, any temperatures below this will not be solved
   amrex::Real m_Tcutoff = 273.;
   // Maximum possible subcycles
   int m_maxSubcycles = 20;

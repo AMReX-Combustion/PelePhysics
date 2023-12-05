@@ -6,7 +6,7 @@
 // (1987) and the ETAB model by Tanner (1997)
 // This function subcycles based on a dt_breakup from large We
 // Continues looping until dt is reached in case multiple breakups occur within
-// a timestep Returns the total tangential velocity from all breakups occuring
+// a timestep Returns the total tangential velocity from all breakups occurring
 // over dt
 
 AMREX_GPU_DEVICE
@@ -31,7 +31,7 @@ updateBreakupTAB(
   const amrex::Real k2 = 2. / 9.;
   SprayUnits SPU;
 
-  // Retreive particle data
+  // Retrieve particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));

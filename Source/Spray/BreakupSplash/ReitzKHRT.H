@@ -31,7 +31,7 @@ updateBreakupKHRT(
   // RT model constants
   const amrex::Real A1 = 0.188;
   SprayUnits SPU;
-  // Retreive particle data
+  // Retrieve particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
     p.rdata(SprayComps::pstateVel + 2)));

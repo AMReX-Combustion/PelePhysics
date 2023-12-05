@@ -49,7 +49,7 @@ SprayParticleContainer::SprayParticleIO(
   // current status of each jet in a checkpoint to ensure injection isn't
   // interrupted during restart
   // File line 0: Number of jets.
-  // Each line after lists the jet name then the oustanding mass and injection
+  // Each line after lists the jet name then the outstanding mass and injection
   // time, then the minimum injection parcel
   if (is_checkpoint && !m_sprayJets.empty()) {
     int numjets = static_cast<int>(m_sprayJets.size());
