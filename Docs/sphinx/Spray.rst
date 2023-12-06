@@ -316,7 +316,7 @@ Spray Flags and Inputs
     particles.SP_lambda = 7.243 1.223 4.223E-8 8.224E-9
     particles.SP_mu = 7.243 1.223 4.223E-8 8.224E-9
 
-  where the numbers respresent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+  where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
 
   .. math::
      \rho_L \,, \lambda_L = a + b T + c T^2 + d T^3
@@ -429,7 +429,7 @@ Care must be taken to ensure the amount of mass injected during a time step matc
 
   * Otherwise, :math:`m_{\rm{inj}}` mass is injected and convected over time :math:`t_{\rm{inj}}` and :math:`m_{\rm{acc}}` and :math:`t_{\rm{acc}}` are reset.
 
-4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the liklihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
+4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
 Spray Validation
 ================
