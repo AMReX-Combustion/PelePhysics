@@ -308,7 +308,7 @@ Spray Flags and Inputs
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
 
-  * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation; see 
+  * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation; see
 
 * Temperature based fits for liquid density, thermal conductivity, and dynamic viscosity can be used; these can be specified as ::
 
