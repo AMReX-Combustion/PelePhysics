@@ -1,6 +1,10 @@
 .. highlight:: rst
 
-.. _SprayInputs:
+.. _Spray:
+
+*****
+Spray
+*****
 
 Spray Flags and Inputs
 ======================
@@ -102,9 +106,9 @@ Spray Flags and Inputs
   If only a single value is provided, :math:`a` is assigned to that value and the other coefficients are set to zero, effectively using a constant value for the parameters.
 
 Spray Injection
-----------------------
+---------------
 
-Templates to facilitate and simplify spray injection are available in `PeleMP`. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` files. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles()`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
+Templates to facilitate and simplify spray injection are available. To use them, changes must be made to the input and ``SprayParticlesInitInsert.cpp`` files. Inputs related to injection use the ``spray.`` parser name. To create a jet in the domain, modify the ``InitSprayParticles()`` function in ``SprayParticleInitInsert.cpp``. Here is an example: ::
 
   void
   SprayParticleContainer::InitSprayParticles(
@@ -177,7 +181,7 @@ No two jets may have the same name. If an injector is constructed using only a n
    +--------------------+--------------------------------+--------------------+
 
 
-.. figure:: /images/inject_transform.png
+.. figure:: /Visualization/inject_transform.png
    :align: center
    :figwidth: 60%
 
@@ -206,3 +210,59 @@ Care must be taken to ensure the amount of mass injected during a time step matc
   * Otherwise, :math:`m_{\rm{inj}}` mass is injected and convected over time :math:`t_{\rm{inj}}` and :math:`m_{\rm{acc}}` and :math:`t_{\rm{acc}}` are reset.
 
 4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the liklihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
+
+Spray Validation
+================
+
+Single Droplet Tests
+--------------------
+
+Single droplet tests are performed and compared with computational or experimental results published in literature. These tests are setup in ``PeleProduction/PeleMPruns/single_drop_test``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
+
+  case = TestCaseName()
+
+then do ``python Validate.py``.
+The following table details the parameters of each test:
+
+.. table::
+
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   |Test Case Name | :math:`T_g` [K] |:math:`p_g` [bar]|:math:`T_d` [K]  |:math:`d_d` [um] | :math:`\Delta u` [m/s]|Ref              |
+   |               |                 |                 |                 |                 |                       |                 |
+   +===============+=================+=================+=================+=================+=======================+=================+
+   |``Tonini_4_33``|1000             |1                |300              |200              |6.786                  |[#ton]_          |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   |``Abramzon``   |1500             |10               |300              |100              |15                     |[#abram]_        |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   |``Daif``       |348              |1                |294              |1334             |3.10                   |[#daif]_         |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   |``RungeHep``   |273              |1                |272              |500-570          |2.5                    |[#runge]_        |
+   |``RungeDec``   |                 |                 |                 |                 |                       |                 |
+   |``RungeMix``   |                 |                 |                 |                 |                       |                 |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+
+.. figure:: /Visualization/ton_res.png
+   :align: center
+   :figwidth: 80%
+
+   Droplet diameter, temperature, and n-octane mass fraction comparisons with Figure 4.33 in [#ton]_
+
+.. figure:: /Visualization/abram_res.png
+   :align: center
+   :figwidth: 80%
+
+   Droplet diameter and temperature comparisons with [#abram]_
+
+.. figure:: /Visualization/daif_res.png
+   :align: center
+   :figwidth: 80%
+
+   Droplet diameter and temperature comparisons with [#daif]_
+
+.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006)
+
+.. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol. 32, No. 9, pp. 1605-1618 (1989)
+
+.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998)
+
+.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998)
