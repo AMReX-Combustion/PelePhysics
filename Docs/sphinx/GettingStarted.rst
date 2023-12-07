@@ -4,77 +4,95 @@
 `PelePhysics` Quickstart
 ************************
 
-Greetings impatient user. Once again, note that this documentation focuses on the CHEMISTRY part of `PelePhysics`.
+Greetings impatient user. As a word of caution, this documentation is in progress. Some parts of the code remain undocumented,
+and some parts of the documentation are out of data. If you are confused by something you read here, or otherwise
+need help with `PelePhysics`, the best course of action is to open a Discussion on the `GitHub page <https://github.com/AMReX-Combustion/PelePhysics/discussions>`_,
+so the development team and other users can help.
 
-- If you are familiar with `PelePhysics`, have it installed already and would simply like to know which chemistry-related keywords and/or environment variables to set in your various input files to perform a simulation with one of the codes available in the `PeleSuite`, then I invite you to directly skip to section :ref:`sec:subsPPOptions`. 
 - If you are a complete beginner, I urge you to carefully read the two following chapters :ref:`sec:GetPP` and :ref:`sec:GetCVODE`, to properly set-up your working environment.
+- If you are familiar with `PelePhysics`, have it installed already and would simply like to know which chemistry-related keywords and/or environment variables to set in your various input files to perform a simulation with one of the codes available in the `PeleSuite`, then I invite you to directly skip to section :ref:`sec:subsPPOptions`.
 - If you are in a hurry but still would like more context, visit section :ref:`sec:subsWD` to be referred to portions of this document that are of interest to you.
-
 
 .. _sec:GetPP:
 
 Obtaining `PelePhysics`
 =======================
 
+PelePhysics is primarily intended as a library for use in the other `Pele codes <https://amrex-combustion.github.io>`_, and is automatically downloaded as
+a submodule of both PeleC and PeleLMeX. However, it can also be used as a stand-alone solver for chemical reactions and thermodynamic properties,
+or as a library for other codes. Instructions for how to obtain `PelePhysics` for these purposes are provided here.
 
 First, make sure that "Git" is installed on your machine---we recommend version 1.7.x or higher. Then...
 
-1. Download the `AMReX` repository by typing: ::
+1. Clone the `PelePhysics` repository and its submodules: ::
 
-    git clone https://github.com/AMReX-Codes/amrex.git
+    git clone --recursive https://github.com/AMReX-Combustion/PelePhysics.git
 
-This will create an ``amrex/`` folder on your machine. Next, set the environment variable ``AMREX_HOME`` to point to the location where you have downloaded `AMReX`::
+  This will create a ``PelePhysics`` directory on your machine. The ``--recursive`` option ensures that the required :ref:`sec:GetCVODE` are also downloaded to the
+  ``PelePhysics/Submodules`` directory. Set the environment variable ``PELE_PHYSICS_HOME`` to point to the location of this folder (``export PELE_PHYSICS_HOME=$(pwd)/PelePhysics``)
 
-        export AMREX_HOME=/path/to/amrex/
-        
-2. Clone the `Pele` repository: ::
-
-    git clone git@github.com:AMReX-Combustion/PelePhysics.git
-
-This will create a ``PelePhysics`` folder on your machine. Set the environment variable ``PELE_PHYSICS_HOME`` to point to the location of this folder.
-
-3. Periodically update both of these repositories by typing ``git pull`` within each repository.
+2. Periodically update the repository and its dependencies by typing ``git pull && git submodule update`` within the repository.
 
 
 .. _sec:GetCVODE:
 
-Install CVODE and `SuiteSparse`
+Dependencies
+============
+
+PelePhysics has two required dependencies: `AMReX <https://amrex-codes.github.io/amrex/>`_ and `SUNDIALS <https://github.com/LLNL/sundials>`_.
+These dependencies are shipped with PelePhysics as git submodules and the proper versions are cloned to the ``PelePhysics/Submodules/`` directory automatically when
+doing the recursive git clone described in :ref:`sec:GetPP`. Users also have the option to download their own versions of these dependencies elsewhere on their machine, in which case
+the paths to these libraries must be specified by exporting ``AMREX_HOME`` and ``SUNDIALS_HOME`` environment variables or defining these variables in
+the ``GNUmakefile`` when building.
+
+1. `AMReX` is a library that provides data structures and methods for operating on data in the context of
+   block-structured adaptive mesh refinement that are used throughout the Pele suite of codes.
+
+2. `SUNDIALS` is a library of differential and algebraic equation solvers that is used by PelePhysics
+   primarily for its CVODE package for implicit solution of stiff ODE systems. CVODE is used for integration of stiff chemical reaction systems in PelePhysics.
+
+PelePhysics has two optional dependencies: `SuiteSparse <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_ and `MAGMA <https://icl.utk.edu/magma/>`_.
+These dependencies are not shipped with PelePhysics by default, but the proper versions are automatically downloaded if needed during the building
+process (:ref:`sec:BuildingRunning`). Both of these dependencies are libraries that aid in solving the linear systems that arise during implicit integration of a chemical system using CVODE.
+There are several other options available for solvers within CVODE, so these libraries are not strictly required, but they may enable options that
+lead to better performance on certain computing architectures.
+
+1. `SuiteSparse` is a suite of Sparse Matrix software that is very handy when dealing with big kinetic mechanisms (the Jacobian of which are usually very sparse).
+   In such a case, CVODE can make use of the KLU library, which is part of `SuiteSparse`, to perform sparse linear algebra.
+   Documentation and further information can be found on `SuiteSparse website <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_.
+
+2. `MAGMA` is a collection of linear algebra libraries for heterogeneous computing.
+
+
+.. _sec:BuildingRunning:
+
+Building and Running Test Cases
 ===============================
 
-***The user is in charge of installing the proper CVODE version, as well as installing and properly linking the KLU library if sparsity features are needed.**
+PelePhysics has several short programs that are used to test its various capabilities, located in the ``Testing/Exec`` directory. For example,
+we will consider the `ReactEval` case, which tests the chemical reaction integration capability. ::
 
+  cd ${PELE_PHYSICS_HOME}/Testing/Exec/ReactEval
 
-SuiteSparse
------------
+The ``GNUmakefile`` in this directory specifies several key build options, like the compiler (``COMP``) and whether it will be a debug (``DEBUG``) build.
 
-`SuiteSparse` is a suite of Sparse Matrix software that is very handy when dealing with big kinetic mechanisms (the Jacobian of which are usually very sparse). 
-In such a case, CVODE can make use of the KLU library, which is part of `SuiteSparse`, to perform sparse linear algebra.
-Documentation and further information can be found on `SuiteSparse website <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_. 
+First, build the necessary dependencies. `SUNDIALS` is always built.
+`SuiteSparse` is downloaded and built if ``PELE_USE_KLU = TRUE`` is specified in the ``GNUmakefile``.
+`MAGMA` is downloaded and built if ``PELE_USE_MAGMA = TRUE`` is specified in the ``GNUmakefile``.
+All dependencies are installed in the ${PELE_PHYSICS_HOME}/ThirdParty directory. For a given set of
+compile-time options, this step only needs to be done once, but it needs to be redone whenever compile-time
+options are changed ::
 
-At the time this note is written, the recommended **SuiteSparse version** is **5.4.0**. Follow these steps to set-up your working environment and build the required libraries:
+  make TPL
 
-1. Go to `the SuiteSparse website <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_ and download the compressed file for the recommended version
-2. Copy the tar file into ``$PELE_PHYSICS_HOME/ThirdParty``
-3. Untar ('tar -zxvf'), cd into it and type 'make' into the following folders: ``SuiteSparse_config``, ``AMD``, ``COLAMD``, ``BTF``
-4. Go into ``metis-5.1.0`` and type 'make config shared=1' followed by 'make'
-5. Go into ``KLU`` and type 'make'
-6. Check that all dynamic libraries have correctly been generated and copied into the folder ``$PELE_PHYSICS_HOME/ThirdParty/SuiteSparse/lib`` 
-7. It is recommended that you add the path ``$PELE_PHYSICS_HOME/ThirdParty/SuiteSparse/lib`` to your ``LD_LIBRARY_PATH``, for precaution
-8. Note that depending upon your compiler, the static ``.a`` versions of the libraries might also be required. In such a case, you can copy them directly from each program folder into the ``SuiteSparse/lib`` folder
+Now, build the `ReactEval` executable (the ``-j 4`` option specified to compile in parallel on 4 processors): ::
 
-CVODE
------
+  make -j 4
 
-CVODE is a solver for stiff and nonstiff ordinary differential equation (ODE) systems. Documentation and further information can be found `online <https://computing.llnl.gov/projects/sundials/cvode>`_.
-At the time this note is written, the recommended **CVODE version** is **v5.0.0**. 
+To run the program, execute: ::
 
-The CVODE sources are distributed as compressed archives, with names following the convention ``cvode-x.y.z.tar.gz``. They can be downloaded by following 
-`this link <https://computation.llnl.gov/projects/sundials/sundials-software>`_.  However, we have designed a simple script enabling to install the current version the correct way. Simply:
+  ./Pele3d.gnu.ex inputs.3d-regt_GPU
 
-1. Go into ``$PELE_PHYSICS_HOME/ThirdParty`` 
-2. Execute either ``get_sundials_v5dev1.sh`` or ``get_sundials_v5dev1_CUDA.sh`` depending on your application (GPU or not) and machine
-3. Set the ``SUNDIALS_LIB_DIR`` environment variable to point to the location where all CVODE libraries have been generated. If you followed these guidelines, it should be ``$PELE_PHYSICS_HOME/ThirdParty/sundials/instdir/lib/`` 
-4. It is recommended, here also, that you add the path ``$PELE_PHYSICS_HOME/ThirdParty/sundials/instdir/lib`` to your ``LD_LIBRARY_PATH``, as paths can get lost in the build of external libraries
+If you need to clean your build, you can run ::
 
-Note that if you do not want to use the KLU library, you can also disable the flags (``-DKLU_ENABLE``) in the ``*.sh`` scripts. 
-
+  make TPLrealclean && make realclean
