@@ -37,6 +37,8 @@ point your web browser at the file ``${PELE_PHYSICS_DIR}/build/html/index.html``
    Transport.rst
    Thermodynamics.rst
    EOS.rst
+   Spray.rst
+   Soot.rst
    Utility.rst
    Tutorials.rst
    DeveloperGuide.rst
