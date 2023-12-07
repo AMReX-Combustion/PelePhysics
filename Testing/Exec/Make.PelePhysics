@@ -1,7 +1,7 @@
 PELE_HOME         ?= ../../../..
-AMREX_HOME        ?= $(abspath $(lastword $(PELE_HOME)/Submodules/amrex))
 PELE_PHYSICS_HOME ?= $(abspath $(lastword $(PELE_HOME)/Submodules/PelePhysics))
-SUNDIALS_HOME     ?= $(abspath $(lastword $(PELE_HOME)/Submodules/sundials))
+AMREX_HOME        ?= $(abspath $(lastword $(PELE_PHYSICS_HOME)/Submodules/amrex))
+SUNDIALS_HOME     ?= $(abspath $(lastword $(PELE_PHYSICS_HOME)/Submodules/sundials))
 
 EOS_HOME          ?= $(PELE_PHYSICS_HOME)/Eos
 REACTIONS_HOME    ?= $(PELE_PHYSICS_HOME)/Reactions
