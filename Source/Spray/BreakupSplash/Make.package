@@ -1,6 +1,8 @@
-
 CEXE_headers += AhamedSplash.H
 CEXE_headers += TABBreakup.H
 CEXE_headers += ReitzKHRT.H
 CEXE_headers += SBData.H
 CEXE_headers += WallFilm.H
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray/BreakupSplash
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray/BreakupSplash
