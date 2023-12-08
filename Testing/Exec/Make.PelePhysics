@@ -90,8 +90,6 @@ INCLUDE_LOCATIONS += $(TRAN_HOME)
 VPATH_LOCATIONS   += $(TRAN_HOME)
 USE_FUEGO = FALSE
 
-Blocs   += $(PELE_PHYSICS_HOME)/Support/Mechanism
-
 ifeq ($(Transport_Model), Simple)
   DEFINES += -DUSE_SIMPLE_TRANSPORT
 endif

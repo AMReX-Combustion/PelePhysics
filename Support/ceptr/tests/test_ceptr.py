@@ -11,7 +11,7 @@ from ceptr import __version__
 def mechanism_path(mname):
     """Determine mechanism path."""
     this_file_dir = pathlib.Path(__file__).parent.resolve()
-    model_path = "Mechanism/Models"
+    model_path = "Mechanism"
     return this_file_dir.parents[1] / model_path / mname
 
 

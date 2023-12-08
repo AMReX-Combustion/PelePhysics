@@ -50,7 +50,7 @@ while getopts ":hf:" option; do
 done
 
 if [ -z "${PELE_PHYSICS_HOME+xxx}" ]; then
-    remove="Support/Mechanism/Models"
+    remove="Mechanisms"
     script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     PELE_PHYSICS_HOME=${script_dir%%"${remove}"}
     echo "Using PELE_PHYSICS_HOME: ${PELE_PHYSICS_HOME}. Set PELE_PHYSICS_HOME you want a different one."

@@ -28,7 +28,7 @@ parser.add_argument(
     "-m",
     "--mechanism",
     default="drm19",
-    help="Name of PelePhysics mechanism from Support/Mechanism/Models",
+    help="Name of PelePhysics mechanism from Mechanisms",
 )
 parser.add_argument(
     "-pp", "--pp_home", default="../../", help="Path to PelePhysics directory"
@@ -60,7 +60,7 @@ parser.add_argument(
     "--output",
     default=None,
     help=(
-        "Path to directory where flames will be saved, if not specified files are saved to PelePhysics/Support/Mechanism/Models/<mechanism>/PMFs/"
+        "Path to directory where flames will be saved, if not specified files are saved to PelePhysics/Mechanisms/<mechanism>/PMFs/"
     ),
 )
 args = parser.parse_args()
@@ -99,7 +99,7 @@ label = fuel_species.split(":")[0] + "_PHI" + str(phi) + "_T" + str(tin) + "_P" 
 
 #################
 # Find mechanism in PelePhysics
-pp_path = os.path.join(args.pp_home, "Support/Mechanism/Models")
+pp_path = os.path.join(args.pp_home, "Mechanisms")
 if args.output is None:
     outdir = os.path.join(pp_path, mechanism, "PMFs")
 else:

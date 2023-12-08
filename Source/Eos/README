@@ -14,7 +14,7 @@ Fuego:
 
    A mixture of ideal gases, computed using CEPTR-generated codes.
    The specific model is selected at compile time from the list in
-   ../Support/Mechanism/Models
+   ../Mechanisms
 
 Soave-Redlich-Kwong:
 
