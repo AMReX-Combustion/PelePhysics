@@ -64,6 +64,5 @@ SAVE/
 SAVE_file*/
 NO_GIT
 SuiteSparse
-sundials
 ThirdParty/INSTALL
 ThirdParty/BUILD

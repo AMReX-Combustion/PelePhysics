@@ -1,0 +1,9 @@
+version: 2
+
+updates:
+  - package-ecosystem: gitsubmodule
+    schedule:
+        interval: "monthly"
+    directory: /
+    allow:
+      - dependency-name: "Submodules/amrex"
