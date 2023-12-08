@@ -20,7 +20,7 @@ jobs:
       - name: Check formatting
         uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
-          source: './Eos ./Transport ./Reactions ./Source ./Utility ./Testing ./Support/Mechanism/Models'
+          source: './Source ./Testing ./Support/Mechanism/Models'
           exclude: '.'
           extensions: 'H,h,cpp'
           clangFormatVersion: 16
