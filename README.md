@@ -20,7 +20,7 @@ This information is read by the CEPTR tool, and source code files are generated 
 * Mixture-averaged thermal diffusion coefficients are also available using the transport.use_soret flag (see PeleLMeX implementation for more information)
 * Utilization of auxiliary source files (C++) that follow the Cantera species production rate function interface (e.g., QSS approximations)
 
-If the `Pele` codes are built with `Eos_dir = Fuego`, the make system variable `Chemistry_Model` must be set to one of the models (subfolders) that exist in the `${PELE_PHYSICS_HOME}/Mechanisms` folder. The repository currently provides (multiple) models for each of the following mixtures:
+If the `Pele` codes are built with `Eos_Model = Fuego`, the make system variable `Chemistry_Model` must be set to one of the models (subfolders) that exist in the `${PELE_PHYSICS_HOME}/Mechanisms` folder. The repository currently provides (multiple) models for each of the following mixtures:
 * air
 * hydrogen
 * methane
@@ -32,7 +32,7 @@ If the `Pele` codes are built with `Eos_dir = Fuego`, the make system variable `
 
 ### NOTE: Non-ideal equations of state
 
-`PelePhysics` currently supports a cubic EOS model: `Soave-Redlich-Kwong`.  It is built on top of the ideal gas models, and is selected by specifying its name as the `Eos_dir` during the build (the make system requires that both `Eos_dir` and `Chemistry_Model` be specified).  Any additional parameters required for the EOS (e.g., attractions, repulsions, critical states) are either included in the underlying CEPTR database used to generate the source file model implementation, or else are inferred from the input model data.
+`PelePhysics` currently supports a cubic EOS model: `Soave-Redlich-Kwong`.  It is built on top of the ideal gas models, and is selected by specifying its name as the `Eos_Model` during the build (the make system requires that both `Eos_Model` and `Chemistry_Model` be specified).  Any additional parameters required for the EOS (e.g., attractions, repulsions, critical states) are either included in the underlying CEPTR database used to generate the source file model implementation, or else are inferred from the input model data.
 
 ## Model generation procedures
 This repository provides the tools necessary for generating new Pele-compatible combustion mechanisms. Please refer to the `CEPTR documentation <https://amrex-combustion.github.io/PelePhysics/Ceptr.html>`_ for instructions on generating mechanism models. Make sure that you edit the `GNUmakefile` where you want to use this (in, e.g., `PeleC/Exec`) so that `Chemistry_Model` is `XXX`.  In `PeleC/Exec/Make.PeleC`, the model is expected to be in the folder `${PELE_PHYSICS_HOME}/Mechanisms/$(Chemistry_Model)`, and it is expected that the folder contains a `Make.package` file to include, so make sure things are where they need to be. Refer to other mechanisms for additional guidance.
