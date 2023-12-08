@@ -1,5 +1,0 @@
-CEXE_sources += Filter.cpp
-CEXE_headers += Filter.H
-
-VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility/Filter
-INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility/Filter

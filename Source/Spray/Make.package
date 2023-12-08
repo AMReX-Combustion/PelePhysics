@@ -15,3 +15,6 @@ CEXE_sources += SprayIO.cpp
 
 CEXE_headers += Drag.H
 CEXE_headers += WallFunctions.H
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray
