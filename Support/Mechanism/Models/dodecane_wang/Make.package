@@ -1,6 +1,6 @@
 CEXE_headers+=mechanism.H
 
-CEXE_sources+=mechanism.cpp solver.cpp solver_simplified.cpp
+CEXE_sources+=mechanism.cpp
 
 LIBRARIES +=
 

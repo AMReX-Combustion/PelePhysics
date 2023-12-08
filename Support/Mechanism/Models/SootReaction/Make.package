@@ -1,4 +1,9 @@
+CEXE_headers+=mechanism.H
+
 CEXE_sources+=mechanism.cpp
 
-#VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+LIBRARIES +=
 
+INCLUDE_LOCATIONS += $(CHEM_DIR)
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
