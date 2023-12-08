@@ -77,13 +77,12 @@ ifeq ($(Eos_Model), GammaLaw)
     $(error Chemistry_Model definition not compatible with Eos_Model=GammaLaw)
   endif
 endif
-CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Mechanism/Models/$(Chemistry_Model)
-CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Mechanism/Models
+CHEM_HOME = $(PELE_PHYSICS_HOME)/Mechanisms/$(Chemistry_Model)
+CHEM_ALL  = $(PELE_PHYSICS_HOME)/Mechanisms
 VPATH_LOCATIONS += $(CHEM_HOME) $(CHEM_ALL)
 Bpack += $(CHEM_HOME)/Make.package \
          $(CHEM_ALL)/Make.package
 Blocs += $(CHEM_HOME) $(CHEM_ALL)
-Blocs   += $(PELE_PHYSICS_HOME)/Support/Evaluation
 
 # Transport
 include $(TRAN_HOME)/Make.package
