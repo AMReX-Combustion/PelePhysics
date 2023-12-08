@@ -1,5 +1,5 @@
 
-// PeleMP include statements
+// Soot include statements
 #include "SootModel.H"
 
 // PelePhysics include statements
