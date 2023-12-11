@@ -90,7 +90,6 @@ SprayParticleContainer::CreateSBDroplets(
         get_ms_theta(alpha, ms, del_film, ms_thetas);
         // Note: Must be -pi/2 < psi < pi, not 0 < psi < pi for symmetry
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
-          Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
@@ -103,7 +102,9 @@ SprayParticleContainer::CreateSBDroplets(
           } else if (new_parts == 3) {
             utBeta = uBeta_pi;
           }
-          AMREX_D_PICK(, , Real utPsi = uPsi_coeff * std::sin(psi);)
+          AMREX_D_PICK(
+            , , Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);
+            Real utPsi = uPsi_coeff * std::sin(psi);)
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Real pvel = AMREX_D_TERM(
               usNorm * normal[dir], +utBeta * tanBeta[dir],
