@@ -103,7 +103,7 @@ SprayParticleContainer::CreateSBDroplets(
           } else if (new_parts == 3) {
             utBeta = uBeta_pi;
           }
-          AMREX_D_PICK(,,Real utPsi = uPsi_coeff * std::sin(psi);)
+          AMREX_D_PICK(, , Real utPsi = uPsi_coeff * std::sin(psi);)
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Real pvel = AMREX_D_TERM(
               usNorm * normal[dir], +utBeta * tanBeta[dir],
