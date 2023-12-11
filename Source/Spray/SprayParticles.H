@@ -20,7 +20,7 @@
 #define NAI_SPR 0
 
 // Forward declarations
-class SBPtrs;
+struct SBPtrs;
 
 class MyParIter : public amrex::ParIter<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>
 {
