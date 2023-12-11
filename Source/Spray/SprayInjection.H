@@ -201,7 +201,7 @@ SprayParticleContainer::uniformSprayInit(
   const amrex::RealVect vel_part,
   const amrex::Real dia_part,
   const amrex::Real T_part,
-  const amrex::Real* Y_part,
+  const amrex::Real* /*Y_part*/,
   const int level,
   const int num_redist,
   const amrex::Real num_ppp)

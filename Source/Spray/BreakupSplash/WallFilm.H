@@ -136,7 +136,7 @@ calculateFilmSource(
       // Species index
       const int fspec = fdat.indx[spf];
       // Gas species index, might be the same
-      const int fdspec = fdat.dep_indx[spf];
+      // const int fdspec = fdat.dep_indx[spf];
       // Convert mass diffusion coefficient from mixture average
       // to binary for fuel only, not concerned with other species
       Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SPU.rhod_conv;
