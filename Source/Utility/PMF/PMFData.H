@@ -58,7 +58,7 @@ public:
       amrex::The_Pinned_Arena()->free(m_data_h.pmf_Y);
     }
     if (m_device_allocated) {
-      amrex::The_Device_Arena()->free(m_data_d);
+      amrex::The_Arena()->free(m_data_d);
     }
   }
 
