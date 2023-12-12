@@ -439,7 +439,7 @@ SprayParticleContainer::updateParticles(
             }
             Gpu::Atomic::Add(
               &engSrcarr(cur_indx), cur_coef * gpv.fluid_eng_src);
-            Real new_time = static_cast<Real>(cur_iter + 1) * sub_dt;
+            // Real new_time = static_cast<Real>(cur_iter + 1) * sub_dt;
             // Modify particle position by whole time step
             if (do_move && !fdat->fixed_parts && p.id() > 0 && !is_film) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {

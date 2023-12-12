@@ -60,10 +60,10 @@ SprayParticleContainer::CreateSBDroplets(
       rho_part = 1. / rho_part;
 #else
       Real rho_part = fdat->rhoL(T0, 0);
-      Real mu_part = fdat->muL(T0, 0);
+      // Real mu_part = fdat->muL(T0, 0);
       Y0[0] = 1.;
 #endif
-      Real pmass = M_PI / 6. * rho_part * std::pow(ref_dia, 3);
+      // Real pmass = M_PI / 6. * rho_part * std::pow(ref_dia, 3);
       Real U0mag = vel0.vectorLength();
 
       // Splashing
@@ -78,7 +78,7 @@ SprayParticleContainer::CreateSBDroplets(
         Real U0norm = normal.dotProduct(vel0);
         Real alpha =
           amrex::max(M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
-        Real alpha_d = alpha * 180. / M_PI;
+        // Real alpha_d = alpha * 180. / M_PI;
         Real U0tan = std::sqrt(U0mag * U0mag - U0norm * U0norm);
         Real uBeta_0, uBeta_half, uBeta_pi, uPsi_coeff, usNorm;
         get_splash_vels(
@@ -90,7 +90,6 @@ SprayParticleContainer::CreateSBDroplets(
         get_ms_theta(alpha, ms, del_film, ms_thetas);
         // Note: Must be -pi/2 < psi < pi, not 0 < psi < pi for symmetry
         for (int new_parts = 0; new_parts < Nsint; ++new_parts) {
-          Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);
           ParticleType p;
           p.id() = ParticleType::NextID();
           p.cpu() = ParallelDescriptor::MyProc();
@@ -103,7 +102,9 @@ SprayParticleContainer::CreateSBDroplets(
           } else if (new_parts == 3) {
             utBeta = uBeta_pi;
           }
-          Real utPsi = uPsi_coeff * std::sin(psi);
+          AMREX_D_PICK(
+            , , Real psi = 0.5 * M_PI * (static_cast<Real>(new_parts) - 1.);
+            Real utPsi = uPsi_coeff * std::sin(psi);)
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Real pvel = AMREX_D_TERM(
               usNorm * normal[dir], +utBeta * tanBeta[dir],
@@ -136,7 +137,7 @@ SprayParticleContainer::CreateSBDroplets(
         Real N_s = std::pow(num_dens0, m_breakupPPPFact);
         int N_d = amrex::max(1, static_cast<int>(num_dens0 / N_s));
         N_s = num_dens0 / static_cast<Real>(N_d);
-        Real new_mass = M_PI / 6. * rho_part * std::pow(dmean, 3);
+        // Real new_mass = M_PI / 6. * rho_part * std::pow(dmean, 3);
 #if AMREX_SPACEDIM == 3
         RealVect testvec(1., 0., 0.);
         if (testvec.crossProduct(normal).vectorLength() < 1.E-5) {

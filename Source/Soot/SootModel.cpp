@@ -5,7 +5,7 @@
 // PelePhysics include statements
 #include "PelePhysics.H"
 
-// PeleMP include statements
+// Soot include statements
 #include "SootModel.H"
 
 using namespace amrex;

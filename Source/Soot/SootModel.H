@@ -5,7 +5,7 @@
 // AMReX include statements
 #include <AMReX_Gpu.H>
 
-// PeleMP include statements
+// Soot include statements
 #include "Constants_Soot.H"
 #include "SootData.H"
 #include "SootReactions.H"

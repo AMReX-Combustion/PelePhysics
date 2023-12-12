@@ -20,7 +20,7 @@ jobs:
       - name: Check formatting
         uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
-          source: './Eos ./Transport ./Reactions ./Source ./Utility ./Testing ./Support/Mechanism/Models'
+          source: './Source ./Testing ./Mechanisms'
           exclude: '.'
           extensions: 'H,h,cpp'
           clangFormatVersion: 16
@@ -75,9 +75,9 @@ jobs:
       - name: Run tests
         run: poetry run pytest
       - name: Convert air mechanism
-        run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/air/mechanism.yaml
+        run: poetry run convert -f ${{github.workspace}}/Mechanisms/air/mechanism.yaml
       - name: Convert LiDryer mechanism
-        run: poetry run convert -f ${{github.workspace}}/Support/Mechanism/Models/LiDryer/mechanism.yaml
+        run: poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
     needs: Formatting
@@ -275,8 +275,8 @@ jobs:
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ccache -z
               cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/ceptr
-              poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Support/Mechanism/Models/dodecane_lu_qss/non_qssa_list.yaml
-              poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/Mechanism/Models/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
+              poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Mechanisms/dodecane_lu_qss/non_qssa_list.yaml
+              poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
               cd ${{env.JAC_WORKING_DIRECTORY}}
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               ./Pele3d.${{matrix.comp}}.DEBUG.TPROF.ex; \

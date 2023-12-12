@@ -203,8 +203,8 @@ void
 droplet_splashing(
   SprayParticleContainer::ParticleType& p,
   int pid,
-  const amrex::RealVect& dx,
-  const amrex::RealVect& plo,
+  const amrex::RealVect& /*dx*/,
+  const amrex::RealVect& /*plo*/,
   const SprayData& fdat,
   const amrex::Real p_gas,
   const amrex::RealVect& vel_part,
