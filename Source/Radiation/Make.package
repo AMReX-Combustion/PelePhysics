@@ -1,0 +1,4 @@
+CEXE_headers += AMRParam.H Constants.H MLMGParam.H Make.package POneMulti.H POneMultiEB.H POneMultiLevbyLev.H POneSingle.H POneSingleEB.H PeleCRad.H PeleLMRad.H PlanckMean.H SpectralModels.H
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Radiation
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Radiation
