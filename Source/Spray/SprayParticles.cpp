@@ -320,7 +320,7 @@ SprayParticleContainer::updateParticles(
         refv.build(Np);
         refv.fillPtrs_d(rf_d);
       }
-      auto N_SB = N_SB_d.dataPtr();
+      auto* N_SB = N_SB_d.dataPtr();
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
