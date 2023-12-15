@@ -1,7 +1,6 @@
 #ifndef PLANCK_MEAN_H
 #define PLANCK_MEAN_H
 
-#include <filesystem>
 #include <fstream>
 
 #include <AMReX.H>
@@ -35,21 +34,12 @@ public:
   AMREX_GPU_HOST
   void load(std::string data_path)
   {
-    using sfp = std::filesystem::path;
-
-    sfp kplco2(data_path + "kpl_co2.dat");
-    sfp kplh2o(data_path + "kpl_h2o.dat");
-    sfp kplco(data_path + "kpl_co.dat");
-    sfp kplch4(data_path + "kpl_ch4.dat");
-    sfp kplc2h4(data_path + "kpl_c2h4.dat");
-    sfp kplsoot(data_path + "kpl_soot.dat");
-
-    std::ifstream dataco2(kplco2);
-    std::ifstream datah2o(kplh2o);
-    std::ifstream dataco(kplco);
-    std::ifstream datach4(kplch4);
-    std::ifstream datac2h4(kplc2h4);
-    std::ifstream datasoot(kplsoot);
+    std::ifstream dataco2(data_path + "kpl_co2.dat");
+    std::ifstream datah2o(data_path + "kpl_h2o.dat");
+    std::ifstream dataco(data_path + "kpl_co.dat");
+    std::ifstream datach4(data_path + "kpl_ch4.dat");
+    std::ifstream datac2h4(data_path + "kpl_c2h4.dat");
+    std::ifstream datasoot(data_path + "kpl_soot.dat");
 
     size_t i_co2 = 0;
     for (float T_temp, kp_temp; dataco2 >> T_temp >> kp_temp;) {
