@@ -18,6 +18,36 @@ private:
   amrex::GpuArray<amrex::Real, 126ul> kpc2h4_;
   amrex::GpuArray<amrex::Real, 126ul> kpsoot_;
 
+  AMREX_GPU_HOST
+  void read_kp_file(
+    std::string file_path, amrex::GpuArray<amrex::Real, 126ul>& file_data)
+  {
+    std::ifstream datastream(file_path);
+    if (!datastream.is_open()) {
+      amrex::Abort("PeleRad: Failed to open data file: " + file_path);
+    }
+    size_t idx = 0;
+    for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
+      if (!amrex::almostEqual(T_temp, 300.0 + 20.0 * idx)) {
+        amrex::Abort(
+          "PeleRad: Invalid temperatures in data file: " + file_path);
+      }
+      if (idx > 125) {
+        amrex::Abort(
+          "PeleRad: Invalid number of entries in data file, must have 126: " +
+          file_path);
+      }
+      file_data[idx] = kp_temp;
+      idx++;
+    }
+    if (idx < 126) {
+      amrex::Abort(
+        "PeleRad: Invalid number of entries in data file, must have 126: " +
+        file_path);
+    }
+    datastream.close();
+  }
+
 public:
   AMREX_GPU_HOST
   PlanckMean() = default;
@@ -34,55 +64,12 @@ public:
   AMREX_GPU_HOST
   void load(std::string data_path)
   {
-    std::ifstream dataco2(data_path + "kpl_co2.dat");
-    std::ifstream datah2o(data_path + "kpl_h2o.dat");
-    std::ifstream dataco(data_path + "kpl_co.dat");
-    std::ifstream datach4(data_path + "kpl_ch4.dat");
-    std::ifstream datac2h4(data_path + "kpl_c2h4.dat");
-    std::ifstream datasoot(data_path + "kpl_soot.dat");
-
-    size_t i_co2 = 0;
-    for (float T_temp, kp_temp; dataco2 >> T_temp >> kp_temp;) {
-      kpco2_[i_co2] = kp_temp;
-      i_co2++;
-    }
-
-    size_t i_h2o = 0;
-    for (float T_temp, kp_temp; datah2o >> T_temp >> kp_temp;) {
-      kph2o_[i_h2o] = kp_temp;
-      i_h2o++;
-    }
-
-    size_t i_co = 0;
-    for (float T_temp, kp_temp; dataco >> T_temp >> kp_temp;) {
-      kpco_[i_co] = kp_temp;
-      i_co++;
-    }
-
-    size_t i_ch4 = 0;
-    for (float T_temp, kp_temp; datach4 >> T_temp >> kp_temp;) {
-      kpch4_[i_ch4] = kp_temp;
-      i_ch4++;
-    }
-
-    size_t i_c2h4 = 0;
-    for (float T_temp, kp_temp; dataco >> T_temp >> kp_temp;) {
-      kpc2h4_[i_c2h4] = kp_temp;
-      i_c2h4++;
-    }
-
-    size_t i_soot = 0;
-    for (float T_temp, kp_temp; datasoot >> T_temp >> kp_temp;) {
-      kpsoot_[i_soot] = kp_temp;
-      i_soot++;
-    }
-
-    dataco2.close();
-    datah2o.close();
-    dataco.close();
-    datach4.close();
-    datac2h4.close();
-    datasoot.close();
+    read_kp_file(data_path + "/kpl_co2.dat", kpco2_);
+    read_kp_file(data_path + "/kpl_h2o.dat", kph2o_);
+    read_kp_file(data_path + "/kpl_co.dat", kpco_);
+    read_kp_file(data_path + "/kpl_ch4.dat", kpch4_);
+    read_kp_file(data_path + "/kpl_c2h4.dat", kpc2h4_);
+    read_kp_file(data_path + "/kpl_soot.dat", kpsoot_);
   }
 
   AMREX_GPU_HOST_DEVICE
