@@ -1,0 +1,25 @@
+#amr
+max_level = 2
+ref_ratio = 2
+n_cell = 32
+max_grid_size = 32
+plot_file_name = "pltRobinAFMultiComp"
+
+#mlmg
+composite_solve = 1
+use_hypre = 0
+verbose = 0
+bottom_verbose = 0
+bottom_reltol = 1.0e-5
+bottom_abstol = 1.0e-5
+max_iter = 200
+max_fmg_iter = 0
+max_coarsening_level = 10
+reltol = 1.0e-5
+abstol = 1.0e-5
+linop_maxorder = 2
+agglomeration = 1
+consolidation = 0
+
+lo_bc = Robin Robin Neumann
+hi_bc = Robin Robin Neumann

@@ -1,0 +1,23 @@
+#amr
+max_level = 2
+ref_ratio = 2
+n_cell = 64
+max_grid_size = 32
+plot_file_name = "pltRobinMultiLevbyLev"
+
+#mlmg
+composite_solve = 0
+use_hypre = 0
+verbose = 0
+bottom_verbose = 0
+max_iter = 20
+max_fmg_iter = 0
+max_coarsening_level = 10
+reltol = 1.e-6
+abstol = 1.e-6
+linop_maxorder = 2
+agglomeration = 1
+consolidation = 1
+
+lo_bc = Robin Dirichlet Neumann
+hi_bc = Robin Dirichlet Neumann
