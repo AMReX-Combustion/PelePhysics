@@ -66,10 +66,7 @@ public:
   void loadSpecModel()
   {
     std::string data_path;
-    data_path = "/ccs/home/gwjgavin/Pele_dev/PeleRad/data/kpDB/";
-
     radprop.load(data_path);
-
     amrex::Print() << "The radiative property database is loaded"
                    << "\n";
   }
