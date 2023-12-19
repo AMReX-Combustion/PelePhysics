@@ -66,8 +66,6 @@ public:
 
   void solve()
   {
-    amrex::MultiFab const& vfrc = factory_->getVolFrac();
-
     auto const max_coarsening_level = mlmgpp_.max_coarsening_level_;
     auto const max_iter = mlmgpp_.max_iter_;
     auto const max_fmg_iter = mlmgpp_.max_fmg_iter_;
