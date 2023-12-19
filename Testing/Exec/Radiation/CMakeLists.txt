@@ -33,12 +33,7 @@ else()
   add_executable(PeleRad_POneSingle.exe tstPOneSingle.cpp)
   target_link_libraries(PeleRad_POneSingle.exe PRIVATE PeleRad AMReX::amrex)
   add_test(NAME PeleRad_POneSingle_Test COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneSingle.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneSingle)
-    
-  add_executable(PeleRad_POneMulti.exe tstPOneMulti.cpp)
-  target_link_libraries(PeleRad_POneMulti.exe PRIVATE PeleRad)
-  add_test(NAME PeleRad_POneMulti_Test_Composite COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMulti.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMulti)
-  add_test(NAME PeleRad_POneMulti_Test_LevbyLev COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMulti.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMultiLevbyLev)
-  
+ 
   add_executable(PeleRad_POneSingleAF.exe tstPOneSingleAF.cpp)
   target_link_libraries(PeleRad_POneSingleAF.exe PRIVATE PeleRad)
   add_test(NAME PeleRad_POneSingleAF_Test COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneSingleAF.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneSingleAF)
@@ -47,6 +42,13 @@ else()
   target_link_libraries(PeleRad_POneMultiAF.exe PRIVATE PeleRad)
   add_test(NAME PeleRad_POneMultiAF_Test_Composite COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMultiAF.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMultiAF)
   add_test(NAME PeleRad_POneMultiAF_Test_LevbyLev COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMultiAF.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMultiAFLevbyLev)
+
+  if(PELELMEX_DIM GREATER 2)
+    add_executable(PeleRad_POneMulti.exe tstPOneMulti.cpp)
+    target_link_libraries(PeleRad_POneMulti.exe PRIVATE PeleRad)
+    add_test(NAME PeleRad_POneMulti_Test_Composite COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMulti.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMulti)
+    add_test(NAME PeleRad_POneMulti_Test_LevbyLev COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/PeleRad_POneMulti.exe ${CMAKE_CURRENT_SOURCE_DIR}/inputs/inputs.tstPOneMultiLevbyLev)
+  endif()
 endif()
 
 if(PELELMEX_ENABLE_CUDA)
