@@ -314,7 +314,7 @@ public:
 
   /// \brief Problem specific injection routine, calls #sprayInjection
   bool injectParticles(
-    amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level, );
+    amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
   /// \brief Generalized initializer routine. Calls #InitSprayParticles and
   /// #PostInitRestart
@@ -322,7 +322,7 @@ public:
 
   /// \brief Problem specific initialization routine. Typically initializes the
   /// SprayJet pointers or calls #uniformSprayInit
-  void InitSprayParticles(const bool init_parts, );
+  void InitSprayParticles(const bool init_parts);
 
   /// \brief Should be called after Restart or initialize routine. Reads
   /// injection data files if they are present. Checks to ensure all jet names
