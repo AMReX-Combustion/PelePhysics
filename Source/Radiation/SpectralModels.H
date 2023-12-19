@@ -29,7 +29,7 @@ interpT(amrex::Real const& T, int& TindexL, amrex::Real& weight)
   TindexL = static_cast<int>(TindexInte);
   weight = TindexReal - TindexInte;
 
-  assert(weight <= 1 && weight >= 0);
+  AMREX_ASSERT(weight <= 1 && weight >= 0);
 }
 
 AMREX_GPU_HOST_DEVICE
