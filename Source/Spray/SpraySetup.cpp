@@ -297,26 +297,13 @@ SprayParticleContainer::spraySetup(const Real* body_force)
 }
 
 void
-SprayParticleContainer::SprayInitialize(
-#ifdef PELELM_USE_SPRAY
-  ProbParm const& prob_parm,
-#else
-  ProbParmHost const& prob_parm,
-  ProbParmDevice const& prob_parm_d,
-#endif
-  const std::string& restart_dir)
+SprayParticleContainer::SprayInitialize(const std::string& restart_dir)
 {
   bool init_sprays = false;
   if (restart_dir.empty() && spray_init_file.empty()) {
     init_sprays = true;
   }
-  InitSprayParticles(
-    init_sprays, prob_parm
-#ifndef PELELM_USE_SPRAY
-    ,
-    prob_parm_d
-#endif
-  );
+  InitSprayParticles(init_sprays);
   if (!spray_init_file.empty()) {
     InitFromAsciiFile(spray_init_file, NSR_SPR);
   } else if (!restart_dir.empty()) {

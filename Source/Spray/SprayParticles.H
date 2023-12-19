@@ -6,12 +6,6 @@
 #include <AMReX_Geometry.H>
 #include "SprayJet.H"
 
-#ifdef PELELM_USE_SPRAY
-#include "pelelmex_prob_parm.H"
-#else
-#include "prob_parm.H"
-#endif
-
 // Need components for velocity, diameter, temperature, mass fractions,
 // breakup model variables, and wall film volume
 #define NSR_SPR (SprayComps::pstateNum)
@@ -320,41 +314,15 @@ public:
 
   /// \brief Problem specific injection routine, calls #sprayInjection
   bool injectParticles(
-    amrex::Real time,
-    amrex::Real dt,
-    int nstep,
-    int level,
-    int finest_level,
-#ifdef PELELM_USE_SPRAY
-    ProbParm const& prob_parm
-#else
-    ProbParmHost const& prob_parm,
-    ProbParmDevice const& prob_parm_d
-#endif
-  );
+    amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
   /// \brief Generalized initializer routine. Calls #InitSprayParticles and
   /// #PostInitRestart
-  void SprayInitialize(
-#ifdef PELELM_USE_SPRAY
-    ProbParm const& prob_parm,
-#else
-    ProbParmHost const& prob_parm,
-    ProbParmDevice const& prob_parm_d,
-#endif
-    const std::string& restart_dir = "");
+  void SprayInitialize(const std::string& restart_dir = "");
 
   /// \brief Problem specific initialization routine. Typically initializes the
   /// SprayJet pointers or calls #uniformSprayInit
-  void InitSprayParticles(
-    const bool init_parts,
-#ifdef PELELM_USE_SPRAY
-    ProbParm const& prob_parm
-#else
-    ProbParmHost const& prob_parm,
-    ProbParmDevice const& prob_parm_d
-#endif
-  );
+  void InitSprayParticles(const bool init_parts);
 
   /// \brief Should be called after Restart or initialize routine. Reads
   /// injection data files if they are present. Checks to ensure all jet names
