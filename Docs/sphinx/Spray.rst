@@ -332,9 +332,8 @@ Templates to facilitate and simplify spray injection are available. To use them,
 
   void
   SprayParticleContainer::InitSprayParticles(
-  const bool init_parts, ProbParm const& prob_parm)
+  const bool init_parts)
   {
-    amrex::ignore_unused(prob_parm);
     int num_jets = 1;
     m_sprayJets.resize(num_jets);
     std::string jet_name = "jet1";
