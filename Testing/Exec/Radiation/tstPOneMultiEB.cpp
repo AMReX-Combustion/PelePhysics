@@ -72,7 +72,6 @@ initProbABecLaplacian(
     amrex::FabArray<amrex::EBCellFlagFab> const& flags =
       factory[ilev]->getMultiEBCellFlagFab();
     auto const dx = geom[ilev].CellSizeArray();
-    amrex::Box const& domainbox = geom[ilev].Domain();
 
     for (amrex::MFIter mfi(rhs[ilev]); mfi.isValid(); ++mfi) {
       amrex::Box const& bx = mfi.validbox();
@@ -143,8 +142,6 @@ main(int argc, char* argv[])
   int const nlevels = amrpp.max_level_ + 1;
   int const max_level = amrpp.max_level_;
   int const ref_ratio = amrpp.ref_ratio_;
-  int const composite_solve = mlmgpp.composite_solve_;
-
   int const max_grid_size = amrpp.max_grid_size_;
 
   amrex::Vector<amrex::Geometry> geom;
@@ -185,7 +182,9 @@ main(int argc, char* argv[])
   // rotated box
   int const max_coarsening_level = mlmgpp.max_coarsening_level_;
   amrex::Real const la = std::sqrt(2.0) / 2.0;
+#if (AMREX_SPACEDIM == 3)
   amrex::Real const shift = std::sqrt(2.0) / 3.0;
+#endif
   amrex::EB2::BoxIF box(
     {AMREX_D_DECL(-la, -la, -1.0)}, {AMREX_D_DECL(la, la, -1.0 + 4.0 * shift)},
     true);

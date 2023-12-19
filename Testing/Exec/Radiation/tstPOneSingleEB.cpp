@@ -75,7 +75,6 @@ initProbABecLaplacian(
   //    amrex::MultiCutFab const& cent  = factory->getCentroid();
 
   auto const dx = geom.CellSizeArray();
-  amrex::Box const& domainbox = geom.Domain();
 
   for (amrex::MFIter mfi(rhs); mfi.isValid(); ++mfi) {
     amrex::Box const& bx = mfi.validbox();
@@ -176,7 +175,9 @@ main(int argc, char* argv[])
   // rotated box
   int const max_coarsening_level = mlmgpp.max_coarsening_level_;
   amrex::Real const la = std::sqrt(2.0) / 2.0;
+#if (AMREX_SPACEDIM == 3)
   amrex::Real const shift = std::sqrt(2.0) / 3.0;
+#endif
   amrex::EB2::BoxIF box(
     {AMREX_D_DECL(-la, -la, -1.0)}, {AMREX_D_DECL(la, la, -1 + 4.0 * shift)},
     true);
