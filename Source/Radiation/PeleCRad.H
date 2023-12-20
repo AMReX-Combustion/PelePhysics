@@ -80,7 +80,7 @@ public:
     amrex::Array4<const amrex::Real> const& Yco,
     amrex::Array4<const amrex::Real> const& T,
     amrex::Array4<const amrex::Real> const& P
-#ifdef PELEC_USE_SOOT
+#ifdef PELE_USE_SOOT
     ,
     amrex::Array4<const amrex::Real> const& fv
 #endif
@@ -111,7 +111,7 @@ public:
       kappa(i, j, k) *= 0.1; // correction for P in cgs
     });
 
-#ifdef PELEC_USE_SOOT
+#ifdef PELE_USE_SOOT
     auto const& kpsoot = radprop.kpsoot();
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
       RadProp::getRadPropSoot(i, j, k, fv, T, kappa, kpsoot);
