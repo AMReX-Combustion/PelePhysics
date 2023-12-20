@@ -441,7 +441,9 @@ Real
 SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
 {
   // Primitive components
+#ifndef PELELM_USE_SOOT
   const int qRhoIndx = m_sootIndx.qRhoIndx;
+#endif
   const int qTempIndx = m_sootIndx.qTempIndx;
   const int qSpecIndx = m_sootIndx.qSpecIndx;
   const int qSootIndx = m_sootIndx.qSootIndx;
