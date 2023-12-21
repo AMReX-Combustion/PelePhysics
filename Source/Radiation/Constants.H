@@ -11,7 +11,7 @@ struct RadComps
   int ch4Indx = -1;
   int c2h4Indx = -1;
 
-  void checkIndices() const
+  void checkIndices()
   {
     if (co2Indx > 0) {
       std::cout << " include radiative gas: CO2, the index is " << co2Indx
