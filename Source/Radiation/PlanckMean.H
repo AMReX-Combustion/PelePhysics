@@ -19,7 +19,7 @@ private:
   amrex::GpuArray<amrex::Real, 126UL> kpsoot_;
 
   AMREX_GPU_HOST
-  static void read_kp_file(
+  void read_kp_file(
     std::string file_path, amrex::GpuArray<amrex::Real, 126UL>& file_data)
   {
     std::ifstream datastream(file_path);
