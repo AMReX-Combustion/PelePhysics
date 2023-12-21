@@ -313,7 +313,7 @@ public:
   }
 
   /// \brief Problem specific injection routine, calls #sprayInjection
-  bool injectParticles(
+  static bool injectParticles(
     amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
   /// \brief Generalized initializer routine. Calls #InitSprayParticles and
