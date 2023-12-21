@@ -28,8 +28,7 @@ private:
     }
     size_t idx = 0;
     for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
-      if (!amrex::almostEqual(
-            T_temp, 300.0 + 20.0 * static_cast<amrex::Real>(idx))) {
+      if (!amrex::almostEqual(T_temp, 300.0 + 20.0 * idx)) {
         amrex::Abort(
           "PeleRad: Invalid temperatures in data file: " + file_path);
       }
@@ -38,7 +37,7 @@ private:
           "PeleRad: Invalid number of entries in data file, must have 126: " +
           file_path);
       }
-      file_data[idx] = static_cast<unsigned long>(kp_temp);
+      file_data[idx] = kp_temp;
       idx++;
     }
     if (idx < 126) {
