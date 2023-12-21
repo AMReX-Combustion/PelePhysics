@@ -51,7 +51,7 @@ public:
       consolidation_(1),
       composite_solve_(1),
       fine_level_solve_only_(0),
-      use_hypre_(0),
+      use_hypre_(false),
       ebbc_type_(2)
   {
   }
