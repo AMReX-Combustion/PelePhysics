@@ -193,7 +193,7 @@ impose_wall(
 #ifdef AMREX_USE_EB
     use_EB
 #endif
-  ,
+  /*unused*/,
 #ifdef AMREX_USE_EB
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
@@ -203,7 +203,7 @@ impose_wall(
 #ifdef AMREX_USE_EB
     ijkc_prev
 #endif
-  ,
+  /*unused*/,
   splash_breakup* N_SB,
   const SBPtrs& rf,
   const amrex::Real film_h)

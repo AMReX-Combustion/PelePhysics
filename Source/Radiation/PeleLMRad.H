@@ -373,7 +373,7 @@ public:
     });
   }
 
-  RadComps const readRadIndices() const { return rc_; }
+  RadComps readRadIndices() const { return rc_; }
 
   amrex::Vector<amrex::MultiFab> const& G() { return solution_; }
 

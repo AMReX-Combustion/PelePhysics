@@ -5,9 +5,7 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_Gpu.H>
 
-namespace PeleRad {
-
-namespace RadProp {
+namespace PeleRad::RadProp {
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -101,7 +99,5 @@ getRadPropSoot(
   absc(i, j, k) += fv(i, j, k) * kp_soot; // cgs, in cm-1
 }
 
-} // namespace RadProp
-
-} // namespace PeleRad
+} // namespace PeleRad::RadProp
 #endif
