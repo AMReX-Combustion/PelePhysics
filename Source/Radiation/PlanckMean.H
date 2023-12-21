@@ -26,7 +26,7 @@ private:
     if (!datastream.is_open()) {
       amrex::Abort("PeleRad: Failed to open data file: " + file_path);
     }
-    size_t idx = 0;
+    int idx = 0;
     for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
       if (!amrex::almostEqual(
             T_temp, 300.0 + 20.0 * static_cast<amrex::Real>(idx))) {
@@ -38,7 +38,7 @@ private:
           "PeleRad: Invalid number of entries in data file, must have 126: " +
           file_path);
       }
-      file_data[idx] = static_cast<int>(kp_temp);
+      file_data[idx] = kp_temp;
       idx++;
     }
     if (idx < 126) {
