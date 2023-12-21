@@ -65,8 +65,8 @@ public:
     auto const max_coarsening_level = mlmgpp_.max_coarsening_level_;
     auto const agglomeration = mlmgpp_.agglomeration_;
     auto const consolidation = mlmgpp_.consolidation_;
-    info_.setAgglomeration(agglomeration);
-    info_.setConsolidation(consolidation);
+    info_.setAgglomeration(agglomeration != 0);
+    info_.setConsolidation(consolidation != 0);
     info_.setMaxCoarseningLevel(max_coarsening_level);
   }
 
@@ -99,8 +99,9 @@ public:
     mlmg.setVerbose(verbose);
     mlmg.setBottomVerbose(bottom_verbose);
     mlmg.setBottomSolver(amrex::BottomSolver::bicgstab);
-    if (use_hypre)
+    if (use_hypre) {
       mlmg.setBottomSolver(amrex::MLMG::BottomSolver::hypre);
+    }
     mlmg.setBottomTolerance(bottom_reltol);
     mlmg.setBottomToleranceAbs(bottom_abstol);
 

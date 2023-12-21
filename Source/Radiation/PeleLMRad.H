@@ -69,8 +69,9 @@ public:
     )
     : geom_(geom), grids_(grids), dmap_(dmap), rc_(rc), mlmgpp_(mlmgpp)
   {
-    if (amrex::ParallelDescriptor::IOProcessor())
+    if (amrex::ParallelDescriptor::IOProcessor()) {
       rc_.checkIndices();
+    }
 
     auto const nlevels = geom_.size();
 
@@ -202,18 +203,20 @@ public:
       if (j >= dlo.y && j <= dhi.y && k >= dlo.z && k <= dhi.z) {
         int jj, kk;
 
-        if (j < bx.loVect3d()[1])
+        if (j < bx.loVect3d()[1]) {
           jj = bx.loVect3d()[1];
-        else if (j > bx.hiVect3d()[1])
+        } else if (j > bx.hiVect3d()[1]) {
           jj = bx.hiVect3d()[1];
-        else
+        } else {
           jj = j;
-        if (k < bx.loVect3d()[2])
+        }
+        if (k < bx.loVect3d()[2]) {
           kk = bx.loVect3d()[2];
-        else if (k > bx.hiVect3d()[2])
+        } else if (k > bx.hiVect3d()[2]) {
           kk = bx.hiVect3d()[2];
-        else
+        } else {
           kk = k;
+        }
 
         if (i > dhi.x) {
           robin_cell = true;
@@ -226,18 +229,20 @@ public:
       } else if (i >= dlo.x && i <= dhi.x && k >= dlo.z && k <= dhi.z) {
         int ii, kk;
 
-        if (i < bx.loVect3d()[0])
+        if (i < bx.loVect3d()[0]) {
           ii = bx.loVect3d()[0];
-        else if (i > bx.hiVect3d()[0])
+        } else if (i > bx.hiVect3d()[0]) {
           ii = bx.hiVect3d()[0];
-        else
+        } else {
           ii = i;
-        if (k < bx.loVect3d()[2])
+        }
+        if (k < bx.loVect3d()[2]) {
           kk = bx.loVect3d()[2];
-        else if (k > bx.hiVect3d()[2])
+        } else if (k > bx.hiVect3d()[2]) {
           kk = bx.hiVect3d()[2];
-        else
+        } else {
           kk = k;
+        }
 
         if (j > dhi.y) {
           robin_cell = true;
@@ -250,18 +255,20 @@ public:
       } else if (i >= dlo.x && i <= dhi.x && j >= dlo.y && j <= dhi.y) {
         int ii, jj;
 
-        if (i < bx.loVect3d()[0])
+        if (i < bx.loVect3d()[0]) {
           ii = bx.loVect3d()[0];
-        else if (i > bx.hiVect3d()[0])
+        } else if (i > bx.hiVect3d()[0]) {
           ii = bx.hiVect3d()[0];
-        else
+        } else {
           ii = i;
-        if (j < bx.loVect3d()[1])
+        }
+        if (j < bx.loVect3d()[1]) {
           jj = bx.loVect3d()[1];
-        else if (j > bx.hiVect3d()[1])
+        } else if (j > bx.hiVect3d()[1]) {
           jj = bx.hiVect3d()[1];
-        else
+        } else {
           jj = j;
+        }
 
         if (k > dhi.z) {
           robin_cell = true;
@@ -342,8 +349,9 @@ public:
   {
     // std::cout << "begin of evaluateRad() \n";
 
-    for (int ilev = 0; ilev < grids_.size(); ++ilev)
+    for (int ilev = 0; ilev < grids_.size(); ++ilev) {
       bcoef_[ilev].FillBoundary();
+    }
     //        if (composite_solve_)
     rte_->solve();
     //        else
@@ -365,7 +373,7 @@ public:
     });
   }
 
-  RadComps const readRadIndices() const { return rc_; }
+  RadComps readRadIndices() const { return rc_; }
 
   amrex::Vector<amrex::MultiFab> const& G() { return solution_; }
 

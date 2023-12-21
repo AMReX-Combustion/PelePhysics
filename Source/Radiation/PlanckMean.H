@@ -11,16 +11,16 @@ namespace PeleRad {
 class PlanckMean
 {
 private:
-  amrex::GpuArray<amrex::Real, 126ul> kpco2_;
-  amrex::GpuArray<amrex::Real, 126ul> kph2o_;
-  amrex::GpuArray<amrex::Real, 126ul> kpco_;
-  amrex::GpuArray<amrex::Real, 126ul> kpch4_;
-  amrex::GpuArray<amrex::Real, 126ul> kpc2h4_;
-  amrex::GpuArray<amrex::Real, 126ul> kpsoot_;
+  amrex::GpuArray<amrex::Real, 126UL> kpco2_;
+  amrex::GpuArray<amrex::Real, 126UL> kph2o_;
+  amrex::GpuArray<amrex::Real, 126UL> kpco_;
+  amrex::GpuArray<amrex::Real, 126UL> kpch4_;
+  amrex::GpuArray<amrex::Real, 126UL> kpc2h4_;
+  amrex::GpuArray<amrex::Real, 126UL> kpsoot_;
 
   AMREX_GPU_HOST
   void read_kp_file(
-    std::string file_path, amrex::GpuArray<amrex::Real, 126ul>& file_data)
+    std::string file_path, amrex::GpuArray<amrex::Real, 126UL>& file_data)
   {
     std::ifstream datastream(file_path);
     if (!datastream.is_open()) {
@@ -28,7 +28,8 @@ private:
     }
     size_t idx = 0;
     for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
-      if (!amrex::almostEqual(T_temp, 300.0 + 20.0 * idx)) {
+      if (!amrex::almostEqual(
+            T_temp, 300.0 + 20.0 * static_cast<amrex::Real>(idx))) {
         amrex::Abort(
           "PeleRad: Invalid temperatures in data file: " + file_path);
       }
@@ -37,7 +38,7 @@ private:
           "PeleRad: Invalid number of entries in data file, must have 126: " +
           file_path);
       }
-      file_data[idx] = kp_temp;
+      file_data[idx] = static_cast<int>(kp_temp);
       idx++;
     }
     if (idx < 126) {
@@ -73,22 +74,22 @@ public:
   }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kpco2() const { return kpco2_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kpco2() const { return kpco2_; }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kph2o() const { return kph2o_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kph2o() const { return kph2o_; }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kpco() const { return kpco_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kpco() const { return kpco_; }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kpch4() const { return kpch4_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kpch4() const { return kpch4_; }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kpc2h4() const { return kpc2h4_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kpc2h4() const { return kpc2h4_; }
 
   AMREX_GPU_HOST_DEVICE
-  const amrex::GpuArray<amrex::Real, 126ul>& kpsoot() const { return kpsoot_; }
+  const amrex::GpuArray<amrex::Real, 126UL>& kpsoot() const { return kpsoot_; }
 };
 
 } // namespace PeleRad

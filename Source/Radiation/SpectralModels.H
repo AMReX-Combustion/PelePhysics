@@ -5,9 +5,7 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_Gpu.H>
 
-namespace PeleRad {
-
-namespace RadProp {
+namespace PeleRad::RadProp {
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -38,7 +36,7 @@ amrex::Real
 interpk(
   int const& TindexL,
   amrex::Real const& weight,
-  amrex::GpuArray<amrex::Real, 126ul> const& k)
+  amrex::GpuArray<amrex::Real, 126UL> const& k)
 {
   return (1.0 - weight) * k[TindexL] + weight * k[TindexL + 1];
 }
@@ -56,9 +54,9 @@ getRadPropGas(
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& pressure,
   amrex::Array4<amrex::Real> const& absc,
-  amrex::GpuArray<amrex::Real, 126ul> const& kdataco2,
-  amrex::GpuArray<amrex::Real, 126ul> const& kdatah2o,
-  amrex::GpuArray<amrex::Real, 126ul> const& kdataco)
+  amrex::GpuArray<amrex::Real, 126UL> const& kdataco2,
+  amrex::GpuArray<amrex::Real, 126UL> const& kdatah2o,
+  amrex::GpuArray<amrex::Real, 126UL> const& kdataco)
 {
   int TindexL = 0;
   amrex::Real weight = 1.0;
@@ -88,7 +86,7 @@ getRadPropSoot(
   amrex::Array4<const amrex::Real> const& fv,
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<amrex::Real> const& absc,
-  amrex::GpuArray<amrex::Real, 126ul> const& kdatasoot)
+  amrex::GpuArray<amrex::Real, 126UL> const& kdatasoot)
 {
   int TindexL = 0;
   amrex::Real weight = 1.0;
@@ -101,7 +99,5 @@ getRadPropSoot(
   absc(i, j, k) += fv(i, j, k) * kp_soot; // cgs, in cm-1
 }
 
-} // namespace RadProp
-
-} // namespace PeleRad
+} // namespace PeleRad::RadProp
 #endif
