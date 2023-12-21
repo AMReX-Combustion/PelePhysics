@@ -26,9 +26,10 @@ private:
     if (!datastream.is_open()) {
       amrex::Abort("PeleRad: Failed to open data file: " + file_path);
     }
-    size_t idx = 0;
+    int idx = 0;
     for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
-      if (!amrex::almostEqual(T_temp, 300.0 + 20.0 * idx)) {
+      if (!amrex::almostEqual(
+            T_temp, 300.0 + 20.0 * static_cast<amrex::Real>(idx))) {
         amrex::Abort(
           "PeleRad: Invalid temperatures in data file: " + file_path);
       }
