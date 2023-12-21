@@ -38,7 +38,7 @@ private:
           "PeleRad: Invalid number of entries in data file, must have 126: " +
           file_path);
       }
-      file_data[idx] = static_cast<int>(kp_temp);
+      file_data[idx] = static_cast<size_t>(kp_temp);
       idx++;
     }
     if (idx < 126) {
