@@ -41,12 +41,27 @@ def convert(
     jacobian,
     qss_format_input,
     qss_symbolic_jac,
+    chemistry,
+    gas_name,
+    interface_name
 ):
     """Convert a mechanism file."""
     print(f"""Converting file {fname}""")
-    mechanism = ct.Solution(fname)
+
+    mechanismIsHomogeneous = chemistry == "homogeneous"
+    if not mechanismIsHomogeneous:
+        print(f"""\tHomogeneous phase name is '{gas_name}'""")
+        print(f"""\tGas-solid interface name is '{interface_name}'""")
+
+    interface = None if mechanismIsHomogeneous else\
+                ct.Interface(fname, interface_name)
+    mechanism = ct.Solution(fname) if mechanismIsHomogeneous else\
+                interface.adjacent[gas_name]
+
     conv = converter.Converter(
         mechanism,
+        interface,
+        chemistry,
         jacobian,
         qss_format_input,
         qss_symbolic_jac,
@@ -105,6 +120,22 @@ def main():
         "-lq", "--lst_qss", help="QSS mechanism directory file list", type=str
     )
 
+    group2 = parser.add_mutually_exclusive_group(required=True)
+    group2.add_argument("-c", "--chemistry", type=str,
+            help="Information regarding whether the supplied"+\
+                 " Mechanism file specified Homogeneous or"+\
+                 " heterogeneous chemistry")
+    parser.add_argument(
+        "--gas_name",
+        type=str,
+        default = "gas",
+        help="Name of the homogeneous phase in the mechanism file")
+    parser.add_argument(
+        "--interface_name",
+        type=str,
+        default = None,
+        help="Name of the gas-solid interface in the mechanism file")
+
     parser.add_argument(
         "--qss_format_input",
         help="Input file for QSS Jacobian formatting parameters mechanisms",
@@ -133,12 +164,23 @@ def main():
 
     args = parser.parse_args()
 
+    # sanity checks
+    assert args.chemistry in ['homogeneous', 'heterogeneous'],\
+        """Invalid chemistry specifier.\nThe required -c/--chemistry argument should be either\n"homogeneous" or "heterogeneous." """
+
+    if args.chemistry == "heterogeneous":
+        assert not isinstance(args.interface_name, type(None)),\
+            f"""Missing --interface_name argument\nPlease specify the name of the gas-solid interface mentioned in {args.fname}"""
+
     if args.fname:
         convert(
             args.fname,
             not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name
         )
     elif args.lst:
         convert_lst(

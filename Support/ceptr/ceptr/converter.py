@@ -27,11 +27,14 @@ class Converter:
     def __init__(
         self,
         mechanism,
+        interface,
+        chemistry,
         jacobian=True,
         qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
         self.mechanism = mechanism
+        self.interface = interface
 
         self.jacobian = jacobian
 
