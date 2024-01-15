@@ -1,0 +1,239 @@
+! Mechanism for CO/H2 oxidation by Hemanth Kolla
+! based on the skeletal mechanism of Evatt R. Hawkes and Ramanan Sankaran
+!
+! Only difference from skeletal mechanism is the inclusion of H2O2 and
+! the reactions corresponding to its formation and consumption
+! 
+! The skeletal mechanism is derived from a detailed C1 mechanism by J. Li
+!
+! Original notes on the skeletal mechanism and the detailed mechanisms follow
+!
+! ------------------------------------------------------------------------------
+! Skeletal Mechanism for CO/H2 oxidation
+! by Evatt R. Hawkes and Ramanan Sankaran
+!
+! Reduced from complete C1 Mechanism that is published in:
+!
+! J. Li, PhD Thesis, 
+! Mechanical and Aerospace Engineering Department, 
+! Princeton University, Princeton NJ.  November 2004. Thesis No. 3122-T.
+!
+! http://www.princeton.edu/~combust/database/files/symposium/C1_Mechanism.zip
+!
+! At the time of writing, a publication to IJCK is in preparation 
+! by the authors of the complete mechanism.
+!
+! This mechanism was reduced specifically for the purpose of the
+! Direct Numerical Simulations performed in
+! Hawkes, E.R., Sankaran, R., Sutherland, J.C., and Chen, J.H. (2006)
+! Proc. Combust. Inst. 31, to appear.
+!
+! It was validated by comparison with the full mechanism in several cases:
+! 1. freely propagating premixed flames in a range of equivalence ratios,
+! 2. opposed-flow non-premixed flames in a range of strains up to extinction,
+! 3. homogeneous ignition calculations for mixtures of fuel and oxidizer streams 
+!    and equilibrium products,
+! 4. two-dimensional DNS featuring extinction and local reignition.
+! In all cases the agreement was excellent.
+!
+! However, the mechanism is validated ONLY for the specific conditions of the 
+! DNS and is not expected to be valid in general.
+!
+! The following changes (only) were made to the complete mechanism:
+! 1) Only the species H2 O2 O OH H2O H HO2 CO CO2 HCO N2 were retained. 
+!    All other species and reactions involving these species were removed.  Note
+!    this includes all C containing species other than those essential for CO 
+!    oxidation: CO, CO2 and HCO.  For the atmospheric pressure of the simulation,
+!    H2O2 was also found to be unimportant and was removed.
+! 2) It was found HCO has only a minor importance, and its reaction rates were 
+!    dominated by a few key reactions.  These reactions (below) were retained
+!    and all others neglected.
+!
+! Steady state assumptions were investigated and found to be reasonably accurate
+! for fully burning conditions but it was found they increased stiffness, hence 
+! they were not employed.  For reference, a steady state approximation for HCO
+! and HO2 may be expected to perform reasonably well if the added stiffness can
+! be tackled.  However, note the HO2 steady state assumption will degrade the 
+! prediction of ignition at longer ignition delay times.
+!
+! ---------------------------------------------------------------------------------
+!
+! Notes on the original mechanism by its authors:
+!
+! Authors: J. Li, Z. Zhao, A. Kazakov, F.L. Dryer, 
+! Address: Dept. of Mechanical and Aerospace Engineering, 
+! Princeton University, Princeton, NJ 08544
+!
+! This C1 mechanism is based on the CH3OH mechanism of Held and Dryer (IJCK,1998, 30, 805)
+! with following important revision:
+! 1.  H2/O2 subset is updated to that of Li et al. (IJCK, in press, 2004)
+! 2.  CO + OH = CO2 + H is optimized to fit the literature experimental result 
+! 3.  HCO + M = H + CO + M is optimized to fit the literature experimental result
+! 4.  CH3 + HO2 = CH3O + OH is modified to match Scire's value at 1000 K 
+! 5.  CH3 + HO2 = CH4 + H is taken from Scire (IJCK, 2001, 33, 75)
+! 6.  CH3 + O2 = CH2O + OH is taken from Scire (2002, Ph.D. thesis)
+! 7.  CH2O + HO2 = HCO + H2O2 is from Eiteneer et al. (JPC A. 1998, 102, 5196)
+! 8.  CH2O + H = HCO + H2 is from Irdam et al. (IJCK 1993, 25, 285)
+! 9.  CH2O + M reactions are from Friedrichs et al.(IJCK 2004, 36, 157)
+! 10. CH3OH decomposition reactions are taken from GRI-3.0 (1999)
+! 11. CH2OH + HCO = CH2O + CH2O is taken from Friedrichs et al. (IJCK, 2004, 36, 157)
+! 12. CH2OH + HCO = CH3OH + CO is changed to keep the branching ratio with the above reaction
+! 13. HCOOH reactions are not included since it is not important and has large uncertainties
+! 14. dHf of OH is adjusted to 8.91 kcal/mol (Ruscic et al. JPC A. 2002, 106, 2727)
+! 15. thermochemical data of CH2OH is fit to Johnson & Hudgens' table (JPC 1996, 100, 19874)
+
+
+ELEMENTS
+C H O N
+END
+
+SPECIES
+H2 O2 O OH H2O H HO2 H2O2 CO CO2 HCO N2 
+END
+
+TRANS ALL
+H2                 1    38.000     2.920     0.000     0.790   280.000          
+O2                 1   107.400     3.458     0.000     1.600     3.800          
+O                  0    80.000     2.750     0.000     0.000     0.000          
+OH                 1    80.000     2.750     0.000     0.000     0.000          
+H2O                2   572.400     2.605     1.844     0.000     4.000          
+H                  0   145.000     2.050     0.000     0.000     0.000          
+HO2                2   107.400     3.458     0.000     0.000     1.000          
+H2O2               2   107.400     3.458     0.000     0.000     3.800          
+CO                 1    98.100     3.650     0.000     1.950     1.800          
+CO2                1   244.000     3.763     0.000     2.650     2.100          
+HCO                2   498.000     3.590     0.000     0.000     0.000          
+N2                 1    97.530     3.621     0.000     1.760     4.000          
+END
+
+
+
+REACTIONS
+
+! ************ H2-O2 Chain Reactions **********************
+
+! Hessler, J. Phys. Chem. A, 102:4517 (1998)
+H+O2=O+OH                 3.547e+15 -0.406  1.6599E+4
+
+! Sutherland et al., 21st Symposium, p. 929 (1986)
+O+H2=H+OH                 0.508E+05  2.67  0.629E+04
+
+! Michael and Sutherland, J. Phys. Chem. 92:3853 (1988)
+H2+OH=H2O+H               0.216E+09  1.51  0.343E+04
+
+! Sutherland et al., 23rd Symposium, p. 51 (1990)
+O+H2O=OH+OH               2.97e+06   2.02  1.34e+4
+
+! *************** H2-O2 Dissociation Reactions ******************
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+H2+M=H+H+M                4.577E+19 -1.40  1.0438E+05
+   H2/2.5/ H2O/12/
+   CO/1.9/ CO2/3.8/
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+O+O+M=O2+M                6.165E+15 -0.50  0.000E+00
+   H2/2.5/ H2O/12/
+   CO/1.9/ CO2/3.8/
+
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+O+H+M=OH+M                4.714E+18 -1.00  0.000E+00
+   H2/2.5/ H2O/12/
+   CO/1.9/ CO2/3.8/
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+!H+OH+M=H2O+M              2.212E+22 -2.00  0.000E+00
+H+OH+M=H2O+M               3.800E+22 -2.00  0.000E+00
+   H2/2.5/ H2O/12/
+   CO/1.9/ CO2/3.8/
+
+!************** Formation and Consumption of HO2******************
+
+! Cobos et al., J. Phys. Chem. 89:342 (1985) for kinf
+! Michael, et al., J. Phys. Chem. A, 106:5297 (2002) for k0
+
+!******************************************************************************
+! MAIN BATH GAS IS N2 (comment this reaction otherwise)
+!
+ H+O2(+M)=HO2(+M)      1.475E+12  0.60  0.00E+00
+     LOW/6.366E+20  -1.72  5.248E+02/
+     TROE/0.8  1E-30  1E+30/
+     H2/2.0/ H2O/11./ O2/0.78/ CO/1.9/ CO2/3.8/
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986) [modified]
+HO2+H=H2+O2               1.66E+13   0.00   0.823E+03
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986) [modified]
+HO2+H=OH+OH               7.079E+13   0.00   2.95E+02
+
+! Baulch et al., J. Phys. Chem. Ref Data, 21:411 (1992)
+HO2+O=O2+OH               0.325E+14  0.00   0.00E+00
+
+! Keyser, J. Phys. Chem. 92:1193 (1988)
+HO2+OH=H2O+O2             2.890E+13  0.00 -4.970E+02
+
+! ***************Formation and Consumption of H2O2******************
+
+! Hippler et al., J. Chem. Phys. 93:1755 (1990)
+HO2+HO2=H2O2+O2            4.200e+14  0.00  1.1982e+04
+  DUPLICATE
+HO2+HO2=H2O2+O2            1.300e+11  0.00 -1.6293e+3
+  DUPLICATE
+
+! Brouwer et al., J. Chem. Phys. 86:6171 (1987) for kinf
+! Warnatz, J. in Combustion chemistry (1984) for k0
+H2O2(+M)=OH+OH(+M)         2.951e+14   0.00  4.843E+04
+  LOW/1.202E+17  0.00  4.55E+04/
+  TROE/0.5 1E-30 1E+30/
+  H2/2.5/ H2O/12/
+  CO/1.9/ CO2/3.8/
+
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+H2O2+H=H2O+OH             0.241E+14  0.00  0.397E+04
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+H2O2+H=HO2+H2             0.482E+14  0.00  0.795E+04
+
+! Tsang and Hampson, J. Phys. Chem. Ref. Data, 15:1087 (1986)
+H2O2+O=OH+HO2             9.550E+06  2.00  3.970E+03
+
+! Hippler and Troe, J. Chem. Phys. Lett. 192:333 (1992)
+H2O2+OH=HO2+H2O           1.000E+12  0.00  0.000
+    DUPLICATE
+H2O2+OH=HO2+H2O           5.800E+14  0.00  9.557E+03
+    DUPLICATE
+
+!************** CO/HCO REACTIONS *****************
+
+! Troe, 15th Symposium
+CO+O(+M)=CO2(+M)           1.80E+10  0.00  2384.
+! Fit of Westmoreland, AiChe J., 1986, rel. to N2 - Tim adjusted from MTA's
+! rate constant, which was rel to Ar.
+   LOW/1.55E+24 -2.79  4191./
+   H2/2.5/ H2O/12/ CO/1.9/ CO2/3.8/
+
+! Tsang and Hampson, JPC Ref. Data, 15:1087 (1986)
+CO+O2=CO2+O               0.253E+13  0.00  0.477E+05
+
+! This rate constant is modified per an updated value for HO2+HO2=H2O2+OH
+CO+HO2=CO2+OH             3.01E+13   0.00   2.30E+04
+
+! This study (2004) by matching literature experiment results
+CO+OH=CO2+H                    2.229E+05  1.89  -1158.7
+
+! This study (2004) by matching literature experiment results
+HCO+M=H+CO+M           4.7485E+11  0.659  1.4874E+04
+H2/2.5/ H2O/6/ CO/1.9/ CO2/3.8/
+
+! Timonen et al., JPC, 92:651 (1988)
+HCO+O2=CO+HO2             0.758E+13  0.00  0.410E+03 
+
+! Timonen et al., JPC, 91:692 (1987)
+HCO+H=CO+H2               0.723E+14  0.00  0.000E+00  
+
+! All reactions from Tsang and Hampson, JPC Ref. Data, 15:1087 (1986)
+HCO + O = CO2 + H                 3.000E+13  0.00  0.000E+00
+
+END
