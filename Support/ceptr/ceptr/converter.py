@@ -33,6 +33,8 @@ class Converter:
         qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
+        self.mechIsAHetMech = chemistry == "heterogeneous"
+
         self.mechanism = mechanism
         self.interface = interface
 
@@ -41,7 +43,11 @@ class Converter:
         # Symbolic computations
         self.qss_symbolic_jacobian = qss_symbolic_jacobian
 
-        self.mechpath = pathlib.Path(self.mechanism.source)
+        if self.mechIsAHetMech:
+            self.mechpath = pathlib.Path(self.interface.source)
+        else:
+            self.mechpath = pathlib.Path(self.mechanism.source)
+
         self.rootname = "mechanism"
         self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
         self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
@@ -81,7 +87,8 @@ class Converter:
     def set_species(self):
         """Set the species."""
         # Fill species counters
-        self.species_info.n_all_species = self.mechanism.n_species
+        self.species_info.n_gas_species = self.mechanism.n_species
+
         try:
             self.species_info.n_qssa_species = self.mechanism.input_data[
                 "n_qssa_species"
@@ -90,8 +97,12 @@ class Converter:
             self.species_info.n_qssa_species = 0
 
         self.species_info.n_species = (
-            self.species_info.n_all_species - self.species_info.n_qssa_species
+            self.species_info.n_gas_species - self.species_info.n_qssa_species
         )
+
+        self.species_info.n_all_species = self.species_info.n_species
+        if self.mechIsAHetMech:
+            self.species_info.n_all_species += self.interface.n_species
 
         # get the unsorted self.qssa_species_list
         qssa_list_tmp = []
@@ -169,6 +180,24 @@ class Converter:
             ],
             "d",
         )
+
+        if self.mechIsAHetMech:
+            # Initialize gas-solid interface species
+            self.species_info.n_surface_species = self.interface.n_species
+            for id, species in enumerate(self.interface.species()):
+                weight = 0.0
+                for elem, coef in species.composition.items():
+                    aw = self.interface.atomic_weight(elem)
+                    weight += coef * aw
+                tempsp = csi.SpeciesDb(
+                        id, sorted_idx, species.name, weight, species.charge
+                    )
+                self.species_info.all_species.append(tempsp)
+                self.species_info.surface_species_list.append(species.name)
+                self.species_info.ordered_idx_map[species.name] = sorted_idx
+                self.species_info.mech_idx_map[species.name] = id
+                sorted_idx += 1
+
         if self.species_info.n_qssa_species > 0:
             print("Full species list with transported first and QSSA last:")
         for all_species in self.species_info.all_species:
