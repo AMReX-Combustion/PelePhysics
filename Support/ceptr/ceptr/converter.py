@@ -632,20 +632,36 @@ class Converter:
 
     def mechanism_header_includes(self, fstream):
         """Write the mechanism header includes."""
+        n_hom_b_elem = len(self.mechanism.element_names)
+        n_hom_species = len(self.species_info.nonqssa_species_list)
+        n_hom_reactions = self.mechanism.n_reactions
+        site_density = n_het_b_elem = n_het_species = n_het_reactions = 0
+
+        all_species_list =  self.species_info.nonqssa_species_list
+
         cw.writer(fstream)
         cw.writer(fstream, "#include <AMReX_Gpu.H>")
         cw.writer(fstream, "#include <AMReX_REAL.H>")
         cw.writer(fstream)
         cw.writer(fstream, "/* Elements")
-        nb_elem = 0
+
         for elem in self.mechanism.element_names:
             cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
-            nb_elem += 1
+
+        if not isinstance(self.interface, type(None)):
+            n_het_species = self.interface.n_species
+            n_het_reactions = self.interface.n_reactions
+            all_species_list += self.interface.species_names
+            for elem in self.interface.element_names:
+                if elem not in self.mechanism.element_names:
+                    cw.writer(fstream, f"{n_hom_b_elem+n_het_b_elem}  {elem}")
+                    n_het_b_elem += 1
         cw.writer(fstream, "*/")
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("Species"))
         nb_ions = 0
-        for species in self.species_info.nonqssa_species_list:
+
+        for species in all_species_list:
             s = cf.format_species(species)
             cw.writer(
                 fstream,
@@ -653,13 +669,40 @@ class Converter:
             )
             if s[-1] == "n" or s[-1] == "p" or s == "E":
                 nb_ions += 1
+
+        qssa_str = "QSSA_" if self.species_info.n_qssa_species > 0 else ""
+
         cw.writer(fstream)
-        cw.writer(fstream, f"#define NUM_ELEMENTS {nb_elem}")
-        cw.writer(fstream, f"#define NUM_SPECIES {self.species_info.n_species}")
+        cw.writer(fstream, f"#define NUM_GAS_ELEMENTS {n_hom_b_elem}" +
+                cw.comment("Elements in the homogeneous phase"))
+        cw.writer(fstream, f"#define NUM_{qssa_str}GAS_SPECIES {n_hom_species}" +
+                cw.comment("Species in the homogeneous phase"))
+        cw.writer(fstream, f"#define NUM_GAS_REACTIONS {n_hom_reactions}" +
+                cw.comment("Reactions in the homogeneous phase"))
+
+        if not isinstance(self.interface, type(None)):
+            site_density = self.interface.site_density
+            site_density *= 0.1# convert from Kmol/m**2 to mol/cm**2
+
+        cw.writer(fstream)
+        cw.writer(fstream, f"#define SITE_DENSITY {site_density:E}"
+                + cw.comment("mol/cm^2"))
+        cw.writer(fstream)
+        cw.writer(fstream, f"#define NUM_SURFACE_ELEMENTS {n_het_b_elem}"+
+                cw.comment("Additional elements in heterogeneous phase"))
+        cw.writer(fstream, f"#define NUM_SURFACE_SPECIES {n_het_species}" +
+                           cw.comment("Species in the heterogeneous phase"))
+        cw.writer(fstream, f"#define NUM_SURFACE_REACTIONS {n_het_reactions}" +
+                           cw.comment("Reactions in the heterogeneous phase"))
+        cw.writer(fstream)
+
+        cw.writer(fstream,
+                f"#define NUM_ELEMENTS NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS")
+        cw.writer(fstream,
+                f"#define NUM_SPECIES NUM_GAS_SPECIES + NUM_SURFACE_SPECIES")
+        cw.writer(fstream,
+                f"#define NUM_REACTIONS NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS")
+        cw.writer(fstream)
         cw.writer(fstream, f"#define NUM_IONS {nb_ions}")
-        cw.writer(
-            fstream,
-            f"#define NUM_REACTIONS {len(self.mechanism.reactions())}",
-        )
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_FIT 4")
