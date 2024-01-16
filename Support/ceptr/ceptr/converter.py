@@ -54,9 +54,21 @@ class Converter:
         self.species_info = csi.SpeciesInfo()
 
         self.set_species()
+
+        # indexing of homogeneous reactions
+        # The first 3 (troe, sri, lindemann) are fallout reactions
+        # followed by three-body, simple and other "weird" reactions
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
-        self.reaction_info = cri.sort_reactions(self.mechanism)
+
+        # indexing of heterogeneous reactions
+        # All the reactions are simple reactions and are either
+        # "Interface" or "Sticking" reactions
+        # within the interface reactions three sub-types exist:
+        # Elementary, Surface-Coverage Modified and FORD
+        # 6/interface/sticking
+        # 6/7        /8
+        self.reaction_info = cri.sort_reactions(self.mechanism, self.interface)
         # QSS  -- sort reactions/networks/check validity of QSSs
         if self.species_info.n_qssa_species > 0:
             print("QSSA information")
