@@ -27,10 +27,10 @@ class ReactionInfo:
         self.n_qssa_reactions = 0
         self.qfqr_co_idx_map = []
 
-        if not isinstance(interface, type(None)):
+        if interface is not None:
             self.rs_unsorted += interface.reactions()
 
-        self.hasRxns = len(self.rs_unsorted) > 0
+        self.has_reactions = len(self.rs_unsorted) > 0
 
 def sort_reactions(mechanism, interface):
     """Sort reactions."""
@@ -78,8 +78,10 @@ def sort_reactions(mechanism, interface):
         if r not in reaction_info.rs:
             # skip all interface-Arrhenius and sticking-Arrhenius heterogeneous reactions
             # heterogeneous reactions are added after all the homogeneous reactions
-            if any([r.reaction_type == "interface-Arrhenius",
-                    r.reaction_type == "sticking-Arrhenius"]):
+            if any([
+                r.reaction_type == "interface-Arrhenius",
+                r.reaction_type == "sticking-Arrhenius",
+            ]):
                 continue
 
             if r.third_body is None:
@@ -93,8 +95,10 @@ def sort_reactions(mechanism, interface):
         if r not in reaction_info.rs:
             # skip all interface-Arrhenius and sticking-Arrhenius heterogeneous reactions
             # heterogeneous reactions are added after all the homogeneous reactions
-            if any([r.reaction_type == "interface-Arrhenius",
-                    r.reaction_type == "sticking-Arrhenius"]):
+            if any([
+                r.reaction_type == "interface-Arrhenius",
+                r.reaction_type == "sticking-Arrhenius",
+            ]):
                 continue
 
             reaction_info.idxmap[k] = i
@@ -103,7 +107,7 @@ def sort_reactions(mechanism, interface):
     reaction_info.index.append(i)
 
     # surface reactions
-    if not isinstance(interface, type(None)):
+    if interface is not None:
         for k, r in enumerate(reaction_info.rs_unsorted):
             if r not in reaction_info.rs:
                 if r.reaction_type == "interface-Arrhenius":
@@ -129,7 +133,7 @@ def rmap(fstream, reaction_info):
     """Write reverse reaction map."""
     rmap = reaction_info.idxmap.keys()
     str_rmap = ",".join(str(x) for x in rmap)
-    if reaction_info.hasRxns:
+    if reaction_info.has_reactions:
         cw.writer(fstream, f"const int rmap[NUM_REACTIONS] = {{{str_rmap}}};")
 
 
@@ -139,14 +143,14 @@ def get_rmap(fstream, reaction_info):
     cw.writer(fstream, cw.comment("Returns 0-based map of reaction order"))
     cw.writer(fstream, "void GET_RMAP" + cc.sym)
 
-    if reaction_info.hasRxns:
+    if reaction_info.has_reactions:
         cw.writer(fstream, "(int * _rmap)")
     else:
         cw.writer(fstream, "(int * /*_rmap*/)")
 
     cw.writer(fstream, "{")
 
-    if reaction_info.hasRxns:
+    if reaction_info.has_reactions:
         cw.writer(fstream, f"for (int j=0; j<NUM_REACTIONS; ++j)")
         cw.writer(fstream, "{")
         cw.writer(fstream, "_rmap[j] = rmap[j];")
