@@ -690,7 +690,7 @@ class Converter:
         for elem in self.mechanism.element_names:
             cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
 
-        if not isinstance(self.interface, type(None)):
+        if self.interface is not None:
             n_het_species = self.interface.n_species
             n_het_reactions = self.interface.n_reactions
             all_species_list += self.interface.species_names
