@@ -113,9 +113,11 @@ class Converter:
             self.species_info.n_gas_species - self.species_info.n_qssa_species
         )
 
-        self.species_info.n_all_species = self.species_info.n_species
-        if self.mechIsAHetMech:
-            self.species_info.n_all_species += self.interface.n_species
+        self.species_info.n_all_species = (
+            self.species_info.n_species + self.interface.n_species
+            if self.mechIsAHetMech
+            else self.species_info.n_species
+        )
 
         # get the unsorted self.qssa_species_list
         qssa_list_tmp = []

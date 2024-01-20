@@ -32,6 +32,7 @@ class ReactionInfo:
 
         self.has_reactions = len(self.rs_unsorted) > 0
 
+
 def sort_reactions(mechanism, interface):
     """Sort reactions."""
     reaction_info = ReactionInfo(mechanism, interface)
@@ -78,10 +79,10 @@ def sort_reactions(mechanism, interface):
         if r not in reaction_info.rs:
             # skip all interface-Arrhenius and sticking-Arrhenius heterogeneous reactions
             # heterogeneous reactions are added after all the homogeneous reactions
-            if any([
-                r.reaction_type == "interface-Arrhenius",
-                r.reaction_type == "sticking-Arrhenius",
-            ]):
+            if (
+                r.reaction_type == "interface-Arrhenius"
+                or r.reaction_type == "sticking-Arrhenius"
+            ):
                 continue
 
             if r.third_body is None:
@@ -95,10 +96,10 @@ def sort_reactions(mechanism, interface):
         if r not in reaction_info.rs:
             # skip all interface-Arrhenius and sticking-Arrhenius heterogeneous reactions
             # heterogeneous reactions are added after all the homogeneous reactions
-            if any([
-                r.reaction_type == "interface-Arrhenius",
-                r.reaction_type == "sticking-Arrhenius",
-            ]):
+            if (
+                r.reaction_type == "interface-Arrhenius"
+                or r.reaction_type == "sticking-Arrhenius"
+            ):
                 continue
 
             reaction_info.idxmap[k] = i
@@ -109,19 +110,17 @@ def sort_reactions(mechanism, interface):
     # surface reactions
     if interface is not None:
         for k, r in enumerate(reaction_info.rs_unsorted):
-            if r not in reaction_info.rs:
-                if r.reaction_type == "interface-Arrhenius":
-                    reaction_info.idxmap[k] = i
-                    reaction_info.rs.append(r)
-                    i += 1
+            if r not in reaction_info.rs and r.reaction_type == "interface-Arrhenius":
+                reaction_info.idxmap[k] = i
+                reaction_info.rs.append(r)
+                i += 1
         reaction_info.index.append(i)
 
         for k, r in enumerate(reaction_info.rs_unsorted):
-            if r not in reaction_info.rs:
-                if r.reaction_type == "sticking-Arrhenius":
-                    reaction_info.idxmap[k] = i
-                    reaction_info.rs.append(r)
-                    i += 1
+            if r not in reaction_info.rs and r.reaction_type == "sticking-Arrhenius":
+                reaction_info.idxmap[k] = i
+                reaction_info.rs.append(r)
+                i += 1
         reaction_info.index.append(i)
 
     reaction_info.is_sorted = True
@@ -151,7 +150,7 @@ def get_rmap(fstream, reaction_info):
     cw.writer(fstream, "{")
 
     if reaction_info.has_reactions:
-        cw.writer(fstream, f"for (int j=0; j<NUM_REACTIONS; ++j)")
+        cw.writer(fstream, "for (int j=0; j<NUM_REACTIONS; ++j)")
         cw.writer(fstream, "{")
         cw.writer(fstream, "_rmap[j] = rmap[j];")
         cw.writer(fstream, "}")
