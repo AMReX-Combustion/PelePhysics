@@ -15,7 +15,7 @@ def process_qss(fname, nqssa, visualize, method):
     """Apply QSSA reduction to single Cantera yaml file."""
     # Load mechanism
     mechanism = ct.Solution(fname)
-    reaction_info = cri.sort_reactions(mechanism)
+    reaction_info = cri.sort_reactions(mechanism, interface=None)
     mechpath = pathlib.Path(mechanism.source)
     qssaname = mechpath.parents[0] / "qssa.yaml"
 
@@ -72,9 +72,9 @@ def process_qss(fname, nqssa, visualize, method):
         raise ValueError("Failure to generate QSSA mechanism.")
 
     qssa.update_user_header({"description": f"QSSA of {mechanism.name}"})
-    qssa.update_user_data({
-        "qssa_species": qssa_species, "n_qssa_species": len(qssa_species)
-    })
+    qssa.update_user_data(
+        {"qssa_species": qssa_species, "n_qssa_species": len(qssa_species)}
+    )
     forward_to_remove_idx = []
     if forward_to_remove:
         for fr in forward_to_remove:
