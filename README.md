@@ -31,18 +31,27 @@ at https://amrex-combustion.github.io/PelePhysics/. The papers listed below unde
 PelePhysics has two required dependencies, AMReX and SUNDIALS, which are both git submodules located the `Submodules` directory.
 The `ThirdParty` directory is used when building these submodules, and for downloading and building other optional submodules.
 
-Finally, the `Tests` directory includes several stand-alone codes for exercising various aspects of the physics modules mentioned above.
+Finally, the `Testing` directory includes several stand-alone codes for exercising various aspects of the physics modules mentioned above.
 
 ## Getting Started
 
 PelePhysics is primarily intended as a library for use with other Pele codes. For more information on how to download PelePhysics and
 its dependencies, and how to build the stand-alone test codes, consult the [online documentation](https://amrex-combustion.github.io/PelePhysics/GettingStarted.html).
 
+## Acknowledgment
+
+This research was supported by the Exascale Computing Project (ECP), Project
+Number: 17-SC-20-SC, a collaborative effort of two DOE organizations -- the
+Office of Science and the National Nuclear Security Administration --
+responsible for the planning and preparation of a capable exascale ecosystem --
+including software, applications, hardware, advanced system engineering, and
+early testbed platforms -- to support the nation's exascale computing
+imperative.
 
 ## Citation
 
 To cite the multi-physics (soot, spray, radiation) capabilities in PelePhysics that were imported from
-PeleMP and PeleRad, please use the following [Journal of Fluids Engineering article](PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite):
+PeleMP and PeleRad, please use the following [Journal of Fluids Engineering article](https://doi.org/10.1115/1.4064494):
 ```
 @article{owen2023pelemp,
   title={PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite},
@@ -53,7 +62,7 @@ PeleMP and PeleRad, please use the following [Journal of Fluids Engineering arti
 }
 ```
 
-To cite PelePhysics as a whole and its use as part of the broader Pele suite, please cite the following
+To cite PelePhysics as a whole and its use as part of the broader Pele suite, please use the following
 SIAM Parallel Processing article:
 
 ```
@@ -70,6 +79,16 @@ SIAM Parallel Processing article:
   journal = {{SIAM Proceedings Series on Parallel Processing for Scientific Computing}}
 }
 ```
+
+## Getting help, contributing
+
+Do you have a question ? Found an issue ? Please use the [GitHub Discussions](https://github.com/AMReX-Combustion/PelePhysics/discussions) to engage
+with the development team or open a new [GitHub issue](https://github.com/AMReX-Combustion/PelePhysics/issues) to report a bug. The development team
+also encourages users to take an active role in respectfully answering each other's questions in these spaces. When reporting a bug, it is helpful
+to provide as much detail as possible, including a case description and the major compile and runtime options being used. Though not required,
+it is most effective to create a fork of this repository and share a branch of that fork with a case that minimally reproduces the error.
+
+New contributions to *PelePhysics* are welcome ! Contributing Guidelines are provided in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## CEPTR
 
