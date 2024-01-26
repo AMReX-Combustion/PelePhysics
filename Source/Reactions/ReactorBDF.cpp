@@ -489,6 +489,7 @@ ReactorBDF::react(
 #else
   amrex::Abort(
     "BDF reactor is not compatible with large mechanisms on the GPU.");
+  return 0;
 #endif
 }
 
