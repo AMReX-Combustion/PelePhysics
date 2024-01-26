@@ -20,6 +20,7 @@ CPickler.py_gpu
 dodecane_wang.cpp_opt3
 drm19.cpp_OK
 callgrind.out*
+.ccls-cache
 
 # AMReX build directories
 d/

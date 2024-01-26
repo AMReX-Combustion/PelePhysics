@@ -17,6 +17,7 @@ sympy = "^1.12"
 symengine = "^0.9.2"
 pandas = ">=2.0.3"
 toml = ">=0.10.2"
+pyarrow = "^15.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0"
