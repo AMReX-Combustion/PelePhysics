@@ -50,18 +50,6 @@ imperative.
 
 ## Citation
 
-To cite the multi-physics (soot, spray, radiation) capabilities in PelePhysics that were imported from
-PeleMP and PeleRad, please use the following [Journal of Fluids Engineering article](https://doi.org/10.1115/1.4064494):
-```
-@article{owen2023pelemp,
-  title={PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite},
-  author={Owen, Landon D and Ge, Wenjun and Rieth, Martin and Arienti, Marco and Esclapez, Lucas and S Soriano, Bruno and Mueller, Michael E and Day, Marc and Sankaran, Ramanan and Chen, Jacqueline H},
-  journal={Journal of Fluids Engineering},
-  pages={1--41},
-  year={2023}
-}
-```
-
 To cite PelePhysics as a whole and its use as part of the broader Pele suite, please use the following
 SIAM Parallel Processing article:
 
@@ -77,6 +65,18 @@ SIAM Parallel Processing article:
   author = {Marc T. {Henry de Frahan} and Lucas Esclapez and Jon Rood and Nicholas Wimer and Paul Mullowney and Bruce A. Perry and Landon Owen and Hariswaran Sitaraman and Shashank Yellapantula and Malik Hassanaly and Mohammad J. Rahimi and Michael Martin and Olga Doronina and Sreejith Nadakkal Appukuttan and Martin Rieth and Wenjun Ge and Ramanan Sankaran and Ann Almgren and Weiqun Zhang and John B. Bell and Ray Grout and Marc S. Day and Jacqueline H. Chen},
   title = {The {Pele} Simulation Suite for Reacting Flows at Exascale},
   journal = {{SIAM Proceedings Series on Parallel Processing for Scientific Computing}}
+}
+```
+
+To cite the multi-physics (soot, spray, radiation) capabilities in PelePhysics that were imported from
+PeleMP and PeleRad, please use the following [Journal of Fluids Engineering article](https://doi.org/10.1115/1.4064494):
+```
+@article{owen2023pelemp,
+  title={PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite},
+  author={Owen, Landon D and Ge, Wenjun and Rieth, Martin and Arienti, Marco and Esclapez, Lucas and S Soriano, Bruno and Mueller, Michael E and Day, Marc and Sankaran, Ramanan and Chen, Jacqueline H},
+  journal={Journal of Fluids Engineering},
+  pages={1--41},
+  year={2023}
 }
 ```
 
