@@ -133,11 +133,15 @@ InterpolateGasPhase(
 #ifdef PELELM_USE_SPRAY
       inv_rho = 1.;
 #endif
+#ifndef PELELM_USE_SPRAY
       amrex::Real ke = 0.;
+#endif
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         amrex::Real vel = momarr(cur_indx, dir) * inv_rho;
         gpv.vel_fluid[dir] += cw * vel;
+#ifndef PELELM_USE_SPRAY
         ke += vel * vel / 2.;
+#endif
       }
       amrex::Real T_i = Tarr(cur_indx);
 #ifndef PELELM_USE_SPRAY

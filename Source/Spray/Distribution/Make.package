@@ -1,3 +1,6 @@
 CEXE_headers += DistBase.H
 CEXE_headers += Distributions.H
 CEXE_sources += Distributions.cpp
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray/Distribution
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Spray/Distribution

@@ -1,3 +1,6 @@
 
 CEXE_headers += Constants_Soot.H SootData.H SootReactions.H SootModel.H SootModel_derive.H
 CEXE_sources += SootModel.cpp SootModel_react.cpp SootModel_derive.cpp
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Soot
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Soot

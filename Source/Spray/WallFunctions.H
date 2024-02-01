@@ -96,7 +96,7 @@ check_wall(
   const amrex::IntVect& ijkc,
 #ifdef AMREX_USE_EB
   const amrex::IntVect& ijkc_prev,
-  const amrex::RealVect& vel_part,
+  const amrex::RealVect& /*vel_part*/,
   const bool use_EB,
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
@@ -185,17 +185,25 @@ impose_wall(
   const SprayData& fdat,
   const amrex::RealVect& dx,
   const amrex::RealVect& plo,
-  const amrex::RealVect& phi,
+  const amrex::RealVect& /*phi*/,
   amrex::IntVect& bflags,
   const amrex::Real* cBoilT,
   const amrex::Real p_fluid,
-  const bool use_EB,
+  const bool
+#ifdef AMREX_USE_EB
+    use_EB
+#endif
+  /*unused*/,
 #ifdef AMREX_USE_EB
   amrex::Array4<amrex::EBCellFlag const> const& flags,
   amrex::Array4<amrex::Real const> const& bcent,
   amrex::Array4<amrex::Real const> const& bnorm,
 #endif
-  const amrex::IntVect& ijkc_prev,
+  const amrex::IntVect&
+#ifdef AMREX_USE_EB
+    ijkc_prev
+#endif
+  /*unused*/,
   splash_breakup* N_SB,
   const SBPtrs& rf,
   const amrex::Real film_h)
@@ -215,8 +223,8 @@ impose_wall(
     ijkc_prev, vel_part, use_EB, flags, bcent, bnorm,
 #endif
     par_dot, normal);
-  amrex::IntVect refl_prev = ijkc;
-  bool do_deposit = false;
+  // amrex::IntVect refl_prev = ijkc;
+  // bool do_deposit = false;
   if (do_refl) {
     amrex::Real Nw_Vp = normal.dotProduct(vel_part);
     if (do_splash) {

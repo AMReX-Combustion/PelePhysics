@@ -136,7 +136,7 @@ calculateFilmSource(
       // Species index
       const int fspec = fdat.indx[spf];
       // Gas species index, might be the same
-      const int fdspec = fdat.dep_indx[spf];
+      // const int fdspec = fdat.dep_indx[spf];
       // Convert mass diffusion coefficient from mixture average
       // to binary for fuel only, not concerned with other species
       Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SPU.rhod_conv;
@@ -158,7 +158,7 @@ calculateFilmSource(
     film_height = new_mass / (rho_film * film_area);
     if (film_height > min_height) {
       if (SPRAY_FUEL_NUM > 1) {
-        rho_film = 0.;
+        // rho_film = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           Y_film[spf] = amrex::min(
             1., amrex::max(
@@ -166,12 +166,12 @@ calculateFilmSource(
           if (Y_film[spf] < 1.E-12) {
             Y_film[spf] = 0.;
           }
-          rho_film += Y_film[spf] / fdat.rhoL(T_film, spf);
+          // rho_film += Y_film[spf] / fdat.rhoL(T_film, spf);
         }
-        rho_film = 1. / rho_film;
-      } else {
-        rho_film = fdat.rhoL(T_film, 0);
-      }
+        // rho_film = 1. / rho_film;
+      } // else {
+        //  rho_film = fdat.rhoL(T_film, 0);
+      //}
     } else {
       film_height = 0.;
       new_mass = 0.;
