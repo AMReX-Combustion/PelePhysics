@@ -78,6 +78,9 @@ def convert_lst(
     qss_format_input,
     qss_symbolic_jac,
     ncpu,
+    chemistry,
+    gas_name,
+    interface_name,
 ):
     """Convert mechanisms from a file containing a list of directories."""
     mechnames = parse_lst_file(lst)
@@ -90,6 +93,9 @@ def convert_lst(
                 repeat(jacobian),
                 repeat(qss_format_input),
                 repeat(qss_symbolic_jac),
+                repeat(chemistry),
+                repeat(gas_name),
+                repeat(interface_name),
             ),
         )
 
@@ -98,6 +104,9 @@ def convert_lst_qss(
     lst,
     jacobian,
     ncpu,
+    chemistry,
+    gas_name,
+    interface_name,
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
     mechnames, qss_format_inputs = parse_qss_lst_file(lst)
@@ -105,7 +114,15 @@ def convert_lst_qss(
     with Pool(ncpu) as pool:
         pool.starmap(
             convert,
-            zip(mechnames, repeat(jacobian), qss_format_inputs, repeat(True)),
+            zip(
+                mechnames,
+                repeat(jacobian),
+                qss_format_inputs,
+                repeat(True),
+                repeat(chemistry),
+                repeat(gas_name),
+                repeat(interface_name),
+            ),
         )
 
 
@@ -197,12 +214,18 @@ def main():
             args.qss_format_input,
             args.qss_symbolic_jacobian,
             args.ncpu,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name,
         )
     elif args.lst_qss:
         convert_lst_qss(
             args.lst_qss,
             not args.no_jacobian,
             args.ncpu,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name,
         )
     end = time.time()
     print(f"CEPTR run time: {end-start:.2f} s")
