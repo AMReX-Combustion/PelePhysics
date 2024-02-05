@@ -1,11 +1,11 @@
 #include "mechanism.H"
-const int rmap[3] = {0, 1, 2};
+const int rmap[NUM_REACTIONS] = {0, 1, 2};
 
 // Returns 0-based map of reaction order
 void
 GET_RMAP(int* _rmap)
 {
-  for (int j = 0; j < 3; ++j) {
+  for (int j = 0; j < NUM_REACTIONS; ++j) {
     _rmap[j] = rmap[j];
   }
 }

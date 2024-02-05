@@ -21,10 +21,21 @@
 #define H2O2_ID 7
 #define N2_ID 8
 
-#define NUM_ELEMENTS 3
-#define NUM_SPECIES 9
+#define NUM_GAS_ELEMENTS 3   // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 9    // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 27 // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 27
 
 #define NUM_FIT 4
 

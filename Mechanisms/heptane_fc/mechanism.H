@@ -65,10 +65,21 @@
 #define C7H15X2_ID 50
 #define NXC7H16_ID 51
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 52
+#define NUM_GAS_ELEMENTS 4    // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 52    // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 218 // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 218
 
 #define NUM_FIT 4
 
@@ -32111,7 +32122,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[725] = 5.54637286E+00;
   COFD[726] = -4.87070324E-01;
   COFD[727] = 2.03983467E-02;
-  COFD[728] = -1.79310920E+01;
+  COFD[728] = -1.79310921E+01;
   COFD[729] = 4.98037650E+00;
   COFD[730] = -4.26676911E-01;
   COFD[731] = 1.83007231E-02;
@@ -36803,7 +36814,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[5417] = 3.30394764E+00;
   COFD[5418] = -2.17920112E-01;
   COFD[5419] = 9.60284243E-03;
-  COFD[5420] = -1.79310920E+01;
+  COFD[5420] = -1.79310921E+01;
   COFD[5421] = 4.98037650E+00;
   COFD[5422] = -4.26676911E-01;
   COFD[5423] = 1.83007231E-02;

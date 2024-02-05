@@ -1,5 +1,5 @@
 #include "mechanism.H"
-const int rmap[289] = {
+const int rmap[NUM_REACTIONS] = {
   9,   11,  48,  55,  60,  61,  68,  70,  81,  111, 124, 128, 139, 148, 151,
   156, 157, 171, 179, 199, 207, 211, 212, 279, 282, 24,  4,   5,   6,   7,
   8,   32,  33,  0,   1,   2,   3,   10,  12,  13,  14,  15,  16,  17,  18,
@@ -25,7 +25,7 @@ const int rmap[289] = {
 void
 GET_RMAP(int* _rmap)
 {
-  for (int j = 0; j < 289; ++j) {
+  for (int j = 0; j < NUM_REACTIONS; ++j) {
     _rmap[j] = rmap[j];
   }
 }
