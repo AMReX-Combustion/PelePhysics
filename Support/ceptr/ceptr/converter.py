@@ -759,14 +759,14 @@ class Converter:
         cw.writer(fstream)
 
         cw.writer(
-            fstream, "#define NUM_ELEMENTS NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS"
+            fstream, "#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)"
         )
         cw.writer(
             fstream,
-            f"#define NUM_SPECIES NUM_{qssa_str}GAS_SPECIES + NUM_SURFACE_SPECIES",
+            f"#define NUM_SPECIES (NUM_{qssa_str}GAS_SPECIES + NUM_SURFACE_SPECIES)",
         )
         cw.writer(
-            fstream, "#define NUM_REACTIONS NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS"
+            fstream, "#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)"
         )
         cw.writer(fstream)
         cw.writer(fstream, f"#define NUM_IONS {nb_ions}")
