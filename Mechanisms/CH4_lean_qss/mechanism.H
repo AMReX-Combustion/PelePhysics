@@ -26,10 +26,21 @@
 #define CH2O_ID 11
 #define N2_ID 12
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 13
+#define NUM_GAS_ELEMENTS 4      // Elements in the homogeneous phase
+#define NUM_QSSA_GAS_SPECIES 13 // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 73    // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_QSSA_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 73
 
 #define NUM_FIT 4
 
@@ -3201,23 +3212,23 @@ comp_sc_qss(amrex::Real* sc_qss, amrex::Real* qf_co, amrex::Real* qr_co)
                             qf_co[15] - qf_co[16] - qf_co[23] - qf_co[40];
   amrex::Real CH2OH_rhs = -CH2OH_num / CH2OH_denom;
 
-  amrex::Real CH2OH_CH2S = (epsilon + 1.0 * qr_co[16]) / CH2OH_denom;
+  amrex::Real CH2OH_CH2_S = (epsilon + 1.0 * qr_co[16]) / CH2OH_denom;
 
   // QSSA species 1: CH2(S)
 
-  amrex::Real CH2S_num = epsilon + 1.0 * qr_co[6] + 1.0 * qr_co[18] +
-                         1.0 * qf_co[20] + 1.0 * qr_co[29] + 1.0 * qr_co[30] +
-                         1.0 * qr_co[31] + 1.0 * qr_co[33] + 1.0 * qr_co[36];
-  amrex::Real CH2S_denom = epsilon - qf_co[6] - qr_co[16] - qf_co[18] -
-                           qr_co[20] - qf_co[28] - qf_co[29] - qf_co[30] -
-                           qf_co[31] - qf_co[32] - qf_co[33] - qf_co[34] -
-                           qf_co[35] - qf_co[36];
-  amrex::Real CH2S_rhs = -CH2S_num / CH2S_denom;
+  amrex::Real CH2_S_num = epsilon + 1.0 * qr_co[6] + 1.0 * qr_co[18] +
+                          1.0 * qf_co[20] + 1.0 * qr_co[29] + 1.0 * qr_co[30] +
+                          1.0 * qr_co[31] + 1.0 * qr_co[33] + 1.0 * qr_co[36];
+  amrex::Real CH2_S_denom = epsilon - qf_co[6] - qr_co[16] - qf_co[18] -
+                            qr_co[20] - qf_co[28] - qf_co[29] - qf_co[30] -
+                            qf_co[31] - qf_co[32] - qf_co[33] - qf_co[34] -
+                            qf_co[35] - qf_co[36];
+  amrex::Real CH2_S_rhs = -CH2_S_num / CH2_S_denom;
 
-  amrex::Real CH2S_CH2OH = (epsilon + 1.0 * qf_co[16]) / CH2S_denom;
-  amrex::Real CH2S_CH2 = (epsilon + 1.0 * qr_co[28] + 1.0 * qr_co[32] +
-                          1.0 * qr_co[34] + 1.0 * qr_co[35]) /
-                         CH2S_denom;
+  amrex::Real CH2_S_CH2OH = (epsilon + 1.0 * qf_co[16]) / CH2_S_denom;
+  amrex::Real CH2_S_CH2 = (epsilon + 1.0 * qr_co[28] + 1.0 * qr_co[32] +
+                           1.0 * qr_co[34] + 1.0 * qr_co[35]) /
+                          CH2_S_denom;
 
   // QSSA species 0: CH2
 
@@ -3232,21 +3243,22 @@ comp_sc_qss(amrex::Real* sc_qss, amrex::Real* qf_co, amrex::Real* qr_co)
 
   amrex::Real CH2_HCO =
     (epsilon + 1.0 * qr_co[5] + 1.0 * qr_co[25]) / CH2_denom;
-  amrex::Real CH2_CH2S = (epsilon + 1.0 * qf_co[28] + 1.0 * qf_co[32] +
-                          1.0 * qf_co[34] + 1.0 * qf_co[35]) /
-                         CH2_denom;
+  amrex::Real CH2_CH2_S = (epsilon + 1.0 * qf_co[28] + 1.0 * qf_co[32] +
+                           1.0 * qf_co[34] + 1.0 * qf_co[35]) /
+                          CH2_denom;
 
   // Putting it all together
   amrex::Real H_0 = CH2_HCO;
-  amrex::Real H_1 = CH2S_CH2OH;
-  amrex::Real H_2 = CH2_CH2S / (1 - CH2OH_CH2S * H_1);
-  sc_qss[0] = ((CH2_rhs - HCO_rhs * H_0) - (CH2S_rhs - CH2OH_rhs * H_1) * H_2) /
-              ((1 - HCO_CH2 * H_0) - CH2S_CH2 * H_2);
+  amrex::Real H_1 = CH2_S_CH2OH;
+  amrex::Real H_2 = CH2_CH2_S / (1 - CH2OH_CH2_S * H_1);
+  sc_qss[0] =
+    ((CH2_rhs - HCO_rhs * H_0) - (CH2_S_rhs - CH2OH_rhs * H_1) * H_2) /
+    ((1 - HCO_CH2 * H_0) - CH2_S_CH2 * H_2);
 
-  sc_qss[1] = ((CH2S_rhs - CH2OH_rhs * H_1) - (CH2S_CH2 * sc_qss[0])) /
-              (1 - CH2OH_CH2S * H_1);
+  sc_qss[1] = ((CH2_S_rhs - CH2OH_rhs * H_1) - (CH2_S_CH2 * sc_qss[0])) /
+              (1 - CH2OH_CH2_S * H_1);
 
-  sc_qss[3] = CH2OH_rhs - (+CH2OH_CH2S * sc_qss[1]);
+  sc_qss[3] = CH2OH_rhs - (+CH2OH_CH2_S * sc_qss[1]);
 
   sc_qss[2] = HCO_rhs - (HCO_CH2 * sc_qss[0]);
 
