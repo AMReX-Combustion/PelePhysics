@@ -27,10 +27,27 @@ Generating for a single chemistry
 
 There are three ways to use CEPTR to generate C++ mechanism files for a given chemistry
 
-1. Using CEPTR directly::
+1. Using CEPTR directly:
+
+   Executed from the ``${PELE_PHYSICS_HOME}/Support/ceptr`` directory, the most general usage of CEPTR is::
+
+     $ poetry run convert -f ${PELEPHYSICS_HOME}/Mechanisms/${chemistry}/mechanism.yaml \
+       --chemistry {chemistry-type} \
+       --gas_name {gas-name} \
+       --interface_name {interface-name}
+
+   The ``--chemistry``, or equivalently ``-c``,  argument allows users to convey if the ``${chemistry}`` of interest is either one of two valid options, namely, ``homogeneous`` or ``heterogeneous``.
+   Similarly, the ``--gas_name`` and ``--interface_name`` allows users to specify the names of the homogeneous phase and gas-solid interface prescribed in the corresponding ``mechanism.yaml`` file.
+
+   The default ``chemistry-type``, ``gas-name`` are ``homogeneous`` and ``gas`` respectively while that for ``interface-name`` is ``None``.
+   Note that if a ``heterogeneous`` ``chemistry-type`` is specified, the user must necessarily specify a corresponding ``interface-name``.
+
+   An example of directly using CEPTR for homogeneous mechanisms is::
 
      $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
      $ poetry run convert -f ${PELE_PHYSICS_HOME}/Mechanisms/LiDryer/mechanism.yaml
+
+   NOTE: CEPTR interpretations of heterogeneous mechanisms is currently a work in progress.
 
 2. Using a helper script in the directory containing the ``mechanism.yaml`` file::
 
