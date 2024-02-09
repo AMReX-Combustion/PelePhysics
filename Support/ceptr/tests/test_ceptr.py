@@ -25,7 +25,9 @@ def test_air():
     mech_path = mechanism_path("air")
     fname = mech_path / "mechanism.yaml"
     mechanism = ct.Solution(fname)
-    conv = converter.Converter(mechanism)
+    interface = None
+    chemistry = "homogeneous"
+    conv = converter.Converter(mechanism, interface, chemistry)
     conv.writer()
     conv.formatter()
 
@@ -35,7 +37,9 @@ def test_lidryer():
     mech_path = mechanism_path("LiDryer")
     fname = mech_path / "mechanism.yaml"
     mechanism = ct.Solution(fname)
-    conv = converter.Converter(mechanism)
+    interface = None
+    chemistry = "homogeneous"
+    conv = converter.Converter(mechanism, interface, chemistry)
     conv.writer()
     conv.formatter()
 
@@ -45,6 +49,8 @@ def test_dodecane_lu():
     mech_path = mechanism_path("dodecane_lu")
     fname = mech_path / "mechanism.yaml"
     mechanism = ct.Solution(fname)
-    conv = converter.Converter(mechanism)
+    interface = None
+    chemistry = "homogeneous"
+    conv = converter.Converter(mechanism, interface, chemistry)
     conv.writer()
     conv.formatter()

@@ -41,12 +41,29 @@ def convert(
     jacobian,
     qss_format_input,
     qss_symbolic_jac,
+    chemistry,
+    gas_name,
+    interface_name,
 ):
     """Convert a mechanism file."""
     print(f"""Converting file {fname}""")
-    mechanism = ct.Solution(fname)
+
+    mechanism_is_homogeneous = chemistry == "homogeneous"
+    if not mechanism_is_homogeneous:
+        print(f"""\tHomogeneous phase name is '{gas_name}'""")
+        print(f"""\tGas-solid interface name is '{interface_name}'""")
+
+    interface = (
+        None if mechanism_is_homogeneous else ct.Interface(fname, interface_name)
+    )
+    mechanism = (
+        ct.Solution(fname) if mechanism_is_homogeneous else interface.adjacent[gas_name]
+    )
+
     conv = converter.Converter(
         mechanism,
+        interface,
+        chemistry,
         jacobian,
         qss_format_input,
         qss_symbolic_jac,
@@ -61,6 +78,9 @@ def convert_lst(
     qss_format_input,
     qss_symbolic_jac,
     ncpu,
+    chemistry,
+    gas_name,
+    interface_name,
 ):
     """Convert mechanisms from a file containing a list of directories."""
     mechnames = parse_lst_file(lst)
@@ -73,6 +93,9 @@ def convert_lst(
                 repeat(jacobian),
                 repeat(qss_format_input),
                 repeat(qss_symbolic_jac),
+                repeat(chemistry),
+                repeat(gas_name),
+                repeat(interface_name),
             ),
         )
 
@@ -81,6 +104,9 @@ def convert_lst_qss(
     lst,
     jacobian,
     ncpu,
+    chemistry,
+    gas_name,
+    interface_name,
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
     mechnames, qss_format_inputs = parse_qss_lst_file(lst)
@@ -88,7 +114,15 @@ def convert_lst_qss(
     with Pool(ncpu) as pool:
         pool.starmap(
             convert,
-            zip(mechnames, repeat(jacobian), qss_format_inputs, repeat(True)),
+            zip(
+                mechnames,
+                repeat(jacobian),
+                qss_format_inputs,
+                repeat(True),
+                repeat(chemistry),
+                repeat(gas_name),
+                repeat(interface_name),
+            ),
         )
 
 
@@ -103,6 +137,31 @@ def main():
     group.add_argument("-l", "--lst", help="Mechanism directory file list", type=str)
     group.add_argument(
         "-lq", "--lst_qss", help="QSS mechanism directory file list", type=str
+    )
+
+    parser.add_argument(
+        "-c",
+        "--chemistry",
+        choices=["homogeneous", "heterogeneous"],
+        help="Information regarding whether the supplied"
+        + " Mechanism file specified Homogeneous or"
+        + " heterogeneous chemistry",
+        type=str,
+        default="homogeneous",
+    )
+
+    parser.add_argument(
+        "--gas_name",
+        type=str,
+        default="gas",
+        help="Name of the homogeneous phase in the mechanism file",
+    )
+
+    parser.add_argument(
+        "--interface_name",
+        type=str,
+        default=None,
+        help="Name of the gas-solid interface in the mechanism file",
     )
 
     parser.add_argument(
@@ -133,12 +192,20 @@ def main():
 
     args = parser.parse_args()
 
+    if args.chemistry == "heterogeneous":
+        assert (
+            args.interface_name is not None
+        ), f"""Missing --interface_name argument.See 'phases' in {args.fname}"""
+
     if args.fname:
         convert(
             args.fname,
             not args.no_jacobian,
             args.qss_format_input,
             args.qss_symbolic_jacobian,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name,
         )
     elif args.lst:
         convert_lst(
@@ -147,12 +214,18 @@ def main():
             args.qss_format_input,
             args.qss_symbolic_jacobian,
             args.ncpu,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name,
         )
     elif args.lst_qss:
         convert_lst_qss(
             args.lst_qss,
             not args.no_jacobian,
             args.ncpu,
+            args.chemistry,
+            args.gas_name,
+            args.interface_name,
         )
     end = time.time()
     print(f"CEPTR run time: {end-start:.2f} s")

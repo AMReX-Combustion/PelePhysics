@@ -12,7 +12,7 @@ def format_species(species):
     # Excited species
     s = s.replace("*", "D")
     # Parenthesis
-    s = s.replace("(", "").replace(")", "")
+    s = s.replace("(", "_").replace(")", "")
     # Dash
     s = s.replace("-", "")
     return s

@@ -47,6 +47,9 @@ class SpeciesInfo:
         # number of non QSSA species
         self.n_species = 0
 
+        # list of surface species
+        self.surface_species_list = list()
+
         # all Species
         self.all_species = []
         self.all_species_list = []

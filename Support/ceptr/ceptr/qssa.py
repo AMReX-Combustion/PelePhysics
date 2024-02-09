@@ -15,7 +15,7 @@ def process_qss(fname, nqssa, visualize, method):
     """Apply QSSA reduction to single Cantera yaml file."""
     # Load mechanism
     mechanism = ct.Solution(fname)
-    reaction_info = cri.sort_reactions(mechanism)
+    reaction_info = cri.sort_reactions(mechanism, interface=None)
     mechpath = pathlib.Path(mechanism.source)
     qssaname = mechpath.parents[0] / "qssa.yaml"
 

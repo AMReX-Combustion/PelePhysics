@@ -68,10 +68,21 @@
 #define c7h14o24_ID 53
 #define n2_ID 54
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 55
+#define NUM_GAS_ELEMENTS 4      // Elements in the homogeneous phase
+#define NUM_QSSA_GAS_SPECIES 55 // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 724   // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_QSSA_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 724
 
 #define NUM_FIT 4
 
@@ -13251,15 +13262,15 @@ comp_sc_qss(amrex::Real* sc_qss, amrex::Real* qf_co, amrex::Real* qr_co)
 
   // QSSA species 11: ch2(s)
 
-  amrex::Real ch2s_num = epsilon + 1.0 * qf_co[41] + 1.0 * qf_co[127] +
-                         1.0 * qf_co[190] + 1.0 * qf_co[192] +
-                         1.0 * qf_co[195] + 1.0 * qf_co[198] +
-                         1.0 * qf_co[200] + 1.0 * qf_co[202] + 1.0 * qf_co[204];
-  amrex::Real ch2s_denom = epsilon - qf_co[42] - qf_co[128] - qf_co[189] -
-                           qf_co[191] - qf_co[193] - qf_co[194] - qf_co[196] -
-                           qf_co[197] - qf_co[199] - qf_co[201] - qf_co[203];
+  amrex::Real ch2_s_num =
+    epsilon + 1.0 * qf_co[41] + 1.0 * qf_co[127] + 1.0 * qf_co[190] +
+    1.0 * qf_co[192] + 1.0 * qf_co[195] + 1.0 * qf_co[198] + 1.0 * qf_co[200] +
+    1.0 * qf_co[202] + 1.0 * qf_co[204];
+  amrex::Real ch2_s_denom = epsilon - qf_co[42] - qf_co[128] - qf_co[189] -
+                            qf_co[191] - qf_co[193] - qf_co[194] - qf_co[196] -
+                            qf_co[197] - qf_co[199] - qf_co[201] - qf_co[203];
 
-  sc_qss[11] = -ch2s_num / ch2s_denom;
+  sc_qss[11] = -ch2_s_num / ch2_s_denom;
 
   // QSSA species 12: nc3h7co
 
