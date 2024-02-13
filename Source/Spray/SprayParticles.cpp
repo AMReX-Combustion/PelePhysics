@@ -18,15 +18,17 @@ SprayParticleContainer::init_bcs()
 {
   for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
     if (
-      phys_bc->lo(dir) == Symmetry || phys_bc->lo(dir) == SlipWall ||
-      phys_bc->lo(dir) == NoSlipWall) {
+      phys_bc->lo(dir) == amrex::PhysBCType::symmetry ||
+      phys_bc->lo(dir) == amrex::PhysBCType::slipwall ||
+      phys_bc->lo(dir) == amrex::PhysBCType::noslipwall) {
       reflect_lo[dir] = true;
     } else {
       reflect_lo[dir] = false;
     }
     if (
-      phys_bc->hi(dir) == Symmetry || phys_bc->hi(dir) == SlipWall ||
-      phys_bc->hi(dir) == NoSlipWall) {
+      phys_bc->hi(dir) == amrex::PhysBCType::symmetry ||
+      phys_bc->hi(dir) == amrex::PhysBCType::slipwall ||
+      phys_bc->hi(dir) == amrex::PhysBCType::noslipwall) {
       reflect_hi[dir] = true;
     } else {
       reflect_hi[dir] = false;
