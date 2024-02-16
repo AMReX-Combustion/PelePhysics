@@ -2431,7 +2431,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     """Write ckinu/skinu."""
     n_reactions = mechanism.n_reactions
     n_gas_reactions = reaction_info.n_reactions
-    phase = "SURFACE" if write_sk else "GAS"
+    phase = "surface" if write_sk else "gas"
     function_prefix = "S" if write_sk else "C"
     function_args = (
         "int* /*ki*/, int* /*nu*/" if n_reactions == 0 else "int ki[], int nu[]"
@@ -2446,12 +2446,12 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     for orig_idx, _ in reaction_info.idxmap.items():
 
         # ignore heterogeneous reactions for CKINU and homogeneous reactions for SKINU
-        if (phase == "GAS" and orig_idx >= n_gas_reactions) or (
-            phase == "SURFACE" and orig_idx < n_gas_reactions
+        if (phase == "gas" and orig_idx >= n_gas_reactions) or (
+            phase == "surface" and orig_idx < n_gas_reactions
         ):
             continue
         # ensure orig_idx is in the range 0, NUM_SURFACE_REACTIONS for SKINU
-        if phase == "SURFACE":
+        if phase == "surface":
             orig_idx -= n_gas_reactions
 
         reaction = mechanism.reaction(orig_idx)
@@ -2467,12 +2467,12 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
 
     for orig_idx, _ in reaction_info.idxmap.items():
         # ignore heterogeneous reactions for CKINU and homogeneous reactions for SKINU
-        if (phase == "GAS" and orig_idx >= n_gas_reactions) or (
-            phase == "SURFACE" and orig_idx < n_gas_reactions
+        if (phase == "gas" and orig_idx >= n_gas_reactions) or (
+            phase == "surface" and orig_idx < n_gas_reactions
         ):
             continue
         # ensure orig_idx is in the range 0, NUM_SURFACE_REACTIONS for SKINU
-        if phase == "SURFACE":
+        if phase == "surface":
             orig_idx -= n_gas_reactions
 
         reaction = mechanism.reaction(orig_idx)
@@ -2486,7 +2486,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     cw.writer(
         fstream,
         cw.comment(
-            f"Returns a count of {phase.lower()} species in a {phase.lower()} "
+            f"Returns a count of {phase} species in a {phase} "
             "reaction, and their indices"
         ),
     )
@@ -2502,19 +2502,22 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     if n_reactions > 0:
         str_ns = ",".join(str(x) for x in ns)
         cw.writer(
-            fstream, f"const int ns[NUM_{phase}_REACTIONS] =\n     {{{str_ns:s}}};"
+            fstream,
+            f"const int ns[NUM_{phase.upper()}_REACTIONS] =\n     {{{str_ns:s}}};",
         )
 
         str_ki = ",".join(",".join(str(x) for x in ki[j]) for j in range(n_reactions))
         cw.writer(
             fstream,
-            f"const int kiv[NUM_{phase}_REACTIONS*{maxsp}] =\n     {{{str_ki:s}}};",
+            f"const int kiv[NUM_{phase.upper()}_REACTIONS*{maxsp}] =\n    "
+            f" {{{str_ki:s}}};",
         )
 
         str_nu = ",".join(",".join(str(x) for x in nu[j]) for j in range(n_reactions))
         cw.writer(
             fstream,
-            f"const int nuv[NUM_{phase}_REACTIONS*{maxsp}] =\n     {{{str_nu:s}}};",
+            f"const int nuv[NUM_{phase.upper()}_REACTIONS*{maxsp}] =\n    "
+            f" {{{str_nu:s}}};",
         )
 
     cw.writer(fstream, "if (i < 1) {")
@@ -2526,7 +2529,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     if n_reactions == 0:
         cw.writer(fstream, "nspec = -1;")
     else:
-        cw.writer(fstream, f"if (i > NUM_{phase}_REACTIONS) {{")
+        cw.writer(fstream, f"if (i > NUM_{phase.upper()}_REACTIONS) {{")
         cw.writer(fstream, "nspec = -1;")
         cw.writer(fstream, "} else {")
 
