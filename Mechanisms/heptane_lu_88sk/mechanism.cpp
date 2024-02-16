@@ -59,12 +59,12 @@ GET_RMAP(int* _rmap)
   }
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int ki[], int nu[])
 {
-  const int ns[729] = {
+  const int ns[NUM_GAS_REACTIONS] = {
     3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 4, 3, 3, 4, 4,
     4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4,
     4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 4,
@@ -95,7 +95,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5,
     5, 5, 5, 5};
-  const int kiv[3645] = {
+  const int kiv[NUM_GAS_REACTIONS * 5] = {
     9,  0,  10, 0,  0,  10, 0,  9,  1,  0,  9,  1,  10, 0,  0,  10, 4,  9,  5,
     0,  9,  5,  10, 4,  0,  10, 2,  9,  4,  0,  9,  4,  10, 2,  0,  15, 9,  17,
     10, 0,  17, 10, 15, 9,  0,  7,  4,  6,  5,  0,  6,  5,  7,  4,  0,  6,  4,
@@ -288,7 +288,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     4,  80, 0,  0,  83, 23, 56, 4,  0,  84, 32, 52, 4,  0,  85, 33, 54, 4,  0,
     86, 24, 55, 4,  0,  82, 4,  36, 22, 5,  81, 4,  16, 5,  57, 82, 4,  26, 5,
     53, 82, 11, 36, 22, 12, 81, 11, 16, 12, 57, 82, 11, 26, 12, 53};
-  const int nuv[3645] = {
+  const int nuv[NUM_GAS_REACTIONS * 5] = {
     -1, -1, 1, 0, 0, -1, -1, 1,  1, 0, -1, -1, 1, 1, 0, -1, -1, 1,  1, 0,
     -1, -1, 1, 1, 0, -1, -1, 1,  1, 0, -1, -1, 1, 1, 0, -1, -1, 1,  1, 0,
     -1, -1, 1, 1, 0, -1, -1, 1,  1, 0, -1, -1, 1, 1, 0, -1, -1, 1,  1, 0,
@@ -476,7 +476,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     // Return max num species per reaction
     nspec = 5;
   } else {
-    if (i > 729) {
+    if (i > NUM_GAS_REACTIONS) {
       nspec = -1;
     } else {
       nspec = ns[i - 1];
