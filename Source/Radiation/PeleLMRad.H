@@ -73,25 +73,8 @@ public:
       rc_.checkIndices();
     }
 
-    auto const nlevels = geom_.size();
-
-    solution_.resize(nlevels);
-    rhs_.resize(nlevels);
-    acoef_.resize(nlevels);
-    bcoef_.resize(nlevels);
-
-    robin_a_.resize(nlevels);
-    robin_b_.resize(nlevels);
-    robin_f_.resize(nlevels);
-    absc_.resize(nlevels);
-
 #ifdef AMREX_USE_EB
-    for (int ilev = 0; ilev < nlevels; ++ilev) {
-      ebfactVec_.push_back(
-        &(static_cast<amrex::EBFArrayBoxFactory const&>(*factory[ilev])));
-    }
-
-    initVars(grids, dmap, ebfactVec_);
+    initVars(grids, dmap, factory);
 #else
     initVars(grids, dmap);
 #endif
@@ -296,7 +279,19 @@ public:
     grids_ = grids;
     dmap_ = dmap;
 
-    for (int ilev = 0; ilev < grids.size(); ++ilev) {
+    auto const nlevels = grids_.size();
+
+    solution_.resize(nlevels);
+    rhs_.resize(nlevels);
+    acoef_.resize(nlevels);
+    bcoef_.resize(nlevels);
+
+    robin_a_.resize(nlevels);
+    robin_b_.resize(nlevels);
+    robin_f_.resize(nlevels);
+    absc_.resize(nlevels);
+
+    for (int ilev = 0; ilev < nlevels; ++ilev) {
       solution_[ilev].define(grids[ilev], dmap[ilev], 1, ng);
       rhs_[ilev].define(grids[ilev], dmap[ilev], 1, 0);
       acoef_[ilev].define(grids[ilev], dmap[ilev], 1, 0);
@@ -315,11 +310,29 @@ public:
   void initVars(
     amrex::Vector<amrex::BoxArray> const& grids,
     amrex::Vector<amrex::DistributionMapping> const& dmap,
-    amrex::Vector<amrex::EBFArrayBoxFactory const*>& factory)
+    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox>>> const&
+      factory)
   {
     amrex::IntVect ng = amrex::IntVect{1};
     grids_ = grids;
     dmap_ = dmap;
+
+    auto const nlevels = grids_.size();
+
+    solution_.resize(nlevels);
+    rhs_.resize(nlevels);
+    acoef_.resize(nlevels);
+    bcoef_.resize(nlevels);
+
+    robin_a_.resize(nlevels);
+    robin_b_.resize(nlevels);
+    robin_f_.resize(nlevels);
+    absc_.resize(nlevels);
+
+    for (int ilev = 0; ilev < nlevels; ++ilev) {
+      ebfactVec_.push_back(
+        &(static_cast<amrex::EBFArrayBoxFactory const&>(*factory[ilev])));
+    }
 
     for (int ilev = 0; ilev < grids.size(); ++ilev) {
       solution_[ilev].define(
