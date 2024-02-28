@@ -91,12 +91,12 @@ GET_RMAP(int* _rmap)
   }
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int ki[], int nu[])
 {
-  const int ns[1049] = {
+  const int ns[NUM_GAS_REACTIONS] = {
     4, 4, 4, 3, 2, 2, 2, 2, 3, 3, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 4, 4, 4,
     4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 3, 4, 3,
     3, 3, 4, 4, 4, 4, 4, 4, 5, 4, 4, 3, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 5, 4, 3,
@@ -139,7 +139,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 3, 3, 3, 4, 4, 4, 4, 4, 4, 3, 4, 4,
     4, 4, 3, 4, 4, 4, 3, 3, 4, 4, 4, 4, 3, 4, 4, 3, 4, 5, 4, 3, 4, 4, 4, 5, 5,
     3, 3, 4, 4, 3, 3, 4, 4, 4, 3, 5, 5, 4, 4, 4, 4, 4, 5, 5, 4, 4, 4, 4, 4};
-  const int kiv[6294] = {
+  const int kiv[NUM_GAS_REACTIONS * 6] = {
     0,   1,   2,   3,   0,   0,   4,   2,   0,   3,   0,   0,   4,   3,   0,
     5,   0,   0,   3,   5,   2,   0,   0,   0,   0,   4,   0,   0,   0,   0,
     0,   4,   0,   0,   0,   0,   0,   4,   0,   0,   0,   0,   0,   4,   0,
@@ -560,7 +560,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     14,  9,   0,   113, 3,   102, 14,  9,   0,   117, 3,   113, 16,  0,   0,
     105, 3,   97,  16,  0,   0,   116, 3,   113, 16,  0,   0,   119, 3,   117,
     16,  0,   0,   120, 3,   113, 16,  0,   0};
-  const int nuv[6294] = {
+  const int nuv[NUM_GAS_REACTIONS * 6] = {
     -1, -1, 1, 1,  0,  0, -1, -1, 1, 1,  0,  0, -1, -1, 1, 1,  0,  0, -2, 1,  1,
     0,  0,  0, -2, 1,  0, 0,  0,  0, -2, 1,  0, 0,  0,  0, -2, 1,  0, 0,  0,  0,
     -2, 1,  0, 0,  0,  0, -1, -1, 1, 0,  0,  0, -1, -1, 1, 0,  0,  0, -2, 1,  0,
@@ -865,7 +865,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     // Return max num species per reaction
     nspec = 6;
   } else {
-    if (i > 1049) {
+    if (i > NUM_GAS_REACTIONS) {
       nspec = -1;
     } else {
       nspec = ns[i - 1];

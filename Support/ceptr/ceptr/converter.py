@@ -245,6 +245,14 @@ class Converter:
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
             cck.cksyms_str(cpp, self.mechanism, self.species_info)
             csp.sparsity(cpp, self.species_info)
+            if self.interface is not None:
+                cck.ckinu(
+                    cpp,
+                    self.interface,
+                    self.species_info,
+                    self.reaction_info,
+                    write_sk=True,
+                )
 
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")

@@ -25,12 +25,12 @@ GET_RMAP(int* _rmap)
   }
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int ki[], int nu[])
 {
-  const int ns[224] = {
+  const int ns[NUM_GAS_REACTIONS] = {
     4, 4, 3, 3, 4, 3, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     5, 4, 5, 4, 4, 4, 4, 3, 4, 5, 4, 4, 4, 5, 4, 5, 4, 4, 4, 3, 3, 4, 4, 4, 4,
     3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -40,7 +40,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 6, 5, 6, 3, 4, 4, 4, 4, 4, 3, 3,
     3, 3, 3, 5, 5, 4, 4, 5, 3, 3, 4, 4, 4, 5, 5, 3, 4, 4, 5, 4, 4, 3, 3, 4, 4,
     4, 3, 4, 3, 3, 3, 4, 4, 4, 4, 4, 3, 5, 5, 3, 4, 3, 4, 4, 3, 4, 3, 4, 4};
-  const int kiv[1344] = {
+  const int kiv[NUM_GAS_REACTIONS * 6] = {
     0,  1,  0,  2,  0,  0,  4,  3,  5,  6,  0,  0,  5,  3,  6,  0,  0,  0,  5,
     6,  7,  0,  0,  0,  4,  6,  5,  7,  0,  0,  6,  7,  3,  0,  0,  0,  5,  8,
     9,  0,  0,  0,  5,  8,  3,  6,  0,  0,  5,  9,  4,  8,  0,  0,  5,  9,  7,
@@ -112,7 +112,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     35, 5,  0,  0,  46, 44, 5,  0,  0,  0,  46, 5,  44, 4,  0,  0,  46, 6,  44,
     7,  0,  0,  38, 46, 5,  0,  0,  0,  38, 22, 35, 5,  0,  0,  35, 45, 5,  0,
     0,  0,  35, 5,  45, 4,  0,  0,  35, 6,  45, 7,  0,  0};
-  const int nuv[1344] = {
+  const int nuv[NUM_GAS_REACTIONS * 6] = {
     -1, -1, 1,  1,  0,  0,  -1, -1, 1,  1,  0,  0,  -1, -1, 1,  0,  0,  0,  -1,
     -1, 1,  0,  0,  0,  -1, -1, 1,  1,  0,  0,  -2, 1,  1,  0,  0,  0,  -1, -1,
     1,  0,  0,  0,  -1, -1, 1,  1,  0,  0,  -1, -1, 1,  1,  0,  0,  -1, -1, 1,
@@ -188,7 +188,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     // Return max num species per reaction
     nspec = 6;
   } else {
-    if (i > 224) {
+    if (i > NUM_GAS_REACTIONS) {
       nspec = -1;
     } else {
       nspec = ns[i - 1];

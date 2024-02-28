@@ -15,17 +15,17 @@ GET_RMAP(int* _rmap)
   }
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int ki[], int nu[])
 {
-  const int ns[84] = {3, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3,
-                      3, 3, 3, 3, 4, 2, 2, 2, 2, 3, 4, 3, 3, 3, 4, 3, 4,
-                      3, 4, 4, 3, 3, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-                      4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 5, 4, 4, 4, 4,
-                      3, 4, 4, 4, 4, 4, 2, 3, 4, 4, 4, 3, 3, 4, 4, 4};
-  const int kiv[420] = {
+  const int ns[NUM_GAS_REACTIONS] = {
+    3, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3,
+    4, 2, 2, 2, 2, 3, 4, 3, 3, 3, 4, 3, 4, 3, 4, 4, 3, 3, 4, 3, 4,
+    3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4,
+    5, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 2, 3, 4, 4, 4, 3, 3, 4, 4, 4};
+  const int kiv[NUM_GAS_REACTIONS * 5] = {
     1,  2,  4,  0,  0, 0,  2,  1,  4,  0, 6,  2,  3,  4,  0, 7,  2,  1,  13, 0,
     8,  2,  1,  13, 0, 9,  2,  14, 1,  0, 10, 2,  9,  4,  0, 11, 2,  12, 0,  0,
     13, 2,  11, 4,  0, 13, 2,  12, 1,  0, 14, 2,  13, 4,  0, 16, 2,  9,  13, 0,
@@ -47,7 +47,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     9,  3,  15, 2,  0, 9,  3,  14, 4,  0, 9,  18, 0,  0,  0, 9,  17, 1,  0,  0,
     9,  13, 10, 11, 0, 14, 9,  10, 13, 0, 18, 9,  17, 10, 0, 13, 11, 1,  0,  0,
     13, 11, 1,  0,  0, 13, 3,  11, 6,  0, 15, 3,  14, 6,  0, 17, 3,  16, 6,  0};
-  const int nuv[420] = {
+  const int nuv[NUM_GAS_REACTIONS * 5] = {
     -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
     -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0,
     -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
@@ -73,7 +73,7 @@ CKINU(const int i, int& nspec, int ki[], int nu[])
     // Return max num species per reaction
     nspec = 5;
   } else {
-    if (i > 84) {
+    if (i > NUM_GAS_REACTIONS) {
       nspec = -1;
     } else {
       nspec = ns[i - 1];
