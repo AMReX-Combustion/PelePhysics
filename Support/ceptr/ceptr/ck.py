@@ -15,31 +15,40 @@ def ckawt(fstream, mechanism):
     cw.writer(fstream, "}")
 
 
-def ckncf(fstream, mechanism, species_info):
-    """Write ckncf."""
+def ckncf(fstream, mechanism, species_info, write_sk=False):
+    """Write ckncf/skncf."""
     n_elements = mechanism.n_elements
-    n_species = species_info.n_species
+    phase = "surface" if write_sk else "gas"
+    function_prefix = "S" if write_sk else "C"
+    sp_list = (
+        species_info.surface_species_list
+        if write_sk
+        else species_info.nonqssa_species_list
+    )
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the elemental composition "))
     cw.writer(fstream, cw.comment("of the speciesi (mdim is num of elements)"))
-    cw.writer(fstream, "void CKNCF" + cc.sym + "(int * ncf)")
+    cw.writer(fstream, f"void {function_prefix}KNCF" + cc.sym + "(int * ncf)")
     cw.writer(fstream, "{")
     cw.writer(fstream, f"int kd = {n_elements}; ")
     cw.writer(fstream, cw.comment("Zero ncf"))
-    cw.writer(fstream, f"for (int id = 0; id < kd * {n_species}; ++ id) {{")
+    cw.writer(
+        fstream, f"for (int id = 0; id < kd * NUM_{phase.upper()}_SPECIES; ++ id) {{"
+    )
     cw.writer(fstream, " ncf[id] = 0; ")
     cw.writer(fstream, "}")
 
+    array_idx_correction = species_info.n_gas_species if write_sk else 0
     cw.writer(fstream)
-    for sp in species_info.nonqssa_species_list:
+    for sp in sp_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqssa_species[spec_idx]
+        species = species_info.all_species[spec_idx]
         cw.writer(fstream, cw.comment(f"{species.name}"))
         for elem, coef in mechanism.species(sp).composition.items():
             cw.writer(
                 fstream,
-                f"ncf[ {species_info.ordered_idx_map[sp]} * kd +"
+                f"ncf[ {species_info.ordered_idx_map[sp] - array_idx_correction} * kd +"
                 f" {mechanism.element_index(elem)} ] = {int(coef)}; "
                 + cw.comment(f"{elem}"),
             )
@@ -2543,14 +2552,13 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     cw.writer(fstream, "}")
 
 
-def ckkfkr(fstream, mechanism, species_info):
+def ckkfkr(fstream, mech_is_heterogeneous, mech_is_reacting):
     """Write ckkfkr."""
-    n_species = species_info.n_species
-    n_reactions = mechanism.n_reactions
+    comment_str = ", surface coverages" if mech_is_heterogeneous else ""
 
     cw.writer(fstream)
-    cw.writer(fstream, cw.comment("Returns the progress rates of each reactions"))
-    cw.writer(fstream, cw.comment("Given P, T, and mole fractions"))
+    cw.writer(fstream, cw.comment("Returns the progress rates of each reaction"))
+    cw.writer(fstream, cw.comment(f"Given P, T, and mole fractions{comment_str}"))
     cw.writer(
         fstream,
         "void CKKFKR"
@@ -2562,22 +2570,45 @@ def ckkfkr(fstream, mechanism, species_info):
 
     cw.writer(
         fstream,
-        f"amrex::Real c[{n_species}]; " + cw.comment("temporary storage"),
+        "amrex::Real c[NUM_SPECIES]; " + cw.comment("temporary storage"),
     )
     cw.writer(
         fstream,
         "amrex::Real PORT = 1e6 *"
         f" P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} *"
         " T); "
-        + cw.comment("1e6 * P/RT so c goes to SI units"),
+        + cw.comment("convert to SI (mol/cm^3 to mol/m^3)"),
     )
+
+    if mech_is_heterogeneous:
+        cw.writer(
+            fstream,
+            "amrex::Real site_density = 1e4 * SITE_DENSITY;"
+            + cw.comment("convert to SI (mol/cm^2 to mol/m^2)"),
+        )
 
     # now compute conversion
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute conversion, see Eq 10"))
-    cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
+    cw.writer(fstream, "for (int id = 0; id < NUM_GAS_SPECIES; ++id) {")
     cw.writer(fstream, "c[id] = x[id]*PORT;")
     cw.writer(fstream, "}")
+
+    if mech_is_heterogeneous:
+        cw.writer(fstream)
+        cw.writer(
+            fstream,
+            cw.comment(
+                "Compute surface species concentrations (aka surface coverages)"
+            ),
+        )
+        cw.writer(
+            fstream,
+            cw.comment("Assuming unit site occupancy number for all surface species"),
+        )
+        cw.writer(fstream, "for (int id = NUM_GAS_SPECIES; id < NUM_SPECIES; ++id) {")
+        cw.writer(fstream, "c[id] = x[id]*site_density;")
+        cw.writer(fstream, "}")
 
     # call progressRateFR
     cw.writer(fstream)
@@ -2586,11 +2617,21 @@ def ckkfkr(fstream, mechanism, species_info):
 
     # convert qdot to chemkin units
     cw.writer(fstream)
-    if n_reactions > 0:
+    if mech_is_reacting:
         cw.writer(fstream, cw.comment("convert to chemkin units"))
-        cw.writer(fstream, f"for (int id = 0; id < {n_reactions}; ++id) {{")
+        cw.writer(fstream, "for (int id = 0; id < NUM_GAS_REACTIONS; ++id) {")
         cw.writer(fstream, "q_f[id] *= 1.0e-6;")
         cw.writer(fstream, "q_r[id] *= 1.0e-6;")
         cw.writer(fstream, "}")
+
+        if mech_is_heterogeneous:
+            cw.writer(fstream)
+            cw.writer(fstream, cw.comment("convert surface qf/qr to chemkin units"))
+            cw.writer(
+                fstream, "for (int id = NUM_GAS_SPECIES; id < NUM_SPECIES; ++id) {"
+            )
+            cw.writer(fstream, "q_f[id] *= 1.0e-4;")
+            cw.writer(fstream, "q_r[id] *= 1.0e-4;")
+            cw.writer(fstream, "}")
 
     cw.writer(fstream, "}")

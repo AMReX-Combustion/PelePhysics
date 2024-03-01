@@ -235,17 +235,15 @@ class Converter:
             cri.rmap(cpp, self.reaction_info)
             cri.get_rmap(cpp, self.reaction_info)
             cck.ckinu(cpp, self.mechanism, self.species_info, self.reaction_info)
-            cck.ckkfkr(cpp, self.mechanism, self.species_info)
-            cp.progress_rate_fr(
-                cpp, self.mechanism, self.species_info, self.reaction_info
-            )
+            cck.ckkfkr(cpp, self.mechIsAHetMech, self.reaction_info.n_reactions > 0)
+            cp.progress_rate_fr(cpp, self.species_info, self.reaction_info)
             self.atomic_weight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
             cck.cksyms_str(cpp, self.mechanism, self.species_info)
             csp.sparsity(cpp, self.species_info)
-            if self.interface is not None:
+            if self.mechIsAHetMech:
                 cck.ckinu(
                     cpp,
                     self.interface,
@@ -253,6 +251,7 @@ class Converter:
                     self.reaction_info,
                     write_sk=True,
                 )
+                cck.ckncf(cpp, self.interface, self.species_info, write_sk=True)
 
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")
@@ -516,13 +515,28 @@ class Converter:
 
     def atomic_weight(self, fstream):
         """Write the atomic weight."""
+        elements = self.mechanism.element_names
+
+        if self.mechIsAHetMech:
+            elements += list(
+                set(self.interface.element_names) - set(self.mechanism.element_names)
+            )
+
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))
         cw.writer(fstream, "void atomicWeight(amrex::Real *  awt)")
         cw.writer(fstream, "{")
-        for elem in self.mechanism.element_names:
-            idx = self.mechanism.element_index(elem)
-            aw = self.mechanism.atomic_weight(elem)
+        for elem in elements:
+            idx = (
+                self.interface.element_index(elem) + len(self.mechanism.element_names)
+                if elem not in self.mechanism.element_names
+                else self.mechanism.element_index(elem)
+            )
+            aw = (
+                self.interface.atomic_weight(elem)
+                if elem not in self.mechanism.element_names
+                else self.mechanism.atomic_weight(elem)
+            )
             cw.writer(fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}"))
         cw.writer(fstream, "}")
 
@@ -700,7 +714,7 @@ class Converter:
         for elem in self.mechanism.element_names:
             cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
 
-        if self.interface is not None:
+        if self.mechIsAHetMech:
             n_het_species = self.interface.n_species
             n_het_reactions = self.interface.n_reactions
             all_species_list += self.interface.species_names
@@ -722,8 +736,6 @@ class Converter:
             if s[-1] == "n" or s[-1] == "p" or s == "E":
                 nb_ions += 1
 
-        qssa_str = "QSSA_" if self.species_info.n_qssa_species > 0 else ""
-
         cw.writer(fstream)
         cw.writer(
             fstream,
@@ -732,7 +744,7 @@ class Converter:
         )
         cw.writer(
             fstream,
-            f"#define NUM_{qssa_str}GAS_SPECIES {n_hom_species}"
+            f"#define NUM_GAS_SPECIES {n_hom_species}"
             + cw.comment("Species in the homogeneous phase"),
         )
         cw.writer(
@@ -741,7 +753,13 @@ class Converter:
             + cw.comment("Reactions in the homogeneous phase"),
         )
 
-        if not isinstance(self.interface, type(None)):
+        cw.writer(
+            fstream,
+            f"#define NUM_QSS_GAS_SPECIES {self.species_info.n_qssa_species}"
+            + cw.comment("QSS species in the homogeneous phase"),
+        )
+
+        if self.mechIsAHetMech:
             site_density = 0.1 * self.interface.site_density  # Kmol/m**2 to mol/cm**2
 
         cw.writer(fstream)
@@ -771,7 +789,7 @@ class Converter:
         )
         cw.writer(
             fstream,
-            f"#define NUM_SPECIES (NUM_{qssa_str}GAS_SPECIES + NUM_SURFACE_SPECIES)",
+            "#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)",
         )
         cw.writer(
             fstream, "#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)"
