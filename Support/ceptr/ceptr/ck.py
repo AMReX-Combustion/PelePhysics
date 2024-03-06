@@ -56,9 +56,14 @@ def ckncf(fstream, mechanism, species_info, write_sk=False):
     cw.writer(fstream, "}")
 
 
-def cksyme_str(fstream, mechanism, species_info):
+def cksyme_str(fstream, mechanism, interface):
     """Write cksyme."""
-    n_elements = mechanism.n_elements
+    element_names = mechanism.element_names
+    if interface is not None:
+        element_names += list(
+            set(interface.element_names) - set(mechanism.element_names)
+        )
+
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the vector of strings of element names"))
     cw.writer(
@@ -66,18 +71,22 @@ def cksyme_str(fstream, mechanism, species_info):
         "void CKSYME_STR" + cc.sym + "(amrex::Vector<std::string>& ename)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, f"ename.resize({n_elements});")
-    for elem in mechanism.element_names:
+    cw.writer(fstream, "ename.resize(NUM_ELEMENTS);")
+    for elem in element_names:
+        idx = (
+            interface.element_index(elem) + len(mechanism.element_names)
+            if elem not in mechanism.element_names
+            else mechanism.element_index(elem)
+        )
         cw.writer(
             fstream,
-            f'ename[{mechanism.element_index(elem)}] = "{elem}";',
+            f'ename[{idx}] = "{elem}";',
         )
     cw.writer(fstream, "}")
 
 
-def cksyms_str(fstream, mechanism, species_info):
+def cksyms_str(fstream, species_info, mech_is_heterogeneous):
     """Write cksyms."""
-    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the vector of strings of species names"))
     cw.writer(
@@ -85,12 +94,18 @@ def cksyms_str(fstream, mechanism, species_info):
         "void CKSYMS_STR" + cc.sym + "(amrex::Vector<std::string>& kname)",
     )
     cw.writer(fstream, "{")
-    cw.writer(fstream, f"kname.resize({n_species});")
+    cw.writer(fstream, "kname.resize(NUM_SPECIES);")
     for species in species_info.nonqssa_species_list:
         cw.writer(
             fstream,
             f'kname[{species_info.ordered_idx_map[species]}] = "{species}";',
         )
+    if mech_is_heterogeneous:
+        for species in species_info.surface_species_list:
+            cw.writer(
+                fstream,
+                f'kname[{species_info.ordered_idx_map[species]}] = "{species}";',
+            )
     cw.writer(fstream, "}")
 
 

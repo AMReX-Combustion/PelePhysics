@@ -240,8 +240,8 @@ class Converter:
             self.atomic_weight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
-            cck.cksyme_str(cpp, self.mechanism, self.species_info)
-            cck.cksyms_str(cpp, self.mechanism, self.species_info)
+            cck.cksyme_str(cpp, self.mechanism, self.interface)
+            cck.cksyms_str(cpp, self.species_info, self.mechIsAHetMech)
             csp.sparsity(cpp, self.species_info)
             if self.mechIsAHetMech:
                 cck.ckinu(
