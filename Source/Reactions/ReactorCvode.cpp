@@ -28,6 +28,7 @@ ReactorCvode::init(int reactor_type, int /*ncells*/)
   // Query CVODE options
   amrex::ParmParse ppcv("cvode");
   ppcv.query("max_order", m_cvode_maxorder);
+  ppcv.query("max_substeps", m_cvode_maxstep);
   std::string linear_solve_type;
   ppcv.query("solve_type", linear_solve_type);
   std::string precondJFNK_type;
@@ -206,7 +207,7 @@ ReactorCvode::initCvode(
   if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) {
     return (1);
   }
-  flag = CVodeSetMaxNumSteps(a_cvode_mem, 100000);
+  flag = CVodeSetMaxNumSteps(a_cvode_mem, m_cvode_maxstep);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1)) {
     return (1);
   }

@@ -189,6 +189,7 @@ private:
   int max_fp_accel{2};
   int m_print_profiling{0};
   int m_cvode_maxorder{2};
+  int m_cvode_maxstep{10000};
   int m_solve_type{-1};
   int m_analytical_jacobian{-1};
   int m_precond_type{-1};
