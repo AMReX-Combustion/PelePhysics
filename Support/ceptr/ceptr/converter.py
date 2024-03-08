@@ -513,30 +513,41 @@ class Converter:
         else:
             print("Clang-format not found. C++ files will be hard to parse by a human.")
 
+    def get_element_id(self, element):
+        """Get the element id for elements associated with homogeneous/heterogeneous species."""
+        n_elements = len(self.mechanism.element_names)
+        idx = (
+            self.mechanism.element_index(element)
+            if element in self.mechanism.element_names
+            else self.interface.element_index(element) + n_elements
+        )
+        return idx
+
+    def get_atomic_weight(self, element):
+        """Get atomic weight of element associated with homogeneous/heterogeneous species."""
+        aw = (
+            self.mechanism.atomic_weight(element)
+            if element in self.mechanism.element_names
+            else self.interface.atomic_weight(element)
+        )
+        return aw
+
     def atomic_weight(self, fstream):
         """Write the atomic weight."""
-        elements = self.mechanism.element_names
-
-        if self.mechIsAHetMech:
-            elements += list(
-                set(self.interface.element_names) - set(self.mechanism.element_names)
-            )
+        surface_elements_set = (
+            set(self.interface.element_names) - set(self.mechanism.element_names)
+            if self.mechIsAHetMech
+            else set()
+        )
+        elements = self.mechanism.element_names + list(surface_elements_set)
 
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))
         cw.writer(fstream, "void atomicWeight(amrex::Real *  awt)")
         cw.writer(fstream, "{")
         for elem in elements:
-            idx = (
-                self.interface.element_index(elem) + len(self.mechanism.element_names)
-                if elem not in self.mechanism.element_names
-                else self.mechanism.element_index(elem)
-            )
-            aw = (
-                self.interface.atomic_weight(elem)
-                if elem not in self.mechanism.element_names
-                else self.mechanism.atomic_weight(elem)
-            )
+            idx = self.get_element_id(elem)
+            aw = self.get_atomic_weight(elem)
             cw.writer(fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}"))
         cw.writer(fstream, "}")
 
