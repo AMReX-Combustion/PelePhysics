@@ -51,7 +51,7 @@ imperative.
 ## Citation
 
 To cite PelePhysics as a whole and its use as part of the broader Pele suite, please use the following
-[SIAM Parallel Processing article](https://doi.org/10.1137/1.9781611977967):
+[SIAM Parallel Processing article](https://doi.org/10.1137/1.9781611977967.2):
 
 ```
 @article{PeleSoftware,
