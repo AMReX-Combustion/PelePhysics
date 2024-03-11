@@ -54,17 +54,18 @@ To cite PelePhysics as a whole and its use as part of the broader Pele suite, pl
 SIAM Parallel Processing article:
 
 ```
-@article{HenrydeFrahan2024,
-  doi = {},
-  url = {},
+@article{PeleSoftware,
+  author = {Marc T. {Henry de Frahan} and Lucas Esclapez and Jon Rood and Nicholas T. Wimer and Paul Mullowney and Bruce A. Perry and Landon Owen and Hariswaran Sitaraman and Shashank Yellapantula and Malik Hassanaly and Mohammad J. Rahimi and Michael J. Martin and Olga A. Doronina and Sreejith N. A. and Martin Rieth and Wenjun Ge and Ramanan Sankaran and Ann S. Almgren and Weiqun Zhang and John B. Bell and Ray Grout and Marc S. Day and Jacqueline H. Chen},
+  title = {The Pele Simulation Suite for Reacting Flows at Exascale},
+  booktitle = {Proceedings of the 2024 SIAM Conference on Parallel Processing for Scientific Computing},
+  journal = {Proceedings of the 2024 SIAM Conference on Parallel Processing for Scientific Computing},
+  chapter = {},
+  pages = {13-25},
+  doi = {10.1137/1.9781611977967.2},
+  URL = {https://epubs.siam.org/doi/abs/10.1137/1.9781611977967.2},
+  eprint = {https://epubs.siam.org/doi/pdf/10.1137/1.9781611977967.2},
   year = {2024},
-  publisher = {SIAM},
-  volume = {},
-  number = {},
-  pages = {},
-  author = {Marc T. {Henry de Frahan} and Lucas Esclapez and Jon Rood and Nicholas Wimer and Paul Mullowney and Bruce A. Perry and Landon Owen and Hariswaran Sitaraman and Shashank Yellapantula and Malik Hassanaly and Mohammad J. Rahimi and Michael Martin and Olga Doronina and Sreejith Nadakkal Appukuttan and Martin Rieth and Wenjun Ge and Ramanan Sankaran and Ann Almgren and Weiqun Zhang and John B. Bell and Ray Grout and Marc S. Day and Jacqueline H. Chen},
-  title = {The {Pele} Simulation Suite for Reacting Flows at Exascale},
-  journal = {{SIAM Proceedings Series on Parallel Processing for Scientific Computing}}
+  publisher = {Proceedings of the 2024 SIAM Conference on Parallel Processing for Scientific Computing}
 }
 ```
 
