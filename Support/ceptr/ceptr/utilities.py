@@ -452,6 +452,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
     else:
         return " + ".join(alpha).replace("+ -", "- ")
 
+
 def get_function_info(is_heterogeneous):
     """Get the phase and function prefix for homogeneous/heterogeneous mechanisms."""
     return ["surface", "S"] if is_heterogeneous else ["gas", "C"]
