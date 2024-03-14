@@ -3,6 +3,7 @@
 import ceptr.constants as cc
 import ceptr.thermo as cth
 import ceptr.writer as cw
+import ceptr.utilities as cu
 
 
 def ckawt(fstream, mechanism):
@@ -18,8 +19,7 @@ def ckawt(fstream, mechanism):
 def ckncf(fstream, mechanism, species_info, write_sk=False):
     """Write ckncf/skncf."""
     n_elements = mechanism.n_elements
-    phase = "surface" if write_sk else "gas"
-    function_prefix = "S" if write_sk else "C"
+    phase, function_prefix = cu.get_function_info(is_heterogeneous=write_sk)
     sp_list = (
         species_info.surface_species_list
         if write_sk
@@ -58,11 +58,7 @@ def ckncf(fstream, mechanism, species_info, write_sk=False):
 
 def cksyme_str(fstream, mechanism, interface):
     """Write cksyme."""
-    element_names = mechanism.element_names
-    if interface is not None:
-        element_names += list(
-            set(interface.element_names) - set(mechanism.element_names)
-        )
+    element_names = cu.get_element_names(mechanism, interface)
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the vector of strings of element names"))
@@ -73,11 +69,7 @@ def cksyme_str(fstream, mechanism, interface):
     cw.writer(fstream, "{")
     cw.writer(fstream, "ename.resize(NUM_ELEMENTS);")
     for elem in element_names:
-        idx = (
-            interface.element_index(elem) + len(mechanism.element_names)
-            if elem not in mechanism.element_names
-            else mechanism.element_index(elem)
-        )
+        idx = cu.get_element_id(mechanism, interface, elem)
         cw.writer(
             fstream,
             f'ename[{idx}] = "{elem}";',
@@ -2455,8 +2447,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     """Write ckinu/skinu."""
     n_reactions = mechanism.n_reactions
     n_gas_reactions = reaction_info.n_reactions
-    phase = "surface" if write_sk else "gas"
-    function_prefix = "S" if write_sk else "C"
+    phase, function_prefix = cu.get_function_info(is_heterogeneous=write_sk)
     function_args = (
         "int* /*ki*/, int* /*nu*/" if n_reactions == 0 else "int ki[], int nu[]"
     )

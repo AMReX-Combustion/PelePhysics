@@ -19,6 +19,7 @@ import ceptr.symbolic_math as csm
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
+import ceptr.utilities as cu
 
 
 class Converter:
@@ -513,41 +514,17 @@ class Converter:
         else:
             print("Clang-format not found. C++ files will be hard to parse by a human.")
 
-    def get_element_id(self, element):
-        """Get the element id for elements associated with homogeneous/heterogeneous species."""
-        n_elements = len(self.mechanism.element_names)
-        idx = (
-            self.mechanism.element_index(element)
-            if element in self.mechanism.element_names
-            else self.interface.element_index(element) + n_elements
-        )
-        return idx
-
-    def get_atomic_weight(self, element):
-        """Get atomic weight of element associated with homogeneous/heterogeneous species."""
-        aw = (
-            self.mechanism.atomic_weight(element)
-            if element in self.mechanism.element_names
-            else self.interface.atomic_weight(element)
-        )
-        return aw
-
     def atomic_weight(self, fstream):
         """Write the atomic weight."""
-        surface_elements_set = (
-            set(self.interface.element_names) - set(self.mechanism.element_names)
-            if self.mechIsAHetMech
-            else set()
-        )
-        elements = self.mechanism.element_names + list(surface_elements_set)
+        element_names = cu.get_element_names(self.mechanism, self.interface)
 
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))
         cw.writer(fstream, "void atomicWeight(amrex::Real *  awt)")
         cw.writer(fstream, "{")
-        for elem in elements:
-            idx = self.get_element_id(elem)
-            aw = self.get_atomic_weight(elem)
+        for elem in element_names:
+            idx = cu.get_element_id(self.mechanism, self.interface, elem)
+            aw = cu.get_atomic_weight(self.mechanism, self.interface, elem)
             cw.writer(fstream, f"awt[{idx}] = {aw:f}; " + cw.comment(f"{elem}"))
         cw.writer(fstream, "}")
 
