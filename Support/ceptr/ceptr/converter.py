@@ -34,7 +34,7 @@ class Converter:
         qss_format_input=None,
         qss_symbolic_jacobian=False,
     ):
-        self.mechIsAHetMech = chemistry == "heterogeneous"
+        self.mech_is_heterogeneous = chemistry == "heterogeneous"
 
         self.mechanism = mechanism
         self.interface = interface
@@ -46,7 +46,7 @@ class Converter:
 
         self.mechpath = (
             pathlib.Path(self.interface.source)
-            if self.mechIsAHetMech
+            if self.mech_is_heterogeneous
             else pathlib.Path(self.mechanism.source)
         )
 
@@ -116,7 +116,7 @@ class Converter:
 
         self.species_info.n_all_species = (
             self.species_info.n_species + self.interface.n_species
-            if self.mechIsAHetMech
+            if self.mech_is_heterogeneous
             else self.species_info.n_species
         )
 
@@ -197,7 +197,7 @@ class Converter:
             "d",
         )
 
-        if self.mechIsAHetMech:
+        if self.mech_is_heterogeneous:
             # Initialize gas-solid interface species
             self.species_info.n_surface_species = self.interface.n_species
             for id, species in enumerate(self.interface.species()):
@@ -236,15 +236,17 @@ class Converter:
             cri.rmap(cpp, self.reaction_info)
             cri.get_rmap(cpp, self.reaction_info)
             cck.ckinu(cpp, self.mechanism, self.species_info, self.reaction_info)
-            cck.ckkfkr(cpp, self.mechIsAHetMech, self.reaction_info.n_reactions > 0)
+            cck.ckkfkr(
+                cpp, self.mech_is_heterogeneous, self.reaction_info.n_reactions > 0
+            )
             cp.progress_rate_fr(cpp, self.species_info, self.reaction_info)
             self.atomic_weight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.interface)
-            cck.cksyms_str(cpp, self.species_info, self.mechIsAHetMech)
+            cck.cksyms_str(cpp, self.species_info, self.mech_is_heterogeneous)
             csp.sparsity(cpp, self.species_info)
-            if self.mechIsAHetMech:
+            if self.mech_is_heterogeneous:
                 cck.ckinu(
                     cpp,
                     self.interface,
@@ -702,7 +704,7 @@ class Converter:
         for elem in self.mechanism.element_names:
             cw.writer(fstream, f"{self.mechanism.element_index(elem)}  {elem}")
 
-        if self.mechIsAHetMech:
+        if self.mech_is_heterogeneous:
             n_het_species = self.interface.n_species
             n_het_reactions = self.interface.n_reactions
             all_species_list += self.interface.species_names
@@ -747,7 +749,7 @@ class Converter:
             + cw.comment("QSS species in the homogeneous phase"),
         )
 
-        if self.mechIsAHetMech:
+        if self.mech_is_heterogeneous:
             site_density = 0.1 * self.interface.site_density  # Kmol/m**2 to mol/cm**2
 
         cw.writer(fstream)

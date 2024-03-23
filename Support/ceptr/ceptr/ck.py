@@ -19,7 +19,6 @@ def ckawt(fstream, mechanism):
 def ckncf(fstream, mechanism, species_info, write_sk=False):
     """Write ckncf/skncf."""
     n_elements = mechanism.n_elements
-    phase, function_prefix = cu.get_function_info(is_heterogeneous=write_sk)
     sp_list = (
         species_info.surface_species_list
         if write_sk
@@ -29,12 +28,16 @@ def ckncf(fstream, mechanism, species_info, write_sk=False):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the elemental composition "))
     cw.writer(fstream, cw.comment("of the speciesi (mdim is num of elements)"))
-    cw.writer(fstream, f"void {function_prefix}KNCF" + cc.sym + "(int * ncf)")
+    cw.writer(
+        fstream, f"void {cu.get_function_prefix(write_sk)}KNCF" + cc.sym + "(int * ncf)"
+    )
     cw.writer(fstream, "{")
     cw.writer(fstream, f"int kd = {n_elements}; ")
     cw.writer(fstream, cw.comment("Zero ncf"))
     cw.writer(
-        fstream, f"for (int id = 0; id < kd * NUM_{phase.upper()}_SPECIES; ++ id) {{"
+        fstream,
+        f"for (int id = 0; id < kd * NUM_{cu.get_phase(write_sk).upper()}_SPECIES; ++"
+        " id) {",
     )
     cw.writer(fstream, " ncf[id] = 0; ")
     cw.writer(fstream, "}")
@@ -2447,7 +2450,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     """Write ckinu/skinu."""
     n_reactions = mechanism.n_reactions
     n_gas_reactions = reaction_info.n_reactions
-    phase, function_prefix = cu.get_function_info(is_heterogeneous=write_sk)
+    phase = cu.get_phase(is_heterogeneous=write_sk)
     function_args = (
         "int* /*ki*/, int* /*nu*/" if n_reactions == 0 else "int ki[], int nu[]"
     )
@@ -2508,7 +2511,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info, write_sk=False):
     cw.writer(fstream, cw.comment("and stoichiometric coefficients. (Eq 50)"))
     cw.writer(
         fstream,
-        f"void {function_prefix}KINU"
+        f"void {cu.get_function_prefix(write_sk)}KINU"
         + cc.sym
         + f"(const int i, int& nspec, {function_args})",
     )
