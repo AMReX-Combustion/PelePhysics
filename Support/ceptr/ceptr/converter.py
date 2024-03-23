@@ -18,8 +18,8 @@ import ceptr.species_info as csi
 import ceptr.symbolic_math as csm
 import ceptr.thermo as cth
 import ceptr.transport as ctr
-import ceptr.writer as cw
 import ceptr.utilities as cu
+import ceptr.writer as cw
 
 
 class Converter:
