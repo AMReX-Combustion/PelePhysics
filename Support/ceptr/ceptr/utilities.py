@@ -451,3 +451,41 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
         return " + ".join(alpha).replace("+ -", "- "), enhancement_smp
     else:
         return " + ".join(alpha).replace("+ -", "- ")
+
+
+def get_function_prefix(is_heterogeneous):
+    """Get the function prefix for homogeneous/heterogeneous mechanisms."""
+    return "S" if is_heterogeneous else "C"
+
+
+def get_phase(is_heterogeneous):
+    """Get the phase for homogeneous/heterogeneous mechanisms."""
+    return "surface" if is_heterogeneous else "gas"
+
+
+def get_element_id(mechanism, interface, element):
+    """Get the element id for elements associated with homogeneous/heterogeneous species."""
+    return (
+        mechanism.element_index(element)
+        if element in mechanism.element_names
+        else interface.element_index(element) + len(mechanism.element_names)
+    )
+
+
+def get_atomic_weight(mechanism, interface, element):
+    """Get atomic weight of element associated with homogeneous/heterogeneous species."""
+    return (
+        mechanism.atomic_weight(element)
+        if element in mechanism.element_names
+        else interface.atomic_weight(element)
+    )
+
+
+def get_element_names(mechanism, interface):
+    """Get the names of all elements associated with homogeneous/heterogeneous species."""
+    surface_elements_set = (
+        set(interface.element_names) - set(mechanism.element_names)
+        if interface is not None
+        else set()
+    )
+    return mechanism.element_names + list(surface_elements_set)

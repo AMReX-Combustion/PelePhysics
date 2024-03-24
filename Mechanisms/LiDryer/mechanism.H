@@ -21,9 +21,10 @@
 #define H2O2_ID 7
 #define N2_ID 8
 
-#define NUM_GAS_ELEMENTS 3   // Elements in the homogeneous phase
-#define NUM_GAS_SPECIES 9    // Species in the homogeneous phase
-#define NUM_GAS_REACTIONS 21 // Reactions in the homogeneous phase
+#define NUM_GAS_ELEMENTS 3    // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 9     // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 21  // Reactions in the homogeneous phase
+#define NUM_QSS_GAS_SPECIES 0 // QSS species in the homogeneous phase
 
 #define SITE_DENSITY 0.000000E+00 // mol/cm^2
 
