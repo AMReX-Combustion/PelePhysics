@@ -36,10 +36,11 @@ public:
     const amrex::Vector<amrex::Geometry>& a_geoms,
     const amrex::Real& a_time,
     const amrex::Vector<int>& a_steps,
-    const amrex::Vector<amrex::IntVect>& a_rref);
+    const amrex::Vector<amrex::IntVect>& a_rref,
+    int nOutFiles);
 
-  static void
-  VisMF2D(const amrex::MultiFab& a_mf, const std::string& a_mf_name);
+  static void VisMF2D(
+    const amrex::MultiFab& a_mf, const std::string& a_mf_name, int nOutFiles);
 
   static void Write2DMFHeader(
     const std::string& a_mf_name,
@@ -78,6 +79,7 @@ private:
   // Variables output
   amrex::Vector<std::string> m_fieldNames;
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
+  int m_nfiles_plane;
 
   // Plane definition
   int m_normal;
