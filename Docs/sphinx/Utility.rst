@@ -49,14 +49,44 @@ An additional script is provided to allow plotting of the PMF solutions. This sc
 Turbulent Inflows
 =================
 
-Placeholder. PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data.
+PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data (3 components of velocity fluctuations).
+A three-dimensional synthetic istropic turbulence is generated and Taylor's hypothesis is used to convert this data into two-dimensional planar data by moving through the third dimension at fixed velocity (the TurbInflow capability is currently not supported for 2D simulations). To reduce memory requirements, a fixed number of planes in the third dimension are read at a time and then replaced when exhausted. This number of planes can be specified at runtime to balance I/O and memory requirements. Multiple turbulent inflow patches can be applied on any domain boundary or on multiple domain boundaries. If multiple patches overlap on the same face, the data from each overlapping patch are superimposed.
+
+This PelePhysics utility provides the machinery to load the data files and interpolate in space and time onto boundary patches, which may or may not cover an entire boundary. Additional code within PeleC and PeleLMeX is required to drive this functionality, and the documentation for the relevant code should be consulted to fully understand the necessary steps. Typically, the TurbInflow capability provides veloicity fluctuations, and the mean inflow velocity must be provided through another means. For each code, an example test case for the capability is provided in `Exec/RegTests/TurbInflow`. Note that the turbulence data is always a square of size 2pi and has a fluctuation velocity scale of unity. Inputs are available as part of this utility to rescale the data as needed. If differently shaped inlet patches are required, this must be done by masking undesired parts of the patch on the PeleC or PeleLMeX side of the implementation.
 
 Generating a turbulence file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The relevant data files are generated using the tools in ``Support/TurbFileHIT``
-and usage inscructions are available in the :ref:`documentation <sec_turbfile>` on these tools.
+and usage instructions are available in the :ref:`documentation <sec_turbfile>` on these tools.
 
+Input file options
+~~~~~~~~~~~~~~~~~~
+
+The input file options that drive this utility (and thus are inherited by PeleC and PeleLMeX) are
+provided below. ::
+
+  turbinflows=low high                                    # Names of injections (can provide any number)
+
+  turbinflow.low.turb_file      = TurbFileHIT/TurbTEST    # Path to directory created in previous step
+  turbinflow.low.dir            = 1                       # Boundary normal direction (0,1, or 2) for patch
+  turbinflow.low.side           = "low"                   # Boundary side (low or high) for patch
+  turbinflow.low.turb_scale_loc = 633.151                 # Factor by which to scale the spatial coordinate between the data file and simulation
+  turbinflow.low.turb_scale_vel = 1.0                     # Factor by which to scale the velcoity between the data file and simulation
+  turbinflow.low.turb_center    = 0.005 0.005             # Center point where turbulence patch will be applied
+  turbinflow.low.turb_conv_vel  = 5.                      # Velocity to move through the 3rd dimension to simulate time evolution
+  turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time
+  turbinflow.low.time_offset    = 0.0                     # Offset in time for reading through the 3rd dimension
+
+  turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
+  turbinflow.high.dir            = 1
+  turbinflow.high.side           = "high"
+  turbinflow.high.turb_scale_loc = 633.151
+  turbinflow.high.turb_scale_vel = 1.0
+  turbinflow.high.turb_center    = 0.005 0.005
+  turbinflow.high.turb_conv_vel  = 5.
+  turbinflow.high.turb_nplane    = 32
+  turbinflow.high.time_offset    = 0.0006
 
 Plt File Management
 ===================

@@ -73,12 +73,12 @@ Generating an initial condition file is as easy as: ::
 Generating Inflow Files
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The `TurbFileHIT` directory also contains C++ source code for a small program that reads the ``.dat`` files created using the python script
+The ``TurbFileHIT`` directory also contains C++ source code for a small program that reads the ``.dat`` files created using the python script
 above and saves them as AMReX data structures that can be read by the TurbInflow utility, which uses Taylor's hypothesis to provide
 temporally varying boundary data by marching through the 3rd dimension of the HIT files at a constant velocity.
 
 Build options can be specified in the ``GNUmakefile``. Notably, if you did not recursively clone PelePhysics with the AMReX submodule, you
-will need to specify a path to AMReX (``AMREX_HOME``). In most cases, you should be able to directly build the utility simply by running: ::
+will need to specify a path to AMReX (``AMREX_HOME``). But in most cases, you should be able to directly build the utility simply by running: ::
 
   make -j
 
