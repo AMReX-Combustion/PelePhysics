@@ -44,6 +44,7 @@ An additional script is provided to allow plotting of the PMF solutions. This sc
 
   poetry -C ../../Support/ceptr/ run python plotPMF.py <pmf-file> <variable-index>
 
+.. _sec_turbinflow:
 
 Turbulent Inflows
 =================
@@ -53,7 +54,9 @@ Placeholder. PelePhysics supports the capability of the flow solvers to have spa
 Generating a turbulence file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A python script is used to generate a synthetic turbulence spectrum.
+The relevant data files are generated using the tools in ``Support/TurbFileHIT``
+and usage inscructions are available in the :ref:`documentation <sec_turbfile>` on these tools.
+
 
 Plt File Management
 ===================
