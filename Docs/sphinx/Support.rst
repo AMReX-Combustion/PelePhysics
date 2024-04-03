@@ -49,16 +49,17 @@ condition for a grid of size N^3 is generated as follows:
 This script accepts the following options: ::
 
   ./gen_hit_ic.py --help
-  usage: gen_hit_ic.py [-h] [-k0 K0] [-N N] [-s SEED] [-p]
+  usage: gen_hit_ic.py [-h] [-k0 K0] [-N N] [-Nk NK] [-s SEED] [-p]
 
   Generate the velocity fluctuations for the HIT IC
 
-  optional arguments:
+  options:
     -h, --help            show this help message and exit
     -k0 K0                Wave number containing highest energy
     -N N                  Resolution
+    -Nk NK                Resolution in wavenumber space for intermediate step
     -s SEED, --seed SEED  Random number generator seed
-    -p, --plot            Save a plot of the x-velocit1y
+    -p, --plot            Save a plot of the x-velocity
 
 Generating an initial condition file is as easy as: ::
 
