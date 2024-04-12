@@ -4,10 +4,10 @@
 # isotropic turbulence case at a specific k0 (default to 4)
 #
 # Order of operations:
-#   1. velocity fluctuations generated on a 512^3 grid in wavenumber space
+#   1. velocity fluctuations generated on a Nk^3 grid in wavenumber space
 #   2. Coefficients associated to wavenumbers that cannot be represented on
 #      the desired grid are set to 0 (sharp wavenumber cutoff)
-#   3. inverse Fourier transform of the velocity fluctuations (512^3 grid)
+#   3. inverse Fourier transform of the velocity fluctuations (Nk^3 grid)
 #   4. velocity fluctuations resampled on the desired grid (N^3)
 #
 # The velocity fluctuations are normalized by urms0 so to get the
@@ -45,6 +45,10 @@ parser.add_argument(
     "-k0", help="Wave number containing highest energy", type=float, default=4.0
 )
 parser.add_argument("-N", help="Resolution", type=int, default=16)
+parser.add_argument(
+    "-Nk", help="Resolution in wavenumber space for intermediate step", type=int,
+    default=512
+)
 parser.add_argument(
     "-s", "--seed", help="Random number generator seed", type=int, default=42
 )
@@ -129,10 +133,10 @@ def abs2(x):
 start = time.time()
 
 # ========================================================================
-# 1. velocity fluctuations generated on a 512^3 grid in wavenumber space
+# 1. velocity fluctuations generated on a Nk^3 grid in wavenumber space
 
 # Dimension of the large cube
-N = 512
+N = args.Nk
 halfN = int(round(0.5 * N))
 xs = 0
 xe = 2.0 * np.pi
@@ -276,7 +280,7 @@ wf[kmag > kmagc] = 0.0
 
 
 # ========================================================================
-# 3. inverse Fourier transform of the velocity fluctuations (512^3 grid)
+# 3. inverse Fourier transform of the velocity fluctuations (Nk^3 grid)
 u = np.fft.irfftn(uf, s=(N, N, N))
 v = np.fft.irfftn(vf, s=(N, N, N))
 w = np.fft.irfftn(wf, s=(N, N, N))
