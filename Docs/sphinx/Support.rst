@@ -39,12 +39,12 @@ The ``gen_hit_ic.py`` python script creates a synthetic isotropic turbulence vel
 in the appendix of `Johnsen et al. (2010) J. Comp Phys. <http://dx.doi.org/10.1016/j.jcp.2009.10.028>`_. The resulting velocity
 field is stored in files with names following the pattern ``hit_ic_k0_N.dat``, where ``k0`` is the most
 energetic wave number and ``N`` is the size of the grid. The initial
-condition for a grid of size N^3 is generated as follows:
+condition for a grid of size :math:`N^3` is generated as follows:
 
-1. velocity fluctuations generated on a 512^3 grid in wavenumber space
+1. velocity fluctuations generated on a :math:`N_k^3` grid in wavenumber space (default :math:`N_k = 512`)
 2. Coefficients associated to wavenumbers that cannot be represented on the desired grid are set to 0 (sharp wavenumber cutoff)
-3. inverse Fourier transform of the velocity fluctuations (512^3 grid)
-4. velocity fluctuations resampled on the desired grid (N^3)
+3. inverse Fourier transform of the velocity fluctuations (:math:`N_k^3` grid)
+4. velocity fluctuations resampled on the desired grid (:math:`N^3`)
 
 This script accepts the following options: ::
 
