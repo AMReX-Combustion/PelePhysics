@@ -382,8 +382,8 @@ TurbInflow::fill_turb_plane(
           ydata[ii] =
             cy[0] * zdata[ii][0] + cy[1] * zdata[ii][1] + cy[2] * zdata[ii][2];
         }
-        vd(i, j, k, n) = cx[0] * ydata[0] + cx[1] * ydata[1] + cx[2] * ydata[2];
-        vd(i, j, k, n) *= velScale;
+        vd(i, j, k, n) +=
+          velScale * (cx[0] * ydata[0] + cx[1] * ydata[1] + cx[2] * ydata[2]);
       }
     }
   });
