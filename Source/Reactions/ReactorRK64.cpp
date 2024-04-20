@@ -171,7 +171,7 @@ ReactorRK64::react(
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Array4<int> const& /*mask*/,
+  amrex::Array4<int> const& mask,
   amrex::Real& dt_react,
   amrex::Real& time
 #ifdef AMREX_USE_GPU
@@ -246,6 +246,8 @@ ReactorRK64::react(
       rYsrc_ext[sp] = rYsrc_in(i, j, k, sp);
     }
 
+    if(mask(i,j,k)!= -1){
+
     int nsteps = 0;
     amrex::Real change_factor;
     while (current_time < time_out) {
@@ -287,6 +289,7 @@ ReactorRK64::react(
       dt_rk = amrex::min<amrex::Real>(dt_rk, time_out - current_time);
     }
 
+
     // copy data back
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     d_nsteps[icell] = nsteps;
@@ -312,6 +315,11 @@ ReactorRK64::react(
     }
     T_in(i, j, k, 0) = temp;
     FC_in(i, j, k, 0) = nsteps;
+    }
+    else
+    {
+    	FC_in(i, j, k, 0) =0;
+    }
   });
 
 #ifdef MOD_REACTOR
