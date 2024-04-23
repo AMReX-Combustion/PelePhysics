@@ -20,7 +20,7 @@ struct TransParm
 template <typename EOSType, typename TransportType>
 struct InitTransParm
 {
-  void operator()(TransParm<EOSType, TransportType> /*tparm*/) {}
+  void operator()(TransParm<EOSType, TransportType>* /*tparm*/) {}
 };
 
 template <typename EOSType>
@@ -89,6 +89,30 @@ struct InitTransParm<EOSType, SutherlandTransport>
     pp.query("viscosity_S", tparm->viscosity_S);
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
     pp.query("const_diffusivity", tparm->const_diffusivity);
+  }
+};
+
+template <typename EOSType>
+struct TransParm<EOSType, ManifoldTransport>
+{
+  ManFuncParams::ManFuncData* manf_data;
+  int idx_rhoD{0};
+  int idx_mu{0};
+};
+
+template <typename EOSType>
+struct InitTransParm<EOSType, ManifoldTransport>
+{
+  void operator()(TransParm<EOSType, ManifoldTransport>* tparm)
+  {
+    amrex::Abort("For manifold transport tabulated or neural network data must be provided to transport parameters");
+  }
+
+  void operator()(TransParm<EOSType, ManifoldTransport>* tparm, ManFuncParams::ManFuncData* manf_data_in)
+  {
+    tparm->manf_data = manf_data_in;
+    tparm->idx_rhoD = get_var_index("DIFF", tparm->manf_data);
+    tparm->idx_mu = get_var_index("VISC", tparm->manf_data);
   }
 };
 
@@ -348,6 +372,18 @@ public:
   void allocate()
   {
     InitTransParm<EosType, TransportType>()(&m_h_trans_parm);
+    if (!m_device_allocated) {
+      m_d_trans_parm =
+        (TransParm<EosType, TransportType>*)amrex::The_Device_Arena()->alloc(
+          sizeof(m_h_trans_parm));
+      m_device_allocated = true;
+      sync_to_device();
+    }
+  }
+
+  void allocate(ManFuncParams::ManFuncData* manf_data)
+  {
+    InitTransParm<EosType, TransportType>()(&m_h_trans_parm, manf_data);
     if (!m_device_allocated) {
       m_d_trans_parm =
         (TransParm<EosType, TransportType>*)amrex::The_Device_Arena()->alloc(
