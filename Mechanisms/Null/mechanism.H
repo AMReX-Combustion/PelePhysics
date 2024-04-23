@@ -13,6 +13,14 @@
 /* Species */
 #define XO_ID 0
 
+#ifndef USE_MANIFOL_EOS
+#define NUM_SPECIES (1 + MANIFOLD_DIM)
+#else
+#define NUM_SPECIES 1
+#endif
+
+#define NUM_ELEMENTS 1
+
 #define NUM_ELEMENTS 1
 #define NUM_SPECIES 1
 #define NUM_REACTIONS 0
