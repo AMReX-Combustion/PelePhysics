@@ -138,4 +138,25 @@ speciesNames<SRK>(amrex::Vector<std::string>& spn)
   speciesNames<Fuego>(spn);
 }
 
+template <>
+void
+atomic_weightsCHON<Manifold>(amrex::Real* /*atwCHON[]*/)
+{
+  amrex::Error("atomic_weightsCHON not supported for Manifold EOS");
+}
+
+template <>
+void
+element_compositionCHON<Manifold>(int* /*ecompCHON[]*/)
+{
+  amrex::Error("element_compositionCHON not supported for Manifold EOS");
+}
+
+template <>
+void
+speciesNames<Manifold>(amrex::Vector<std::string>& spn)
+{
+  speciesNames<Fuego>(spn);
+}
+
 } // namespace pele::physics::eos

@@ -20,6 +20,29 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void RY2R(const amrex::Real RY[], amrex::Real &R)
+  {
+    R = RY[0];
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2RRinvY(const amrex::Real RY[], amrex::Real &R, amrex::Real &Rinv, amrex::Real Y[] )
+  {
+    R = RY[0];
+    Rinv = 1.0 / R;
+    Y[0] = 1.0;
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2dRdY(const amrex::Real& /*R*/, const amrex::Real* /*Y[]*/, amrex::Real* /*dRdY[]*/)
+  {
+    amrex::Error("RY2dRdY not applicable for GammaLaw EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real mw[NUM_SPECIES])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {

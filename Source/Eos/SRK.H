@@ -18,6 +18,34 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void RY2R(const amrex::Real RY[], amrex::Real &R)
+  {
+    R = 0.0;
+    for (int is = 0; is < NUM_SPECIES; is++) {
+      R += RY[is];
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2RRinvY(const amrex::Real RY[], amrex::Real &R, amrex::Real &Rinv, amrex::Real Y[] )
+  {
+    RY2R(RY,R);
+    Rinv = 1.0/R;
+    for (int is = 0; is < NUM_SPECIES; is++) {
+      Y[is] = RY[is] * Rinv;
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2dRdY(const amrex::Real& /*R*/, const amrex::Real* /*Y[]*/, amrex::Real* /*dRdY[]*/)
+  {
+    amrex::Error("RY2dRdY not applicable for SRK EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void MixingRuleAmBm(
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],

@@ -1,4 +1,4 @@
-CEXE_headers += EOS.H GammaLaw.H Fuego.H SRK.H
+CEXE_headers += EOS.H GammaLaw.H Fuego.H SRK.H ManifoldFunc.H Table.H NeuralNet.H Manifold.H EosParams.H
 CEXE_sources += EOS.cpp
 
 VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Eos
