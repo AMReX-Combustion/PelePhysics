@@ -371,7 +371,6 @@ private:
       // home rolled fixed grid direct SOFAR: lower_bound is much faster than
       // home rolled while loop. Even then, finding indexes is ~50% of runtime
 
-
 #ifndef AMREX_USE_GPU
       auto beg = &tf_data->grids[start];
       int idx =
@@ -381,10 +380,10 @@ private:
         dimLen - 2); // don't let idx be negative or out of bounds
 #else
       // home rolled
-      //int idx = 1;
-      //while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen)
+      // int idx = 1;
+      // while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen)
       //    {idx+=1;};
-      //idx-=1;
+      // idx-=1;
       int idx = locate(&tf_data->grids[start], dimLen, interpdata[dim]);
 #endif
 
@@ -394,8 +393,7 @@ private:
         1.0 / (tf_data->grids[idx + 1] - tf_data->grids[idx]);
       dxinv[dim] = dx_inv;
       amrex::Real alpha = (tf_data->grids[idx + 1] - interpdata[dim]) * dx_inv;
-      alphas[dim] = std::min(
-        std::max(alpha, 0.0), 1.0);
+      alphas[dim] = std::min(std::max(alpha, 0.0), 1.0);
       start += dimLen;
     }
   }
