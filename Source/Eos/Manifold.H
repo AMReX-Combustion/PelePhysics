@@ -118,16 +118,22 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cp(const amrex::Real /*R*/, const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& /*Cp*/)
+  void RTY2Cp(const amrex::Real /*R*/, const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& Cp)
   {
-    amrex::Error("RTY2Cp is not yet implemented for Manifold EOS");
+    // TODO: HACK HACK HACK: FIXME (need to remove enthalpy calculations from PeleLM)
+    Cp = 100.0;
+    //amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void REY2T(const amrex::Real /*R*/, const amrex::Real /*E*/, const amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
+  void REY2T(const amrex::Real /*R*/, const amrex::Real /*E*/, const amrex::Real Y[], amrex::Real& T)
   {
-    amrex::Error("REY2T is not yet implemented for Manifold EOS");
+    if (eosparm->compute_temperature) {
+      manfunc->get_value(eosparm->idx_T, Y, T);
+    } else {
+      T = 1.0;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE

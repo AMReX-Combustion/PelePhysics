@@ -1,0 +1,9 @@
+# General
+size = 32
+
+# Manifold
+manifold.model = Table
+manifold.filename = peletable_1dim_100grid
+manifold.v = 1
+eos.nominal_pressure_cgs = 1013250.0
+eos.compute_temperature = 1
