@@ -1,0 +1,2 @@
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/BlackBoxFunc
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/BlackBoxFunc
