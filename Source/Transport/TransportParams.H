@@ -105,10 +105,13 @@ struct InitTransParm<EOSType, ManifoldTransport>
 {
   void operator()(TransParm<EOSType, ManifoldTransport>* tparm)
   {
-    amrex::Abort("For manifold transport tabulated or neural network data must be provided to transport parameters");
+    amrex::Abort("For manifold transport tabulated or neural network data must "
+                 "be provided to transport parameters");
   }
 
-  void operator()(TransParm<EOSType, ManifoldTransport>* tparm, ManFuncParams::ManFuncData* manf_data_in)
+  void operator()(
+    TransParm<EOSType, ManifoldTransport>* tparm,
+    ManFuncParams::ManFuncData* manf_data_in)
   {
     tparm->manf_data = manf_data_in;
     tparm->idx_rhoD = get_var_index("DIFF", tparm->manf_data);

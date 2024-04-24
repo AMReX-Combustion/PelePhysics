@@ -50,25 +50,25 @@ struct is_valid_physics_combination<eos::SRK, transport::SutherlandTransport>
 
 // Manifold Transport doesn't apply except with Manifold EOS
 // Manifold EOS requires Manifold or Constant Transport
-template<typename EosModel>
+template <typename EosModel>
 struct is_valid_physics_combination<EosModel, transport::ManifoldTransport>
   : public std::false_type
 {
 };
 
-template<typename TransportModel>
+template <typename TransportModel>
 struct is_valid_physics_combination<eos::Manifold, TransportModel>
   : public std::false_type
 {
 };
 
-template<>
+template <>
 struct is_valid_physics_combination<eos::Manifold, transport::ManifoldTransport>
   : public std::true_type
 {
 };
 
-template<>
+template <>
 struct is_valid_physics_combination<eos::Manifold, transport::ConstTransport>
   : public std::true_type
 {

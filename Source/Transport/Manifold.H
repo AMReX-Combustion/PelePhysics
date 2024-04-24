@@ -28,16 +28,13 @@ struct ManifoldTransport
     TransParm<EosType, transport_type> const* tparm)
   {
     pele::physics::ManifoldFunc* manfunc;
-    if(tparm->manf_data->manmodel == ManifoldModel::TABLE)
-    {
+    if (tparm->manf_data->manmodel == ManifoldModel::TABLE) {
       TabFuncParams::TabFuncData* tf_data =
-          static_cast<TabFuncParams::TabFuncData*>(tparm->manf_data);
+        static_cast<TabFuncParams::TabFuncData*>(tparm->manf_data);
       manfunc = new pele::physics::TabFunc(tf_data);
-    }
-    else
-    {
+    } else {
       NNFuncParams::NNFuncData* nnf_data =
-          static_cast<NNFuncParams::NNFuncData*>(tparm->manf_data);
+        static_cast<NNFuncParams::NNFuncData*>(tparm->manf_data);
       manfunc = new pele::physics::NNFunc(nnf_data);
     }
 
@@ -47,12 +44,14 @@ struct ManifoldTransport
 
     if (wtr_get_lam) {
       // could be added to table if desired
-      amrex::Abort("Use of thermal conductivity is not supported for ManifoldTransport");
+      amrex::Abort(
+        "Use of thermal conductivity is not supported for ManifoldTransport");
     }
 
     if (wtr_get_xi) {
       // could be added to table if desired
-      amrex::Abort("Use of bulk viscosity is not supported for ManifoldTransport");
+      amrex::Abort(
+        "Use of bulk viscosity is not supported for ManifoldTransport");
     }
 
     if (wtr_get_Ddiag) {
@@ -61,7 +60,7 @@ struct ManifoldTransport
       for (int i = 0; i < NUM_SPECIES - 1; ++i) {
         Ddiag[i] = Dtemp;
       }
-      Ddiag[NUM_SPECIES-1] = 0.0; // Placeholder for density
+      Ddiag[NUM_SPECIES - 1] = 0.0; // Placeholder for density
     }
 
     delete manfunc;
@@ -100,8 +99,8 @@ struct ManifoldTransport
           amrex::Real muloc, xiloc, lamloc;
           amrex::Real Ddiag[NUM_SPECIES] = {0.0};
           transport(
-            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, 0.0, 0.0, massloc,
-            Ddiag, muloc, xiloc, lamloc, tparm);
+            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, 0.0, 0.0,
+            massloc, Ddiag, muloc, xiloc, lamloc, tparm);
 
           // mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {

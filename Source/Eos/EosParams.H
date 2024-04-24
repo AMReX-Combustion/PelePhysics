@@ -6,13 +6,13 @@
 
 #include "Table.H"
 
-//TODO: Single general interface for eosparm, pmfdata, transparm, etc.
+// TODO: Single general interface for eosparm, pmfdata, transparm, etc.
 
 namespace pele {
 namespace physics {
 namespace eos {
 
-enum class density_lookup_type {linear, log, inverse};
+enum class density_lookup_type { linear, log, inverse };
 
 struct GammaLaw;
 struct Fuego;
@@ -43,7 +43,7 @@ struct InitEosParm<GammaLaw>
   {
     amrex::ParmParse pp("eos");
     pp.query("gamma", eosparm->gamma);
-    //TODO: Actually integrate this into gamma law EOS code
+    // TODO: Actually integrate this into gamma law EOS code
     amrex::Error("Gamma cannot yet be specified at runtime");
   }
 };
@@ -66,13 +66,16 @@ struct InitEosParm<Manifold>
 {
   void operator()(EosParm<Manifold>* eosparm)
   {
-    amrex::Error("Manifold EOS cannot be initialized without tabulated or neural network data");
+    amrex::Error("Manifold EOS cannot be initialized without tabulated or "
+                 "neural network data");
   }
 
-  void operator()(EosParm<Manifold>* eosparm, ManFuncParams::ManFuncData* manf_data_in)
+  void operator()(
+    EosParm<Manifold>* eosparm, ManFuncParams::ManFuncData* manf_data_in)
   {
     eosparm->manf_data = manf_data_in;
-    // First (N-1) species are table dimensions (last species corresponds to density)
+    // First (N-1) species are table dimensions (last species corresponds to
+    // density)
     AMREX_ALWAYS_ASSERT(manf_data_in->Ndim == NUM_SPECIES - 1);
 
     amrex::ParmParse pp("eos");
@@ -81,20 +84,24 @@ struct InitEosParm<Manifold>
     pp.get("compute_temperature", eosparm->compute_temperature);
 
     // Setup density lookups
-    std::string density_lookup_type_string {"linear"};
+    std::string density_lookup_type_string{"linear"};
     pp.query("density_lookup_type", density_lookup_type_string);
     if (density_lookup_type_string == "linear") {
       eosparm->dens_lookup = density_lookup_type::linear;
       eosparm->idx_density = get_var_index("RHO", manf_data_in);
-      amrex::Print() << "Manifold EOS: Using linear density lookups : index = " << eosparm->idx_density << std::endl;
+      amrex::Print() << "Manifold EOS: Using linear density lookups : index = "
+                     << eosparm->idx_density << std::endl;
     } else if (density_lookup_type_string == "log") {
       eosparm->dens_lookup = density_lookup_type::log;
       eosparm->idx_density = get_var_index("lnRHO", manf_data_in);
-      amrex::Print() << "Manifold EOS: Using logarithmic density lookups : index = " << eosparm->idx_density << std::endl;
+      amrex::Print()
+        << "Manifold EOS: Using logarithmic density lookups : index = "
+        << eosparm->idx_density << std::endl;
     } else if (density_lookup_type_string == "inverse") {
       eosparm->dens_lookup = density_lookup_type::inverse;
       eosparm->idx_density = get_var_index("invRHO", manf_data_in);
-      amrex::Print() << "Manifold EOS: Using inverse density lookups : index = " << eosparm->idx_density << std::endl;
+      amrex::Print() << "Manifold EOS: Using inverse density lookups : index = "
+                     << eosparm->idx_density << std::endl;
     } else {
       amrex::Abort("Invalid density lookup type supplied");
     }
@@ -102,35 +109,33 @@ struct InitEosParm<Manifold>
     // Get important indices
     eosparm->idx_T = get_var_index("T", manf_data_in);
 
-    // For manifold table parameter source terms, assume if index not found, source term is 0
-    // For neural net, require a definition to be supplied for each manifold parameter
-    if(eosparm->has_mani_src)
-    {
-      for (int idim = 0; idim < manf_data_in->Ndim; idim++)
-      {
-        std::string dimname = std::string(&manf_data_in->dimnames[idim*manf_data_in->len_str], manf_data_in->len_str);
+    // For manifold table parameter source terms, assume if index not found,
+    // source term is 0 For neural net, require a definition to be supplied for
+    // each manifold parameter
+    if (eosparm->has_mani_src) {
+      for (int idim = 0; idim < manf_data_in->Ndim; idim++) {
+        std::string dimname = std::string(
+          &manf_data_in->dimnames[idim * manf_data_in->len_str],
+          manf_data_in->len_str);
         std::string dim_src;
-        if(dimname.rfind("Y-") == 0)
-        {
+        if (dimname.rfind("Y-") == 0) {
           dim_src = "SRC_" + amrex::trim(dimname).substr(2u, std::string::npos);
-        }
-        else
-        {
+        } else {
           dim_src = "SRC_" + amrex::trim(dimname);
         }
-        eosparm->idx_Wdot[idim] = get_var_index(dim_src.c_str(), manf_data_in, false);
-        if( eosparm->idx_Wdot[idim] < 0)
-        {
-        	amrex::Print() << "Warning: No source term found for manifold parameter " << amrex::trim(dimname)
-        		       << ", assuming SRC_" << amrex::trim(dimname) << " = 0" << std::endl;
+        eosparm->idx_Wdot[idim] =
+          get_var_index(dim_src.c_str(), manf_data_in, false);
+        if (eosparm->idx_Wdot[idim] < 0) {
+          amrex::Print()
+            << "Warning: No source term found for manifold parameter "
+            << amrex::trim(dimname) << ", assuming SRC_" << amrex::trim(dimname)
+            << " = 0" << std::endl;
         }
       }
-    }
-    else
-    {
-      for (int idim = 0; idim < manf_data_in->Ndim; idim++)
-      {
-        // The info file / metadata loader will ensure we have a definition for each
+    } else {
+      for (int idim = 0; idim < manf_data_in->Ndim; idim++) {
+        // The info file / metadata loader will ensure we have a definition for
+        // each
         eosparm->idx_Wdot[idim] = -1;
       }
     }
@@ -149,9 +154,8 @@ public:
   {
     InitEosParm<EOSType>()(&m_h_eos_parm);
     if (!m_device_allocated) {
-      m_d_eos_parm =
-        (EosParm<EOSType>*)amrex::The_Device_Arena()->alloc(
-          sizeof(m_h_eos_parm));
+      m_d_eos_parm = (EosParm<EOSType>*)amrex::The_Device_Arena()->alloc(
+        sizeof(m_h_eos_parm));
       m_device_allocated = true;
       sync_to_device();
     }
@@ -161,9 +165,8 @@ public:
   {
     InitEosParm<EOSType>()(&m_h_eos_parm, manf_data);
     if (!m_device_allocated) {
-      m_d_eos_parm =
-        (EosParm<EOSType>*)amrex::The_Device_Arena()->alloc(
-          sizeof(m_h_eos_parm));
+      m_d_eos_parm = (EosParm<EOSType>*)amrex::The_Device_Arena()->alloc(
+        sizeof(m_h_eos_parm));
       m_device_allocated = true;
       sync_to_device();
     }
@@ -186,15 +189,9 @@ public:
     }
   }
 
-  EosParm<EOSType>& host_eos_parm()
-  {
-    return m_h_eos_parm;
-  }
+  EosParm<EOSType>& host_eos_parm() { return m_h_eos_parm; }
 
-  const EosParm<EOSType>* device_eos_parm()
-  {
-    return m_d_eos_parm;
-  }
+  const EosParm<EOSType>* device_eos_parm() { return m_d_eos_parm; }
 
 private:
   EosParm<EOSType> m_h_eos_parm;

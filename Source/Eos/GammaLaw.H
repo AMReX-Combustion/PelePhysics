@@ -20,14 +20,12 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RY2R(const amrex::Real RY[], amrex::Real &R)
-  {
-    R = RY[0];
-  }
+  static void RY2R(const amrex::Real RY[], amrex::Real& R) { R = RY[0]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RY2RRinvY(const amrex::Real RY[], amrex::Real &R, amrex::Real &Rinv, amrex::Real Y[] )
+  static void RY2RRinvY(
+    const amrex::Real RY[], amrex::Real& R, amrex::Real& Rinv, amrex::Real Y[])
   {
     R = RY[0];
     Rinv = 1.0 / R;
@@ -36,7 +34,10 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RY2dRdY(const amrex::Real& /*R*/, const amrex::Real* /*Y[]*/, amrex::Real* /*dRdY[]*/)
+  static void RY2dRdY(
+    const amrex::Real& /*R*/,
+    const amrex::Real* /*Y[]*/,
+    amrex::Real* /*dRdY[]*/)
   {
     amrex::Error("RY2dRdY not applicable for GammaLaw EOS");
   }
