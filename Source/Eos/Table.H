@@ -404,7 +404,7 @@ private:
   // dimensionality some notes: the process is entirely recursive, but for  Ndim
   // <= 5 is unrolled to allow inlining Inlining not supported for Ndim > 5, but
   // that is unlikely to be used anyway minor performance gain possible by
-  // modifying code so selecting dimensionality isn't neeeded for each lookup
+  // modifying code so selecting dimensionality isn't needed for each lookup
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real interpolate(
