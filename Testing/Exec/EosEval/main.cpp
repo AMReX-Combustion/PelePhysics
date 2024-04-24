@@ -16,36 +16,30 @@ main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
   {
-      pele::physics::eos::EosParams<
-          pele::physics::PhysicsType::eos_type>
-          eos_parms;
-      amrex::Print() << " Initialization of EOS (CPP)... \n";
+    pele::physics::eos::EosParams<pele::physics::PhysicsType::eos_type>
+      eos_parms;
+    amrex::Print() << " Initialization of EOS (CPP)... \n";
 #ifdef USE_MANIFOLD_EOS
-      static std::unique_ptr<pele::physics::ManFuncParams> manfunc_par;
+    static std::unique_ptr<pele::physics::ManFuncParams> manfunc_par;
 
-      amrex::ParmParse ppm("manifold");
-      std::string manifold_model;
-      ppm.get("model", manifold_model);
-      if(manifold_model == "Table")
-          {
+    amrex::ParmParse ppm("manifold");
+    std::string manifold_model;
+    ppm.get("model", manifold_model);
+    if (manifold_model == "Table") {
       manfunc_par.reset(new pele::physics::TabFuncParams());
       amrex::Print() << " Initialization of Table (CPP)... \n";
       manfunc_par->initialize();
       eos_parms.allocate(manfunc_par->device_manfunc_data());
-  }
-      else if(manifold_model == "NeuralNet")
-          {
+    } else if (manifold_model == "NeuralNet") {
       manfunc_par.reset(new pele::physics::NNFuncParams());
       amrex::Print() << " Initialization of Neural Net Func. (CPP)... \n";
       manfunc_par->initialize();
       eos_parms.allocate(manfunc_par->device_manfunc_data());
-  }
-      else
-          {
+    } else {
       amrex::Error("Invalid manifold model!");
-  }
+    }
 #else
-      eos_parms.allocate();
+    eos_parms.allocate();
 #endif
     auto const* leosparm = eos_parms.device_eos_parm();
 
@@ -110,9 +104,9 @@ main(int argc, char* argv[])
         auto const& rho_a = density.array(mfi);
         auto const& e_a = energy.array(mfi);
         amrex::ParallelFor(
-          bx, [Y_a, T_a, rho_a, e_a,
-               geomdata, leosparm] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-              initialize_data(i, j, k, Y_a, T_a, rho_a, e_a, geomdata, leosparm);
+          bx, [Y_a, T_a, rho_a, e_a, geomdata,
+               leosparm] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+            initialize_data(i, j, k, Y_a, T_a, rho_a, e_a, geomdata, leosparm);
           });
       }
     }
@@ -180,30 +174,35 @@ main(int argc, char* argv[])
       }
     }
     if (do_plot) {
-        amrex::MultiFab VarPlt(ba, dm, 4 + 2*NUM_SPECIES, num_grow);
-        amrex::MultiFab::Copy(VarPlt, density, 0, 0, 1, num_grow);
-        amrex::MultiFab::Copy(VarPlt, mass_frac, 0, 1, NUM_SPECIES, num_grow);
-        amrex::MultiFab::Copy(VarPlt, cp, 0, 1+NUM_SPECIES, 1, num_grow);
-        amrex::MultiFab::Copy(VarPlt, wdot, 0, 2+NUM_SPECIES, NUM_SPECIES, num_grow);
-        amrex::MultiFab::Copy(VarPlt, temperature, 0, 2+2*NUM_SPECIES, 1, num_grow);
-        amrex::MultiFab::Copy(VarPlt, energy, 0, 3+2*NUM_SPECIES, 1, num_grow);
+      amrex::MultiFab VarPlt(ba, dm, 4 + 2 * NUM_SPECIES, num_grow);
+      amrex::MultiFab::Copy(VarPlt, density, 0, 0, 1, num_grow);
+      amrex::MultiFab::Copy(VarPlt, mass_frac, 0, 1, NUM_SPECIES, num_grow);
+      amrex::MultiFab::Copy(VarPlt, cp, 0, 1 + NUM_SPECIES, 1, num_grow);
+      amrex::MultiFab::Copy(
+        VarPlt, wdot, 0, 2 + NUM_SPECIES, NUM_SPECIES, num_grow);
+      amrex::MultiFab::Copy(
+        VarPlt, temperature, 0, 2 + 2 * NUM_SPECIES, 1, num_grow);
+      amrex::MultiFab::Copy(
+        VarPlt, energy, 0, 3 + 2 * NUM_SPECIES, 1, num_grow);
 
-        std::string outfile = amrex::Concatenate(pltfile, 1);
-        amrex::Vector<std::string> plt_VarsName, spec_VarsName;
-        pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(spec_VarsName);
+      std::string outfile = amrex::Concatenate(pltfile, 1);
+      amrex::Vector<std::string> plt_VarsName, spec_VarsName;
+      pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+        spec_VarsName);
 
-        plt_VarsName.push_back("rho");
-        for (int n = 0; n < NUM_SPECIES; ++n) {
-            plt_VarsName.push_back("Y("+spec_VarsName[n]+ ")");
-        }
-        plt_VarsName.push_back("cp");
-        for (int n = 0; n < NUM_SPECIES; ++n) {
-            plt_VarsName.push_back("wdot("+spec_VarsName[n]+ ")");
-        }
-        plt_VarsName.push_back("temperature");
-        plt_VarsName.push_back("energy");
+      plt_VarsName.push_back("rho");
+      for (int n = 0; n < NUM_SPECIES; ++n) {
+        plt_VarsName.push_back("Y(" + spec_VarsName[n] + ")");
+      }
+      plt_VarsName.push_back("cp");
+      for (int n = 0; n < NUM_SPECIES; ++n) {
+        plt_VarsName.push_back("wdot(" + spec_VarsName[n] + ")");
+      }
+      plt_VarsName.push_back("temperature");
+      plt_VarsName.push_back("energy");
 
-        amrex::WriteSingleLevelPlotfile(outfile, VarPlt, plt_VarsName, geom, 0.0, 0);
+      amrex::WriteSingleLevelPlotfile(
+        outfile, VarPlt, plt_VarsName, geom, 0.0, 0);
     }
   }
 

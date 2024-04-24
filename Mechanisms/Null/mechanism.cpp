@@ -21,7 +21,7 @@ CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
   kname.resize(NUM_SPECIES);
   for (int i = 0; i < NUM_SPECIES; ++i) {
-      kname[0] = "X"+std::to_string(i);
+    kname[0] = "X" + std::to_string(i);
   }
 }
 
