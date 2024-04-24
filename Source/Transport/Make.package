@@ -1,6 +1,5 @@
-CEXE_headers += Transport.H TransportTypes.H TransportParams.H Constant.H Simple
-                  .H Sutherland.H CEXE_sources += Transport.cpp
+CEXE_headers += Transport.H TransportTypes.H TransportParams.H Constant.H Simple.H Sutherland.H Manifold.H
+CEXE_sources += Transport.cpp
 
-                                                    VPATH_LOCATIONS +=
-  $(PELE_PHYSICS_HOME) / Source / Transport INCLUDE_LOCATIONS +=
-  $(PELE_PHYSICS_HOME) / Source / Transport
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Transport
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Transport
