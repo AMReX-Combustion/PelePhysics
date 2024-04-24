@@ -17,7 +17,7 @@ interpT(amrex::Real const& T, int& TindexL, amrex::Real& weight)
     return;
   }
   if (T > 2800) {
-    TindexL = 125;
+    TindexL = 124;
     weight = 1.0;
     return;
   }
@@ -58,6 +58,11 @@ getRadPropGas(
   amrex::GpuArray<amrex::Real, 126UL> const& kdatah2o,
   amrex::GpuArray<amrex::Real, 126UL> const& kdataco)
 {
+  if (
+    yco2(i, j, k) < 1.0e-5 && yh2o(i, j, k) < 1.0e-5 && yco(i, j, k) < 1.0e-5) {
+    absc(i, j, k) = 0.001;
+    return;
+  }
   int TindexL = 0;
   amrex::Real weight = 1.0;
   interpT(temp(i, j, k), TindexL, weight);

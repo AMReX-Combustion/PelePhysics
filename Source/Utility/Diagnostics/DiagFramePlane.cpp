@@ -55,7 +55,9 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
   for (int f{0}; f < nOutFields; ++f) {
     pp.get("field_names", m_fieldNames[f], f);
   }
-
+  m_nfiles_plane =
+    std::max(1, std::min(amrex::ParallelDescriptor::NProcs(), 256));
+  pp.query("n_files", m_nfiles_plane);
   // Plane normal
   pp.get("normal", m_normal);
   AMREX_ASSERT(m_normal >= 0 && m_normal < AMREX_SPACEDIM);
@@ -294,7 +296,7 @@ DiagFramePlane::processDiag(
     amrex::Vector<int> step_array(nlevs, a_nstep);
     Write2DMultiLevelPlotfile(
       diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
-      a_time, step_array, ref_ratio);
+      a_time, step_array, ref_ratio, m_nfiles_plane);
   }
 }
 
@@ -307,7 +309,8 @@ DiagFramePlane::Write2DMultiLevelPlotfile(
   const amrex::Vector<amrex::Geometry>& a_geoms,
   const amrex::Real& a_time,
   const amrex::Vector<int>& a_steps,
-  const amrex::Vector<amrex::IntVect>& a_rref)
+  const amrex::Vector<amrex::IntVect>& a_rref,
+  int nOutFiles)
 {
   const std::string levelPrefix = "Level_";
   const std::string mfPrefix = "Cell";
@@ -370,7 +373,8 @@ DiagFramePlane::Write2DMultiLevelPlotfile(
   for (int level = 0; level < a_nlevels; ++level) {
     VisMF2D(
       *a_slice[level],
-      amrex::MultiFabFileFullPrefix(level, a_pltfile, levelPrefix, mfPrefix));
+      amrex::MultiFabFileFullPrefix(level, a_pltfile, levelPrefix, mfPrefix),
+      nOutFiles);
   }
 }
 
@@ -454,7 +458,7 @@ DiagFramePlane::Write2DPlotfileHeader(
 
 void
 DiagFramePlane::VisMF2D(
-  const amrex::MultiFab& a_mf, const std::string& a_mf_name)
+  const amrex::MultiFab& a_mf, const std::string& a_mf_name, int nOutFiles)
 {
   auto whichRD = amrex::FArrayBox::getDataDescriptor();
   bool doConvert(*whichRD != amrex::FPC::NativeRealDescriptor());
@@ -469,8 +473,6 @@ DiagFramePlane::VisMF2D(
   amrex::VisMF::How how = amrex::VisMF::How::NFiles;
   amrex::VisMF::Header hdr(a_mf, how, currentVersion, calcMinMax);
 
-  int nOutFiles =
-    std::max(1, std::min(amrex::ParallelDescriptor::NProcs(), 256));
   bool groupSets = false;
   bool setBuf = true;
 

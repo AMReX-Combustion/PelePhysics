@@ -1,0 +1,2 @@
+CEXE_headers += HITData.H main_K.H Utilities.H
+CEXE_sources += main.cpp Utilities.cpp
