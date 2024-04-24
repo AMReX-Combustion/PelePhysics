@@ -19,8 +19,8 @@ initialize_data(
   amrex::Array4<amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& energy,
   amrex::GeometryData const& geomdata,
-  const pele::physics::eos::EosParm<
-  pele::physics::PhysicsType::eos_type> * eosparm) noexcept
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
   const amrex::Real* plo = geomdata.ProbLo();
   const amrex::Real* phi = geomdata.ProbHi();
@@ -43,18 +43,18 @@ initialize_data(
     P[n] = L[n] / 4.0;
   }
 #ifdef USE_MANIFOLD_EOS
-   for (int n = 0; n < NUM_SPECIES-1; n++) {
-     Y_lo[n] = 0.0;
-     Y_hi[n] = 1.0 / (NUM_SPECIES-1) ;
-   }
-   Y_lo[NUM_SPECIES-1] = 1.0;
-   Y_hi[NUM_SPECIES-1] = 1.0;
+  for (int n = 0; n < NUM_SPECIES - 1; n++) {
+    Y_lo[n] = 0.0;
+    Y_hi[n] = 1.0 / (NUM_SPECIES - 1);
+  }
+  Y_lo[NUM_SPECIES - 1] = 1.0;
+  Y_hi[NUM_SPECIES - 1] = 1.0;
 #else
-   for (int n = 0; n < NUM_SPECIES; n++) {
-     Y_lo[n] = 0.0;
-     Y_hi[n] = 1.0 / NUM_SPECIES ;
-   }
-   Y_lo[0] = 1.0;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    Y_lo[n] = 0.0;
+    Y_hi[n] = 1.0 / NUM_SPECIES;
+  }
+  Y_lo[0] = 1.0;
 #endif
 
   // T, Yk, rho
@@ -94,8 +94,8 @@ get_cp(
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& cp,
-  const pele::physics::eos::EosParm<
-  pele::physics::PhysicsType::eos_type> * eosparm) noexcept
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
@@ -118,11 +118,11 @@ get_wdot(
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& wdot,
-  const pele::physics::eos::EosParm<
-  pele::physics::PhysicsType::eos_type> * eosparm) noexcept
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
-    amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt, rxn_pt;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt, rxn_pt;
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf_pt[n] = mf(i, j, k, n);
   }
@@ -146,8 +146,8 @@ get_T_from_EY(
   amrex::Array4<amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
   amrex::Array4<const amrex::Real> const& energy,
-  const pele::physics::eos::EosParm<
-  pele::physics::PhysicsType::eos_type> * eosparm) noexcept
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
