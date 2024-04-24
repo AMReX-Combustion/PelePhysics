@@ -321,7 +321,7 @@ private:
   // x             => x location
   // idxlo (return)=> output st. xtable(idxlo) <= x < xtable(idxlo+1)
   // -----------------------------------------------------------
-  AMREX_GPU_DEVICE
+  AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   int locate(const amrex::Real* xtable, const int n, const amrex::Real x)
   {
@@ -371,6 +371,7 @@ private:
       // home rolled fixed grid direct SOFAR: lower_bound is much faster than
       // home rolled while loop. Even then, finding indexes is ~50% of runtime
 
+
 #ifndef AMREX_USE_GPU
       auto beg = &tf_data->grids[start];
       int idx =
@@ -380,13 +381,12 @@ private:
         dimLen - 2); // don't let idx be negative or out of bounds
 #else
       // home rolled
-      // int idx = 1;
-      // while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen)
-      // {idx+=1;}; idx-=1;
+      //int idx = 1;
+      //while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen)
+      //    {idx+=1;};
+      //idx-=1;
       int idx = locate(&tf_data->grids[start], dimLen, interpdata[dim]);
 #endif
-      // test to see cost if no lookup
-      // int idx=42;
 
       indices[dim] = idx;
       idx += start;
@@ -395,9 +395,7 @@ private:
       dxinv[dim] = dx_inv;
       amrex::Real alpha = (tf_data->grids[idx + 1] - interpdata[dim]) * dx_inv;
       alphas[dim] = std::min(
-        std::max(alpha, 0.0), 1.0); // Clip to avoid extrapolating when out of
-                                    // bounds // REPLACE with AMReX function
-      // std::cout << "alpha " << dim << ": " << alphas[dim] << std::endl;
+        std::max(alpha, 0.0), 1.0);
       start += dimLen;
     }
   }
