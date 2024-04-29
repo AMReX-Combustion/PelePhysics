@@ -524,7 +524,7 @@ progressRateFR(
   // compute the Gibbs free energy
   amrex::Real g_RT[NUM_SPECIES];
   gibbs(g_RT, T);
-  amrex::Real g_RT_qss[NUM_QSSA_GAS_SPECIES];
+  amrex::Real g_RT_qss[NUM_GAS_SPECIES];
   gibbs_qss(g_RT_qss, T);
 
   amrex::Real sc_qss[33];
