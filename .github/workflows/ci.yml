@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check formatting
         uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: false
       - name: Python
@@ -56,7 +56,7 @@ jobs:
       run:
         working-directory: ${{github.workspace}}/Support/ceptr
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{matrix.python-version}}
@@ -104,7 +104,7 @@ jobs:
             amrex_build_args: 'USE_SYCL=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{matrix.python-version}}
@@ -113,7 +113,7 @@ jobs:
         with:
           poetry-version: ${{matrix.poetry-version}}
       - name: Clone PelePhysics
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: PelePhysics-${{matrix.comp}}
           submodules: recursive
