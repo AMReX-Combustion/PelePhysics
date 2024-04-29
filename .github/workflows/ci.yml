@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check formatting
         uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
@@ -30,11 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: false
       - name: Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Dependencies
@@ -56,8 +56,8 @@ jobs:
       run:
         working-directory: ${{github.workspace}}/Support/ceptr
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
@@ -104,8 +104,8 @@ jobs:
             amrex_build_args: 'USE_SYCL=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
@@ -113,7 +113,7 @@ jobs:
         with:
           poetry-version: ${{matrix.poetry-version}}
       - name: Clone PelePhysics
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: PelePhysics-${{matrix.comp}}
           submodules: recursive
@@ -141,7 +141,7 @@ jobs:
           tar xvf ccache-4.8-linux-x86_64.tar.xz
           sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
       - name: Set Up Ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.comp}}-git-${{github.sha}}
