@@ -1469,7 +1469,7 @@ def progress_rate_fr(fstream, species_info, reaction_info):
         if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "amrex::Real g_RT_qss[NUM_QSSA_GAS_SPECIES];",
+                "amrex::Real g_RT_qss[NUM_GAS_SPECIES];",
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
 
