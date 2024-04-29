@@ -36,7 +36,7 @@ jobs:
       - name: Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
       - name: Dependencies
         run: |
           # Install Python packages
@@ -85,7 +85,7 @@ jobs:
     strategy:
       matrix:
         comp: [gnu, llvm, cuda, hip, sycl]
-        python-version: ['3.12']
+        python-version: ['3.11']
         poetry-version: ['1.4.2']
         include:
           - comp: gnu
