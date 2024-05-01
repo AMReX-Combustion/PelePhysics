@@ -33,7 +33,7 @@ struct InitEosParm
 template <>
 struct EosParm<GammaLaw>
 {
-  amrex::Real gamma{1.4};
+  amrex::Real gamma{Constants::gamma};
 };
 
 template <>
@@ -43,8 +43,11 @@ struct InitEosParm<GammaLaw>
   {
     amrex::ParmParse pp("eos");
     pp.query("gamma", eosparm->gamma);
-    // TODO: Actually integrate this into gamma law EOS code
-    amrex::Error("Gamma cannot yet be specified at runtime");
+    if (eosparm->gamma != Constants::gamma) {
+      amrex::Warning(
+        "Runtime gamma does not match compile time gamma, use caution because "
+        "runtime specification of gamma may not yet be supported everywhere");
+    }
   }
 };
 
