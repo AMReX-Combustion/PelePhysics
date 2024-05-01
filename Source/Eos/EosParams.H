@@ -57,7 +57,7 @@ struct EosParm<Manifold>
   bool compute_temperature{false};
   int idx_density{0};
   int idx_T{0};
-  int idx_Wdot[NUM_SPECIES - 1] = {0};
+  int idx_Wdot[NUM_SPECIES - 1];
   bool has_mani_src = false;
 };
 
