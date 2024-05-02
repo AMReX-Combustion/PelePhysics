@@ -79,18 +79,16 @@ struct Manifold
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
-    amrex::Real& E)
+    amrex::Real* /*E*/)
   {
-    // TODO: HACK HACK HACK: FIXME (only here for EosEval utility)
-    // amrex::Error("RTY2E does not have significance for Manifold EOS");
-    E = 0.0;
+    amrex::Error("RTY2E does not have significance for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void T2Hi(const amrex::Real /*T*/, amrex::Real Hi[])
   {
-    // TODO: HACK HACK HACK: FIXME (need to remove enthalpy calculations from
+    // TODO: FIXME (need to remove enthalpy calculations from
     // PeleLM)
     for (int is = 0; is < NUM_SPECIES; is++) {
       Hi[is] = 0.0;
@@ -133,7 +131,7 @@ struct Manifold
   void
   TY2Cp(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& Cp)
   {
-    // TODO: HACK HACK HACK: FIXME (need to remove enthalpy calculations from
+    // TODO: FIXME (need to remove enthalpy calculations from
     // PeleLM)
     Cp = 100.0;
     // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
@@ -147,7 +145,7 @@ struct Manifold
     const amrex::Real* /*Y[]*/,
     amrex::Real& Cp)
   {
-    // TODO: HACK HACK HACK: FIXME (need to remove enthalpy calculations from
+    // TODO: FIXME (need to remove enthalpy calculations from
     // PeleLM)
     Cp = 100.0;
     // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
@@ -199,7 +197,7 @@ struct Manifold
   void TY2H(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& H)
   {
     H = 0.0;
-    // TODO: Eliminate this call entirely?
+    // TODO: FIXME Eliminate this call from PeleLM?
     // amrex::Error("TY2H is not yet implemented for Manifold EOS");
   }
 
@@ -207,7 +205,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   void X2Y(const amrex::Real X[], amrex::Real Y[])
   {
-    // TODO: FIXME HACK HACK HACK
+    // TODO: FIXME
     // just return Y as a hack for PMF, this should really not be needed
     // anywhere
     for (int is = 0; is < NUM_SPECIES; is++) {

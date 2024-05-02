@@ -75,10 +75,11 @@ initialize_data(
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf_pt[n] = mf(i, j, k, n);
   }
+
+#ifndef USE_MANIFOLD_EOS
   eos.RTY2E(rho(i, j, k), temp(i, j, k), mf_pt.arr, energy(i, j, k));
-#if (AMREX_SPACEDIM == 1)
-  energy(i, j, k) = energy(i, j, k);
-#else
+#endif
+#if (AMREX_SPACEDIM != 1)
   energy(i, j, k) += denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
 #endif
 }
