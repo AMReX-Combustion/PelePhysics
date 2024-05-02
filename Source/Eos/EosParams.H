@@ -61,7 +61,7 @@ struct EosParm<Manifold>
   int idx_density{0};
   int idx_T{0};
   int idx_Wdot[NUM_SPECIES - 1];
-  bool has_mani_src = false;
+  bool has_mani_src = true;
 };
 
 template <>
