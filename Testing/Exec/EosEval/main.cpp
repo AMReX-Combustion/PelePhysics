@@ -113,7 +113,7 @@ main(int argc, char* argv[])
     amrex::MultiFab cp(ba, dm, 1, num_grow);
     amrex::MultiFab wdot(ba, dm, NUM_SPECIES, num_grow);
     {
-      BL_PROFILE("Pele::cp()");
+      BL_PROFILE("Pele::get_cp()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -133,7 +133,7 @@ main(int argc, char* argv[])
       }
     }
     {
-      BL_PROFILE("Pele::cv()");
+      BL_PROFILE("Pele::get_wdot()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -148,13 +148,18 @@ main(int argc, char* argv[])
         auto const& rho_a = density.array(mfi);
         amrex::ParallelFor(
           box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+#ifndef USE_GAMMALAW_EOS
             get_wdot(i, j, k, Y_a, T_a, rho_a, wdot_a, leosparm);
+#else
+            // GammaLaw: Wdot not supported, just set to 0
+            wdot_a(i,j,k,0) = 0.0;
+#endif
           });
       }
     }
 
     {
-      BL_PROFILE("Pele::getE()");
+      BL_PROFILE("Pele::get_T()");
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
