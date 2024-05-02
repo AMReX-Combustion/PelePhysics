@@ -180,7 +180,7 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          for TYPE in Constant Simple Sutherland; do \
+          for TYPE in Constant Simple Sutherland Manifold; do \
             printf "\n-------- ${TYPE} --------\n"; \
             if [ "${TYPE}" == 'Manifold' ]; then EOSMODEL=Manifold; else EOSMODEL=Fuego; fi; \
             make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
