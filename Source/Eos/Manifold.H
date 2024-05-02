@@ -79,7 +79,7 @@ struct Manifold
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
-    amrex::Real E)
+    amrex::Real& E)
   {
     // TODO: HACK HACK HACK: FIXME (only here for EosEval utility)
     // amrex::Error("RTY2E does not have significance for Manifold EOS");

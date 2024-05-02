@@ -1,6 +1,8 @@
 #ifndef _NEURAL_NET_MD_H_
 #define _NEURAL_NET_MD_H_
 
+#define MAXD_NETWORK 100
+
 #include <vector>
 #include <iostream>
 #include <fstream>

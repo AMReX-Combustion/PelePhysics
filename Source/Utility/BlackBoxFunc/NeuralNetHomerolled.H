@@ -154,6 +154,9 @@ public:
     m_h_nnf_data.Nvar = stoi(umap["nvar"][0]);
     m_h_nnf_data.Nmanpar = stoi(umap["nmanpar"][0]);
 
+    // Hard coded limit on size of network (required for derivs function)
+    AMREX_ALWAYS_ASSERT(m_h_nnf_data.Ndim < MAXD_TABLE);
+
     AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
     AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);
 
@@ -409,7 +412,8 @@ public:
     const amrex::Real outval0 = nnmodel(indata)[ivar];
     amrex::Real diff;
 
-    amrex::Real indata_copy[NUM_SPECIES - 1];
+    // TODO: Better way to do this than hardcoding the size?
+    amrex::Real indata_copy[MAXD_NETWORK];
     for (int i = 0; i < nnf_data->Ndim; i++) {
       indata_copy[i] = indata[i];
     }
