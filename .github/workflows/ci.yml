@@ -182,7 +182,8 @@ jobs:
           ccache -z
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            if [ "${TYPE}" == 'Manifold' ]; then EOSMODEL=Manifold; else EOSMODEL=Fuego; fi; \
+            make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
             fi; \
@@ -201,13 +202,14 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          for TYPE in Fuego GammaLaw Soave-Redlich-Kwong; do \
+          for TYPE in Fuego GammaLaw Soave-Redlich-Kwong Manifold; do \
             if [ "${TYPE}" == 'Fuego' ] || [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
+            if [ "${TYPE}" == 'Manifold' ]; then INPUTFILE=inputs.2d.table1d; else INPUTFILE=inputs.2d; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
-              ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; \
+              ./Pele2d.${{matrix.comp}}.TPROF.ex ${INPUTFILE}; \
             fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \

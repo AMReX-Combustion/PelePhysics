@@ -49,8 +49,8 @@ ifeq ($(USE_MANIFOLD), TRUE)
   Eos_Model       = Manifold
   Chemistry_Model = Null
   Transport_Model = Manifold
-  Manifold_Dim    = 1
 endif
+Manifold_Dim    = 1
 
 Bpack   := ./Make.package
 Blocs   := .
