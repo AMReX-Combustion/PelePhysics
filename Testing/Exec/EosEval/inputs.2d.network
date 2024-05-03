@@ -1,0 +1,12 @@
+# General
+gridsize = 32
+
+# Manifold
+manifold.model = NeuralNet
+manifold.filename = fgm_net.pnn
+manifold.info_filename = fgm_net_info.txt
+manifold.v = 1
+manifold.cmlm_net = 1
+eos.nominal_pressure_cgs = 1013250.0
+eos.compute_temperature = 1
+eos.has_mani_src = 1

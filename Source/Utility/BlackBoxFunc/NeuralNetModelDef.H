@@ -215,6 +215,8 @@ public:
 
       outvec0 = new amrex::Real[maxsize];
       outvec1 = new amrex::Real[maxsize];
+    } else {
+      amrex::Abort("Only CMLM nets supported for now without owning data");
     }
   }
 
