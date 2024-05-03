@@ -229,13 +229,7 @@ struct Manifold
     const amrex::Real Y[],
     amrex::Real WDOT[])
   {
-    if (eosparm->has_mani_src) {
-      manfunc->get_values(NUM_SPECIES - 1, eosparm->idx_Wdot, Y, WDOT);
-    } else {
-      for (int is = 0; is < NUM_SPECIES - 1; is++) {
-        manfunc->calculate_Wdot(is, Y, WDOT[is]);
-      }
-    }
+    manfunc->get_values(NUM_SPECIES - 1, eosparm->idx_Wdot, Y, WDOT);
 
     // Density source is 0
     WDOT[NUM_SPECIES - 1] = 0.0;

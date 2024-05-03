@@ -81,10 +81,6 @@ public:
     const int ivar, const amrex::Real indata[], amrex::Real derivs[]) = 0;
 
   AMREX_GPU_HOST_DEVICE
-  virtual void calculate_Wdot(
-    const int paramidx, const amrex::Real indata[], amrex::Real& out) = 0;
-
-  AMREX_GPU_HOST_DEVICE
   virtual ManifoldModel model() = 0;
 
   AMREX_GPU_HOST_DEVICE

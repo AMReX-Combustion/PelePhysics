@@ -140,6 +140,8 @@ struct InitEosParm<Manifold>
         // The info file / metadata loader will ensure we have a definition for
         // each
         eosparm->idx_Wdot[idim] = -1;
+        amrex::Abort("Computation of manifold src terms from species src terms "
+                     "needs to be reimplemented");
       }
     }
   }

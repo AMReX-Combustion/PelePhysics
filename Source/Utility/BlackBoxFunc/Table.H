@@ -290,14 +290,6 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void calculate_Wdot(
-    const int paramidx, const amrex::Real indata[], amrex::Real& out)
-  {
-    out = 0.0;
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
   virtual ManifoldModel model() { return tf_data->manmodel; }
 
   /*
