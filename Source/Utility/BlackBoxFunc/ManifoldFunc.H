@@ -1,6 +1,8 @@
 #ifndef _MANIFOLD_FUNC_H_
 #define _MANIFOLD_FUNC_H_
 
+#include <AMReX_Utility.H>
+
 namespace pele {
 namespace physics {
 

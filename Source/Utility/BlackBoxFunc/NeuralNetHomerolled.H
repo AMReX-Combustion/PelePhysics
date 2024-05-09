@@ -155,7 +155,7 @@ public:
     m_h_nnf_data.Nmanpar = stoi(umap["nmanpar"][0]);
 
     // Hard coded limit on size of network (required for derivs function)
-    AMREX_ALWAYS_ASSERT(m_h_nnf_data.Ndim < MAXD_TABLE);
+    AMREX_ALWAYS_ASSERT(m_h_nnf_data.Ndim < MAXD_NETWORK);
 
     AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
     AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);

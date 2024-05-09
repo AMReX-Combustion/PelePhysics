@@ -2,6 +2,7 @@
 #define _NEURAL_NET_MD_H_
 
 #define MAXD_NETWORK 100
+#define num_layers 7
 
 #include <vector>
 #include <iostream>
@@ -129,7 +130,7 @@ public:
       }
     }
 
-    num_layers = layer_vec.size();
+    // num_layers = layer_vec.size();
 
     layers = new NNLayer*[num_layers];
     for (int i = 0; i < num_layers; i++) {
@@ -166,7 +167,7 @@ public:
     cmlm_net = static_cast<bool>(nnid_in[0]);
 
     if (cmlm_net) {
-      num_layers = 7;
+      // num_layers = 7;
       layers = new NNLayer*[num_layers];
       lsizes = new int[num_layers];
 
@@ -212,12 +213,13 @@ public:
         layers[i]->nout = lsizes[i];
         maxsize = (lsizes[i] > maxsize) ? lsizes[i] : maxsize;
       }
-
-      outvec0 = new amrex::Real[maxsize];
-      outvec1 = new amrex::Real[maxsize];
+      
+      AMREX_ASSERT(maxsize < MAXD_NETWORK);
+      outvec0 = new amrex::Real[MAXD_NETWORK];
+      outvec1 = new amrex::Real[MAXD_NETWORK];
     } else {
       amrex::Abort("Only CMLM nets supported for now without owning data");
-    }
+      } 
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -320,7 +322,7 @@ private:
   NNLayer** layers;
   int* lsizes;
   int inpsize;
-  int num_layers;
+  // static constexpr int num_layers = 7;
   amrex::Real* outvec0;
   amrex::Real* outvec1;
   bool cmlm_net;

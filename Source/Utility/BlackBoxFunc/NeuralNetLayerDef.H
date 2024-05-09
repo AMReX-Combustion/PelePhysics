@@ -92,6 +92,8 @@ dim_to_numel(int* dim, size_t ndim)
 class NNLayer
 {
 public:
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   virtual ~NNLayer() {}
 
   // Template for CPU-only constructor to be used when reading in a file
@@ -171,6 +173,8 @@ public:
     nout = bsize[0];
   }
 
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   virtual ~LinearNNLayer()
   {
     if (owns_data) {
@@ -260,7 +264,9 @@ public:
     owns_data = false;
     neg_slope = nnrd;
   }
-
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   virtual ~LeakyReluNNLayer()
   {
     if (owns_data) {
@@ -338,7 +344,9 @@ public:
     weight = nnrd;
     bias = nnrd + wsize[0];
   }
-
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   virtual ~BatchNorm1dNNLayer()
   {
     if (owns_data) {

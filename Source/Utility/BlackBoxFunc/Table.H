@@ -24,11 +24,20 @@ public:
     std::string tablefile;
     pp.get("filename", tablefile);
     pp.query("v", m_verbose);
+
+    //std::cout << "READ TABLE STAGE " << &m_h_tf_data << " " << m_d_tf_data << " " << (&m_h_tf_data)->dimLengths << " " << m_d_tf_data->dimLengths << std::endl;
+    
     read_table(tablefile);
+
+    //std::cout << "READ TABLE AFTER " << &m_h_tf_data << " " << m_d_tf_data << " " << (&m_h_tf_data)->dimLengths << " " << m_d_tf_data->dimLengths << std::endl;
+    
     if (m_verbose >= 1) {
       print();
     }
     allocate();
+
+    //std::cout << "DONE TABLE STAGE " << &m_h_tf_data << " " << m_d_tf_data << " " << (&m_h_tf_data)->dimLengths << " " << m_d_tf_data->dimLengths << std::endl;
+    
   }
 
   void read_table(std::string& tablefile)
