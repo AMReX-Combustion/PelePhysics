@@ -196,22 +196,30 @@ class SymbolicMath:
 
         if self.remove_pow:
             # Positive exponents
-            user_functions["Pow"].append((
-                lambda b, e: (e.is_Integer or e.is_Float)
-                and (abs(e - 1) < 1e-16 or abs(e - 2) < 1e-16 or abs(e - 3) < 1e-16),
-                lambda b, e: "(" + "*".join(["(" + b + ")"] * int(float(e))) + ")",
-            ))
+            user_functions["Pow"].append(
+                (
+                    lambda b, e: (e.is_Integer or e.is_Float)
+                    and (
+                        abs(e - 1) < 1e-16 or abs(e - 2) < 1e-16 or abs(e - 3) < 1e-16
+                    ),
+                    lambda b, e: "(" + "*".join(["(" + b + ")"] * int(float(e))) + ")",
+                )
+            )
             # Negative exponents
-            user_functions["Pow"].append((
-                lambda b, e: (e.is_Integer or e.is_Float)
-                and (abs(e + 1) < 1e-16 or abs(e + 2) < 1e-16 or abs(e + 3) < 1e-16),
-                lambda b, e: "("
-                + "1.0/"
-                + "("
-                + "*".join(["(" + b + ")"] * int(-float(e)))
-                + ")"
-                + ")",
-            ))
+            user_functions["Pow"].append(
+                (
+                    lambda b, e: (e.is_Integer or e.is_Float)
+                    and (
+                        abs(e + 1) < 1e-16 or abs(e + 2) < 1e-16 or abs(e + 3) < 1e-16
+                    ),
+                    lambda b, e: "("
+                    + "1.0/"
+                    + "("
+                    + "*".join(["(" + b + ")"] * int(-float(e)))
+                    + ")"
+                    + ")",
+                )
+            )
 
         if self.remove_pow10:
             user_functions["Pow"].append(

@@ -894,8 +894,7 @@ def ckpx(fstream, mechanism, species_info):
         fstream,
         "P = rho *"
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T"
-        " / XW; "
-        + cw.comment("P = rho*R*T/W"),
+        " / XW; " + cw.comment("P = rho*R*T/W"),
     )
 
     cw.writer(fstream)
@@ -934,8 +933,7 @@ def ckpy(fstream, mechanism, species_info):
         fstream,
         "P = rho *"
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T"
-        " * YOW; "
-        + cw.comment("P = rho*R*T/W"),
+        " * YOW; " + cw.comment("P = rho*R*T/W"),
     )
 
     cw.writer(fstream)
@@ -982,8 +980,7 @@ def ckpc(fstream, mechanism, species_info):
         fstream,
         "P = rho *"
         f" {(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} * T"
-        " * sumC / W; "
-        + cw.comment("P = rho*R*T/W"),
+        " * sumC / W; " + cw.comment("P = rho*R*T/W"),
     )
 
     cw.writer(fstream)
@@ -1022,8 +1019,7 @@ def ckrhox(fstream, mechanism, species_info):
         fstream,
         "rho = P * XW /"
         f" ({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} *"
-        " T); "
-        + cw.comment("rho = P*W/(R*T)"),
+        " T); " + cw.comment("rho = P*W/(R*T)"),
     )
 
     cw.writer(fstream)
@@ -1055,8 +1051,7 @@ def ckrhoy(fstream, mechanism, species_info):
         fstream,
         "rho = P /"
         f" ({(cc.R * cc.ureg.mole * cc.ureg.kelvin / cc.ureg.erg).m:1.14e} * T"
-        " * YOW);"
-        + cw.comment("rho = P*W/(R*T)"),
+        " * YOW);" + cw.comment("rho = P*W/(R*T)"),
     )
 
     cw.writer(fstream, "}")
@@ -1438,8 +1433,7 @@ def ckxtcp(fstream, mechanism, species_info):
         fstream,
         "amrex::Real PORT ="
         f" P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} *"
-        " T); "
-        + cw.comment("P/RT"),
+        " T); " + cw.comment("P/RT"),
     )
     # now compute conversion
     cw.writer(fstream)
@@ -2149,8 +2143,7 @@ def ckwxp(fstream, mechanism, species_info):
         fstream,
         "amrex::Real PORT = 1e6 *"
         f" P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} *"
-        " T); "
-        + cw.comment("1e6 * P/RT so c goes to SI units"),
+        " T); " + cw.comment("1e6 * P/RT so c goes to SI units"),
     )
 
     # now compute conversion
@@ -2585,8 +2578,7 @@ def ckkfkr(fstream, mech_is_heterogeneous, mech_is_reacting):
         fstream,
         "amrex::Real PORT = 1e6 *"
         f" P/({(cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg).m:1.14e} *"
-        " T); "
-        + cw.comment("convert to SI (mol/cm^3 to mol/m^3)"),
+        " T); " + cw.comment("1e6 * P/RT so c goes to SI units"),
     )
 
     if mech_is_heterogeneous:
