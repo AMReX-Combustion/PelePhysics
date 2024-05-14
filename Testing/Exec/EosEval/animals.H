@@ -110,6 +110,99 @@ class animal
     virtual void type() { std::cout << "IN FUNC "; my_type.type();};
     DogType my_type;
   };
+
+  /*
+  template <typename DogType, typename BaseType>
+  class dogplus : public dog<DogType> {
+  public:
+    virtual void type() { std::cout << "IN FUNC "; my_type.type();};
+    DogType my_type;
+    }; */
+
+  class data_base {
+  public:
+    virtual void print() {std::cout  << "I am data_base" <<std::endl;}
+    int x = 0;
+  };
+
+    class data_der1 : public data_base{
+    public:
+      void print() override {std::cout  << " I am data_der1" <<std::endl; x=7;}
+      int y = 2;
+    };
+  
+    class data_der2 : public data_base{
+    public:
+      void print() override {std::cout  << "I am data_der2" <<std::endl; x=23;}
+      int z = 3;
+    };
+  
+  template <typename BaseDataType>
+  class base_class : public Factory<base_class<BaseDataType>>
+  {
+  public:
+    static std::string base_identifier(){ return "base_class";}
+    virtual std::string name() {return "no name";};
+    virtual BaseDataType* get_my_data() = 0;
+    
+  };
+
+  template <typename ClassType, typename BaseDataType = ClassType>
+  class derived_class : public  base_class<BaseDataType> //::template Register<derived_class<ClassType, BaseDataType>> 
+    {
+    public:
+      static_assert(std::is_base_of_v<BaseDataType,ClassType> == true);
+      std::string name() override {return "derived names";};
+      // static std::string identifier() {return "derived_class";};
+      virtual BaseDataType* get_my_data() {return &myData;};
+    private:
+      ClassType myData;
+    };
+
+  class fart : public base_class<data_base>::Register<fart, derived_class<data_der1, data_base>> {
+    //class fart : public derived_class<data_der1, data_base> {
+  public:
+    std::string name() override;
+    static std::string identifier() {return "fart_class";};
+    //data_base* get_my_data() override {return &myData;};
+  };
+  
+  class fart2 : public  base_class<data_base>::Register<fart2, derived_class<data_der2, data_base>> {
+  //class fart2 : public  derived_class<data_der2, data_base> {
+  public:
+    std::string name() override;
+    static std::string identifier() {return "fart2_class";};
+    //data_base* get_my_data() override {return &myData;};
+  };
+  
+  //std::string fart::name() {return "my name is fart class";};
+  //std::string fart::identifier() {return "fart_class";};
+  std::string fart::name () {return "my name is fart class";};
+  //data_base* fart::get_my_data() {return nullptr;};
+  //std::string fart2::identifier() {return "fart2_class";};
+  std::string fart2::name () {return "my name is fart2 class";};
+  //data_base* fart2::get_my_data() {return nullptr;};
+
+  /*
+  class other_class : public base_class<data_base>::Register<other_class>
+  {
+  public:
+    static std::string identifier();
+    std::string name() override;
+  };
+  
+  std::string other_class::name() {return "my name is other class";};
+  std::string other_class::identifier() {return "other_class";};
+  */
+
+  /*
+
+  template<>
+  std::string derived_class<data_cont>::name() {return "my name is derived data_cont";}
+
+  template<>
+  std::string derived_class<data_cont>::identifier() {return "derived_class";}
+  */
   
   class DOGS : public dog<dog_type>, public Factory<DOGS>
   {

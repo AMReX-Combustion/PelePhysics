@@ -55,6 +55,27 @@ main(int argc, char* argv[])
 
   amrex::Print() << std::endl << " - - - - - - - - - - - - - - " << std::endl << std::endl;
 
+  
+  pele::physics::Factory<pele::physics::base_class<pele::physics::data_base>>::print(std::cout);
+  //pele::physics::Factory<pele::physics::base_class>::print(std::cout);
+  
+  std::unique_ptr<pele::physics::base_class<pele::physics::data_base>> aclass = pele::physics::base_class<pele::physics::data_base>::create("fart_class");
+  //pele::physics::fart aclass;
+  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
+  pele::physics::data_der1* dptr = static_cast<pele::physics::data_der1*>(aclass->get_my_data());
+  std::cout << "Recasted values " << dptr->x << " " <<dptr->y <<std::endl;
+  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
+  aclass->get_my_data()->print() ;
+  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
+  amrex::Print() << " ==== " << std::endl;
+  
+  pele::physics::derived_class<pele::physics::data_der2> bclass;
+  amrex::Print() << " howdy " << bclass.name() << " " << bclass.get_my_data()->x  << std::endl;
+  bclass.get_my_data()->print() ;
+  
+  pele::physics::derived_class<pele::physics::data_der1> cclass;
+  amrex::Print() << " howdy " << cclass.name() << " " << cclass.get_my_data()->x <<  std::endl;
+  cclass.get_my_data()->print() ;
   /*
   std::unique_ptr<pele::physics::DOGS> hound = pele::physics::DOGS::create("doberman");
   hound->name();
