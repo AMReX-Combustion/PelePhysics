@@ -6,77 +6,101 @@
 
 namespace pele::physics {
 
+// ParmType: Generic parameters to be copied from host to device
+// Template for HostOnlyParm: Data kept only by Host
 template <typename ParmType>
-struct HostOnlyParm {};
-
-template <typename ParmType>
-class PeleParams;
-  
-template <typename ParmType>
-struct InitParm {
-  static void host_initialize(PeleParams<ParmType>*) {}
-
-  static void host_deallocate(PeleParams<ParmType>*) {}
+struct HostOnlyParm
+{
 };
-  
-template <typename ParmType>
-class PeleParams : public Factory<PeleParams<ParmType>>
+
+// Forward Declaration of PeleParams
+template <typename ParmType, typename BaseParmType = ParmType>
+class PeleParams;
+
+// Template for initializer/destructor funtions
+template <typename ParmType, typename BaseParmType = ParmType>
+struct InitParm
+{
+  static void host_initialize(PeleParams<ParmType, BaseParmType>*) {}
+
+  static void host_deallocate(PeleParams<ParmType, BaseParmType>*) {}
+};
+
+// Define generic interface
+// This gets a bit complicated to handle the case of base and derived ParmType
+// classes
+template <typename BaseParmType>
+class PeleParamsGeneric : public Factory<PeleParamsGeneric<BaseParmType>>
+{
+public:
+  static std::string base_identifier() { return "pele_params_base_generic"; }
+
+  virtual void initialize() = 0;
+  virtual void device_allocate() = 0;
+  virtual void sync_to_device() = 0;
+  virtual void deallocate() = 0;
+  virtual BaseParmType& host_parm() = 0;
+  virtual const BaseParmType* device_parm() = 0;
+};
+
+// Template for class that allocates/deallocates a generic ParmType
+// For most use cases ParmType doesn't have inheritance to worry about
+// and uses the default BaseParmType = ParmType defined in the forward
+// declaration above
+template <typename ParmType, typename BaseParmType>
+class PeleParams : public PeleParamsGeneric<BaseParmType>
 {
 
-  friend class InitParm<ParmType>;
-  
-public: 
-  static std::string base_identifier() { return "pele_params_base_generic";}
+  friend class InitParm<ParmType, BaseParmType>;
 
+public:
   PeleParams() {}
 
   virtual ~PeleParams() {}
 
-  virtual void initialize()
+  void initialize() override
   {
     std::cout << "starting initialization" << std::endl;
-    InitParm<ParmType>::host_initialize(this);
+    InitParm<ParmType, BaseParmType>::host_initialize(this);
     device_allocate();
   }
-  
-  virtual void device_allocate()
+
+  void device_allocate() override
   {
     if (!m_device_allocated) {
-      m_d_parm = (ParmType*)amrex::The_Device_Arena()->alloc(
-        sizeof(m_h_parm));
+      m_d_parm = (ParmType*)amrex::The_Device_Arena()->alloc(sizeof(m_h_parm));
       m_device_allocated = true;
       sync_to_device();
     }
   }
-  
-  virtual void sync_to_device()
+
+  void sync_to_device() override
   {
     if (!m_device_allocated) {
       amrex::Abort("Device params not allocated yet");
     } else {
       amrex::Gpu::copy(
-        amrex::Gpu::hostToDevice, &m_h_parm, &m_h_parm + 1,
-        m_d_parm);
+        amrex::Gpu::hostToDevice, &m_h_parm, &m_h_parm + 1, m_d_parm);
     }
   }
-  
-  virtual void deallocate()
+
+  void deallocate() override
   {
-    InitParm<ParmType>::host_deallocate(this);
+    InitParm<ParmType, BaseParmType>::host_deallocate(this);
     if (m_device_allocated)
       amrex::The_Device_Arena()->free(m_d_parm);
   }
-  
-  virtual ParmType& host_parm() { return m_h_parm; }
 
-  virtual const ParmType* device_parm() { return m_d_parm; }
+  BaseParmType& host_parm() override { return m_h_parm; }
 
-  private:
+  const BaseParmType* device_parm() override { return m_d_parm; }
+
+private:
   HostOnlyParm<ParmType> m_host_only_parm;
   ParmType m_h_parm;
   ParmType* m_d_parm;
   bool m_device_allocated{false};
 };
 
-}
+} // namespace pele::physics
 #endif
