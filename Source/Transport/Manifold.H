@@ -31,12 +31,12 @@ struct ManifoldTransport
   {
     pele::physics::ManifoldFunc* manfunc;
     if (tparm->manf_data->manmodel == ManifoldModel::TABLE) {
-      TabFuncParams::TabFuncData* tf_data =
-        static_cast<TabFuncParams::TabFuncData*>(tparm->manf_data);
+      TabFuncData* tf_data =
+        static_cast<TabFuncData*>(tparm->manf_data);
       manfunc = new pele::physics::TabFunc(tf_data);
     } else {
-      NNFuncParams::NNFuncData* nnf_data =
-        static_cast<NNFuncParams::NNFuncData*>(tparm->manf_data);
+      NNFuncData* nnf_data =
+        static_cast<NNFuncData*>(tparm->manf_data);
       manfunc = new pele::physics::NNFunc(nnf_data);
     }
 

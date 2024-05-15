@@ -9,6 +9,15 @@
 namespace pele {
 namespace physics {
 
+  struct TabFuncData : ManFuncData
+  {
+    int varSpacing;
+    int* dimLengths;
+    int* dimDataSpacing;
+    amrex::Real* grids;
+    amrex::Real* values;
+  };
+  
 // Struct to contain tabulated data
 class TabFuncParams : public ManFuncParams
 {
@@ -151,15 +160,6 @@ public:
     }
   }
 
-  struct TabFuncData : ManFuncParams::ManFuncData
-  {
-    int varSpacing;
-    int* dimLengths;
-    int* dimDataSpacing;
-    amrex::Real* grids;
-    amrex::Real* values;
-  };
-
   virtual void allocate()
   {
     if (!m_device_allocated) {
@@ -217,7 +217,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc(TabFuncParams::TabFuncData* tf_data_in) { tf_data = tf_data_in; }
+  TabFunc(TabFuncData* tf_data_in) { tf_data = tf_data_in; }
 
   // Lookup directly if you already know index
   AMREX_GPU_HOST_DEVICE
@@ -311,7 +311,7 @@ public:
   */
 
 private:
-  TabFuncParams::TabFuncData* tf_data;
+  TabFuncData* tf_data;
 
   // -----------------------------------------------------------
   // Search for the closest index in an array to a given value

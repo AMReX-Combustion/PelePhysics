@@ -332,12 +332,12 @@ struct Manifold
     eosparm = eparm;
 
     if (eosparm->manf_data->manmodel == ManifoldModel::TABLE) {
-      TabFuncParams::TabFuncData* tf_data =
-        static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
+      TabFuncData* tf_data =
+        static_cast<TabFuncData*>(eosparm->manf_data);
       manfunc = new pele::physics::TabFunc(tf_data);
     } else {
-      NNFuncParams::NNFuncData* nnf_data =
-        static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
+      NNFuncData* nnf_data =
+        static_cast<NNFuncData*>(eosparm->manf_data);
       manfunc = new pele::physics::NNFunc(nnf_data);
     }
   }

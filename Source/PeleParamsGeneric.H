@@ -34,7 +34,7 @@ class PeleParamsGeneric : public Factory<PeleParamsGeneric<BaseParmType>>
 {
 public:
   static std::string base_identifier() { return "pele_params_base_generic"; }
-
+  
   virtual void initialize() = 0;
   virtual void device_allocate() = 0;
   virtual void sync_to_device() = 0;
@@ -54,6 +54,9 @@ class PeleParams : public PeleParamsGeneric<BaseParmType>
   friend class InitParm<ParmType, BaseParmType>;
 
 public:
+  
+  static_assert(std::is_base_of_v<BaseParmType,ParmType> == true);
+  
   PeleParams() {}
 
   virtual ~PeleParams() {}

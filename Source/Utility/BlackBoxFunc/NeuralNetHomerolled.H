@@ -5,7 +5,14 @@
 
 namespace pele {
 namespace physics {
-
+  
+  struct NNFuncData : ManFuncData
+  {
+    amrex::Real* nnrdata;          // Real data representing the NNModel
+    int* nnidata;                  // int data representing the NNModel
+    char nn_filename[len_str + 1]; // Path to neural network file
+  };
+  
 class NNFuncParams : public ManFuncParams
 {
 public:
@@ -241,14 +248,7 @@ public:
         m_d_nnf_data);
     }
   }
-
-  struct NNFuncData : ManFuncParams::ManFuncData
-  {
-    amrex::Real* nnrdata;          // Real data representing the NNModel
-    int* nnidata;                  // int data representing the NNModel
-    char nn_filename[len_str + 1]; // Path to neural network file
-  };
-
+  
   virtual ManFuncData& host_manfunc_data() { return m_h_nnf_data; }
 
   virtual ManFuncData* device_manfunc_data() { return m_d_nnf_data; }
@@ -273,7 +273,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  NNFunc(NNFuncParams::NNFuncData* nnf_data_in)
+  NNFunc(NNFuncData* nnf_data_in)
     : nnf_data{nnf_data_in}, nnmodel(nnf_data_in->nnrdata, nnf_data_in->nnidata)
   {
   }
@@ -340,7 +340,7 @@ public:
 
 private:
   // Variables
-  NNFuncParams::NNFuncData* nnf_data;
+  NNFuncData* nnf_data;
   NNModel nnmodel;
   amrex::Real* indata_copy;
 

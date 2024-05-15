@@ -95,7 +95,7 @@ struct InitTransParm<EOSType, SutherlandTransport>
 template <typename EOSType>
 struct TransParm<EOSType, ManifoldTransport>
 {
-  ManFuncParams::ManFuncData* manf_data;
+  ManFuncData* manf_data;
   int idx_rhoD{0};
   int idx_mu{0};
 };
@@ -111,7 +111,7 @@ struct InitTransParm<EOSType, ManifoldTransport>
 
   void operator()(
     TransParm<EOSType, ManifoldTransport>* tparm,
-    ManFuncParams::ManFuncData* manf_data_in)
+    ManFuncData* manf_data_in)
   {
     tparm->manf_data = manf_data_in;
     tparm->idx_rhoD = get_var_index("DIFF", tparm->manf_data);
@@ -384,7 +384,7 @@ public:
     }
   }
 
-  void allocate(ManFuncParams::ManFuncData* manf_data)
+  void allocate(ManFuncData* manf_data)
   {
     InitTransParm<EosType, TransportType>()(&m_h_trans_parm, manf_data);
     if (!m_device_allocated) {

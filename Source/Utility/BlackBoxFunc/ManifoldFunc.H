@@ -8,14 +8,6 @@ namespace physics {
 
 enum class ManifoldModel { TABLE = 0, NEURAL_NET = 1 };
 
-class ManFuncParams
-{
-public:
-  virtual void initialize() = 0;
-  virtual void allocate() = 0;
-  virtual void deallocate() = 0;
-  virtual void sync_to_device() = 0;
-
   struct ManFuncData
   {
     ManifoldModel manmodel;
@@ -29,6 +21,14 @@ public:
                     // variables)
     char* varnames; // Names of the output variables
   };
+  
+class ManFuncParams
+{
+public:
+  virtual void initialize() = 0;
+  virtual void allocate() = 0;
+  virtual void deallocate() = 0;
+  virtual void sync_to_device() = 0;
 
   virtual ManFuncData& host_manfunc_data() = 0;
   virtual ManFuncData* device_manfunc_data() = 0;
@@ -41,7 +41,7 @@ AMREX_FORCE_INLINE
 int
 get_var_index(
   const char* varname,
-  const ManFuncParams::ManFuncData* manf_data,
+  const ManFuncData* manf_data,
   const bool require = true)
 {
   std::string var(varname);

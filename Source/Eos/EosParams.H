@@ -39,7 +39,7 @@ struct EosParm<GammaLaw>
 template <>
 struct EosParm<Manifold>
 {
-  ManFuncParams::ManFuncData* manf_data;
+  ManFuncData* manf_data;
   amrex::Real Pnom_cgs;
   density_lookup_type dens_lookup;
   bool compute_temperature{false};
@@ -92,8 +92,8 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   }
   parm_in->m_host_only_parm.manfunc_par->initialize();
   
-  ManFuncParams::ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_manfunc_data();
-  ManFuncParams::ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_manfunc_data());
+  ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_manfunc_data();
+  ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_manfunc_data());
     
     parm_in->m_h_parm.manf_data = d_manf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to
