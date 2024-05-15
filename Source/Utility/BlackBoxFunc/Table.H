@@ -17,6 +17,156 @@ namespace physics {
     amrex::Real* grids;
     amrex::Real* values;
   };
+
+
+class TabFuncParams2 : public PeleParamsGeneric<ManFuncData>::Register<TabFuncParams2, PeleParams<TabFuncData, ManFuncData>> {
+public: 
+  static std::string identifier() {return "Table";}
+}; 
+
+  template<>
+  struct InitParm<TabFuncData, ManFuncData> {
+    static void host_initialize(PeleParams<TabFuncData, ManFuncData>* parm_in)
+    {
+      amrex::ParmParse pp("table");
+      std::string tablefile;
+      int verbose = 2;
+      
+      // TODO: allow user-specific parmparse prefix to enable loading multiple networks 
+      pp.get("filename", tablefile);
+      pp.query("v", verbose);
+      if (verbose > 0) {
+        amrex::Print() << "Loading tabulated data from file: " << tablefile << std::endl;
+      }
+      parm_in->m_h_parm.manmodel = ManifoldModel::TABLE;
+      read_table(tablefile, parm_in->m_h_parm);
+      if (verbose > 1) {
+        print(parm_in->m_h_parm);
+      }
+    }
+    
+    static void host_deallocate(PeleParams<TabFuncData, ManFuncData>* parm_in)
+    {
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimLengths);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimDataSpacing);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.grids);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.values);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.varnames);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
+    }
+
+    static void read_table(const std::string& tablefile, TabFuncData& m_h_tf_data)
+  {
+    std::ifstream fi(tablefile, std::ios::binary | std::ios::in);
+    if (!fi.is_open()) {
+      // AMREX ABORT
+      std::cout << ("Unable to open input file " + tablefile) << std::endl;
+    }
+    fi.seekg(0, std::ios::beg);
+
+    // Number of dimensions
+    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Ndim), sizeof(int));
+    if (m_h_tf_data.Ndim > MAXD_TABLE) {
+      amrex::Abort(
+        "Requesting too many table dimensions, need to increase MAXD_TABLE");
+    }
+
+    // Dimension names
+    m_h_tf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(
+      m_h_tf_data.Ndim * m_h_tf_data.len_str * sizeof(char)));
+    fi.read(
+      m_h_tf_data.dimnames,
+      m_h_tf_data.Ndim * m_h_tf_data.len_str * sizeof(char));
+
+    // Dimension lengths
+    m_h_tf_data.dimLengths = static_cast<int*>(
+      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * sizeof(int)));
+    fi.read(
+      reinterpret_cast<char*>(m_h_tf_data.dimLengths),
+      m_h_tf_data.Ndim * sizeof(int));
+    // Number of variables
+    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), sizeof(int));
+    // No separate passed variables for a table
+    m_h_tf_data.Nmanpar = m_h_tf_data.Ndim;
+
+    // Grid locations for all dimensions
+    int Ngridtot = 0;
+    for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
+      Ngridtot += m_h_tf_data.dimLengths[ii];
+    }
+    m_h_tf_data.grids = static_cast<amrex::Real*>(
+      amrex::The_Pinned_Arena()->alloc(Ngridtot * sizeof(amrex::Real)));
+    fi.read(
+      reinterpret_cast<char*>(m_h_tf_data.grids),
+      sizeof(amrex::Real) * Ngridtot);
+
+    // Model Name
+    fi.read(m_h_tf_data.model_name, sizeof(char) * m_h_tf_data.len_str);
+    m_h_tf_data.model_name[m_h_tf_data.len_str] = '\0';
+
+    // Variable Names
+    m_h_tf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(
+      m_h_tf_data.Nvar * m_h_tf_data.len_str * sizeof(char)));
+    fi.read(
+      m_h_tf_data.varnames,
+      m_h_tf_data.Nvar * m_h_tf_data.len_str * sizeof(char));
+
+    // Data
+    m_h_tf_data.dimDataSpacing = static_cast<int*>(
+      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * sizeof(int)));
+    m_h_tf_data.dimDataSpacing[0] = 1;
+    for (int ii = 1; ii < m_h_tf_data.Ndim; ii++) {
+      m_h_tf_data.dimDataSpacing[ii] =
+        m_h_tf_data.dimDataSpacing[ii - 1] * m_h_tf_data.dimLengths[ii - 1];
+    }
+    m_h_tf_data.varSpacing = m_h_tf_data.dimDataSpacing[m_h_tf_data.Ndim - 1] *
+                             m_h_tf_data.dimLengths[m_h_tf_data.Ndim - 1];
+    int Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
+    m_h_tf_data.values = static_cast<amrex::Real*>(
+      amrex::The_Pinned_Arena()->alloc(Ndata * sizeof(amrex::Real)));
+    fi.read(
+      reinterpret_cast<char*>(m_h_tf_data.values), sizeof(amrex::Real) * Ndata);
+  }
+
+     static void print(const TabFuncData& m_h_tf_data)
+  {
+    amrex::Print() << "TABULATED FUNCTION" << std::endl;
+    amrex::Print() << "Ndim: " << m_h_tf_data.Ndim << std::endl;
+    amrex::Print() << "Nxi : ";
+    for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
+      std::string dimname(
+        &m_h_tf_data.dimnames[ii * m_h_tf_data.len_str], m_h_tf_data.len_str);
+      amrex::Print() << amrex::trim(dimname) << " "
+                     << m_h_tf_data.dimLengths[ii] << " | ";
+    }
+    amrex::Print() << std::endl;
+    amrex::Print() << "Nv: " << m_h_tf_data.Nvar << std::endl;
+    amrex::Print() << "Grids: " << std::endl;
+    int start = 0;
+    for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
+      for (int jj = start; jj < start + m_h_tf_data.dimLengths[ii]; jj++) {
+        amrex::Print() << m_h_tf_data.grids[jj] << " ";
+      }
+      start += m_h_tf_data.dimLengths[ii];
+      amrex::Print() << std::endl << std::endl;
+    }
+    amrex::Print() << "Model name: " << m_h_tf_data.model_name << std::endl;
+
+    amrex::Print() << "Index | Variable | Min | Max" << std::endl;
+    for (int ii = 0; ii < m_h_tf_data.Nvar; ii++) {
+      std::string varname(
+        &m_h_tf_data.varnames[ii * m_h_tf_data.len_str], m_h_tf_data.len_str);
+      amrex::Real* dat_beg = &m_h_tf_data.values[ii * m_h_tf_data.varSpacing];
+      amrex::Real* dat_end =
+        &m_h_tf_data.values[(ii + 1) * m_h_tf_data.varSpacing];
+      amrex::Real* min_entry = std::min_element(dat_beg, dat_end);
+      amrex::Real* max_entry = std::max_element(dat_beg, dat_end);
+      amrex::Print() << ii << " | " << amrex::trim(varname) << " | "
+                     << *min_entry << " | " << *max_entry << std::endl;
+    }
+  }
+    
+  };
   
 // Struct to contain tabulated data
 class TabFuncParams : public ManFuncParams
@@ -217,7 +367,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc(TabFuncData* tf_data_in) { tf_data = tf_data_in; }
+  TabFunc(const TabFuncData* tf_data_in) { tf_data = tf_data_in; }
 
   // Lookup directly if you already know index
   AMREX_GPU_HOST_DEVICE
@@ -311,7 +461,7 @@ public:
   */
 
 private:
-  TabFuncData* tf_data;
+  const TabFuncData* tf_data;
 
   // -----------------------------------------------------------
   // Search for the closest index in an array to a given value

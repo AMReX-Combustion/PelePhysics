@@ -39,7 +39,7 @@ struct EosParm<GammaLaw>
 template <>
 struct EosParm<Manifold>
 {
-  ManFuncData* manf_data;
+  const ManFuncData* manf_data;
   amrex::Real Pnom_cgs;
   density_lookup_type dens_lookup;
   bool compute_temperature{false};
@@ -54,7 +54,7 @@ struct EosParm<Manifold>
   template<>
   struct HostOnlyParm<eos::EosParm<eos::Manifold>>
   {
-    std::unique_ptr<ManFuncParams> manfunc_par;
+    std::unique_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
   };
   
   template<>
@@ -81,6 +81,11 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   amrex::ParmParse ppm("manifold");
   std::string manifold_model;
   ppm.get("model", manifold_model);
+  parm_in->m_host_only_parm.manfunc_par = PeleParamsGeneric<ManFuncData>::create(manifold_model);
+  parm_in->m_host_only_parm.manfunc_par->initialize();
+  const ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_parm();
+  ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_parm());
+  /*
   if (manifold_model == "Table") {
     parm_in->m_host_only_parm.manfunc_par.reset(new TabFuncParams());
     amrex::Print() << " Initialization of Table (CPP)... \n";
@@ -92,8 +97,10 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   }
   parm_in->m_host_only_parm.manfunc_par->initialize();
   
+  
   ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_manfunc_data();
   ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_manfunc_data());
+  */
     
     parm_in->m_h_parm.manf_data = d_manf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to

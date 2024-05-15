@@ -142,7 +142,7 @@ class animal
   {
   public:
     static std::string base_identifier(){ return "base_class";}
-    virtual std::string name() {return "no name";};
+    std::string name() {return "no name";};
     virtual BaseDataType* get_my_data() = 0;
     
   };
@@ -152,7 +152,7 @@ class animal
     {
     public:
       static_assert(std::is_base_of_v<BaseDataType,ClassType> == true);
-      std::string name() override {return "derived names";};
+      std::string name()  {return "derived names";};
       // static std::string identifier() {return "derived_class";};
       virtual BaseDataType* get_my_data() {return &myData;};
     private:
@@ -162,7 +162,7 @@ class animal
   class fart : public base_class<data_base>::Register<fart, derived_class<data_der1, data_base>> {
     //class fart : public derived_class<data_der1, data_base> {
   public:
-    std::string name() override;
+    std::string name();
     static std::string identifier() {return "fart_class";};
     //data_base* get_my_data() override {return &myData;};
   };
@@ -170,7 +170,7 @@ class animal
   class fart2 : public  base_class<data_base>::Register<fart2, derived_class<data_der2, data_base>> {
   //class fart2 : public  derived_class<data_der2, data_base> {
   public:
-    std::string name() override;
+    std::string name();
     static std::string identifier() {return "fart2_class";};
     //data_base* get_my_data() override {return &myData;};
   };
@@ -182,6 +182,9 @@ class animal
   //std::string fart2::identifier() {return "fart2_class";};
   std::string fart2::name () {return "my name is fart2 class";};
   //data_base* fart2::get_my_data() {return nullptr;};
+
+  // fart a;
+  // fart2 b; 
 
   /*
   class other_class : public base_class<data_base>::Register<other_class>

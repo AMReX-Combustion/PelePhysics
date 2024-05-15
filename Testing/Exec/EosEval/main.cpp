@@ -22,9 +22,9 @@ main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
 
-  
-  
-  
+  pele::physics::fart a;
+  pele::physics::fart2 b;
+
   pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::eos::GammaLaw>> dogs;
   
   pele::physics::Factory<pele::physics::LIZARDS>::print(std::cout);
