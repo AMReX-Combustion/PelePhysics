@@ -11,125 +11,16 @@
 
 #include <PelePhysics.H>
 
-//#include "PeleParamsGeneric.H"
-//#include "EosParams.H"
-#include "animals.H"
-//#include "ReactorBase.H"
-//#include "ReactorBDF.H"
-
 int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-
-  pele::physics::fart a;
-  pele::physics::fart2 b;
-
-  pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::eos::GammaLaw>> dogs;
-  
-  pele::physics::Factory<pele::physics::LIZARDS>::print(std::cout);
-  
-  std::unique_ptr<pele::physics::LIZARDS> liz = pele::physics::Factory<pele::physics::LIZARDS>::create("geico");
-  amrex::Print() << "yo " << liz->name() << std::endl;
-  
-  //pele::physics::reactions::ReactorBDF fire;
-  //pele::physics::reactions::geico insurance;
-  //pele::physics::reactions::croc odile; 
-  
-  std::cout << " ____ " << std::endl;
-  pele::physics::Factory<pele::physics::CATS<int>>::print(std::cout);
-
-  std::cout << " ==== " << std::endl;
-  pele::physics::Factory<pele::physics::CATS<pele::physics::data_cont>>::print(std::cout);
-  
-  std::cout << " ____ " << std::endl;
-  std::unique_ptr<pele::physics::CATS<pele::physics::data_cont>> yo_pet = pele::physics::CATS<pele::physics::data_cont>::create("Lion");
-  amrex::Print() << "yo " << yo_pet->name() << std::endl;
-  yo_pet->my_cont.dcont_type();
-  yo_pet->cont_name();
-  std::unique_ptr<pele::physics::CATS<pele::physics::data_cont>> my_pet = pele::physics::CATS<pele::physics::data_cont>::create("Cats2");
-  amrex::Print() << "my " << my_pet->name() << std::endl;
-  my_pet->print_hello();
-  my_pet->my_cont.dcont_type();
-  my_pet->cont_name();
-
-  amrex::Print() << std::endl << " - - - - - - - - - - - - - - " << std::endl << std::endl;
-
-  
-  pele::physics::Factory<pele::physics::base_class<pele::physics::data_base>>::print(std::cout);
-  //pele::physics::Factory<pele::physics::base_class>::print(std::cout);
-  
-  std::unique_ptr<pele::physics::base_class<pele::physics::data_base>> aclass = pele::physics::base_class<pele::physics::data_base>::create("fart_class");
-  //pele::physics::fart aclass;
-  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
-  pele::physics::data_der1* dptr = static_cast<pele::physics::data_der1*>(aclass->get_my_data());
-  std::cout << "Recasted values " << dptr->x << " " <<dptr->y <<std::endl;
-  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
-  aclass->get_my_data()->print() ;
-  amrex::Print() << " howdy " << aclass->name() << " "  << aclass->get_my_data()->x  << std::endl;
-  amrex::Print() << " ==== " << std::endl;
-  
-  pele::physics::derived_class<pele::physics::data_der2> bclass;
-  amrex::Print() << " howdy " << bclass.name() << " " << bclass.get_my_data()->x  << std::endl;
-  bclass.get_my_data()->print() ;
-  
-  pele::physics::derived_class<pele::physics::data_der1> cclass;
-  amrex::Print() << " howdy " << cclass.name() << " " << cclass.get_my_data()->x <<  std::endl;
-  cclass.get_my_data()->print() ;
-  /*
-  std::unique_ptr<pele::physics::DOGS> hound = pele::physics::DOGS::create("doberman");
-  hound->name();
-  hound->type();
-  hound->my_type.type();
-
-  pele::physics::doberman pound;
-  pound.name();
-  pound.type();
-  pound.my_type.type();
-  */
-  
-  amrex::Print() << std::endl << " - - - - - - - - - - - - - - " << std::endl << std::endl;
   
   {
     pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>
       eos_parms;
     amrex::Print() << " Initialization of EOS (CPP)... \n";
-
-#ifdef USE_MANIFOLD_EOS
-    std::cout << "using manifold" << std::endl;
-#endif
-    /*
-#ifdef USE_MANIFOLD_EOS
-    std::unique_ptr<pele::physics::ManFuncParams> manfunc_par;
-
-    amrex::ParmParse ppm("manifold");
-    std::string manifold_model;
-    ppm.get("model", manifold_model);
-    if (manifold_model == "Table") {
-      manfunc_par.reset(new pele::physics::TabFuncParams());
-      amrex::Print() << " Initialization of Table (CPP)... \n";
-      manfunc_par->initialize();
-      eos_parms.initialize();
-      //eos_parms.allocate(manfunc_par->device_manfunc_data());
-    } else if (manifold_model == "NeuralNet") {
-      manfunc_par.reset(new pele::physics::NNFuncParams());
-      amrex::Print() << " Initialization of Neural Net Func. (CPP)... \n";
-      manfunc_par->initialize();
-      eos_parms.initialize();
-      // eos_parms.allocate(manfunc_par->device_manfunc_data());
-    } else {
-      amrex::Error("Invalid manifold model!");
-    }
-#else
-    eos_parms.allocate();
-#endif
-    */
-    amrex::Real DOGS[NUM_SPECIES];
-    //    pele::physics::eos::atomic_weightsCHON<pele::physics::PhysicsType::eos_type>(DOGS);
-    
-    std::cout << " BEFORE " << std::endl;
     eos_parms.initialize();
-    std::cout << " after " << std::endl;
     auto const* leosparm = eos_parms.device_parm();
 
     amrex::ParmParse pp;
