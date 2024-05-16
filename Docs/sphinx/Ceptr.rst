@@ -110,7 +110,7 @@ The full list of options is::
 
 For a detailed description of these options and a further information on the way QSS mechanism are treated in CEPTR the reader may consult :ref:`the QSS section <sec_qss>`.
 
-To generate a QSS C++ mechanism from the ``.yaml`` file thus created, taylored to your needs, please refer to Tutorials :ref:`Generating NC12H26 QSS mechanism with analytical jacobian <sec_tutqss1>` and :ref:`Generating NC12H26 QSS mechanism without analytical jacobian <sec_tutqss2>`.
+To generate a QSS C++ mechanism from the ``.yaml`` file thus created, tailored to your needs, please refer to Tutorials :ref:`Generating NC12H26 QSS mechanism with analytical jacobian <sec_tutqss1>` and :ref:`Generating NC12H26 QSS mechanism without analytical jacobian <sec_tutqss2>`.
 
 Batched generation of Pele-compatible mechanisms 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
