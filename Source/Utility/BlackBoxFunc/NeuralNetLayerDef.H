@@ -264,7 +264,7 @@ public:
     owns_data = false;
     neg_slope = nnrd;
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual ~LeakyReluNNLayer()
@@ -344,7 +344,7 @@ public:
     weight = nnrd;
     bias = nnrd + wsize[0];
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   virtual ~BatchNorm1dNNLayer()

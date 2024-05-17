@@ -8,7 +8,7 @@
 #include "Table.H"
 
 namespace pele::physics {
-  // Need to instantiate these so Factory picks them up
-  NNFuncParams dummy_1;
-  TabFuncParams dummy_2;
-}
+// Need to instantiate these so Factory picks them up
+NNFuncParams dummy_1;
+TabFuncParams dummy_2;
+} // namespace pele::physics

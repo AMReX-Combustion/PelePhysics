@@ -213,13 +213,13 @@ public:
         layers[i]->nout = lsizes[i];
         maxsize = (lsizes[i] > maxsize) ? lsizes[i] : maxsize;
       }
-      
+
       AMREX_ASSERT(maxsize < MAXD_NETWORK);
       outvec0 = new amrex::Real[MAXD_NETWORK];
       outvec1 = new amrex::Real[MAXD_NETWORK];
     } else {
       amrex::Abort("Only CMLM nets supported for now without owning data");
-      } 
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
