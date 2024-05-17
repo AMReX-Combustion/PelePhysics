@@ -9,25 +9,26 @@ namespace physics {
 
 enum class ManifoldModel { TABLE = 0, NEURAL_NET = 1 };
 
-  struct ManFuncData
-  {
-    ManifoldModel manmodel;
-    static constexpr int len_str = 64; // Length of strings in the char arrays
-    char model_name[len_str + 1];      // Name of the neural network model
-    int Ndim;                          // Input dimension (# of manifold params)
-    int Nvar;       // Output dimension (# of quantities of interest)
-    int Nmanpar;    // # of manifold parameters (discounting variables passed to
-                    // input layer)
-    char* dimnames; // Names of the manifold parameters (including the passed
-                    // variables)
-    char* varnames; // Names of the output variables
-  };
+struct ManFuncData
+{
+  ManifoldModel manmodel;
+  static constexpr int len_str = 64; // Length of strings in the char arrays
+  char model_name[len_str + 1];      // Name of the neural network model
+  int Ndim;                          // Input dimension (# of manifold params)
+  int Nvar;       // Output dimension (# of quantities of interest)
+  int Nmanpar;    // # of manifold parameters (discounting variables passed to
+                  // input layer)
+  char* dimnames; // Names of the manifold parameters (including the passed
+                  // variables)
+  char* varnames; // Names of the output variables
+};
 
-  template <>
-  struct HostOnlyParm<ManFuncData> {
-    std::string parm_parse_prefix;
-  };
-  
+template <>
+struct HostOnlyParm<ManFuncData>
+{
+  std::string parm_parse_prefix;
+};
+
 class ManFuncParams
 {
 public:
@@ -46,9 +47,7 @@ public:
 AMREX_FORCE_INLINE
 int
 get_var_index(
-  const char* varname,
-  const ManFuncData* manf_data,
-  const bool require = true)
+  const char* varname, const ManFuncData* manf_data, const bool require = true)
 {
   std::string var(varname);
   int ii;

@@ -15,9 +15,10 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-  
+
   {
-    pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>
+    pele::physics::PeleParams<
+      pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>
       eos_parms;
     amrex::Print() << " Initialization of EOS (CPP)... \n";
     eos_parms.initialize();

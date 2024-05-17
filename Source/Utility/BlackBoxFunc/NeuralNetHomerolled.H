@@ -6,74 +6,82 @@
 
 namespace pele {
 namespace physics {
-  
-  struct NNFuncData : ManFuncData
-  {
-    amrex::Real* nnrdata;          // Real data representing the NNModel
-    int* nnidata;                  // int data representing the NNModel
-    char nn_filename[len_str + 1]; // Path to neural network file
-  };
 
-  class NNFuncParams : public PeleParamsGeneric<ManFuncData>::Register<NNFuncParams, PeleParams<NNFuncData, ManFuncData>>
+struct NNFuncData : ManFuncData
+{
+  amrex::Real* nnrdata;          // Real data representing the NNModel
+  int* nnidata;                  // int data representing the NNModel
+  char nn_filename[len_str + 1]; // Path to neural network file
+};
+
+class NNFuncParams
+  : public PeleParamsGeneric<
+      ManFuncData>::Register<NNFuncParams, PeleParams<NNFuncData, ManFuncData>>
 {
 public:
-  static std::string identifier() {return "NeuralNet";}
-  };
-  
-template<>
-  struct InitParm<NNFuncData, ManFuncData> {
-    static void host_initialize(PeleParams<NNFuncData, ManFuncData>* parm_in)
-    {
-      parm_in->m_h_parm.manmodel = ManifoldModel::NEURAL_NET;
+  static std::string identifier() { return "NeuralNet"; }
+};
 
-      std::string pp_pref = parm_in->m_host_only_parm.parm_parse_prefix.empty() ? "network" : parm_in->m_host_only_parm.parm_parse_prefix + ".network";
-      amrex::ParmParse pp(pp_pref);
+template <>
+struct InitParm<NNFuncData, ManFuncData>
+{
+  static void host_initialize(PeleParams<NNFuncData, ManFuncData>* parm_in)
+  {
+    parm_in->m_h_parm.manmodel = ManifoldModel::NEURAL_NET;
 
-      int verbose = 2;
-      pp.query("v", verbose);
-      
-      std::string nn_filename;
-      pp.get("filename", nn_filename);
-      if (verbose > 0) {
-        amrex::Print() << "Loading neural network data from file: " << nn_filename << std::endl;
-      }
-      std::string ext = amrex::trim(nn_filename).substr(nn_filename.length() - 4);
-      if (ext != ".pnn") {
-        amrex::Abort("Home-rolled neural net file should have .pnn extension.");
-      }
-      std::string info_filename;
-      pp.get("info_filename", info_filename);
-      if (verbose > 0) {
-        amrex::Print() << "  with network metadata from file: " << info_filename << std::endl;
-      }
+    std::string pp_pref =
+      parm_in->m_host_only_parm.parm_parse_prefix.empty()
+        ? "network"
+        : parm_in->m_host_only_parm.parm_parse_prefix + ".network";
+    amrex::ParmParse pp(pp_pref);
 
-      bool cmlm_net = false;
-      pp.query("cmlm_net", cmlm_net);
+    int verbose = 2;
+    pp.query("v", verbose);
 
-      NNModel nnmodel(nn_filename, cmlm_net);
-      pack_model(nnmodel, parm_in->m_h_parm);
-      read_metadata(info_filename, parm_in->m_h_parm);
-      
-      strncpy(
-              parm_in->m_h_parm.nn_filename, nn_filename.c_str(),
-              parm_in->m_h_parm.len_str * sizeof(char));
-      parm_in->m_h_parm.nn_filename[parm_in->m_h_parm.len_str] = '\0';
-      
-      if (verbose > 1) {
-        print(parm_in->m_h_parm);
-        nnmodel.print();
-      }
+    std::string nn_filename;
+    pp.get("filename", nn_filename);
+    if (verbose > 0) {
+      amrex::Print() << "Loading neural network data from file: " << nn_filename
+                     << std::endl;
     }
-    
-    static void host_deallocate(PeleParams<NNFuncData, ManFuncData>* parm_in)
-    {
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnrdata);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnidata);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.varnames);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
+    std::string ext = amrex::trim(nn_filename).substr(nn_filename.length() - 4);
+    if (ext != ".pnn") {
+      amrex::Abort("Home-rolled neural net file should have .pnn extension.");
+    }
+    std::string info_filename;
+    pp.get("info_filename", info_filename);
+    if (verbose > 0) {
+      amrex::Print() << "  with network metadata from file: " << info_filename
+                     << std::endl;
     }
 
-    static void pack_model(NNModel& nnmodel, NNFuncData& m_h_nnf_data)
+    bool cmlm_net = false;
+    pp.query("cmlm_net", cmlm_net);
+
+    NNModel nnmodel(nn_filename, cmlm_net);
+    pack_model(nnmodel, parm_in->m_h_parm);
+    read_metadata(info_filename, parm_in->m_h_parm);
+
+    strncpy(
+      parm_in->m_h_parm.nn_filename, nn_filename.c_str(),
+      parm_in->m_h_parm.len_str * sizeof(char));
+    parm_in->m_h_parm.nn_filename[parm_in->m_h_parm.len_str] = '\0';
+
+    if (verbose > 1) {
+      print(parm_in->m_h_parm);
+      nnmodel.print();
+    }
+  }
+
+  static void host_deallocate(PeleParams<NNFuncData, ManFuncData>* parm_in)
+  {
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnrdata);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnidata);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.varnames);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
+  }
+
+  static void pack_model(NNModel& nnmodel, NNFuncData& m_h_nnf_data)
   {
     // Get sizes of buffers
     int nreals, nints;
@@ -90,7 +98,8 @@ template<>
     nnmodel.pack(m_h_nnf_data.nnrdata, m_h_nnf_data.nnidata);
   }
 
-  static void read_metadata(std::string& info_filename, NNFuncData& m_h_nnf_data)
+  static void
+  read_metadata(std::string& info_filename, NNFuncData& m_h_nnf_data)
   {
     std::ifstream fi(info_filename, std::ios::in);
 
@@ -230,7 +239,6 @@ template<>
     }
     amrex::Print() << std::endl;
   }
-    
 };
 
 class NNFunc : public ManifoldFunc

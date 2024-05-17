@@ -19,14 +19,16 @@ main(int argc, char* argv[])
     amrex::ParmParse pp;
 
     pele::physics::PeleParams<pele::physics::transport::TransParm<
-      pele::physics::PhysicsType::eos_type, pele::physics::PhysicsType::transport_type>>
+      pele::physics::PhysicsType::eos_type,
+      pele::physics::PhysicsType::transport_type>>
       trans_parms;
-    pele::physics::PeleParams<pele::physics::eos::EosParm<
-      pele::physics::PhysicsType::eos_type>>
+    pele::physics::PeleParams<
+      pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>
       eos_parms;
     eos_parms.initialize();
 #ifdef USE_MANIFOLD_EOS
-    trans_parms.host_only_parm().manfunc_par = eos_parms.host_only_parm().manfunc_par;
+    trans_parms.host_only_parm().manfunc_par =
+      eos_parms.host_only_parm().manfunc_par;
 #endif
     trans_parms.initialize();
 
@@ -123,7 +125,7 @@ main(int argc, char* argv[])
 
     trans_parms.deallocate();
     eos_parms.deallocate();
-    
+
     amrex::MultiFab VarPlt(ba, dm, NUM_SPECIES + 3, num_grow);
     amrex::MultiFab::Copy(VarPlt, D, 0, 0, NUM_SPECIES, num_grow);
     amrex::MultiFab::Copy(VarPlt, mu, 0, NUM_SPECIES, 1, num_grow);

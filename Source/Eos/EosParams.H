@@ -13,10 +13,9 @@
 
 // TODO: Single general interface for eosparm, pmfdata, transparm, etc.
 
-
 namespace pele {
 namespace physics {
-namespace eos{
+namespace eos {
 
 enum class density_lookup_type { linear, log, inverse };
 
@@ -24,7 +23,7 @@ struct GammaLaw;
 struct Fuego;
 struct SRK;
 struct Manifold;
-  
+
 template <typename EOSType>
 struct EosParm
 {
@@ -35,7 +34,7 @@ struct EosParm<GammaLaw>
 {
   amrex::Real gamma{Constants::gamma};
 };
-  
+
 template <>
 struct EosParm<Manifold>
 {
@@ -48,45 +47,52 @@ struct EosParm<Manifold>
   int idx_Wdot[NUM_SPECIES - 1];
   bool has_mani_src = true;
 };
-  
+
 } // namespace eos
 
-  template<>
-  struct HostOnlyParm<eos::EosParm<eos::Manifold>>
-  {
-    std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
-  };
-  
-  template<>
-  struct InitParm<eos::EosParm<eos::GammaLaw>>
+template <>
+struct HostOnlyParm<eos::EosParm<eos::Manifold>>
 {
-  static void host_initialize(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in) {
-  amrex::ParmParse pp("eos");
-  pp.query("gamma", parm_in->m_h_parm.gamma);
-  if (parm_in->m_h_parm.gamma != Constants::gamma) {
-    amrex::Warning(
-                   "Runtime gamma does not match compile time gamma, use caution because "
-                   "runtime specification of gamma may not yet be supported everywhere");
-  }
-  }
-  
-  static void host_deallocate(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in) {}
+  std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
 };
 
- 
-template<>
+template <>
+struct InitParm<eos::EosParm<eos::GammaLaw>>
+{
+  static void host_initialize(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in)
+  {
+    amrex::ParmParse pp("eos");
+    pp.query("gamma", parm_in->m_h_parm.gamma);
+    if (parm_in->m_h_parm.gamma != Constants::gamma) {
+      amrex::Warning(
+        "Runtime gamma does not match compile time gamma, use caution because "
+        "runtime specification of gamma may not yet be supported everywhere");
+    }
+  }
+
+  static void host_deallocate(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in)
+  {
+  }
+};
+
+template <>
 struct InitParm<eos::EosParm<eos::Manifold>>
 {
-  static void host_initialize(PeleParams<eos::EosParm<eos::Manifold>>* parm_in) {
-  amrex::ParmParse pp("manifold");
-  std::string manifold_model;
-  pp.get("model", manifold_model);
-  parm_in->m_host_only_parm.manfunc_par = PeleParamsGeneric<ManFuncData>::create(manifold_model);
-  parm_in->m_host_only_parm.manfunc_par->host_only_parm().parm_parse_prefix = "manifold";
-  parm_in->m_host_only_parm.manfunc_par->initialize();
-  const ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_parm();
-  ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_parm());
-    
+  static void host_initialize(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
+  {
+    amrex::ParmParse pp("manifold");
+    std::string manifold_model;
+    pp.get("model", manifold_model);
+    parm_in->m_host_only_parm.manfunc_par =
+      PeleParamsGeneric<ManFuncData>::create(manifold_model);
+    parm_in->m_host_only_parm.manfunc_par->host_only_parm().parm_parse_prefix =
+      "manifold";
+    parm_in->m_host_only_parm.manfunc_par->initialize();
+    const ManFuncData* d_manf_data_in =
+      parm_in->m_host_only_parm.manfunc_par->device_parm();
+    ManFuncData* h_manf_data_in =
+      &(parm_in->m_host_only_parm.manfunc_par->host_parm());
+
     parm_in->m_h_parm.manf_data = d_manf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to
     // density)
@@ -156,11 +162,12 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     }
   }
 
-  static void host_deallocate(PeleParams<eos::EosParm<eos::Manifold>>* parm_in ) {
+  static void host_deallocate(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
+  {
     parm_in->m_host_only_parm.manfunc_par->deallocate();
   }
 };
-  
+
 } // namespace physics
 } // namespace pele
 #endif

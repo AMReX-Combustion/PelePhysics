@@ -28,7 +28,7 @@ struct TransParm<EOSType, ConstTransport>
   amrex::Real const_thermal_diffusion_ratio{0.0};
   bool use_soret = false;
 };
-  
+
 template <typename EOSType>
 struct TransParm<EOSType, SutherlandTransport>
 {
@@ -70,7 +70,6 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
 };
 
-  
 template <>
 struct TransParm<eos::SRK, SimpleTransport>
 {
@@ -102,15 +101,18 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Kappai = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
 };
-  
-} // namespaces transport
-  
+
+} // namespace transport
+
 template <typename EOSType>
 struct InitParm<transport::TransParm<EOSType, transport::ConstTransport>>
 {
-  static void host_initialize(PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>* parm_in)
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>*
+      parm_in)
   {
-    transport::TransParm<EOSType, transport::ConstTransport>* tparm = &(parm_in->m_h_parm);
+    transport::TransParm<EOSType, transport::ConstTransport>* tparm =
+      &(parm_in->m_h_parm);
     amrex::ParmParse pp("transport");
     pp.query("const_viscosity", tparm->const_viscosity);
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
@@ -135,17 +137,24 @@ struct InitParm<transport::TransParm<EOSType, transport::ConstTransport>>
         ". Use CGS (def) or MKS");
     }
   }
-  
-  static void host_deallocate(PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>* parm_in) {}
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>*
+      parm_in)
+  {
+  }
 };
 
 template <typename EOSType>
 struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
 {
-  
-  static void host_initialize(PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>* parm_in)
+
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
+      parm_in)
   {
-    transport::TransParm<EOSType, transport::SutherlandTransport>* tparm = &(parm_in->m_h_parm);
+    transport::TransParm<EOSType, transport::SutherlandTransport>* tparm =
+      &(parm_in->m_h_parm);
     amrex::ParmParse pp("transport");
     pp.query("Prandtl_number", tparm->Prandtl_number);
     pp.query("viscosity_mu_ref", tparm->viscosity_mu_ref);
@@ -154,11 +163,15 @@ struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
     pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
     pp.query("const_diffusivity", tparm->const_diffusivity);
   }
-  
-  static void host_deallocate(PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>* parm_in) {}
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
+      parm_in)
+  {
+  }
 };
 
-template<typename EOSType>
+template <typename EOSType>
 struct HostOnlyParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
 {
   std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
@@ -168,30 +181,43 @@ struct HostOnlyParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
 template <typename EOSType>
 struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
 {
-  static void host_initialize(PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>* parm_in)
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>*
+      parm_in)
   {
     amrex::ParmParse pp("manifold_transport");
     pp.query("use_eos_manifold", parm_in->m_host_only_parm.use_eos_manifold);
-    
-    if (parm_in->m_host_only_parm.manfunc_par == nullptr && parm_in->m_host_only_parm.use_eos_manifold) {
-      amrex::Abort("For manifold transport tabulated or neural network data must "
-                   "be provided to transport parameters by setting the host_only_parm"
-                   "unless you set manifold_transport.use_eos_manifold = false");
+
+    if (
+      parm_in->m_host_only_parm.manfunc_par == nullptr &&
+      parm_in->m_host_only_parm.use_eos_manifold) {
+      amrex::Abort(
+        "For manifold transport tabulated or neural network data must "
+        "be provided to transport parameters by setting the host_only_parm"
+        "unless you set manifold_transport.use_eos_manifold = false");
     } else if (!parm_in->m_host_only_parm.use_eos_manifold) {
       std::string manifold_model;
       pp.get("model", manifold_model);
-      parm_in->m_host_only_parm.manfunc_par = PeleParamsGeneric<ManFuncData>::create(manifold_model);
-      parm_in->m_host_only_parm.manfunc_par->host_only_parm().parm_parse_prefix = "manifold_transport";
+      parm_in->m_host_only_parm.manfunc_par =
+        PeleParamsGeneric<ManFuncData>::create(manifold_model);
+      parm_in->m_host_only_parm.manfunc_par->host_only_parm()
+        .parm_parse_prefix = "manifold_transport";
       parm_in->m_host_only_parm.manfunc_par->initialize();
     }
-    
-    transport::TransParm<EOSType, transport::ManifoldTransport>* tparm = &(parm_in->m_h_parm);
+
+    transport::TransParm<EOSType, transport::ManifoldTransport>* tparm =
+      &(parm_in->m_h_parm);
     tparm->manf_data = parm_in->m_host_only_parm.manfunc_par->device_parm();
-    tparm->idx_rhoD = get_var_index("DIFF", &parm_in->m_host_only_parm.manfunc_par->host_parm());
-    tparm->idx_mu = get_var_index("VISC", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+    tparm->idx_rhoD = get_var_index(
+      "DIFF", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+    tparm->idx_mu = get_var_index(
+      "VISC", &parm_in->m_host_only_parm.manfunc_par->host_parm());
   }
 
-  static void host_deallocate(PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>* parm_in) {
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>*
+      parm_in)
+  {
     if (!parm_in->m_host_only_parm.use_eos_manifold) {
       parm_in->m_host_only_parm.manfunc_par->deallocate();
     }
@@ -201,9 +227,12 @@ struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
 template <typename EOSType>
 struct InitParm<transport::TransParm<EOSType, transport::SimpleTransport>>
 {
-  static void host_initialize(PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>* parm_in)
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>*
+      parm_in)
   {
-    transport::TransParm<EOSType, transport::SimpleTransport>* tparm = &(parm_in->m_h_parm);
+    transport::TransParm<EOSType, transport::SimpleTransport>* tparm =
+      &(parm_in->m_h_parm);
     egtransetWT(tparm->wt.data());
     egtransetEPS(tparm->eps.data());
     egtransetSIG(tparm->sig.data());
@@ -225,16 +254,23 @@ struct InitParm<transport::TransParm<EOSType, transport::SimpleTransport>>
       tparm->iwt[i] = 1. / tparm->wt[i];
     }
   }
-  
-  static void host_deallocate(PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>* parm_in) {}
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>*
+      parm_in)
+  {
+  }
 };
 
 template <>
 struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
 {
-  static void host_initialize(PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>* parm_in)
+  static void host_initialize(
+    PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>*
+      parm_in)
   {
-    transport::TransParm<eos::SRK, transport::SimpleTransport>* tparm = &(parm_in->m_h_parm);
+    transport::TransParm<eos::SRK, transport::SimpleTransport>* tparm =
+      &(parm_in->m_h_parm);
     egtransetWT(tparm->wt.data());
     egtransetEPS(tparm->eps.data());
     egtransetSIG(tparm->sig.data());
@@ -392,8 +428,12 @@ struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
       }
     }
   }
-  
-  static void host_deallocate(PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>* parm_in) {}
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>*
+      parm_in)
+  {
+  }
 };
 
 } // namespace pele::physics

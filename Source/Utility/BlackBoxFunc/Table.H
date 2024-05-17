@@ -9,54 +9,62 @@
 namespace pele {
 namespace physics {
 
-  struct TabFuncData : ManFuncData
+struct TabFuncData : ManFuncData
+{
+  int varSpacing;
+  int* dimLengths;
+  int* dimDataSpacing;
+  amrex::Real* grids;
+  amrex::Real* values;
+};
+
+class TabFuncParams
+  : public PeleParamsGeneric<ManFuncData>::
+      Register<TabFuncParams, PeleParams<TabFuncData, ManFuncData>>
+{
+public:
+  static std::string identifier() { return "Table"; }
+};
+
+template <>
+struct InitParm<TabFuncData, ManFuncData>
+{
+  static void host_initialize(PeleParams<TabFuncData, ManFuncData>* parm_in)
   {
-    int varSpacing;
-    int* dimLengths;
-    int* dimDataSpacing;
-    amrex::Real* grids;
-    amrex::Real* values;
-  };
+    std::string pp_pref =
+      parm_in->m_host_only_parm.parm_parse_prefix.empty()
+        ? "table"
+        : parm_in->m_host_only_parm.parm_parse_prefix + ".table";
+    amrex::ParmParse pp(pp_pref);
+    std::string tablefile;
+    int verbose = 2;
 
-
-class TabFuncParams : public PeleParamsGeneric<ManFuncData>::Register<TabFuncParams, PeleParams<TabFuncData, ManFuncData>> {
-public: 
-  static std::string identifier() {return "Table";}
-}; 
-
-  template<>
-  struct InitParm<TabFuncData, ManFuncData> {
-    static void host_initialize(PeleParams<TabFuncData, ManFuncData>* parm_in)
-    {
-      std::string pp_pref = parm_in->m_host_only_parm.parm_parse_prefix.empty() ? "table" : parm_in->m_host_only_parm.parm_parse_prefix + ".table";
-      amrex::ParmParse pp(pp_pref);
-      std::string tablefile;
-      int verbose = 2;
-      
-      // TODO: allow user-specific parmparse prefix to enable loading multiple networks 
-      pp.get("filename", tablefile);
-      pp.query("v", verbose);
-      if (verbose > 0) {
-        amrex::Print() << "Loading tabulated data from file: " << tablefile << std::endl;
-      }
-      parm_in->m_h_parm.manmodel = ManifoldModel::TABLE;
-      read_table(tablefile, parm_in->m_h_parm);
-      if (verbose > 1) {
-        print(parm_in->m_h_parm);
-      }
+    // TODO: allow user-specific parmparse prefix to enable loading multiple
+    // networks
+    pp.get("filename", tablefile);
+    pp.query("v", verbose);
+    if (verbose > 0) {
+      amrex::Print() << "Loading tabulated data from file: " << tablefile
+                     << std::endl;
     }
-    
-    static void host_deallocate(PeleParams<TabFuncData, ManFuncData>* parm_in)
-    {
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimLengths);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimDataSpacing);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.grids);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.values);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.varnames);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
+    parm_in->m_h_parm.manmodel = ManifoldModel::TABLE;
+    read_table(tablefile, parm_in->m_h_parm);
+    if (verbose > 1) {
+      print(parm_in->m_h_parm);
     }
+  }
 
-    static void read_table(const std::string& tablefile, TabFuncData& m_h_tf_data)
+  static void host_deallocate(PeleParams<TabFuncData, ManFuncData>* parm_in)
+  {
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimLengths);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimDataSpacing);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.grids);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.values);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.varnames);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
+  }
+
+  static void read_table(const std::string& tablefile, TabFuncData& m_h_tf_data)
   {
     std::ifstream fi(tablefile, std::ios::binary | std::ios::in);
     if (!fi.is_open()) {
@@ -129,7 +137,7 @@ public:
       reinterpret_cast<char*>(m_h_tf_data.values), sizeof(amrex::Real) * Ndata);
   }
 
-     static void print(const TabFuncData& m_h_tf_data)
+  static void print(const TabFuncData& m_h_tf_data)
   {
     amrex::Print() << "TABULATED FUNCTION" << std::endl;
     amrex::Print() << "Ndim: " << m_h_tf_data.Ndim << std::endl;
@@ -166,8 +174,7 @@ public:
                      << *min_entry << " | " << *max_entry << std::endl;
     }
   }
-    
-  };
+};
 
 // Struct to contain tabulated data
 class TabFunc : public ManifoldFunc
