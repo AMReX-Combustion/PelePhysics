@@ -17,7 +17,7 @@ struct HostOnlyParm
 template <typename ParmType, typename BaseParmType = ParmType>
 class PeleParams;
 
-// Template for initializer/destructor funtions
+// Template for initializer/destructor functions
 template <typename ParmType, typename BaseParmType = ParmType>
 struct InitParm
 {
