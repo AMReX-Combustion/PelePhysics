@@ -26,8 +26,8 @@ template<>
     {
       parm_in->m_h_parm.manmodel = ManifoldModel::NEURAL_NET;
 
-      // TODO: allow user-specific parmparse prefix to enable loading multiple networks 
-      amrex::ParmParse pp("network");
+      std::string pp_pref = parm_in->m_host_only_parm.parm_parse_prefix.empty() ? "network" : parm_in->m_host_only_parm.parm_parse_prefix + ".network";
+      amrex::ParmParse pp(pp_pref);
 
       int verbose = 2;
       pp.query("v", verbose);

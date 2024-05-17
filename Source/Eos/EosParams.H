@@ -54,7 +54,7 @@ struct EosParm<Manifold>
   template<>
   struct HostOnlyParm<eos::EosParm<eos::Manifold>>
   {
-    std::unique_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
+    std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
   };
   
   template<>
@@ -78,36 +78,20 @@ template<>
 struct InitParm<eos::EosParm<eos::Manifold>>
 {
   static void host_initialize(PeleParams<eos::EosParm<eos::Manifold>>* parm_in) {
-  amrex::ParmParse ppm("manifold");
+  amrex::ParmParse pp("manifold");
   std::string manifold_model;
-  ppm.get("model", manifold_model);
+  pp.get("model", manifold_model);
   parm_in->m_host_only_parm.manfunc_par = PeleParamsGeneric<ManFuncData>::create(manifold_model);
+  parm_in->m_host_only_parm.manfunc_par->host_only_parm().parm_parse_prefix = "manifold";
   parm_in->m_host_only_parm.manfunc_par->initialize();
   const ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_parm();
   ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_parm());
-  /*
-  if (manifold_model == "Table") {
-    parm_in->m_host_only_parm.manfunc_par.reset(new TabFuncParams());
-    amrex::Print() << " Initialization of Table (CPP)... \n";
-  } else if (manifold_model == "NeuralNet") {
-    parm_in->m_host_only_parm.manfunc_par.reset(new NNFuncParams());
-    amrex::Print() << " Initialization of Neural Net Func. (CPP)... \n";
-  } else {
-    amrex::Error("Invalid manifold model!");
-  }
-  parm_in->m_host_only_parm.manfunc_par->initialize();
-  
-  
-  ManFuncData* d_manf_data_in = parm_in->m_host_only_parm.manfunc_par->device_manfunc_data();
-  ManFuncData* h_manf_data_in = &(parm_in->m_host_only_parm.manfunc_par->host_manfunc_data());
-  */
     
     parm_in->m_h_parm.manf_data = d_manf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to
     // density)
     AMREX_ALWAYS_ASSERT(h_manf_data_in->Ndim == NUM_SPECIES - 1);
 
-    amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", parm_in->m_h_parm.Pnom_cgs);
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);

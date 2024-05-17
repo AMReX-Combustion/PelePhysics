@@ -22,6 +22,11 @@ enum class ManifoldModel { TABLE = 0, NEURAL_NET = 1 };
                     // variables)
     char* varnames; // Names of the output variables
   };
+
+  template <>
+  struct HostOnlyParm<ManFuncData> {
+    std::string parm_parse_prefix;
+  };
   
 class ManFuncParams
 {

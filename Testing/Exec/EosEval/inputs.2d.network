@@ -4,12 +4,12 @@ amr.do_plot = 0
 
 # Manifold
 manifold.model = NeuralNet
-network.filename = fgm_net.pnn
-network.info_filename = fgm_net_info.txt
-network.v = 1
-network.cmlm_net = 1
-eos.nominal_pressure_cgs = 1013250.0
-eos.compute_temperature = 1
-eos.has_mani_src = 1
+manifold.network.filename = fgm_net.pnn
+manifold.network.info_filename = fgm_net_info.txt
+manifold.network.v = 2
+manifold.network.cmlm_net = 1
+manifold.nominal_pressure_cgs = 1013250.0
+manifold.compute_temperature = 1
+manifold.has_mani_src = 1
 
 amrex.the_arena_is_managed = 0

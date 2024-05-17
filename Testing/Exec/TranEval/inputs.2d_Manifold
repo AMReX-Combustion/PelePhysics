@@ -1,6 +1,14 @@
-# Manifold
-manifold.model = Table
-manifold.filename = peletable_trans_2dim_10grid
-manifold.v = 1
-eos.nominal_pressure_cgs = 1013250.0
-eos.compute_temperature = 1
+# Manifold Transport
+manifold_transport.use_eos_manifold = false
+manifold_transport.model = Table
+manifold_transport.table.filename = peletable_trans_2dim_10grid
+manifold_transport.table.v = 2
+
+# Manifold EOS
+manifold.model = NeuralNet
+manifold.network.filename = fgm_net.pnn
+manifold.network.info_filename = fgm_net_info.txt
+manifold.network.v = 2
+manifold.network.cmlm_net = 1
+manifold.nominal_pressure_cgs = 1013250.0
+manifold.compute_temperature = 1

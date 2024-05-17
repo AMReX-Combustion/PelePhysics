@@ -41,6 +41,7 @@ public:
   virtual void deallocate() = 0;
   virtual BaseParmType& host_parm() = 0;
   virtual const BaseParmType* device_parm() = 0;
+  virtual HostOnlyParm<BaseParmType>& host_only_parm() = 0;
 };
 
 // Template for class that allocates/deallocates a generic ParmType
@@ -98,8 +99,10 @@ public:
 
   const BaseParmType* device_parm() override { return m_d_parm; }
 
+  HostOnlyParm<BaseParmType>& host_only_parm(){ return m_host_only_parm;} 
+
 private:
-  HostOnlyParm<ParmType> m_host_only_parm;
+  HostOnlyParm<BaseParmType> m_host_only_parm;
   ParmType m_h_parm;
   ParmType* m_d_parm;
   bool m_device_allocated{false};

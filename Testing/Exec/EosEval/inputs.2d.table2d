@@ -2,11 +2,10 @@
 gridsize = 32
 amr.do_plot = 0
 
-
 # Manifold
 manifold.model = Table
-table.filename = peletable_2dim_10grid
-table.v = 1
-eos.nominal_pressure_cgs = 1013250.0
-eos.compute_temperature = 1
-eos.has_mani_src = 1
+manifold.table.filename = peletable_2dim_10grid
+manifold.table.v = 2
+manifold.nominal_pressure_cgs = 1013250.0
+manifold.compute_temperature = 1
+manifold.has_mani_src = 1

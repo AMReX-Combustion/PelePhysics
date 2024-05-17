@@ -28,7 +28,8 @@ public:
   struct InitParm<TabFuncData, ManFuncData> {
     static void host_initialize(PeleParams<TabFuncData, ManFuncData>* parm_in)
     {
-      amrex::ParmParse pp("table");
+      std::string pp_pref = parm_in->m_host_only_parm.parm_parse_prefix.empty() ? "table" : parm_in->m_host_only_parm.parm_parse_prefix + ".table";
+      amrex::ParmParse pp(pp_pref);
       std::string tablefile;
       int verbose = 2;
       
