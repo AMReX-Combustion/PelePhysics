@@ -29,21 +29,6 @@ struct HostOnlyParm<ManFuncData>
   std::string parm_parse_prefix;
 };
 
-class ManFuncParams
-{
-public:
-  virtual void initialize() = 0;
-  virtual void allocate() = 0;
-  virtual void deallocate() = 0;
-  virtual void sync_to_device() = 0;
-
-  virtual ManFuncData& host_manfunc_data() = 0;
-  virtual ManFuncData* device_manfunc_data() = 0;
-
-  virtual ~ManFuncParams() {}
-
-}; // class ManFuncParams
-
 AMREX_FORCE_INLINE
 int
 get_var_index(
@@ -94,6 +79,7 @@ public:
   virtual ~ManifoldFunc() {}
 
 }; // class ManifoldFunc
+
 } // namespace physics
 } // namespace pele
 
