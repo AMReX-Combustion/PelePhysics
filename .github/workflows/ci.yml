@@ -186,6 +186,9 @@ jobs:
             make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
+              if [ "${TYPE}" == 'Manifold' ]; then \
+                 ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_Network
+              fi; \
             fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
@@ -205,11 +208,14 @@ jobs:
           for TYPE in Fuego GammaLaw Soave-Redlich-Kwong Manifold; do \
             if [ "${TYPE}" == 'Fuego' ] || [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
-            if [ "${TYPE}" == 'Manifold' ]; then INPUTFILE=inputs.2d.table1d; else INPUTFILE=inputs.2d; fi; \
+            if [ "${TYPE}" == 'Manifold' ]; then INPUTFILE=inputs.2d.table2d; else INPUTFILE=inputs.2d; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex ${INPUTFILE}; \
+              if [ "${TYPE}" == 'Manifold' ]; then \
+                 ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d.network
+              fi; \
             fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \

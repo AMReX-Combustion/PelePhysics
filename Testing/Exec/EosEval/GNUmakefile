@@ -50,7 +50,7 @@ ifeq ($(USE_MANIFOLD), TRUE)
   Chemistry_Model = Null
   Transport_Model = Manifold
 endif
-Manifold_Dim    = 1
+Manifold_Dim    = 2
 
 Bpack   := ./Make.package
 Blocs   := .

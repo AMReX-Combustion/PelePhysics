@@ -59,21 +59,6 @@ ifeq ($(Eos_Model),$(filter $(Eos_Model),Manifold))
    DEFINES += -DMANIFOLD_DIM=$(Manifold_Dim)
 endif
 
-TORCH_LIBPATH = $(LIBTORCH_HOME)/lib
-
-ifeq ($(USE_CUDA),TRUE)
-  TORCH_LIBS = -ltorch -ltorch_cpu -lc10 -lc10_cuda -lcuda
-else
-  TORCH_LIBS = -ltorch -ltorch_cpu -lc10
-endif
-
-ifeq ($(USE_LIBTORCH), TRUE)
-  DEFINES += -DUSE_LIBTORCH
-	INCLUDE_LOCATIONS += $(LIBTORCH_HOME)/include $(LIBTORCH_HOME)/include/torch/csrc/api/include
-	LIBRARY_LOCATIONS += $(TORCH_LIBPATH)
-	LDFLAGS += -Wl,-rpath $(TORCH_LIBPATH) $(TORCH_LIBS)
-endif
-
 INCLUDE_LOCATIONS += $(EOS_HOME)
 VPATH_LOCATIONS   += $(EOS_HOME)
 ifeq ($(Eos_Model), Fuego)
