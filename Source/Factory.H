@@ -92,13 +92,13 @@ struct Factory
   }
 
   //! Class to handle registration of subclass for runtime selection
-  template <class T, class BT = Base>
-  struct Register : public BT
+  template <class T, class DeriveFrom = Base>
+  struct Register : public DeriveFrom
   {
     friend T;
     static bool registered;
 
-    static_assert(std::is_base_of_v<Base, BT> == true);
+    static_assert(std::is_base_of_v<Base, DeriveFrom> == true);
 
     static bool add_sub_type()
     {
@@ -157,9 +157,9 @@ private:
 };
 
 template <class Base, class... Args>
-template <class T, class BT>
-bool Factory<Base, Args...>::Register<T, BT>::registered =
-  Factory<Base, Args...>::Register<T, BT>::add_sub_type();
+template <class T, class DeriveFrom>
+bool Factory<Base, Args...>::Register<T, DeriveFrom>::registered =
+  Factory<Base, Args...>::Register<T, DeriveFrom>::add_sub_type();
 
 } // namespace pele::physics
 #endif /* FACTORY_H */
