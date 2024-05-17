@@ -3,12 +3,7 @@
 
 #include <memory>
 #include "Table.H"
-
-#ifdef USE_LIBTORCH
-#include "NeuralNet.H"
-#else
 #include "NeuralNetHomerolled.H"
-#endif
 
 namespace pele {
 namespace physics {
