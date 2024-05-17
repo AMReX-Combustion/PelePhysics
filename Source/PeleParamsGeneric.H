@@ -63,7 +63,6 @@ public:
 
   void initialize() override
   {
-    std::cout << "starting initialization" << std::endl;
     InitParm<ParmType, BaseParmType>::host_initialize(this);
     device_allocate();
   }
@@ -98,7 +97,10 @@ public:
 
   const BaseParmType* device_parm() override { return m_d_parm; }
 
-  HostOnlyParm<BaseParmType>& host_only_parm() { return m_host_only_parm; }
+  HostOnlyParm<BaseParmType>& host_only_parm() override
+  {
+    return m_host_only_parm;
+  }
 
 private:
   HostOnlyParm<BaseParmType> m_host_only_parm;
