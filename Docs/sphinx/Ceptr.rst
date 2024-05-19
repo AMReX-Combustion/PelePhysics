@@ -19,7 +19,7 @@ To install CEPTR dependencies::
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry update
 
-.. note:: Note that you will need to use a Python version >=3.10 and <3.12. If a compatible version exists in your system then poetry will try to find and use it. Otherwise, think about using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to manage packages and their dependencies without tampering with your system. 
+.. note:: Note that the install requires a specific Python version, which is specified in the ``Support/ceptr/pyproject.toml``. If a compatible version exists in your system then poetry will try to find and use it. Otherwise, think about using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to manage packages and their dependencies without tampering with your system. 
 
 Usage
 -----
@@ -75,8 +75,6 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
      $ dependencies: 
      $ - python=3.10  
      $ - cantera
-     $ - cython  
-     $ - numpy 
 
 3. Using a helper script in the ``Mechanisms`` directory::
 
