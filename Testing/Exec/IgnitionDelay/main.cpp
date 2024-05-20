@@ -47,7 +47,7 @@ main(int argc, char* argv[])
     amrex::Real strt_time = amrex::ParallelDescriptor::second();
     BL_PROFILE_VAR("main::main()", pmain);
 
-    // ~~~~ Init: Read input, initialize transport, geom, data
+    // ~~~~ Init: Read input, geom, data
     // Parse the relevant inputs
     std::string fuel_name;
     std::string chem_integrator;
@@ -72,12 +72,6 @@ main(int argc, char* argv[])
     // Assign Fuel ID
     int fuel_idx;
     getFuelID(fuel_name, fuel_idx);
-
-    // Initialize transport
-    pele::physics::transport::TransportParams<
-      pele::physics::PhysicsType::transport_type>
-      trans_parms;
-    trans_parms.allocate();
 
     // Initialize reactor object inside OMP region, including tolerances
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
@@ -159,7 +153,6 @@ main(int argc, char* argv[])
     plotResult(do_plt, pltfile, finest_level, mf, geoms);
 
     // ~~~~ Finalize
-    trans_parms.deallocate();
     BL_PROFILE_VAR_STOP(pmain);
     amrex::Real run_time = amrex::ParallelDescriptor::second() - strt_time;
     amrex::ParallelDescriptor::ReduceRealMax(
