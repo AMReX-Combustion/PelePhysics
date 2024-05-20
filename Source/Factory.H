@@ -98,7 +98,7 @@ struct Factory
     friend T;
     static bool registered;
 
-    static_assert(std::is_base_of_v<Base, DeriveFrom> == true);
+    static_assert(std::is_base_of_v<Base, DeriveFrom>);
 
     static bool add_sub_type()
     {
