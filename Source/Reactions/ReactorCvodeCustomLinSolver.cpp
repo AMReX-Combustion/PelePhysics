@@ -249,7 +249,7 @@ SUNLinSolSolve_Sparse_custom(
     sgjsolve(Data_offset, x_d_offset, b_d_offset);
   }
 
-  return (SUNLS_SUCCESS);
+  return (SUN_SUCCESS);
 }
 #endif
 } // namespace pele::physics::reactions::cvode
