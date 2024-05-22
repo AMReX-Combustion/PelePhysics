@@ -1012,7 +1012,7 @@ ReactorCvode::allocUserData(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
     int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
       a_A, nullptr, udata->csr_row_count_h, udata->csr_col_index_h);
-    if (sunMatFlag != SUNMAT_SUCCESS) {
+    if (sunMatFlag != SUN_SUCCESS) {
       amrex::Print()
         << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
     }
