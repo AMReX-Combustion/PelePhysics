@@ -310,7 +310,8 @@ ReactorArkode::react(
   amrex::Gpu::htod_memcpy_async(
     yvec_d, rY_in, sizeof(sunrealtype) * (neq * ncells));
   amrex::Gpu::htod_memcpy_async(
-    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(sunrealtype));
+    user_data->rYsrc_ext, rYsrc_in,
+    (NUM_SPECIES * ncells) * sizeof(sunrealtype));
   amrex::Gpu::htod_memcpy_async(
     user_data->rhoe_init, rX_in, sizeof(sunrealtype) * ncells);
   amrex::Gpu::htod_memcpy_async(
@@ -318,7 +319,8 @@ ReactorArkode::react(
 #else
   std::memcpy(yvec_d, rY_in, sizeof(sunrealtype) * (neq * ncells));
   std::memcpy(
-    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(sunrealtype));
+    user_data->rYsrc_ext, rYsrc_in,
+    (NUM_SPECIES * ncells) * sizeof(sunrealtype));
   std::memcpy(user_data->rhoe_init, rX_in, sizeof(sunrealtype) * ncells);
   std::memcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(sunrealtype) * ncells);
 #endif
