@@ -161,13 +161,13 @@ ReactorArkode::react(
   // Solution vector and execution policy
 #ifdef AMREX_USE_GPU
   auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
-  realtype* yvec_d = N_VGetDeviceArrayPointer(y);
+  sunrealtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag(static_cast<void*>(y), "N_VNew_Serial", 0) != 0) {
     return (1);
   }
-  realtype* yvec_d = N_VGetArrayPointer(y);
+  sunrealtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
   const auto captured_reactor_type = m_reactor_type;
@@ -187,8 +187,8 @@ ReactorArkode::react(
     box, ncells, rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
     user_data->rYsrc_ext, user_data->rhoe_init, user_data->rhoesrc_ext);
 
-  realtype time_init = time;
-  realtype time_out = time + dt_react;
+  sunrealtype time_init = time;
+  sunrealtype time_out = time + dt_react;
 
   void* arkode_mem = nullptr;
   if (use_erkstep == 0) {
@@ -261,12 +261,12 @@ ReactorArkode::react(
 // React for 1d array
 int
 ReactorArkode::react(
-  realtype* rY_in,
-  realtype* rYsrc_in,
-  realtype* rX_in,
-  realtype* rX_src_in,
-  realtype& dt_react,
-  realtype& time,
+  sunrealtype* rY_in,
+  sunrealtype* rYsrc_in,
+  sunrealtype* rX_in,
+  sunrealtype* rX_src_in,
+  sunrealtype& dt_react,
+  sunrealtype& time,
   int ncells
 #ifdef AMREX_USE_GPU
   ,
@@ -284,13 +284,13 @@ ReactorArkode::react(
 
 #ifdef AMREX_USE_GPU
   auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
-  realtype* yvec_d = N_VGetDeviceArrayPointer(y);
+  sunrealtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag(static_cast<void*>(y), "N_VNew_Serial", 0) != 0) {
     return (1);
   }
-  realtype* yvec_d = N_VGetArrayPointer(y);
+  sunrealtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
   const auto captured_reactor_type = m_reactor_type;
@@ -308,23 +308,23 @@ ReactorArkode::react(
 
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
-    yvec_d, rY_in, sizeof(realtype) * (neq * ncells));
+    yvec_d, rY_in, sizeof(sunrealtype) * (neq * ncells));
   amrex::Gpu::htod_memcpy_async(
-    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(realtype));
+    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(sunrealtype));
   amrex::Gpu::htod_memcpy_async(
-    user_data->rhoe_init, rX_in, sizeof(realtype) * ncells);
+    user_data->rhoe_init, rX_in, sizeof(sunrealtype) * ncells);
   amrex::Gpu::htod_memcpy_async(
-    user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * ncells);
+    user_data->rhoesrc_ext, rX_src_in, sizeof(sunrealtype) * ncells);
 #else
-  std::memcpy(yvec_d, rY_in, sizeof(realtype) * (neq * ncells));
+  std::memcpy(yvec_d, rY_in, sizeof(sunrealtype) * (neq * ncells));
   std::memcpy(
-    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(realtype));
-  std::memcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * ncells);
-  std::memcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * ncells);
+    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(sunrealtype));
+  std::memcpy(user_data->rhoe_init, rX_in, sizeof(sunrealtype) * ncells);
+  std::memcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(sunrealtype) * ncells);
 #endif
 
-  realtype time_init = time;
-  realtype time_out = time + dt_react;
+  sunrealtype time_init = time;
+  sunrealtype time_out = time + dt_react;
 
   void* arkode_mem = nullptr;
   if (use_erkstep == 0) {
@@ -360,7 +360,7 @@ ReactorArkode::react(
 #else
   std::memcpy(
 #endif
-    rY_in, yvec_d, (neq * ncells) * sizeof(realtype));
+    rY_in, yvec_d, (neq * ncells) * sizeof(sunrealtype));
   for (int i = 0; i < ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
@@ -390,15 +390,15 @@ ReactorArkode::react(
 
 int
 ReactorArkode::cF_RHS(
-  realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
+  sunrealtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::ReactorArkode::cF_RHS()");
 #ifdef AMREX_USE_GPU
-  realtype* yvec_d = N_VGetDeviceArrayPointer(y_in);
-  realtype* ydot_d = N_VGetDeviceArrayPointer(ydot_in);
+  sunrealtype* yvec_d = N_VGetDeviceArrayPointer(y_in);
+  sunrealtype* ydot_d = N_VGetDeviceArrayPointer(ydot_in);
 #else
-  realtype* yvec_d = N_VGetArrayPointer(y_in);
-  realtype* ydot_d = N_VGetArrayPointer(ydot_in);
+  sunrealtype* yvec_d = N_VGetArrayPointer(y_in);
+  sunrealtype* ydot_d = N_VGetArrayPointer(ydot_in);
 #endif
 
   auto* udata = static_cast<ARKODEUserData*>(user_data);

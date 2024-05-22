@@ -1494,12 +1494,12 @@ ReactorCvode::react(
 
 int
 ReactorCvode::react(
-  realtype* rY_in,
-  realtype* rYsrc_in,
-  realtype* rX_in,
-  realtype* rX_src_in,
-  realtype& dt_react,
-  realtype& time,
+  sunrealtype* rY_in,
+  sunrealtype* rYsrc_in,
+  sunrealtype* rX_in,
+  sunrealtype* rX_src_in,
+  sunrealtype& dt_react,
+  sunrealtype& time,
   int ncells
 #ifdef AMREX_USE_GPU
   ,
@@ -1694,7 +1694,7 @@ ReactorCvode::react(
 
 int
 ReactorCvode::cF_RHS(
-  realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
+  sunrealtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::ReactorCvode::cF_RHS()");
 #ifdef AMREX_USE_GPU
