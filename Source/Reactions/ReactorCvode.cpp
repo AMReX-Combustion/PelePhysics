@@ -485,11 +485,6 @@ ReactorCvode::initCvode(
   if (utils::check_flag(&flag, "CVodeSetMaxErrTestFails", 1) != 0) {
     return (1);
   }
-  flag = CVodeSetErrHandlerFn(
-    a_cvode_mem, cvode::cvodeErrHandler, nullptr); // Err. handler funct.
-  if (utils::check_flag(&flag, "CVodeSetErrHandlerFn", 1) != 0) {
-    return (1);
-  }
   flag = CVodeSetMaxNumSteps(a_cvode_mem, 10000); // Max substeps
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1) != 0) {
     return (1);
