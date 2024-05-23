@@ -52,7 +52,12 @@ else
                    CCOMPILER = craycc
                    CXXCOMPILER = craycxx
                 else
-                  $(error Unknown COMP setting)
+                  ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),nvhpc))
+                    CCOMPILER = nvc
+                    CXXCOMPILER = nvc++
+                  else
+                    $(error Unknown COMP setting)
+                  endif
                 endif
               endif
 	    endif
