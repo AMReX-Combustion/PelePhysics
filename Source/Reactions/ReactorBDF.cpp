@@ -319,7 +319,7 @@ ReactorBDF::react(
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Array4<int> const& /*mask*/,
+  amrex::Array4<int> const& mask,
   amrex::Real& dt_react,
   amrex::Real& time
 #ifdef AMREX_USE_GPU
@@ -355,6 +355,7 @@ ReactorBDF::react(
   int* d_nsteps = v_nsteps.data();
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+	  if(mask(i,j,k)!=-1){
     amrex::Real soln[NUM_SPECIES + 1] = {0.0};
     amrex::Real soln_n[NUM_SPECIES + 1] = {0.0};   // at time level n
     amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; // at time level n-1
@@ -475,7 +476,7 @@ ReactorBDF::react(
       amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
     }
     T_in(i, j, k, 0) = temp;
-    FC_in(i, j, k, 0) = captured_nsubsteps;
+    FC_in(i, j, k, 0) = captured_nsubsteps;}
   });
 
 #ifdef MOD_REACTOR
