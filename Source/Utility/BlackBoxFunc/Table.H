@@ -75,10 +75,6 @@ struct InitParm<TabFuncData, ManFuncData>
 
     // Number of dimensions
     fi.read(reinterpret_cast<char*>(&m_h_tf_data.Ndim), sizeof(int));
-    if (m_h_tf_data.Ndim > MAXD_TABLE) {
-      amrex::Abort(
-        "Requesting too many table dimensions, need to increase MAXD_TABLE");
-    }
 
     // Dimension names
     m_h_tf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(
@@ -189,7 +185,13 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc(const TabFuncData* tf_data_in) { tf_data = tf_data_in; }
+  TabFunc(const TabFuncData* tf_data_in)
+  {
+    tf_data = tf_data_in;
+    AMREX_ALWAYS_ASSERT(
+      TableDim == tf_data->Ndim ||
+      (TableDim == 0 && tf_data->Ndim <= MAXD_TABLE));
+  }
 
   // Lookup directly if you already know index
   AMREX_GPU_HOST_DEVICE
