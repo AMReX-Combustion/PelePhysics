@@ -1373,7 +1373,7 @@ ReactorCvode::react(
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
   long int* d_nfe = v_nfe.data();
   unflatten(
-    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in,mask, yvec_d,
     udata->rhoe_init, d_nfe, dt_react);
 
   if (udata->verbose > 1) {
