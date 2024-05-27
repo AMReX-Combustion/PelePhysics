@@ -1878,8 +1878,8 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
   }
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
-                 << ", ";
+  amrex::Print() << "\nFinal Statistics: "
+                 << "(thread:" << omp_get_thread_num() << ", ";
   amrex::Print() << "cvode_mem:" << cvodemem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";
