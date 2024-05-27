@@ -158,7 +158,7 @@ public:
     amrex::Real* y_vect,
     amrex::Real* vect_energy,
     long int* FCunt,
-    amrex::Real dt) 
+    amrex::Real dt)
   {
     flatten_ops.unflatten(
       box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, temperature,

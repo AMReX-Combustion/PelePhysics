@@ -1373,7 +1373,7 @@ ReactorCvode::react(
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
   long int* d_nfe = v_nfe.data();
   unflatten(
-    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in,mask, yvec_d,
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, mask, yvec_d,
     udata->rhoe_init, d_nfe, dt_react);
 
   if (udata->verbose > 1) {
@@ -1878,8 +1878,8 @@ ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats) // NOLINT
   }
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: "
-                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
+                 << ", ";
   amrex::Print() << "cvode_mem:" << cvodemem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";

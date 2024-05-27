@@ -355,128 +355,130 @@ ReactorBDF::react(
   int* d_nsteps = v_nsteps.data();
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-	  if(mask(i,j,k)!=-1){
-    amrex::Real soln[NUM_SPECIES + 1] = {0.0};
-    amrex::Real soln_n[NUM_SPECIES + 1] = {0.0};   // at time level n
-    amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; // at time level n-1
-    amrex::Real soln_nm2[NUM_SPECIES + 1] = {0.0}; // at time level n-2
-    amrex::Real dsoln[NUM_SPECIES + 1] = {
-      0.0}; // newton_soln_k+1 - newton_soln_k
-    amrex::Real dsoln0[NUM_SPECIES + 1] = {
-      0.0}; // initial newton_soln_k+1 -newton_soln_k
-    amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
-    const int neq = (NUM_SPECIES + 1);
+    if (mask(i, j, k) != -1) {
+      amrex::Real soln[NUM_SPECIES + 1] = {0.0};
+      amrex::Real soln_n[NUM_SPECIES + 1] = {0.0};   // at time level n
+      amrex::Real soln_nm1[NUM_SPECIES + 1] = {0.0}; // at time level n-1
+      amrex::Real soln_nm2[NUM_SPECIES + 1] = {0.0}; // at time level n-2
+      amrex::Real dsoln[NUM_SPECIES + 1] = {
+        0.0}; // newton_soln_k+1 - newton_soln_k
+      amrex::Real dsoln0[NUM_SPECIES + 1] = {
+        0.0}; // initial newton_soln_k+1 -newton_soln_k
+      amrex::Real rYsrc_ext[NUM_SPECIES] = {0.0};
+      const int neq = (NUM_SPECIES + 1);
 
-    // initialization of variables before timestepping
-    amrex::Real current_time = time_init;
-    amrex::Real dt = dt_react / amrex::Real(captured_nsubsteps);
-    amrex::Real rho = 0.0;
-    amrex::Real massfrac[NUM_SPECIES] = {0.0};
-    for (int sp = 0; sp < NUM_SPECIES; sp++) {
-      soln_n[sp] = rY_in(i, j, k, sp);
-    }
-    get_rho_and_massfracs(soln_n, rho, massfrac);
-
-    amrex::Real temp = T_in(i, j, k, 0);
-    amrex::Real Enrg_loc = rEner_in(i, j, k, 0) / rho;
-    auto eos = pele::physics::PhysicsType::eos();
-    if (captured_reactor_type == ReactorTypes::e_reactor_type) {
-      eos.REY2T(rho, Enrg_loc, massfrac, temp);
-    } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
-      eos.RHY2T(rho, Enrg_loc, massfrac, temp);
-    } else {
-      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-    }
-    soln_n[NUM_SPECIES] = temp;
-    amrex::Real rhoe_init[] = {rEner_in(i, j, k, 0)};
-    amrex::Real rhoesrc_ext[] = {rEner_src_in(i, j, k, 0)};
-    for (int sp = 0; sp < NUM_SPECIES; sp++) {
-      rYsrc_ext[sp] = rYsrc_in(i, j, k, sp);
-    }
-    for (int ii = 0; ii < neq; ii++) {
-      soln[ii] = soln_n[ii];
-      soln_nm1[ii] = soln_n[ii];
-      soln_nm2[ii] = soln_n[ii];
-    }
-
-    // begin timestepping
-    int printflag = 0;
-    // if BDF2 use trapz or BDF1 for first step
-    int first_tstepscheme =
-      (captured_tstepscheme >= BDF2SCHEME) ? TRPZSCHEME : captured_tstepscheme;
-    int schemechangestep = captured_tstepscheme - 2; // 0 for BDF2 and 1 for
-                                                     // BDF3
-    amrex::Real rhs[(NUM_SPECIES + 1)] = {0.0};
-    amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {{0.0}};
-    for (int nsteps = 0; nsteps < captured_nsubsteps; nsteps++) {
-      // shift to BDF2 after first step
-      int tstepscheme =
-        (nsteps > schemechangestep) ? captured_tstepscheme : first_tstepscheme;
-
-      for (int ii = 0; ii < neq; ii++) {
-        dsoln0[ii] = 0.0;
+      // initialization of variables before timestepping
+      amrex::Real current_time = time_init;
+      amrex::Real dt = dt_react / amrex::Real(captured_nsubsteps);
+      amrex::Real rho = 0.0;
+      amrex::Real massfrac[NUM_SPECIES] = {0.0};
+      for (int sp = 0; sp < NUM_SPECIES; sp++) {
+        soln_n[sp] = rY_in(i, j, k, sp);
       }
-      // non-linear iterations for each timestep
-      for (int nlit = 0; nlit < captured_nonlinear_iters; nlit++) {
-        for (int ii = 0; ii < neq; ii++) {
-          dsoln0[ii] = dsoln[ii];
-        }
-        get_bdf_matrix_and_rhs(
-          soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type, tstepscheme,
-          dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time, time_init,
-          Jmat2d, rhs);
+      get_rho_and_massfracs(soln_n, rho, massfrac);
 
-        performgmres(
-          Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
-          captured_gmres_restarts, captured_gmres_kspiters, captured_gmres_tol,
-          printflag);
-
-        for (int ii = 0; ii < neq; ii++) {
-          soln[ii] += dsoln[ii];
-        }
-
-        amrex::Real norm = 0.0;
-        for (int ii = 0; ii < neq; ii++) {
-          norm += rhs[ii] * rhs[ii];
-        }
-        norm = std::sqrt(norm);
-        if (norm <= captured_nonlin_tol) {
-          break;
-        }
+      amrex::Real temp = T_in(i, j, k, 0);
+      amrex::Real Enrg_loc = rEner_in(i, j, k, 0) / rho;
+      auto eos = pele::physics::PhysicsType::eos();
+      if (captured_reactor_type == ReactorTypes::e_reactor_type) {
+        eos.REY2T(rho, Enrg_loc, massfrac, temp);
+      } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
+        eos.RHY2T(rho, Enrg_loc, massfrac, temp);
+      } else {
+        amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
       }
-
-      // copy non-linear solution onto soln_n,
-      // soln_n to soln_nm1
+      soln_n[NUM_SPECIES] = temp;
+      amrex::Real rhoe_init[] = {rEner_in(i, j, k, 0)};
+      amrex::Real rhoesrc_ext[] = {rEner_src_in(i, j, k, 0)};
+      for (int sp = 0; sp < NUM_SPECIES; sp++) {
+        rYsrc_ext[sp] = rYsrc_in(i, j, k, sp);
+      }
       for (int ii = 0; ii < neq; ii++) {
-        soln_nm2[ii] = soln_nm1[ii];
+        soln[ii] = soln_n[ii];
         soln_nm1[ii] = soln_n[ii];
-        soln_n[ii] = soln[ii];
+        soln_nm2[ii] = soln_n[ii];
       }
-      current_time += dt;
+
+      // begin timestepping
+      int printflag = 0;
+      // if BDF2 use trapz or BDF1 for first step
+      int first_tstepscheme = (captured_tstepscheme >= BDF2SCHEME)
+                                ? TRPZSCHEME
+                                : captured_tstepscheme;
+      int schemechangestep = captured_tstepscheme - 2; // 0 for BDF2 and 1 for
+                                                       // BDF3
+      amrex::Real rhs[(NUM_SPECIES + 1)] = {0.0};
+      amrex::Real Jmat2d[NUM_SPECIES + 1][NUM_SPECIES + 1] = {{0.0}};
+      for (int nsteps = 0; nsteps < captured_nsubsteps; nsteps++) {
+        // shift to BDF2 after first step
+        int tstepscheme = (nsteps > schemechangestep) ? captured_tstepscheme
+                                                      : first_tstepscheme;
+
+        for (int ii = 0; ii < neq; ii++) {
+          dsoln0[ii] = 0.0;
+        }
+        // non-linear iterations for each timestep
+        for (int nlit = 0; nlit < captured_nonlinear_iters; nlit++) {
+          for (int ii = 0; ii < neq; ii++) {
+            dsoln0[ii] = dsoln[ii];
+          }
+          get_bdf_matrix_and_rhs(
+            soln, soln_n, soln_nm1, soln_nm2, captured_reactor_type,
+            tstepscheme, dt, rhoe_init, rhoesrc_ext, rYsrc_ext, current_time,
+            time_init, Jmat2d, rhs);
+
+          performgmres(
+            Jmat2d, rhs, dsoln0, dsoln, captured_gmres_precond,
+            captured_gmres_restarts, captured_gmres_kspiters,
+            captured_gmres_tol, printflag);
+
+          for (int ii = 0; ii < neq; ii++) {
+            soln[ii] += dsoln[ii];
+          }
+
+          amrex::Real norm = 0.0;
+          for (int ii = 0; ii < neq; ii++) {
+            norm += rhs[ii] * rhs[ii];
+          }
+          norm = std::sqrt(norm);
+          if (norm <= captured_nonlin_tol) {
+            break;
+          }
+        }
+
+        // copy non-linear solution onto soln_n,
+        // soln_n to soln_nm1
+        for (int ii = 0; ii < neq; ii++) {
+          soln_nm2[ii] = soln_nm1[ii];
+          soln_nm1[ii] = soln_n[ii];
+          soln_n[ii] = soln[ii];
+        }
+        current_time += dt;
+      }
+
+      // copy data back
+      int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
+      d_nsteps[icell] = captured_nsubsteps;
+
+      get_rho_and_massfracs(soln_n, rho, massfrac);
+      for (int sp = 0; sp < NUM_SPECIES; sp++) {
+        rY_in(i, j, k, sp) = soln_n[sp];
+      }
+
+      temp = soln_n[NUM_SPECIES];
+      rEner_in(i, j, k, 0) = rhoe_init[0] + dt_react * rhoesrc_ext[0];
+      Enrg_loc = rEner_in(i, j, k, 0) / rho;
+
+      if (captured_reactor_type == ReactorTypes::e_reactor_type) {
+        eos.REY2T(rho, Enrg_loc, massfrac, temp);
+      } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
+        eos.RHY2T(rho, Enrg_loc, massfrac, temp);
+      } else {
+        amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
+      }
+      T_in(i, j, k, 0) = temp;
+      FC_in(i, j, k, 0) = captured_nsubsteps;
     }
-
-    // copy data back
-    int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
-    d_nsteps[icell] = captured_nsubsteps;
-
-    get_rho_and_massfracs(soln_n, rho, massfrac);
-    for (int sp = 0; sp < NUM_SPECIES; sp++) {
-      rY_in(i, j, k, sp) = soln_n[sp];
-    }
-
-    temp = soln_n[NUM_SPECIES];
-    rEner_in(i, j, k, 0) = rhoe_init[0] + dt_react * rhoesrc_ext[0];
-    Enrg_loc = rEner_in(i, j, k, 0) / rho;
-
-    if (captured_reactor_type == ReactorTypes::e_reactor_type) {
-      eos.REY2T(rho, Enrg_loc, massfrac, temp);
-    } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
-      eos.RHY2T(rho, Enrg_loc, massfrac, temp);
-    } else {
-      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-    }
-    T_in(i, j, k, 0) = temp;
-    FC_in(i, j, k, 0) = captured_nsubsteps;}
   });
 
 #ifdef MOD_REACTOR

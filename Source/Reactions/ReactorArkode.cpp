@@ -239,7 +239,7 @@ ReactorArkode::react(
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
   long int* d_nfe = v_nfe.data();
   unflatten(
-    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, mask,yvec_d,
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, mask, yvec_d,
     user_data->rhoe_init, d_nfe, dt_react);
 
   N_VDestroy(y);
@@ -449,8 +449,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   }
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: "
-                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
+                 << ", ";
   amrex::Print() << "arkodeMem:" << arkode_mem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";
