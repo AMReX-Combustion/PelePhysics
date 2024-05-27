@@ -318,7 +318,7 @@ fKernelDenseAJchem(
   amrex::Real temp_pt = u_curr[NUM_SPECIES];
 
   const int consP = reactor_type == ReactorTypes::h_reactor_type;
-  amrex::GpuArray<amrex::Real, neqs * neqs> Jmat_pt = {0.0};
+  amrex::GpuArray<amrex::Real, neqs* neqs> Jmat_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
