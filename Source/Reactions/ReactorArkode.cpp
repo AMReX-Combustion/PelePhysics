@@ -449,8 +449,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   }
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
-                 << ", ";
+  amrex::Print() << "\nFinal Statistics: "
+                 << "(thread:" << omp_get_thread_num() << ", ";
   amrex::Print() << "arkodeMem:" << arkode_mem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";
