@@ -87,24 +87,24 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
 
   switch (rk_controller) {
   case 0:
-    rk_controller = ARK_ADAPT_PID;
     controller_string = "PID";
+    sun_controller = SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
     break;
   case 1:
-    rk_controller = ARK_ADAPT_PI;
     controller_string = "PI";
+    sun_controller = SUNAdaptController_PI(*amrex::sundials::The_Sundials_Context());
     break;
   case 2:
-    rk_controller = ARK_ADAPT_I;
     controller_string = "I";
+    sun_controller = SUNAdaptController_I(*amrex::sundials::The_Sundials_Context());
     break;
   case 3:
-    rk_controller = ARK_ADAPT_EXP_GUS;
     controller_string = "explicit Gustafsson";
+    sun_controller = SUNAdaptController_ExpGus(*amrex::sundials::The_Sundials_Context());
     break;
   default:
-    rk_controller = ARK_ADAPT_PID;
     controller_string = "PID";
+    sun_controller = SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
     break;
   }
 
@@ -200,7 +200,8 @@ ReactorArkode::react(
       relTol, absTol, m_typ_vals, "arkstep", verbose);
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
-    ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
+    int flag = ARKStepSetAdaptController(arkode_mem, sun_controller);
+    utils::check_flag(&flag, "ARKStepSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
@@ -213,7 +214,8 @@ ReactorArkode::react(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       relTol, absTol, m_typ_vals, "erkstep", verbose);
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
-    ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
+    int flag = ERKStepSetAdaptController(arkode_mem, sun_controller);
+    utils::check_flag(&flag, "ERKStepSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
