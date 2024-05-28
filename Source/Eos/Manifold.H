@@ -1,13 +1,33 @@
 #ifndef _MANIFOLD_H_
 #define _MANIFOLD_H_
 
-#include <memory>
-#include "Table.H"
-#include "NeuralNetHomerolled.H"
+#include "BlackBoxFuncFactory.H"
 
 namespace pele {
 namespace physics {
 namespace eos {
+
+// Default - runtime selectable Table vs. Network for MANIFOLD EOS
+// But if not using manifold, just keep table for simplicity
+#ifndef MANIFOLD_EOS_TYPE
+#define MANIFOLD_EOS_TYPE 1
+#endif
+
+// Right now, cannot compile with network model for SYCL
+#ifdef AMREX_USE_SYCL
+#define MANIFOLD_EOS_TYPE 1
+#endif
+
+// Compile time choice for Table vs. Network vs. Runtime Selectable
+#if MANIFOLD_EOS_TYPE == 0
+using ManifoldFuncType = ManifoldFunc;
+#elif MANIFOLD_EOS_TYPE == 1
+using ManifoldFuncType = TabFunc<MANIFOLD_DIM>;
+#elif MANIFOLD_EOS_TYPE == 2
+using ManifoldFuncType = NNFunc;
+#else
+static_assert(false, "Invalid MANIFOLD_EOS_TYPE specified");
+#endif
 
 struct Manifold
 {
@@ -155,7 +175,7 @@ struct Manifold
     amrex::Real& T)
   {
     if (eosparm->compute_temperature) {
-      manfunc->get_value(eosparm->idx_T, Y, T);
+      manfunc.get_func()->get_value(eosparm->idx_T, Y, T);
     } else {
       T = 1.0;
     }
@@ -166,7 +186,7 @@ struct Manifold
   void HY2T(const amrex::Real /*H*/, const amrex::Real Y[], amrex::Real& T)
   {
     if (eosparm->compute_temperature) {
-      manfunc->get_value(eosparm->idx_T, Y, T);
+      manfunc.get_func()->get_value(eosparm->idx_T, Y, T);
     } else {
       T = 1.0;
     }
@@ -181,7 +201,7 @@ struct Manifold
     amrex::Real& T)
   {
     if (eosparm->compute_temperature) {
-      manfunc->get_value(eosparm->idx_T, Y, T);
+      manfunc.get_func()->get_value(eosparm->idx_T, Y, T);
     } else {
       T = 1.0;
     }
@@ -224,7 +244,7 @@ struct Manifold
     const amrex::Real Y[],
     amrex::Real WDOT[])
   {
-    manfunc->get_values(NUM_SPECIES - 1, eosparm->idx_Wdot, Y, WDOT);
+    manfunc.get_func()->get_values(NUM_SPECIES - 1, eosparm->idx_Wdot, Y, WDOT);
 
     // Density source is 0
     WDOT[NUM_SPECIES - 1] = 0.0;
@@ -263,7 +283,7 @@ struct Manifold
   {
     // Get value of Rho consistent with other state variables
     amrex::Real rho_from_table;
-    manfunc->get_value(eosparm->idx_density, Y, rho_from_table);
+    manfunc.get_func()->get_value(eosparm->idx_density, Y, rho_from_table);
     switch (eosparm->dens_lookup) {
     case density_lookup_type::linear:
       break;
@@ -287,7 +307,7 @@ struct Manifold
     const amrex::Real /*T*/,
     amrex::Real& R)
   {
-    manfunc->get_value(eosparm->idx_density, Y, R);
+    manfunc.get_func()->get_value(eosparm->idx_density, Y, R);
     switch (eosparm->dens_lookup) {
     case density_lookup_type::linear:
       break;
@@ -304,7 +324,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   void RY2dRdY(const amrex::Real R, const amrex::Real Y[], amrex::Real dRdY[])
   {
-    manfunc->get_derivs(eosparm->idx_density, Y, dRdY);
+    manfunc.get_func()->get_derivs(eosparm->idx_density, Y, dRdY);
     switch (eosparm->dens_lookup) {
     case density_lookup_type::linear:
       break;
@@ -323,18 +343,8 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   Manifold(const EosParm<Manifold>* eparm)
+    : eosparm(eparm), manfunc(eparm->manf_data)
   {
-    eosparm = eparm;
-
-    if (eosparm->manf_data->manmodel == ManifoldModel::TABLE) {
-      const TabFuncData* tf_data =
-        static_cast<const TabFuncData*>(eosparm->manf_data);
-      manfunc = new pele::physics::TabFunc(tf_data);
-    } else {
-      const NNFuncData* nnf_data =
-        static_cast<const NNFuncData*>(eosparm->manf_data);
-      manfunc = new pele::physics::NNFunc(nnf_data);
-    }
   }
 
   template <class... Args>
@@ -345,10 +355,10 @@ struct Manifold
   }
 
   AMREX_GPU_HOST_DEVICE
-  ~Manifold() { delete manfunc; }
+  ~Manifold() {}
 
 private:
-  pele::physics::ManifoldFunc* manfunc;
+  BlackBoxFuncFactory<ManifoldFuncType> manfunc;
   const EosParm<Manifold>* eosparm;
 };
 

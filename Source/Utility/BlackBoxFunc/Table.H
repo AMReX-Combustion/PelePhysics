@@ -273,16 +273,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ManifoldModel model() { return tf_data->manmodel; }
-
-  /*
-  int idx_density;
-  int idx_T;
-  int idx_Wdot;
-  int idx_rhoD;
-  int idx_mu;
-  amrex::Real Pnom;
-  */
+  virtual ManifoldModel model() { return ManifoldModel::TABLE; }
 
 private:
   const TabFuncData* tf_data;

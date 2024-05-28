@@ -29,19 +29,10 @@ struct ManifoldTransport
     amrex::Real& /*lam*/,
     TransParm<EosType, transport_type> const* tparm)
   {
-    pele::physics::ManifoldFunc* manfunc;
-    if (tparm->manf_data->manmodel == ManifoldModel::TABLE) {
-      const TabFuncData* tf_data =
-        static_cast<const TabFuncData*>(tparm->manf_data);
-      manfunc = new pele::physics::TabFunc(tf_data);
-    } else {
-      const NNFuncData* nnf_data =
-        static_cast<const NNFuncData*>(tparm->manf_data);
-      manfunc = new pele::physics::NNFunc(nnf_data);
-    }
+    BlackBoxFuncFactory<eos::ManifoldFuncType> manfunc(tparm->manf_data);
 
     if (wtr_get_mu) {
-      manfunc->get_value(tparm->idx_mu, Yloc, mu);
+      manfunc.get_func()->get_value(tparm->idx_mu, Yloc, mu);
     }
 
     if (wtr_get_lam) {
@@ -64,14 +55,12 @@ struct ManifoldTransport
 
     if (wtr_get_Ddiag) {
       amrex::Real Dtemp{0.0};
-      manfunc->get_value(tparm->idx_rhoD, Yloc, Dtemp);
+      manfunc.get_func()->get_value(tparm->idx_rhoD, Yloc, Dtemp);
       for (int i = 0; i < NUM_SPECIES - 1; ++i) {
         Ddiag[i] = Dtemp;
       }
       Ddiag[NUM_SPECIES - 1] = 0.0; // Placeholder for density
     }
-
-    delete manfunc;
   }
 
   AMREX_GPU_HOST_DEVICE

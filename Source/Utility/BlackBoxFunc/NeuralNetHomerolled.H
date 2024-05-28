@@ -313,7 +313,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ManifoldModel model() { return nnf_data->manmodel; }
+  virtual ManifoldModel model() { return ManifoldModel::NEURAL_NET; }
 
 private:
   // Variables
