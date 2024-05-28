@@ -72,7 +72,7 @@ provided below. ::
   turbinflow.low.dir            = 1                       # Boundary normal direction (0,1, or 2) for patch
   turbinflow.low.side           = "low"                   # Boundary side (low or high) for patch
   turbinflow.low.turb_scale_loc = 633.151                 # Factor by which to scale the spatial coordinate between the data file and simulation
-  turbinflow.low.turb_scale_vel = 1.0                     # Factor by which to scale the velcoity between the data file and simulation
+  turbinflow.low.turb_scale_vel = 1.0                     # Factor by which to scale the velocity between the data file and simulation
   turbinflow.low.turb_center    = 0.005 0.005             # Center point where turbulence patch will be applied
   turbinflow.low.turb_conv_vel  = 5.                      # Velocity to move through the 3rd dimension to simulate time evolution
   turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time

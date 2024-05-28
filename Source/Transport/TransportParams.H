@@ -33,7 +33,7 @@ template <typename EOSType>
 struct TransParm<EOSType, SutherlandTransport>
 {
   amrex::Real Prandtl_number{0.7};
-  amrex::Real viscosity_mu_ref{17.16};
+  amrex::Real viscosity_mu_ref{17.16e-5};
   amrex::Real viscosity_T_ref{273.15};
   amrex::Real viscosity_S{110.4};
   amrex::Real const_bulk_viscosity{0.0};
