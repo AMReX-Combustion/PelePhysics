@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Utility &mdash; PelePhysics 2022.10 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/mywrap.css?v=d9e67d65" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=bf7b0411"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Support" href="Support.html" />
+    <link rel="prev" title="Soot" href="Soot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PelePhysics
+          </a>
+              <div class="version">
+                2022.10
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="GettingStarted.html"><cite>PelePhysics</cite> Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Chemistry.html">Chemistry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transport.html">Transport</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Thermodynamics.html">Thermodynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Spray.html">Spray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Soot.html">Soot</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#premixed-flame-initialization">Premixed Flame Initialization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generating-a-pmf-file">Generating a PMF file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#turbulent-inflows">Turbulent Inflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generating-a-turbulence-file">Generating a turbulence file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input-file-options">Input file options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plt-file-management">Plt File Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#diagnostics">Diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filter">Filter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#developing">Developing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Support.html">Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DeveloperGuide.html">Developer Guidelines</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PelePhysics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Utility.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="utility">
+<span id="sec-utility"></span><h1>Utility<a class="headerlink" href="#utility" title="Link to this heading"></a></h1>
+<p>In addition to routines for evaluating chemical reactions, transport properties, and equation of state functions, PelePhysics includes other shared utilities that are utilized by both PeleC and PeleLM(eX). These utilities include support for:</p>
+<ul class="simple">
+<li><p>Premixed Flame (<code class="docutils literal notranslate"><span class="pre">PMF</span></code>) initialization from precomputed 1D flame profiles</p></li>
+<li><p>Turbulent inflows (<code class="docutils literal notranslate"><span class="pre">TurbInflow</span></code>) on domain boundaries from saved turbulence data</p></li>
+<li><p>Plt file management (<code class="docutils literal notranslate"><span class="pre">PltFileManager</span></code>)</p></li>
+<li><p>Output of runtime <code class="docutils literal notranslate"><span class="pre">Diagnostics</span></code></p></li>
+</ul>
+<p>This section provides relevant notes on using these utilities across the Pele family of codes. There may be additional subtleties based on the code-specific implementation of these capabilities, in which case it will be necessary to refer to the documentation of the code of interest.</p>
+<section id="premixed-flame-initialization">
+<h2>Premixed Flame Initialization<a class="headerlink" href="#premixed-flame-initialization" title="Link to this heading"></a></h2>
+<p>Pre-computed profiles from 1D freely propagating premixed flames are used to initialize a wrinkled <a class="reference external" href="https://amrex-combustion.github.io/PeleLMeX/manual/html/Tutorials_FlameSheet.html">flamesheet</a> in PeleLMeX, among other problems. Right now, this capability is not used in PeleC, but similar code that accomplishes the same task using data files of the same format is applied in PeleC. The code has two parts, a data container defined in <code class="docutils literal notranslate"><span class="pre">PMFData.{H,cpp}</span></code> that loads and stores data from the pre-computed profile, and a function defined in <code class="docutils literal notranslate"><span class="pre">PMF.H</span></code> that, when provided this data structure and the bounds of a cell of interest, returns temperature, velocity, and mole fractions from that location.</p>
+<p>This code has two runtime parameters that may be set in the input file:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>pmf.datafile = pmf.dat
+pmf.do_cellAverage = 1
+</pre></div>
+</div>
+<p>The first parameter specifies the path to the PMF data file. This file contains a two-line header followed by whitespace-delimited data columns in the order: position (cm), temperature (K), velocity (cm/s), density(g/cm3), species mole fractions. Sample files are provided in the relevant PeleLMeX (and PeleC) examples, and the procedure to generate these files with a provided script is described below. The second parameter specifies whether the PMF code does a finite volume-style integral over the queried cell (<code class="docutils literal notranslate"><span class="pre">pmf.do_cellAverage</span> <span class="pre">=</span> <span class="pre">1</span></code>) or whether the code finds an interpolated value at the midpoint of the queried cell (<code class="docutils literal notranslate"><span class="pre">pmf.do_cellAverage</span> <span class="pre">=</span> <span class="pre">0</span></code>)</p>
+<section id="generating-a-pmf-file">
+<h3>Generating a PMF file<a class="headerlink" href="#generating-a-pmf-file" title="Link to this heading"></a></h3>
+<p>The script <code class="docutils literal notranslate"><span class="pre">cantera_pmf_generator.py</span></code> solves a 1D unstrained premixed flame using <a class="reference external" href="https://doi.org/10.5281/zenodo.6387882">Cantera</a> and saves it in the appropriate file format for use by the Pele codes. To use this script, first follow the <a class="reference internal" href="Ceptr.html#sec-ceptr-software"><span class="std std-ref">CEPTR instructions</span></a> for setting up <code class="docutils literal notranslate"><span class="pre">poetry</span></code>. Then return to the <code class="docutils literal notranslate"><span class="pre">Utility/PMF/</span></code> directory and run the script:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>poetry -C ../../Support/ceptr/ run python cantera_pmf_generator.py -m dodecane_lu -f NC12H26 -d 0.01 -o ./
+</pre></div>
+</div>
+<p>This example computes a dodecane/air flame using the <code class="docutils literal notranslate"><span class="pre">dodecane_lu</span></code> mechanism on a 0.01 m domain, and saves the resulting file to the present directory. You may choose any mechanism included with PelePhysics, as the Cantera <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> format is included for all mechanisms. If you choose a reduced mechanism with QSS species, the 1D solution will be obtained using the skeletal version of the mechanism without QSS species being remove, as Cantera does not support QSS by default. In this case, the script will also save a data file with QSS species removed (ending in <code class="docutils literal notranslate"><span class="pre">-qssa-removed.dat</span></code>) that is suitable for use with the QSS mechanisms in Pele. A range of additional conditions may be specified at the command line. To see the full set of options, use the help feature:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>poetry -C ../../Support/ceptr/ run python cantera_pmf_generator.py --help
+</pre></div>
+</div>
+<p>Note that when running Cantera, you may need to adjust the domain size to be appropriate for your conditions in order for the solver to converge. At times, you may also need to adjust the solver tolerances and other parameters that are specified within the script.</p>
+<p>An additional script is provided to allow plotting of the PMF solutions. This script is used as follows (if no variable index is specified, temperature is plotted by default):</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>poetry -C ../../Support/ceptr/ run python plotPMF.py &lt;pmf-file&gt; &lt;variable-index&gt;
+</pre></div>
+</div>
+</section>
+</section>
+<section id="turbulent-inflows">
+<span id="sec-turbinflow"></span><h2>Turbulent Inflows<a class="headerlink" href="#turbulent-inflows" title="Link to this heading"></a></h2>
+<p>PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data (3 components of velocity fluctuations).
+A three-dimensional synthetic istropic turbulence is generated and Taylor’s hypothesis is used to convert this data into two-dimensional planar data by moving through the third dimension at fixed velocity (the TurbInflow capability is currently not supported for 2D simulations). To reduce memory requirements, a fixed number of planes in the third dimension are read at a time and then replaced when exhausted. This number of planes can be specified at runtime to balance I/O and memory requirements. Multiple turbulent inflow patches can be applied on any domain boundary or on multiple domain boundaries. If multiple patches overlap on the same face, the data from each overlapping patch are superimposed.</p>
+<p>This PelePhysics utility provides the machinery to load the data files and interpolate in space and time onto boundary patches, which may or may not cover an entire boundary. Additional code within PeleC and PeleLMeX is required to drive this functionality, and the documentation for the relevant code should be consulted to fully understand the necessary steps. Typically, the TurbInflow capability provides veloicity fluctuations, and the mean inflow velocity must be provided through another means. For each code, an example test case for the capability is provided in <cite>Exec/RegTests/TurbInflow</cite>. Note that the turbulence data is always a square of size 2pi and has a fluctuation velocity scale of unity. Inputs are available as part of this utility to rescale the data as needed. If differently shaped inlet patches are required, this must be done by masking undesired parts of the patch on the PeleC or PeleLMeX side of the implementation.</p>
+<section id="generating-a-turbulence-file">
+<h3>Generating a turbulence file<a class="headerlink" href="#generating-a-turbulence-file" title="Link to this heading"></a></h3>
+<p>The relevant data files are generated using the tools in <code class="docutils literal notranslate"><span class="pre">Support/TurbFileHIT</span></code>
+and usage instructions are available in the <a class="reference internal" href="Support.html#sec-turbfile"><span class="std std-ref">documentation</span></a> on these tools.</p>
+</section>
+<section id="input-file-options">
+<h3>Input file options<a class="headerlink" href="#input-file-options" title="Link to this heading"></a></h3>
+<p>The input file options that drive this utility (and thus are inherited by PeleC and PeleLMeX) are
+provided below.</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>turbinflows=low high                                    # Names of injections (can provide any number)
+
+turbinflow.low.turb_file      = TurbFileHIT/TurbTEST    # Path to directory created in previous step
+turbinflow.low.dir            = 1                       # Boundary normal direction (0,1, or 2) for patch
+turbinflow.low.side           = &quot;low&quot;                   # Boundary side (low or high) for patch
+turbinflow.low.turb_scale_loc = 633.151                 # Factor by which to scale the spatial coordinate between the data file and simulation
+turbinflow.low.turb_scale_vel = 1.0                     # Factor by which to scale the velocity between the data file and simulation
+turbinflow.low.turb_center    = 0.005 0.005             # Center point where turbulence patch will be applied
+turbinflow.low.turb_conv_vel  = 5.                      # Velocity to move through the 3rd dimension to simulate time evolution
+turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time
+turbinflow.low.time_offset    = 0.0                     # Offset in time for reading through the 3rd dimension
+
+turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
+turbinflow.high.dir            = 1
+turbinflow.high.side           = &quot;high&quot;
+turbinflow.high.turb_scale_loc = 633.151
+turbinflow.high.turb_scale_vel = 1.0
+turbinflow.high.turb_center    = 0.005 0.005
+turbinflow.high.turb_conv_vel  = 5.
+turbinflow.high.turb_nplane    = 32
+turbinflow.high.time_offset    = 0.0006
+</pre></div>
+</div>
+</section>
+</section>
+<section id="plt-file-management">
+<h2>Plt File Management<a class="headerlink" href="#plt-file-management" title="Link to this heading"></a></h2>
+<p>This code contains data structures used to handle data read from plt files that is utilized by the routines that allow the code to be restarted based on data from plt files.</p>
+</section>
+<section id="diagnostics">
+<h2>Diagnostics<a class="headerlink" href="#diagnostics" title="Link to this heading"></a></h2>
+<p>Placeholder. Once the porting of diagnostics from PeleLMeX to PelePhysics/PeleC is complete, documentation can be added here.</p>
+</section>
+<section id="filter">
+<h2>Filter<a class="headerlink" href="#filter" title="Link to this heading"></a></h2>
+<p>A utility for filtering data stored in AMReX data structures. When initializing the <code class="docutils literal notranslate"><span class="pre">Filter</span></code> class, the filter type
+and filter width to grid ratio are specified. A variety of filter types are supported:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">0</span></code>: no filtering</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">1</span></code>: standard box filter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">2</span></code>: standard Gaussian filter</p></li>
+</ul>
+<p>We have also implemented a set of filters defined in Sagaut &amp; Grohens (1999) Int. J. Num. Meth. Fluids:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">3</span></code>: 3 point box filter approximation (Eq. 26)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">4</span></code>: 5 point box filter approximation (Eq. 27)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">5</span></code>: 3 point box filter optimized approximation (Table 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">6</span></code>: 5 point box filter optimized approximation (Table 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">7</span></code>: 3 point Gaussian filter approximation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">8</span></code>: 5 point Gaussian filter approximation (Eq. 29)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">9</span></code>: 3 point Gaussian filter optimized approximation (Table 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">=</span> <span class="pre">10</span></code>: 5 point Gaussian filter optimized approximation (Table 1)</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This utility is not aware of EB or domain boundaries. If the filter stencil extends across these boundaries,
+the boundary cells are treated as if they are fluid cells.
+It is up to the user to ensure an adequate number of ghost cells in the arrays are appropriately populated,
+using the <code class="docutils literal notranslate"><span class="pre">get_filter_ngrow()</span></code> member function of the class to determine the required number of ghost cells.</p>
+</div>
+<section id="developing">
+<h3>Developing<a class="headerlink" href="#developing" title="Link to this heading"></a></h3>
+<p>The weights for these filters are set in <code class="docutils literal notranslate"><span class="pre">Filter.cpp</span></code>. To add a
+filter type, one needs to add an enum to the <code class="docutils literal notranslate"><span class="pre">filter_types</span></code> and
+define a corresponding <code class="docutils literal notranslate"><span class="pre">set_NAME_weights</span></code> function to be called at
+initialization.</p>
+<p>The application of a filter can be done on a Fab or MultiFab. The loop nesting
+ordering was chosen to be performant on existing HPC architectures and
+discussed in PeleC milestone reports. An example call to the filtering operation is</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="gh">les_filter = Filter(les_filter_type, les_filter_fgr);</span>
+<span class="gh">...</span>
+les_filter.apply_filter(bxtmp, flux[i], filtered_flux[i], Density, NUM_STATE);
+</pre></div>
+</div>
+<p>The user must ensure that the correct number of grow cells is present in the Fab or MultiFab.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Soot.html" class="btn btn-neutral float-left" title="Soot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Support.html" class="btn btn-neutral float-right" title="Support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright AMReX Copyright (c) 2022, The Regents of the University of California, through Lawrence Berkeley National Laboratory and the Alliance for Sustainable Energy, LLC., through National Renewable Energy Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy).  All rights reserved..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

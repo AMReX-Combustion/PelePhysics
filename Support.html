@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support &mdash; PelePhysics 2022.10 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/mywrap.css?v=d9e67d65" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=bf7b0411"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tutorials" href="Tutorials.html" />
+    <link rel="prev" title="Utility" href="Utility.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PelePhysics
+          </a>
+              <div class="version">
+                2022.10
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="GettingStarted.html"><cite>PelePhysics</cite> Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Chemistry.html">Chemistry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transport.html">Transport</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Thermodynamics.html">Thermodynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Spray.html">Spray</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Soot.html">Soot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility.html">Utility</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ceptr">ceptr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#turbfilehit">TurbFileHIT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generating-an-hit-file">Generating an HIT File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generating-inflow-files">Generating Inflow Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mechanismpah">MechanismPAH</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#disclaimer">Disclaimer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#liquidprop">liquidProp</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DeveloperGuide.html">Developer Guidelines</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PelePhysics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Support</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Support.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="support">
+<span id="sec-support"></span><h1>Support<a class="headerlink" href="#support" title="Link to this heading"></a></h1>
+<p>The main purpose of PelePhysics is to contain a library of routines for shared use by the other Pele codes,
+which are contained in the <code class="docutils literal notranslate"><span class="pre">Source</span></code> directory. In the <code class="docutils literal notranslate"><span class="pre">Support</span></code> directory, PelePhysics also contains
+several stand-alone tools and scripts that are used to generate data and source code that support these purposes.
+These tools include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ceptr</span></code>: Chemistry Evaluation for Pele Through Recasting, machine generation of mechanism code</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TurbFileHIT</span></code>: Isotropic turbulence initial conditions and inflows</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MechanismPAH</span></code>: Append PAH module to chemical mechanism data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">liquidProp</span></code>: Fits to NIST data for condensed phase species</p></li>
+</ul>
+<section id="ceptr">
+<h2>ceptr<a class="headerlink" href="#ceptr" title="Link to this heading"></a></h2>
+<p>CEPTR is used to generate the C++ mechanism files from Cantera-format mechanism data for all the chemical
+mechanisms in the <code class="docutils literal notranslate"><span class="pre">Mechanisms/</span></code> directory. For a full description of CEPTR and how to use it, see the
+<a class="reference internal" href="Ceptr.html#sec-ceptr"><span class="std std-ref">CEPTR subsection</span></a> of the Chemistry section of this documentation.</p>
+</section>
+<section id="turbfilehit">
+<span id="sec-turbfile"></span><h2>TurbFileHIT<a class="headerlink" href="#turbfilehit" title="Link to this heading"></a></h2>
+<p>This support code contains two separate pieces: a python script that generates a synthetic 3D isotropic turbulence velocity field and
+an AMReX-based C++ code that converts that data into a format that can be used by the PelePhysics <a class="reference internal" href="Utility.html#sec-turbinflow"><span class="std std-ref">TurbInflow Utility</span></a>
+to provide turbulent inflow boundary conditions in either PeleC or PeleLMeX.</p>
+<section id="generating-an-hit-file">
+<h3>Generating an HIT File<a class="headerlink" href="#generating-an-hit-file" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">gen_hit_ic.py</span></code> python script creates a synthetic isotropic turbulence velocity field based on the methodology described
+in the appendix of <a class="reference external" href="http://dx.doi.org/10.1016/j.jcp.2009.10.028">Johnsen et al. (2010) J. Comp Phys.</a>. The resulting velocity
+field is stored in files with names following the pattern <code class="docutils literal notranslate"><span class="pre">hit_ic_k0_N.dat</span></code>, where <code class="docutils literal notranslate"><span class="pre">k0</span></code> is the most
+energetic wave number and <code class="docutils literal notranslate"><span class="pre">N</span></code> is the size of the grid. The initial
+condition for a grid of size <span class="math notranslate nohighlight">\(N^3\)</span> is generated as follows:</p>
+<ol class="arabic simple">
+<li><p>velocity fluctuations generated on a <span class="math notranslate nohighlight">\(N_k^3\)</span> grid in wavenumber space (default <span class="math notranslate nohighlight">\(N_k = 512\)</span>)</p></li>
+<li><p>Coefficients associated to wavenumbers that cannot be represented on the desired grid are set to 0 (sharp wavenumber cutoff)</p></li>
+<li><p>inverse Fourier transform of the velocity fluctuations (<span class="math notranslate nohighlight">\(N_k^3\)</span> grid)</p></li>
+<li><p>velocity fluctuations resampled on the desired grid (<span class="math notranslate nohighlight">\(N^3\)</span>)</p></li>
+</ol>
+<p>This script accepts the following options:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>./gen_hit_ic.py --help
+usage: gen_hit_ic.py [-h] [-k0 K0] [-N N] [-Nk NK] [-s SEED] [-p]
+
+Generate the velocity fluctuations for the HIT IC
+
+options:
+  -h, --help            show this help message and exit
+  -k0 K0                Wave number containing highest energy
+  -N N                  Resolution
+  -Nk NK                Resolution in wavenumber space for intermediate step
+  -s SEED, --seed SEED  Random number generator seed
+  -p, --plot            Save a plot of the x-velocity
+</pre></div>
+</div>
+<p>Generating an initial condition file is as easy as:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>./gen_hit_ic.py -N 16
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This script utilizes standard python libraries such as SciPy and Matplotlib. If you’d like to ensure that you are using appropriate
+versions of the dependencies, follow the <a class="reference internal" href="Ceptr.html#sec-ceptr-software"><span class="std std-ref">CEPTR instructions</span></a> for setting up <code class="docutils literal notranslate"><span class="pre">poetry</span></code> to  manage
+dependencies, then run the script using <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">-C</span> <span class="pre">../ceptr/</span> <span class="pre">python</span> <span class="pre">gen_hit_ic.py</span> <span class="pre">-N</span> <span class="pre">16</span></code>.</p>
+</div>
+</section>
+<section id="generating-inflow-files">
+<h3>Generating Inflow Files<a class="headerlink" href="#generating-inflow-files" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">TurbFileHIT</span></code> directory also contains C++ source code for a small program that reads the <code class="docutils literal notranslate"><span class="pre">.dat</span></code> files created using the python script
+above and saves them as AMReX data structures that can be read by the TurbInflow utility, which uses Taylor’s hypothesis to provide
+temporally varying boundary data by marching through the 3rd dimension of the HIT files at a constant velocity.</p>
+<p>Build options can be specified in the <code class="docutils literal notranslate"><span class="pre">GNUmakefile</span></code>. Notably, if you did not recursively clone PelePhysics with the AMReX submodule, you
+will need to specify a path to AMReX (<code class="docutils literal notranslate"><span class="pre">AMREX_HOME</span></code>). But in most cases, you should be able to directly build the utility simply by running:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>make -j
+</pre></div>
+</div>
+<p>Then run the resulting executable using the provided input file:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>./PeleTurb3d.gnu.ex input
+</pre></div>
+</div>
+<p>Adjust the <code class="docutils literal notranslate"><span class="pre">hit_file</span></code> and <code class="docutils literal notranslate"><span class="pre">input_ncell</span></code> parameters in the input file to match the file name and number of cells from the previous step.
+The <code class="docutils literal notranslate"><span class="pre">urms0</span></code> parameter is a scale factor to rescale the velocity fluctuations. <code class="docutils literal notranslate"><span class="pre">TurbFile</span></code> specified the name of the directory where the
+output files will be saved. After successful execution, the output directory should contain two files: <code class="docutils literal notranslate"><span class="pre">HDR</span></code> and <code class="docutils literal notranslate"><span class="pre">DAT</span></code>.</p>
+</section>
+</section>
+<section id="mechanismpah">
+<h2>MechanismPAH<a class="headerlink" href="#mechanismpah" title="Link to this heading"></a></h2>
+<p>This functionality takes an existing set of mechanism, transport, and thermodynamic data files in Chemkin format and attempts to add a PAH module to it. It checks if any species are duplicated by comparing the atomic composition and the enthalpy curves. It check if any reactions are duplicated. If any species or reactions are duplicated, these are skipped. Once the new yaml file is created, ignition delay time at 1 and 20 atm is compared between the original and new mechanism to see what impact the PAH module has on the mechanism. Plot files of these values are created for you to decide if the differences are significant.</p>
+<section id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h3>
+<p>You need to have the NumPy, Cantera, and MatPlotLib python modules. In order to run, use the following</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>python addPAHmech.py --mech origmech.inp --transport origtrans.dat --thermo origthermo.dat --fuelname NC10H22
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">origmech.inp</span></code>, <code class="docutils literal notranslate"><span class="pre">origthermo.dat</span></code>, and <code class="docutils literal notranslate"><span class="pre">origtrans.dat</span></code> are the initial mechanism, thermodynamic,
+and transport files to have the PAH module amended to.</p>
+</section>
+<section id="disclaimer">
+<h3>Disclaimer<a class="headerlink" href="#disclaimer" title="Link to this heading"></a></h3>
+<p>The resulting IDT should be studied to determine if the new mechanism is now compromised with the addition of the PAH module. This is left up to the user’s discretion. This has only been tested on a few mechanisms and might have bugs.</p>
+</section>
+</section>
+<section id="liquidprop">
+<h2>liquidProp<a class="headerlink" href="#liquidprop" title="Link to this heading"></a></h2>
+<p>This is a python script that reads in an NIST property file for a condensed or saturated phase of a species.
+Files for rho, mu, and lambda (thermal conductivity) should be provided in a single directory and
+named <code class="docutils literal notranslate"><span class="pre">rho.dat</span></code>, <code class="docutils literal notranslate"><span class="pre">mu.dat</span></code>, and <code class="docutils literal notranslate"><span class="pre">lambda.dat</span></code>. The usage for this script is:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>$ python propcoeff.py -h
+
+usage: propcoeff.py [-h] --species NC10H22 [--file_loc FILE_LOC] [--units UNITS] [--vars VARS [VARS ...]]
+
+options:
+  -h, --help            show this help message and exit
+  --species NC10H22     Species name
+  --file_loc FILE_LOC   Location of data files. Files should be called rho.dat, mu.dat, and/or lambda.dat
+  --units UNITS         Units, either MKS or CGS
+  --vars VARS [VARS ...]
+                        Which variables to fit, ex. mu lambda rho
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Utility.html" class="btn btn-neutral float-left" title="Utility" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright AMReX Copyright (c) 2022, The Regents of the University of California, through Lawrence Berkeley National Laboratory and the Alliance for Sustainable Energy, LLC., through National Renewable Energy Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy).  All rights reserved..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

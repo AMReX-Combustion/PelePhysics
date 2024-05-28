@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spray &mdash; PelePhysics 2022.10 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/mywrap.css?v=d9e67d65" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=bf7b0411"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Soot" href="Soot.html" />
+    <link rel="prev" title="Equation of State" href="EOS.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PelePhysics
+          </a>
+              <div class="version">
+                2022.10
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="GettingStarted.html"><cite>PelePhysics</cite> Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Chemistry.html">Chemistry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transport.html">Transport</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Thermodynamics.html">Thermodynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Spray</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spray-equations">Spray Equations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spray-flags-and-inputs">Spray Flags and Inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spray-injection">Spray Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#spray-validation">Spray Validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#single-droplet-tests">Single Droplet Tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Soot.html">Soot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility.html">Utility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Support.html">Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DeveloperGuide.html">Developer Guidelines</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PelePhysics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Spray</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Spray.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="spray">
+<span id="id1"></span><h1>Spray<a class="headerlink" href="#spray" title="Link to this heading"></a></h1>
+<section id="spray-equations">
+<h2>Spray Equations<a class="headerlink" href="#spray-equations" title="Link to this heading"></a></h2>
+<p>This section outlines the modeling and mathematics for the spray routines.
+Firstly, spray modeling relies on the following assumptions:</p>
+<ul class="simple">
+<li><p>Dilute spray: droplet volume inside an Eulerian cell is much smaller than the volume of the gas phase; the droplets can be modeled as Lagrangian point source terms relative to the Eulerian gas phase</p></li>
+<li><p>Infinite conductivity model: temperature within a droplet is temporally varying but spatially uniform</p></li>
+<li><p>One-third rule: the thermophysical properties in the film of an evaporating droplet can be approximated as a weighted average of the state at the droplet surface (weighted as 2/3) and the state of the surrounding gas (weighted as 1/3)</p></li>
+<li><p>Ideal equilibrium: the liquid and vapor state at the surface of the droplet are in equilibrium</p></li>
+<li><p>The radiation, Soret, and Dufour effects are neglected</p></li>
+</ul>
+<p>The evaporation models follow the work by Abramzon and Sirignano <a class="footnote-reference brackets" href="#abram" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> and the multicomponent evaporation is based on work by Tonini. <a class="footnote-reference brackets" href="#ton" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> Details regarding the energy balance are provided in Ge et al. <a class="footnote-reference brackets" href="#ge" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a></p>
+<p>The subscript notation for this section is: <span class="math notranslate nohighlight">\(d\)</span> relates to the liquid droplet, <span class="math notranslate nohighlight">\(v\)</span> relates to the vapor state that is in equilibrium with the liquid and gas phase, <span class="math notranslate nohighlight">\(L\)</span> relates to the liquid phase, and <span class="math notranslate nohighlight">\(g\)</span> relates to the gas phase. The subscript <span class="math notranslate nohighlight">\(r\)</span> relates to the reference state with which to approximate the thermophysical and transport properties. This reference state is assumed to be in the evaporating film that surrounds the droplet state and is approximated as</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}T_r &amp;= T_d + A (T_g - T_d)\\Y_{r,n} &amp;= Y_{v,n} + A (Y_{g,n} - Y_{v,n})\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(A = 1/3\)</span> according the the one-third rule.
+Additional nomenclature: <span class="math notranslate nohighlight">\(M_n\)</span> is the molar mass of species <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(\overline{M}\)</span> is the average molar mass of a mixture, <span class="math notranslate nohighlight">\(\mathcal{R}\)</span> is the universal gas constant, <span class="math notranslate nohighlight">\(N_L\)</span> is the number of liquid species, and <span class="math notranslate nohighlight">\(N_s\)</span> is the number of gas phase species. <span class="math notranslate nohighlight">\(Y_n\)</span> and <span class="math notranslate nohighlight">\(\chi_n\)</span> are the mass and molar fractions of species <span class="math notranslate nohighlight">\(n\)</span>, respectively.
+The user is required to provide a reference temperature for the liquid properties, <span class="math notranslate nohighlight">\(T^*\)</span>, the critical temperature for each liquid species, <span class="math notranslate nohighlight">\(T_{c,n}\)</span>, the boiling temperature for each liquid species at atmospheric pressure, <span class="math notranslate nohighlight">\(T^*_{b,n}\)</span>, the latent heat and liquid specific heat at the reference temperature, <span class="math notranslate nohighlight">\(h_{L,n}(T^*)\)</span> and <span class="math notranslate nohighlight">\(c_{p,L,n}(T^*)\)</span>, respectively.
+Note: this reference temperature is a constant value for all species and is not related to the reference state denoted by the subscript <span class="math notranslate nohighlight">\(r\)</span>.</p>
+<p>The equations of motion, mass, momentum, and energy for the Lagrangian spray droplet are:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\frac{d \mathbf{X}_d}{d t} &amp;= \mathbf{u}_d,\\\frac{d m_d}{d t} &amp;= \sum^{N_L}_{n=0} \dot{m}_n,\\m_d \frac{d Y_{d,n}}{d t} &amp;= \dot{m}_n - Y_{d,n} \frac{d m_d}{d t},\\m_d \frac{d \mathbf{u}_d}{d t} &amp;= \mathbf{F}_d + m_d \mathbf{g},\\m_d c_{p,L} \frac{d T_d}{d t} &amp;= \sum^{N_L}_{n=0} \dot{m}_n h_{L,n}(T_d) + \mathcal{Q}_d.\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{X}_d\)</span> is the spatial vector, <span class="math notranslate nohighlight">\(\mathbf{u}_d\)</span> is the velocity vector, <span class="math notranslate nohighlight">\(T_d\)</span> is the droplet temperature, <span class="math notranslate nohighlight">\(m_d\)</span> is the mass of the droplet, <span class="math notranslate nohighlight">\(\mathbf{g}\)</span> is an external body force (like gravity), <span class="math notranslate nohighlight">\(\dot{m}\)</span> is evaporated mass, <span class="math notranslate nohighlight">\(\mathcal{Q}_d\)</span> is the heat transfer between the droplet and the surrounding gas, and <span class="math notranslate nohighlight">\(\mathbf{F}_d\)</span> is the momentum source term.
+The density of the liquid mixture, <span class="math notranslate nohighlight">\(\rho_d\)</span>, depends on the liquid mass fractions of the dropet, <span class="math notranslate nohighlight">\(Y_{d,n}\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\rho_d = \left( \sum^{N_L}_{n=0} \frac{Y_{d,n}}{\rho_{L,n}} \right)^{-1}\]</div>
+<p>The droplets are assumed to be spherical with diameter <span class="math notranslate nohighlight">\(d_d\)</span>. Therefore, the mass is computed as</p>
+<div class="math notranslate nohighlight">
+\[m_d = \frac{\pi}{6} \rho_d d_d^3\]</div>
+<p>The procedure is as follows for updating the spray droplet:</p>
+<ol class="arabic">
+<li><p>Interpolate the gas phase state to the droplet location using a trilinear interpolation scheme.</p></li>
+<li><p>Compute the boiling temperature for species <span class="math notranslate nohighlight">\(n\)</span> at the current gas phase pressure using the Clasius-Clapeyron relation</p>
+<div class="math notranslate nohighlight">
+\[T_{b,n} = \left(\log\left(\frac{p_{\rm{atm}}}{p_g}\right) \frac{\mathcal{R}}{M_n h_{L,n}(T^*_{b,n})} + \frac{1}{T^*_{b,n}}\right)\]</div>
+<p>The boiling temperature of the droplet is computed as</p>
+<div class="math notranslate nohighlight">
+\[T_{d,b} = \sum^{N_L}_{n=0} Y_{d,n} T_{b,n}\]</div>
+<p>Since we only have the latent heat at the reference condition temperature, we estimate the enthalpy at the boiling condition using Watson’s law</p>
+<div class="math notranslate nohighlight">
+\[h_{L,n}(T^*_{b,n}) = h_{L,n}(T^*) \left(\frac{T_{c,n} - T^*}{T_{c,n} - T^*_{b,n}} \right)^{-0.38}\]</div>
+</li>
+<li><p>Compute the latent heat of the droplet using</p>
+<div class="math notranslate nohighlight">
+\[h_{L,n}(T_d) = h_{g,n}(T_d) - h_{g,n}(T^*) + h_{L,n}(T^*) - c_{p,L,n}(T^*) (T_d - T^*) \,.\]</div>
+<p>and the saturation pressure using either the Clasius-Clapeyron relation</p>
+<div class="math notranslate nohighlight">
+\[p_{{\rm{sat}}, n} = p_{\rm{atm}} \exp\left(\frac{h_{L,n}(T_d) M_n}{\mathcal{R}} \left(\frac{1}{T^*_{b,n}} - \frac{1}{T_d}\right)\right)\]</div>
+<p>or the Antoine curve fit</p>
+<div class="math notranslate nohighlight">
+\[p_{{\rm{sat}},n} = d 10^{a - b / (T_d + c)}\]</div>
+</li>
+<li><p>Estimate the mass fractions in the vapor state using Raoult’s law</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}Y_{v,n} &amp;= \frac{\chi_{v,n} M_n}{\overline{M}_v + \overline{M}_g (1 - \chi_{v,{\rm{sum}}})} \; \forall n \in N_L\\\chi_{v,{\rm{sum}}} &amp;= \sum^{N_L}_{n=0} \chi_{v,n}\\\chi_{v,n} &amp;= \frac{\chi_{d,n} p_{{\rm{sat}},n}}{p_g}\\\chi_{d,n} &amp;= \frac{Y_{d,n}}{M_n}\left(\sum^{N_L}_{k=0} \frac{Y_{d,k}}{M_k}\right)^{-1}\\\overline{M}_v &amp;= \sum^{N_L}_{n=0} \chi_{v,n} M_n\end{aligned}\end{align} \]</div>
+<p>If <span class="math notranslate nohighlight">\(\chi_{g,n} p_g &gt; p_{{\rm{sat}},n}\)</span>, then <span class="math notranslate nohighlight">\(\chi_{v,n} = Y_{v,n} = 0\)</span> for that particular species in the equations above, since that means the gas phase is saturated. The mass fractions in the reference state for the fuel are computed using the one-third rule and the remaining reference mass fractions are normalized gas phase mass fractions to ensure they sum to 1</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}Y_{r,n} = \left\{\begin{array}{c l}
+\displaystyle Y_{v,n} + A (Y_{g,n} - Y_{v,n}) &amp; {\text{If $Y_{v,n} &gt; 0$}}, \\
+\displaystyle\frac{1 - \sum^{N_L}_{k=0} Y_{v,k}}{1 - \sum^{N_L}_{k=0} Y_{g,k}} Y_{g,n} &amp; {\text{Otherwise}}.
+\end{array}\right. \; \forall n \in N_s.\end{split}\]</div>
+</li>
+<li><p>The average molar mass, specific heat, and density of the reference state in the gas film are computed as</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\overline{M}_r &amp;= \left(\sum^{N_s}_{n=0} \frac{Y_{r,n}}{M_n}\right)^{-1},\\c_{p,r} &amp;= \sum^{N_s}_{n=0} Y_{s,n} c_{p,g,n}(T_r),\\\rho_r &amp;= \frac{\overline{M}_r p_g}{\mathcal{R} T_r}.\end{aligned}\end{align} \]</div>
+</li>
+<li><p>Transport properties are computed using the reference state: dynamic viscosity, <span class="math notranslate nohighlight">\(\mu_r\)</span>, thermal conductivity, <span class="math notranslate nohighlight">\(\lambda_r\)</span>, and mass diffusion coefficient for species <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(D_{r,n}\)</span>.</p></li>
+<li><p>It is important to note that <cite>PelePhysics</cite> provides mixture averaged mass diffusion coefficient <span class="math notranslate nohighlight">\(\overline{(\rho D)}_{r,n}\)</span>, which is converted into the binary mass diffusion coefficient using</p>
+<div class="math notranslate nohighlight">
+\[(\rho D)_{r,n} = \overline{(\rho D)}_{r,n} \overline{M}_r / M_n.\]</div>
+<p>Mass diffusion coefficient is then normalized by the total fuel vapor molar fraction</p>
+<div class="math notranslate nohighlight">
+\[(\rho D)^*_{r,n} = \frac{\chi_{v,n} (\rho D)_{r,n}}{\chi_{v,{\rm{sum}}}} \; \forall n \in N_L\]</div>
+<p>and the total is</p>
+<div class="math notranslate nohighlight">
+\[(\rho D)_r = \sum_{n=0}^{N_L} (\rho D)_{r,n}^*\]</div>
+</li>
+<li><p>The momentum source is a function of the drag force</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{F}_d = \frac{1}{2} \rho_r C_D A_d \left\|\Delta \mathbf{u}\right\| \Delta \mathbf{u}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta \mathbf{u} = \mathbf{u}_g - \mathbf{u}_d\)</span>, <span class="math notranslate nohighlight">\(A_d = \pi d_d^2/4\)</span> is the frontal area of the droplet, and <span class="math notranslate nohighlight">\(C_D\)</span> is the drag coefficient for a sphere, which is estimated using the standard drag curve for an immersed sphere</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}C_D = \frac{24}{{\rm{Re}}_d}\left\{\begin{array}{c l}
+1 &amp; {\text{If Re$_d$ &lt; 1}}, \\
+\displaystyle 1 + \frac{{\rm{Re}}^{2/3}_d}{6} &amp; {\text{Otherwise}}.
+\end{array}\right.\end{split}\]</div>
+<p>The droplet Reynolds number is defined as</p>
+<div class="math notranslate nohighlight">
+\[{\rm{Re}}_d = \frac{\rho_r d_d \left\|\Delta \mathbf{u}\right\|}{\mu_r}\]</div>
+</li>
+<li><p>The mass source term is modeled according to Abramzon and Sirignano (1989). The following non-dimensional numbers and factors are used:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}F(B) &amp;= (1 + B)^{0.7}\frac{\log(1 + B)}{B}\\F_2 &amp;= \max(1, \min(400, {\rm{Re}}_d)^{0.077})\\{\rm{Pr}}_r &amp;= \frac{\mu_r c_{p,r}}{\lambda_r}\\{\rm{Sc}}_r &amp;= \frac{\mu_r}{(\rho D)_r}\\{\rm{Sh}}_0 &amp;= 1 + (1 + {\rm{Re}}_d {\rm{Sc}}_r)^{1/3} F_2\\{\rm{Nu}}_0 &amp;= 1 + (1 + {\rm{Re}}_d {\rm{Pr}}_r)^{1/3} F_2\\{\rm{Sh}}^* &amp;= 2 + \frac{{\rm{Sh}}_0 - 2}{F(B_M)}\\{\rm{Nu}}^* &amp;= 2 + \frac{{\rm{Nu}}_0 - 2}{F(B_T)}\end{aligned}\end{align} \]</div>
+<ul>
+<li><p>The Spalding numbers for mass transfer, <span class="math notranslate nohighlight">\(B_M\)</span>, and heat transfer, <span class="math notranslate nohighlight">\(B_T\)</span>, are computed using</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}B_M &amp;= \displaystyle\frac{\sum^{N_L}_{n=0} Y_{v,n} - \sum^{N_L}_{n=0} Y_{g,n}}{1 - \sum^{N_L}_{n=0} Y_{v,n}}\\B_T &amp;= \left(1 + B_M\right)^{\phi} - 1\end{aligned}\end{align} \]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\phi = \frac{c_{p,r} (\rho D)_r {\rm{Sh}}^*}{\lambda_r {\rm{Nu}}^*}\]</div>
+<p>Note the dependence of <span class="math notranslate nohighlight">\({\rm{Nu}}^*\)</span> on <span class="math notranslate nohighlight">\(B_T\)</span> means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\dot{m}_n &amp;= -\pi (\rho D)_{r,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L\\\mathcal{Q}_d &amp;= \pi \lambda_r d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}\end{aligned}\end{align} \]</div>
+</li>
+<li><p>If the gas phase is saturated for all liquid species, the equations for heat and mass transfer become</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\dot{m}_n &amp;= 0\\\mathcal{Q}_d &amp;= \pi \lambda_r d_d (T_g - T_d) {\rm{Nu}}_0\end{aligned}\end{align} \]</div>
+</li>
+</ul>
+</li>
+<li><p>To alleviate conservation issues at AMR interfaces, each parcel only contributes to the gas phase source term of the cell containing it. The gas phase source terms for a single parcel to the cell are</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}S_{\rho} &amp;= \mathcal{C} \sum^{N_L}_{n=0} \dot{m}_n,\\S_{\rho Y_n} &amp;= \mathcal{C} \dot{m}_n,\\\mathbf{S}_{\rho \mathbf{u}} &amp;= \mathcal{C} \mathbf{F}_d,\\S_{\rho h} &amp;= \mathcal{C}\left(\mathcal{Q}_d + \sum_{n=0}^{N_L} \dot{m}_n h_{g,n}(T_d)\right),\\S_{\rho E} &amp;= S_{\rho h} + \frac{1}{2}\left\|\mathbf{u}_d\right\| S_{\rho} + \mathcal{C} \mathbf{F}_d \cdot \mathbf{u}_d\end{aligned}\end{align} \]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{C} = -\frac{N_{d}}{V_{\rm{cell}}},\]</div>
+<p><span class="math notranslate nohighlight">\(N_{d}\)</span> is the number of droplets per computational parcel, and <span class="math notranslate nohighlight">\(V_{\rm{cell}}\)</span> is the volume for the cell of interest. Note that the cell volume can vary depending on AMR level and if an EB is present.</p>
+</div></blockquote>
+</li>
+</ol>
+</section>
+<section id="spray-flags-and-inputs">
+<h2>Spray Flags and Inputs<a class="headerlink" href="#spray-flags-and-inputs" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">GNUmakefile</span></code>, specify <code class="docutils literal notranslate"><span class="pre">USE_PARTICLES</span> <span class="pre">=</span> <span class="pre">TRUE</span></code> and <code class="docutils literal notranslate"><span class="pre">SPRAY_FUEL_NUM</span> <span class="pre">=</span> <span class="pre">N</span></code> where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the number of liquid species being used in the simulation.</p></li>
+<li><p>Depending on the gas phase solver, spray solving functionality can be turned on in the input file using <code class="docutils literal notranslate"><span class="pre">pelec.do_spray_particles</span> <span class="pre">=</span> <span class="pre">1</span></code> or <code class="docutils literal notranslate"><span class="pre">peleLM.do_spray_particles</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p></li>
+<li><p>The units for <cite>PeleLM</cite> and <cite>PeleLMeX</cite> are MKS while the units for <cite>PeleC</cite> are CGS. This is the same for the spray inputs. E.g. when running a spray simulation coupled with <cite>PeleC</cite>, the units for <code class="docutils literal notranslate"><span class="pre">particles.fuel_cp</span></code> must be in erg/g.</p></li>
+<li><p>There are many required <code class="docutils literal notranslate"><span class="pre">particles.</span></code> flags in the input file. For demonstration purposes, 2 liquid species of <code class="docutils literal notranslate"><span class="pre">NC7H16</span></code> and <code class="docutils literal notranslate"><span class="pre">NC10H22</span></code> will be used.</p>
+<ul>
+<li><p>The liquid fuel species names are specified using <code class="docutils literal notranslate"><span class="pre">particles.fuel_species</span> <span class="pre">=</span> <span class="pre">NC7H16</span> <span class="pre">NC10H22</span></code>. The number of fuel species listed must match <code class="docutils literal notranslate"><span class="pre">SPRAY_FUEL_NUM</span></code>.</p></li>
+<li><p>Many values must be specified on a per-species basis. Following the current example, one would have to specify <code class="docutils literal notranslate"><span class="pre">particles.NC7H16_crit_temp</span> <span class="pre">=</span> <span class="pre">540.</span></code> and <code class="docutils literal notranslate"><span class="pre">particles.NC10H22_crit_temp</span> <span class="pre">=</span> <span class="pre">617.</span></code> to set a critical temperature of 540 K for <code class="docutils literal notranslate"><span class="pre">NC7H16</span></code> and 617 K for <code class="docutils literal notranslate"><span class="pre">NC10H22</span></code>.</p></li>
+<li><p>Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use <code class="docutils literal notranslate"><span class="pre">particles.dep_fuel_species</span></code>. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called <code class="docutils literal notranslate"><span class="pre">SP3</span></code>, we would put <code class="docutils literal notranslate"><span class="pre">particles.dep_fuel_species</span> <span class="pre">=</span> <span class="pre">SP3</span> <span class="pre">SP3</span></code>. All species specified must be present in the chemistry transport and thermodynamic data.</p></li>
+</ul>
+</li>
+<li><p>The following table lists other inputs related to <code class="docutils literal notranslate"><span class="pre">particles.</span></code>, where <code class="docutils literal notranslate"><span class="pre">SP</span></code> will refer to a fuel species name</p></li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Default Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fuel_species</span></code></p></td>
+<td><p>Names of liquid species</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dep_fuel_species</span></code></p></td>
+<td><p>Name of gas phase species to
+contribute</p></td>
+<td><p>Yes</p></td>
+<td><p>Inputs to
+<code class="docutils literal notranslate"><span class="pre">fuel_species</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fuel_ref_temp</span></code></p></td>
+<td><p>Liquid reference temperature</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SP_crit_temp</span></code></p></td>
+<td><p>Critical temperature</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SP_boil_temp</span></code></p></td>
+<td><p>Boiling temperature at
+atmospheric pressure</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SP_cp</span></code></p></td>
+<td><p>Liquid <span class="math notranslate nohighlight">\(c_p\)</span> at reference
+temperature</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SP_latent</span></code></p></td>
+<td><p>Latent heat at reference
+temperature</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SP_rho</span></code></p></td>
+<td><p>Liquid density</p></td>
+<td><p>Yes</p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SP_lambda</span></code></p></td>
+<td><p>Liquid thermal conductivity
+(currently unused)</p></td>
+<td><p>No</p></td>
+<td><ol class="arabic simple" start="0">
+<li></li>
+</ol>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SP_mu</span></code></p></td>
+<td><p>Liquid dynamic viscosity
+(currently unused)</p></td>
+<td><p>No</p></td>
+<td><ol class="arabic simple" start="0">
+<li></li>
+</ol>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mom_transfer</span></code></p></td>
+<td><p>Couple momentum with gas phase</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mass_transfer</span></code></p></td>
+<td><p>Evaporate mass and exchange
+heat with gas phase</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_parts</span></code></p></td>
+<td><p>Fix particles in space</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">parcel_size</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(N_{d}\)</span>; Number of
+droplets per parcel</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write_ascii_files</span></code></p></td>
+<td><p>Output ascii files of spray
+data</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cfl</span></code></p></td>
+<td><p>Particle CFL number for
+limiting time step</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.5</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">init_file</span></code></p></td>
+<td><p>Ascii file name to initialize
+droplets</p></td>
+<td><p>No</p></td>
+<td><p>Empty</p></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>If an Antoine fit for saturation pressure is used, it must be specified for individual species,</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>particles.SP_psat = 4.07857 1501.268 -78.67 1.E5
+</pre></div>
+</div>
+<p>where the numbers represent <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, <span class="math notranslate nohighlight">\(c\)</span>, and <span class="math notranslate nohighlight">\(d\)</span>, respectively in:</p>
+<div class="math notranslate nohighlight">
+\[p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}\]</div>
+<ul class="simple">
+<li><p>If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation; see</p></li>
+</ul>
+</li>
+<li><p>Temperature based fits for liquid density, thermal conductivity, and dynamic viscosity can be used; these can be specified as</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>particles.SP_rho = 10.42 -5.222 1.152E-2 4.123E-7
+particles.SP_lambda = 7.243 1.223 4.223E-8 8.224E-9
+particles.SP_mu = 7.243 1.223 4.223E-8 8.224E-9
+</pre></div>
+</div>
+<p>where the numbers represent <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, <span class="math notranslate nohighlight">\(c\)</span>, and <span class="math notranslate nohighlight">\(d\)</span>, respectively in:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\rho_L \,, \lambda_L = a + b T + c T^2 + d T^3\\\mu_L = a + b / T + c / T^2 + d / T^3\end{aligned}\end{align} \]</div>
+<p>If only a single value is provided, <span class="math notranslate nohighlight">\(a\)</span> is assigned to that value and the other coefficients are set to zero, effectively using a constant value for the parameters.</p>
+</li>
+</ul>
+<section id="spray-injection">
+<h3>Spray Injection<a class="headerlink" href="#spray-injection" title="Link to this heading"></a></h3>
+<p>Templates to facilitate and simplify spray injection are available. To use them, changes must be made to the input and <code class="docutils literal notranslate"><span class="pre">SprayParticlesInitInsert.cpp</span></code> files. Inputs related to injection use the <code class="docutils literal notranslate"><span class="pre">spray.</span></code> parser name. To create a jet in the domain, modify the <code class="docutils literal notranslate"><span class="pre">InitSprayParticles()</span></code> function in <code class="docutils literal notranslate"><span class="pre">SprayParticleInitInsert.cpp</span></code>. Here is an example:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>void
+SprayParticleContainer::InitSprayParticles(
+const bool init_parts)
+{
+  int num_jets = 1;
+  m_sprayJets.resize(num_jets);
+  std::string jet_name = &quot;jet1&quot;;
+  m_sprayJets[0] = std::make_unique&lt;SprayJet&gt;(jet_name, Geom(0));
+  return;
+}
+</pre></div>
+</div>
+<p>This creates a single jet that is named <code class="docutils literal notranslate"><span class="pre">jet1</span></code>. This name will be used in the input file to reference this particular jet. For example, to set the location of the jet center for <code class="docutils literal notranslate"><span class="pre">jet1</span></code>, the following should be included in the input file,</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>spray.jet1.jet_cent = 0. 0. 0.
+</pre></div>
+</div>
+<p>No two jets may have the same name. If an injector is constructed using only a name and geometry, the injection parameters are read from the input file. Here is a list of injection related inputs:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jet_cent</span></code></p></td>
+<td><p>Jet center location</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jet_norm</span></code></p></td>
+<td><p>Jet normal direction</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jet_vel</span></code></p></td>
+<td><p>Jet velocity magnitude</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jet_dia</span></code></p></td>
+<td><p>Jet diameter</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">spread_angle</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_J\)</span>; Full spread
+angle in degrees from the jet
+normal direction; droplets vary
+from
+<span class="math notranslate nohighlight">\([-\theta_J/2,\theta_J/2]\)</span></p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">T</span></code></p></td>
+<td><p>Temperature of the injected
+liquid</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Y</span></code></p></td>
+<td><p>Mass fractions of the injected
+liquid based on
+<code class="docutils literal notranslate"><span class="pre">particles.fuel_species</span></code></p></td>
+<td><p>Yes, if
+<code class="docutils literal notranslate"><span class="pre">SPRAY_FUEL_NUM</span></code> &gt;
+1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mass_flow_rate</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\dot{m}_{\rm{inj}}\)</span>; Mass
+flow rate of the jet</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hollow_spray</span></code></p></td>
+<td><p>Sets hollow cone injection with
+angle <span class="math notranslate nohighlight">\(\theta_J/2\)</span></p></td>
+<td><p>No (Default: 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hollow_spread</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_h\)</span>; Adds spread to
+hollow cone <span class="math notranslate nohighlight">\(\theta_J/2\pm
+\theta_h\)</span></p></td>
+<td><p>No (Default: 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">swirl_angle</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\phi_S\)</span>; Adds a swirling
+component along azimuthal
+direction</p></td>
+<td><p>No (Default: 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">start_time</span></code> and
+<code class="docutils literal notranslate"><span class="pre">end_time</span></code></p></td>
+<td><p>Beginning and end time for jet</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dist_type</span></code></p></td>
+<td><p>Droplet diameter distribution
+type: <code class="docutils literal notranslate"><span class="pre">Uniform</span></code>, <code class="docutils literal notranslate"><span class="pre">Normal</span></code>,
+<code class="docutils literal notranslate"><span class="pre">LogNormal</span></code>, <code class="docutils literal notranslate"><span class="pre">Weibull</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ChiSquared</span></code></p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+<figure class="align-center" id="id12" style="width: 60%">
+<img alt="_images/inject_transform.png" src="_images/inject_transform.png" />
+<figcaption>
+<p><span class="caption-number">9 </span><span class="caption-text">Demonstration of injection angles. <span class="math notranslate nohighlight">\(\phi_J\)</span> varies uniformly from <span class="math notranslate nohighlight">\([0, 2 \pi]\)</span></span><a class="headerlink" href="#id12" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>Care must be taken to ensure the amount of mass injected during a time step matches the desired mass flow rate. For smaller time steps, the risk of over-injecting mass increases. To mitigate this issue, each jet accounts for three values: <span class="math notranslate nohighlight">\(N_{P,\min}\)</span>, <span class="math notranslate nohighlight">\(m_{\rm{acc}}\)</span>, and <span class="math notranslate nohighlight">\(t_{\rm{acc}}\)</span> (labeled in the code as <code class="docutils literal notranslate"><span class="pre">m_minParcel</span></code>, <code class="docutils literal notranslate"><span class="pre">m_sumInjMass</span></code>, and <code class="docutils literal notranslate"><span class="pre">m_sumInjTime</span></code>, respectively). <span class="math notranslate nohighlight">\(N_{P,\min}\)</span> is the minimum number of parcels that must be injected over the course of an injection event; this must be greater than or equal to one. <span class="math notranslate nohighlight">\(m_{\rm{acc}}\)</span> is the amount of uninjected mass accumulated over the time period <span class="math notranslate nohighlight">\(t_{\rm{acc}}\)</span>. The injection routine steps are as follows:</p>
+<ol class="arabic">
+<li><p>The injected mass for the current time step is computed using the desired mass flow rate, <span class="math notranslate nohighlight">\(\dot{m}_{\rm{inj}}\)</span> and the current time step</p>
+<div class="math notranslate nohighlight">
+\[m_{\rm{inj}} = \dot{m}_{\rm{inj}} \Delta t + m_{\rm{acc}}\]</div>
+</li>
+<li><p>The time period for the current injection event is computed using</p>
+<div class="math notranslate nohighlight">
+\[t_{\rm{inj}} = \Delta t + t_{\rm{acc}}\]</div>
+</li>
+<li><p>Using the average mass of an injected parcel, <span class="math notranslate nohighlight">\(N_{d} m_{d,\rm{avg}}\)</span>, the estimated number of injected parcels is computed</p>
+<div class="math notranslate nohighlight">
+\[N_{P, \rm{inj}} = m_{\rm{inj}} / (N_{d} m_{d, \rm{avg}})\]</div>
+</li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>If <span class="math notranslate nohighlight">\(N_{P, \rm{inj}} &lt; N_{P, \min}\)</span>, the mass and time is accumulated as <span class="math notranslate nohighlight">\(m_{\rm{acc}} = m_{\rm{inj}}\)</span> and <span class="math notranslate nohighlight">\(t_{\rm{acc}} = t_{\rm{inj}}\)</span> and no injection occurs this time step.</p></li>
+<li><p>Otherwise, <span class="math notranslate nohighlight">\(m_{\rm{inj}}\)</span> mass is injected and convected over time <span class="math notranslate nohighlight">\(t_{\rm{inj}}\)</span> and <span class="math notranslate nohighlight">\(m_{\rm{acc}}\)</span> and <span class="math notranslate nohighlight">\(t_{\rm{acc}}\)</span> are reset.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>If injection occurs, the amount of mass injected, <span class="math notranslate nohighlight">\(m_{\rm{actual}}\)</span>, is summed and compared with the desired mass flow rate. If <span class="math notranslate nohighlight">\(m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} &gt; 0.05 \dot{m}_{\rm{inj}}\)</span>, then <span class="math notranslate nohighlight">\(N_{P,\min}\)</span> is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.</p></li>
+</ol>
+</section>
+</section>
+<section id="spray-validation">
+<h2>Spray Validation<a class="headerlink" href="#spray-validation" title="Link to this heading"></a></h2>
+<section id="single-droplet-tests">
+<h3>Single Droplet Tests<a class="headerlink" href="#single-droplet-tests" title="Link to this heading"></a></h3>
+<p>Single droplet tests are performed and compared with computational or experimental results published in literature. These tests are setup in <code class="docutils literal notranslate"><span class="pre">PeleProduction/PeleMPruns/single_drop_test</span></code>. To run a test case, simply open <code class="docutils literal notranslate"><span class="pre">Validate.py</span></code> and set the case name from the table below</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>case = TestCaseName()
+</pre></div>
+</div>
+<p>then do <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">Validate.py</span></code>.
+The following table details the parameters of each test:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Test Case Name</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(T_g\)</span> [K]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(p_g\)</span> [bar]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(T_d\)</span> [K]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(d_d\)</span> [um]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\Delta u\)</span> [m/s]</p></th>
+<th class="head"><p>Ref</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Tonini_4_33</span></code></p></td>
+<td><p>1000</p></td>
+<td><p>1</p></td>
+<td><p>300</p></td>
+<td><p>200</p></td>
+<td><p>6.786</p></td>
+<td><p><a class="footnote-reference brackets" href="#ton" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Abramzon</span></code></p></td>
+<td><p>1500</p></td>
+<td><p>10</p></td>
+<td><p>300</p></td>
+<td><p>100</p></td>
+<td><p>15</p></td>
+<td><p><a class="footnote-reference brackets" href="#abram" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Daif</span></code></p></td>
+<td><p>348</p></td>
+<td><p>1</p></td>
+<td><p>294</p></td>
+<td><p>1334</p></td>
+<td><p>3.10</p></td>
+<td><p><a class="footnote-reference brackets" href="#daif" id="id7" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RungeHep</span></code>
+<code class="docutils literal notranslate"><span class="pre">RungeDec</span></code>
+<code class="docutils literal notranslate"><span class="pre">RungeMix</span></code></p></td>
+<td><p>273</p></td>
+<td><p>1</p></td>
+<td><p>272</p></td>
+<td><p>500-570</p></td>
+<td><p>2.5</p></td>
+<td><p><a class="footnote-reference brackets" href="#runge" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<figure class="align-center" id="id13" style="width: 80%">
+<img alt="_images/ton_res.png" src="_images/ton_res.png" />
+<figcaption>
+<p><span class="caption-number">10 </span><span class="caption-text">Droplet diameter, temperature, and n-octane mass fraction comparisons with Figure 4.33 in <a class="footnote-reference brackets" href="#ton" id="id9" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></span><a class="headerlink" href="#id13" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id14" style="width: 80%">
+<img alt="_images/abram_res.png" src="_images/abram_res.png" />
+<figcaption>
+<p><span class="caption-number">11 </span><span class="caption-text">Droplet diameter and temperature comparisons with <a class="footnote-reference brackets" href="#abram" id="id10" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></span><a class="headerlink" href="#id14" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id15" style="width: 80%">
+<img alt="_images/daif_res.png" src="_images/daif_res.png" />
+<figcaption>
+<p><span class="caption-number">12 </span><span class="caption-text">Droplet diameter and temperature comparisons with <a class="footnote-reference brackets" href="#daif" id="id11" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></span><a class="headerlink" href="#id15" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="ton" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id5">2</a>,<a role="doc-backlink" href="#id9">3</a>)</span>
+<p>“Fuel spray modeling in direct-injection diesel and gasoline engines”, S. Tonini, Dissertation, City University London (2006)</p>
+</aside>
+<aside class="footnote brackets" id="abram" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id6">2</a>,<a role="doc-backlink" href="#id10">3</a>)</span>
+<p>“Droplet vaporization model for spray combustion calculations”, B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol. 32, No. 9, pp. 1605-1618 (1989)</p>
+</aside>
+<aside class="footnote brackets" id="daif" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id7">1</a>,<a role="doc-backlink" href="#id11">2</a>)</span>
+<p>“Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model”, A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998)</p>
+</aside>
+<aside class="footnote brackets" id="runge" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id8">4</a><span class="fn-bracket">]</span></span>
+<p>“Low-temperature vaporization of JP-4 and JP-8 fuel droplets”, T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998)</p>
+</aside>
+<aside class="footnote brackets" id="ge" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">5</a><span class="fn-bracket">]</span></span>
+<p>“Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays”, W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020)</p>
+</aside>
+</aside>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="EOS.html" class="btn btn-neutral float-left" title="Equation of State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Soot.html" class="btn btn-neutral float-right" title="Soot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright AMReX Copyright (c) 2022, The Regents of the University of California, through Lawrence Berkeley National Laboratory and the Alliance for Sustainable Energy, LLC., through National Renewable Energy Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy).  All rights reserved..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
