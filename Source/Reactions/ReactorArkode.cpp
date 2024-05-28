@@ -88,23 +88,28 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   switch (rk_controller) {
   case 0:
     controller_string = "PID";
-    sun_controller = SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
+    sun_controller =
+      SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
     break;
   case 1:
     controller_string = "PI";
-    sun_controller = SUNAdaptController_PI(*amrex::sundials::The_Sundials_Context());
+    sun_controller =
+      SUNAdaptController_PI(*amrex::sundials::The_Sundials_Context());
     break;
   case 2:
     controller_string = "I";
-    sun_controller = SUNAdaptController_I(*amrex::sundials::The_Sundials_Context());
+    sun_controller =
+      SUNAdaptController_I(*amrex::sundials::The_Sundials_Context());
     break;
   case 3:
     controller_string = "explicit Gustafsson";
-    sun_controller = SUNAdaptController_ExpGus(*amrex::sundials::The_Sundials_Context());
+    sun_controller =
+      SUNAdaptController_ExpGus(*amrex::sundials::The_Sundials_Context());
     break;
   default:
     controller_string = "PID";
-    sun_controller = SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
+    sun_controller =
+      SUNAdaptController_PID(*amrex::sundials::The_Sundials_Context());
     break;
   }
 
@@ -453,8 +458,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   }
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: "
-                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
+                 << ", ";
   amrex::Print() << "arkodeMem:" << arkode_mem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";
