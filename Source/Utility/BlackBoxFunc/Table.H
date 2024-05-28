@@ -172,6 +172,179 @@ struct InitParm<TabFuncData, ManFuncData>
   }
 };
 
+// Wrapper for interpolation process, chooses appropriate approach based on
+// dimensionality. Table dimensionlity specified at compile time through
+// template is done recursively and entirely inlined, with dimensionality
+// automatically detected. Runtime table dimensionality must use select case
+// to find the dimensionality, allows up to 5 dimensions
+template <unsigned int InterpDim>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+interpolate(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real data[],
+  const int data_spacing[],
+  const int numdim)
+{
+  AMREX_ASSERT(numdim == InterpDim);
+  const int idx = indices[InterpDim - 1];
+  const int dimDataSpac = data_spacing[InterpDim - 1];
+  const amrex::Real out_value_left = interpolate<InterpDim - 1>(
+    indices, alphas, &data[idx * dimDataSpac], data_spacing, numdim - 1);
+  const amrex::Real out_value_right = interpolate<InterpDim - 1>(
+    indices, alphas, &data[(idx + 1) * dimDataSpac], data_spacing, numdim - 1);
+  const amrex::Real alpha = alphas[InterpDim - 1];
+  return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+}
+
+template <>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+interpolate<1>(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real data[],
+  const int* /*data_spacing[]*/,
+  const int numdim)
+{
+  AMREX_ASSERT(numdim == 1);
+  const int idx = indices[0];
+  const amrex::Real out_value_left = data[idx];
+  const amrex::Real out_value_right = data[idx + 1];
+  const amrex::Real alpha = alphas[0];
+  return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+}
+
+// Default: runtime selection of interpolation dimension
+template <>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+interpolate<0>(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real data[],
+  const int data_spacing[],
+  const int numdim)
+{
+  amrex::Real out_value;
+  AMREX_ASSERT(numdim <= MAXD_TABLE);
+  switch (numdim) {
+  case 1:
+    out_value = interpolate<1>(indices, alphas, data, data_spacing, numdim);
+    break;
+  case 2:
+    out_value = interpolate<2>(indices, alphas, data, data_spacing, numdim);
+    break;
+  case 3:
+    out_value = interpolate<3>(indices, alphas, data, data_spacing, numdim);
+    break;
+  case 4:
+    out_value = interpolate<4>(indices, alphas, data, data_spacing, numdim);
+    break;
+  case 5:
+    out_value = interpolate<5>(indices, alphas, data, data_spacing, numdim);
+    break;
+  default:
+    amrex::Abort("Tabulated function: Failure: only 1D-5D tables are allowed "
+                 "at runtime \n");
+  }
+  return out_value;
+}
+
+// Wrapper for differentiation process, chooses appropriate approach based on
+// dimensionality same caveats apply as for the interpolation process
+template <unsigned int DiffDim>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+differentiate(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real dxinv[],
+  const amrex::Real data[],
+  const int data_spacing[],
+  const int numdim,
+  amrex::Real derivs[])
+{
+  constexpr int dim = DiffDim - 1;
+  AMREX_ASSERT(DiffDim == numdim);
+  const amrex::Real alpha = alphas[dim];
+  const amrex::Real oneMinusAlpha = 1.0 - alpha;
+  amrex::Real derivs_left[dim];
+  amrex::Real derivs_right[dim];
+  const amrex::Real value_left = differentiate<dim>(
+    indices, alphas, dxinv, &data[indices[dim] * data_spacing[dim]],
+    data_spacing, dim, derivs_left);
+  const amrex::Real value_right = differentiate<dim>(
+    indices, alphas, dxinv, &data[(indices[dim] + 1) * data_spacing[dim]],
+    data_spacing, dim, derivs_right);
+  // interpolate existing derivatives
+  for (int ddim = 0; ddim < dim; ddim++) {
+    derivs[ddim] =
+      alpha * derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+  }
+  derivs[dim] = (value_right - value_left) * dxinv[dim]; // take the derivative
+  return alpha * value_left + oneMinusAlpha * value_right; // interpolate
+}
+
+template <>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+differentiate<1>(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real dxinv[],
+  const amrex::Real data[],
+  const int* /*data_spacing[]*/,
+  const int numdim,
+  amrex::Real derivs[])
+{
+  AMREX_ASSERT(numdim == 1);
+  const amrex::Real alpha = alphas[0];
+  const amrex::Real oneMinusAlpha = 1.0 - alpha;
+  const int idx = indices[0];
+  const amrex::Real value_left = data[idx];
+  const amrex::Real value_right = data[idx + 1];
+  derivs[0] = (value_right - value_left) * dxinv[0]; // take the derivative
+  return alpha * value_left + oneMinusAlpha * value_right; // interpolate
+}
+
+template <>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+differentiate<0>(
+  const int indices[],
+  const amrex::Real alphas[],
+  const amrex::Real dxinv[],
+  const amrex::Real data[],
+  const int data_spacing[],
+  const int numdim,
+  amrex::Real derivs[])
+{
+  AMREX_ASSERT(numdim <= MAXD_TABLE);
+  amrex::Real out_value;
+  switch (numdim) {
+  case 1:
+    out_value = differentiate<1>(
+      indices, alphas, dxinv, data, data_spacing, numdim, derivs);
+    break;
+  case 2:
+    out_value = differentiate<2>(
+      indices, alphas, dxinv, data, data_spacing, numdim, derivs);
+    break;
+  case 3:
+    out_value = differentiate<3>(
+      indices, alphas, dxinv, data, data_spacing, numdim, derivs);
+    break;
+  case 4:
+    out_value = differentiate<4>(
+      indices, alphas, dxinv, data, data_spacing, numdim, derivs);
+    break;
+  case 5:
+    out_value = differentiate<5>(
+      indices, alphas, dxinv, data, data_spacing, numdim, derivs);
+    break;
+  default:
+    amrex::Abort("Tabulated function: Failure: only 1D-5D tables are allowed "
+                 "at runtime \n");
+  }
+  return out_value;
+}
+
 // Struct to contain tabulated data
 // slight performance benefit possible use template to specify dimensionality
 // default (0) allows arbitrary dimensionality
@@ -207,7 +380,8 @@ public:
 
     // interpolate down
     out = interpolate<TableDim>(
-      indices, alphas, &tf_data->values[ivar * tf_data->varSpacing]);
+      indices, alphas, &tf_data->values[ivar * tf_data->varSpacing],
+      tf_data->dimDataSpacing, tf_data->Ndim);
   }
 
   // Lookup a few variables directly if you already know indices
@@ -230,7 +404,8 @@ public:
       out[i] =
         (ivar[i] >= 0)
           ? interpolate<TableDim>(
-              indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing])
+              indices, alphas, &tf_data->values[ivar[i] * tf_data->varSpacing],
+              tf_data->dimDataSpacing, tf_data->Ndim)
           : 0.0;
     }
   }
@@ -248,7 +423,8 @@ public:
     // interpolate down
     for (int i = 0; i < tf_data->Nvar; ++i) {
       out[i] = interpolate<TableDim>(
-        indices, alphas, &tf_data->values[i * tf_data->varSpacing]);
+        indices, alphas, &tf_data->values[i * tf_data->varSpacing],
+        tf_data->dimDataSpacing, tf_data->Ndim);
     }
   }
 
@@ -268,7 +444,7 @@ public:
     // finite differences from table
     amrex::Real out = differentiate<TableDim>(
       indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing],
-      derivs);
+      tf_data->dimDataSpacing, tf_data->Ndim, derivs);
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -363,233 +539,6 @@ private:
       alphas[dim] = std::min(std::max(alpha, 0.0), 1.0);
       start += dimLen;
     }
-  }
-
-  // Wrapper for interpolation process, chooses appropriate approach based on
-  // dimensionality. Table dimensionlity specified at compile time through
-  // template is done recursively and entirely inlined, with dimensionality
-  // automatically detected. Runtime table dimensionality must use select case
-  // to find the dimensionality, allows inlining up to 5 dimensions and table
-  // dimensionality up to MAXD_TABLE
-  template <unsigned int InterpDim>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real interpolate(
-    const int indices[], const amrex::Real alphas[], const amrex::Real data[])
-  {
-    const int idx = indices[InterpDim - 1];
-    const int dimDataSpac = tf_data->dimDataSpacing[InterpDim - 1];
-    const amrex::Real out_value_left =
-      interpolate<InterpDim - 1>(indices, alphas, &data[idx * dimDataSpac]);
-    const amrex::Real out_value_right = interpolate<InterpDim - 1>(
-      indices, alphas, &data[(idx + 1) * dimDataSpac]);
-    const amrex::Real alpha = alphas[InterpDim - 1];
-    return alpha * out_value_left + (1.0 - alpha) * out_value_right;
-  }
-
-  template <>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real interpolate<1>(
-    const int indices[], const amrex::Real alphas[], const amrex::Real data[])
-  {
-    const int idx = indices[0];
-    const amrex::Real out_value_left = data[idx];
-    const amrex::Real out_value_right = data[idx + 1];
-    const amrex::Real alpha = alphas[0];
-    return alpha * out_value_left + (1.0 - alpha) * out_value_right;
-  }
-
-  // Default: runtime selection of interpolation dimension
-  template <>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real interpolate<0>(
-    const int indices[], const amrex::Real alphas[], const amrex::Real data[])
-  {
-    amrex::Real out_value;
-    switch (tf_data->Ndim) {
-    case 1:
-      out_value = interpolate<1>(indices, alphas, data);
-      break;
-    case 2:
-      out_value = interpolate<2>(indices, alphas, data);
-      break;
-    case 3:
-      out_value = interpolate<3>(indices, alphas, data);
-      break;
-    case 4:
-      out_value = interpolate<4>(indices, alphas, data);
-      break;
-    case 5:
-      out_value = interpolate<5>(indices, alphas, data);
-      break;
-    default:
-#if MAXD_TABLE > 5
-      out_value = interpolate_ND(indices, alphas, data, tf_data->Ndim - 1);
-#else
-      amrex::Abort(
-        "Tabulated function: Failure: table must have 1-5 dimensions \n)");
-#endif
-    }
-    return out_value;
-  }
-
-  // recursive function for interpolating each dimension - cannot be inlined -
-  // use for Ndim >5 until Ndim=5
-  AMREX_GPU_HOST_DEVICE
-  amrex::Real interpolate_ND(
-    const int indices[],
-    const amrex::Real alphas[],
-    const amrex::Real data[],
-    const int dim)
-  {
-    if (dim == 5) {
-      return interpolate<5>(indices, alphas, data);
-    } else if (dim > 0) {
-      amrex::Real out_value_left = interpolate_ND(
-        indices, alphas, &data[indices[dim] * tf_data->dimDataSpacing[dim]],
-        dim - 1);
-      amrex::Real out_value_right = interpolate_ND(
-        indices, alphas,
-        &data[(indices[dim] + 1) * tf_data->dimDataSpacing[dim]], dim - 1);
-      return alphas[dim] * out_value_left +
-             (1.0 - alphas[dim]) * out_value_right;
-    } else {
-      amrex::Real out_value_left = data[indices[dim]];
-      amrex::Real out_value_right = data[indices[dim] + 1];
-      return alphas[dim] * out_value_left +
-             (1.0 - alphas[dim]) * out_value_right;
-    }
-  }
-
-  // Wrapper for differentiation process, chooses appropriate approach based on
-  // dimensionality same caveats apply as for the interpolation process
-  template <unsigned int DiffDim>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real differentiate(
-    const int indices[],
-    const amrex::Real alphas[],
-    const amrex::Real dxinv[],
-    const amrex::Real data[],
-    amrex::Real derivs[])
-  {
-    constexpr int dim = DiffDim - 1;
-    const amrex::Real alpha = alphas[dim];
-    const amrex::Real oneMinusAlpha = 1.0 - alpha;
-    amrex::Real derivs_left[dim];
-    amrex::Real derivs_right[dim];
-    const amrex::Real value_left = differentiate<dim>(
-      indices, alphas, dxinv,
-      &data[indices[dim] * tf_data->dimDataSpacing[dim]], derivs_left);
-    const amrex::Real value_right = differentiate<dim>(
-      indices, alphas, dxinv,
-      &data[(indices[dim] + 1) * tf_data->dimDataSpacing[dim]], derivs_right);
-    // interpolate existing derivatives
-    for (int ddim = 0; ddim < dim; ddim++) {
-      derivs[ddim] =
-        alpha * derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-    }
-    derivs[dim] =
-      (value_right - value_left) * dxinv[dim]; // take the derivative
-    return alpha * value_left + oneMinusAlpha * value_right; // interpolate
-  }
-
-  template <>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real differentiate<1>(
-    const int indices[],
-    const amrex::Real alphas[],
-    const amrex::Real dxinv[],
-    const amrex::Real data[],
-    amrex::Real derivs[])
-  {
-    const amrex::Real alpha = alphas[0];
-    const amrex::Real oneMinusAlpha = 1.0 - alpha;
-    const int idx = indices[0];
-    const amrex::Real value_left = data[idx];
-    const amrex::Real value_right = data[idx + 1];
-    derivs[0] = (value_right - value_left) * dxinv[0]; // take the derivative
-    return alpha * value_left + oneMinusAlpha * value_right; // interpolate
-  }
-
-  template <>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real differentiate<0>(
-    const int indices[],
-    const amrex::Real alphas[],
-    const amrex::Real dxinv[],
-    const amrex::Real data[],
-    amrex::Real derivs[])
-  {
-    amrex::Real out_value;
-    switch (tf_data->Ndim) {
-    case 1:
-      out_value = differentiate<1>(indices, alphas, dxinv, data, derivs);
-      break;
-    case 2:
-      out_value = differentiate<2>(indices, alphas, dxinv, data, derivs);
-      break;
-    case 3:
-      out_value = differentiate<3>(indices, alphas, dxinv, data, derivs);
-      break;
-    case 4:
-      out_value = differentiate<4>(indices, alphas, dxinv, data, derivs);
-      break;
-    case 5:
-      out_value = differentiate<5>(indices, alphas, dxinv, data, derivs);
-      break;
-    default:
-#if MAXD_TABLE > 5
-      out_value = differentiate_ND(
-        indices, alphas, dxinv, data, derivs, tf_data->Ndim - 1);
-#else
-      amrex::Abort(
-        "Tabulated function: Failure: table must have 1-5 dimensions \n)");
-#endif
-    }
-    return out_value;
-  }
-
-  // Recursive function
-  AMREX_GPU_HOST_DEVICE
-  amrex::Real differentiate_ND(
-    const int indices[],
-    const amrex::Real alphas[],
-    const amrex::Real dxinv[],
-    const amrex::Real data[],
-    amrex::Real derivs[],
-    const int dim)
-  {
-    amrex::Real value_left, value_right;
-    const amrex::Real alpha = alphas[dim];
-    const amrex::Real oneMinusAlpha = 1.0 - alpha;
-    if (dim == 0) {
-      int idx = indices[0];
-      value_left = data[idx];
-      value_right = data[idx + 1];
-    } else {
-      amrex::Real derivs_left[MAXD_TABLE];
-      amrex::Real derivs_right[MAXD_TABLE];
-      // Exit recursion for performance when possible
-      if (dim == 5) {
-        value_left = differentiate<5>(
-          indices, alphas, dxinv,
-          &data[indices[dim] * tf_data->dimDataSpacing[dim]], derivs_left);
-        value_right = differentiate<5>(
-          indices, alphas, dxinv,
-          &data[(indices[dim] + 1) * tf_data->dimDataSpacing[dim]],
-          derivs_right);
-      } else {
-        value_left = differentiate_ND(
-          indices, alphas, dxinv,
-          &data[indices[dim] * tf_data->dimDataSpacing[dim]], derivs_left,
-          dim - 1);
-        value_right = differentiate_ND(
-          indices, alphas, dxinv,
-          &data[(indices[dim] + 1) * tf_data->dimDataSpacing[dim]],
-          derivs_right, dim - 1);
-      }
-      // interpolate existing derivatives
-      for (int ddim = 0; ddim < dim; ddim++) {
-        derivs[ddim] =
-          alpha * derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-      }
-    }
-    derivs[dim] =
-      (value_right - value_left) * dxinv[dim]; // take the derivative
-    return alpha * value_left + oneMinusAlpha * value_right; // interpolate
   }
 };
 } // namespace physics

@@ -80,7 +80,6 @@ jobs:
         run: poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
-    needs: Formatting
     runs-on: ubuntu-20.04
     strategy:
       matrix:

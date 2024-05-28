@@ -13,16 +13,12 @@ namespace eos {
 #define MANIFOLD_EOS_TYPE 1
 #endif
 
-// Right now, cannot compile with network model for SYCL
-#ifdef AMREX_USE_SYCL
-#define MANIFOLD_EOS_TYPE 1
-#endif
-
 // Compile time choice for Table vs. Network vs. Runtime Selectable
-#if MANIFOLD_EOS_TYPE == 0
+// Right now, cannot compile with network model for SYCL
+#if defined(AMREX_USE_SYCL) || (MANIFOLD_EOS_TYPE == 1)
+using ManifoldFuncType = TabFunc<NUM_SPECIES - 1>;
+#elif MANIFOLD_EOS_TYPE == 0
 using ManifoldFuncType = ManifoldFunc;
-#elif MANIFOLD_EOS_TYPE == 1
-using ManifoldFuncType = TabFunc<MANIFOLD_DIM>;
 #elif MANIFOLD_EOS_TYPE == 2
 using ManifoldFuncType = NNFunc;
 #else
