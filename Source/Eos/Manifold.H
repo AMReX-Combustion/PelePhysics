@@ -19,7 +19,7 @@ namespace eos {
 #if MANIFOLD_EOS_TYPE == 1
 using ManifoldFuncType = TabFunc<NUM_SPECIES - 1>;
 #elif MANIFOLD_EOS_TYPE == 0
-using ManifoldFuncType = ManifoldFunc;
+using ManifoldFuncType = BlackBoxFunc;
 #elif MANIFOLD_EOS_TYPE == 2
 using ManifoldFuncType = NNFunc;
 #else

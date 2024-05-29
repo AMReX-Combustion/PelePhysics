@@ -24,11 +24,11 @@ struct BlackBoxFuncFactory<TabFunc<Dimension>>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const ManFuncData* mf_data)
+  BlackBoxFuncFactory(const BBFuncData* mf_data)
     : func(static_cast<const TabFuncData*>(mf_data))
   {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-      mf_data->manmodel == ManifoldModel::TABLE,
+      mf_data->bbmodel == BlackBoxModel::TABLE,
       "Runtime Table/Network must match what you compiled with");
   }
 
@@ -50,11 +50,11 @@ struct BlackBoxFuncFactory<NNFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const ManFuncData* mf_data)
+  BlackBoxFuncFactory(const BBFuncData* mf_data)
     : func(static_cast<const NNFuncData*>(mf_data))
   {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-      mf_data->manmodel == ManifoldModel::NEURAL_NET,
+      mf_data->bbmodel == BlackBoxModel::NEURAL_NET,
       "Runtime Table/Network must match what you compiled with");
   }
 
@@ -67,7 +67,7 @@ private:
 };
 
 template <>
-struct BlackBoxFuncFactory<ManifoldFunc>
+struct BlackBoxFuncFactory<BlackBoxFunc>
 {
 
   AMREX_GPU_HOST_DEVICE
@@ -76,13 +76,13 @@ struct BlackBoxFuncFactory<ManifoldFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const ManFuncData* mf_data)
+  BlackBoxFuncFactory(const BBFuncData* mf_data)
   {
-    if (mf_data->manmodel == ManifoldModel::TABLE) {
+    if (mf_data->bbmodel == BlackBoxModel::TABLE) {
       const TabFuncData* tf_data = static_cast<const TabFuncData*>(mf_data);
       // Note: Table dimension not specified a priori, slight performance loss
       func = new pele::physics::TabFunc<>(tf_data);
-    } else if (mf_data->manmodel == ManifoldModel::NEURAL_NET) {
+    } else if (mf_data->bbmodel == BlackBoxModel::NEURAL_NET) {
       const NNFuncData* nnf_data = static_cast<const NNFuncData*>(mf_data);
       func = new pele::physics::NNFunc(nnf_data);
     } else {
@@ -96,10 +96,10 @@ struct BlackBoxFuncFactory<ManifoldFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  ManifoldFunc* get_func() { return func; }
+  BlackBoxFunc* get_func() { return func; }
 
 private:
-  ManifoldFunc* func;
+  BlackBoxFunc* func;
 };
 } // namespace physics
 } // namespace pele

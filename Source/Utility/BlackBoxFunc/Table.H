@@ -4,12 +4,12 @@
 #define MAXD_TABLE 5
 #include <iostream>
 #include <fstream>
-#include "ManifoldFunc.H"
+#include "BlackBoxFunc.H"
 
 namespace pele {
 namespace physics {
 
-struct TabFuncData : ManFuncData
+struct TabFuncData : BBFuncData
 {
   int varSpacing;
   int* dimLengths;
@@ -19,17 +19,17 @@ struct TabFuncData : ManFuncData
 };
 
 class TabFuncParams
-  : public PeleParamsGeneric<ManFuncData>::
-      Register<TabFuncParams, PeleParams<TabFuncData, ManFuncData>>
+  : public PeleParamsGeneric<
+      BBFuncData>::Register<TabFuncParams, PeleParams<TabFuncData, BBFuncData>>
 {
 public:
   static std::string identifier() { return "Table"; }
 };
 
 template <>
-struct InitParm<TabFuncData, ManFuncData>
+struct InitParm<TabFuncData, BBFuncData>
 {
-  static void host_initialize(PeleParams<TabFuncData, ManFuncData>* parm_in)
+  static void host_initialize(PeleParams<TabFuncData, BBFuncData>* parm_in)
   {
     std::string pp_pref =
       parm_in->m_host_only_parm.parm_parse_prefix.empty()
@@ -47,14 +47,14 @@ struct InitParm<TabFuncData, ManFuncData>
       amrex::Print() << "Loading tabulated data from file: " << tablefile
                      << std::endl;
     }
-    parm_in->m_h_parm.manmodel = ManifoldModel::TABLE;
+    parm_in->m_h_parm.bbmodel = BlackBoxModel::TABLE;
     read_table(tablefile, parm_in->m_h_parm);
     if (verbose > 1) {
       print(parm_in->m_h_parm);
     }
   }
 
-  static void host_deallocate(PeleParams<TabFuncData, ManFuncData>* parm_in)
+  static void host_deallocate(PeleParams<TabFuncData, BBFuncData>* parm_in)
   {
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimLengths);
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimDataSpacing);
@@ -349,7 +349,7 @@ differentiate<0>(
 // slight performance benefit possible use template to specify dimensionality
 // default (0) allows arbitrary dimensionality
 template <unsigned int TableDim = 0>
-class TabFunc : public ManifoldFunc
+class TabFunc : public BlackBoxFunc
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -449,7 +449,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ManifoldModel model() { return ManifoldModel::TABLE; }
+  virtual BlackBoxModel model() { return BlackBoxModel::TABLE; }
 
 private:
   const TabFuncData* tf_data;

@@ -2,12 +2,12 @@
 #define _NEURAL_NET_HR_H_
 
 #include "NeuralNetModelDef.H"
-#include "ManifoldFunc.H"
+#include "BlackBoxFunc.H"
 
 namespace pele {
 namespace physics {
 
-struct NNFuncData : ManFuncData
+struct NNFuncData : BBFuncData
 {
   amrex::Real* nnrdata;          // Real data representing the NNModel
   int* nnidata;                  // int data representing the NNModel
@@ -16,18 +16,18 @@ struct NNFuncData : ManFuncData
 
 class NNFuncParams
   : public PeleParamsGeneric<
-      ManFuncData>::Register<NNFuncParams, PeleParams<NNFuncData, ManFuncData>>
+      BBFuncData>::Register<NNFuncParams, PeleParams<NNFuncData, BBFuncData>>
 {
 public:
   static std::string identifier() { return "NeuralNet"; }
 };
 
 template <>
-struct InitParm<NNFuncData, ManFuncData>
+struct InitParm<NNFuncData, BBFuncData>
 {
-  static void host_initialize(PeleParams<NNFuncData, ManFuncData>* parm_in)
+  static void host_initialize(PeleParams<NNFuncData, BBFuncData>* parm_in)
   {
-    parm_in->m_h_parm.manmodel = ManifoldModel::NEURAL_NET;
+    parm_in->m_h_parm.bbmodel = BlackBoxModel::NEURAL_NET;
 
     std::string pp_pref =
       parm_in->m_host_only_parm.parm_parse_prefix.empty()
@@ -73,7 +73,7 @@ struct InitParm<NNFuncData, ManFuncData>
     }
   }
 
-  static void host_deallocate(PeleParams<NNFuncData, ManFuncData>* parm_in)
+  static void host_deallocate(PeleParams<NNFuncData, BBFuncData>* parm_in)
   {
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnrdata);
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnidata);
@@ -241,7 +241,7 @@ struct InitParm<NNFuncData, ManFuncData>
   }
 };
 
-class NNFunc : public ManifoldFunc
+class NNFunc : public BlackBoxFunc
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -313,7 +313,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ManifoldModel model() { return ManifoldModel::NEURAL_NET; }
+  virtual BlackBoxModel model() { return BlackBoxModel::NEURAL_NET; }
 
 private:
   // Variables

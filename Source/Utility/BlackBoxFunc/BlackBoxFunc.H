@@ -1,5 +1,5 @@
-#ifndef _MANIFOLD_FUNC_H_
-#define _MANIFOLD_FUNC_H_
+#ifndef _BLACK_BOX_FUNC_H_
+#define _BLACK_BOX_FUNC_H_
 
 #include <AMReX_Utility.H>
 #include "PeleParamsGeneric.H"
@@ -7,11 +7,11 @@
 namespace pele {
 namespace physics {
 
-enum class ManifoldModel { TABLE = 0, NEURAL_NET = 1 };
+enum class BlackBoxModel { TABLE = 0, NEURAL_NET = 1 };
 
-struct ManFuncData
+struct BBFuncData
 {
-  ManifoldModel manmodel;
+  BlackBoxModel bbmodel;
   static constexpr int len_str = 64; // Length of strings in the char arrays
   char model_name[len_str + 1];      // Name of the neural network model
   int Ndim;                          // Input dimension (# of manifold params)
@@ -24,7 +24,7 @@ struct ManFuncData
 };
 
 template <>
-struct HostOnlyParm<ManFuncData>
+struct HostOnlyParm<BBFuncData>
 {
   std::string parm_parse_prefix;
 };
@@ -32,7 +32,7 @@ struct HostOnlyParm<ManFuncData>
 AMREX_FORCE_INLINE
 int
 get_var_index(
-  const char* varname, const ManFuncData* manf_data, const bool require = true)
+  const char* varname, const BBFuncData* manf_data, const bool require = true)
 {
   std::string var(varname);
   int ii;
@@ -50,7 +50,7 @@ get_var_index(
   return ii;
 }
 
-class ManifoldFunc
+class BlackBoxFunc
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -73,12 +73,12 @@ public:
     const int ivar, const amrex::Real indata[], amrex::Real derivs[]) = 0;
 
   AMREX_GPU_HOST_DEVICE
-  virtual ManifoldModel model() = 0;
+  virtual BlackBoxModel model() = 0;
 
   AMREX_GPU_HOST_DEVICE
-  virtual ~ManifoldFunc() {}
+  virtual ~BlackBoxFunc() {}
 
-}; // class ManifoldFunc
+}; // class BlackBoxFunc
 
 } // namespace physics
 } // namespace pele
