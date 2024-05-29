@@ -14,7 +14,7 @@ using TransportType = transport::ConstTransport;
 using TransportType = transport::SimpleTransport;
 #elif USE_SUTHERLAND_TRANSPORT
 using TransportType = transport::SutherlandTransport;
-#elif USE_MANIFOLD_TRANSPORT
+#elif USE_MANIFOLD_TRANSPORT && !defined(AMREX_USE_SYCL)
 using TransportType = transport::ManifoldTransport;
 #else
 static_assert(false, "Invalid Transport specified");

@@ -179,11 +179,13 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          for TYPE in Constant Simple Sutherland Manifold; do \
+          for TYPE in Manifold Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             if [ "${TYPE}" == 'Manifold' ]; then EOSMODEL=Manifold; else EOSMODEL=Fuego; fi; \
             if [ "${TYPE}" == 'Manifold' ]; then CHEMISTRY=Null; else CHEMISTRY=air; fi; \
-            make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Chemistry_Model=${CHEMISTRY} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            if [ "${TYPE}" != 'Manifold' ] || [ "${{matrix.comp}}" != 'sycl' ]; then \
+              make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Chemistry_Model=${CHEMISTRY} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            fi; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
               if [ "${TYPE}" == 'Manifold' ]; then \
@@ -210,7 +212,9 @@ jobs:
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
             if [ "${TYPE}" == 'Manifold' ]; then INPUTFILE=inputs.2d.table2d; else INPUTFILE=inputs.2d; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            if [ "${TYPE}" != 'Manifold' ] || [ "${{matrix.comp}}" != 'sycl' ]; then \
+              make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            fi; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex ${INPUTFILE}; \
               if [ "${TYPE}" == 'Manifold' ]; then \

@@ -6,8 +6,6 @@
 
 #include "mechanism.H"
 #include "ManifoldFunc.H"
-#include "Table.H"
-#include "NeuralNetHomerolled.H"
 #include "PhysicsConstants.H"
 #include "PeleParamsGeneric.H"
 
@@ -35,6 +33,7 @@ struct EosParm<GammaLaw>
   amrex::Real gamma{Constants::gamma};
 };
 
+#ifndef AMREX_USE_SYCL
 template <>
 struct EosParm<Manifold>
 {
@@ -47,14 +46,9 @@ struct EosParm<Manifold>
   int idx_Wdot[NUM_SPECIES - 1];
   bool has_mani_src = true;
 };
+#endif
 
 } // namespace eos
-
-template <>
-struct HostOnlyParm<eos::EosParm<eos::Manifold>>
-{
-  std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
-};
 
 template <>
 struct InitParm<eos::EosParm<eos::GammaLaw>>
@@ -73,6 +67,13 @@ struct InitParm<eos::EosParm<eos::GammaLaw>>
   static void host_deallocate(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in)
   {
   }
+};
+
+#ifndef AMREX_USE_SYCL
+template <>
+struct HostOnlyParm<eos::EosParm<eos::Manifold>>
+{
+  std::shared_ptr<PeleParamsGeneric<ManFuncData>> manfunc_par;
 };
 
 template <>
@@ -167,6 +168,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     parm_in->m_host_only_parm.manfunc_par->deallocate();
   }
 };
+#endif
 
 } // namespace physics
 } // namespace pele

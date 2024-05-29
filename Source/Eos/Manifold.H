@@ -14,8 +14,9 @@ namespace eos {
 #endif
 
 // Compile time choice for Table vs. Network vs. Runtime Selectable
-// Right now, cannot compile with network model for SYCL
-#if defined(AMREX_USE_SYCL) || (MANIFOLD_EOS_TYPE == 1)
+// Note right now Manifold EOS not supported for SYCL at all
+// Runtime selection is  significant performnce hit
+#if MANIFOLD_EOS_TYPE == 1
 using ManifoldFuncType = TabFunc<NUM_SPECIES - 1>;
 #elif MANIFOLD_EOS_TYPE == 0
 using ManifoldFuncType = ManifoldFunc;

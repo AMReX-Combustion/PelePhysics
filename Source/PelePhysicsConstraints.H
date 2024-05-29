@@ -50,6 +50,7 @@ struct is_valid_physics_combination<eos::SRK, transport::SutherlandTransport>
 
 // Manifold Transport doesn't apply except with Manifold EOS
 // Manifold EOS requires Manifold or Constant Transport
+#ifndef AMREX_USE_SYCL
 template <typename EosModel>
 struct is_valid_physics_combination<EosModel, transport::ManifoldTransport>
   : public std::false_type
@@ -73,5 +74,6 @@ struct is_valid_physics_combination<eos::Manifold, transport::ConstTransport>
   : public std::true_type
 {
 };
+#endif
 
 } // namespace pele::physics

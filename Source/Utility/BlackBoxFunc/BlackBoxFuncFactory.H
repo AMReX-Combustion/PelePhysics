@@ -7,6 +7,8 @@
 namespace pele {
 namespace physics {
 
+// Factory struct to allow either compile time or runtime
+// selection of BlackBoxFunc type
 template <typename FuncType>
 struct BlackBoxFuncFactory
 {
@@ -78,6 +80,7 @@ struct BlackBoxFuncFactory<ManifoldFunc>
   {
     if (mf_data->manmodel == ManifoldModel::TABLE) {
       const TabFuncData* tf_data = static_cast<const TabFuncData*>(mf_data);
+      // Note: Table dimension not specified a priori, slight performance loss
       func = new pele::physics::TabFunc<>(tf_data);
     } else if (mf_data->manmodel == ManifoldModel::NEURAL_NET) {
       const NNFuncData* nnf_data = static_cast<const NNFuncData*>(mf_data);
