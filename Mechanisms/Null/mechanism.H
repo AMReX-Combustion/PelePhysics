@@ -20,8 +20,6 @@
 #endif
 
 #define NUM_ELEMENTS 1
-
-#define NUM_ELEMENTS 1
 #define NUM_REACTIONS 0
 #define NUM_FIT 4
 
