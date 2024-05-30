@@ -1,5 +1,5 @@
-#ifndef _NEURAL_NET_MD_H_
-#define _NEURAL_NET_MD_H_
+#ifndef NEURAL_NET_MD_H
+#define NEURAL_NET_MD_H
 
 #define MAXD_NETWORK 100
 #define num_layers 7
@@ -12,8 +12,7 @@
 
 #include "NeuralNetLayerDef.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 AMREX_FORCE_INLINE
 void
@@ -38,7 +37,7 @@ read_fmt(
     case READING_DTYPE:
       char c0;
       is >> c0;
-      types.push_back(c0);
+      types.emplace_back(c0);
       state = READING_PAREN;
       break;
     case READING_PAREN:
@@ -54,9 +53,9 @@ read_fmt(
       int i;
       is >> i;
       if (sizes.size() < types.size()) {
-        sizes.push_back(std::vector<int>());
+        sizes.emplace_back(std::vector<int>());
       }
-      sizes[sizes.size() - 1].push_back(i);
+      sizes[sizes.size() - 1].emplace_back(i);
       state = READING_DELIM;
       break;
     case READING_DELIM:
@@ -85,9 +84,9 @@ class NNModel
 {
 public:
   AMREX_GPU_HOST_DEVICE
-  NNModel() {}
+  NNModel() = default;
 
-  NNModel(std::string& fname, bool cmlm_net = false) : cmlm_net{cmlm_net}
+  NNModel(std::string& fname, bool is_cmlm_net = false) : cmlm_net{is_cmlm_net}
   {
     std::ifstream file(fname, std::ios::binary | std::ios::in);
     std::vector<NNLayer*> layer_vec;
@@ -107,25 +106,25 @@ public:
     while (file.peek() != EOF) {
       std::vector<char> name_arr(ssize);
       std::vector<char> fmt_arr(ssize);
-      file.read(&name_arr[0], ssize * sizeof(char));
-      file.read(&fmt_arr[0], ssize * sizeof(char));
+      file.read(name_arr.data(), ssize * sizeof(char));
+      file.read(fmt_arr.data(), ssize * sizeof(char));
       std::string name =
-        amrex::trim(std::string(&name_arr[0], ssize), std::string(1, '\0'));
+        amrex::trim(std::string(name_arr.data(), ssize), std::string(1, '\0'));
       std::string fmt =
-        amrex::trim(std::string(&fmt_arr[0], ssize), std::string(1, '\0'));
+        amrex::trim(std::string(fmt_arr.data(), ssize), std::string(1, '\0'));
 
       std::vector<char> types;
       std::vector<std::vector<int>> sizes;
       read_fmt(fmt, types, sizes);
 
       if (name == "Linear") {
-        layer_vec.push_back(
+        layer_vec.emplace_back(
           new LinearNNLayer(types, sizes, file, fsize, isize));
       } else if (name == "LeakyReLU") {
-        layer_vec.push_back(
+        layer_vec.emplace_back(
           new LeakyReluNNLayer(types, sizes, file, fsize, isize));
       } else if (name == "BatchNorm1d") {
-        layer_vec.push_back(
+        layer_vec.emplace_back(
           new BatchNorm1dNNLayer(types, sizes, file, fsize, isize));
       }
     }
@@ -273,11 +272,11 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  int nin() { return inpsize; }
+  int nin() const { return inpsize; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  int nout() { return lsizes[num_layers - 1]; }
+  int nout() const { return lsizes[num_layers - 1]; }
 
   void buffer_sizes_for_packing(int& nreals_in, int& nints_in)
   {
@@ -328,7 +327,5 @@ private:
   bool cmlm_net;
 };
 
-} // namespace physics
-} // namespace pele
-
+} // namespace pele::physics
 #endif

@@ -1,21 +1,20 @@
-#ifndef _NEURAL_NET_LD_H_
-#define _NEURAL_NET_LD_H_
+#ifndef NEURAL_NET_LD_H
+#define NEURAL_NET_LD_H
 
 #include <fstream>
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 class NNMath
 {
   // GPU compatible math class
 public:
-  const amrex::Real inf = INFINITY;
+  static constexpr amrex::Real inf = INFINITY;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  amrex::Real
-  clamp(const amrex::Real r, const amrex::Real min, const amrex::Real max) const
+  static amrex::Real
+  clamp(const amrex::Real r, const amrex::Real min, const amrex::Real max)
   {
     amrex::Real r0 = (r < min) ? min : r;
     return (r0 > max) ? max : r0;
@@ -29,7 +28,7 @@ public:
   static void read_with_template(int size, T2* outdata, std::ifstream& file)
   {
     amrex::Vector<T1> fdata(size);
-    file.read(reinterpret_cast<char*>(&fdata[0]), size * sizeof(T1));
+    file.read(reinterpret_cast<char*>(fdata.data()), size * sizeof(T1));
     for (int i = 0; i < size; i++) {
       outdata[i] = (T2)fdata[i];
     }
@@ -69,7 +68,7 @@ public:
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 int
-dim_to_numel(int* dim, size_t ndim)
+dim_to_numel(const int* dim, size_t ndim)
 {
   int numel = 1;
   for (size_t i = 0; i < ndim; i++) {
@@ -83,7 +82,7 @@ class NNLayer
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ~NNLayer() {}
+  virtual ~NNLayer() = default;
 
   // Template for CPU-only constructor to be used when reading in a file
   // NNLayer(std::vector<char>& types, std::vector<std::vector<int>>& sizes,
@@ -107,9 +106,6 @@ public:
   // Dimension introduced by the layer, replacing the n2 from the input
   // dimensions. -1 implies no change in shape
   int nout = -1;
-
-protected:
-  NNMath nnmath;
 };
 
 class LinearNNLayer : public NNLayer
@@ -164,7 +160,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ~LinearNNLayer()
+  ~LinearNNLayer() override
   {
     if (owns_data) {
       delete[] weight;
@@ -176,8 +172,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  operator()(const amrex::Real* inputs, amrex::Real* outputs, const int nin)
+  void operator()(
+    const amrex::Real* inputs, amrex::Real* outputs, const int nin) override
   {
     for (int j = 0; j < nout; j++) {
       outputs[j] = 0.0;
@@ -194,13 +190,13 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int nfparams() { return dim_to_numel(wsize, 2) + bsize[0]; }
+  int nfparams() override { return dim_to_numel(wsize, 2) + bsize[0]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int niparams() { return 2; }
+  int niparams() override { return 2; }
 
-  virtual void pack(amrex::Real* nnrd, int* nnid)
+  void pack(amrex::Real* nnrd, int* nnid) override
   {
     for (int j = 0; j < wsize[0]; j++) {
       for (int i = 0; i < wsize[1]; i++) {
@@ -256,7 +252,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ~LeakyReluNNLayer()
+  ~LeakyReluNNLayer() override
   {
     if (owns_data) {
       delete neg_slope;
@@ -265,24 +261,24 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  operator()(const amrex::Real* inputs, amrex::Real* outputs, const int nin)
+  void operator()(
+    const amrex::Real* inputs, amrex::Real* outputs, const int nin) override
   {
     for (int i = 0; i < nin; i++) {
-      outputs[i] = nnmath.clamp(inputs[i], 0.0, nnmath.inf) +
-                   *neg_slope * nnmath.clamp(inputs[i], -nnmath.inf, 0.0);
+      outputs[i] = NNMath::clamp(inputs[i], 0.0, NNMath::inf) +
+                   *neg_slope * NNMath::clamp(inputs[i], -NNMath::inf, 0.0);
     }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int nfparams() { return 1; }
+  int nfparams() override { return 1; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int niparams() { return 0; }
+  int niparams() override { return 0; }
 
-  virtual void pack(amrex::Real* nnrd, int* /*nnid*/)
+  void pack(amrex::Real* nnrd, int* /*nnid*/) override
   {
     nnrd[0] = neg_slope[0];
   }
@@ -339,7 +335,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ~BatchNorm1dNNLayer()
+  ~BatchNorm1dNNLayer() override
   {
     if (owns_data) {
       delete[] weight;
@@ -351,8 +347,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  operator()(const amrex::Real* inputs, amrex::Real* outputs, const int nin)
+  void operator()(
+    const amrex::Real* inputs, amrex::Real* outputs, const int nin) override
   {
     for (int i = 0; i < nin; i++) {
       outputs[i] = inputs[i] * weight[i] + bias[i];
@@ -361,13 +357,13 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int nfparams() { return wsize[0] + bsize[0]; }
+  int nfparams() override { return wsize[0] + bsize[0]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual int niparams() { return 1; }
+  int niparams() override { return 1; }
 
-  virtual void pack(amrex::Real* nnrd, int* nnid)
+  void pack(amrex::Real* nnrd, int* nnid) override
   {
     for (int i = 0; i < wsize[0]; i++) {
       nnrd[i] = weight[i];
@@ -389,7 +385,6 @@ private:
   int* bsize;
 };
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 
 #endif

@@ -1,11 +1,9 @@
-#ifndef _MANIFOLD_H_
-#define _MANIFOLD_H_
+#ifndef MANIFOLD_H
+#define MANIFOLD_H
 
 #include "BlackBoxFuncFactory.H"
 
-namespace pele {
-namespace physics {
-namespace eos {
+namespace pele::physics::eos {
 
 // Default - runtime selectable Table vs. Network for MANIFOLD EOS
 // But if not using manifold, just keep 1D table for simplicity
@@ -56,7 +54,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void molecular_weight(amrex::Real* /*mw[]*/)
+  static void molecular_weight(amrex::Real* /*mw[]*/)
   {
     amrex::Error("molecular_weight for species does not have significance for "
                  "Manifold EOS");
@@ -64,7 +62,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void inv_molecular_weight(amrex::Real* /*imw[]*/)
+  static void inv_molecular_weight(amrex::Real* /*imw[]*/)
   {
     amrex::Error("inv_molecular_weight for species does not have significance "
                  "for Manifold EOS");
@@ -72,14 +70,14 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Y2WBAR(const amrex::Real* /*Y*/, amrex::Real& /*WBAR*/)
+  static void Y2WBAR(const amrex::Real* /*Y*/, amrex::Real& /*WBAR*/)
   {
     amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Ei(
+  static void RTY2Ei(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -90,7 +88,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2E(
+  static void RTY2E(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -101,7 +99,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void T2Hi(const amrex::Real /*T*/, amrex::Real Hi[])
+  static void T2Hi(const amrex::Real /*T*/, amrex::Real Hi[])
   {
     // TODO: FIXME (need to remove enthalpy calculations from
     // PeleLM)
@@ -113,7 +111,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Hi(
+  static void RTY2Hi(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -124,7 +122,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2Cv(
+  static void TY2Cv(
     const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& /*Cv*/)
   {
     amrex::Error("TY2Cv is not yet implemented for Manifold EOS");
@@ -132,7 +130,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cv(
+  static void RTY2Cv(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -143,7 +141,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   TY2Cp(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& Cp)
   {
     // TODO: FIXME (need to remove enthalpy calculations from
@@ -154,7 +152,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cp(
+  static void RTY2Cp(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -209,7 +207,8 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2H(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& H)
+  static void
+  TY2H(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& H)
   {
     H = 0.0;
     // TODO: FIXME Eliminate this call from PeleLM?
@@ -218,7 +217,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void X2Y(const amrex::Real X[], amrex::Real Y[])
+  static void X2Y(const amrex::Real X[], amrex::Real Y[])
   {
     // TODO: FIXME
     // just return Y as a hack for PMF, this should really not be needed
@@ -231,7 +230,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Y2X(const amrex::Real* /*Y[]*/, amrex::Real* /*X[]*/)
+  static void Y2X(const amrex::Real* /*Y[]*/, amrex::Real* /*X[]*/)
   {
     amrex::Error("Y2X does not have significance for Manifold EOS");
   }
@@ -252,7 +251,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2JAC(
+  static void RTY2JAC(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -264,7 +263,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2C(
+  static void RTY2C(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
@@ -355,14 +354,12 @@ struct Manifold
   }
 
   AMREX_GPU_HOST_DEVICE
-  ~Manifold() {}
+  ~Manifold() = default;
 
 private:
   const EosParm<Manifold>* eosparm;
   BlackBoxFuncFactory<ManifoldFuncType> manfunc;
 };
 
-} // namespace eos
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics::eos
 #endif

@@ -21,9 +21,13 @@ class PeleParams;
 template <typename ParmType, typename BaseParmType = ParmType>
 struct InitParm
 {
-  static void host_initialize(PeleParams<ParmType, BaseParmType>*) {}
+  static void host_initialize(PeleParams<ParmType, BaseParmType>* /*parm_in*/)
+  {
+  }
 
-  static void host_deallocate(PeleParams<ParmType, BaseParmType>*) {}
+  static void host_deallocate(PeleParams<ParmType, BaseParmType>* /*parm_in*/)
+  {
+  }
 };
 
 // Define generic interface
@@ -55,11 +59,11 @@ class PeleParams : public PeleParamsGeneric<BaseParmType>
   friend struct InitParm<ParmType, BaseParmType>;
 
 public:
-  static_assert(std::is_base_of_v<BaseParmType, ParmType> == true);
+  static_assert(std::is_base_of_v<BaseParmType, ParmType>);
 
-  PeleParams() {}
+  PeleParams() = default;
 
-  virtual ~PeleParams() {}
+  ~PeleParams() override = default;
 
   void initialize() override
   {
@@ -89,8 +93,9 @@ public:
   void deallocate() override
   {
     InitParm<ParmType, BaseParmType>::host_deallocate(this);
-    if (m_device_allocated)
+    if (m_device_allocated) {
       amrex::The_Device_Arena()->free(m_d_parm);
+    }
   }
 
   BaseParmType& host_parm() override { return m_h_parm; }

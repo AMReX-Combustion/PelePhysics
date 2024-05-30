@@ -1,13 +1,12 @@
-#ifndef _TABLE_H_
-#define _TABLE_H_
+#ifndef TABLE_H
+#define TABLE_H
 
 #define MAXD_TABLE 5
 #include <iostream>
 #include <fstream>
 #include "BlackBoxFunc.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 struct TabFuncData : BBFuncData
 {
@@ -95,7 +94,7 @@ struct InitParm<TabFuncData, BBFuncData>
     m_h_tf_data.Nmanpar = m_h_tf_data.Ndim;
 
     // Grid locations for all dimensions
-    int Ngridtot = 0;
+    size_t Ngridtot = 0;
     for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
       Ngridtot += m_h_tf_data.dimLengths[ii];
     }
@@ -126,7 +125,7 @@ struct InitParm<TabFuncData, BBFuncData>
     }
     m_h_tf_data.varSpacing = m_h_tf_data.dimDataSpacing[m_h_tf_data.Ndim - 1] *
                              m_h_tf_data.dimLengths[m_h_tf_data.Ndim - 1];
-    int Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
+    size_t Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
     m_h_tf_data.values = static_cast<amrex::Real*>(
       amrex::The_Pinned_Arena()->alloc(Ndata * sizeof(amrex::Real)));
     fi.read(
@@ -358,7 +357,7 @@ class TabFunc : public BlackBoxFunc
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc() {}
+  TabFunc() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -373,8 +372,8 @@ public:
   // Lookup directly if you already know index
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  get_value(const int ivar, const amrex::Real interpdata[], amrex::Real& out)
+  void get_value(
+    const int ivar, const amrex::Real interpdata[], amrex::Real& out) override
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -391,11 +390,11 @@ public:
   // Lookup a few variables directly if you already know indices
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_values(
+  void get_values(
     const int nvar,
     const int ivar[],
     const amrex::Real interpdata[],
-    amrex::Real out[])
+    amrex::Real out[]) override
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -416,7 +415,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_all_values(const amrex::Real interpdata[], amrex::Real out[])
+  void
+  get_all_values(const amrex::Real interpdata[], amrex::Real out[]) override
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -436,8 +436,8 @@ public:
   // finite difference
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  get_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[])
+  void get_derivs(
+    int ivar, const amrex::Real derivloc[], amrex::Real derivs[]) override
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -453,7 +453,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual BlackBoxModel model() { return BlackBoxModel::TABLE; }
+  BlackBoxModel model() override { return BlackBoxModel::TABLE; }
 
 private:
   const TabFuncData* tf_data;
@@ -514,12 +514,10 @@ private:
     for (int dim = 0; dim < tf_data->Ndim; dim++) {
       int dimLen = tf_data->dimLengths[dim];
       // Find index to left of data
-      // TODO: test alternatives: lower_bound, find, home rolled while loop,
-      // home rolled fixed grid direct SOFAR: lower_bound is much faster than
-      // home rolled while loop. Even then, finding indexes is ~50% of runtime
+      // May be able to improve performance, e.g. with fixed grid spacing
 
 #ifndef AMREX_USE_GPU
-      auto beg = &tf_data->grids[start];
+      auto* beg = &tf_data->grids[start];
       int idx =
         std::lower_bound(beg + 1, beg + dimLen - 1, interpdata[dim]) - beg - 1;
       idx = std::min(
@@ -545,6 +543,5 @@ private:
     }
   }
 };
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 #endif

@@ -1,11 +1,10 @@
-#ifndef _BLACK_BOX_FUNC_H_
-#define _BLACK_BOX_FUNC_H_
+#ifndef BLACK_BOX_FUNC_H
+#define BLACK_BOX_FUNC_H
 
 #include <AMReX_Utility.H>
 #include "PeleParamsGeneric.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 enum class BlackBoxModel { TABLE = 0, NEURAL_NET = 1 };
 
@@ -39,8 +38,9 @@ get_var_index(
   for (ii = 0; ii < manf_data->Nvar; ii++) {
     std::string vartest = std::string(
       &(manf_data->varnames)[ii * manf_data->len_str], manf_data->len_str);
-    if (amrex::trim(var) == amrex::trim(vartest))
+    if (amrex::trim(var) == amrex::trim(vartest)) {
       break;
+    }
   }
   if (ii == manf_data->Nvar && require) {
     amrex::Abort("Requested variable not found in table: " + var);
@@ -76,11 +76,9 @@ public:
   virtual BlackBoxModel model() = 0;
 
   AMREX_GPU_HOST_DEVICE
-  virtual ~BlackBoxFunc() {}
+  virtual ~BlackBoxFunc() = default;
 
 }; // class BlackBoxFunc
 
-} // namespace physics
-} // namespace pele
-
+} // namespace pele::physics
 #endif

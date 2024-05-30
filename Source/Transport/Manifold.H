@@ -1,5 +1,5 @@
-#ifndef _MANIFOLDTRANSPORT_H_
-#define _MANIFOLDTRANSPORT_H_
+#ifndef MANIFOLDTRANSPORT_H
+#define MANIFOLDTRANSPORT_H
 
 #include "TransportParams.H"
 
@@ -13,7 +13,7 @@ struct ManifoldTransport
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void transport(
+  static void transport(
     const bool wtr_get_xi,
     const bool wtr_get_mu,
     const bool wtr_get_lam,
@@ -65,7 +65,7 @@ struct ManifoldTransport
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_transport_coeffs(
+  static void get_transport_coeffs(
     amrex::Box const& bx,
     amrex::Array4<const amrex::Real> const& Y_in,
     amrex::Array4<const amrex::Real> const& /*T_in*/,
@@ -116,7 +116,7 @@ struct ManifoldTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE ManifoldTransport(Args...)
+  AMREX_GPU_HOST_DEVICE ManifoldTransport(Args... /*args*/)
   {
   }
 };

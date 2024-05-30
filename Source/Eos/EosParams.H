@@ -9,8 +9,7 @@
 #include "PhysicsConstants.H"
 #include "PeleParamsGeneric.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 namespace eos {
 
 enum class density_lookup_type { linear, log, inverse };
@@ -142,7 +141,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
           h_manf_data_in->len_str);
         std::string dim_src;
         if (dimname.rfind("Y-") == 0) {
-          dim_src = "SRC_" + amrex::trim(dimname).substr(2u, std::string::npos);
+          dim_src = "SRC_" + amrex::trim(dimname).substr(2U, std::string::npos);
         } else {
           dim_src = "SRC_" + amrex::trim(dimname);
         }
@@ -173,6 +172,5 @@ struct InitParm<eos::EosParm<eos::Manifold>>
 };
 #endif
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 #endif

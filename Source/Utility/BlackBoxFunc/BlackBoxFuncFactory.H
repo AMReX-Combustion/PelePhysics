@@ -4,8 +4,7 @@
 #include "Table.H"
 #include "NeuralNetHomerolled.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 // Factory struct to allow either compile time or runtime
 // selection of BlackBoxFunc type
@@ -20,7 +19,7 @@ struct BlackBoxFuncFactory<TabFunc<Dimension>>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() {}
+  BlackBoxFuncFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -46,7 +45,7 @@ struct BlackBoxFuncFactory<NNFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() {}
+  BlackBoxFuncFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -72,18 +71,18 @@ struct BlackBoxFuncFactory<BlackBoxFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() {}
+  BlackBoxFuncFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   BlackBoxFuncFactory(const BBFuncData* mf_data)
   {
     if (mf_data->bbmodel == BlackBoxModel::TABLE) {
-      const TabFuncData* tf_data = static_cast<const TabFuncData*>(mf_data);
+      const auto* tf_data = static_cast<const TabFuncData*>(mf_data);
       // Note: Table dimension not specified a priori, slight performance loss
       func = new pele::physics::TabFunc<>(tf_data);
     } else if (mf_data->bbmodel == BlackBoxModel::NEURAL_NET) {
-      const NNFuncData* nnf_data = static_cast<const NNFuncData*>(mf_data);
+      const auto* nnf_data = static_cast<const NNFuncData*>(mf_data);
       func = new pele::physics::NNFunc(nnf_data);
     } else {
       amrex::Abort("invalid black box function type requested");
@@ -101,6 +100,5 @@ struct BlackBoxFuncFactory<BlackBoxFunc>
 private:
   BlackBoxFunc* func;
 };
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 #endif

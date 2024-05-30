@@ -1,11 +1,10 @@
-#ifndef _NEURAL_NET_HR_H_
-#define _NEURAL_NET_HR_H_
+#ifndef NEURAL_NET_HR_H
+#define NEURAL_NET_HR_H
 
 #include "NeuralNetModelDef.H"
 #include "BlackBoxFunc.H"
 
-namespace pele {
-namespace physics {
+namespace pele::physics {
 
 struct NNFuncData : BBFuncData
 {
@@ -248,7 +247,7 @@ class NNFunc : public BlackBoxFunc
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  NNFunc() {}
+  NNFunc() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -259,19 +258,19 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  get_value(const int ivar, const amrex::Real indata[], amrex::Real& out)
+  void get_value(
+    const int ivar, const amrex::Real indata[], amrex::Real& out) override
   {
     out = nnmodel(indata)[ivar];
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_values(
+  void get_values(
     const int nvar,
     const int ivar[],
     const amrex::Real indata[],
-    amrex::Real out[])
+    amrex::Real out[]) override
   {
     const amrex::Real* outdata = nnmodel(indata);
     for (int i = 0; i < nvar; i++) {
@@ -281,7 +280,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_all_values(const amrex::Real indata[], amrex::Real out[])
+  void get_all_values(const amrex::Real indata[], amrex::Real out[]) override
   {
     const amrex::Real* outdata = nnmodel(indata);
     for (int i = 0; i < nnf_data->Nvar; i++) {
@@ -291,8 +290,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void
-  get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[])
+  void get_derivs(
+    const int ivar, const amrex::Real indata[], amrex::Real derivs[]) override
   {
     // Use first-order finite difference approach for now
     constexpr amrex::Real eps = 1e-5;
@@ -315,7 +314,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual BlackBoxModel model() { return BlackBoxModel::NEURAL_NET; }
+  BlackBoxModel model() override { return BlackBoxModel::NEURAL_NET; }
 
 private:
   // Variables
@@ -324,7 +323,6 @@ private:
 
 }; // class NNFunc
 
-} // namespace physics
-} // namespace pele
+} // namespace pele::physics
 
 #endif
