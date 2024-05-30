@@ -26,8 +26,8 @@ int Precond(
   amrex::Real tn,
   N_Vector u,
   N_Vector fu,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data);
 
@@ -59,8 +59,8 @@ int Precond_custom(
   amrex::Real tn,
   N_Vector u,
   N_Vector fu,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data);
 
@@ -81,8 +81,8 @@ int Precond_sparse(
   amrex::Real tn,
   N_Vector u,
   N_Vector fu,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data);
 #endif

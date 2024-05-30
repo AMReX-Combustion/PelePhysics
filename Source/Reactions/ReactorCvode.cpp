@@ -485,11 +485,6 @@ ReactorCvode::initCvode(
   if (utils::check_flag(&flag, "CVodeSetMaxErrTestFails", 1) != 0) {
     return (1);
   }
-  flag = CVodeSetErrHandlerFn(
-    a_cvode_mem, cvode::cvodeErrHandler, nullptr); // Err. handler funct.
-  if (utils::check_flag(&flag, "CVodeSetErrHandlerFn", 1) != 0) {
-    return (1);
-  }
   flag = CVodeSetMaxNumSteps(a_cvode_mem, 10000); // Max substeps
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1) != 0) {
     return (1);
@@ -1017,7 +1012,7 @@ ReactorCvode::allocUserData(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
     int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
       a_A, nullptr, udata->csr_row_count_h, udata->csr_col_index_h);
-    if (sunMatFlag != SUNMAT_SUCCESS) {
+    if (sunMatFlag != SUN_SUCCESS) {
       amrex::Print()
         << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
     }
@@ -1494,12 +1489,12 @@ ReactorCvode::react(
 
 int
 ReactorCvode::react(
-  realtype* rY_in,
-  realtype* rYsrc_in,
-  realtype* rX_in,
-  realtype* rX_src_in,
-  realtype& dt_react,
-  realtype& time,
+  sunrealtype* rY_in,
+  sunrealtype* rYsrc_in,
+  sunrealtype* rX_in,
+  sunrealtype* rX_src_in,
+  sunrealtype& dt_react,
+  sunrealtype& time,
   int ncells
 #ifdef AMREX_USE_GPU
   ,
@@ -1694,7 +1689,7 @@ ReactorCvode::react(
 
 int
 ReactorCvode::cF_RHS(
-  realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
+  sunrealtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::ReactorCvode::cF_RHS()");
 #ifdef AMREX_USE_GPU

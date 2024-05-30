@@ -76,7 +76,7 @@ SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
 int
 SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A)
 {
-  return (SUNLS_SUCCESS);
+  return (SUN_SUCCESS);
 }
 
 int
@@ -113,14 +113,14 @@ SUNLinSolSolve_Dense_custom(
 
   BL_PROFILE_VAR_STOP(fKernelDenseSolve);
 
-  return (SUNLS_SUCCESS);
+  return (SUN_SUCCESS);
 }
 
 int
 SUNLinSolFree_Dense_custom(SUNLinearSolver S)
 {
   if (S == NULL)
-    return (SUNLS_SUCCESS);
+    return (SUN_SUCCESS);
 
   if (S->content) {
     free(S->content);
@@ -135,7 +135,7 @@ SUNLinSolFree_Dense_custom(SUNLinearSolver S)
   free(S);
   S = NULL;
 
-  return (SUNLS_SUCCESS);
+  return (SUN_SUCCESS);
 }
 #endif
 
@@ -249,7 +249,7 @@ SUNLinSolSolve_Sparse_custom(
     sgjsolve(Data_offset, x_d_offset, b_d_offset);
   }
 
-  return (SUNLS_SUCCESS);
+  return (SUN_SUCCESS);
 }
 #endif
 } // namespace pele::physics::reactions::cvode

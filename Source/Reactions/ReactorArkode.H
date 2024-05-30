@@ -134,6 +134,7 @@ private:
   int use_erkstep{1};
   int rk_method{40};
   int rk_controller{0};
+  SUNAdaptController sun_controller;
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 #if defined(AMREX_USE_HIP)

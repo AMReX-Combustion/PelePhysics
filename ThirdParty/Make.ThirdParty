@@ -12,7 +12,7 @@ REL_SUNDIALS_LIB_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecific
 SUNDIALS_LIB_DIR := $(abspath $(lastword $(REL_SUNDIALS_LIB_DIR)))
 INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
-LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecserial
+LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_core -lsundials_nvecserial
 ifeq ($(USE_CUDA),TRUE)
     LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
     LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
