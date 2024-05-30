@@ -25,24 +25,13 @@ public:
 class NNArrReaders
 {
 public:
-  template <class T>
-  static void
-  read_with_template(int size, amrex::Real* outdata, std::ifstream& file)
+  template <typename T1, typename T2>
+  static void read_with_template(int size, T2* outdata, std::ifstream& file)
   {
-    T fdata[size];
-    file.read(reinterpret_cast<char*>(&fdata[0]), size * sizeof(T));
+    amrex::Vector<T1> fdata(size);
+    file.read(reinterpret_cast<char*>(&fdata[0]), size * sizeof(T1));
     for (int i = 0; i < size; i++) {
-      outdata[i] = (amrex::Real)fdata[i];
-    }
-  }
-
-  template <class T>
-  static void read_with_template(int size, int* outdata, std::ifstream& file)
-  {
-    T fdata[size];
-    file.read(reinterpret_cast<char*>(&fdata[0]), size * sizeof(T));
-    for (int i = 0; i < size; i++) {
-      outdata[i] = (int)fdata[i];
+      outdata[i] = (T2)fdata[i];
     }
   }
 
@@ -50,9 +39,9 @@ public:
   read_reals(int fsize, int arrsize, amrex::Real* outdata, std::ifstream& file)
   {
     if (fsize == 4) {
-      read_with_template<float>(arrsize, outdata, file);
+      read_with_template<float, amrex::Real>(arrsize, outdata, file);
     } else if (fsize == 8) {
-      read_with_template<double>(arrsize, outdata, file);
+      read_with_template<double, amrex::Real>(arrsize, outdata, file);
     } else {
       amrex::Error(
         "Cannot read data of size " + std::to_string(fsize) +
@@ -64,10 +53,10 @@ public:
   read_ints(int isize, int arrsize, int* outdata, std::ifstream& file)
   {
     if (isize == 2) {
-      read_with_template<short>(arrsize, outdata, file);
+      read_with_template<short, int>(arrsize, outdata, file);
     }
     if (isize == 4) {
-      read_with_template<int>(arrsize, outdata, file);
+      read_with_template<int, int>(arrsize, outdata, file);
     } else {
       // Don't support longs
       amrex::Error(
@@ -244,7 +233,7 @@ public:
     std::vector<std::vector<int>>& sizes,
     std::ifstream& file,
     int fsize,
-    int isize)
+    int /*isize*/)
   {
     AMREX_ALWAYS_ASSERT(types.size() == 1);
     AMREX_ALWAYS_ASSERT(sizes.size() == 1);
@@ -259,7 +248,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  LeakyReluNNLayer(amrex::Real* nnrd, int* nnid)
+  LeakyReluNNLayer(amrex::Real* nnrd, int* /*nnid*/)
   {
     owns_data = false;
     neg_slope = nnrd;
@@ -293,7 +282,10 @@ public:
   AMREX_FORCE_INLINE
   virtual int niparams() { return 0; }
 
-  virtual void pack(amrex::Real* nnrd, int* nnid) { nnrd[0] = neg_slope[0]; }
+  virtual void pack(amrex::Real* nnrd, int* /*nnid*/)
+  {
+    nnrd[0] = neg_slope[0];
+  }
 
 private:
   bool owns_data = true;

@@ -161,8 +161,8 @@ struct InitParm<NNFuncData, BBFuncData>
       }
 
       if (state == READING_VAR) {
-        for (int i = 0; i < str.length(); i++) {
-          str[i] = std::tolower(str[i]);
+        for (char& c : str) {
+          c = std::tolower(c);
         }
         cur_var = str;
       }
@@ -187,8 +187,10 @@ struct InitParm<NNFuncData, BBFuncData>
     // Hard coded limit on size of network (required for derivs function)
     AMREX_ALWAYS_ASSERT(m_h_nnf_data.Ndim < MAXD_NETWORK);
 
-    AMREX_ALWAYS_ASSERT(umap["dimnames"].size() == m_h_nnf_data.Ndim);
-    AMREX_ALWAYS_ASSERT(umap["varnames"].size() == m_h_nnf_data.Nvar);
+    AMREX_ALWAYS_ASSERT(
+      umap["dimnames"].size() == static_cast<size_t>(m_h_nnf_data.Ndim));
+    AMREX_ALWAYS_ASSERT(
+      umap["varnames"].size() == static_cast<size_t>(m_h_nnf_data.Nvar));
 
     m_h_nnf_data.dimnames = static_cast<char*>(
       amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim * str_size));
@@ -319,7 +321,6 @@ private:
   // Variables
   const NNFuncData* nnf_data;
   NNModel nnmodel;
-  amrex::Real* indata_copy;
 
 }; // class NNFunc
 

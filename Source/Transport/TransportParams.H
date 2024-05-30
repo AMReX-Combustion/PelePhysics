@@ -140,7 +140,7 @@ struct InitParm<transport::TransParm<EOSType, transport::ConstTransport>>
 
   static void host_deallocate(
     PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>*
-      parm_in)
+    /*parm_in*/)
   {
   }
 };
@@ -166,7 +166,7 @@ struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
 
   static void host_deallocate(
     PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
-      parm_in)
+    /*parm_in*/)
   {
   }
 };
@@ -257,7 +257,7 @@ struct InitParm<transport::TransParm<EOSType, transport::SimpleTransport>>
 
   static void host_deallocate(
     PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>*
-      parm_in)
+    /*parm_in*/)
   {
   }
 };
@@ -431,7 +431,7 @@ struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
 
   static void host_deallocate(
     PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>*
-      parm_in)
+    /*parm_in*/)
   {
   }
 };

@@ -187,6 +187,7 @@ interpolate(
   const int numdim)
 {
   AMREX_ASSERT(numdim == InterpDim);
+  amrex::ignore_unused(numdim);
   const int idx = indices[InterpDim - 1];
   const int dimDataSpac = data_spacing[InterpDim - 1];
   const amrex::Real out_value_left = interpolate<InterpDim - 1>(
@@ -207,6 +208,7 @@ interpolate<1>(
   const int numdim)
 {
   AMREX_ASSERT(numdim == 1);
+  amrex::ignore_unused(numdim);
   const int idx = indices[0];
   const amrex::Real out_value_left = data[idx];
   const amrex::Real out_value_right = data[idx + 1];
@@ -224,7 +226,7 @@ interpolate<0>(
   const int data_spacing[],
   const int numdim)
 {
-  amrex::Real out_value;
+  amrex::Real out_value = 0.0;
   AMREX_ASSERT(numdim <= MAXD_TABLE);
   switch (numdim) {
   case 1:
@@ -264,6 +266,7 @@ differentiate(
 {
   constexpr int dim = DiffDim - 1;
   AMREX_ASSERT(DiffDim == numdim);
+  amrex::ignore_unused(numdim);
   const amrex::Real alpha = alphas[dim];
   const amrex::Real oneMinusAlpha = 1.0 - alpha;
   amrex::Real derivs_left[dim];
@@ -295,6 +298,7 @@ differentiate<1>(
   amrex::Real derivs[])
 {
   AMREX_ASSERT(numdim == 1);
+  amrex::ignore_unused(numdim);
   const amrex::Real alpha = alphas[0];
   const amrex::Real oneMinusAlpha = 1.0 - alpha;
   const int idx = indices[0];
@@ -316,7 +320,7 @@ differentiate<0>(
   amrex::Real derivs[])
 {
   AMREX_ASSERT(numdim <= MAXD_TABLE);
-  amrex::Real out_value;
+  amrex::Real out_value = 0.0;
   switch (numdim) {
   case 1:
     out_value = differentiate<1>(
@@ -442,7 +446,7 @@ public:
     get_indices_alphas_dxinv(derivloc, indices, alphas, dxinv);
 
     // finite differences from table
-    amrex::Real out = differentiate<TableDim>(
+    differentiate<TableDim>(
       indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing],
       tf_data->dimDataSpacing, tf_data->Ndim, derivs);
   }

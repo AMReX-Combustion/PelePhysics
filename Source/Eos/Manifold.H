@@ -358,8 +358,8 @@ struct Manifold
   ~Manifold() {}
 
 private:
-  BlackBoxFuncFactory<ManifoldFuncType> manfunc;
   const EosParm<Manifold>* eosparm;
+  BlackBoxFuncFactory<ManifoldFuncType> manfunc;
 };
 
 } // namespace eos

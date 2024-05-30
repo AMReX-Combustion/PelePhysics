@@ -105,8 +105,8 @@ public:
     file.read(reinterpret_cast<char*>(&inpsize), sizeof(int));
 
     while (file.peek() != EOF) {
-      char name_arr[ssize];
-      char fmt_arr[ssize];
+      std::vector<char> name_arr(ssize);
+      std::vector<char> fmt_arr(ssize);
       file.read(&name_arr[0], ssize * sizeof(char));
       file.read(&fmt_arr[0], ssize * sizeof(char));
       std::string name =

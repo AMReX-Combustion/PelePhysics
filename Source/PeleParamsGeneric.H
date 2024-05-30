@@ -52,7 +52,7 @@ template <typename ParmType, typename BaseParmType>
 class PeleParams : public PeleParamsGeneric<BaseParmType>
 {
 
-  friend class InitParm<ParmType, BaseParmType>;
+  friend struct InitParm<ParmType, BaseParmType>;
 
 public:
   static_assert(std::is_base_of_v<BaseParmType, ParmType> == true);

@@ -9,8 +9,6 @@
 #include "PhysicsConstants.H"
 #include "PeleParamsGeneric.H"
 
-// TODO: Single general interface for eosparm, pmfdata, transparm, etc.
-
 namespace pele {
 namespace physics {
 namespace eos {
@@ -33,6 +31,10 @@ struct EosParm<GammaLaw>
   amrex::Real gamma{Constants::gamma};
 };
 
+#ifndef MANIFOLD_DIM
+#define MANIFOLD_DIM 1
+#endif
+
 #ifndef AMREX_USE_SYCL
 template <>
 struct EosParm<Manifold>
@@ -43,7 +45,7 @@ struct EosParm<Manifold>
   bool compute_temperature{false};
   int idx_density{0};
   int idx_T{0};
-  int idx_Wdot[NUM_SPECIES - 1];
+  int idx_Wdot[MANIFOLD_DIM];
   bool has_mani_src = true;
 };
 #endif
@@ -64,7 +66,8 @@ struct InitParm<eos::EosParm<eos::GammaLaw>>
     }
   }
 
-  static void host_deallocate(PeleParams<eos::EosParm<eos::GammaLaw>>* parm_in)
+  static void
+  host_deallocate(PeleParams<eos::EosParm<eos::GammaLaw>>* /*parm_in*/)
   {
   }
 };
