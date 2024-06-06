@@ -9,7 +9,7 @@
 
 // Define a class to hold/manage the PMF data,
 namespace pele::physics {
-namespace PMF {
+namespace PMF::PmfData {
 
 struct DataContainer
 {
@@ -19,19 +19,19 @@ struct DataContainer
   amrex::Real* pmf_X;
   amrex::Real* pmf_Y;
 };
-} // namespace PMF
+} // namespace PMF::PmfData
 
 template <>
-struct InitParm<PMF::DataContainer>
+struct InitParm<PMF::PmfData::DataContainer>
 {
 
   static void read_pmf(
     const std::string& fname,
     const int a_doAverage,
     const int a_verbose,
-    PMF::DataContainer& h_pmf_data);
+    PMF::PmfData::DataContainer& h_pmf_data);
 
-  static void host_initialize(PeleParams<PMF::DataContainer>* parm_in)
+  static void host_initialize(PeleParams<PMF::PmfData::DataContainer>* parm_in)
   {
     amrex::ParmParse pp("pmf");
     std::string datafile;
@@ -46,7 +46,10 @@ struct InitParm<PMF::DataContainer>
     read_pmf(datafile, do_average, verbose, parm_in->m_h_parm);
   };
 
-  static void host_deallocate(PeleParams<PMF::DataContainer>* /*parm_in*/) {}
+  static void
+  host_deallocate(PeleParams<PMF::PmfData::DataContainer>* /*parm_in*/)
+  {
+  }
 };
 
 } // namespace pele::physics

@@ -32,7 +32,8 @@ main(int argc, char* argv[])
     BL_PROFILE_VAR("main::main()", pmain);
 
     // Init PMF
-    pele::physics::PeleParams<pele::physics::PMF::DataContainer> pmf_data;
+    pele::physics::PeleParams<pele::physics::PMF::PmfData::DataContainer>
+      pmf_data;
     pmf_data.initialize();
 
     // Get standoff

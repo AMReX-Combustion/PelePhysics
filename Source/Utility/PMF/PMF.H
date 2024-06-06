@@ -12,7 +12,7 @@ AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 pmf(
-  DataContainer const* pmf_data,
+  PmfData::DataContainer const* pmf_data,
   amrex::Real xlo,
   amrex::Real xhi,
   amrex::GpuArray<amrex::Real, NUM_SPECIES + 4>& y_vector)

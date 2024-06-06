@@ -17,7 +17,7 @@ initdata(
   amrex::Array4<amrex::Real> const& state,
   const amrex::Real& standoff,
   amrex::GeometryData const& geomdata,
-  pele::physics::PMF::DataContainer const* pmf_data)
+  pele::physics::PMF::PmfData::DataContainer const* pmf_data)
 {
   const amrex::Real* prob_lo = geomdata.ProbLo();
   const amrex::Real* prob_hi = geomdata.ProbHi();

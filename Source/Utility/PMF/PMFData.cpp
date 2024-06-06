@@ -25,11 +25,11 @@ checkQuotes(const std::string& str)
 namespace pele::physics {
 
 void
-InitParm<PMF::DataContainer>::read_pmf(
+InitParm<PMF::PmfData::DataContainer>::read_pmf(
   const std::string& fname,
   const int a_doAverage,
   const int /*a_verbose*/,
-  PMF::DataContainer& h_pmf_data)
+  PMF::PmfData::DataContainer& h_pmf_data)
 {
   std::ifstream infile(fname);
   if (!infile.is_open()) {
