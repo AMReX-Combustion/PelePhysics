@@ -12,7 +12,7 @@ AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 pmf(
-  PmfData::DataContainer const* pmf_data,
+  DataContainer const* pmf_data,
   amrex::Real xlo,
   amrex::Real xhi,
   amrex::GpuArray<amrex::Real, NUM_SPECIES + 4>& y_vector)
@@ -122,7 +122,7 @@ pmf(
       if (loside != hiside) {
         dydx = (y2 - y1) / (x2 - x1);
       }
-      y_vector[j] = y1 + dydx * (xlo - x1);
+      y_vector[j] = y1 + dydx * (xmid - x1);
     }
   }
 }

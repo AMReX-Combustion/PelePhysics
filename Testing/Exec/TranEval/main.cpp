@@ -18,10 +18,11 @@ main(int argc, char* argv[])
 
     amrex::ParmParse pp;
 
-    pele::physics::transport::TransportParams<
-      pele::physics::PhysicsType::transport_type>
+    pele::physics::PeleParams<pele::physics::transport::TransParm<
+      pele::physics::PhysicsType::eos_type,
+      pele::physics::PhysicsType::transport_type>>
       trans_parms;
-    trans_parms.allocate();
+    trans_parms.initialize();
 
     // Define geometry
     amrex::Array<int, AMREX_SPACEDIM> npts{AMREX_D_DECL(1, 1, 1)};
@@ -88,7 +89,7 @@ main(int argc, char* argv[])
     amrex::MultiFab chi(ba, dm, NUM_SPECIES, num_grow);
 
     // Get the transport data pointer
-    auto const* ltransparm = trans_parms.device_trans_parm();
+    auto const* ltransparm = trans_parms.device_parm();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
