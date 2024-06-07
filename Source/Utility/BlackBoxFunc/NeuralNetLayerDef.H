@@ -82,7 +82,8 @@ class NNLayer
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual ~NNLayer() = default;
+  // NOLINTNEXTLINE(modernize-use-equals-default)
+  virtual ~NNLayer() {}
 
   // Template for CPU-only constructor to be used when reading in a file
   // NNLayer(std::vector<char>& types, std::vector<std::vector<int>>& sizes,

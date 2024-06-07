@@ -72,52 +72,52 @@ struct InitParm<TabFuncData, BBFuncData>
     }
     fi.seekg(0, std::ios::beg);
 
+    std::streamsize char_size = sizeof(char);
+    std::streamsize int_size = sizeof(int);
+    std::streamsize real_size = sizeof(amrex::Real);
+
     // Number of dimensions
-    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Ndim), sizeof(int));
+    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Ndim), int_size);
 
     // Dimension names
     m_h_tf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(
-      m_h_tf_data.Ndim * m_h_tf_data.len_str * sizeof(char)));
+      m_h_tf_data.Ndim * m_h_tf_data.len_str * char_size));
     fi.read(
-      m_h_tf_data.dimnames,
-      m_h_tf_data.Ndim * m_h_tf_data.len_str * sizeof(char));
+      m_h_tf_data.dimnames, m_h_tf_data.Ndim * m_h_tf_data.len_str * char_size);
 
     // Dimension lengths
     m_h_tf_data.dimLengths = static_cast<int*>(
-      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * sizeof(int)));
+      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * int_size));
     fi.read(
       reinterpret_cast<char*>(m_h_tf_data.dimLengths),
-      m_h_tf_data.Ndim * sizeof(int));
+      m_h_tf_data.Ndim * int_size);
     // Number of variables
-    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), sizeof(int));
+    fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), int_size);
     // No separate passed variables for a table
     m_h_tf_data.Nmanpar = m_h_tf_data.Ndim;
 
     // Grid locations for all dimensions
-    size_t Ngridtot = 0;
+    int Ngridtot = 0;
     for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
       Ngridtot += m_h_tf_data.dimLengths[ii];
     }
     m_h_tf_data.grids = static_cast<amrex::Real*>(
-      amrex::The_Pinned_Arena()->alloc(Ngridtot * sizeof(amrex::Real)));
-    fi.read(
-      reinterpret_cast<char*>(m_h_tf_data.grids),
-      sizeof(amrex::Real) * Ngridtot);
+      amrex::The_Pinned_Arena()->alloc(Ngridtot * real_size));
+    fi.read(reinterpret_cast<char*>(m_h_tf_data.grids), Ngridtot * real_size);
 
     // Model Name
-    fi.read(m_h_tf_data.model_name, sizeof(char) * m_h_tf_data.len_str);
+    fi.read(m_h_tf_data.model_name, char_size * m_h_tf_data.len_str);
     m_h_tf_data.model_name[m_h_tf_data.len_str] = '\0';
 
     // Variable Names
     m_h_tf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(
-      m_h_tf_data.Nvar * m_h_tf_data.len_str * sizeof(char)));
+      m_h_tf_data.Nvar * m_h_tf_data.len_str * char_size));
     fi.read(
-      m_h_tf_data.varnames,
-      m_h_tf_data.Nvar * m_h_tf_data.len_str * sizeof(char));
+      m_h_tf_data.varnames, m_h_tf_data.Nvar * m_h_tf_data.len_str * char_size);
 
     // Data
     m_h_tf_data.dimDataSpacing = static_cast<int*>(
-      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * sizeof(int)));
+      amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim * int_size));
     m_h_tf_data.dimDataSpacing[0] = 1;
     for (int ii = 1; ii < m_h_tf_data.Ndim; ii++) {
       m_h_tf_data.dimDataSpacing[ii] =
@@ -125,11 +125,10 @@ struct InitParm<TabFuncData, BBFuncData>
     }
     m_h_tf_data.varSpacing = m_h_tf_data.dimDataSpacing[m_h_tf_data.Ndim - 1] *
                              m_h_tf_data.dimLengths[m_h_tf_data.Ndim - 1];
-    size_t Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
+    int Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
     m_h_tf_data.values = static_cast<amrex::Real*>(
-      amrex::The_Pinned_Arena()->alloc(Ndata * sizeof(amrex::Real)));
-    fi.read(
-      reinterpret_cast<char*>(m_h_tf_data.values), sizeof(amrex::Real) * Ndata);
+      amrex::The_Pinned_Arena()->alloc(Ndata * real_size));
+    fi.read(reinterpret_cast<char*>(m_h_tf_data.values), Ndata * real_size);
   }
 
   static void print(const TabFuncData& m_h_tf_data)
@@ -518,8 +517,8 @@ private:
 
 #ifndef AMREX_USE_GPU
       auto* beg = &tf_data->grids[start];
-      int idx =
-        std::lower_bound(beg + 1, beg + dimLen - 1, interpdata[dim]) - beg - 1;
+      int idx = static_cast<int>(
+        std::lower_bound(beg + 1, beg + dimLen - 1, interpdata[dim]) - beg - 1);
       idx = std::min(
         std::max(idx, 0),
         dimLen - 2); // don't let idx be negative or out of bounds

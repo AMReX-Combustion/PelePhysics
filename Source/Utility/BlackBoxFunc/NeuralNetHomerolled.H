@@ -113,7 +113,7 @@ struct InitParm<NNFuncData, BBFuncData>
     std::string cur_var;
     std::string str;
 
-    int str_size = m_h_nnf_data.len_str * sizeof(char);
+    int str_size = m_h_nnf_data.len_str * static_cast<int>(sizeof(char));
     int str_len = m_h_nnf_data.len_str;
 
     if (!fi.is_open()) {
@@ -161,7 +161,7 @@ struct InitParm<NNFuncData, BBFuncData>
 
       if (state == READING_VAR) {
         for (char& c : str) {
-          c = std::tolower(c);
+          c = (char)std::tolower(c);
         }
         cur_var = str;
       }

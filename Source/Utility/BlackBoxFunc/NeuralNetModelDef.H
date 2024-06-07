@@ -53,7 +53,7 @@ read_fmt(
       int i;
       is >> i;
       if (sizes.size() < types.size()) {
-        sizes.emplace_back(std::vector<int>());
+        sizes.emplace_back();
       }
       sizes[sizes.size() - 1].emplace_back(i);
       state = READING_DELIM;
@@ -106,8 +106,9 @@ public:
     while (file.peek() != EOF) {
       std::vector<char> name_arr(ssize);
       std::vector<char> fmt_arr(ssize);
-      file.read(name_arr.data(), ssize * sizeof(char));
-      file.read(fmt_arr.data(), ssize * sizeof(char));
+      std::streamsize char_size = sizeof(char);
+      file.read(name_arr.data(), ssize * char_size);
+      file.read(fmt_arr.data(), ssize * char_size);
       std::string name =
         amrex::trim(std::string(name_arr.data(), ssize), std::string(1, '\0'));
       std::string fmt =
