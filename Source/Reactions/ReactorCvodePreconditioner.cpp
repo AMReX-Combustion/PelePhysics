@@ -8,8 +8,8 @@ Precond(
   amrex::Real /*tn*/,
   N_Vector u,
   N_Vector /*fu*/,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data)
 {
@@ -134,8 +134,8 @@ Precond(
   amrex::Real /* tn */,
   N_Vector /* u */,
   N_Vector /* fu */,
-  booleantype /* jok */,
-  booleantype* /* jcurPtr */,
+  sunbooleantype /* jok */,
+  sunbooleantype* /* jcurPtr */,
   amrex::Real /* gamma */,
   void* /* user_data */)
 {
@@ -170,8 +170,8 @@ Precond(
   amrex::Real /* tn */,
   N_Vector u,
   N_Vector /* fu */,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data)
 {
@@ -289,8 +289,8 @@ Precond_sparse(
   amrex::Real /* tn */,
   N_Vector u,
   N_Vector /* fu */,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data)
 {
@@ -464,8 +464,8 @@ Precond_custom(
   amrex::Real /* tn */,
   N_Vector u,
   N_Vector /* fu */,
-  booleantype jok,
-  booleantype* jcurPtr,
+  sunbooleantype jok,
+  sunbooleantype* jcurPtr,
   amrex::Real gamma,
   void* user_data)
 {

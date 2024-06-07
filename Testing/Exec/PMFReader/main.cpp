@@ -32,7 +32,8 @@ main(int argc, char* argv[])
     BL_PROFILE_VAR("main::main()", pmain);
 
     // Init PMF
-    pele::physics::PMF::PmfData pmf_data;
+    pele::physics::PeleParams<pele::physics::PMF::PmfData::DataContainer>
+      pmf_data;
     pmf_data.initialize();
 
     // Get standoff
@@ -73,8 +74,7 @@ main(int argc, char* argv[])
 
     // Initialize data from PMF
     const auto geomdata = geom.data();
-    pele::physics::PMF::PmfData::DataContainer const* lpmfdata =
-      pmf_data.getDeviceData();
+    auto const* lpmfdata = pmf_data.device_parm();
     auto const& sma = stateMF.arrays();
     amrex::ParallelFor(
       stateMF, [=] AMREX_GPU_DEVICE(int box_no, int i, int j, int k) noexcept {

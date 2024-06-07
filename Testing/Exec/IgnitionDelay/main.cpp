@@ -47,7 +47,7 @@ main(int argc, char* argv[])
     amrex::Real strt_time = amrex::ParallelDescriptor::second();
     BL_PROFILE_VAR("main::main()", pmain);
 
-    // ~~~~ Init: Read input, geom, data
+    // ~~~~ Init: Read input, initialize geom, data
     // Parse the relevant inputs
     std::string fuel_name;
     std::string chem_integrator;

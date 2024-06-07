@@ -4,6 +4,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
 #include "TransportTypes.H"
+#include "PeleParamsGeneric.H"
 #include "EOS.H"
 
 namespace pele::physics {
