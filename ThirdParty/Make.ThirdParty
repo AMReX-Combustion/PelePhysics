@@ -16,7 +16,7 @@ LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_core -lsundials_nvecserial
 ifeq ($(USE_CUDA),TRUE)
     LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
     LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
-    LIBRARIES += -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse -lcusolver -lcusparse
+    LIBRARIES += -lcusolver -lcusparse -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse
 else
   ifeq ($(USE_HIP),TRUE)
      LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
