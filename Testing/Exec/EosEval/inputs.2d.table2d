@@ -4,7 +4,7 @@ amr.do_plot = 0
 
 # Manifold
 manifold.model = Table
-manifold.table.filename = peletable_2dim_10grid
+manifold.table.filename = ../../../Support/CMLM/peletable_2dim_10grid
 manifold.table.v = 2
 manifold.nominal_pressure_cgs = 1013250.0
 manifold.compute_temperature = 1

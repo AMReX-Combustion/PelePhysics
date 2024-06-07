@@ -1,13 +1,13 @@
 # Manifold Transport
 manifold_transport.use_eos_manifold = false
 manifold_transport.model = Table
-manifold_transport.table.filename = peletable_trans_2dim_10grid
+manifold_transport.table.filename =  ../../../Support/CMLM/peletable_trans_2dim_10grid
 manifold_transport.table.v = 2
 
 # Manifold EOS
 manifold.model = NeuralNet
-manifold.network.filename = fgm_net.pnn
-manifold.network.info_filename = fgm_net_info.txt
+manifold.network.filename =  ../../../Support/CMLM/fgm_net.pnn
+manifold.network.info_filename =  ../../../Support/CMLM/fgm_net_info.txt
 manifold.network.v = 2
 manifold.network.cmlm_net = 1
 manifold.nominal_pressure_cgs = 1013250.0

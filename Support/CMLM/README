@@ -1,0 +1,4 @@
+Tools for generating tables and neural networks for manifold models
+are currently available at: https://github.com/NREL/cmlm
+
+For now, this directory contains a sample table and network for testing purposes.

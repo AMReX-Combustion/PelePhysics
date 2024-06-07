@@ -3,8 +3,8 @@ manifold_transport.use_eos_manifold = true
 
 # Manifold EOS
 manifold.model = NeuralNet
-manifold.network.filename = fgm_net.pnn
-manifold.network.info_filename = fgm_net_info.txt
+manifold.network.filename =  ../../../Support/CMLM/fgm_net.pnn
+manifold.network.info_filename =  ../../../Support/CMLM/fgm_net_info.txt
 manifold.network.v = 2
 manifold.network.cmlm_net = 1
 manifold.nominal_pressure_cgs = 1013250.0
