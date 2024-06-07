@@ -4,9 +4,11 @@
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
 #include "TransportTypes.H"
+#include "PeleParamsGeneric.H"
 #include "EOS.H"
 
-namespace pele::physics::transport {
+namespace pele::physics {
+namespace transport {
 
 struct ConstTransport;
 struct SimpleTransport;
@@ -15,12 +17,6 @@ struct SutherlandTransport;
 template <typename EOSType, typename TransportType>
 struct TransParm
 {
-};
-
-template <typename EOSType, typename TransportType>
-struct InitTransParm
-{
-  void operator()(TransParm<EOSType, TransportType> /*tparm*/) {}
 };
 
 template <typename EOSType>
@@ -35,37 +31,6 @@ struct TransParm<EOSType, ConstTransport>
 };
 
 template <typename EOSType>
-struct InitTransParm<EOSType, ConstTransport>
-{
-  void operator()(TransParm<EOSType, ConstTransport>* tparm)
-  {
-    amrex::ParmParse pp("transport");
-    pp.query("const_viscosity", tparm->const_viscosity);
-    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
-    pp.query("const_conductivity", tparm->const_conductivity);
-    pp.query("const_diffusivity", tparm->const_diffusivity);
-    pp.query(
-      "const_thermal_diffusion_ratio", tparm->const_thermal_diffusion_ratio);
-    if (std::abs(tparm->const_thermal_diffusion_ratio) > 1e-24) {
-      tparm->use_soret = true;
-    }
-    std::string units = "CGS";
-    pp.query("units", units);
-    if (units == "MKS") {
-      // If input in MKS, convert to CGS
-      tparm->const_viscosity *= amrex::Real(1.0e1);
-      tparm->const_bulk_viscosity *= amrex::Real(1.0e1);
-      tparm->const_diffusivity *= amrex::Real(1.0e1);
-      tparm->const_conductivity *= amrex::Real(1.0e5);
-    } else if (units != "CGS") {
-      amrex::Abort(
-        "Unable to initialize transport using unknown units " + units +
-        ". Use CGS (def) or MKS");
-    }
-  }
-};
-
-template <typename EOSType>
 struct TransParm<EOSType, SutherlandTransport>
 {
   amrex::Real Prandtl_number{0.7};
@@ -75,21 +40,6 @@ struct TransParm<EOSType, SutherlandTransport>
   amrex::Real const_bulk_viscosity{0.0};
   amrex::Real const_diffusivity{1.0};
   bool use_soret = false;
-};
-
-template <typename EOSType>
-struct InitTransParm<EOSType, SutherlandTransport>
-{
-  void operator()(TransParm<EOSType, SutherlandTransport>* tparm)
-  {
-    amrex::ParmParse pp("transport");
-    pp.query("Prandtl_number", tparm->Prandtl_number);
-    pp.query("viscosity_mu_ref", tparm->viscosity_mu_ref);
-    pp.query("viscosity_T_ref", tparm->viscosity_T_ref);
-    pp.query("viscosity_S", tparm->viscosity_S);
-    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
-    pp.query("const_diffusivity", tparm->const_diffusivity);
-  }
 };
 
 template <typename EOSType>
@@ -111,34 +61,6 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<int, 3> liteSpec = {0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 3> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
-};
-
-template <typename EOSType>
-struct InitTransParm<EOSType, SimpleTransport>
-{
-  void operator()(TransParm<EOSType, SimpleTransport>* tparm)
-  {
-    egtransetWT(tparm->wt.data());
-    egtransetEPS(tparm->eps.data());
-    egtransetSIG(tparm->sig.data());
-    egtransetDIP(tparm->dip.data());
-    egtransetPOL(tparm->pol.data());
-    egtransetZROT(tparm->zrot.data());
-    egtransetNLIN(tparm->nlin.data());
-    egtransetCOFETA(tparm->fitmu.data());
-    egtransetCOFLAM(tparm->fitlam.data());
-    egtransetCOFD(tparm->fitdbin.data());
-    amrex::ParmParse pp("transport");
-    pp.query("use_soret", tparm->use_soret);
-    if (tparm->use_soret) {
-      egtransetNLITE(&tparm->numLite);
-      egtransetKTDIF(tparm->liteSpec.data());
-      egtransetCOFTD(tparm->fittdrat.data());
-    }
-    for (int i = 0; i < NUM_SPECIES; ++i) {
-      tparm->iwt[i] = 1. / tparm->wt[i];
-    }
-  }
 };
 
 template <>
@@ -173,11 +95,122 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
 };
 
-template <>
-struct InitTransParm<eos::SRK, SimpleTransport>
+} // namespace transport
+
+template <typename EOSType>
+struct InitParm<transport::TransParm<EOSType, transport::ConstTransport>>
 {
-  void operator()(TransParm<eos::SRK, SimpleTransport>* tparm)
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>*
+      parm_in)
   {
+    transport::TransParm<EOSType, transport::ConstTransport>* tparm =
+      &(parm_in->m_h_parm);
+    amrex::ParmParse pp("transport");
+    pp.query("const_viscosity", tparm->const_viscosity);
+    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
+    pp.query("const_conductivity", tparm->const_conductivity);
+    pp.query("const_diffusivity", tparm->const_diffusivity);
+    pp.query(
+      "const_thermal_diffusion_ratio", tparm->const_thermal_diffusion_ratio);
+    if (std::abs(tparm->const_thermal_diffusion_ratio) > 1e-24) {
+      tparm->use_soret = true;
+    }
+    std::string units = "CGS";
+    pp.query("units", units);
+    if (units == "MKS") {
+      // If input in MKS, convert to CGS
+      tparm->const_viscosity *= amrex::Real(1.0e1);
+      tparm->const_bulk_viscosity *= amrex::Real(1.0e1);
+      tparm->const_diffusivity *= amrex::Real(1.0e1);
+      tparm->const_conductivity *= amrex::Real(1.0e5);
+    } else if (units != "CGS") {
+      amrex::Abort(
+        "Unable to initialize transport using unknown units " + units +
+        ". Use CGS (def) or MKS");
+    }
+  }
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::ConstTransport>>*
+    /*parm_in*/)
+  {
+  }
+};
+
+template <typename EOSType>
+struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
+{
+
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
+      parm_in)
+  {
+    transport::TransParm<EOSType, transport::SutherlandTransport>* tparm =
+      &(parm_in->m_h_parm);
+    amrex::ParmParse pp("transport");
+    pp.query("Prandtl_number", tparm->Prandtl_number);
+    pp.query("viscosity_mu_ref", tparm->viscosity_mu_ref);
+    pp.query("viscosity_T_ref", tparm->viscosity_T_ref);
+    pp.query("viscosity_S", tparm->viscosity_S);
+    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
+    pp.query("const_diffusivity", tparm->const_diffusivity);
+  }
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
+    /*parm_in*/)
+  {
+  }
+};
+
+template <typename EOSType>
+struct InitParm<transport::TransParm<EOSType, transport::SimpleTransport>>
+{
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>*
+      parm_in)
+  {
+    transport::TransParm<EOSType, transport::SimpleTransport>* tparm =
+      &(parm_in->m_h_parm);
+    egtransetWT(tparm->wt.data());
+    egtransetEPS(tparm->eps.data());
+    egtransetSIG(tparm->sig.data());
+    egtransetDIP(tparm->dip.data());
+    egtransetPOL(tparm->pol.data());
+    egtransetZROT(tparm->zrot.data());
+    egtransetNLIN(tparm->nlin.data());
+    egtransetCOFETA(tparm->fitmu.data());
+    egtransetCOFLAM(tparm->fitlam.data());
+    egtransetCOFD(tparm->fitdbin.data());
+    amrex::ParmParse pp("transport");
+    pp.query("use_soret", tparm->use_soret);
+    if (tparm->use_soret) {
+      egtransetNLITE(&tparm->numLite);
+      egtransetKTDIF(tparm->liteSpec.data());
+      egtransetCOFTD(tparm->fittdrat.data());
+    }
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      tparm->iwt[i] = 1. / tparm->wt[i];
+    }
+  }
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::SimpleTransport>>*
+    /*parm_in*/)
+  {
+  }
+};
+
+template <>
+struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
+{
+  static void host_initialize(
+    PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>*
+      parm_in)
+  {
+    transport::TransParm<eos::SRK, transport::SimpleTransport>* tparm =
+      &(parm_in->m_h_parm);
     egtransetWT(tparm->wt.data());
     egtransetEPS(tparm->eps.data());
     egtransetSIG(tparm->sig.data());
@@ -335,59 +368,13 @@ struct InitTransParm<eos::SRK, SimpleTransport>
       }
     }
   }
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<eos::SRK, transport::SimpleTransport>>*
+    /*parm_in*/)
+  {
+  }
 };
 
-template <typename TransportType>
-class TransportParams
-{
-public:
-  TransportParams() = default;
-
-  ~TransportParams() = default;
-
-  void allocate()
-  {
-    InitTransParm<EosType, TransportType>()(&m_h_trans_parm);
-    if (!m_device_allocated) {
-      m_d_trans_parm =
-        (TransParm<EosType, TransportType>*)amrex::The_Device_Arena()->alloc(
-          sizeof(m_h_trans_parm));
-      m_device_allocated = true;
-      sync_to_device();
-    }
-  }
-
-  void deallocate()
-  {
-    if (m_device_allocated) {
-      amrex::The_Device_Arena()->free(m_d_trans_parm);
-    }
-  }
-
-  void sync_to_device()
-  {
-    if (!m_device_allocated) {
-      amrex::Abort("Device params not allocated yet");
-    } else {
-      amrex::Gpu::copy(
-        amrex::Gpu::hostToDevice, &m_h_trans_parm, &m_h_trans_parm + 1,
-        m_d_trans_parm);
-    }
-  }
-
-  TransParm<EosType, TransportType>& host_trans_parm()
-  {
-    return m_h_trans_parm;
-  }
-  const TransParm<EosType, TransportType>* device_trans_parm()
-  {
-    return m_d_trans_parm;
-  }
-
-private:
-  TransParm<EosType, TransportType> m_h_trans_parm;
-  TransParm<EosType, TransportType>* m_d_trans_parm{nullptr};
-  bool m_device_allocated{false};
-};
-} // namespace pele::physics::transport
+} // namespace pele::physics
 #endif
