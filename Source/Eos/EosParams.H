@@ -45,7 +45,7 @@ struct EosParm<Manifold>
   int idx_density{0};
   int idx_T{0};
   int idx_Wdot[MANIFOLD_DIM];
-  bool has_mani_src = true;
+  bool has_mani_src{true};
 };
 #endif
 
@@ -136,15 +136,13 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     // each manifold parameter
     if (parm_in->m_h_parm.has_mani_src) {
       for (int idim = 0; idim < h_manf_data_in->Ndim; idim++) {
-        std::string dimname = std::string(
+        const std::string dimname = std::string(
           &h_manf_data_in->dimnames[idim * h_manf_data_in->len_str],
           h_manf_data_in->len_str);
-        std::string dim_src;
-        if (dimname.rfind("Y-") == 0) {
-          dim_src = "SRC_" + amrex::trim(dimname).substr(2U, std::string::npos);
-        } else {
-          dim_src = "SRC_" + amrex::trim(dimname);
-        }
+        const std::string dim_src =
+          (dimname.rfind("Y-") == 0)
+            ? "SRC_" + amrex::trim(dimname).substr(2U, std::string::npos)
+            : "SRC_" + amrex::trim(dimname);
         parm_in->m_h_parm.idx_Wdot[idim] =
           get_var_index(dim_src.c_str(), h_manf_data_in, false);
         if (parm_in->m_h_parm.idx_Wdot[idim] < 0) {
