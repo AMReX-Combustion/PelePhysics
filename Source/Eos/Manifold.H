@@ -47,8 +47,8 @@ struct Manifold
   {
     RY2R(RY, R);
     Rinv = 1.0 / R;
-    for (int is = 0; is < NUM_SPECIES; is++) {
-      Y[is] = RY[is] * Rinv;
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      Y[i] = RY[i] * Rinv;
     }
   }
 
@@ -103,8 +103,8 @@ struct Manifold
   {
     // TODO: FIXME (need to remove enthalpy calculations from
     // PeleLM)
-    for (int is = 0; is < NUM_SPECIES; is++) {
-      Hi[is] = 0.0;
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      Hi[i] = 0.0;
     }
     // amrex::Error("T2Hi does not have significance for Manifold EOS");
   }
@@ -222,8 +222,8 @@ struct Manifold
     // TODO: FIXME
     // just return Y as a hack for PMF, this should really not be needed
     // anywhere
-    for (int is = 0; is < NUM_SPECIES; is++) {
-      Y[is] = X[is];
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      Y[i] = X[i];
     }
     // amrex::Error("X2Y does not have significance for Manifold EOS");
   }
@@ -328,13 +328,13 @@ struct Manifold
     case density_lookup_type::linear:
       break;
     case density_lookup_type::log:
-      for (int is = 0; is < NUM_SPECIES - 1; is++) {
-        dRdY[is] *= R;
+      for (int i = 0; i < NUM_SPECIES - 1; i++) {
+        dRdY[i] *= R;
       }
       break;
     case density_lookup_type::inverse:
-      for (int is = 0; is < NUM_SPECIES - 1; is++) {
-        dRdY[is] *= -R * R;
+      for (int i = 0; i < NUM_SPECIES - 1; i++) {
+        dRdY[i] *= -R * R;
       }
       break;
     }

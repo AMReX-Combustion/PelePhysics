@@ -21,8 +21,8 @@ struct Fuego
   static void RY2R(const amrex::Real RY[], amrex::Real& R)
   {
     R = 0.0;
-    for (int is = 0; is < NUM_SPECIES; is++) {
-      R += RY[is];
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      R += RY[i];
     }
   }
 
@@ -33,8 +33,8 @@ struct Fuego
   {
     RY2R(RY, R);
     Rinv = 1.0 / R;
-    for (int is = 0; is < NUM_SPECIES; is++) {
-      Y[is] = RY[is] * Rinv;
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      Y[i] = RY[i] * Rinv;
     }
   }
 
