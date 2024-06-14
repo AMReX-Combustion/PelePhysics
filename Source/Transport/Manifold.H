@@ -29,7 +29,8 @@ struct ManifoldTransport
     amrex::Real& /*lam*/,
     TransParm<EosType, transport_type> const* tparm)
   {
-    BlackBoxFuncFactory<eos::ManifoldFuncType> manfunc(tparm->manf_data);
+    BlackBoxFunctionFactory<eos::ManifoldFunctionType> manfunc(
+      tparm->manf_data);
 
     if (wtr_get_mu) {
       manfunc.get_func()->get_value(tparm->idx_mu, Yloc, mu);

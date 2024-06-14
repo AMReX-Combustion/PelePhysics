@@ -7,24 +7,24 @@
 namespace pele::physics {
 
 // Factory struct to allow either compile time or runtime
-// selection of BlackBoxFunc type
+// selection of BlackBoxFunction type
 template <typename FuncType>
-struct BlackBoxFuncFactory
+struct BlackBoxFunctionFactory
 {
 };
 
 template <unsigned int Dimension>
-struct BlackBoxFuncFactory<TabFunc<Dimension>>
+struct BlackBoxFunctionFactory<TabulatedFunction<Dimension>>
 {
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() = default;
+  BlackBoxFunctionFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const BBFuncData* mf_data)
-    : func(static_cast<const TabFuncData*>(mf_data))
+  BlackBoxFunctionFactory(const BlackBoxFunctionData* mf_data)
+    : func(static_cast<const TabulatedFunctionData*>(mf_data))
   {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
       mf_data->bbmodel == BlackBoxModel::TABLE,
@@ -33,24 +33,24 @@ struct BlackBoxFuncFactory<TabFunc<Dimension>>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc<Dimension>* get_func() { return &func; }
+  TabulatedFunction<Dimension>* get_func() { return &func; }
 
 private:
-  TabFunc<Dimension> func;
+  TabulatedFunction<Dimension> func;
 };
 
 template <>
-struct BlackBoxFuncFactory<NNFunc>
+struct BlackBoxFunctionFactory<NeuralNetFunction>
 {
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() = default;
+  BlackBoxFunctionFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const BBFuncData* mf_data)
-    : func(static_cast<const NNFuncData*>(mf_data))
+  BlackBoxFunctionFactory(const BlackBoxFunctionData* mf_data)
+    : func(static_cast<const NeuralNetFunctionData*>(mf_data))
   {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
       mf_data->bbmodel == BlackBoxModel::NEURAL_NET,
@@ -59,31 +59,31 @@ struct BlackBoxFuncFactory<NNFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  NNFunc* get_func() { return &func; }
+  NeuralNetFunction* get_func() { return &func; }
 
 private:
-  NNFunc func;
+  NeuralNetFunction func;
 };
 
 template <>
-struct BlackBoxFuncFactory<BlackBoxFunc>
+struct BlackBoxFunctionFactory<BlackBoxFunction>
 {
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory() = default;
+  BlackBoxFunctionFactory() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFuncFactory(const BBFuncData* mf_data)
+  BlackBoxFunctionFactory(const BlackBoxFunctionData* mf_data)
   {
     if (mf_data->bbmodel == BlackBoxModel::TABLE) {
-      const auto* tf_data = static_cast<const TabFuncData*>(mf_data);
+      const auto* tf_data = static_cast<const TabulatedFunctionData*>(mf_data);
       // Note: Table dimension not specified a priori, slight performance loss
-      func = new pele::physics::TabFunc<>(tf_data);
+      func = new pele::physics::TabulatedFunction<>(tf_data);
     } else if (mf_data->bbmodel == BlackBoxModel::NEURAL_NET) {
-      const auto* nnf_data = static_cast<const NNFuncData*>(mf_data);
-      func = new pele::physics::NNFunc(nnf_data);
+      const auto* nnf_data = static_cast<const NeuralNetFunctionData*>(mf_data);
+      func = new pele::physics::NeuralNetFunction(nnf_data);
     } else {
       amrex::Abort("invalid black box function type requested");
     }
@@ -91,14 +91,14 @@ struct BlackBoxFuncFactory<BlackBoxFunc>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  ~BlackBoxFuncFactory() { delete func; }
+  ~BlackBoxFunctionFactory() { delete func; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFunc* get_func() { return func; }
+  BlackBoxFunction* get_func() { return func; }
 
 private:
-  BlackBoxFunc* func;
+  BlackBoxFunction* func;
 };
 } // namespace pele::physics
 #endif

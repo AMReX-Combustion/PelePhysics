@@ -45,7 +45,7 @@ struct TransParm<EOSType, SutherlandTransport>
 template <typename EOSType>
 struct TransParm<EOSType, ManifoldTransport>
 {
-  const BBFuncData* manf_data;
+  const BlackBoxFunctionData* manf_data;
   int idx_rhoD{0};
   int idx_mu{0};
 };
@@ -175,7 +175,7 @@ struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
 template <typename EOSType>
 struct HostOnlyParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
 {
-  std::shared_ptr<PeleParamsGeneric<BBFuncData>> manfunc_par;
+  std::shared_ptr<PeleParamsGeneric<BlackBoxFunctionData>> manfunc_par;
   bool use_eos_manifold = true;
 };
 
@@ -200,7 +200,7 @@ struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
       std::string manifold_model;
       pp.get("model", manifold_model);
       parm_in->m_host_only_parm.manfunc_par =
-        PeleParamsGeneric<BBFuncData>::create(manifold_model);
+        PeleParamsGeneric<BlackBoxFunctionData>::create(manifold_model);
       parm_in->m_host_only_parm.manfunc_par->host_only_parm()
         .parm_parse_prefix = "manifold_transport";
       parm_in->m_host_only_parm.manfunc_par->initialize();

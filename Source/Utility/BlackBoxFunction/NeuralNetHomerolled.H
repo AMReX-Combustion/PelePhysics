@@ -2,29 +2,31 @@
 #define NEURAL_NET_HR_H
 
 #include "NeuralNetModelDef.H"
-#include "BlackBoxFunc.H"
+#include "BlackBoxFunction.H"
 
 namespace pele::physics {
 
-struct NNFuncData : BBFuncData
+struct NeuralNetFunctionData : BlackBoxFunctionData
 {
   amrex::Real* nnrdata;          // Real data representing the NNModel
   int* nnidata;                  // int data representing the NNModel
   char nn_filename[len_str + 1]; // Path to neural network file
 };
 
-class NNFuncParams
-  : public PeleParamsGeneric<
-      BBFuncData>::Register<NNFuncParams, PeleParams<NNFuncData, BBFuncData>>
+class NeuralNetFunctionParams
+  : public PeleParamsGeneric<BlackBoxFunctionData>::Register<
+      NeuralNetFunctionParams,
+      PeleParams<NeuralNetFunctionData, BlackBoxFunctionData>>
 {
 public:
   static std::string identifier() { return "NeuralNet"; }
 };
 
 template <>
-struct InitParm<NNFuncData, BBFuncData>
+struct InitParm<NeuralNetFunctionData, BlackBoxFunctionData>
 {
-  static void host_initialize(PeleParams<NNFuncData, BBFuncData>* parm_in)
+  static void host_initialize(
+    PeleParams<NeuralNetFunctionData, BlackBoxFunctionData>* parm_in)
   {
     parm_in->m_h_parm.bbmodel = BlackBoxModel::NEURAL_NET;
 
@@ -72,7 +74,8 @@ struct InitParm<NNFuncData, BBFuncData>
     }
   }
 
-  static void host_deallocate(PeleParams<NNFuncData, BBFuncData>* parm_in)
+  static void host_deallocate(
+    PeleParams<NeuralNetFunctionData, BlackBoxFunctionData>* parm_in)
   {
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnrdata);
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.nnidata);
@@ -80,7 +83,7 @@ struct InitParm<NNFuncData, BBFuncData>
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
   }
 
-  static void pack_model(NNModel& nnmodel, NNFuncData& m_h_nnf_data)
+  static void pack_model(NNModel& nnmodel, NeuralNetFunctionData& m_h_nnf_data)
   {
     // Get sizes of buffers
     int nreals, nints;
@@ -98,7 +101,7 @@ struct InitParm<NNFuncData, BBFuncData>
   }
 
   static void
-  read_metadata(std::string& info_filename, NNFuncData& m_h_nnf_data)
+  read_metadata(std::string& info_filename, NeuralNetFunctionData& m_h_nnf_data)
   {
     std::ifstream fi(info_filename, std::ios::in);
 
@@ -212,7 +215,7 @@ struct InitParm<NNFuncData, BBFuncData>
     }
   }
 
-  static void print(NNFuncData& m_h_nnf_data)
+  static void print(NeuralNetFunctionData& m_h_nnf_data)
   {
     amrex::Print() << std::endl;
     amrex::Print() << "NEURAL NETWORK MODEL" << std::endl;
@@ -242,16 +245,16 @@ struct InitParm<NNFuncData, BBFuncData>
   }
 };
 
-class NNFunc : public BlackBoxFunc
+class NeuralNetFunction : public BlackBoxFunction
 {
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  NNFunc() = default;
+  NeuralNetFunction() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  NNFunc(const NNFuncData* nnf_data_in)
+  NeuralNetFunction(const NeuralNetFunctionData* nnf_data_in)
     : nnf_data{nnf_data_in}, nnmodel(nnf_data_in->nnrdata, nnf_data_in->nnidata)
   {
   }
@@ -318,10 +321,10 @@ public:
 
 private:
   // Variables
-  const NNFuncData* nnf_data;
+  const NeuralNetFunctionData* nnf_data;
   NNModel nnmodel;
 
-}; // class NNFunc
+}; // class NeuralNetFunction
 
 } // namespace pele::physics
 

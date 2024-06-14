@@ -8,7 +8,7 @@ namespace pele::physics {
 
 enum class BlackBoxModel { TABLE = 0, NEURAL_NET = 1 };
 
-struct BBFuncData
+struct BlackBoxFunctionData
 {
   BlackBoxModel bbmodel;
   static constexpr int len_str = 64; // Length of strings in the char arrays
@@ -23,7 +23,7 @@ struct BBFuncData
 };
 
 template <>
-struct HostOnlyParm<BBFuncData>
+struct HostOnlyParm<BlackBoxFunctionData>
 {
   std::string parm_parse_prefix;
 };
@@ -31,7 +31,9 @@ struct HostOnlyParm<BBFuncData>
 AMREX_FORCE_INLINE
 int
 get_var_index(
-  const char* varname, const BBFuncData* manf_data, const bool require = true)
+  const char* varname,
+  const BlackBoxFunctionData* manf_data,
+  const bool require = true)
 {
   std::string var(varname);
   int ii;
@@ -50,7 +52,7 @@ get_var_index(
   return ii;
 }
 
-class BlackBoxFunc
+class BlackBoxFunction
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -76,9 +78,9 @@ public:
   virtual BlackBoxModel model() = 0;
 
   AMREX_GPU_HOST_DEVICE
-  virtual ~BlackBoxFunc() = default;
+  virtual ~BlackBoxFunction() = default;
 
-}; // class BlackBoxFunc
+}; // class BlackBoxFunction
 
 } // namespace pele::physics
 #endif

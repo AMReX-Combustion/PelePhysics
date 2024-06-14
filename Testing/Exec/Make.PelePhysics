@@ -129,7 +129,7 @@ include $(UTILITY_HOME)/Filter/Make.package
 include $(UTILITY_HOME)/PMF/Make.package
 include $(UTILITY_HOME)/PltFileManager/Make.package
 include $(UTILITY_HOME)/TurbInflow/Make.package
-include $(UTILITY_HOME)/BlackBoxFunc/Make.package
+include $(UTILITY_HOME)/BlackBoxFunction/Make.package
 
 Pdirs   := Base Boundary AmrCore
 

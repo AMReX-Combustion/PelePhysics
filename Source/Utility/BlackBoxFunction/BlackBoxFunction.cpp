@@ -9,6 +9,6 @@
 
 namespace pele::physics {
 // Need to instantiate these so Factory picks them up
-NNFuncParams dummy_1;
-TabFuncParams dummy_2;
+NeuralNetFunctionParams dummy_1;
+TabulatedFunctionParams dummy_2;
 } // namespace pele::physics

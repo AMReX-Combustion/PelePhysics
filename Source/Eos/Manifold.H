@@ -1,7 +1,7 @@
 #ifndef MANIFOLD_H
 #define MANIFOLD_H
 
-#include "BlackBoxFuncFactory.H"
+#include "BlackBoxFunctionFactory.H"
 
 namespace pele::physics::eos {
 
@@ -18,11 +18,11 @@ namespace pele::physics::eos {
 // Note right now Manifold EOS not supported for SYCL at all
 // Runtime selection is  significant performnce hit
 #if MANIFOLD_EOS_TYPE == 1
-using ManifoldFuncType = TabFunc<MANIFOLD_DIM>;
+using ManifoldFunctionType = TabulatedFunction<MANIFOLD_DIM>;
 #elif MANIFOLD_EOS_TYPE == 0
-using ManifoldFuncType = BlackBoxFunc;
+using ManifoldFunctionType = BlackBoxFunction;
 #elif MANIFOLD_EOS_TYPE == 2
-using ManifoldFuncType = NNFunc;
+using ManifoldFunctionType = NeuralNetFunction;
 #else
 static_assert(false, "Invalid MANIFOLD_EOS_TYPE specified");
 #endif
@@ -358,7 +358,7 @@ struct Manifold
 
 private:
   const EosParm<Manifold>* eosparm;
-  BlackBoxFuncFactory<ManifoldFuncType> manfunc;
+  BlackBoxFunctionFactory<ManifoldFunctionType> manfunc;
 };
 
 } // namespace pele::physics::eos

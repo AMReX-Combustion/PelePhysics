@@ -4,11 +4,11 @@
 #define MAXD_TABLE 5
 #include <iostream>
 #include <fstream>
-#include "BlackBoxFunc.H"
+#include "BlackBoxFunction.H"
 
 namespace pele::physics {
 
-struct TabFuncData : BBFuncData
+struct TabulatedFunctionData : BlackBoxFunctionData
 {
   int varSpacing;
   int* dimLengths;
@@ -17,18 +17,20 @@ struct TabFuncData : BBFuncData
   amrex::Real* values;
 };
 
-class TabFuncParams
-  : public PeleParamsGeneric<
-      BBFuncData>::Register<TabFuncParams, PeleParams<TabFuncData, BBFuncData>>
+class TabulatedFunctionParams
+  : public PeleParamsGeneric<BlackBoxFunctionData>::Register<
+      TabulatedFunctionParams,
+      PeleParams<TabulatedFunctionData, BlackBoxFunctionData>>
 {
 public:
   static std::string identifier() { return "Table"; }
 };
 
 template <>
-struct InitParm<TabFuncData, BBFuncData>
+struct InitParm<TabulatedFunctionData, BlackBoxFunctionData>
 {
-  static void host_initialize(PeleParams<TabFuncData, BBFuncData>* parm_in)
+  static void host_initialize(
+    PeleParams<TabulatedFunctionData, BlackBoxFunctionData>* parm_in)
   {
     std::string pp_pref =
       parm_in->m_host_only_parm.parm_parse_prefix.empty()
@@ -53,7 +55,8 @@ struct InitParm<TabFuncData, BBFuncData>
     }
   }
 
-  static void host_deallocate(PeleParams<TabFuncData, BBFuncData>* parm_in)
+  static void host_deallocate(
+    PeleParams<TabulatedFunctionData, BlackBoxFunctionData>* parm_in)
   {
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimLengths);
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimDataSpacing);
@@ -63,7 +66,8 @@ struct InitParm<TabFuncData, BBFuncData>
     amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.dimnames);
   }
 
-  static void read_table(const std::string& tablefile, TabFuncData& m_h_tf_data)
+  static void
+  read_table(const std::string& tablefile, TabulatedFunctionData& m_h_tf_data)
   {
     std::ifstream fi(tablefile, std::ios::binary | std::ios::in);
     if (!fi.is_open()) {
@@ -131,7 +135,7 @@ struct InitParm<TabFuncData, BBFuncData>
     fi.read(reinterpret_cast<char*>(m_h_tf_data.values), Ndata * real_size);
   }
 
-  static void print(const TabFuncData& m_h_tf_data)
+  static void print(const TabulatedFunctionData& m_h_tf_data)
   {
     amrex::Print() << "TABULATED FUNCTION" << std::endl;
     amrex::Print() << "Ndim: " << m_h_tf_data.Ndim << std::endl;
@@ -351,16 +355,16 @@ differentiate<0>(
 // slight performance benefit possible use template to specify dimensionality
 // default (0) allows arbitrary dimensionality
 template <unsigned int TableDim = 0>
-class TabFunc : public BlackBoxFunc
+class TabulatedFunction : public BlackBoxFunction
 {
 public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc() = default;
+  TabulatedFunction() = default;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabFunc(const TabFuncData* tf_data_in)
+  TabulatedFunction(const TabulatedFunctionData* tf_data_in)
   {
     tf_data = tf_data_in;
     AMREX_ALWAYS_ASSERT(
@@ -455,7 +459,7 @@ public:
   BlackBoxModel model() override { return BlackBoxModel::TABLE; }
 
 private:
-  const TabFuncData* tf_data;
+  const TabulatedFunctionData* tf_data;
   static constexpr int maxdim = TableDim != 0 ? TableDim : MAXD_TABLE;
 
   // -----------------------------------------------------------
