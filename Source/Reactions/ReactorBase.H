@@ -81,11 +81,20 @@ public:
 
   void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
+  void set_eos_parm(
+    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      eosparm)
+  {
+    m_eosparm = eosparm;
+  }
+
   ~ReactorBase() override = default;
 
 protected:
   int verbose{0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    m_eosparm;
 };
 } // namespace pele::physics::reactions
 #endif

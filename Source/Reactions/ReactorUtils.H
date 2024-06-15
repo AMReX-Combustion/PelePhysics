@@ -369,19 +369,17 @@ fKernelSpec(
   amrex::Real* ydot_d, // NOLINT(readability-non-const-parameter)
   const amrex::Real* rhoe_init,
   const amrex::Real* rhoesrc_ext,
-  const amrex::Real* rYs)
+  const amrex::Real* rYs,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm = nullptr)
 {
-  amrex::Real rho_pt = 0.0;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
+  amrex::Real rho_pt = 0.0, rho_pt_inv = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0}, massdens = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
-    massfrac[n] = yvec_d[vec_index<OrderType>(n, icell, ncells)];
-    rho_pt += massfrac[n];
+    massdens[n] = yvec_d[vec_index<OrderType>(n, icell, ncells)];
   }
-  const amrex::Real rho_pt_inv = 1.0 / rho_pt;
-
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    massfrac[n] *= rho_pt_inv;
-  }
+  eos.RY2RRinvY(massdens.data(), rho_pt, rho_pt_inv, massfrac.data());
 
   const amrex::Real nrg_pt =
     (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) * rho_pt_inv;
@@ -391,7 +389,6 @@ fKernelSpec(
 
   amrex::Real Cv_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
-  auto eos = pele::physics::PhysicsType::eos();
   if (reactor_type == ReactorTypes::e_reactor_type) {
     eos.REY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
     eos.RTY2Ei(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
