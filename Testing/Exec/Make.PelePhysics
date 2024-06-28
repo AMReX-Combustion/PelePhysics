@@ -54,6 +54,20 @@ endif
 ifeq ($(Eos_Model),$(filter $(Eos_Model),Soave-Redlich-Kwong))
    DEFINES += -DUSE_SRK_EOS
 endif
+ifeq ($(Eos_Model),$(filter $(Eos_Model),Manifold))
+   DEFINES += -DUSE_MANIFOLD_EOS
+   DEFINES += -DMANIFOLD_DIM=$(Manifold_Dim)
+   ifeq ($(Manifold_Type),Table)
+      DEFINES += -DMANIFOLD_EOS_TYPE=1
+   else
+      ifeq ($(Manifold_Type),Network)
+         DEFINES += -DMANIFOLD_EOS_TYPE=2
+      else
+         DEFINES += -DMANIFOLD_EOS_TYPE=0
+      endif
+   endif
+endif
+
 INCLUDE_LOCATIONS += $(EOS_HOME)
 VPATH_LOCATIONS   += $(EOS_HOME)
 ifeq ($(Eos_Model), Fuego)
@@ -103,6 +117,9 @@ endif
 ifeq ($(Transport_Model), Sutherland)
   DEFINES += -DUSE_SUTHERLAND_TRANSPORT
 endif
+ifeq ($(Transport_Model), Manifold)
+  DEFINES += -DUSE_MANIFOLD_TRANSPORT
+endif
 
 # Utilities
 INCLUDE_LOCATIONS += $(UTILITY_HOME)
@@ -112,6 +129,7 @@ include $(UTILITY_HOME)/Filter/Make.package
 include $(UTILITY_HOME)/PMF/Make.package
 include $(UTILITY_HOME)/PltFileManager/Make.package
 include $(UTILITY_HOME)/TurbInflow/Make.package
+include $(UTILITY_HOME)/BlackBoxFunction/Make.package
 
 Pdirs   := Base Boundary AmrCore
 

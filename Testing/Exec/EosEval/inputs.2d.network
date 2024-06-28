@@ -1,0 +1,15 @@
+# General
+gridsize = 32
+amr.do_plot = 0
+
+# Manifold
+manifold.model = NeuralNet
+manifold.network.filename = ../../../Support/CMLM/fgm_net.pnn
+manifold.network.info_filename =  ../../../Support/CMLM/fgm_net_info.txt
+manifold.network.v = 2
+manifold.network.cmlm_net = 1
+manifold.nominal_pressure_cgs = 1013250.0
+manifold.compute_temperature = 1
+manifold.has_mani_src = 1
+
+amrex.the_arena_is_managed = 0

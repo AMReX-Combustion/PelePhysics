@@ -44,6 +44,15 @@ else
   Transport_Model = Constant
 endif
 
+
+USE_MANIFOLD = FALSE
+ifeq ($(USE_MANIFOLD), TRUE)
+  Eos_Model       = Manifold
+  Chemistry_Model = Null
+  Transport_Model = Manifold
+endif
+Manifold_Dim = 2
+
 Bpack   := ./Make.package
 Blocs   := .
 

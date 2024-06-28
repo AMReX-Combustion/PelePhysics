@@ -15,6 +15,7 @@ USE_HIP    = FALSE
 
 # PelePhysics
 FUEGO_GAS  = TRUE
+USE_MANIFOLD = FALSE
 TINY_PROFILE = FALSE
 
 # define the location of the PELE_PHYSICS top directory
@@ -43,6 +44,13 @@ else
   Chemistry_Model = Null
   Transport_Model = Constant
 endif
+
+ifeq ($(USE_MANIFOLD), TRUE)
+  Eos_Model       = Manifold
+  Chemistry_Model = Null
+  Transport_Model = Manifold
+endif
+Manifold_Dim    = 2
 
 Bpack   := ./Make.package
 Blocs   := .

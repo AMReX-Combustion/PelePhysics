@@ -18,6 +18,38 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void RY2R(const amrex::Real RY[], amrex::Real& R)
+  {
+    R = 0.0;
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      R += RY[i];
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2RRinvY(
+    const amrex::Real RY[], amrex::Real& R, amrex::Real& Rinv, amrex::Real Y[])
+  {
+    RY2R(RY, R);
+    Rinv = 1.0 / R;
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      Y[i] = RY[i] * Rinv;
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RY2dRdY(
+    const amrex::Real& /*R*/,
+    const amrex::Real* /*Y[]*/,
+    amrex::Real* /*dRdY[]*/)
+  {
+    amrex::Error("RY2dRdY not applicable for Fuego EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real mw[NUM_SPECIES]) { get_mw(mw); }
 
   AMREX_GPU_HOST_DEVICE

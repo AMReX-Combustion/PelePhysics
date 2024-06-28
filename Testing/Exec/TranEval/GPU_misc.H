@@ -37,11 +37,20 @@ initialize_data(
     L[n] = phi[n] - plo[n];
     P[n] = L[n] / 4.0;
   }
+#ifdef USE_MANIFOLD_EOS
+  for (int n = 0; n < NUM_SPECIES - 1; n++) {
+    Y_lo[n] = 0.0;
+    Y_hi[n] = 1.0 / (NUM_SPECIES - 1);
+  }
+  Y_lo[NUM_SPECIES - 1] = 1.0;
+  Y_hi[NUM_SPECIES - 1] = 1.0;
+#else
   for (int n = 0; n < NUM_SPECIES; n++) {
     Y_lo[n] = 0.0;
     Y_hi[n] = 1.0 / NUM_SPECIES;
   }
   Y_lo[0] = 1.0;
+#endif
 
   // T, Yk, rho
 #if (AMREX_SPACEDIM == 1)
@@ -54,11 +63,5 @@ initialize_data(
   for (int n = 0; n < NUM_SPECIES; n++) {
     spec(i, j, k, n) = Y_lo[n] + (Y_hi[n] - Y_lo[n]) * (x - plo[0]) / L[0];
   }
-  // corr Yk
-  amrex::Real dummy = 0.0;
-  for (int n = 0; n < NUM_SPECIES - 1; n++) {
-    dummy = dummy + spec(i, j, k, n);
-  }
-  spec(i, j, k, NUM_SPECIES - 1) = 1.0 - dummy;
 }
 #endif
