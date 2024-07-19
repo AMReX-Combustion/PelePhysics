@@ -120,6 +120,13 @@ public:
       rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt, dt);
   }
 
+  void set_eos_parm(
+    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      eosparm) override
+  {
+    m_eosparm = eosparm;
+  }
+
 private:
   amrex::Real absTol{1e-10};
   int rk64_nsubsteps_guess{10};
