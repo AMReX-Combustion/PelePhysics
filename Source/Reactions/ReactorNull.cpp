@@ -61,7 +61,7 @@ ReactorNull::react(
     }
     amrex::Real energy_loc = renergy_loc / rho_loc;
     amrex::Real T_loc = T_in(i, j, k, 0);
-    auto eos = pele::physics::PhysicsType::eos(m_eosparm);
+    auto eos = pele::physics::PhysicsType::eos(leosparm);
     if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho_loc, energy_loc, Y_loc, T_loc);
     } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {

@@ -89,7 +89,8 @@ public:
   {
     auto eos = pele::physics::PhysicsType::eos(eosparm);
     if (eos.identifier() == "Manifold") {
-      amrex::Abort("Manifold EOS only supported with ReactorRK64 for now");
+      amrex::Abort(
+        "Manifold EOS only supported with ReactorRK64 and ReactorNull for now");
     } else {
       m_eosparm = eosparm;
     }
