@@ -541,7 +541,8 @@ private:
         1.0 / (tf_data->grids[idx + 1] - tf_data->grids[idx]);
       dxinv[dim] = dx_inv;
       amrex::Real alpha = (tf_data->grids[idx + 1] - interpdata[dim]) * dx_inv;
-      alphas[dim] = std::min(std::max(alpha, 0.0), 1.0);
+      alphas[dim] =
+        std::min(std::max(alpha, amrex::Real(0.0)), amrex::Real(1.0));
       start += dimLen;
     }
   }
