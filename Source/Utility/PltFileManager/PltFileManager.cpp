@@ -121,7 +121,7 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
     is >> Domains[lev];
   }
   GotoNextLine(is);
-  GotoNextLine(is); // Skip nsteps line
+  is >> m_nsteps;
   for (int lev = 0; lev < m_nlevels; ++lev) {
     GotoNextLine(is); // Skip dx line
   }
