@@ -122,7 +122,6 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
   }
   GotoNextLine(is);
   is >> m_nsteps;
-  // GotoNextLine(is); // Skip nsteps line
   for (int lev = 0; lev < m_nlevels; ++lev) {
     GotoNextLine(is); // Skip dx line
   }
