@@ -39,7 +39,7 @@ public:
 
   // constructor
   POneMulti(
-    MLMGParam const& mlmgpp,
+    MLMGParam const mlmgpp,
     amrex::Vector<amrex::Geometry>& geom,
     amrex::Vector<amrex::BoxArray>& grids,
     amrex::Vector<amrex::DistributionMapping>& dmap,
@@ -50,7 +50,7 @@ public:
     amrex::Vector<amrex::MultiFab> const& robin_a,
     amrex::Vector<amrex::MultiFab> const& robin_b,
     amrex::Vector<amrex::MultiFab> const& robin_f)
-    : mlmgpp_(mlmgpp),
+    : mlmgpp_(std::move(mlmgpp)),
       geom_(geom),
       grids_(grids),
       dmap_(dmap),
