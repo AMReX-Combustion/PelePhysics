@@ -1,6 +1,8 @@
 [submodule "Submodules/sundials"]
 	path = Submodules/sundials
 	url = https://github.com/LLNL/sundials.git
+	shallow = true
 [submodule "Submodules/amrex"]
 	path = Submodules/amrex
 	url = https://github.com/AMReX-Codes/amrex.git
+	shallow = true
