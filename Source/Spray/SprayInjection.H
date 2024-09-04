@@ -296,7 +296,7 @@ SprayParticleContainer::uniformSprayInit(
           nparticles.pop_back();
         }
       } // if (which == MyProc)
-    }   // for (int which ...
+    } // for (int which ...
     for (auto& kv : host_particles) {
       auto grid = kv.first.first;
       auto tile = kv.first.second;

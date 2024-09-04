@@ -170,7 +170,7 @@ updateBreakupTAB(
         yn = ynp;
         ydotn = ydotnp;
       } // if (tbv < subdt)
-    }   // if (Wer + A <= 1)
+    } // if (Wer + A <= 1)
     if (curt + subdt > dt) {
       subdt = dt - curt;
     }
