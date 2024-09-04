@@ -62,7 +62,7 @@ public:
       bcoef_(bcoef),
       robin_a_(robin_a),
       robin_b_(robin_b),
-      robin_f_(robin_f){};
+      robin_f_(robin_f) {};
 
   void solve()
   {
