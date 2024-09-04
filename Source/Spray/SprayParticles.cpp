@@ -480,8 +480,8 @@ SprayParticleContainer::updateParticles(
               p.id() = -1;
             }
           } // End of subcycle loop
-        }   // End of p.id() > 0 check
-      });   // End of loop over particles
+        } // End of p.id() > 0 check
+      }); // End of loop over particles
       if (make_new_drops) {
         Gpu::copy(
           Gpu::deviceToHost, N_SB_d.begin(), N_SB_d.end(), N_SB_h.begin());

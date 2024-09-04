@@ -210,8 +210,7 @@ DiagPDF::writePDFToFile(
     widths[0] = std::max(width, static_cast<int>(m_fieldName.length()) + 1);
     widths[1] = std::max(width, static_cast<int>(m_fieldName.length()) + 5);
     pdfFile << std::setw(widths[0]) << m_fieldName << " "
-            << std::setw(widths[1]) << m_fieldName + "_PDF"
-            << "\n";
+            << std::setw(widths[1]) << m_fieldName + "_PDF" << "\n";
 
     for (int i{0}; i < a_pdf.size(); ++i) {
       pdfFile << std::setw(widths[0]) << std::setprecision(prec)
