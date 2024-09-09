@@ -31,7 +31,12 @@ public:
   //
   // Destructor
   //
-  ~SootModel()
+  ~SootModel() {}
+
+  //
+  // Deallocate memory
+  //
+  void cleanup()
   {
     delete m_sootData;
     delete m_sootReact;
