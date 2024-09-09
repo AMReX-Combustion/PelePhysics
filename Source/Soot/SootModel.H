@@ -31,12 +31,12 @@ public:
   //
   // Destructor
   //
-  ~SootModel() {}
+  ~SootModel() = default;
 
   //
   // Deallocate memory
   //
-  void cleanup()
+  void cleanup() // NOLINT(readability-make-member-function-const)
   {
     delete m_sootData;
     delete m_sootReact;
