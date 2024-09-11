@@ -140,7 +140,7 @@ ReactorArkode::react(
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Array4<int> const& /*mask*/,
+  amrex::Array4<int> const& mask,
   amrex::Real& dt_react,
   amrex::Real& time
 #ifdef AMREX_USE_GPU
@@ -246,7 +246,7 @@ ReactorArkode::react(
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
   long int* d_nfe = v_nfe.data();
   unflatten(
-    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, mask, yvec_d,
     user_data->rhoe_init, d_nfe, dt_react);
 
   N_VDestroy(y);

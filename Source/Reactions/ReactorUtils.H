@@ -356,6 +356,37 @@ public:
         dt);
     });
   }
+
+  void unflatten(
+    const amrex::Box& box,
+    const int ncells,
+    const int reactor_type,
+    const bool clean_init_massfrac,
+    amrex::Array4<amrex::Real> const& rhoY,
+    amrex::Array4<amrex::Real> const& temperature,
+    amrex::Array4<amrex::Real> const& rhoE,
+    amrex::Array4<amrex::Real> const& frcEExt,
+    amrex::Array4<amrex::Real> const& FC_in,
+    amrex::Array4<int> const& mask,
+    amrex::Real* y_vect,
+    amrex::Real* vect_energy,
+    long int* FCunt,
+    amrex::Real dt)
+  {
+    BL_PROFILE("Pele::unflatten()");
+    const auto len = amrex::length(box);
+    const auto lo = amrex::lbound(box);
+    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+      const int icell =
+        (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
+      if (mask(i, j, k) != -1) {
+        box_unflatten<OrderType>(
+          icell, i, j, k, ncells, reactor_type, clean_init_massfrac, rhoY,
+          temperature, rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt[icell],
+          dt);
+      }
+    });
+  }
 };
 
 template <typename OrderType>

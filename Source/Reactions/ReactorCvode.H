@@ -146,6 +146,25 @@ public:
       rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt, dt);
   }
 
+  void unflatten(
+    const amrex::Box& box,
+    const int ncells,
+    amrex::Array4<amrex::Real> const& rhoY,
+    amrex::Array4<amrex::Real> const& temperature,
+    amrex::Array4<amrex::Real> const& rhoE,
+    amrex::Array4<amrex::Real> const& frcEExt,
+    amrex::Array4<amrex::Real> const& FC_in,
+    amrex::Array4<int> const& mask,
+    amrex::Real* y_vect,
+    amrex::Real* vect_energy,
+    long int* FCunt,
+    amrex::Real dt)
+  {
+    flatten_ops.unflatten(
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, temperature,
+      rhoE, frcEExt, FC_in, mask, y_vect, vect_energy, FCunt, dt);
+  }
+
 private:
   void checkCvodeOptions(
     const std::string& a_solve_type_str,
