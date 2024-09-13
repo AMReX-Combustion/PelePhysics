@@ -69,6 +69,13 @@ main(int argc, char* argv[])
       use_typ_vals, ncells, max_grid_size, t0, equiv_ratio, press,
       outputFolderHR);
 
+    // initialize eosparm (only really needed for manifold EOS)
+    pele::physics::PeleParams<
+      pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>
+      eos_parms;
+    eos_parms.initialize();
+    auto const* leosparm = eos_parms.device_parm();
+
     // Assign Fuel ID
     int fuel_idx;
     getFuelID(fuel_name, fuel_idx);
@@ -78,6 +85,7 @@ main(int argc, char* argv[])
     std::unique_ptr<pele::physics::reactions::ReactorBase> reactor =
       pele::physics::reactions::ReactorBase::create(chem_integrator);
     reactor->init(ode_iE, ode_ncells);
+    reactor->set_eos_parm(leosparm); // only needed for manifold
     BL_PROFILE_VAR_STOP(reactInfo);
 
     // Initialize Geometry
@@ -99,7 +107,7 @@ main(int argc, char* argv[])
     initializeData(
       num_grow, mf, rY_source_ext, mfE, rY_source_energy_ext, t0, equiv_ratio,
       press, fctCount, dummyMask, finest_level, geoms, grids, dmaps, fuel_idx,
-      ode_iE);
+      ode_iE, leosparm);
 
     // ~~~~ Reac
     amrex::Print() << " \n STARTING THE ADVANCE \n";

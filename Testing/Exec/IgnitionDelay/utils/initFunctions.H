@@ -121,23 +121,14 @@ parseInput(
 void
 getFuelID(std::string& fuel_name, int& fuel_idx)
 {
-
-  /* Mixture info */
-  fuel_idx = -1;
-  if (fuel_name == "H2") {
-    fuel_idx = H2_ID;
-#ifdef CH4_ID
-  } else if (fuel_name == "CH4") {
-    fuel_idx = CH4_ID;
-#endif
-#ifdef NC12H26_ID
-  } else if (fuel_name == "NC12H26") {
-    fuel_idx = NC12H26_ID;
-#endif
-#ifdef IC8H18_ID
-  } else if (fuel_name == "IC8H18") {
-    fuel_idx = IC8H18_ID;
-#endif
+  amrex::Vector<std::string> spec_names;
+  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+    spec_names);
+  fuel_idx = std::find(spec_names.begin(), spec_names.end(), fuel_name) -
+             spec_names.begin();
+  if (fuel_idx >= spec_names.size()) {
+    amrex::Abort(
+      "Requeted fuel species (" + fuel_name + ") not found in mechanism");
   }
 }
 
@@ -213,7 +204,9 @@ initializeData(
   amrex::Vector<amrex::BoxArray>& grids,
   amrex::Vector<amrex::DistributionMapping>& dmaps,
   int& fuel_idx,
-  int& ode_iE)
+  int& ode_iE,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm)
 {
   BL_PROFILE_VAR("main::initialize_data()", InitData);
   // -----------------------------------------------------------------------------
@@ -254,7 +247,7 @@ initializeData(
         box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
           initialize_data(
             i, j, k, fuel_idx, ode_iE, rY_a, rYs_a, E_a, rE_a, t0, equiv_ratio,
-            p, geomdata);
+            p, geomdata, eosparm);
         });
     }
   }
