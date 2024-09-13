@@ -387,8 +387,9 @@ fKernelSpec(
   amrex::Real temp_pt =
     yvec_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)];
 
-  amrex::Real Cv_pt = 0.0;
+  amrex::Real Cv_pt = 1.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
+#ifndef USE_MANIFOLD_EOS
   if (reactor_type == ReactorTypes::e_reactor_type) {
     eos.REY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
     eos.RTY2Ei(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
@@ -400,6 +401,7 @@ fKernelSpec(
   } else {
     amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
+#endif
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
   eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
