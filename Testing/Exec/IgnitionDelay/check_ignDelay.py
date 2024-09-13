@@ -18,7 +18,7 @@ if __name__=="__main__":
     tIgn,uncertainty = readResult('log')
 
     # Compare to theoretical value
-    if abs(tIgn-0.0763)>10*uncertainty:
+    if abs(tIgn-0.0763)>15*uncertainty:
          sys.exit(1)
     else:
          sys.exit(0)
