@@ -271,7 +271,11 @@ jobs:
               pip install numpy
               ccache -z
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
-              bash exec_ignDelay.sh
+              bash exec_ignDelay.sh firstpass
+              python check_ignDelay.py
+              if [ $? -ne 0 ]; then exit 1; fi; \
+              make -j ${{env.NPROCS}} Eos_Model=Manifold Manifold_Dim=1 Chemistry_Model=Null TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
+              bash exec_ignDelay.sh manifold
               python check_ignDelay.py
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
