@@ -166,6 +166,8 @@ main(int argc, char* argv[])
     amrex::ParallelDescriptor::ReduceRealMax(
       run_time, amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::Print() << " \n >> React::main() " << run_time << "\n\n";
+
+    eos_parms.deallocate();
   }
 #ifdef AMREX_USE_GPU
   amrex::sundials::Finalize();
