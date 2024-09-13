@@ -274,6 +274,8 @@ jobs:
               bash exec_ignDelay.sh firstpass
               python check_ignDelay.py
               if [ $? -ne 0 ]; then exit 1; fi; \
+              rm log PPreaction.txt inputs/input.0d_refine
+              make realclean
               make -j ${{env.NPROCS}} Eos_Model=Manifold Manifold_Dim=1 Chemistry_Model=Null TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               bash exec_ignDelay.sh manifold
               python check_ignDelay.py
