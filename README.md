@@ -1,5 +1,14 @@
 # PelePhysics
 
+<div align="left">
+[Overview](#Overview)
+[Getting Started](#getting-started)
+[Acknowledgment](#Acknowledgment)
+[Citation](#Citation)
+[Getting help](#Getting help)
+[CEPTR: Chemistry Evaluation for Pele Through Recasting](#CEPTR)
+</div>
+
 [![AMReX Badge](https://img.shields.io/static/v1?label=%22powered%20by%22&message=%22AMReX%22&color=%22blue%22)](https://amrex-codes.github.io/amrex/)
 [![Exascale Computing Project](https://img.shields.io/badge/supported%20by-ECP-blue)](https://www.exascaleproject.org/research-project/combustion-pele/)
 
@@ -50,8 +59,11 @@ imperative.
 
 ## Citation
 
-To cite PelePhysics as a whole and its use as part of the broader Pele suite, please use the following
-[SIAM Parallel Processing article](https://doi.org/10.1137/1.9781611977967.2):
+To cite PelePhysics as a whole and its use as part of the broader Pele
+suite, please use the following [SIAM Parallel
+Processing](https://doi.org/10.1137/1.9781611977967.2) and [Combustion
+and Flame](https://doi.org/10.1016/j.combustflame.2024.113740)
+articles:
 
 ```
 @article{PeleSoftware,
@@ -67,6 +79,18 @@ To cite PelePhysics as a whole and its use as part of the broader Pele suite, pl
   year = {2024},
   publisher = {Proceedings of the 2024 SIAM Conference on Parallel Processing for Scientific Computing}
 }
+
+@article{Hassanaly2024,
+  author = {Malik Hassanaly and Nicholas T. Wimer and Anne Felden and Lucas Esclapez and Julia Ream and Marc T. {Henry de Frahan} and Jon Rood and Marc Day},
+  title = {Symbolic construction of the chemical Jacobian of quasi-steady state (QSS) chemistries for Exascale computing platforms},
+  journal = {Combustion and Flame},
+  volume = {270},
+  pages = {113740},
+  year = {2024},
+  issn = {0010-2180},
+  doi = {https://doi.org/10.1016/j.combustflame.2024.113740},
+  url = {https://www.sciencedirect.com/science/article/pii/S0010218024004498},
+}
 ```
 
 To cite the multi-physics (soot, spray, radiation) capabilities in PelePhysics that were imported from
@@ -81,7 +105,7 @@ PeleMP and PeleRad, please use the following [Journal of Fluids Engineering arti
 }
 ```
 
-## Getting help, contributing
+## Getting help
 
 Do you have a question ? Found an issue ? Please use the [GitHub Discussions](https://github.com/AMReX-Combustion/PelePhysics/discussions) to engage
 with the development team or open a new [GitHub issue](https://github.com/AMReX-Combustion/PelePhysics/issues) to report a bug. The development team
@@ -93,7 +117,7 @@ New contributions to *PelePhysics* are welcome ! Contributing Guidelines are pro
 
 ## CEPTR
 
-This `PelePhysics` repository contains the CEPTR source code generation tool in order to support the inclusion of chemical models specified in the Cantera yaml format. CETPR derives from FUEGO, which was originally created by Michael Aivazis at CalTech, and donated to CCSE in 2001.  Originally, FUEGO was part of a larger Python-based set of workflow tools Michael developed for managing and publishing simulation-based studies.  FUEGO itself was developed as a drop-in replacement for the CHEMKIN library, and provided "hand-coded" replacement routines for evaluation of EOS thermodynamic functions that are considerably more efficient than their CHEMKIN counterparts.  Since 2001, CCSE has continued to modify FUEGO independently for its own use so that the current version here bears little resemblance to Michael's original code, or its intentions. CEPTR has adapted FUEGO code to use the Cantera yaml format and is now the preferred way of generating mechanism files.
+This `PelePhysics` repository contains the CEPTR source code generation tool in order to support the inclusion of chemical models specified in the Cantera yaml format. CETPR derives from FUEGO, which was originally created by Michael Aivazis at CalTech, and donated to CCSE in 2001.  Originally, FUEGO was part of a larger Python-based set of workflow tools Michael developed for managing and publishing simulation-based studies.  FUEGO itself was developed as a drop-in replacement for the CHEMKIN library, and provided "hand-coded" replacement routines for evaluation of EOS thermodynamic functions that are considerably more efficient than their CHEMKIN counterparts.  Since 2001, CCSE has continued to modify FUEGO independently for its own use so that the current version here bears little resemblance to Michael's original code, or its intentions. CEPTR has adapted FUEGO code to use the Cantera yaml format and is now the preferred way of generating mechanism files. If using CEPTR, please cite the above `Hassanaly2024` journal article.
 
 Typically, Cantera *mechanisms* (combustion models) are transmitted via a set of yaml files, which provide data for
 * *Species* - definition of chemical species, as composed by fundamental elements
