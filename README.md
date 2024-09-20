@@ -1,14 +1,5 @@
 # PelePhysics
 
-<div align="left">
-[Overview](#Overview)
-[Getting Started](#getting-started)
-[Acknowledgment](#Acknowledgment)
-[Citation](#Citation)
-[Getting help](#Getting help)
-[CEPTR: Chemistry Evaluation for Pele Through Recasting](#CEPTR)
-</div>
-
 [![AMReX Badge](https://img.shields.io/static/v1?label=%22powered%20by%22&message=%22AMReX%22&color=%22blue%22)](https://amrex-codes.github.io/amrex/)
 [![Exascale Computing Project](https://img.shields.io/badge/supported%20by-ECP-blue)](https://www.exascaleproject.org/research-project/combustion-pele/)
 
