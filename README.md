@@ -15,7 +15,7 @@ PelePhysics contains C++ source code for the following physics and other modules
 * *Reactions*: Routines for substepped integration of stiff chemical systems, including with CVODE
 * *Spray*: Lagrangian spray droplet library, formerly part of [PeleMP](https://github.com/AMReX-Combustion/PeleMP)
 * *Soot*: An implementation of the Hybrid Method of Moments soot model, formerly part of [PeleMP](https://github.com/AMReX-Combustion/PeleMP)
-* *Radiation*: Raidative heat transfer model based on the spherical harmonics method, formerly [PeleRad](https://github.com/AMReX-Combustion/PeleRad)
+* *Radiation*: Radiative heat transfer model based on the spherical harmonics method, formerly [PeleRad](https://github.com/AMReX-Combustion/PeleRad)
 * *Utility*: Several handy modules for data management across other Pele codes
 
 Additionally, PelePhysics contains a variety of stand-alone tools to aid in Pele simulation workflows, found in the `Support` directory.
