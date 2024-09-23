@@ -190,6 +190,8 @@ main(int argc, char* argv[])
       amrex::WriteSingleLevelPlotfile(
         outfile, VarPlt, plt_VarsName, geom, 0.0, 0);
     }
+
+    eos_parms.deallocate();
   }
 
   amrex::Finalize();
