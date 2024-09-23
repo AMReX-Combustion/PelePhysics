@@ -41,7 +41,7 @@ def writeNewInput(oldInput,newInput,dt,ndt):
 
 def writeResult(filename,temp,press,phi,tign,uncertainty):
     with open(filename,'w+') as f:
-        logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+        logMessage = f"T = {temp:.3g} K , P = {press/1013250.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
         f.write(logMessage)
 
 def readMultiColFile(filename,headerSize=0):
