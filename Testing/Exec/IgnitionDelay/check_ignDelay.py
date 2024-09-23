@@ -14,11 +14,19 @@ def readResult(filename):
 
 
 if __name__=="__main__":
+    # Two arguments: intended correct value and uncertainty factor
+    if len(sys.argv) > 1:
+        correct_value = float(sys.argv[1])
+        uncertainty_factor = float(sys.argv[2])
+    else:
+        correct_value = 0.0763
+        uncertainty_factor = 10.0
+
     # Read ignition delay output
     tIgn,uncertainty = readResult('log')
 
     # Compare to theoretical value
-    if abs(tIgn-0.0763)>15*uncertainty:
+    if abs(tIgn-correct_value)>uncertainty_factor*uncertainty:
          sys.exit(1)
     else:
          sys.exit(0)
