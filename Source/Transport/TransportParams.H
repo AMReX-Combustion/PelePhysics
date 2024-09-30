@@ -43,6 +43,14 @@ struct TransParm<EOSType, SutherlandTransport>
 };
 
 template <typename EOSType>
+struct TransParm<EOSType, ManifoldTransport>
+{
+  const BlackBoxFunctionData* manf_data;
+  int idx_rhoD{0};
+  int idx_mu{0};
+};
+
+template <typename EOSType>
 struct TransParm<EOSType, SimpleTransport>
 {
   amrex::GpuArray<amrex::Real, NUM_SPECIES> wt = {0.0};
@@ -52,14 +60,14 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES> dip = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> pol = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> zrot = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitmu = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT> fitmu = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT> fitlam = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES * NUM_FIT> fitdbin = {
     0.0};
   bool use_soret = false;
   int numLite = 3;
   amrex::GpuArray<int, 3> liteSpec = {0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 3> fittdrat = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT * 3> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
 };
 
@@ -74,22 +82,22 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES> pol = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> zrot = {0.0};
 
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitmu = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT> fitmu = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT> fitlam = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES * NUM_FIT> fitdbin = {
     0.0};
   bool use_soret = false;
   int numLite = 10;
   amrex::GpuArray<int, 10> liteSpec = {0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT* 10> fittdrat = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_FIT * 10> fittdrat = {0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
   amrex::GpuArray<amrex::Real, 10 * 4> Afac = {0.0};
   amrex::GpuArray<amrex::Real, 7 * 4> Bfac = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtT2ij = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtEpsilonij = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtMWij = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtKappaij = {0.0};
-  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_SPECIES>
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES> sqrtT2ij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES> sqrtEpsilonij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES> sqrtMWij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES> sqrtKappaij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES * NUM_SPECIES * NUM_SPECIES>
     Upsilonijk = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Kappai = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
@@ -161,6 +169,59 @@ struct InitParm<transport::TransParm<EOSType, transport::SutherlandTransport>>
     PeleParams<transport::TransParm<EOSType, transport::SutherlandTransport>>*
     /*parm_in*/)
   {
+  }
+};
+
+template <typename EOSType>
+struct HostOnlyParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
+{
+  std::shared_ptr<PeleParamsGeneric<BlackBoxFunctionData>> manfunc_par;
+  bool use_eos_manifold = true;
+};
+
+template <typename EOSType>
+struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
+{
+  static void host_initialize(
+    PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>*
+      parm_in)
+  {
+    amrex::ParmParse pp("manifold_transport");
+    pp.query("use_eos_manifold", parm_in->m_host_only_parm.use_eos_manifold);
+
+    if (
+      parm_in->m_host_only_parm.manfunc_par == nullptr &&
+      parm_in->m_host_only_parm.use_eos_manifold) {
+      amrex::Abort(
+        "For manifold transport tabulated or neural network data must "
+        "be provided to transport parameters by setting the host_only_parm"
+        "unless you set manifold_transport.use_eos_manifold = false");
+    } else if (!parm_in->m_host_only_parm.use_eos_manifold) {
+      std::string manifold_model;
+      pp.get("model", manifold_model);
+      parm_in->m_host_only_parm.manfunc_par =
+        PeleParamsGeneric<BlackBoxFunctionData>::create(manifold_model);
+      parm_in->m_host_only_parm.manfunc_par->host_only_parm()
+        .parm_parse_prefix = "manifold_transport";
+      parm_in->m_host_only_parm.manfunc_par->initialize();
+    }
+
+    transport::TransParm<EOSType, transport::ManifoldTransport>* tparm =
+      &(parm_in->m_h_parm);
+    tparm->manf_data = parm_in->m_host_only_parm.manfunc_par->device_parm();
+    tparm->idx_rhoD = get_var_index(
+      "DIFF", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+    tparm->idx_mu = get_var_index(
+      "VISC", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+  }
+
+  static void host_deallocate(
+    PeleParams<transport::TransParm<EOSType, transport::ManifoldTransport>>*
+      parm_in)
+  {
+    if (!parm_in->m_host_only_parm.use_eos_manifold) {
+      parm_in->m_host_only_parm.manfunc_par->deallocate();
+    }
   }
 };
 

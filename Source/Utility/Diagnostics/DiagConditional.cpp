@@ -340,13 +340,11 @@ DiagConditional::writeAverageDataToFile(
       widths[3 + 2 * f] =
         std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[3 + 2 * f])
-               << m_fieldNames[f] + "_Avg"
-               << " ";
+               << m_fieldNames[f] + "_Avg" << " ";
       widths[4 + 2 * f] =
         std::max(width, static_cast<int>(m_fieldNames[f].length()) + 7);
       condFile << std::left << std::setw(widths[4 + 2 * f])
-               << m_fieldNames[f] + "_StdDev"
-               << " ";
+               << m_fieldNames[f] + "_StdDev" << " ";
     }
     condFile << "\n";
 
@@ -408,8 +406,7 @@ DiagConditional::writeIntegralDataToFile(
       widths[1 + f] =
         std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
-               << m_fieldNames[f] + "_Int"
-               << " ";
+               << m_fieldNames[f] + "_Int" << " ";
     }
     condFile << "\n";
 
@@ -459,8 +456,7 @@ DiagConditional::writeSumDataToFile(
       widths[1 + f] =
         std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
-               << m_fieldNames[f] + "_Sum"
-               << " ";
+               << m_fieldNames[f] + "_Sum" << " ";
     }
     condFile << "\n";
 

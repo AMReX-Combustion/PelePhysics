@@ -24,11 +24,11 @@ def parseInputFile(input_filename):
     return inpt
 
 def writeNewInput(oldInput,newInput,dt,ndt):
-    
-    with open(oldInput,'r+') as f: 
+
+    with open(oldInput,'r+') as f:
         lines = f.readlines()
 
-    with open(newInput,'w+') as f: 
+    with open(newInput,'w+') as f:
         for line in lines:
             if line.startswith('ode.dt'):
                 f.write('ode.dt = %.10f' % (dt))
@@ -40,8 +40,8 @@ def writeNewInput(oldInput,newInput,dt,ndt):
                 f.write(line)
 
 def writeResult(filename,temp,press,phi,tign,uncertainty):
-    with open(filename,'w+') as f: 
-        logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+    with open(filename,'w+') as f:
+        logMessage = f"T = {temp:.3g} K , P = {press/1013250.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
         f.write(logMessage)
 
 def readMultiColFile(filename,headerSize=0):
@@ -72,8 +72,8 @@ if __name__=="__main__":
     group2.add_argument('-v','--verbose', action='store_true', help='verbose')
     group2.add_argument('-q','--quiet', action='store_true', help='quiet')
     args = parser.parse_args()
-    
-    
+
+
     # Read Pele input file
     inpt = parseInputFile(args.inputFile)
     dt = float(inpt['ode.dt'])
@@ -81,24 +81,24 @@ if __name__=="__main__":
     press = float(inpt['hr.press'])
     temp = float(inpt['hr.t0'])
     phi = float(inpt['hr.equiv_ratio'])
-    
-    
+
+
     # Process result
     filePP = 'PPreaction.txt'
     A1 = readMultiColFile(filePP)
     ignitionDelayPP = (dt/ndt)*np.amin(np.argwhere(A1[:,1]>(A1[0,1]+400)))
-    
-    
+
+
     if args.estimate:
-        if args.verbose: 
-            logMessage = f"Rough estimate: T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+        if args.verbose:
+            logMessage = f"Rough estimate: T = {temp:.3g} K , P = {press/1013250.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
             print(logMessage)
         # Write new input file
         writeNewInput(args.inputFile,'inputs/inputs.0d_refine',ignitionDelayPP*1.1,ndt*2)
-    
-    if args.refine: 
-        logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+
+    if args.refine:
+        logMessage = f"T = {temp:.3g} K , P = {press/1013250.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
         print(logMessage)
-        writeResult('log',temp,press,phi,ignitionDelayPP,dt/ndt) 
+        writeResult('log',temp,press,phi,ignitionDelayPP,dt/ndt)
         print("Equivalence ratio calculation assumed you are using Ndodecane")
         print("Change GPU_misc.H if you are not")

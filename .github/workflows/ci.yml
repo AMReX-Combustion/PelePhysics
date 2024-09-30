@@ -18,12 +18,12 @@ jobs:
       - name: Clone
         uses: actions/checkout@v4
       - name: Check formatting
-        uses: DoozyX/clang-format-lint-action@v0.16.2
+        uses: DoozyX/clang-format-lint-action@v0.18.2
         with:
           source: './Source ./Testing ./Mechanisms'
           exclude: '.'
           extensions: 'H,h,cpp'
-          clangFormatVersion: 16
+          clangFormatVersion: 18
 
   Codespell:
     needs: Formatting
@@ -180,11 +180,18 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          for TYPE in Constant Simple Sutherland; do \
+          for TYPE in Constant Simple Sutherland Manifold; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            if [ "${TYPE}" == 'Manifold' ]; then EOSMODEL=Manifold; else EOSMODEL=Fuego; fi; \
+            if [ "${TYPE}" == 'Manifold' ]; then CHEMISTRY=Null; else CHEMISTRY=air; fi; \
+            if [ "${TYPE}" != 'Manifold' ] || [ "${{matrix.comp}}" != 'sycl' ]; then \
+              make -j ${{env.NPROCS}} Eos_Model=${EOSMODEL} Chemistry_Model=${CHEMISTRY} Transport_Model=${TYPE} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            fi; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
+              if [ "${TYPE}" == 'Manifold' ]; then \
+                 ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_Network
+              fi; \
             fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
@@ -201,13 +208,19 @@ jobs:
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           ccache -z
-          for TYPE in Fuego GammaLaw Soave-Redlich-Kwong; do \
+          for TYPE in Fuego GammaLaw Soave-Redlich-Kwong Manifold; do \
             if [ "${TYPE}" == 'Fuego' ] || [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             if [ "${TYPE}" == 'Soave-Redlich-Kwong' ]; then TRANSPORT=Simple; else TRANSPORT=Constant; fi; \
+            if [ "${TYPE}" == 'Manifold' ]; then INPUTFILE=inputs.2d.table2d; else INPUTFILE=inputs.2d; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            if [ "${TYPE}" != 'Manifold' ] || [ "${{matrix.comp}}" != 'sycl' ]; then \
+              make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} Transport_Model=${TRANSPORT} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+            fi; \
             if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
-              ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; \
+              ./Pele2d.${{matrix.comp}}.TPROF.ex ${INPUTFILE}; \
+              if [ "${TYPE}" == 'Manifold' ]; then \
+                 ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d.network
+              fi; \
             fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
@@ -258,8 +271,14 @@ jobs:
               pip install numpy
               ccache -z
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
-              bash exec_ignDelay.sh
+              bash exec_ignDelay.sh firstpass
               python check_ignDelay.py
+              if [ $? -ne 0 ]; then exit 1; fi; \
+              rm log PPreaction.txt inputs/inputs.0d_refine
+              make realclean
+              make -j ${{env.NPROCS}} Eos_Model=Manifold Transport_Model=Manifold Manifold_Dim=1 Chemistry_Model=Null TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
+              bash exec_ignDelay.sh manifold
+              python check_ignDelay.py 0.0766 10
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
           make realclean

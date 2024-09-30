@@ -32,6 +32,7 @@ public:
   amrex::Vector<std::string> getVariableList() { return m_vars; }
   int getNlev() const { return m_nlevels; }
   amrex::Real getTime() const { return m_time; }
+  int getNsteps() const { return m_nsteps; }
   const amrex::BoxArray& getGrid(int a_lev) { return m_grids[a_lev]; }
   const amrex::Geometry& getGeom(int a_lev) { return m_geoms[a_lev]; }
   int getRefRatio(int a_lev) { return m_refRatio[a_lev]; }
@@ -43,6 +44,7 @@ protected:
   amrex::Vector<std::string> m_vars; // list of variable in the plotfile
   int m_nlevels{0};                  // number of levels
   amrex::Real m_time{0.0};           // Simulation time
+  int m_nsteps;                      // Number of steps
   bool m_dataLoaded{false}; // Flag to check is the data has been read in
 
   // Geometry, grid and data containers

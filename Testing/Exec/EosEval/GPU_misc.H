@@ -18,7 +18,9 @@ initialize_data(
   amrex::Array4<amrex::Real> const& temp,
   amrex::Array4<amrex::Real> const& rho,
   amrex::Array4<amrex::Real> const& energy,
-  amrex::GeometryData const& geomdata) noexcept
+  amrex::GeometryData const& geomdata,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
   const amrex::Real* plo = geomdata.ProbLo();
   const amrex::Real* phi = geomdata.ProbHi();
@@ -40,11 +42,20 @@ initialize_data(
     L[n] = phi[n] - plo[n];
     P[n] = L[n] / 4.0;
   }
+#ifdef USE_MANIFOLD_EOS
+  for (int n = 0; n < NUM_SPECIES - 1; n++) {
+    Y_lo[n] = 0.0;
+    Y_hi[n] = 1.0 / (NUM_SPECIES - 1);
+  }
+  Y_lo[NUM_SPECIES - 1] = 1.0;
+  Y_hi[NUM_SPECIES - 1] = 1.0;
+#else
   for (int n = 0; n < NUM_SPECIES; n++) {
     Y_lo[n] = 0.0;
     Y_hi[n] = 1.0 / NUM_SPECIES;
   }
   Y_lo[0] = 1.0;
+#endif
 
   // T, Yk, rho
 #if (AMREX_SPACEDIM == 1)
@@ -57,22 +68,18 @@ initialize_data(
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf(i, j, k, n) = Y_lo[n] + (Y_hi[n] - Y_lo[n]) * (x - plo[0]) / L[0];
   }
-  // corr Yk
-  amrex::Real dummy = 0.0;
-  for (int n = 0; n < NUM_SPECIES - 1; n++) {
-    dummy = dummy + mf(i, j, k, n);
-  }
-  mf(i, j, k, NUM_SPECIES - 1) = 1.0 - dummy;
+
   // compute real E + perturb it for future tests
-  auto eos = pele::physics::PhysicsType::eos();
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf_pt[n] = mf(i, j, k, n);
   }
+
+#ifndef USE_MANIFOLD_EOS
   eos.RTY2E(rho(i, j, k), temp(i, j, k), mf_pt.arr, energy(i, j, k));
-#if (AMREX_SPACEDIM == 1)
-  energy(i, j, k) = energy(i, j, k);
-#else
+#endif
+#if (AMREX_SPACEDIM != 1)
   energy(i, j, k) += denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
 #endif
 }
@@ -87,7 +94,9 @@ get_cp(
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
-  amrex::Array4<amrex::Real> const& cp) noexcept
+  amrex::Array4<amrex::Real> const& cp,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
@@ -95,30 +104,36 @@ get_cp(
     mf_pt[n] = mf(i, j, k, n);
   }
 
-  auto eos = pele::physics::PhysicsType::eos();
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
   eos.RTY2Cp(rho(i, j, k), temp(i, j, k), mf_pt.arr, cp(i, j, k));
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-get_cv(
+get_wdot(
   int i,
   int j,
   int k,
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<const amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
-  amrex::Array4<amrex::Real> const& cv) noexcept
+  amrex::Array4<amrex::Real> const& wdot,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt, rxn_pt;
   for (int n = 0; n < NUM_SPECIES; n++) {
     mf_pt[n] = mf(i, j, k, n);
   }
 
-  auto eos = pele::physics::PhysicsType::eos();
-  eos.RTY2Cv(rho(i, j, k), temp(i, j, k), mf_pt.arr, cv(i, j, k));
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
+  eos.RTY2WDOT(rho(i, j, k), temp(i, j, k), mf_pt.arr, rxn_pt.arr);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    wdot(i, j, k, n) = rxn_pt[n];
+  }
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -131,7 +146,9 @@ get_T_from_EY(
   amrex::Array4<const amrex::Real> const& mf,
   amrex::Array4<amrex::Real> const& temp,
   amrex::Array4<const amrex::Real> const& rho,
-  amrex::Array4<const amrex::Real> const& energy) noexcept
+  amrex::Array4<const amrex::Real> const& energy,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mf_pt;
@@ -139,7 +156,7 @@ get_T_from_EY(
     mf_pt[n] = mf(i, j, k, n);
   }
 
-  auto eos = pele::physics::PhysicsType::eos();
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
   eos.REY2T(rho(i, j, k), energy(i, j, k), mf_pt.arr, temp(i, j, k));
 }
 

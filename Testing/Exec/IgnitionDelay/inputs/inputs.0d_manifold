@@ -1,0 +1,29 @@
+ncells = 1 1 1
+max_grid_size  = 1
+fuel_name = X0 # NOT USED
+reactFormat = Array4
+#reactFormat = 1dArray
+chem_integrator = "ReactorRK64"
+
+ode.dt = 1
+ode.ndt = 2000
+ode.reactor_type  = 2 # 1=full e, 2=full h
+ode.verbose = 1
+ode.use_typ_vals = 0
+
+manifold.model = Table
+manifold.table.filename = ../../../Support/CMLM/autoignition.ctb
+manifold.table.v = 2
+manifold.nominal_pressure_cgs = 5066250.0
+manifold.compute_temperature = 1
+manifold.has_mani_src = 1
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
+
+# 1013250.0 * patm
+hr.press = 5066250.0
+hr.t0 = 600
+hr.equiv_ratio = 7.928571428571429
+hr.outputFolderHR = ./

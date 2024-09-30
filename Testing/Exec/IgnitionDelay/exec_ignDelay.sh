@@ -18,12 +18,10 @@ else
 
     echo INFO: Using $execname to compute ignition delay
     # Rough estimate of ignition time
-    $execname inputs/inputs.0d_firstpass
-    python computeIgnitionDelay.py -v -est -f inputs/inputs.0d_firstpass
-    
+    $execname inputs/inputs.0d_$1
+    python computeIgnitionDelay.py -v -est -f inputs/inputs.0d_$1
+
     # Refined estimate of ignition time
     $execname inputs/inputs.0d_refine
     python computeIgnitionDelay.py -ref -f inputs/inputs.0d_refine
 fi
-
-

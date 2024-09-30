@@ -40,6 +40,7 @@ ReactorNull::react(
 #endif
 
   int captured_reactor_type = m_reactor_type;
+  const auto* leosparm = m_eosparm;
 
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     amrex::Real renergy_loc =
@@ -60,7 +61,7 @@ ReactorNull::react(
     }
     amrex::Real energy_loc = renergy_loc / rho_loc;
     amrex::Real T_loc = T_in(i, j, k, 0);
-    auto eos = pele::physics::PhysicsType::eos();
+    auto eos = pele::physics::PhysicsType::eos(leosparm);
     if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho_loc, energy_loc, Y_loc, T_loc);
     } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {

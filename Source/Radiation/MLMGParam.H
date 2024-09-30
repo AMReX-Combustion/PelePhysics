@@ -57,7 +57,7 @@ public:
   }
 
   AMREX_GPU_HOST
-  MLMGParam(const amrex::ParmParse& pp) : pp_(pp)
+  MLMGParam(const amrex::ParmParse pp) : pp_(std::move(pp))
   {
     pp_.query("kppath", kppath_);
     pp_.query("verbose", verbose_);
