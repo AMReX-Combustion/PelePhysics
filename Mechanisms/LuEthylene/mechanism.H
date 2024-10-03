@@ -49,6 +49,7 @@
 #define NUM_GAS_ELEMENTS 5    // Elements in the homogeneous phase
 #define NUM_GAS_SPECIES 32    // Species in the homogeneous phase
 #define NUM_GAS_REACTIONS 206 // Reactions in the homogeneous phase
+#define NUM_QSS_GAS_SPECIES 0 // QSS species in the homogeneous phase
 
 #define SITE_DENSITY 0.000000E+00 // mol/cm^2
 
