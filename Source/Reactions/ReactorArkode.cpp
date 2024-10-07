@@ -429,8 +429,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   int flag;
 
   if (use_erkstep != 0) {
-    flag = ERKStepGetARKodes(arkode_mem, &nst);
-    utils::check_flag(&flag, "ERKStepGetARKodes", 1);
+    flag = ARKodeGetNumSteps(arkode_mem, &nst);
+    utils::check_flag(&flag, "ARKodeGetNumSteps", 1);
     flag = ERKStepGetARKodeAttempts(arkode_mem, &nst_a);
     utils::check_flag(&flag, "ERKStepGetARKodeAttempts", 1);
     flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
