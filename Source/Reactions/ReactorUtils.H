@@ -147,9 +147,9 @@ set_sundials_solver_tols(
   if (solvername == "cvode") {
     flag = CVodeSVtolerances(sundials_mem, relTol, atol);
   } else if (solvername == "arkstep") {
-    flag = ARKStepSVtolerances(sundials_mem, relTol, atol);
+    flag = ARKodeSVtolerances(sundials_mem, relTol, atol);
   } else if (solvername == "erkstep") {
-    flag = ERKStepSVtolerances(sundials_mem, relTol, atol);
+    flag = ARKodeSVtolerances(sundials_mem, relTol, atol);
   } else {
     amrex::Abort("setSundialsSolverTols not implemented for this solver type");
   }
