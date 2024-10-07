@@ -478,10 +478,10 @@ struct GammaLaw
   AMREX_GPU_HOST_DEVICE
   GammaLaw(const EosParm<GammaLaw>* eparm)
   {
-    AMREX_ASSERT_WITH_MESSAGE(
-      eparm != nullptr,
-      "GammaLaw Eos initialized with eosparm, but eosparm was not initialized");
-    gamma = eparm->gamma;
+    // This should eventually error out if eparm is nullptr
+    // But for now we require that eparm->gamma=gamma anyway,
+    // and this supports some potential legacy use cases for now
+    gamma = (eparm != nullptr) ? eparm->gamma : gamma;
   }
 
   template <class... Args>
