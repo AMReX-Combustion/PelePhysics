@@ -10,6 +10,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
   n_tp = ppr.countval("turbinflows");
   amrex::Vector<std::string> tp_list;
   if (n_tp > 0) {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+      AMREX_SPACEDIM == 3, "TurbInflow::init(): TurbInflows are only supported "
+                           "for 3 dimensional simulations for now");
     tp.resize(n_tp);
     tp_list.resize(n_tp);
     for (int n = 0; n < n_tp; n++) {
