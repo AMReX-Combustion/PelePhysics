@@ -428,23 +428,16 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   long int nst, nst_a, netf, nfe, nfi;
   int flag;
 
+  flag = ARKodeGetNumSteps(arkode_mem, &nst);
+  utils::check_flag(&flag, "ARKodeGetNumSteps", 1);
+  flag = ARKodeGetNumStepAttempts(arkode_mem, &nst_a);
+  utils::check_flag(&flag, "ARKodeGetNumStepAttempts", 1);
+  flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
+  utils::check_flag(&flag, "ARKodeGetNumErrTestFails", 1);
   if (use_erkstep != 0) {
-    flag = ARKodeGetNumSteps(arkode_mem, &nst);
-    utils::check_flag(&flag, "ARKodeGetNumSteps", 1);
-    flag = ERKStepGetARKodeAttempts(arkode_mem, &nst_a);
-    utils::check_flag(&flag, "ERKStepGetARKodeAttempts", 1);
-    flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
-    utils::check_flag(&flag, "ARKodeGetNumErrTestFails", 1);
     flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
     utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
-
   } else {
-    flag = ARKodeGetNumSteps(arkode_mem, &nst);
-    utils::check_flag(&flag, "ARKodeGetNumSteps", 1);
-    flag = ARKodeGetNumStepAttempts(arkode_mem, &nst_a);
-    utils::check_flag(&flag, "ARKodeGetNumStepAttempts", 1);
-    flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
-    utils::check_flag(&flag, "ARKodeGetNumErrTestFails", 1);
     flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
   }
