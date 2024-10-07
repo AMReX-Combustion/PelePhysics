@@ -17,11 +17,11 @@ struct TurbParm
   int verbose = 1;
 
   // Geometry of the turbulent data
-  amrex::GpuArray<int, AMREX_SPACEDIM> npboxcells = {{0}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> pboxlo = {{0.0}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = {{0.0}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxinv = {{0.0}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> pboxsize = {{0.0}};
+  amrex::GpuArray<int, 3> npboxcells = {{0}};
+  amrex::GpuArray<amrex::Real, 3> pboxlo = {{0.0}};
+  amrex::GpuArray<amrex::Real, 3> dx = {{0.0}};
+  amrex::GpuArray<amrex::Real, 3> dxinv = {{0.0}};
+  amrex::GpuArray<amrex::Real, 3> pboxsize = {{0.0}};
   int dir;                       // Direction where to use this TurbParm
   amrex::Orientation::Side side; // Side on which to use this TurbParm
   amrex::Real time_shift =

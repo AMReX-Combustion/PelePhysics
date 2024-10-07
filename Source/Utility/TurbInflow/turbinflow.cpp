@@ -242,8 +242,8 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
   }
 
   amrex::Box dstBox = a_tp.sdata->box();
-  dstBox.setSmall(2, iplane);
-  dstBox.setBig(2, iplane);
+  dstBox.setSmall(AMREX_SPACEDIM - 1, iplane);
+  dstBox.setBig(AMREX_SPACEDIM - 1, iplane);
 
   for (int n = 0; n < AMREX_SPACEDIM; ++n) {
 
