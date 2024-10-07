@@ -13,6 +13,9 @@ struct TurbParm
   // Turbulence data file
   std::string m_turb_file;
 
+  // Verbosity
+  int verbose = 1;
+
   // Geometry of the turbulent data
   amrex::GpuArray<int, AMREX_SPACEDIM> npboxcells = {{0}};
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> pboxlo = {{0.0}};
