@@ -23,7 +23,9 @@ initialize_data(
   amrex::Real t0,
   amrex::Real equiv_ratio,
   amrex::Real p,
-  amrex::GeometryData const& geomdata) noexcept
+  amrex::GeometryData const& geomdata,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm) noexcept
 {
   const amrex::Real* plo = geomdata.ProbLo();
   const amrex::Real* phi = geomdata.ProbHi();
@@ -50,18 +52,21 @@ initialize_data(
     P[n] = L[n] / 4.0;
   }
   // Y
+  auto eos = pele::physics::PhysicsType::eos(eosparm);
+
+#ifndef USE_MANIFOLD_EOS
   for (int n = 0; n < NUM_SPECIES; n++) {
     X[n] = 0.0;
   }
-  // X[O2_ID]   = 0.7;
-  // X[fuel_id] = 0.3;
+  // Assumes n-Dodecane
   X[O2_ID] = 1.0 / (equiv_ratio / 18.5 + 1 + 0.79 / 0.21);
   X[N2_ID] = 0.79 * X[O2_ID] / 0.21;
   X[fuel_id] = 1.0 - X[O2_ID] - X[N2_ID];
-
-  auto eos = pele::physics::PhysicsType::eos();
-
   eos.X2Y(&X[0], &Y[0]);
+#else
+  Y[0] = 0.0; // Progress variable
+  Y[1] = 1.0; // Density
+#endif
 
   // T
   temp = t0;
@@ -69,7 +74,8 @@ initialize_data(
   // std::sin(2.0*pi*y/P[1]);
   if (energy_type == 1) {
     // get rho and E
-    eos.PYT2RE(pressure, &Y[0], temp, density, energy);
+    eos.PYT2R(pressure, &Y[0], temp, density);
+    eos.RTY2E(density, temp, &Y[0], energy);
   } else {
     // get rho and H
     eos.PYT2R(pressure, &Y[0], temp, density);

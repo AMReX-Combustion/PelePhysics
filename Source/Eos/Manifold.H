@@ -92,7 +92,7 @@ struct Manifold
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
-    amrex::Real* /*E*/)
+    amrex::Real /*E*/)
   {
     amrex::Error("RTY2E does not have significance for Manifold EOS");
   }

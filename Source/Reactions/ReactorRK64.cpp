@@ -64,6 +64,7 @@ ReactorRK64::react(
   const int captured_nsubsteps_min = rk64_nsubsteps_min;
   const int captured_nsubsteps_max = rk64_nsubsteps_max;
   const amrex::Real captured_abstol = absTol;
+  const auto* leosparm = m_eosparm;
   RK64Params rkp;
 
   amrex::Gpu::DeviceVector<int> v_nsteps(ncells, 0);
@@ -103,7 +104,7 @@ ReactorRK64::react(
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, ydot,
-          rhoe_init, rhoesrc_ext, rYsrc_ext);
+          rhoe_init, rhoesrc_ext, rYsrc_ext, leosparm);
 
         for (int sp = 0; sp < neq; sp++) {
           error_reg[sp] += rkp.err_rk64[stage] * dt_rk * ydot[sp];
@@ -131,9 +132,9 @@ ReactorRK64::react(
           rkp.betaerr_rk64 * pow((captured_abstol / max_err), rkp.exp2_rk64);
         dt_rk = amrex::max<amrex::Real>(dt_rk_min, dt_rk * change_factor);
       }
+      // Don't overstep the integration time
+      dt_rk = amrex::min<amrex::Real>(dt_rk, time_out - current_time);
     }
-    // Don't overstep the integration time
-    dt_rk = amrex::min<amrex::Real>(dt_rk, time_out - current_time);
     d_nsteps[icell] = nsteps;
     // copy data back
     for (int sp = 0; sp < neq; sp++) {
@@ -192,6 +193,7 @@ ReactorRK64::react(
   const int captured_nsubsteps_min = rk64_nsubsteps_min;
   const int captured_nsubsteps_max = rk64_nsubsteps_max;
   const amrex::Real captured_abstol = absTol;
+  const auto* leosparm = m_eosparm;
   RK64Params rkp;
 
   int ncells = static_cast<int>(box.numPts());
@@ -210,21 +212,18 @@ ReactorRK64::react(
     amrex::Real current_time = time_init;
     const int neq = (NUM_SPECIES + 1);
 
-    amrex::Real rho = 0.0;
+    auto eos = pele::physics::PhysicsType::eos(leosparm);
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       soln_reg[sp] = rY_in(i, j, k, sp);
       carryover_reg[sp] = soln_reg[sp];
-      rho += rY_in(i, j, k, sp);
     }
-    amrex::Real rho_inv = 1.0 / rho;
+    amrex::Real rho = 0.0, rho_inv = 0.0;
     amrex::Real mass_frac[NUM_SPECIES] = {0.0};
-    for (int sp = 0; sp < NUM_SPECIES; sp++) {
-      mass_frac[sp] = rY_in(i, j, k, sp) * rho_inv;
-    }
+    eos.RY2RRinvY(soln_reg, rho, rho_inv, mass_frac);
+
     amrex::Real temp = T_in(i, j, k, 0);
 
     amrex::Real Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
-    auto eos = pele::physics::PhysicsType::eos();
     if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho, Enrg_loc, mass_frac, temp);
     } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
@@ -255,7 +254,7 @@ ReactorRK64::react(
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, ydot,
-          rhoe_init, rhoesrc_ext, rYsrc_ext);
+          rhoe_init, rhoesrc_ext, rYsrc_ext, leosparm);
 
         for (int sp = 0; sp < neq; sp++) {
           error_reg[sp] += rkp.err_rk64[stage] * dt_rk * ydot[sp];
@@ -290,15 +289,11 @@ ReactorRK64::react(
     // copy data back
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     d_nsteps[icell] = nsteps;
-    rho = 0.0;
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       rY_in(i, j, k, sp) = soln_reg[sp];
-      rho += rY_in(i, j, k, sp);
     }
-    rho_inv = 1.0 / rho;
-    for (int sp = 0; sp < NUM_SPECIES; sp++) {
-      mass_frac[sp] = rY_in(i, j, k, sp) * rho_inv;
-    }
+    eos.RY2RRinvY(soln_reg, rho, rho_inv, mass_frac);
+
     temp = soln_reg[NUM_SPECIES];
     rEner_in(i, j, k, 0) = rhoe_init[0] + dt_react * rhoesrc_ext[0];
     Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
