@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -6,20 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CVODE implementation in PelePhysics &mdash; PelePhysics 2022.10 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=7ab3649f" />
       <link rel="stylesheet" type="text/css" href="_static/mywrap.css?v=d9e67d65" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=bf7b0411"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=bf7b0411"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -38,9 +36,6 @@
           <a href="index.html" class="icon icon-home">
             PelePhysics
           </a>
-              <div class="version">
-                2022.10
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -316,7 +311,8 @@ The domain considered is a <span class="math notranslate nohighlight">\(2x1024x2
 </tbody>
 </table>
 <figure class="align-center" id="id1">
-<span id="fig-errh2"></span><a class="reference external image-reference" href="./Visualization/Case_ReactEvalCvode.001.png"><img alt="The ReactEval_C test case" src="_images/Case_ReactEvalCvode.001.png" style="width: 50%;" /></a>
+<span id="fig-errh2"></span><a class="reference external image-reference" href="./Visualization/Case_ReactEvalCvode.001.png"><img alt="The ReactEval_C test case" src="_images/Case_ReactEvalCvode.001.png" style="width: 50%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">1 </span><span class="caption-text">The ReactEval_C test case</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
 </figcaption>
@@ -423,7 +419,8 @@ By default, the number of cells integrated simultaneously by one CVODE instance 
 <p>It took 52.61s to integrate the 4096 cells of this box, with 4 MPI processes and no OMP process.
 The resulting temperature evolution for all cells in the y-direction is displayed in Fig. <a class="reference internal" href="#fig-reacevalcv"><span class="std std-numref">2</span></a>.</p>
 <figure class="align-center" id="fig-reactevalcv">
-<span id="fig-reacevalcv"></span><a class="reference internal image-reference" href="_images/ReactEvalCv.001.png"><img alt="Evolution of temperature in the 2x1024x2 example box, using a CV reactor and a dense direct solve, and computed with the DRM mechanism. Black: $t=0$, red: $t=1e-05s$" src="_images/ReactEvalCv.001.png" style="width: 100%;" /></a>
+<span id="fig-reacevalcv"></span><a class="reference internal image-reference" href="_images/ReactEvalCv.001.png"><img alt="Evolution of temperature in the 2x1024x2 example box, using a CV reactor and a dense direct solve, and computed with the DRM mechanism. Black: $t=0$, red: $t=1e-05s$" src="_images/ReactEvalCv.001.png" style="width: 100%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">2 </span><span class="caption-text">Evolution of temperature in the 2x1024x2 example box, using a CV reactor and a dense direct solve, and computed with the DRM mechanism. Black: t=0s, red: t=1e-05s</span><a class="headerlink" href="#fig-reactevalcv" title="Link to this image"></a></p>
 </figcaption>
@@ -715,7 +712,8 @@ Dense + <cite>hack</cite></p></th>
 <h2>Grouping cells together<a class="headerlink" href="#grouping-cells-together" title="Link to this heading"></a></h2>
 <p>To take full advantage of the GPU power, many intensive operations of similar nature should be performed in parallel. In <cite>PelePhysics</cite>, this is achieved by grouping many cells together, and integrating each one in separate threads within one CVODE instance. Indeed, the flow of operations to solve one set of ODEs is very similar from one cell to the next, and one could expect limited thread divergence from this approach. Fig. <a class="reference internal" href="#fig-groupingcells"><span class="std std-numref">3</span></a> summarizes the idea. Note that the Jacobian of the group of cells is block-sparse, and any chosen integration method should take advantage of this.</p>
 <figure class="align-center" id="id10">
-<span id="fig-groupingcells"></span><a class="reference internal image-reference" href="_images/GroupingOfCells.png"><img alt="Grouping of cells" src="_images/GroupingOfCells.png" style="width: 40%;" /></a>
+<span id="fig-groupingcells"></span><a class="reference internal image-reference" href="_images/GroupingOfCells.png"><img alt="Grouping of cells" src="_images/GroupingOfCells.png" style="width: 40%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">3 </span><span class="caption-text">n cells are solved together in one CVODE instance. The big-matrix is block-sparse.</span><a class="headerlink" href="#id10" title="Link to this image"></a></p>
 </figcaption>

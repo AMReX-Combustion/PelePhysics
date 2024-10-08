@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -6,20 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analytically reduced chemistry via quasi-steady state (QSS) assumption in PelePhysics &mdash; PelePhysics 2022.10 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=7ab3649f" />
       <link rel="stylesheet" type="text/css" href="_static/mywrap.css?v=d9e67d65" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=bf7b0411"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=bf7b0411"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -38,9 +36,6 @@
           <a href="index.html" class="icon icon-home">
             PelePhysics
           </a>
-              <div class="version">
-                2022.10
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -126,7 +121,8 @@ If the set of QSS species is judiciously chosen, macroscopic quantities of inter
 <span id="sec-invertalgebraicsystem"></span><h2>From <cite>non-QSS species</cite> to <cite>QSS species</cite> concentration<a class="headerlink" href="#from-non-qss-species-to-qss-species-concentration" title="Link to this heading"></a></h2>
 <p>The set of algebraic equations that result from the QSS assumption does not always easily result in a simple algebraic relation between a given <cite>QSS species</cite> and all the <cite>non-QSS species</cite>. To do this, it is necessary to apply some form of linearization to the reactions involved <a class="reference internal" href="#sys2006" id="id2"><span>[SYS2006]</span></a>. In addition, even in the presence of linear relations, <cite>QSS species</cite> may depend on one another. The following figure shows the relation graph between the <cite>QSS species</cite> of a reduced <span class="math notranslate nohighlight">\(N-C_{12}H_{26}\)</span> mechanism <a class="reference internal" href="#nd2018" id="id3"><span>[ND2018]</span></a>. The arrows indicate that a <cite>QSS species</cite> concentration depends on another <cite>QSS species</cite> concentration. It can also be seen that dependency groups exist among the <cite>QSS species</cite>. In <cite>PelePhysics</cite> it is possible to deduce invert analytically the linear system of equations given an arbitrary relation graph.</p>
 <figure class="align-center" id="fig-drg">
-<span id="fig-depgraph"></span><a class="reference external image-reference" href="./Visualization/directedGraphQSS.png"><img alt="Directed graph of dependencies between QSS species" src="_images/directedGraphQSS.png" style="width: 90%;" /></a>
+<span id="fig-depgraph"></span><a class="reference external image-reference" href="./Visualization/directedGraphQSS.png"><img alt="Directed graph of dependencies between QSS species" src="_images/directedGraphQSS.png" style="width: 90%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">4 </span><span class="caption-text">Relation graph between QSS species for N-dodecane mechanism <a class="reference internal" href="#nd2018" id="id4"><span>[ND2018]</span></a></span><a class="headerlink" href="#fig-drg" title="Link to this image"></a></p>
 </figcaption>
@@ -136,7 +132,8 @@ If the set of QSS species is judiciously chosen, macroscopic quantities of inter
 <span id="sec-linearizing"></span><h2>Linearizing the set of equations<a class="headerlink" href="#linearizing-the-set-of-equations" title="Link to this heading"></a></h2>
 <p>In general, the QSS assumption results in a set of equations that are non-linearly coupled making it difficult to invert the system. The non-linear relations can arise if two or more <cite>QSS-species</cite> are on the same side of an elementary reaction, or if the stoichiometric coefficient of a <cite>QSS-species</cite> is not equal to one. Below, the relation graph between the QSS species plotted above is expanded with dots that denote reactions that relate <cite>QSS-species</cite>. Dots or species are colored in red if they are involved in a quadratic coupling.</p>
 <figure class="align-center" id="fig-quad">
-<span id="fig-quadgraph"></span><a class="reference external image-reference" href="./Visualization/quadGraphQSS.png"><img alt="Graph of dependencies between QSS species augmented with reactions." src="_images/quadGraphQSS.png" style="width: 90%;" /></a>
+<span id="fig-quadgraph"></span><a class="reference external image-reference" href="./Visualization/quadGraphQSS.png"><img alt="Graph of dependencies between QSS species augmented with reactions." src="_images/quadGraphQSS.png" style="width: 90%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">5 </span><span class="caption-text">Graph of dependencies between QSS species for N-dodecane mechanism <a class="reference internal" href="#nd2018" id="id5"><span>[ND2018]</span></a>, augmented with reactions. Red species or dots denote species and reactions involved in quadratic coupling.</span><a class="headerlink" href="#fig-quad" title="Link to this image"></a></p>
 </figcaption>
@@ -148,7 +145,8 @@ If the set of QSS species is judiciously chosen, macroscopic quantities of inter
 <span id="sec-validation"></span><h2>Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h2>
 <p>The three linearization methods are validated against the skeletal <span class="math notranslate nohighlight">\(N-C_{12}H_{26}\)</span> <a class="reference internal" href="#skel2017" id="id6"><span>[SKEL2017]</span></a>. Using 343 0D calculation that span the range of applicability of the QSS assumption (<span class="math notranslate nohighlight">\(\phi = [0.5, 2.0], p=[1atm, 50atm], T=[800K, 1600K]\)</span>), the ignition delay is computed using the skeletal mechanism (SK53) and each one of the three linearization methods for the QSS mechanism (RedXX). The left plot shows the correlation between the ignition delay from the skeletal mechanism and the reduced version. The statistics of the relative error between the reduced and the skeletal mechanism are shown in the title of that plot. The right plot shows the ignition delay values at high-pressure conditions only.</p>
 <figure class="align-center" id="id7">
-<span id="fig-val"></span><a class="reference external image-reference" href="./Visualization/validationQSS.png"><img alt="Validation of linearization method" src="_images/validationQSS.png" style="width: 90%;" /></a>
+<span id="fig-val"></span><a class="reference external image-reference" href="./Visualization/validationQSS.png"><img alt="Validation of linearization method" src="_images/validationQSS.png" style="width: 90%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">6 </span><span class="caption-text">Left: Scatter plot of the ignition delay measured with the QSS mechanism linearized and the skeletal mechanism.
 Right: Ignition delays measured for the skeletal mechanism and QSS mechanism linearized at high-pressure conditions.
@@ -161,7 +159,8 @@ Top: Method 1. Middle: Method 2. Bottom: Method 3.</span><a class="headerlink" h
 <p>In several computational experiments, using analytical Jacobians was found to provide better stability or efficiency compared with finite difference approximation or numerical inversion (see also <a class="reference internal" href="#fig-qss-integrator">fig:qss_integrator</a>).
 Compared with non-QSS mechanisms, analytical Jacobians need to reflect the dependence of each QSS species on non-QSS species. However, QSS species may depend on an ensemble of other non-QSS species and therefore ensemble of reactions. Therefore, analytical Jacobian cannot be constructed by sequentially adding the contribution of each reaction. This significantly complicates the analytical jacobian generation. Failure to include the dependence of QSS species with respect to non-QSS species typically results in wrong ignition profiles, unless very small timesteps are used, as seen in figure <a class="reference internal" href="#fig-qss-aj">fig:qss_aj</a>.</p>
 <figure class="align-center" id="fig-qss-constant">
-<span id="fig-qss-aj"></span><a class="reference external image-reference" href="./Visualization/aj_0D_QSS.png"><img alt="" src="_images/aj_0D_QSS.png" style="width: 90%;" /></a>
+<span id="fig-qss-aj"></span><a class="reference external image-reference" href="./Visualization/aj_0D_QSS.png"><img alt="" src="_images/aj_0D_QSS.png" style="width: 90%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">7 </span><span class="caption-text">Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3.
 Left: Results without inclusion of dependence of QSS species with respect to non-QSS species.
@@ -195,7 +194,8 @@ Right: Result with inclusion of dependence of QSS species with respect to non-QS
 </ul>
 <p>The analytical Jacobian for QSS mechanisms is typically more accurate and stable than GMRES, and is on par with the finite difference Jacobian of <cite>CVODE</cite> as seen in <a class="reference internal" href="#fig-qss-integrator">fig:qss_integrator</a></p>
 <figure class="align-center" id="id9">
-<span id="fig-qss-integrator"></span><a class="reference external image-reference" href="./Visualization/qss_integrator.png"><img alt="" src="_images/qss_integrator.png" style="width: 70%;" /></a>
+<span id="fig-qss-integrator"></span><a class="reference external image-reference" href="./Visualization/qss_integrator.png"><img alt="" src="_images/qss_integrator.png" style="width: 70%;" />
+</a>
 <figcaption>
 <p><span class="caption-number">8 </span><span class="caption-text">Temperature of a 0D reactor at constant pressure for NC12H26. Initial temperature is 600K, initial molar fraction of O2 is 0.7 and initial molar fraction of fuel is 0.3. Results are shown for finite difference jacobian (red thick line), analytical jacobian (black line) and GMRES (crosses) using the same tolerances.</span><a class="headerlink" href="#id9" title="Link to this image"></a></p>
 </figcaption>
