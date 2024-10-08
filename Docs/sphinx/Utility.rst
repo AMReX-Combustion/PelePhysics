@@ -77,6 +77,7 @@ provided below. ::
   turbinflow.low.turb_conv_vel  = 5.                      # Velocity to move through the 3rd dimension to simulate time evolution
   turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time
   turbinflow.low.time_offset    = 0.0                     # Offset in time for reading through the 3rd dimension
+  turbinflow.low.verbose        = 0                       # verbosity level
 
   turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
   turbinflow.high.dir            = 1
@@ -87,6 +88,7 @@ provided below. ::
   turbinflow.high.turb_conv_vel  = 5.
   turbinflow.high.turb_nplane    = 32
   turbinflow.high.time_offset    = 0.0006
+  turbinflow.high.verbose        = 2
 
 Plt File Management
 ===================

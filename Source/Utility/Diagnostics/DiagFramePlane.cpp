@@ -40,6 +40,10 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
 {
   DiagBase::init(a_prefix, a_diagName);
 
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    AMREX_SPACEDIM == 3, "DiagFramePlane::init(): DiagFramePlane is only "
+                         "supported for 3 dimensional simulations");
+
   if (m_filters.empty()) {
     amrex::Print() << " Filters are not available on DiagFramePlane and will "
                       "be discarded \n";
@@ -117,9 +121,9 @@ DiagFramePlane::prepare(
         cdim += 1;
       }
     }
-    initDomain.setRange(2, 0, 1);
-    initRealBox.setLo(2, 0.0);
-    initRealBox.setHi(2, dxlcl[2]);
+    initDomain.setRange(AMREX_SPACEDIM - 1, 0, 1);
+    initRealBox.setLo(AMREX_SPACEDIM - 1, 0.0);
+    initRealBox.setHi(AMREX_SPACEDIM - 1, dxlcl[2]);
     m_geomLev0.define(
       initDomain, initRealBox, a_geoms[0].Coord(),
       amrex::Array<int, AMREX_SPACEDIM>({AMREX_D_DECL(0, 0, 0)}));
