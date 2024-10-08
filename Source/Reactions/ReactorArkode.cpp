@@ -206,7 +206,7 @@ ReactorArkode::react(
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     int flag = ARKodeSetAdaptController(arkode_mem, sun_controller);
-    utils::check_flag(&flag, "ARKStepSetAdaptController", 1);
+    utils::check_flag(&flag, "ARKodeSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
@@ -220,7 +220,7 @@ ReactorArkode::react(
       relTol, absTol, m_typ_vals, "erkstep", verbose);
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
     int flag = ARKodeSetAdaptController(arkode_mem, sun_controller);
-    utils::check_flag(&flag, "ERKStepSetAdaptController", 1);
+    utils::check_flag(&flag, "ARKodeSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
