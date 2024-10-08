@@ -199,31 +199,31 @@ ReactorArkode::react(
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(
       cF_RHS, nullptr, time, y, *amrex::sundials::The_Sundials_Context());
-    ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    ARKodeSetUserData(arkode_mem, static_cast<void*>(user_data));
     utils::set_sundials_solver_tols<Ordering>(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       relTol, absTol, m_typ_vals, "arkstep", verbose);
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
-    int flag = ARKStepSetAdaptController(arkode_mem, sun_controller);
-    utils::check_flag(&flag, "ARKStepSetAdaptController", 1);
+    int flag = ARKodeSetAdaptController(arkode_mem, sun_controller);
+    utils::check_flag(&flag, "ARKodeSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
-    ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
     arkode_mem =
       ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
-    ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    ARKodeSetUserData(arkode_mem, static_cast<void*>(user_data));
     utils::set_sundials_solver_tols<Ordering>(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       relTol, absTol, m_typ_vals, "erkstep", verbose);
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
-    int flag = ERKStepSetAdaptController(arkode_mem, sun_controller);
-    utils::check_flag(&flag, "ERKStepSetAdaptController", 1);
+    int flag = ARKodeSetAdaptController(arkode_mem, sun_controller);
+    utils::check_flag(&flag, "ARKodeSetAdaptController", 1);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
-    ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
 
@@ -250,11 +250,7 @@ ReactorArkode::react(
     user_data->rhoe_init, d_nfe, dt_react);
 
   N_VDestroy(y);
-  if (use_erkstep == 0) {
-    ARKStepFree(&arkode_mem);
-  } else {
-    ERKStepFree(&arkode_mem);
-  }
+  ARKodeFree(&arkode_mem);
 
   delete user_data;
 
@@ -339,24 +335,24 @@ ReactorArkode::react(
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(
       cF_RHS, nullptr, time, y, *amrex::sundials::The_Sundials_Context());
-    ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    ARKodeSetUserData(arkode_mem, static_cast<void*>(user_data));
     utils::set_sundials_solver_tols<Ordering>(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       relTol, absTol, m_typ_vals, "arkstep", verbose);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
-    ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
     arkode_mem =
       ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
-    ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    ARKodeSetUserData(arkode_mem, static_cast<void*>(user_data));
     utils::set_sundials_solver_tols<Ordering>(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       relTol, absTol, m_typ_vals, "erkstep", verbose);
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
-    ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    ARKodeEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
 #ifdef MOD_REACTOR
@@ -386,11 +382,7 @@ ReactorArkode::react(
   }
 
   N_VDestroy(y);
-  if (use_erkstep == 0) {
-    ARKStepFree(&arkode_mem);
-  } else {
-    ERKStepFree(&arkode_mem);
-  }
+  ARKodeFree(&arkode_mem);
 
   delete user_data;
 
@@ -436,23 +428,16 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   long int nst, nst_a, netf, nfe, nfi;
   int flag;
 
+  flag = ARKodeGetNumSteps(arkode_mem, &nst);
+  utils::check_flag(&flag, "ARKodeGetNumSteps", 1);
+  flag = ARKodeGetNumStepAttempts(arkode_mem, &nst_a);
+  utils::check_flag(&flag, "ARKodeGetNumStepAttempts", 1);
+  flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
+  utils::check_flag(&flag, "ARKodeGetNumErrTestFails", 1);
   if (use_erkstep != 0) {
-    flag = ERKStepGetNumSteps(arkode_mem, &nst);
-    utils::check_flag(&flag, "ERKStepGetNumSteps", 1);
-    flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
-    utils::check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
-    flag = ERKStepGetNumErrTestFails(arkode_mem, &netf);
-    utils::check_flag(&flag, "ERKStepGetNumErrTestFails", 1);
     flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
     utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
-
   } else {
-    flag = ARKStepGetNumSteps(arkode_mem, &nst);
-    utils::check_flag(&flag, "ARKStepGetNumSteps", 1);
-    flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
-    utils::check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
-    flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
-    utils::check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
     flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
   }
