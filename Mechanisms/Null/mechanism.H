@@ -4,12 +4,6 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
-#if 0
-/* Elements
-0  X
-*/
-#endif
-
 /* Species */
 #define XO_ID 0
 
