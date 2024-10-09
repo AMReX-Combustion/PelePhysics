@@ -1396,7 +1396,8 @@ ReactorCvode::react(
   // Update TypicalValues
   utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata->ncells, relTol,
-    absTol, m_typ_vals, "cvode", verbose);
+    absTol, m_typ_vals, "cvode",
+    verbose); // NOLINT(clang-analyzer-core.CallAndMessage)
 
   const auto captured_reactor_type = m_reactor_type;
   const auto captured_clean_init_massfrac = m_clean_init_massfrac;
