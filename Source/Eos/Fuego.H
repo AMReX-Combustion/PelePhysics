@@ -16,13 +16,14 @@ struct Fuego
 
   static std::string identifier() { return "Fuego"; }
 
+  template <typename T, int first=0>
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RY2R(const amrex::Real RY[], amrex::Real& R)
+  static void RY2R(const T RY, amrex::Real& R)
   {
     R = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      R += RY[i];
+      R += RY[first + i];
     }
   }
 
