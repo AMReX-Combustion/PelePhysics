@@ -16,22 +16,27 @@ struct Fuego
 
   static std::string identifier() { return "Fuego"; }
 
-  template <typename T, int first=0>
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  static void RY2R(const T RY, amrex::Real& R)
+  template <typename T, int first = 0>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
+  RY2R(const T RY, amrex::Real& R)
   {
+    static_assert(
+      std::is_same_v<decltype(RY[0]), amrex::Real&> ||
+      std::is_same_v<decltype(RY[0]), const amrex::Real&>);
     R = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
       R += RY[first + i];
     }
   }
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  static void RY2RRinvY(
-    const amrex::Real RY[], amrex::Real& R, amrex::Real& Rinv, amrex::Real Y[])
+  template <typename T, typename T2>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
+  RY2RRinvY(const T RY, amrex::Real& R, amrex::Real& Rinv, T2 Y)
   {
+    static_assert(
+      std::is_same_v<decltype(RY[0]), amrex::Real&> ||
+      std::is_same_v<decltype(RY[0]), const amrex::Real&>);
+    static_assert(std::is_same_v<decltype(Y[0]), amrex::Real&>);
     RY2R(RY, R);
     Rinv = 1.0 / R;
     for (int i = 0; i < NUM_SPECIES; i++) {
