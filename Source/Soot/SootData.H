@@ -311,9 +311,7 @@ struct SootData
       }
       weightDelta = sc.smallWeight;
     }
-    if (weightDelta > moments[0]) {
-      weightDelta = moments[0];
-    }
+    weightDelta = amrex::min(weightDelta, moments[0]);
     moments[NUM_SOOT_MOMENTS] = weightDelta;
   }
 
