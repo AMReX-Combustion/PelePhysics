@@ -1394,10 +1394,10 @@ ReactorCvode::react(
   initCvode(y, A, udata, NLS, LS, cvode_mem, time_start, ncells);
 
   // Update TypicalValues
+  // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
   utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata->ncells, relTol,
-    absTol, m_typ_vals, "cvode",
-    verbose); // NOLINT(clang-analyzer-core.CallAndMessage)
+    absTol, m_typ_vals, "cvode", verbose);
 
   const auto captured_reactor_type = m_reactor_type;
   const auto captured_clean_init_massfrac = m_clean_init_massfrac;
