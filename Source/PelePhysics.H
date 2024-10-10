@@ -13,14 +13,14 @@ namespace pele::physics {
 template <typename T>
 struct is_eos_type
 {
-  static constexpr bool value = std::is_base_of<typename T::eos_type, T>::value;
+  static constexpr bool value = std::is_base_of_v<typename T::eos_type, T>;
 };
 
 template <typename T>
 struct is_transport_type
 {
   static constexpr bool value =
-    std::is_base_of<typename T::transport_type, T>::value;
+    std::is_base_of_v<typename T::transport_type, T>;
 };
 
 template <typename EosModel, typename TransportModel>
@@ -41,7 +41,7 @@ struct PelePhysics
 
   static std::string identifier()
   {
-    if (std::is_same<EosModel, TransportModel>::value) {
+    if (std::is_same_v<EosModel, TransportModel>) {
       return EosModel::identifier();
     }
     return EosModel::identifier() + "-" + TransportModel::identifier();
