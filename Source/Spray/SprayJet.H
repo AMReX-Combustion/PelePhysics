@@ -40,32 +40,32 @@ public:
 
   virtual ~SprayJet() = default;
 
-  inline const amrex::RealVect& jet_norm() const { return m_norm; }
-  inline const amrex::RealVect& jet_cent() const { return m_cent; }
-  inline amrex::Real jet_vel(const amrex::Real time) const
+  const amrex::RealVect& jet_norm() const { return m_norm; }
+  const amrex::RealVect& jet_cent() const { return m_cent; }
+  amrex::Real jet_vel(const amrex::Real time) const
   {
     if (m_useROI) {
       return interpolateVel(time);
     }
     return m_jetVel;
   }
-  inline const amrex::Real& max_jet_vel() const { return m_maxJetVel; }
-  inline const amrex::Real& jet_dia() const { return m_jetDia; }
-  inline const amrex::Real& spread_angle() const { return m_spreadAngle; }
-  inline amrex::Real mass_flow_rate(const amrex::Real time) const
+  const amrex::Real& max_jet_vel() const { return m_maxJetVel; }
+  const amrex::Real& jet_dia() const { return m_jetDia; }
+  const amrex::Real& spread_angle() const { return m_spreadAngle; }
+  amrex::Real mass_flow_rate(const amrex::Real time) const
   {
     if (m_useROI) {
       return interpolateMdot(time);
     }
     return m_massFlow;
   }
-  inline const amrex::Real& Y(const int spf) const { return m_jetY[spf]; }
-  inline const amrex::Real& T() const { return m_jetT; }
-  inline const amrex::Real& start_time() const { return m_startTime; }
-  inline const amrex::Real& end_time() const { return m_endTime; }
-  inline const amrex::Real& num_ppp() const { return m_numPPP; }
-  inline const std::string& jet_name() const { return m_jetName; }
-  inline int Proc() const { return m_proc; }
+  const amrex::Real& Y(const int spf) const { return m_jetY[spf]; }
+  const amrex::Real& T() const { return m_jetT; }
+  const amrex::Real& start_time() const { return m_startTime; }
+  const amrex::Real& end_time() const { return m_endTime; }
+  const amrex::Real& num_ppp() const { return m_numPPP; }
+  const std::string& jet_name() const { return m_jetName; }
+  int Proc() const { return m_proc; }
 
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
@@ -84,7 +84,7 @@ public:
     return check;
   }
 
-  inline bool hollow_spray() const { return m_hollowSpray; }
+  bool hollow_spray() const { return m_hollowSpray; }
 
   /// Returns the average values given for the jet
   amrex::Real get_avg_dia() const { return m_avgDia; }
@@ -230,7 +230,7 @@ public:
     part_vel *= umag;
   }
 
-  inline amrex::Real
+  amrex::Real
   interpolateROI(const amrex::Real& time, const amrex::Real* vals) const
   {
     int i = 0;
@@ -246,12 +246,12 @@ public:
     return val1 + (val2 - val1) * invt;
   }
 
-  inline amrex::Real interpolateMdot(const amrex::Real time) const
+  amrex::Real interpolateMdot(const amrex::Real time) const
   {
     return interpolateROI(time, inject_mass.dataPtr());
   }
 
-  inline amrex::Real interpolateVel(const amrex::Real time) const
+  amrex::Real interpolateVel(const amrex::Real time) const
   {
     return interpolateROI(time, inject_vel.dataPtr());
   }

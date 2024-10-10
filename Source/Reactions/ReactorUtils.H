@@ -44,8 +44,7 @@ struct CYOrder
 template <typename T>
 struct is_ordering_type
 {
-  static constexpr bool value =
-    std::is_base_of<typename T::ordering_type, T>::value;
+  static constexpr bool value = std::is_base_of_v<typename T::ordering_type, T>;
 };
 
 template <typename OrderType>
