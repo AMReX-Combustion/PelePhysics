@@ -32,8 +32,6 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
     return;
   }
 
-
-
   if (amrex::ParallelDescriptor::IOProcessor()) {
     amrex::Real dt = sim_dt;
 
