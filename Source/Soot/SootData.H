@@ -1,4 +1,3 @@
-
 #ifndef SOOTDATA_H
 #define SOOTDATA_H
 
@@ -312,9 +311,7 @@ struct SootData
       }
       weightDelta = sc.smallWeight;
     }
-    if (weightDelta > moments[0]) {
-      weightDelta = moments[0];
-    }
+    weightDelta = amrex::min(weightDelta, moments[0]);
     moments[NUM_SOOT_MOMENTS] = weightDelta;
   }
 
@@ -642,6 +639,7 @@ struct SootData
     default:
       amrex::Abort(
         "SootModel::FMCoagSL: Moment not contained in number of moments!");
+      break;
     }
     return 0.;
   }
@@ -754,6 +752,8 @@ struct SootData
       }
       return 2. * weightDelta * (p1 + p2 + p3);
     }
+    default:
+      return 0.;
     }
     return 0.;
   }
@@ -793,6 +793,8 @@ struct SootData
       return CNCoagLLFunc(1., 0., 0., 1., lambda, momFV);
     case 5: // M02
       return CNCoagLLFunc(0., 1., lambda, momFV);
+    default:
+      return 0.;
     }
     return 0.;
   }

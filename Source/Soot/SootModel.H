@@ -100,12 +100,12 @@ public:
   //
   // Set the indices for primitive and conservative variables
   //
-  inline void setIndices(const SootComps& sootIndx) { m_sootIndx = sootIndx; }
+  void setIndices(const SootComps& sootIndx) { m_sootIndx = sootIndx; }
 
   //
   // Return string of the names of each variable
   //
-  inline std::string sootVariableName(const int indx) const
+  std::string sootVariableName(const int indx) const
   {
     AMREX_ASSERT(indx >= 0 && indx < NUM_SOOT_MOMENTS + 1);
     return m_sootVarName[indx];
@@ -114,8 +114,8 @@ public:
   //
   // Return pointer to soot data
   //
-  inline SootData* getSootData() const { return m_sootData; }
-  inline SootData* getSootData_d() const { return d_sootData; }
+  SootData* getSootData() const { return m_sootData; }
+  SootData* getSootData_d() const { return d_sootData; }
 
   /***********************************************************************
     Member data
