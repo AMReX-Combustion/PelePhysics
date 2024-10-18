@@ -39,7 +39,7 @@ struct Manifold
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
   RY2R(const RealArrayLike& RY, amrex::Real& R, int first = 0)
   {
-    R = RY[NUM_SPECIES - 1];
+    R = RY[first + NUM_SPECIES - 1];
   }
 
   // ReallArrayLike can be anything with an [] operator that returns
