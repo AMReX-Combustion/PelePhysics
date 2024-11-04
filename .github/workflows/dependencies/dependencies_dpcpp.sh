@@ -14,5 +14,5 @@ echo "deb https://apt.repos.intel.com/oneapi all main" \
 
 sudo apt-get update
 sudo apt-get install -y \
-    intel-oneapi-compiler-dpcpp-cpp \
-    intel-oneapi-mkl-devel
+    intel-oneapi-compiler-dpcpp-cpp=2024.2.1-1079 \
+    intel-oneapi-mkl-devel=2024.2.2-15
