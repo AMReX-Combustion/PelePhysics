@@ -222,6 +222,7 @@ struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
     if (!parm_in->m_host_only_parm.use_eos_manifold) {
       parm_in->m_host_only_parm.manfunc_par->deallocate();
     }
+    parm_in->m_host_only_parm.manfunc_par = nullptr;
   }
 };
 
