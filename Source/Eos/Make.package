@@ -1,5 +1,4 @@
 CEXE_headers += EOS.H GammaLaw.H Fuego.H SRK.H
-CEXE_sources += EOS.cpp
 
 VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Eos
 INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Eos
