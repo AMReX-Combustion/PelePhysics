@@ -9,6 +9,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 {
   std::string ppspray = "spray." + m_jetName;
   amrex::ParmParse ps(ppspray);
+  amrex::Real verylargenum = std::numeric_limits<amrex::Real>::max();
 
   ps.query("read_from_dpm_file", m_use_Fluentdpmfile);
   if (m_use_Fluentdpmfile) {
@@ -60,13 +61,22 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       m_translation[dir] = dX_translation[dir];
     }
-
     ps.query("start_time", m_startTime);
-    ps.query("end_time", m_endTime);
+    // ps.query("end_time", m_endTime);
+    m_endTime = verylargenum;
+
     ps.get("initial_injection_dpm_time", m_dpm_time_initial_injection);
     ps.get("initial_injection_flow_time", m_flow_time_initial_injection);
+    if (is_dpm_periodic) {
+      set_jet_endtime(verylargenum);
+    } else {
+      // amrex::Real
+      // final_flow_time=m_flow_time_initial_injection+(m_dpm_time_final-m_dpm_time_initial_injection);
+      // set_jet_endtime((m_endTime<final_flow_time?m_endTime:final_flow_time));
+      set_jet_endtime(verylargenum);
+    }
     m_cur_inj_dpm_time = m_dpm_time_initial_injection;
-    m_cur_inj_flw_time = m_flow_time_initial_injection;
+    m_nxt_inj_flw_time = m_flow_time_initial_injection;
 
     if (SPRAY_FUEL_NUM == 1) {
       m_jetY[0] = 1.;

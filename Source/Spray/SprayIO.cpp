@@ -89,7 +89,7 @@ SprayParticleContainer::SprayParticleIO(
                << js->m_totalInjTime << " "
                << js->get_flow_time_initial_injection() << " "
                << js->get_dpm_time_initial_injection() << " "
-               << js->m_cur_inj_flw_time << " " << js->m_cur_inj_dpm_time
+               << js->m_nxt_inj_flw_time << " " << js->m_cur_inj_dpm_time
                << "\n";
         } else {
           file << js->jet_name() << " " << js->num_ppp() << " "
@@ -191,12 +191,12 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
                 fluentdpm_inj_init_flw_time[ijets]);
               js->set_initial_injection_dpm_time(
                 fluentdpm_inj_init_dpm_time[ijets]);
-              js->m_cur_inj_flw_time = fluentdpm_inj_nxt_flw_time[ijets];
+              js->m_nxt_inj_flw_time = fluentdpm_inj_nxt_flw_time[ijets];
               js->m_cur_inj_dpm_time = fluentdpm_inj_nxt_dpm_time[ijets];
 
               amrex::Print()
-                << "  For jet " << js->jet_name()
-                << ", next injection flow time = " << js->m_cur_inj_flw_time
+                << "\n  For jet " << js->jet_name()
+                << ", next injection flow time = " << js->m_nxt_inj_flw_time
                 << " and next injection dpm time = " << js->m_cur_inj_dpm_time
                 << "\n";
             }
