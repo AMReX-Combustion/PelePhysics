@@ -130,6 +130,7 @@ speciesNames(
   CKSYMS_STR(spn);
 }
 
+#ifndef AMREX_USE_SYCL
 template <>
 inline void
 speciesNames<Manifold>(
@@ -148,6 +149,7 @@ speciesNames<Manifold>(
   }
   spn[MANIFOLD_DIM] = "XRHO";
 }
+#endif
 
 } // namespace eos
 } // namespace pele::physics
