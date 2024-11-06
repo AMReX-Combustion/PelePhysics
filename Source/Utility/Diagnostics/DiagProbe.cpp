@@ -19,15 +19,18 @@ LinearInterpolate(
   amrex::Real slp[3] = {0.0};
 
   for (int cnt = 0; cnt < AMREX_SPACEDIM; cnt++) {
-      slp[cnt] = (xp[cnt] - x_low[cnt]) / dx[cnt];
-    }
+    slp[cnt] = (xp[cnt] - x_low[cnt]) / dx[cnt];
+  }
 
-  value += (1.0 - slp[0]) * (1 - slp[1]) * (1 - slp[2]) * neighbour_cells(0, 0, 0);
+  value +=
+    (1.0 - slp[0]) * (1 - slp[1]) * (1 - slp[2]) * neighbour_cells(0, 0, 0);
   value += slp[0] * (1 - slp[1]) * (1 - slp[2]) * neighbour_cells(0 + 1, 0, 0);
-  value += (1.0 - slp[0]) * slp[1] * (1 - slp[2]) * neighbour_cells(0, 0 + 1, 0);
+  value +=
+    (1.0 - slp[0]) * slp[1] * (1 - slp[2]) * neighbour_cells(0, 0 + 1, 0);
   value += slp[0] * slp[1] * (1 - slp[2]) * neighbour_cells(0 + 1, 0 + 1, 0);
 
-  value += (1.0 - slp[0]) * (1 - slp[1]) * slp[2] * neighbour_cells(0, 0, 0 + 1);
+  value +=
+    (1.0 - slp[0]) * (1 - slp[1]) * slp[2] * neighbour_cells(0, 0, 0 + 1);
   value += slp[0] * (1 - slp[1]) * slp[2] * neighbour_cells(0 + 1, 0, 0 + 1);
   value += (1.0 - slp[0]) * slp[1] * slp[2] * neighbour_cells(0, 0 + 1, 0 + 1);
   value += slp[0] * slp[1] * slp[2] * neighbour_cells(0 + 1, 0 + 1, 0 + 1);
@@ -258,7 +261,8 @@ DiagProbe::processDiag(
 #if (AMREX_SPACEDIM == 1)
           {
             neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0], 0, 0, stIdx);
-            neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
+            neighbour_cells(1, 0, 0) =
+              state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
           }
 #elif (AMREX_SPACEDIM == 2)
 	        {
@@ -281,7 +285,8 @@ DiagProbe::processDiag(
 	        }
 #endif
           tmp_values_d[n] = LinearInterpolate(
-            m_probe_loc_d, x_low_cell_d, neighbour_cells, dx_finest_lev_probe_d);
+            m_probe_loc_d, x_low_cell_d, neighbour_cells,
+            dx_finest_lev_probe_d);
         } else if (m_interpType_d == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
           tmp_values_d[n] = state(m_probe_idx_d[0], 0, 0, stIdx);
