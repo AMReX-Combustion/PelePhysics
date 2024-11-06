@@ -85,14 +85,17 @@ public:
   // the RK64 reactor
   virtual void set_eos_parm(
     const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-      eosparm)
+      h_eosparm,
+    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      d_eosparm)
   {
-    auto eos = pele::physics::PhysicsType::eos(eosparm);
+    auto eos = pele::physics::PhysicsType::eos(h_eosparm);
     if (eos.identifier() == "Manifold") {
       amrex::Abort(
         "Manifold EOS only supported with ReactorRK64 and ReactorNull for now");
     } else {
-      m_eosparm = eosparm;
+      m_h_eosparm = h_eosparm;
+      m_d_eosparm = d_eosparm;
     }
   }
 
@@ -102,7 +105,9 @@ protected:
   int verbose{0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-    m_eosparm;
+    m_h_eosparm;
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    m_d_eosparm;
 };
 } // namespace pele::physics::reactions
 #endif

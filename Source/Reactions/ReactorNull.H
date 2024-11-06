@@ -88,9 +88,12 @@ public:
 
   void set_eos_parm(
     const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-      eosparm) override
+      h_eosparm,
+    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      d_eosparm) override
   {
-    m_eosparm = eosparm;
+    m_h_eosparm = h_eosparm;
+    m_d_eosparm = d_eosparm;
   }
 
 private:

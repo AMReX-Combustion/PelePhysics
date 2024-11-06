@@ -85,7 +85,8 @@ main(int argc, char* argv[])
     std::unique_ptr<pele::physics::reactions::ReactorBase> reactor =
       pele::physics::reactions::ReactorBase::create(chem_integrator);
     reactor->init(ode_iE, ode_ncells);
-    reactor->set_eos_parm(leosparm); // only needed for manifold
+    reactor->set_eos_parm(
+      &(eos_parms.host_parm()), leosparm); // only needed for manifold
     BL_PROFILE_VAR_STOP(reactInfo);
 
     // Initialize Geometry

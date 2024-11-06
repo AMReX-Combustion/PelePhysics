@@ -8,7 +8,8 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
   const int size_ETV = static_cast<int>(ExtTypVals.size());
   AMREX_ALWAYS_ASSERT(size_ETV == static_cast<int>(m_typ_vals.size()));
   amrex::Vector<std::string> kname;
-  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
+  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+    kname, m_h_eosparm);
   int omp_thread = 0;
 
 #ifdef AMREX_USE_OMP
