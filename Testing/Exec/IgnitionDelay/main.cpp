@@ -76,9 +76,11 @@ main(int argc, char* argv[])
     eos_parms.initialize();
     auto const* leosparm = eos_parms.device_parm();
 
-    // Assign Fuel ID
-    int fuel_idx;
-    getFuelID(fuel_name, fuel_idx);
+    // Assign Fuel ID - don't need to do this for manifold
+    int fuel_idx = -1;
+    if (pele::physics::PhysicsType::eos::identifier() != "Manifold") {
+      getFuelID(fuel_name, fuel_idx);
+    }
 
     // Initialize reactor object inside OMP region, including tolerances
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
