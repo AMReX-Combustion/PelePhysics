@@ -78,7 +78,7 @@ main(int argc, char* argv[])
 
     // Assign Fuel ID - don't need to do this for manifold
     int fuel_idx = -1;
-    if (pele::physics::PhysicsType::eos::identifier() != "Manifold") {
+    if (pele::physics::PhysicsType::eos_type::identifier() != "Manifold") {
       getFuelID(fuel_name, fuel_idx);
     }
 
