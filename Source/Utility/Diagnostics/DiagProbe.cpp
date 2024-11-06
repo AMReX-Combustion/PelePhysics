@@ -11,37 +11,26 @@ amrex::Real
 LinearInterpolate(
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> xp,
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> x_low,
-  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data,
+  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> neighbour_cells,
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx)
 {
-  amrex::Real alpha, beta, gama;
+
   amrex::Real value = 0.0;
+  amrex::Real slp[3] = {0.0};
 
-  alpha = 0.0;
-  beta = 0.0;
-  gama = 0.0;
+  for (int cnt = 0; cnt < AMREX_SPACEDIM; cnt++) {
+      slp[cnt] = (xp[cnt] - x_low[cnt]) / dx[cnt];
+    }
 
-  const int XDIR = 0;
-  const int YDIR = 1;
-  const int ZDIR = 2;
+  value += (1.0 - slp[0]) * (1 - slp[1]) * (1 - slp[2]) * neighbour_cells(0, 0, 0);
+  value += slp[0] * (1 - slp[1]) * (1 - slp[2]) * neighbour_cells(0 + 1, 0, 0);
+  value += (1.0 - slp[0]) * slp[1] * (1 - slp[2]) * neighbour_cells(0, 0 + 1, 0);
+  value += slp[0] * slp[1] * (1 - slp[2]) * neighbour_cells(0 + 1, 0 + 1, 0);
 
-  alpha = (xp[XDIR] - x_low[XDIR]) / dx[XDIR];
-  if (AMREX_SPACEDIM >= 2) {
-    beta = (xp[YDIR] - x_low[YDIR]) / dx[YDIR];
-  }
-  if (AMREX_SPACEDIM == 3) {
-    gama = (xp[ZDIR] - x_low[ZDIR]) / dx[ZDIR];
-  }
-
-  value += (1.0 - alpha) * (1 - beta) * (1 - gama) * cell_data(0, 0, 0);
-  value += alpha * (1 - beta) * (1 - gama) * cell_data(0 + 1, 0, 0);
-  value += (1.0 - alpha) * beta * (1 - gama) * cell_data(0, 0 + 1, 0);
-  value += alpha * beta * (1 - gama) * cell_data(0 + 1, 0 + 1, 0);
-
-  value += (1.0 - alpha) * (1 - beta) * gama * cell_data(0, 0, 0 + 1);
-  value += alpha * (1 - beta) * gama * cell_data(0 + 1, 0, 0 + 1);
-  value += (1.0 - alpha) * beta * gama * cell_data(0, 0 + 1, 0 + 1);
-  value += alpha * beta * gama * cell_data(0 + 1, 0 + 1, 0 + 1);
+  value += (1.0 - slp[0]) * (1 - slp[1]) * slp[2] * neighbour_cells(0, 0, 0 + 1);
+  value += slp[0] * (1 - slp[1]) * slp[2] * neighbour_cells(0 + 1, 0, 0 + 1);
+  value += (1.0 - slp[0]) * slp[1] * slp[2] * neighbour_cells(0, 0 + 1, 0 + 1);
+  value += slp[0] * slp[1] * slp[2] * neighbour_cells(0 + 1, 0 + 1, 0 + 1);
   return (value);
 }
 
@@ -260,7 +249,7 @@ DiagProbe::processDiag(
 
     amrex::ParallelFor(
       m_fieldIndices_d.size(), [=] AMREX_GPU_DEVICE(int n) noexcept {
-        amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{
+        amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> neighbour_cells{
           0.0}; // Neighbour cell solution values
         int stIdx = idx_d_p[n];
 
@@ -268,31 +257,31 @@ DiagProbe::processDiag(
 
 #if (AMREX_SPACEDIM == 1)
           {
-            cell_data_d(0, 0, 0) = state(low_cell_idx_d[0], 0, 0, stIdx);
-            cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
+            neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0], 0, 0, stIdx);
+            neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
           }
 #elif (AMREX_SPACEDIM == 2)
 	        {
-	        	cell_data_d(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       0, stIdx);
-	        	cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       0, stIdx);
-	        	cell_data_d(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, 0, stIdx);
-	        	cell_data_d(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, 0, stIdx);
+	        	neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       0, stIdx);
+	        	neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       0, stIdx);
+	        	neighbour_cells(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, 0, stIdx);
+	        	neighbour_cells(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, 0, stIdx);
 	        }
 #else
 	        {
-	        	cell_data_d(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
-	        	cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
-	        	cell_data_d(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
-	        	cell_data_d(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
+	        	neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
+	        	neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
+	        	neighbour_cells(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
+	        	neighbour_cells(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
 
-	        	cell_data_d(0, 0, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
-	        	cell_data_d(1, 0, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
-	        	cell_data_d(0, 1, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
-	        	cell_data_d(1, 1, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
+	        	neighbour_cells(0, 0, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
+	        	neighbour_cells(1, 0, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
+	        	neighbour_cells(0, 1, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
+	        	neighbour_cells(1, 1, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
 	        }
 #endif
           tmp_values_d[n] = LinearInterpolate(
-            m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe_d);
+            m_probe_loc_d, x_low_cell_d, neighbour_cells, dx_finest_lev_probe_d);
         } else if (m_interpType_d == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
           tmp_values_d[n] = state(m_probe_idx_d[0], 0, 0, stIdx);
