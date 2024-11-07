@@ -166,6 +166,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   static void host_deallocate(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
   {
     parm_in->m_host_only_parm.manfunc_par->deallocate();
+    parm_in->m_host_only_parm.manfunc_par = nullptr;
   }
 };
 #endif

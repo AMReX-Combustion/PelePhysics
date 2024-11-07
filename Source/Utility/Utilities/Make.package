@@ -1,0 +1,4 @@
+CEXE_headers += Utilities.H UnitConversions.H
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/Utilities
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/Utilities

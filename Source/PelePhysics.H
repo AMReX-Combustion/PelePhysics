@@ -7,6 +7,7 @@
 #include "PelePhysicsConstraints.H"
 #include "EOS.H"
 #include "Transport.H"
+#include "Utilities.H"
 
 namespace pele::physics {
 

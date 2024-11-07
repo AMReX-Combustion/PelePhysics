@@ -16,20 +16,26 @@ struct Fuego
 
   static std::string identifier() { return "Fuego"; }
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  static void RY2R(const amrex::Real RY[], amrex::Real& R)
+  // ReallArrayLike can be anything with an [] operator that returns
+  // amrex::Real&
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
+  RY2R(const RealArrayLike& RY, amrex::Real& R, int first = 0)
   {
     R = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      R += RY[i];
+      R += RY[first + i];
     }
   }
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  static void RY2RRinvY(
-    const amrex::Real RY[], amrex::Real& R, amrex::Real& Rinv, amrex::Real Y[])
+  // ReallArrayLike can be anything with an [] operator that returns
+  // amrex::Real&
+  template <typename RealArrayLike1, typename RealArrayLike2>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void RY2RRinvY(
+    const RealArrayLike1& RY,
+    amrex::Real& R,
+    amrex::Real& Rinv,
+    RealArrayLike2&& Y)
   {
     RY2R(RY, R);
     Rinv = 1.0 / R;
