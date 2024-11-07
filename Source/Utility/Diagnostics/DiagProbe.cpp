@@ -259,30 +259,39 @@ DiagProbe::processDiag(
         if (m_interpType_d == Linear) {
 
 #if (AMREX_SPACEDIM == 1)
-          {
-            neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0], 0, 0, stIdx);
-            neighbour_cells(1, 0, 0) =
-              state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
-          }
+          neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0], 0, 0, stIdx);
+          neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-	        {
-	        	neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       0, stIdx);
-	        	neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       0, stIdx);
-	        	neighbour_cells(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, 0, stIdx);
-	        	neighbour_cells(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, 0, stIdx);
-	        }
+          neighbour_cells(0, 0, 0) =
+            state(low_cell_idx_d[0], low_cell_idx_d[1], 0, stIdx);
+          neighbour_cells(1, 0, 0) =
+            state(low_cell_idx_d[0] + 1, low_cell_idx_d[1], 0, stIdx);
+          neighbour_cells(0, 1, 0) =
+            state(low_cell_idx_d[0], low_cell_idx_d[1] + 1, 0, stIdx);
+          neighbour_cells(1, 1, 0) =
+            state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, 0, stIdx);
 #else
-	        {
-	        	neighbour_cells(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
-	        	neighbour_cells(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
-	        	neighbour_cells(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
-	        	neighbour_cells(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
+          neighbour_cells(0, 0, 0) = state(
+            low_cell_idx_d[0], low_cell_idx_d[1], low_cell_idx_d[2], stIdx);
+          neighbour_cells(1, 0, 0) = state(
+            low_cell_idx_d[0] + 1, low_cell_idx_d[1], low_cell_idx_d[2], stIdx);
+          neighbour_cells(0, 1, 0) = state(
+            low_cell_idx_d[0], low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
+          neighbour_cells(1, 1, 0) = state(
+            low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2],
+            stIdx);
 
-	        	neighbour_cells(0, 0, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
-	        	neighbour_cells(1, 0, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
-	        	neighbour_cells(0, 1, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
-	        	neighbour_cells(1, 1, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
-	        }
+          neighbour_cells(0, 0, 1) = state(
+            low_cell_idx_d[0], low_cell_idx_d[1], low_cell_idx_d[2] + 1, stIdx);
+          neighbour_cells(1, 0, 1) = state(
+            low_cell_idx_d[0] + 1, low_cell_idx_d[1], low_cell_idx_d[2] + 1,
+            stIdx);
+          neighbour_cells(0, 1, 1) = state(
+            low_cell_idx_d[0], low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1,
+            stIdx);
+          neighbour_cells(1, 1, 1) = state(
+            low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1,
+            stIdx);
 #endif
           tmp_values_d[n] = LinearInterpolate(
             m_probe_loc_d, x_low_cell_d, neighbour_cells,
@@ -291,9 +300,10 @@ DiagProbe::processDiag(
 #if (AMREX_SPACEDIM == 1)
           tmp_values_d[n] = state(m_probe_idx_d[0], 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-	    	  tmp_values_d[n] = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+          tmp_values_d[n] = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
 #else
-	    	  tmp_values_d[n] = state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+          tmp_values_d[n] =
+            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
 #endif
         }
       });
