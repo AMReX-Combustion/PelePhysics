@@ -96,14 +96,14 @@ element_compositionCHON(int ecompCHON[])
 
 template <>
 inline void
-atomic_weightsCHON<GammaLaw>(amrex::Real atwCHON[])
+atomic_weightsCHON<GammaLaw>(amrex::Real* /*atwCHON[]*/)
 {
   amrex::Error("atomic_weightsCHON not supported for GammaLaw EOS");
 }
 
 template <>
 inline void
-element_compositionCHON<GammaLaw>(int ecompCHON[])
+element_compositionCHON<GammaLaw>(int* /*ecompCHON[]*/)
 {
   amrex::Error("element_compositionCHON not supported for GammaLaw EOS");
 }
@@ -125,7 +125,7 @@ element_compositionCHON<Manifold>(int* /*ecompCHON[]*/)
 template <typename EOSType>
 void
 speciesNames(
-  amrex::Vector<std::string>& spn, const EosParm<EOSType>* eparm = nullptr)
+  amrex::Vector<std::string>& spn, const EosParm<EOSType>* /*eparm*/ = nullptr)
 {
   CKSYMS_STR(spn);
 }
@@ -141,7 +141,7 @@ speciesNames<Manifold>(
                  "species names");
   }
   spn.resize(NUM_SPECIES);
-  auto* mani_data = eparm->manf_data;
+  const auto* mani_data = eparm->manf_data;
   for (int n = 0; n < MANIFOLD_DIM; n++) {
     std::string nametmp = std::string(
       &(mani_data->dimnames)[n * mani_data->len_str], mani_data->len_str);
