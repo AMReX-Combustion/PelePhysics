@@ -150,7 +150,7 @@ jobs:
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
-          ${{github.workspace}}/Submodules/amrex/.github/workflows/dependencies/ubuntu_free_disk_space.sh
+          ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Submodules/amrex/.github/workflows/dependencies/ubuntu_free_disk_space.sh
           if [ "${{matrix.comp}}" == 'cuda' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
             echo "CUDA_HOME=${CUDA_HOME}"; \
