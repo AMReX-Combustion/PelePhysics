@@ -2,10 +2,8 @@
 #define UTILITIES_H
 
 #include "UnitConversions.H"
-namespace pele::physics {
-namespace utilities {
+namespace pele::physics::utilities {
 
-} // namespace utilities
-} // namespace pele::physics
+} // namespace pele::physics::utilities
 
 #endif
