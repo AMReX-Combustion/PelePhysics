@@ -48,9 +48,10 @@
 #define OC12H23OOH_ID 33
 #define N2_ID 34
 
-#define NUM_GAS_ELEMENTS 4      // Elements in the homogeneous phase
-#define NUM_QSSA_GAS_SPECIES 35 // Species in the homogeneous phase
-#define NUM_GAS_REACTIONS 268   // Reactions in the homogeneous phase
+#define NUM_GAS_ELEMENTS 4     // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 35     // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 268  // Reactions in the homogeneous phase
+#define NUM_QSS_GAS_SPECIES 18 // QSS species in the homogeneous phase
 
 #define SITE_DENSITY 0.000000E+00 // mol/cm^2
 
@@ -59,7 +60,7 @@
 #define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
 
 #define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
-#define NUM_SPECIES (NUM_QSSA_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)
 #define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
 
 #define NUM_IONS 0
