@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
-#
-# Copyright 2020 Axel Huebl
-#
-# License: BSD-3-Clause-LBNL
-
-# search recursive inside a folder if a file contains tabs
-#
-# @result 0 if no files are found, else 1
-#
 
 set -eu -o pipefail
 
-CUDA_VERSION=11-2
+CUDA_VERSION=12-6
 
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
-echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" \
-    | sudo tee /etc/apt/sources.list.d/cuda.list
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
 sudo apt-get update
 sudo apt-get install -y \
     cuda-command-line-tools-${CUDA_VERSION} \
@@ -28,8 +18,9 @@ sudo apt-get install -y \
     libcusolver-dev-${CUDA_VERSION}         \
     libcusparse-dev-${CUDA_VERSION}         \
     libcublas-dev-${CUDA_VERSION}           \
-    libcurand-dev-${CUDA_VERSION}
+    libcurand-dev-${CUDA_VERSION}           \
+    libnvjitlink-${CUDA_VERSION}
 
-export PATH=/usr/local/cuda-11.2/bin:${PATH}
+export PATH=/usr/local/nvidia/bin:/usr/local/cuda-12.6/bin:${PATH}
 which nvcc
 nvcc --version

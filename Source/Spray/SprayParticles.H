@@ -110,7 +110,6 @@ public:
   amrex::Real estTimestep(int level) const;
 
   /// \brief Reset the particle ID in case we need to reinitialize the particles
-
   static void resetID(const int id) { ParticleType::NextID(id); }
 
   /// \brief Returns the number of ghost cells for making ghost particles. This
@@ -122,7 +121,6 @@ public:
   /// @param cfl Particle CFL number on level N
   /// @param depos_width Number of cells adjacent to the cell containing the
   /// particle needed to interpolate the particle source term to the mesh
-
   static int getGhostPartCells(
     const int level,
     const int finest_level,

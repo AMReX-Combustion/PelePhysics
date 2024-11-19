@@ -146,10 +146,12 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
       Vector<Real> fluentdpm_inj_init_dpm_time(in_numjets);
       Vector<Real> fluentdpm_inj_nxt_flw_time(in_numjets);
       Vector<Real> fluentdpm_inj_nxt_dpm_time(in_numjets);
+
       for (int i = 0; i < in_numjets; ++i) {
         JetDataFile >> in_jet_names[i] >> in_inj_ppp[i] >> in_inj_mass[i] >>
           in_inj_time[i] >> in_min_parcel[i] >> in_total_mass[i] >>
           in_total_time[i];
+
         std::string in_name = in_jet_names[i];
 
         bool jet_is_fluent_dpm_based = false;
@@ -171,6 +173,7 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
             break;
           }
         }
+
       }
       for (int ijets = 0; ijets < in_numjets; ++ijets) {
         std::string in_name = in_jet_names[ijets];
