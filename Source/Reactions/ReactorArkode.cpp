@@ -232,12 +232,8 @@ ReactorArkode::react(
   time = time_init;
 #endif
 
-  long int nfe, nfi;
-  if (use_erkstep == 0) {
-    ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
-  } else {
-    ERKStepGetNumRhsEvals(arkode_mem, &nfe);
-  }
+  long int nfe;
+  ARKodeGetNumRhsEvals(arkode_mem, 0, &nfe);
 
   if (user_data->verbose > 1) {
     print_final_stats(arkode_mem);
@@ -370,12 +366,8 @@ ReactorArkode::react(
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
 
-  long int nfe, nfi;
-  if (use_erkstep == 0) {
-    ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
-  } else {
-    ERKStepGetNumRhsEvals(arkode_mem, &nfe);
-  }
+  long int nfe;
+  ARKodeGetNumRhsEvals(arkode_mem, 0, &nfe);
 
   if (user_data->verbose > 1) {
     print_final_stats(arkode_mem);
@@ -425,7 +417,7 @@ ReactorArkode::cF_RHS(
 void
 ReactorArkode::print_final_stats(void* arkode_mem)
 {
-  long int nst, nst_a, netf, nfe, nfi;
+  long int nst, nst_a, netf, nfe;
   int flag;
 
   flag = ARKodeGetNumSteps(arkode_mem, &nst);
@@ -434,13 +426,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   utils::check_flag(&flag, "ARKodeGetNumStepAttempts", 1);
   flag = ARKodeGetNumErrTestFails(arkode_mem, &netf);
   utils::check_flag(&flag, "ARKodeGetNumErrTestFails", 1);
-  if (use_erkstep != 0) {
-    flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
-    utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
-  } else {
-    flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
-    utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
-  }
+  flag = ARKodeGetNumRhsEvals(arkode_mem, 0, &nfe);
+  utils::check_flag(&flag, "ARKodeGetNumRhsEvals", 1);
 
 #ifdef AMREX_USE_OMP
   amrex::Print() << "\nFinal Statistics: "
