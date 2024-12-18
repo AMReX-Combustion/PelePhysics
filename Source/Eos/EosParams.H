@@ -115,7 +115,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     if (density_lookup_type_string == "linear") {
       parm_in->m_h_parm.dens_lookup = eos::density_lookup_type::linear;
       parm_in->m_h_parm.idx_density = get_var_index("RHO", h_manf_data_in);
-      if (verbose) {
+      if (verbose > 0) {
         amrex::Print()
           << "Manifold EOS: Using linear density lookups : index = "
           << parm_in->m_h_parm.idx_density << std::endl;
@@ -123,7 +123,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     } else if (density_lookup_type_string == "log") {
       parm_in->m_h_parm.dens_lookup = eos::density_lookup_type::log;
       parm_in->m_h_parm.idx_density = get_var_index("lnRHO", h_manf_data_in);
-      if (verbose) {
+      if (verbose > 0) {
         amrex::Print()
           << "Manifold EOS: Using logarithmic density lookups : index = "
           << parm_in->m_h_parm.idx_density << std::endl;
@@ -131,7 +131,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     } else if (density_lookup_type_string == "inverse") {
       parm_in->m_h_parm.dens_lookup = eos::density_lookup_type::inverse;
       parm_in->m_h_parm.idx_density = get_var_index("invRHO", h_manf_data_in);
-      if (verbose) {
+      if (verbose > 0) {
         amrex::Print()
           << "Manifold EOS: Using inverse density lookups : index = "
           << parm_in->m_h_parm.idx_density << std::endl;
@@ -157,7 +157,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
             : "SRC_" + amrex::trim(dimname);
         parm_in->m_h_parm.idx_Wdot[idim] =
           get_var_index(dim_src.c_str(), h_manf_data_in, false);
-        if ((parm_in->m_h_parm.idx_Wdot[idim] < 0) && verbose) {
+        if ((parm_in->m_h_parm.idx_Wdot[idim] < 0) && verbose > 0) {
           amrex::Print() << "Manifold EOS: Warning: No source term found for "
                             "manifold parameter "
                          << amrex::trim(dimname) << ", assuming SRC_"
@@ -191,7 +191,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
             h_manf_data_in->len_str));
           if (variance_of == test_dimname) {
             parm_in->m_h_parm.is_variance_of[idim] = jdim;
-            if (verbose) {
+            if (verbose > 0) {
               amrex::Print() << "Manifold EOS: using " << dimname
                              << " as variance of " << variance_of << std::endl;
             }
