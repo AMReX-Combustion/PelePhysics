@@ -4,7 +4,7 @@
 `PelePhysics` Quickstart
 ************************
 
-Greetings impatient user. As a word of caution, this documentation is in progress. Some parts of the code remain undocumented,
+Greetings users. As a word of caution, this documentation is in progress. Some parts of the code remain undocumented,
 and some parts of the documentation are out of data. If you are confused by something you read here, or otherwise
 need help with `PelePhysics`, the best course of action is to open a Discussion on the `GitHub page <https://github.com/AMReX-Combustion/PelePhysics/discussions>`_,
 so the development team and other users can help.
