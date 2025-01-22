@@ -96,6 +96,12 @@ PeleMP and PeleRad, please use the following [Journal of Fluids Engineering arti
 }
 ```
 
+A full list of publications documenting the development of the Pele suite and its
+application to various reacting flow and other simulations is available on the main
+[Pele suite page](https://amrex-combustion.github.io/pubs.html). After publication,
+if you'd like your work to be included on that list, you can request to have it added
+[here](https://github.com/AMReX-Combustion/AMReX-Combustion.github.io/discussions/3).
+
 ## Getting help
 
 Do you have a question ? Found an issue ? Please use the [GitHub Discussions](https://github.com/AMReX-Combustion/PelePhysics/discussions) to engage

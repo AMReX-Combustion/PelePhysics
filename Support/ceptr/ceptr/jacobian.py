@@ -562,12 +562,13 @@ def ajac_reaction_d(
     else:
         dim = cu.phase_space_units(reaction.reactants)
     third_body = reaction.third_body is not None
+    plog = reaction.rate.type == "pressure-dependent-Arrhenius"
     falloff = reaction.rate.type == "falloff"
     is_troe = reaction.rate.sub_type == "Troe"
     is_sri = reaction.rate.sub_type == "Sri"
     is_lindemann = reaction.rate.sub_type == "Lindemann"
     aeuc = cu.activation_energy_units()
-    if not third_body and not falloff:
+    if not third_body and not falloff and not plog:
         # Case 3 !PD, !TB
         cw.writer(
             fstream,
@@ -577,7 +578,7 @@ def ajac_reaction_d(
         pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
         beta = reaction.rate.temperature_exponent
         ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(aeuc)
-    elif not falloff:
+    elif not falloff and not plog:
         # Case 2 !PD, TB
         cw.writer(
             fstream,
@@ -587,6 +588,19 @@ def ajac_reaction_d(
         pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
         beta = reaction.rate.temperature_exponent
         ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(aeuc)
+    elif not third_body and not falloff and plog:
+        # Case 4 PLOG
+        cw.writer(
+            fstream,
+            cw.comment("a non-third-body and non-pressure-fall-off reaction (PLOG)"),
+        )
+        ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+        plog_pef, plog_beta, plog_ae = cu.evaluate_plog(
+            reaction.rate.rates, mechanism.P
+        )
+        pef = (plog_pef * ctuc).to_base_units()
+        beta = plog_beta
+        ae = (plog_ae * cc.ureg.joule / cc.ureg.kmol).to(aeuc)
     else:
         # Case 1 PD, TB
         cw.writer(

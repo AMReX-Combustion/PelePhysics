@@ -1,5 +1,6 @@
 """Generate C++ files for a mechanism."""
 
+import os
 import pathlib
 import shutil
 import subprocess as spr
@@ -7,6 +8,7 @@ import subprocess as spr
 import numpy as np
 
 import ceptr.ck as cck
+import ceptr.constants as cc
 import ceptr.formatter as cf
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
@@ -32,6 +34,7 @@ class Converter:
         jacobian=True,
         qss_format_input=None,
         qss_symbolic_jacobian=False,
+        plog_pressure=None,
     ):
         self.mechIsAHetMech = chemistry == "heterogeneous"
 
@@ -49,9 +52,6 @@ class Converter:
             else pathlib.Path(self.mechanism.source)
         )
 
-        self.rootname = "mechanism"
-        self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
-        self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
         self.species_info = csi.SpeciesInfo()
 
         self.set_species()
@@ -70,6 +70,47 @@ class Converter:
         # 6/interface/sticking
         # 6/7        /8
         self.reaction_info = cri.sort_reactions(self.mechanism, self.interface)
+
+        # Set up folder structure for PLOG reactions
+        if self.reaction_info.has_plog_reactions:
+            print(
+                "\nWARNING: Your mechanism contains at least one PLOG reaction.\n"
+                "WARNING: The compiled mechanism will only be valid for the given "
+                "constant pressure. It is not applicable for compressible solvers.\n\n"
+            )
+            # The pressure necessary for the plog evaluation is either provided via
+            # the command line argument or during runtime
+            if plog_pressure is None:  # runtime option
+                plog_pressure = float(
+                    input(
+                        "Please specify the pressure, at which you want to evaluate"
+                        f" the rates in Pascal (1 atm = {cc.Patm_pa} Pa, 1 bar = 1e5"
+                        " Pa):\n"
+                    )
+                )
+            print(
+                f"plog_pressure set to {plog_pressure} Pa /"
+                f" {plog_pressure / 1e5} bar /."
+            )
+            mechanism.TP = mechanism.T, plog_pressure
+            # To catch confusion about Pascal and bar/atm :
+            if mechanism.P < 1e3:
+                raise ValueError("Provided plog_pressure too low.")
+
+            # Now, create the pressure-specific folder
+            plog_folder = f"{plog_pressure/cc.Patm_pa:0.3f}atm".replace(".", "_")
+            if not os.path.isdir(self.mechpath.parents[0] / plog_folder):
+                os.makedirs(self.mechpath.parents[0] / plog_folder)
+                # Copy the Make.package file into the new folder
+                source = self.mechpath.parents[0] / "Make.package"
+                destination = self.mechpath.parents[0] / plog_folder / "Make.package"
+                shutil.copy(source, destination)
+            self.rootname = f"{plog_folder}/mechanism"
+        else:
+            self.rootname = "mechanism"
+        self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
+        self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
+
         # QSS  -- sort reactions/networks/check validity of QSSs
         if self.species_info.n_qssa_species > 0:
             print("QSSA information")
