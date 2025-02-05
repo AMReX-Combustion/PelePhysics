@@ -145,24 +145,43 @@ struct BinaryDiff
     TransParm<EOSType, SimpleTransport> const* tparm)
   {
     const amrex::Real scale = Constants::PATM / (Constants::RU * Tloc);
-    for (int i = 0; i < NUM_SPECIES; ++i) {
+
+	for (int i = 0; i< NUM_SPECIES, i++){
+		Ddiag[i] = 0.0;
+	}
+
+    for (int i = 0; i < NUM_SPECIES - 1; ++i) {
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
-      for (int j = 0; j < NUM_SPECIES; ++j) {
+
+      for (int j = i + 1; j < NUM_SPECIES; ++j) {
         // cppcheck-suppress knownConditionTrueFalse
-        if (i != j) {
-          const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
-          const amrex::Real dbintemp =
-            tparm->fitdbin[four_idx_ij] +
-            tparm->fitdbin[1 + four_idx_ij] * logT[0] +
-            tparm->fitdbin[2 + four_idx_ij] * logT[1] +
-            tparm->fitdbin[3 + four_idx_ij] * logT[2];
-          term1 += Yloc[j];
-          term2 += Xloc[j] * std::exp(-dbintemp);
-        }
+		//
+          const int four_idx_ij = 4 * (NUM_SPECIES * i - i * (i + 1)/2 + j);
+
+		  const amrex::Real a0 = tparm->fitdbin[four_idx_ij];
+          const amrex::Real a1 = tparm->fitdbin[four_idx_ij + 1];
+          const amrex::Real a2 = tparm->fitdbin[four_idx_ij + 2];
+          const amrex::Real a3 = tparm->fitdbin[four_idx_ij + 3];
+
+          const amrex::Real dbintemp =  a0 +
+										a1 * logT[0] +
+										a2 * logT[1] +
+										a3 * logT[2];
+          
+		  // have to backup, that the Xloc und Yloc are used correctlya
+		  // Yloc should be the massfraction, therefor 1-Yloc[i] should work
+		  // like a charm
+          Ddiag[i] += Xloc[j] * std::exp(-dbintemp);
+          Ddiag[j] += Xloc[j] * std::exp(-dbintemp);
       }
-      Ddiag[i] = tparm->wt[i] * term1 / term2 * scale;
-    }
+	
+	}
+	for (int i = 0; i< NUM_SPECIES, i++){
+		term1 = 1 - Yloc[i];
+		Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
+	}
+
   }
 };
 
