@@ -603,7 +603,7 @@ class Converter:
         )
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = f"{species.weight:f},"
+            text = f"{species.weight:.16f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
         cw.writer(fstream, "#endif")
@@ -613,7 +613,7 @@ class Converter:
         )
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = f"{species.weight:f},"
+            text = f"{species.weight:.16f},"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "};")
 
@@ -642,7 +642,7 @@ class Converter:
         cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
         for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqssa_species[i]
-            text = f"mw_new[{i}] = {species.weight:f};"
+            text = f"mw_new[{i}] = {species.weight:.16f};"
             cw.writer(fstream, text + cw.comment(f"{species.name}"))
         cw.writer(fstream, "}")
         cw.writer(fstream)
