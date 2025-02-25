@@ -155,8 +155,7 @@ struct BinaryDiff
 
       for (int j = 0; j < i; ++j) {
         // cppcheck-suppress knownConditionTrueFalse
-		//
-          const int four_idx_ij = 4 *  (i * (i + 1)/2 + j);
+          const int four_idx_ij = 4 * (i * (i + 1)/2 + j);
 
 		  const amrex::Real a0 = tparm->fitdbin[four_idx_ij];
           const amrex::Real a1 = tparm->fitdbin[four_idx_ij + 1];
@@ -167,10 +166,7 @@ struct BinaryDiff
 										a1 * logT[0] +
 										a2 * logT[1] +
 										a3 * logT[2];
-          
-		  // have to backup, that the Xloc und Yloc are used correctlya
-		  // Yloc should be the massfraction, therefor 1-Yloc[i] should work
-		  // like a charm
+
 		  const amrex::Real dexp = std::exp(-dbintemp);
           Ddiag[i] += Xloc[i] * dexp;
           Ddiag[j] += Xloc[j] * dexp;
@@ -178,8 +174,7 @@ struct BinaryDiff
 	
 	}
 	for (int i = 0; i< NUM_SPECIES; i++){
-		amrex::Real term1 = 0.0;
-		term1 = sum_of_Yloc - Yloc[i];
+		const amrex::Real term1 = sum_of_Yloc - Yloc[i];
 		Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
 	}
 
