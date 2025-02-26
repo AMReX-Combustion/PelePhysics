@@ -19,7 +19,7 @@ To install CEPTR dependencies::
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
   $ poetry update
 
-.. note:: Note that the install requires a specific Python version, which is specified in the ``Support/ceptr/pyproject.toml``. If a compatible version exists in your system then poetry will try to find and use it. Otherwise, think about using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to manage packages and their dependencies without tampering with your system. 
+.. note:: Note that the install requires a specific Python version, which is specified in the ``Support/ceptr/pyproject.toml``. If a compatible version exists in your system then poetry will try to find and use it. Otherwise, think about using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to manage packages and their dependencies without tampering with your system.
 
 Usage
 -----
@@ -48,7 +48,8 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
      $ poetry run convert -f ${PELEPHYSICS_HOME}/Mechanisms/${chemistry}/mechanism.yaml \
        --chemistry {chemistry-type} \
        --gas_name {gas-name} \
-       --interface_name {interface-name}
+       --interface_name {interface-name} \
+       --plog_pressure {value in Pa}
 
    The ``--chemistry`` (or ``-c``) argument allows users to convey if the ``${chemistry}`` of interest is either one of two valid options, namely, ``homogeneous`` or ``heterogeneous``. The default value for ``{chemistry-type}`` is ``homogeneous``.
    The ``--gas_name`` argument allows users to specify the names of the homogeneous phase to use, as several different ones can be defined in the corresponding ``mechanism.yaml`` file (under the ``phases:`` item). The default value for ``{gas-name}`` is ``gas``.
@@ -63,17 +64,25 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
 
    .. note:: CEPTR interpretations of heterogeneous mechanisms is currently a work in progress.
 
+   .. note:: CEPTR offers only partial support for mechanisms with pressure-dependent Arrhenius (PLOG) reactions.
+             These reactions are fixed to a constant pressure, specified with the ``--plog_pressure`` argument,
+             in the CEPTR-generated source code. Mechanisms with PLOG reactions generated in this way are limited
+             in validity to that specific pressure and would not be suitable for compressible flows with significant
+             pressure variation. For that reason, source code for these mechanisms is saved in pressure-specific directories, for
+             example ``${PELE_PHYSICS_HOME}/Mechanisms/POLIMI2020/1_000atm/``.
+
+
 2. Using a helper script in the directory containing the ``mechanism.yaml`` file::
 
      $ ./convert.sh
 
-   .. note:: It is possible that using this option will require for you to have a valid Cantera installed somewhere. Again, we strongly suggest using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to install all required package. A simple ceptr environment can be generated using the following yaml script:: 
+   .. note:: It is possible that using this option will require for you to have a valid Cantera installed somewhere. Again, we strongly suggest using a `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ environment to install all required package. A simple ceptr environment can be generated using the following yaml script::
 
      $ name: ceptr
-     $ channels:  
-     $ - conda-forge 
-     $ dependencies: 
-     $ - python=3.10  
+     $ channels:
+     $ - conda-forge
+     $ dependencies:
+     $ - python=3.10
      $ - cantera
 
 3. Using a helper script in the ``Mechanisms`` directory::
@@ -110,7 +119,7 @@ For a detailed description of these options and a further information on the way
 
 To generate a QSS C++ mechanism from the ``.yaml`` file thus created, tailored to your needs, please refer to Tutorials :ref:`Generating NC12H26 QSS mechanism with analytical jacobian <sec_tutqss1>` and :ref:`Generating NC12H26 QSS mechanism without analytical jacobian <sec_tutqss2>`.
 
-Batched generation of Pele-compatible mechanisms 
+Batched generation of Pele-compatible mechanisms
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
@@ -138,5 +147,3 @@ To generate all mechanisms::
   $ poetry run convert -l ${PELE_PHYSICS_HOME}/Mechanisms/list_mech
   $ poetry run qssa -lq ${PELE_PHYSICS_HOME}/Mechanisms/list_qss_mech
   $ poetry run convert -lq ${PELE_PHYSICS_HOME}/Mechanisms/list_qss_mech
-
-

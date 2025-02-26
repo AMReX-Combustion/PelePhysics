@@ -2,7 +2,7 @@
 
 import copy
 from collections import Counter
-from math import isclose
+from math import exp, isclose, log
 
 import ceptr.constants as cc
 
@@ -451,3 +451,43 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
         return " + ".join(alpha).replace("+ -", "- "), enhancement_smp
     else:
         return " + ".join(alpha).replace("+ -", "- ")
+
+
+def evaluate_plog(rates, plog_pressure):
+    """Evaluate rate constants for a PLOG reaction."""
+    if plog_pressure <= rates[0][0]:
+        # Case 1: plog_pressure <= lower bound -> take lower bound:
+        plog_reaction = rates[0][1]
+        pef = plog_reaction.pre_exponential_factor
+        beta = plog_reaction.temperature_exponent
+        ae = plog_reaction.activation_energy
+        return pef, beta, ae
+    elif plog_pressure >= rates[-1][0]:
+        # Case 2: plog_pressure >= upper bound -> take upper bound:
+        plog_reaction = rates[-1][1]
+        pef = plog_reaction.pre_exponential_factor
+        beta = plog_reaction.temperature_exponent
+        ae = plog_reaction.activation_energy
+        return pef, beta, ae
+    else:
+        # Case 3: lower bound < plog_pressure < upper bound -> logarithmic interpolation:
+        for plog_p_i in range(len(rates) - 1):
+            if rates[plog_p_i][0] <= plog_pressure < rates[plog_p_i + 1][0]:
+                rate_low = rates[plog_p_i][1]
+                rate_high = rates[plog_p_i + 1][1]
+                interp_fac = (log(plog_pressure) - log(rates[plog_p_i][0])) / (
+                    log(rates[plog_p_i + 1][0]) - log(rates[plog_p_i][0])
+                )
+                pef = exp(
+                    log(rate_low.pre_exponential_factor) * (1 - interp_fac)
+                    + log(rate_high.pre_exponential_factor) * interp_fac
+                )
+                beta = (
+                    rate_low.temperature_exponent * (1 - interp_fac)
+                    + rate_high.temperature_exponent * interp_fac
+                )
+                ae = (
+                    rate_low.activation_energy * (1 - interp_fac)
+                    + rate_high.activation_energy * interp_fac
+                )
+                return pef, beta, ae

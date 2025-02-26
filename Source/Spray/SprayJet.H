@@ -55,6 +55,7 @@ public:
   const amrex::Real& spread_angle() const { return m_spreadAngle; }
   amrex::Real mass_flow_rate(const amrex::Real time) const
 
+
   {
     if (m_useROI) {
       return interpolateMdot(time);
@@ -88,7 +89,6 @@ public:
     }
     return check;
   }
-
 
   bool hollow_spray() const { return m_hollowSpray; }
 

@@ -104,6 +104,10 @@ struct InitParm<TabulatedFunctionData, BlackBoxFunctionData>
     int Ngridtot = 0;
     for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
       Ngridtot += m_h_tf_data.dimLengths[ii];
+      if (m_h_tf_data.dimLengths[ii] < 2) {
+        amrex::Abort("TabulatedFunction: Each dimension must have at least two "
+                     "grid points.");
+      }
     }
     m_h_tf_data.grids = static_cast<amrex::Real*>(
       amrex::The_Pinned_Arena()->alloc(Ngridtot * real_size));

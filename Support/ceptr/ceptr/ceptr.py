@@ -15,25 +15,37 @@ def parse_lst_file(lst):
     """Return mechanism paths give a file containing a list of mechanism files."""
     lpath = pathlib.Path(lst)
     fnames = []
+    plog_pressures = []
     with open(lst, "r") as f:
         for line in f:
             if not line.startswith("#"):
-                fnames.append(line)
-    return [lpath.parents[0] / fn.strip() for fn in fnames]
+                parts = line.split("--plog=")
+                fnames.append(parts[0])
+                if len(parts) > 1:
+                    plog_pressures.append(float(parts[1].strip()))
+                else:
+                    plog_pressures.append(None)
+    return [lpath.parents[0] / fn.strip() for fn in fnames], plog_pressures
 
 
 def parse_qss_lst_file(lst):
     """Return mechanism paths give a file containing a list of qss mechanism files."""
     lpath = pathlib.Path(lst)
     fnames = []
+    plog_pressures = []
     with open(lst, "r") as f:
         for line in f:
             if not line.startswith("#"):
-                fnames.append(line)
+                parts = line.split("--plog=")
+                fnames.append(parts[0])
+                if len(parts) > 1:
+                    plog_pressures.append(float(parts[1].strip()))
+                else:
+                    plog_pressures.append(None)
 
     mechnames = [lpath.parents[0] / fn.split()[0].strip() for fn in fnames]
     qss_format_inputs = [lpath.parents[0] / fn.split()[1].strip() for fn in fnames]
-    return mechnames, qss_format_inputs
+    return mechnames, qss_format_inputs, plog_pressures
 
 
 def convert(
@@ -44,6 +56,7 @@ def convert(
     chemistry,
     gas_name,
     interface_name,
+    plog_pressure,
 ):
     """Convert a mechanism file."""
     print(f"""Converting file {fname}""")
@@ -67,6 +80,7 @@ def convert(
         jacobian,
         qss_format_input,
         qss_symbolic_jac,
+        plog_pressure,
     )
     conv.writer()
     conv.formatter()
@@ -83,7 +97,7 @@ def convert_lst(
     interface_name,
 ):
     """Convert mechanisms from a file containing a list of directories."""
-    mechnames = parse_lst_file(lst)
+    mechnames, plog_pressures = parse_lst_file(lst)
     print(f"Using {ncpu} processes")
     with Pool(ncpu) as pool:
         pool.starmap(
@@ -96,6 +110,7 @@ def convert_lst(
                 repeat(chemistry),
                 repeat(gas_name),
                 repeat(interface_name),
+                plog_pressures,
             ),
         )
 
@@ -109,7 +124,7 @@ def convert_lst_qss(
     interface_name,
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
-    mechnames, qss_format_inputs = parse_qss_lst_file(lst)
+    mechnames, qss_format_inputs, plog_pressures = parse_qss_lst_file(lst)
     print(f"Using {ncpu} processes")
     with Pool(ncpu) as pool:
         pool.starmap(
@@ -122,6 +137,7 @@ def convert_lst_qss(
                 repeat(chemistry),
                 repeat(gas_name),
                 repeat(interface_name),
+                plog_pressures,
             ),
         )
 
@@ -190,6 +206,14 @@ def main():
         "-n", "--ncpu", help="Number of processes to use", type=int, default=cpu_count()
     )
 
+    parser.add_argument(
+        "-p",
+        "--plog_pressure",
+        help="Pressure in Pascal to evaluate PLOG reactions",
+        type=float,
+        default=None,
+    )
+
     args = parser.parse_args()
 
     if args.chemistry == "heterogeneous":
@@ -206,6 +230,7 @@ def main():
             args.chemistry,
             args.gas_name,
             args.interface_name,
+            args.plog_pressure,
         )
     elif args.lst:
         convert_lst(

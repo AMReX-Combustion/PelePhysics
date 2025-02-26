@@ -40,7 +40,7 @@ ReactorNull::react(
 #endif
 
   int captured_reactor_type = m_reactor_type;
-  const auto* leosparm = m_eosparm;
+  const auto* leosparm = m_d_eosparm;
 
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     amrex::Real renergy_loc =

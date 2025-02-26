@@ -27,6 +27,8 @@ class ReactionInfo:
         self.n_qssa_reactions = 0
         self.qfqr_co_idx_map = []
 
+        self.has_plog_reactions = False
+
         if interface is not None:
             self.rs_unsorted += interface.reactions()
 
@@ -86,6 +88,9 @@ def sort_reactions(mechanism, interface):
                 continue
 
             if r.third_body is None:
+                # Check for PLOG reactions on the fly
+                if r.reaction_type == "pressure-dependent-Arrhenius":
+                    reaction_info.has_plog_reactions = True
                 reaction_info.idxmap[k] = i
                 reaction_info.rs.append(r)
                 i += 1

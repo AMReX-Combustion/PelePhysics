@@ -64,7 +64,7 @@ ReactorRK64::react(
   const int captured_nsubsteps_min = rk64_nsubsteps_min;
   const int captured_nsubsteps_max = rk64_nsubsteps_max;
   const amrex::Real captured_abstol = absTol;
-  const auto* leosparm = m_eosparm;
+  const auto* leosparm = m_d_eosparm;
   RK64Params rkp;
 
   amrex::Gpu::DeviceVector<int> v_nsteps(ncells, 0);
@@ -193,7 +193,7 @@ ReactorRK64::react(
   const int captured_nsubsteps_min = rk64_nsubsteps_min;
   const int captured_nsubsteps_max = rk64_nsubsteps_max;
   const amrex::Real captured_abstol = absTol;
-  const auto* leosparm = m_eosparm;
+  const auto* leosparm = m_d_eosparm;
   RK64Params rkp;
 
   int ncells = static_cast<int>(box.numPts());
