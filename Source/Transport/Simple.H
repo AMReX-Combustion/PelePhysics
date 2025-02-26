@@ -195,12 +195,16 @@ struct BinaryDiff<eos::SRK>
     amrex::Real* Ddiag,
     TransParm<eos::SRK, SimpleTransport> const* tparm)
   {
-    for (int i = 0; i < NUM_SPECIES; ++i) {
+
+  amrex::Real sum_of_Yloc = 0.0;
+  for (int i = 0; i < NUM_SPECIES; i++){
+	sum_of_Yloc += Yloc[i];
+  }
+
+  for (int i = 0; i < NUM_SPECIES; ++i) {
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
-        // cppcheck-suppress knownConditionTrueFalse
-        if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
                                  tparm->fitdbin[1 + 4 * idx_ij] * logT[0] +
