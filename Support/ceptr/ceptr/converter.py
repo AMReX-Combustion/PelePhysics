@@ -52,7 +52,6 @@ class Converter:
             else pathlib.Path(self.mechanism.source)
         )
 
-
         self.species_info = csi.SpeciesInfo()
 
         self.set_species()
