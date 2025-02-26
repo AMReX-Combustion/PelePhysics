@@ -369,7 +369,6 @@ ReactorArkode::react(
   long int nfe;
   ARKodeGetNumRhsEvals(arkode_mem, 0, &nfe);
 
-
   if (user_data->verbose > 1) {
     print_final_stats(arkode_mem);
   }
@@ -431,8 +430,8 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   utils::check_flag(&flag, "ARKodeGetNumRhsEvals", 1);
 
 #ifdef AMREX_USE_OMP
-  amrex::Print() << "\nFinal Statistics: "
-                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "\nFinal Statistics: " << "(thread:" << omp_get_thread_num()
+                 << ", ";
   amrex::Print() << "arkodeMem:" << arkode_mem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";

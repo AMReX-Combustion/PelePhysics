@@ -55,7 +55,6 @@ public:
   const amrex::Real& spread_angle() const { return m_spreadAngle; }
   amrex::Real mass_flow_rate(const amrex::Real time) const
 
-
   {
     if (m_useROI) {
       return interpolateMdot(time);
@@ -124,7 +123,6 @@ public:
       m_endTime = m_flow_time_final_injection + largenum;
     }
   }
-
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
 
@@ -199,7 +197,6 @@ public:
   {
     return m_override_inj_plane_loc;
   }
-
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
@@ -336,7 +333,6 @@ public:
     }
   }
 
-
   amrex::Real interpolateMdot(const amrex::Real time) const
   {
     return interpolateROI(time, inject_mass.dataPtr());
@@ -355,7 +351,6 @@ public:
   // Total injection mass and time
   amrex::Real m_totalInjMass = 0.;
   amrex::Real m_totalInjTime = 0.;
-
 
   bool m_use_Fluentdpmfile;
   bool m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile = false;

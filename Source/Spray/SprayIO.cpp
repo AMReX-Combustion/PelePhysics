@@ -173,7 +173,6 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
             break;
           }
         }
-
       }
       for (int ijets = 0; ijets < in_numjets; ++ijets) {
         std::string in_name = in_jet_names[ijets];
