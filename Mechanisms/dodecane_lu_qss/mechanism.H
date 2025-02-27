@@ -11627,11 +11627,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   amrex::Real sc_qss[18];
   amrex::Real qf_qss[198], qr_qss[198];
   // Fill sc_qss here
-  amrex::Print() << "here " << std::endl;
   comp_qss_coeff(T, invT, logT, qf_qss, qr_qss, sc, g_RT, g_RT_qss);
-  amrex::Print() << "here 1" << std::endl;
   comp_sc_qss(sc_qss, qf_qss, qr_qss);
-  amrex::Print() << "here 2" << std::endl;
 
   {
     // reaction 0:  H + O2 (+M) <=> HO2 (+M)
@@ -11657,8 +11654,6 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     wdot[4] += qdot;
     wdot[8] -= qdot;
   }
-
-  amrex::Print() << "here 3" << std::endl;
 
   {
     // reaction 1:  2 OH (+M) <=> H2O2 (+M)
@@ -15411,9 +15406,6 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     wdot[17] += 2.000000 * qdot;
     wdot[33] -= qdot;
   }
-
-
-  amrex::Print() << "here 164" << std::endl;
 }
 
 // GPU version of productionRate: no more use of thermo namespace vectors
