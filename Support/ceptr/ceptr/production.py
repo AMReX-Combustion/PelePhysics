@@ -516,16 +516,16 @@ def production_rate(
             )
             cw.writer(
                 fstream,
-                f"amrex::Real kf_qss[{reaction_info.n_qssa_reactions}],"
+                f"amrex::Real "
                 f" qf_qss[{reaction_info.n_qssa_reactions}],"
                 f" qr_qss[{reaction_info.n_qssa_reactions}];",
             )
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
-            cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
+            #cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             cw.writer(
                 fstream,
-                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
+                "comp_qss_coeff(T, invT, logT, qf_qss, qr_qss, sc, g_RT, g_RT_qss);",
             )
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
@@ -1101,11 +1101,11 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
 
         if species_info.n_qssa_species > 0:
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
-            cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
+            #cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             cw.writer(
                 fstream,
-                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
+                "comp_qss_coeff(T, invT, logT, qf_qss, qr_qss, sc, g_RT, g_RT_qss);",
             )
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
@@ -1504,14 +1504,14 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
             cw.writer(
                 fstream,
-                f"amrex::Real kf_qss[{reaction_info.n_qssa_reactions}],"
+                f"amrex::Real"
                 f" qf_qss[{reaction_info.n_qssa_reactions}],"
                 f" qr_qss[{reaction_info.n_qssa_reactions}];",
             )
-            cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
+            #cw.writer(fstream, "comp_k_f_qss(T, invT, logT, kf_qss);")
             cw.writer(
                 fstream,
-                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, T, g_RT, g_RT_qss);",
+                "comp_qss_coeff(T, invT, logT, qf_qss, qr_qss, sc, g_RT, g_RT_qss);",
             )
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
 
