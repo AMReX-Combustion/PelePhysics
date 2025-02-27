@@ -15007,82 +15007,28 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 3:  H + HCO (+M) <=> CH2O (+M)
-    const amrex::Real k_f =
-      1090000 * exp((0.48) * logT - (-130.836333109227) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 1350000000000 * exp(-2.57 * logT - 717.083748771726 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.2176 * exp(-T * 0.003690036900369) +
-      0.7824 * exp(-T * 0.000362976406533575) + exp(-6570 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc_qss[2]);
-    const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] - g_RT[11] + g_RT_qss[2])) * (refC) * (sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[0] * sc_qss[2] - qr_qss[0] * sc_qss[2];
     wdot[1] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 4:  CH2 + H (+M) <=> CH3 (+M)
-    const amrex::Real k_f = 25000000000 * exp((-0.8) * logT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 3.2e+15 * exp(-3.14 * logT - 618.956498939805 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.32 * exp(-T * 0.0128205128205128) +
-      0.68 * exp(-T * 0.00050125313283208) + exp(-5590 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc_qss[0]);
-    const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] - g_RT[9] + g_RT_qss[0])) * (refC) * (sc[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[1] * sc_qss[0] - qr_qss[1] * sc_qss[0];
     wdot[1] -= qdot;
     wdot[9] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 5:  CH2O + H (+M) <=> CH3O (+M)
-    const amrex::Real k_f =
-      540000 * exp((0.454) * logT - (1308.36333109227) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 2.2e+18 * exp(-4.8 * logT - 2797.88466187424 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.242 * exp(-T * 0.0106382978723404) +
-      0.758 * exp(-T * 0.000643086816720257) + exp(-4200 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[11]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[11] - g_RT_qss[3])) * (refC) *
-                           (sc_qss[3]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[3]
+    amrex::Real qdot = qf_qss[2] - qr_qss[2];
     wdot[1] -= qdot;
     wdot[11] -= qdot;
   }
@@ -15143,165 +15089,56 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 8:  C2H3 (+M) <=> C2H2 + H (+M)
-    const amrex::Real k_f =
-      38600000 * exp((1.62) * logT - (18643.2716780664) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[14] + (2) * sc[15] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 2.565e+21 * exp(-3.4 * logT - 18014.5125184767 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      -0.9816 * exp(-T * 0.000185745862510913) +
-      1.9816 * exp(-T * 0.232926488400261) + exp(0.0795 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc_qss[4]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(-g_RT[1] - g_RT[14] + g_RT_qss[4])) *
-                           (refCinv) * (sc[1] * sc[14]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[4]
+    amrex::Real qdot = qf_qss[3] * sc_qss[4] - qr_qss[3] * sc_qss[4];
     wdot[1] += qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 9:  C2H3 + H (+M) <=> C2H4 (+M)
-    const amrex::Real k_f =
-      6080000 * exp((0.27) * logT - (140.900666425322) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[14] + (2) * sc[15] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 1.4e+18 * exp(-3.86 * logT - 1670.67933047167 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.218 * exp(-T * 0.00481927710843374) +
-      0.782 * exp(-T * 0.000375516334960571) + exp(-6095 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc_qss[4]);
-    const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] - g_RT[15] + g_RT_qss[4])) * (refC) * (sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[4] * sc_qss[4] - qr_qss[4] * sc_qss[4];
     wdot[1] -= qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 10:  C2H3 + CH3 (+M) <=> C3H6 (+M)
-    const amrex::Real k_f = 25000000;
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[14] + (2) * sc[15] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 4.27e+46 * exp(-11.94 * logT - 4916.32618157895 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.825 * exp(-T * 0.000745934656124124) +
-      0.175 * exp(-T * 1.66666666666667e-05) + exp(-10139.8 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[9] * sc_qss[4]);
-    const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[9] - g_RT[19] + g_RT_qss[4])) * (refC) * (sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[5] * sc_qss[4] - qr_qss[5] * sc_qss[4];
     wdot[9] -= qdot;
     wdot[19] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 11:  C2H4 + H (+M) <=> C2H5 (+M)
-    const amrex::Real k_f =
-      3975 * exp((1.28) * logT - (649.466525387545) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 4715000 * exp(0 * logT - 380.059419015673 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.24 * exp(-T * 0.025) + 0.76 * exp(-T * 0.000975609756097561) + 0.0);
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[15]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[15] - g_RT_qss[5])) * (refC) *
-                           (sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[5]
+    amrex::Real qdot = qf_qss[6] - qr_qss[6];
     wdot[1] -= qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 12:  C2H5 + H (+M) <=> C2H6 (+M)
-    const amrex::Real k_f =
-      521000000000 * exp((-0.99) * logT - (795.082331971457) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 1.99e+29 * exp(-7.08 * logT - 3364.00341090455 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.1578 * exp(-T * 0.008) + 0.8422 * exp(-T * 0.000450653447498873) +
-      exp(-6882 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc_qss[5]);
-    const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] - g_RT[16] + g_RT_qss[5])) * (refC) * (sc[16]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[7] * sc_qss[5] - qr_qss[7] * sc_qss[5];
     wdot[1] -= qdot;
     wdot[16] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 13:  C2H3 + C2H5 (+M) <=> C4H81 (+M)
-    const amrex::Real k_f = 15000000;
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 1.55e+44 * exp(-11.79 * logT - 4521.1501339225 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent = log10(
-      0.802 * exp(-T * 0.000439000834101585) +
-      0.198 * exp(-T * 1.66666666666667e-05) + exp(-5723.2 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc_qss[4] * sc_qss[5]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(-g_RT[22] + g_RT_qss[4] + g_RT_qss[5])) *
-                           (refC) * (sc[22]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[4]*sc_qss[5]
+    amrex::Real qdot =
+      qf_qss[8] * sc_qss[4] * sc_qss[5] - qr_qss[8] * sc_qss[4] * sc_qss[5];
     wdot[22] += qdot;
   }
 
@@ -15361,27 +15198,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 16:  C3H6 + H (+M) <=> nC3H7 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[19]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[19] - g_RT_qss[6])) * (refC) *
-                           (sc_qss[6]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[6]
+    amrex::Real qdot = qf_qss[9] - qr_qss[9];
     wdot[1] -= qdot;
     wdot[19] -= qdot;
   }
@@ -15414,131 +15234,46 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 18:  C4H81 + H (+M) <=> pC4H9 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[22]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[22] - g_RT_qss[7])) * (refC) *
-                           (sc_qss[7]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[7]
+    amrex::Real qdot = qf_qss[10] - qr_qss[10];
     wdot[1] -= qdot;
     wdot[22] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 19:  C5H10 + H (+M) <=> PXC5H11 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[24]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[24] - g_RT_qss[8])) * (refC) *
-                           (sc_qss[8]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[8]
+    amrex::Real qdot = qf_qss[11] - qr_qss[11];
     wdot[1] -= qdot;
     wdot[24] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 20:  C6H12 + H (+M) <=> PXC6H13 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[25]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[25] - g_RT_qss[9])) * (refC) *
-                           (sc_qss[9]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[9]
+    amrex::Real qdot = qf_qss[12] - qr_qss[12];
     wdot[1] -= qdot;
     wdot[25] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 21:  C7H14 + H (+M) <=> PXC7H15 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[26]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[26] - g_RT_qss[10])) * (refC) *
-                           (sc_qss[10]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[10]
+    amrex::Real qdot = qf_qss[13] - qr_qss[13];
     wdot[1] -= qdot;
     wdot[26] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 22:  C8H16 + H (+M) <=> PXC8H17 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[27]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[27] - g_RT_qss[11])) * (refC) *
-                           (sc_qss[11]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[11]
+    amrex::Real qdot = qf_qss[14] - qr_qss[14];
     wdot[1] -= qdot;
     wdot[27] -= qdot;
   }
@@ -15570,27 +15305,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 24:  C10H20 + H (+M) <=> PXC10H21 (+M)
-    const amrex::Real k_f = 13300000 * exp(-(1640.83858218945) * invT);
-    amrex::Real Corr = mixture + sc[5] + (5) * sc[6] + sc[10] + (0.5) * sc[12] +
-                       sc[13] + (2) * sc[16];
-    const amrex::Real redP =
-      Corr / k_f * 6.26e+26 * exp(-6.66 * logT - 3522.51666063304 * invT);
-    const amrex::Real F = redP / (1.0 + redP);
-    const amrex::Real logPred = log10(redP);
-    const amrex::Real logFcent =
-      log10(+1 * exp(-T * 0.000763358778625954) + exp(-48097 * invT));
-    const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
-    const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
-    const amrex::Real troe =
-      (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
-    const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
-    Corr = F * F_troe;
-    const amrex::Real qf = Corr * k_f * (sc[1] * sc[30]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(g_RT[1] + g_RT[30] - g_RT_qss[12])) * (refC) *
-                           (sc_qss[12]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[12]
+    amrex::Real qdot = qf_qss[15] - qr_qss[15];
     wdot[1] -= qdot;
     wdot[30] -= qdot;
   }
@@ -15700,28 +15418,19 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 33:  HCO + M <=> CO + H + M
-    const amrex::Real k_f =
-      187000000000 * exp((-1) * logT - (8554.68331868023) * invT);
-    const amrex::Real Corr =
-      mixture + sc[5] + (-1) * sc[6] + (0.75) * sc[12] + (2.6) * sc[13];
-    const amrex::Real qf = Corr * k_f * (sc_qss[2]);
-    const amrex::Real qr = Corr * k_f *
-                           exp(-(-g_RT[1] - g_RT[12] + g_RT_qss[2])) *
-                           (refCinv) * (sc[1] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[2]
+    amrex::Real qdot = qf_qss[16] * sc_qss[2] - qr_qss[16] * sc_qss[2];
     wdot[1] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 34:  HCO + H2O <=> CO + H + H2O
-    const amrex::Real k_f =
-      2244000000000 * exp((-1) * logT - (8554.68331868023) * invT);
-    const amrex::Real qf = k_f * (sc[6] * sc_qss[2]);
-    const amrex::Real qr = k_f * exp(-(-g_RT[1] - g_RT[12] + g_RT_qss[2])) *
-                           (refCinv) * (sc[1] * sc[6] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[17] * sc_qss[2] - qr_qss[17] * sc_qss[2];
     wdot[1] += qdot;
     wdot[12] += qdot;
   }
@@ -15991,232 +15700,181 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 55:  H + HCO <=> CO + H2
-    const amrex::Real k_f = 120000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[12] + g_RT_qss[2])) *
-                           (sc[5] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[18] * sc_qss[2] - qr_qss[18] * sc_qss[2];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 56:  HCO + O <=> CO + OH
-    const amrex::Real k_f = 30000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[3] - g_RT[12] + g_RT_qss[2])) *
-                           (sc[3] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[19] * sc_qss[2] - qr_qss[19] * sc_qss[2];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 57:  HCO + O <=> CO2 + H
-    const amrex::Real k_f = 30000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[2] - g_RT[13] + g_RT_qss[2])) *
-                           (sc[1] * sc[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[20] * sc_qss[2] - qr_qss[20] * sc_qss[2];
     wdot[1] += qdot;
     wdot[2] -= qdot;
     wdot[13] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 58:  HCO + OH <=> CO + H2O
-    const amrex::Real k_f = 30200000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] - g_RT[12] + g_RT_qss[2])) *
-                           (sc[6] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[21] * sc_qss[2] - qr_qss[21] * sc_qss[2];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 59:  HCO + O2 <=> CO + HO2
-    const amrex::Real k_f =
-      12040 * exp((0.807) * logT - (-365.838516040031) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[12] + g_RT_qss[2])) *
-                           (sc[4] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[22] * sc_qss[2] - qr_qss[22] * sc_qss[2];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 60:  CH2 + O <=> H + HCO
-    const amrex::Real k_f = 80000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT_qss[0] - g_RT_qss[2])) *
-      (sc[1] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[23] * sc_qss[0] - qr_qss[23] * sc_qss[0];
     wdot[1] += qdot;
     wdot[2] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 61:  CH2 + OH <=> CH2O + H
-    const amrex::Real k_f = 20000000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[0]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[3] - g_RT[11] + g_RT_qss[0])) *
-                           (sc[1] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[24] * sc_qss[0] - qr_qss[24] * sc_qss[0];
     wdot[1] += qdot;
     wdot[3] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 62:  CH2 + H2 <=> CH3 + H
-    const amrex::Real k_f = 0.5 * exp((2) * logT - (3638.25649376812) * invT);
-    const amrex::Real qf = k_f * (sc[5] * sc_qss[0]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[5] - g_RT[9] + g_RT_qss[0])) *
-                           (sc[1] * sc[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[25] * sc_qss[0] - qr_qss[25] * sc_qss[0];
     wdot[1] += qdot;
     wdot[5] -= qdot;
     wdot[9] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 63:  CH2 + O2 <=> HCO + OH
-    const amrex::Real k_f = 10600000 * exp(-(754.82499870708) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[8] + g_RT_qss[0] - g_RT_qss[2])) *
-      (sc[3] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[26] * sc_qss[0] - qr_qss[26] * sc_qss[0];
     wdot[3] += qdot;
     wdot[8] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 64:  CH2 + O2 <=> CO2 + 2 H
-    const amrex::Real k_f = 2640000 * exp(-(754.82499870708) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-2.000000 * g_RT[1] + g_RT[8] - g_RT[13] + g_RT_qss[0])) *
-      (refCinv) * ((sc[1] * sc[1]) * sc[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    // (sc[1] * sc[1])*sc[13]
+    amrex::Real qdot = qf_qss[27] * sc_qss[0] - qr_qss[27] * sc_qss[0];
     wdot[1] += 2.000000 * qdot;
     wdot[8] -= qdot;
     wdot[13] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 65:  CH2 + HO2 <=> CH2O + OH
-    const amrex::Real k_f = 20000000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[0]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[3] + g_RT[4] - g_RT[11] + g_RT_qss[0])) *
-                           (sc[3] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[28] * sc_qss[0] - qr_qss[28] * sc_qss[0];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 66:  2 CH2 <=> C2H2 + H2
-    const amrex::Real k_f = 32000000;
-    const amrex::Real qf = k_f * (sc_qss[0] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[5] - g_RT[14] + 2.000000 * g_RT_qss[0])) *
-      (sc[5] * sc[14]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[0]*sc_qss[0]
+    amrex::Real qdot =
+      qf_qss[29] * sc_qss[0] * sc_qss[0] - qr_qss[29] * sc_qss[0] * sc_qss[0];
     wdot[5] += qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 67:  CH2* + N2 <=> CH2 + N2
-    const amrex::Real k_f = 15000000 * exp(-(301.929999482832) * invT);
-    const amrex::Real qf = k_f * (sc[34] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[34] - g_RT[34] - g_RT_qss[0] + g_RT_qss[1])) *
-      (sc[34] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[30] * sc_qss[1] - qr_qss[30] * sc_qss[1];
     wdot[34] -= qdot;
     wdot[34] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 68:  CH2* + O <=> CO + H2
-    const amrex::Real k_f = 15000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[5] - g_RT[12] + g_RT_qss[1])) *
-                           (sc[5] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[31] * sc_qss[1] - qr_qss[31] * sc_qss[1];
     wdot[2] -= qdot;
     wdot[5] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 69:  CH2* + O <=> H + HCO
-    const amrex::Real k_f = 15000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT_qss[1] - g_RT_qss[2])) *
-      (sc[1] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[32] * sc_qss[1] - qr_qss[32] * sc_qss[1];
     wdot[1] += qdot;
     wdot[2] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 70:  CH2* + OH <=> CH2O + H
-    const amrex::Real k_f = 30000000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[3] - g_RT[11] + g_RT_qss[1])) *
-                           (sc[1] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[33] * sc_qss[1] - qr_qss[33] * sc_qss[1];
     wdot[1] += qdot;
     wdot[3] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 71:  CH2* + H2 <=> CH3 + H
-    const amrex::Real k_f = 70000000;
-    const amrex::Real qf = k_f * (sc[5] * sc_qss[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[5] - g_RT[9] + g_RT_qss[1])) *
-                           (sc[1] * sc[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[34] * sc_qss[1] - qr_qss[34] * sc_qss[1];
     wdot[1] += qdot;
     wdot[5] -= qdot;
     wdot[9] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 72:  CH2* + O2 <=> CO + H + OH
-    const amrex::Real k_f = 28000000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] - g_RT[3] + g_RT[8] - g_RT[12] + g_RT_qss[1])) *
-      (refCinv) * (sc[1] * sc[3] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[35] * sc_qss[1] - qr_qss[35] * sc_qss[1];
     wdot[1] += qdot;
     wdot[3] += qdot;
     wdot[8] -= qdot;
@@ -16224,129 +15882,100 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 73:  CH2* + O2 <=> CO + H2O
-    const amrex::Real k_f = 12000000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[6] + g_RT[8] - g_RT[12] + g_RT_qss[1])) *
-                           (sc[6] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[36] * sc_qss[1] - qr_qss[36] * sc_qss[1];
     wdot[6] += qdot;
     wdot[8] -= qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 74:  CH2* + H2O <=> CH2 + H2O
-    const amrex::Real k_f = 30000000;
-    const amrex::Real qf = k_f * (sc[6] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[6] - g_RT[6] - g_RT_qss[0] + g_RT_qss[1])) *
-      (sc[6] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[37] * sc_qss[1] - qr_qss[37] * sc_qss[1];
     wdot[6] -= qdot;
     wdot[6] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 75:  CH2* + CO <=> CH2 + CO
-    const amrex::Real k_f = 9000000;
-    const amrex::Real qf = k_f * (sc[12] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[12] - g_RT[12] - g_RT_qss[0] + g_RT_qss[1])) *
-      (sc[12] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[38] * sc_qss[1] - qr_qss[38] * sc_qss[1];
     wdot[12] -= qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 76:  CH2* + CO2 <=> CH2 + CO2
-    const amrex::Real k_f = 7000000;
-    const amrex::Real qf = k_f * (sc[13] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[13] - g_RT[13] - g_RT_qss[0] + g_RT_qss[1])) *
-      (sc[13] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[39] * sc_qss[1] - qr_qss[39] * sc_qss[1];
     wdot[13] -= qdot;
     wdot[13] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 77:  CH2* + CO2 <=> CH2O + CO
-    const amrex::Real k_f = 14000000;
-    const amrex::Real qf = k_f * (sc[13] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[11] - g_RT[12] + g_RT[13] + g_RT_qss[1])) *
-      (sc[11] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[40] * sc_qss[1] - qr_qss[40] * sc_qss[1];
     wdot[11] += qdot;
     wdot[12] += qdot;
     wdot[13] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 78:  CH2O + H <=> H2 + HCO
-    const amrex::Real k_f =
-      23000 * exp((1.05) * logT - (1648.03458051046) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[5] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[41] - qr_qss[41];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[11] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 79:  CH2O + O <=> HCO + OH
-    const amrex::Real k_f = 39000000 * exp(-(1781.38699694871) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[3] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[3] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[42] - qr_qss[42];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[11] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 80:  CH2O + OH <=> H2O + HCO
-    const amrex::Real k_f =
-      3430 * exp((1.18) * logT - (-224.93784961471) * invT);
-    const amrex::Real qf = k_f * (sc[3] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[6] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[43] - qr_qss[43];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[11] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 81:  CH2O + O2 <=> HCO + HO2
-    const amrex::Real k_f = 100000000 * exp(-(20128.6666321888) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[4] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[44] - qr_qss[44];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[11] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 82:  CH2O + HO2 <=> H2O2 + HCO
-    const amrex::Real k_f = 1000000 * exp(-(4025.73332643776) * invT);
-    const amrex::Real qf = k_f * (sc[4] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[4] - g_RT[7] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[7] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[45] - qr_qss[45];
     wdot[4] -= qdot;
     wdot[7] += qdot;
     wdot[11] -= qdot;
@@ -16366,39 +15995,30 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 84:  CH3 + OH <=> CH2 + H2O
-    const amrex::Real k_f = 56 * exp((1.6) * logT - (2727.43432866158) * invT);
-    const amrex::Real qf = k_f * (sc[3] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] + g_RT[9] - g_RT_qss[0])) *
-                           (sc[6] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[46] - qr_qss[46];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[9] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 85:  CH3 + OH <=> CH2* + H2O
-    const amrex::Real k_f = 25010000;
-    const amrex::Real qf = k_f * (sc[3] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] + g_RT[9] - g_RT_qss[1])) *
-                           (sc[6] * sc_qss[1]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[47] - qr_qss[47];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[9] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 86:  CH3 + O2 <=> CH3O + O
-    const amrex::Real k_f = 30830000 * exp(-(14492.6399751759) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[2] + g_RT[8] + g_RT[9] - g_RT_qss[3])) *
-                           (sc[2] * sc_qss[3]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[48] - qr_qss[48];
     wdot[2] += qdot;
     wdot[8] -= qdot;
     wdot[9] -= qdot;
@@ -16431,13 +16051,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 89:  CH3 + HO2 <=> CH3O + OH
-    const amrex::Real k_f = 13400000;
-    const amrex::Real qf = k_f * (sc[4] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[3] + g_RT[4] + g_RT[9] - g_RT_qss[3])) *
-                           (sc[3] * sc_qss[3]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[49] - qr_qss[49];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[9] -= qdot;
@@ -16458,143 +16075,111 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 91:  CH3 + HCO <=> CH4 + CO
-    const amrex::Real k_f = 8480000;
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[12] + g_RT_qss[2])) *
-                           (sc[10] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[50] * sc_qss[2] - qr_qss[50] * sc_qss[2];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 92:  CH2O + CH3 <=> CH4 + HCO
-    const amrex::Real k_f =
-      0.00332 * exp((2.81) * logT - (2948.84966161566) * invT);
-    const amrex::Real qf = k_f * (sc[9] * sc[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] + g_RT[11] - g_RT_qss[2])) *
-                           (sc[10] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[51] - qr_qss[51];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[11] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 93:  CH2 + CH3 <=> C2H4 + H
-    const amrex::Real k_f = 40000000;
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[0]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[9] - g_RT[15] + g_RT_qss[0])) *
-                           (sc[1] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[52] * sc_qss[0] - qr_qss[52] * sc_qss[0];
     wdot[1] += qdot;
     wdot[9] -= qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 94:  CH2* + CH3 <=> C2H4 + H
-    const amrex::Real k_f = 12000000 * exp(-(-286.83349950869) * invT);
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[9] - g_RT[15] + g_RT_qss[1])) *
-                           (sc[1] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[53] * sc_qss[1] - qr_qss[53] * sc_qss[1];
     wdot[1] += qdot;
     wdot[9] -= qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 95:  2 CH3 <=> C2H5 + H
-    const amrex::Real k_f =
-      4990000 * exp((0.1) * logT - (5334.09665753003) * invT);
-    const amrex::Real qf = k_f * ((sc[9] * sc[9]));
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + 2.000000 * g_RT[9] - g_RT_qss[5])) *
-                           (sc[1] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // (sc[9] * sc[9])
+    // *sc_qss[5]
+    amrex::Real qdot =
+      qf_qss[54] * (sc[9] * sc[9]) - qr_qss[54] * (sc[9] * sc[9]);
     wdot[1] += qdot;
     wdot[9] -= 2.000000 * qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 96:  CH3O + H <=> CH2O + H2
-    const amrex::Real k_f = 20000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT_qss[3])) *
-                           (sc[5] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[55] * sc_qss[3] - qr_qss[55] * sc_qss[3];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 97:  CH3O + H <=> CH3 + OH
-    const amrex::Real k_f = 32000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[3]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[9] + g_RT_qss[3])) * (sc[3] * sc[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[56] * sc_qss[3] - qr_qss[56] * sc_qss[3];
     wdot[1] -= qdot;
     wdot[3] += qdot;
     wdot[9] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 98:  CH3O + H <=> CH2* + H2O
-    const amrex::Real k_f = 16000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[3]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[6] - g_RT_qss[1] + g_RT_qss[3])) *
-      (sc[6] * sc_qss[1]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[57] * sc_qss[3] - qr_qss[57] * sc_qss[3];
     wdot[1] -= qdot;
     wdot[6] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 99:  CH3O + O <=> CH2O + OH
-    const amrex::Real k_f = 10000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[3] - g_RT[11] + g_RT_qss[3])) *
-                           (sc[3] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[58] * sc_qss[3] - qr_qss[58] * sc_qss[3];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 100:  CH3O + OH <=> CH2O + H2O
-    const amrex::Real k_f = 5000000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] - g_RT[11] + g_RT_qss[3])) *
-                           (sc[6] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[59] * sc_qss[3] - qr_qss[59] * sc_qss[3];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 101:  CH3O + O2 <=> CH2O + HO2
-    const amrex::Real k_f =
-      4.28e-19 * exp((7.6) * logT - (-1776.35483029066) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[11] + g_RT_qss[3])) *
-                           (sc[4] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[3]
+    amrex::Real qdot = qf_qss[60] * sc_qss[3] - qr_qss[60] * sc_qss[3];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[11] += qdot;
@@ -16642,37 +16227,30 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 105:  CH2 + CH4 <=> 2 CH3
-    const amrex::Real k_f = 2.46 * exp((2) * logT - (4161.60182620503) * invT);
-    const amrex::Real qf = k_f * (sc[10] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-2.000000 * g_RT[9] + g_RT[10] + g_RT_qss[0])) *
-      ((sc[9] * sc[9]));
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    // (sc[9] * sc[9])
+    amrex::Real qdot = qf_qss[61] * sc_qss[0] - qr_qss[61] * sc_qss[0];
     wdot[9] += 2.000000 * qdot;
     wdot[10] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 106:  CH2* + CH4 <=> 2 CH3
-    const amrex::Real k_f = 16000000 * exp(-(-286.83349950869) * invT);
-    const amrex::Real qf = k_f * (sc[10] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-2.000000 * g_RT[9] + g_RT[10] + g_RT_qss[1])) *
-      ((sc[9] * sc[9]));
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // (sc[9] * sc[9])
+    amrex::Real qdot = qf_qss[62] * sc_qss[1] - qr_qss[62] * sc_qss[1];
     wdot[9] += 2.000000 * qdot;
     wdot[10] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 107:  C2H2 + O <=> CH2 + CO
-    const amrex::Real k_f = 4.08 * exp((2) * logT - (956.111665028967) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[14]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[12] + g_RT[14] - g_RT_qss[0])) *
-                           (sc[12] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[63] - qr_qss[63];
     wdot[2] -= qdot;
     wdot[12] += qdot;
     wdot[14] -= qdot;
@@ -16693,13 +16271,11 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 109:  C2H2 + HCO <=> C2H3 + CO
-    const amrex::Real k_f = 10 * exp((2) * logT - (3019.29999482832) * invT);
-    const amrex::Real qf = k_f * (sc[14] * sc_qss[2]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[12] + g_RT[14] + g_RT_qss[2] - g_RT_qss[4])) *
-      (sc[12] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[64] * sc_qss[2] - qr_qss[64] * sc_qss[2];
     wdot[12] += qdot;
     wdot[14] -= qdot;
   }
@@ -16718,174 +16294,130 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 111:  C2H3 + H <=> C2H2 + H2
-    const amrex::Real k_f = 90000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[14] + g_RT_qss[4])) *
-                           (sc[5] * sc[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[65] * sc_qss[4] - qr_qss[65] * sc_qss[4];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 112:  C2H3 + O <=> CH3 + CO
-    const amrex::Real k_f = 48000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[9] - g_RT[12] + g_RT_qss[4])) *
-                           (sc[9] * sc[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[66] * sc_qss[4] - qr_qss[66] * sc_qss[4];
     wdot[2] -= qdot;
     wdot[9] += qdot;
     wdot[12] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 113:  C2H3 + OH <=> C2H2 + H2O
-    const amrex::Real k_f = 30110000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT_qss[4])) *
-                           (sc[6] * sc[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[67] * sc_qss[4] - qr_qss[67] * sc_qss[4];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 114:  C2H3 + O2 <=> C2H2 + HO2
-    const amrex::Real k_f =
-      1.34 * exp((1.61) * logT - (-192.93326966953) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[14] + g_RT_qss[4])) *
-                           (sc[4] * sc[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[68] * sc_qss[4] - qr_qss[68] * sc_qss[4];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 115:  C2H3 + O2 <=> CH2CHO + O
-    const amrex::Real k_f =
-      300000 * exp((0.29) * logT - (5.53538332385192) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[2] + g_RT[8] - g_RT[17] + g_RT_qss[4])) *
-                           (sc[2] * sc[17]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[69] * sc_qss[4] - qr_qss[69] * sc_qss[4];
     wdot[2] += qdot;
     wdot[8] -= qdot;
     wdot[17] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 116:  C2H3 + O2 <=> CH2O + HCO
-    const amrex::Real k_f =
-      46000000000 * exp((-1.39) * logT - (508.248832462767) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[4]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[8] - g_RT[11] - g_RT_qss[2] + g_RT_qss[4])) *
-      (sc[11] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[70] * sc_qss[4] - qr_qss[70] * sc_qss[4];
     wdot[8] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 117:  C2H3 + HO2 <=> CH2CHO + OH
-    const amrex::Real k_f = 10000000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[3] + g_RT[4] - g_RT[17] + g_RT_qss[4])) *
-                           (sc[3] * sc[17]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[71] * sc_qss[4] - qr_qss[71] * sc_qss[4];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[17] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 118:  C2H3 + H2O2 <=> C2H4 + HO2
-    const amrex::Real k_f = 12100 * exp(-(-299.917132819613) * invT);
-    const amrex::Real qf = k_f * (sc[7] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[7] - g_RT[15] + g_RT_qss[4])) *
-                           (sc[4] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[72] * sc_qss[4] - qr_qss[72] * sc_qss[4];
     wdot[4] += qdot;
     wdot[7] -= qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 119:  C2H3 + HCO <=> C2H4 + CO
-    const amrex::Real k_f = 90330000;
-    const amrex::Real qf = k_f * (sc_qss[2] * sc_qss[4]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[12] - g_RT[15] + g_RT_qss[2] + g_RT_qss[4])) *
-      (sc[12] * sc[15]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[2]*sc_qss[4]
+    amrex::Real qdot =
+      qf_qss[73] * sc_qss[2] * sc_qss[4] - qr_qss[73] * sc_qss[2] * sc_qss[4];
     wdot[12] += qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 120:  C2H3 + HCO <=> C2H3CHO
-    const amrex::Real k_f = 18000000;
-    const amrex::Real qf = k_f * (sc_qss[2] * sc_qss[4]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[20] + g_RT_qss[2] + g_RT_qss[4])) * (refC) * (sc[20]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[2]*sc_qss[4]
+    amrex::Real qdot =
+      qf_qss[74] * sc_qss[2] * sc_qss[4] - qr_qss[74] * sc_qss[2] * sc_qss[4];
     wdot[20] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 121:  C2H3 + CH3 <=> C2H2 + CH4
-    const amrex::Real k_f = 392000;
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[14] + g_RT_qss[4])) *
-                           (sc[10] * sc[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[75] * sc_qss[4] - qr_qss[75] * sc_qss[4];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[14] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 122:  C2H3 + CH3 <=> H + aC3H5
-    const amrex::Real k_f =
-      1.5e+18 * exp((-2.83) * logT - (9368.88788395227) * invT);
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[1] + g_RT[9] - g_RT[18] + g_RT_qss[4])) *
-                           (sc[1] * sc[18]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[76] * sc_qss[4] - qr_qss[76] * sc_qss[4];
     wdot[1] += qdot;
     wdot[9] -= qdot;
     wdot[18] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 123:  2 C2H3 <=> C2H2 + C2H4
-    const amrex::Real k_f = 960000;
-    const amrex::Real qf = k_f * (sc_qss[4] * sc_qss[4]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[14] - g_RT[15] + 2.000000 * g_RT_qss[4])) *
-      (sc[14] * sc[15]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[4]*sc_qss[4]
+    amrex::Real qdot =
+      qf_qss[77] * sc_qss[4] * sc_qss[4] - qr_qss[77] * sc_qss[4] * sc_qss[4];
     wdot[14] += qdot;
     wdot[15] += qdot;
   }
@@ -16904,13 +16436,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 125:  CH2CHO + H <=> CH3 + HCO
-    const amrex::Real k_f = 90000000;
-    const amrex::Real qf = k_f * (sc[1] * sc[17]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[9] + g_RT[17] - g_RT_qss[2])) *
-                           (sc[9] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[78] - qr_qss[78];
     wdot[1] -= qdot;
     wdot[9] += qdot;
     wdot[17] -= qdot;
@@ -16932,234 +16461,178 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 127:  C2H4 + H <=> C2H3 + H2
-    const amrex::Real k_f =
-      50.7 * exp((1.9) * logT - (6516.65582217112) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] + g_RT[15] - g_RT_qss[4])) *
-                           (sc[5] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[79] - qr_qss[79];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 128:  C2H4 + O <=> C2H3 + OH
-    const amrex::Real k_f =
-      15.1 * exp((1.9) * logT - (1882.03033010965) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[3] + g_RT[15] - g_RT_qss[4])) *
-                           (sc[3] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[80] - qr_qss[80];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 129:  C2H4 + O <=> CH3 + HCO
-    const amrex::Real k_f =
-      19.2 * exp((1.83) * logT - (110.707666477038) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[9] + g_RT[15] - g_RT_qss[2])) *
-                           (sc[9] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[81] - qr_qss[81];
     wdot[2] -= qdot;
     wdot[9] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 130:  C2H4 + O <=> CH2 + CH2O
-    const amrex::Real k_f =
-      0.384 * exp((1.83) * logT - (110.707666477038) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[11] + g_RT[15] - g_RT_qss[0])) *
-                           (sc[11] * sc_qss[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[82] - qr_qss[82];
     wdot[2] -= qdot;
     wdot[11] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 131:  C2H4 + OH <=> C2H3 + H2O
-    const amrex::Real k_f = 3.6 * exp((2) * logT - (1258.0416645118) * invT);
-    const amrex::Real qf = k_f * (sc[3] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] + g_RT[15] - g_RT_qss[4])) *
-                           (sc[6] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[83] - qr_qss[83];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 132:  C2H4 + HCO <=> C2H5 + CO
-    const amrex::Real k_f = 10 * exp((2) * logT - (4025.73332643776) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[2]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[12] + g_RT[15] + g_RT_qss[2] - g_RT_qss[5])) *
-      (sc[12] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[84] * sc_qss[2] - qr_qss[84] * sc_qss[2];
     wdot[12] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 133:  C2H4 + CH2 <=> H + aC3H5
-    const amrex::Real k_f = 20000000 * exp(-(3019.29999482832) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[0]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[15] - g_RT[18] + g_RT_qss[0])) *
-      (sc[1] * sc[18]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[0]
+    amrex::Real qdot = qf_qss[85] * sc_qss[0] - qr_qss[85] * sc_qss[0];
     wdot[1] += qdot;
     wdot[15] -= qdot;
     wdot[18] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 134:  C2H4 + CH2* <=> H + aC3H5
-    const amrex::Real k_f = 50000000;
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[15] - g_RT[18] + g_RT_qss[1])) *
-      (sc[1] * sc[18]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    amrex::Real qdot = qf_qss[86] * sc_qss[1] - qr_qss[86] * sc_qss[1];
     wdot[1] += qdot;
     wdot[15] -= qdot;
     wdot[18] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 135:  C2H4 + CH3 <=> C2H3 + CH4
-    const amrex::Real k_f = 0.227 * exp((2) * logT - (4629.59332540342) * invT);
-    const amrex::Real qf = k_f * (sc[9] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] + g_RT[15] - g_RT_qss[4])) *
-                           (sc[10] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[87] - qr_qss[87];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 136:  nC3H7 <=> C2H4 + CH3
-    const amrex::Real k_f = 96000000000000 * exp(-(15611.2604302599) * invT);
-    const amrex::Real qf = k_f * (sc_qss[6]);
-    const amrex::Real qr = k_f * exp(-(-g_RT[9] - g_RT[15] + g_RT_qss[6])) *
-                           (refCinv) * (sc[9] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[6]
+    amrex::Real qdot = qf_qss[88] * sc_qss[6] - qr_qss[88] * sc_qss[6];
     wdot[9] += qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 137:  C2H4 + O2 <=> C2H3 + HO2
-    const amrex::Real k_f = 42200000 * exp(-(30595.573280927) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc[15]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] + g_RT[15] - g_RT_qss[4])) *
-                           (sc[4] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[89] - qr_qss[89];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 138:  C2H3 + C2H4 <=> C4H7
-    const amrex::Real k_f =
-      7.93e+32 * exp((-8.47) * logT - (7155.74098774311) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[4]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[15] - g_RT[21] + g_RT_qss[4])) * (refC) * (sc[21]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[90] * sc_qss[4] - qr_qss[90] * sc_qss[4];
     wdot[15] -= qdot;
     wdot[21] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 139:  C2H5 + H <=> C2H4 + H2
-    const amrex::Real k_f = 2000000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[15] + g_RT_qss[5])) *
-                           (sc[5] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[91] * sc_qss[5] - qr_qss[91] * sc_qss[5];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 140:  C2H5 + O <=> CH2O + CH3
-    const amrex::Real k_f = 16040000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[9] - g_RT[11] + g_RT_qss[5])) *
-                           (sc[9] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[92] * sc_qss[5] - qr_qss[92] * sc_qss[5];
     wdot[2] -= qdot;
     wdot[9] += qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 141:  C2H5 + O2 <=> C2H4 + HO2
-    const amrex::Real k_f = 20000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[15] + g_RT_qss[5])) *
-                           (sc[4] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[93] * sc_qss[5] - qr_qss[93] * sc_qss[5];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 142:  C2H5 + HO2 <=> C2H6 + O2
-    const amrex::Real k_f = 300000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[4] - g_RT[8] - g_RT[16] + g_RT_qss[5])) *
-                           (sc[8] * sc[16]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[94] * sc_qss[5] - qr_qss[94] * sc_qss[5];
     wdot[4] -= qdot;
     wdot[8] += qdot;
     wdot[16] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 143:  C2H5 + HO2 <=> C2H4 + H2O2
-    const amrex::Real k_f = 300000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[4] - g_RT[7] - g_RT[15] + g_RT_qss[5])) *
-                           (sc[7] * sc[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[95] * sc_qss[5] - qr_qss[95] * sc_qss[5];
     wdot[4] -= qdot;
     wdot[7] += qdot;
     wdot[15] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 144:  C2H5 + HO2 <=> CH2O + CH3 + OH
-    const amrex::Real k_f = 24000000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[5]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[9] - g_RT[11] + g_RT_qss[5])) *
-      (refCinv) * (sc[3] * sc[9] * sc[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[96] * sc_qss[5] - qr_qss[96] * sc_qss[5];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[9] += qdot;
@@ -17167,95 +16640,70 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 145:  C2H5 + H2O2 <=> C2H6 + HO2
-    const amrex::Real k_f = 8700 * exp(-(490.133032493797) * invT);
-    const amrex::Real qf = k_f * (sc[7] * sc_qss[5]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[7] - g_RT[16] + g_RT_qss[5])) *
-                           (sc[4] * sc[16]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[97] * sc_qss[5] - qr_qss[97] * sc_qss[5];
     wdot[4] += qdot;
     wdot[7] -= qdot;
     wdot[16] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 146:  C2H3 + C2H5 <=> CH3 + aC3H5
-    const amrex::Real k_f =
-      3.9e+26 * exp((-5.22) * logT - (9937.0194996458) * invT);
-    const amrex::Real qf = k_f * (sc_qss[4] * sc_qss[5]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[9] - g_RT[18] + g_RT_qss[4] + g_RT_qss[5])) *
-      (sc[9] * sc[18]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[4]*sc_qss[5]
+    amrex::Real qdot =
+      qf_qss[98] * sc_qss[4] * sc_qss[5] - qr_qss[98] * sc_qss[4] * sc_qss[5];
     wdot[9] += qdot;
     wdot[18] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 147:  C2H6 + H <=> C2H5 + H2
-    const amrex::Real k_f = 115 * exp((1.9) * logT - (3789.22149350954) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[16]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] + g_RT[16] - g_RT_qss[5])) *
-                           (sc[5] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[99] - qr_qss[99];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[16] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 148:  C2H6 + O <=> C2H5 + OH
-    const amrex::Real k_f =
-      89.8 * exp((1.92) * logT - (2863.30282842885) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[16]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[2] - g_RT[3] + g_RT[16] - g_RT_qss[5])) *
-                           (sc[3] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[100] - qr_qss[100];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[16] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 149:  C2H6 + OH <=> C2H5 + H2O
-    const amrex::Real k_f =
-      3.54 * exp((2.12) * logT - (437.798499250106) * invT);
-    const amrex::Real qf = k_f * (sc[3] * sc[16]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] + g_RT[16] - g_RT_qss[5])) *
-                           (sc[6] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[101] - qr_qss[101];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[16] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 150:  C2H6 + CH2* <=> C2H5 + CH3
-    const amrex::Real k_f = 40000000 * exp(-(-276.769166192596) * invT);
-    const amrex::Real qf = k_f * (sc[16] * sc_qss[1]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[9] + g_RT[16] + g_RT_qss[1] - g_RT_qss[5])) *
-      (sc[9] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[1]
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[102] * sc_qss[1] - qr_qss[102] * sc_qss[1];
     wdot[9] += qdot;
     wdot[16] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 151:  C2H6 + CH3 <=> C2H5 + CH4
-    const amrex::Real k_f =
-      6.14 * exp((1.74) * logT - (5258.61415765932) * invT);
-    const amrex::Real qf = k_f * (sc[9] * sc[16]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] + g_RT[16] - g_RT_qss[5])) *
-                           (sc[10] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[103] - qr_qss[103];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[16] -= qdot;
@@ -17317,13 +16765,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 156:  HO2 + aC3H5 <=> C2H3 + CH2O + OH
-    const amrex::Real k_f = 6600000;
-    const amrex::Real qf = k_f * (sc[4] * sc[18]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[11] + g_RT[18] - g_RT_qss[4])) *
-      (refCinv) * (sc[3] * sc[11] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[104] - qr_qss[104];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[11] += qdot;
@@ -17331,13 +16776,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 157:  HCO + aC3H5 <=> C3H6 + CO
-    const amrex::Real k_f = 60000000;
-    const amrex::Real qf = k_f * (sc[18] * sc_qss[2]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[12] + g_RT[18] - g_RT[19] + g_RT_qss[2])) *
-      (sc[12] * sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[105] * sc_qss[2] - qr_qss[105] * sc_qss[2];
     wdot[12] += qdot;
     wdot[18] -= qdot;
     wdot[19] += qdot;
@@ -17386,12 +16828,9 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 161:  C3H6 + O => C2H5 + HCO
-    const amrex::Real k_f =
-      35 * exp((1.65) * logT - (-489.126599162188) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[19]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[106] - qr_qss[106];
     wdot[2] -= qdot;
     wdot[19] -= qdot;
   }
@@ -17453,27 +16892,20 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 166:  C2H3CHO + H <=> C2H4 + HCO
-    const amrex::Real k_f =
-      108000 * exp((0.454) * logT - (2928.72099498347) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[20]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[20] - g_RT_qss[2])) *
-                           (sc[15] * sc_qss[2]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[107] - qr_qss[107];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[20] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 167:  C2H3CHO + O <=> C2H3 + CO + OH
-    const amrex::Real k_f = 30000000 * exp(-(1781.38699694871) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[20]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[12] + g_RT[20] - g_RT_qss[4])) *
-      (refCinv) * (sc[3] * sc[12] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[108] - qr_qss[108];
     wdot[2] -= qdot;
     wdot[3] += qdot;
     wdot[12] += qdot;
@@ -17481,14 +16913,10 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 168:  C2H3CHO + OH <=> C2H3 + CO + H2O
-    const amrex::Real k_f =
-      3430 * exp((1.18) * logT - (-224.93784961471) * invT);
-    const amrex::Real qf = k_f * (sc[3] * sc[20]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[12] + g_RT[20] - g_RT_qss[4])) *
-      (refCinv) * (sc[6] * sc[12] * sc_qss[4]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[4]
+    amrex::Real qdot = qf_qss[109] - qr_qss[109];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[12] += qdot;
@@ -17496,90 +16924,71 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 169:  H + nC3H7 <=> C2H5 + CH3
-    const amrex::Real k_f =
-      3.7e+18 * exp((-2.92) * logT - (6292.72440588802) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[6]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[9] - g_RT_qss[5] + g_RT_qss[6])) *
-      (sc[9] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[110] * sc_qss[6] - qr_qss[110] * sc_qss[6];
     wdot[1] -= qdot;
     wdot[9] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 170:  H + nC3H7 <=> C3H6 + H2
-    const amrex::Real k_f = 1800000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[6]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[19] + g_RT_qss[6])) *
-                           (sc[5] * sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[111] * sc_qss[6] - qr_qss[111] * sc_qss[6];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[19] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 171:  O + nC3H7 <=> C2H5 + CH2O
-    const amrex::Real k_f = 96000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[6]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[11] - g_RT_qss[5] + g_RT_qss[6])) *
-      (sc[11] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[112] * sc_qss[6] - qr_qss[112] * sc_qss[6];
     wdot[2] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 172:  OH + nC3H7 <=> C3H6 + H2O
-    const amrex::Real k_f = 24000000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[6]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] - g_RT[19] + g_RT_qss[6])) *
-                           (sc[6] * sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[113] * sc_qss[6] - qr_qss[113] * sc_qss[6];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[19] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 173:  O2 + nC3H7 <=> C3H6 + HO2
-    const amrex::Real k_f = 90000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[6]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[19] + g_RT_qss[6])) *
-                           (sc[4] * sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[114] * sc_qss[6] - qr_qss[114] * sc_qss[6];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[19] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 174:  HO2 + nC3H7 <=> C2H5 + CH2O + OH
-    const amrex::Real k_f = 24000000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[6]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[11] - g_RT_qss[5] + g_RT_qss[6])) *
-      (refCinv) * (sc[3] * sc[11] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[115] * sc_qss[6] - qr_qss[115] * sc_qss[6];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 175:  CH3 + nC3H7 <=> C3H6 + CH4
-    const amrex::Real k_f = 11000000;
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[6]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[19] + g_RT_qss[6])) *
-                           (sc[10] * sc[19]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[116] * sc_qss[6] - qr_qss[116] * sc_qss[6];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[19] += qdot;
@@ -17615,27 +17024,20 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 178:  C4H7 + HCO <=> C4H81 + CO
-    const amrex::Real k_f = 60000000;
-    const amrex::Real qf = k_f * (sc[21] * sc_qss[2]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[12] + g_RT[21] - g_RT[22] + g_RT_qss[2])) *
-      (sc[12] * sc[22]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[2]
+    amrex::Real qdot = qf_qss[117] * sc_qss[2] - qr_qss[117] * sc_qss[2];
     wdot[12] += qdot;
     wdot[21] -= qdot;
     wdot[22] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 179:  C4H81 + H <=> C2H4 + C2H5
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[22]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[22] - g_RT_qss[5])) *
-                           (sc[15] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[118] - qr_qss[118];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[22] -= qdot;
@@ -17670,12 +17072,9 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 182:  C4H81 + O => HCO + nC3H7
-    const amrex::Real k_f =
-      330 * exp((1.45) * logT - (-202.293099653497) * invT);
-    const amrex::Real qf = k_f * (sc[2] * sc[22]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[119] - qr_qss[119];
     wdot[2] -= qdot;
     wdot[22] -= qdot;
   }
@@ -17762,87 +17161,69 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 189:  H + pC4H9 => 2 C2H5
-    const amrex::Real k_f =
-      3.7e+18 * exp((-2.92) * logT - (6292.72440588802) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[7]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[120] * sc_qss[7] - qr_qss[120] * sc_qss[7];
     wdot[1] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 190:  H + pC4H9 <=> C4H81 + H2
-    const amrex::Real k_f = 1800000;
-    const amrex::Real qf = k_f * (sc[1] * sc_qss[7]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[5] - g_RT[22] + g_RT_qss[7])) *
-                           (sc[5] * sc[22]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[121] * sc_qss[7] - qr_qss[121] * sc_qss[7];
     wdot[1] -= qdot;
     wdot[5] += qdot;
     wdot[22] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 191:  O + pC4H9 <=> CH2O + nC3H7
-    const amrex::Real k_f = 96000000;
-    const amrex::Real qf = k_f * (sc[2] * sc_qss[7]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[11] - g_RT_qss[6] + g_RT_qss[7])) *
-      (sc[11] * sc_qss[6]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[122] * sc_qss[7] - qr_qss[122] * sc_qss[7];
     wdot[2] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 192:  OH + pC4H9 <=> C4H81 + H2O
-    const amrex::Real k_f = 24000000;
-    const amrex::Real qf = k_f * (sc[3] * sc_qss[7]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[3] - g_RT[6] - g_RT[22] + g_RT_qss[7])) *
-                           (sc[6] * sc[22]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[123] * sc_qss[7] - qr_qss[123] * sc_qss[7];
     wdot[3] -= qdot;
     wdot[6] += qdot;
     wdot[22] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 193:  O2 + pC4H9 <=> C4H81 + HO2
-    const amrex::Real k_f = 270000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[7]);
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[4] + g_RT[8] - g_RT[22] + g_RT_qss[7])) *
-                           (sc[4] * sc[22]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[124] * sc_qss[7] - qr_qss[124] * sc_qss[7];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[22] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 194:  HO2 + pC4H9 <=> CH2O + OH + nC3H7
-    const amrex::Real k_f = 24000000;
-    const amrex::Real qf = k_f * (sc[4] * sc_qss[7]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[11] - g_RT_qss[6] + g_RT_qss[7])) *
-      (refCinv) * (sc[3] * sc[11] * sc_qss[6]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[125] * sc_qss[7] - qr_qss[125] * sc_qss[7];
     wdot[3] += qdot;
     wdot[4] -= qdot;
     wdot[11] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 195:  CH3 + pC4H9 <=> C4H81 + CH4
-    const amrex::Real k_f = 11000000;
-    const amrex::Real qf = k_f * (sc[9] * sc_qss[7]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[22] + g_RT_qss[7])) *
-                           (sc[10] * sc[22]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[126] * sc_qss[7] - qr_qss[126] * sc_qss[7];
     wdot[9] -= qdot;
     wdot[10] += qdot;
     wdot[22] += qdot;
@@ -17860,845 +17241,662 @@ productionRate_light(
   }
 
   {
+    // THIS IS QSS
     // reaction 197:  C5H9 => C2H3 + C3H6
-    const amrex::Real k_f = 25000000000000 * exp(-(15106.1214767918) * invT);
-    const amrex::Real qf = k_f * (sc[23]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[127] - qr_qss[127];
     wdot[19] += qdot;
     wdot[23] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 198:  C5H10 + H <=> C2H4 + nC3H7
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[24]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[24] - g_RT_qss[6])) *
-                           (sc[15] * sc_qss[6]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[128] - qr_qss[128];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[24] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 199:  C5H10 + H <=> C2H5 + C3H6
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[24]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[19] + g_RT[24] - g_RT_qss[5])) *
-                           (sc[19] * sc_qss[5]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    amrex::Real qdot = qf_qss[129] - qr_qss[129];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[24] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 200:  C2H4 + nC3H7 <=> PXC5H11
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[6]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[15] + g_RT_qss[6] - g_RT_qss[8])) * (refC) * (sc_qss[8]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    // sc_qss[8]
+    amrex::Real qdot = qf_qss[130] * sc_qss[6] - qr_qss[130] * sc_qss[6];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 201:  C6H12 + H <=> C2H4 + pC4H9
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[25]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[25] - g_RT_qss[7])) *
-                           (sc[15] * sc_qss[7]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[131] - qr_qss[131];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[25] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 202:  C6H12 + H <=> C3H6 + nC3H7
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[25]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[19] + g_RT[25] - g_RT_qss[6])) *
-                           (sc[19] * sc_qss[6]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[132] - qr_qss[132];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[25] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 203:  C2H4 + pC4H9 <=> PXC6H13
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[7]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[15] + g_RT_qss[7] - g_RT_qss[9])) * (refC) * (sc_qss[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    // sc_qss[9]
+    amrex::Real qdot = qf_qss[133] * sc_qss[7] - qr_qss[133] * sc_qss[7];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 204:  C7H14 + H <=> C2H4 + PXC5H11
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[26]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[26] - g_RT_qss[8])) *
-                           (sc[15] * sc_qss[8]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[8]
+    amrex::Real qdot = qf_qss[134] - qr_qss[134];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[26] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 205:  C7H14 + H <=> C3H6 + pC4H9
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[26]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[19] + g_RT[26] - g_RT_qss[7])) *
-                           (sc[19] * sc_qss[7]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    amrex::Real qdot = qf_qss[135] - qr_qss[135];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[26] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 206:  C2H4 + PXC5H11 <=> PXC7H15
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[8]);
-    const amrex::Real qr = k_f * exp(-(g_RT[15] + g_RT_qss[8] - g_RT_qss[10])) *
-                           (refC) * (sc_qss[10]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[8]
+    // sc_qss[10]
+    amrex::Real qdot = qf_qss[136] * sc_qss[8] - qr_qss[136] * sc_qss[8];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 207:  C8H16 + H <=> C2H4 + PXC6H13
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[27]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[15] + g_RT[27] - g_RT_qss[9])) *
-                           (sc[15] * sc_qss[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[9]
+    amrex::Real qdot = qf_qss[137] - qr_qss[137];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[27] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 208:  C8H16 + H <=> C3H6 + PXC5H11
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[27]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[19] + g_RT[27] - g_RT_qss[8])) *
-                           (sc[19] * sc_qss[8]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[8]
+    amrex::Real qdot = qf_qss[138] - qr_qss[138];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[27] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 209:  C2H4 + PXC6H13 <=> PXC8H17
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[9]);
-    const amrex::Real qr = k_f * exp(-(g_RT[15] + g_RT_qss[9] - g_RT_qss[11])) *
-                           (refC) * (sc_qss[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[9]
+    // sc_qss[11]
+    amrex::Real qdot = qf_qss[139] * sc_qss[9] - qr_qss[139] * sc_qss[9];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 210:  C9H18 + H <=> C2H4 + PXC7H15
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[28]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[15] + g_RT[28] - g_RT_qss[10])) *
-      (sc[15] * sc_qss[10]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[10]
+    amrex::Real qdot = qf_qss[140] - qr_qss[140];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[28] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 211:  C9H18 + H <=> C3H6 + PXC6H13
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[28]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[1] - g_RT[19] + g_RT[28] - g_RT_qss[9])) *
-                           (sc[19] * sc_qss[9]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[9]
+    amrex::Real qdot = qf_qss[141] - qr_qss[141];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[28] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 212:  C2H4 + PXC7H15 <=> PXC9H19
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[10]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[15] - g_RT[29] + g_RT_qss[10])) * (refC) * (sc[29]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[10]
+    amrex::Real qdot = qf_qss[142] * sc_qss[10] - qr_qss[142] * sc_qss[10];
     wdot[15] -= qdot;
     wdot[29] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 213:  C10H20 + H <=> C2H4 + PXC8H17
-    const amrex::Real k_f =
-      8e+15 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[30]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[15] + g_RT[30] - g_RT_qss[11])) *
-      (sc[15] * sc_qss[11]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[11]
+    amrex::Real qdot = qf_qss[143] - qr_qss[143];
     wdot[1] -= qdot;
     wdot[15] += qdot;
     wdot[30] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 214:  C10H20 + H <=> C3H6 + PXC7H15
-    const amrex::Real k_f =
-      1.6e+16 * exp((-2.39) * logT - (5625.96232369677) * invT);
-    const amrex::Real qf = k_f * (sc[1] * sc[30]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[19] + g_RT[30] - g_RT_qss[10])) *
-      (sc[19] * sc_qss[10]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[10]
+    amrex::Real qdot = qf_qss[144] - qr_qss[144];
     wdot[1] -= qdot;
     wdot[19] += qdot;
     wdot[30] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 215:  C2H4 + PXC8H17 <=> PXC10H21
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[15] + g_RT_qss[11] - g_RT_qss[12])) *
-                           (refC) * (sc_qss[12]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[11]
+    // sc_qss[12]
+    amrex::Real qdot = qf_qss[145] * sc_qss[11] - qr_qss[145] * sc_qss[11];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 216:  C12H24 <=> C5H9 + PXC7H15
-    const amrex::Real k_f = 3.5e+16 * exp(-(35696.6303005228) * invT);
-    const amrex::Real qf = k_f * (sc[31]);
-    const amrex::Real qr = k_f * exp(-(-g_RT[23] + g_RT[31] - g_RT_qss[10])) *
-                           (refCinv) * (sc[23] * sc_qss[10]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[10]
+    amrex::Real qdot = qf_qss[146] - qr_qss[146];
     wdot[23] += qdot;
     wdot[31] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 217:  C2H4 + PXC10H21 <=> PXC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[15] * sc_qss[12]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[15] + g_RT_qss[12] - g_RT_qss[13])) *
-                           (refC) * (sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[12]
+    // sc_qss[13]
+    amrex::Real qdot = qf_qss[147] * sc_qss[12] - qr_qss[147] * sc_qss[12];
     wdot[15] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 218:  PXC12H25 <=> S3XC12H25
-    const amrex::Real k_f =
-      3670000000000 * exp((-0.6) * logT - (7246.31998758796) * invT);
-    const amrex::Real qf = k_f * (sc_qss[13]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT_qss[13] - g_RT_qss[15])) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[13]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[148] * sc_qss[13] - qr_qss[148] * sc_qss[13];
   }
 
   {
+    // THIS IS QSS
     // reaction 219:  C3H6 + PXC9H19 <=> SXC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[19] * sc[29]);
-    const amrex::Real qr =
-      k_f * exp(-(g_RT[19] + g_RT[29] - g_RT_qss[14])) * (refC) * (sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[14]
+    amrex::Real qdot = qf_qss[149] - qr_qss[149];
     wdot[19] -= qdot;
     wdot[29] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 220:  C4H81 + PXC8H17 <=> SXC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[22] * sc_qss[11]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[22] + g_RT_qss[11] - g_RT_qss[14])) *
-                           (refC) * (sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[11]
+    // sc_qss[14]
+    amrex::Real qdot = qf_qss[150] * sc_qss[11] - qr_qss[150] * sc_qss[11];
     wdot[22] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 221:  C5H10 + PXC7H15 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[24] * sc_qss[10]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[24] + g_RT_qss[10] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[10]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[151] * sc_qss[10] - qr_qss[151] * sc_qss[10];
     wdot[24] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 222:  C10H20 + C2H5 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[30] * sc_qss[5]);
-    const amrex::Real qr = k_f * exp(-(g_RT[30] + g_RT_qss[5] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[5]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[152] * sc_qss[5] - qr_qss[152] * sc_qss[5];
     wdot[30] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 223:  C6H12 + PXC6H13 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[25] * sc_qss[9]);
-    const amrex::Real qr = k_f * exp(-(g_RT[25] + g_RT_qss[9] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[9]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[153] * sc_qss[9] - qr_qss[153] * sc_qss[9];
     wdot[25] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 224:  C9H18 + nC3H7 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[28] * sc_qss[6]);
-    const amrex::Real qr = k_f * exp(-(g_RT[28] + g_RT_qss[6] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[154] * sc_qss[6] - qr_qss[154] * sc_qss[6];
     wdot[28] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 225:  C7H14 + PXC5H11 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[26] * sc_qss[8]);
-    const amrex::Real qr = k_f * exp(-(g_RT[26] + g_RT_qss[8] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[8]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[155] * sc_qss[8] - qr_qss[155] * sc_qss[8];
     wdot[26] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 226:  C8H16 + pC4H9 <=> S3XC12H25
-    const amrex::Real k_f = 300000 * exp(-(3673.48166037445) * invT);
-    const amrex::Real qf = k_f * (sc[27] * sc_qss[7]);
-    const amrex::Real qr = k_f * exp(-(g_RT[27] + g_RT_qss[7] - g_RT_qss[15])) *
-                           (refC) * (sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[7]
+    // sc_qss[15]
+    amrex::Real qdot = qf_qss[156] * sc_qss[7] - qr_qss[156] * sc_qss[7];
     wdot[27] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 227:  C2H5 + PXC10H21 <=> NC12H26
-    const amrex::Real k_f = 188000000 * exp((-0.5) * logT);
-    const amrex::Real qf = k_f * (sc_qss[5] * sc_qss[12]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT_qss[5] + g_RT_qss[12])) * (refC) * (sc[0]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[5]*sc_qss[12]
+    amrex::Real qdot = qf_qss[157] * sc_qss[5] * sc_qss[12] -
+                       qr_qss[157] * sc_qss[5] * sc_qss[12];
     wdot[0] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 228:  PXC9H19 + nC3H7 <=> NC12H26
-    const amrex::Real k_f = 188000000 * exp((-0.5) * logT);
-    const amrex::Real qf = k_f * (sc[29] * sc_qss[6]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[29] + g_RT_qss[6])) * (refC) * (sc[0]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[6]
+    amrex::Real qdot = qf_qss[158] * sc_qss[6] - qr_qss[158] * sc_qss[6];
     wdot[0] += qdot;
     wdot[29] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 229:  PXC8H17 + pC4H9 <=> NC12H26
-    const amrex::Real k_f = 188000000 * exp((-0.5) * logT);
-    const amrex::Real qf = k_f * (sc_qss[7] * sc_qss[11]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT_qss[7] + g_RT_qss[11])) * (refC) * (sc[0]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[7]*sc_qss[11]
+    amrex::Real qdot = qf_qss[159] * sc_qss[7] * sc_qss[11] -
+                       qr_qss[159] * sc_qss[7] * sc_qss[11];
     wdot[0] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 230:  PXC5H11 + PXC7H15 <=> NC12H26
-    const amrex::Real k_f = 188000000 * exp((-0.5) * logT);
-    const amrex::Real qf = k_f * (sc_qss[8] * sc_qss[10]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT_qss[8] + g_RT_qss[10])) * (refC) * (sc[0]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[8]*sc_qss[10]
+    amrex::Real qdot = qf_qss[160] * sc_qss[8] * sc_qss[10] -
+                       qr_qss[160] * sc_qss[8] * sc_qss[10];
     wdot[0] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 231:  2 PXC6H13 <=> NC12H26
-    const amrex::Real k_f = 188000000 * exp((-0.5) * logT);
-    const amrex::Real qf = k_f * (sc_qss[9] * sc_qss[9]);
-    const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + 2.000000 * g_RT_qss[9])) * (refC) * (sc[0]);
-    // Remove forward reaction
-    // const amrex::Real qdot = qf - qr;
-    const amrex::Real qdot = -qr;
+    // sc_qss[9]*sc_qss[9]
+    amrex::Real qdot =
+      qf_qss[161] * sc_qss[9] * sc_qss[9] - qr_qss[161] * sc_qss[9] * sc_qss[9];
     wdot[0] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 232:  H + NC12H26 <=> H2 + PXC12H25
-    const amrex::Real k_f =
-      1.3 * exp((2.54) * logT - (3399.73179417669) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[1] - g_RT[5] - g_RT_qss[13])) *
-                           (sc[5] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[162] - qr_qss[162];
     wdot[0] -= qdot;
     wdot[1] -= qdot;
     wdot[5] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 233:  H + NC12H26 <=> H2 + SXC12H25
-    const amrex::Real k_f = 2.6 * exp((2.4) * logT - (2249.8817128129) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[1] - g_RT[5] - g_RT_qss[14])) *
-                           (sc[5] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[163] - qr_qss[163];
     wdot[0] -= qdot;
     wdot[1] -= qdot;
     wdot[5] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 234:  H + NC12H26 <=> H2 + S3XC12H25
-    const amrex::Real k_f = 3.9 * exp((2.4) * logT - (2249.8817128129) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[1]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[1] - g_RT[5] - g_RT_qss[15])) *
-                           (sc[5] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[164] - qr_qss[164];
     wdot[0] -= qdot;
     wdot[1] -= qdot;
     wdot[5] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 235:  NC12H26 + O <=> OH + PXC12H25
-    const amrex::Real k_f =
-      0.19 * exp((2.68) * logT - (1869.95313013034) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[2] - g_RT[3] - g_RT_qss[13])) *
-                           (sc[3] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[165] - qr_qss[165];
     wdot[0] -= qdot;
     wdot[2] -= qdot;
     wdot[3] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 236:  NC12H26 + O <=> OH + SXC12H25
-    const amrex::Real k_f =
-      0.0952 * exp((2.71) * logT - (1059.77429818474) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[2] - g_RT[3] - g_RT_qss[14])) *
-                           (sc[3] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[166] - qr_qss[166];
     wdot[0] -= qdot;
     wdot[2] -= qdot;
     wdot[3] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 237:  NC12H26 + O <=> OH + S3XC12H25
-    const amrex::Real k_f =
-      0.1428 * exp((2.71) * logT - (1059.77429818474) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[2]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[2] - g_RT[3] - g_RT_qss[15])) *
-                           (sc[3] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[167] - qr_qss[167];
     wdot[0] -= qdot;
     wdot[2] -= qdot;
     wdot[3] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 238:  NC12H26 + OH <=> H2O + PXC12H25
-    const amrex::Real k_f =
-      0.0034 * exp((2.66) * logT - (265.195182879087) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[3] - g_RT[6] - g_RT_qss[13])) *
-                           (sc[6] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[168] - qr_qss[168];
     wdot[0] -= qdot;
     wdot[3] -= qdot;
     wdot[6] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 239:  NC12H26 + OH <=> H2O + SXC12H25
-    const amrex::Real k_f =
-      0.074 * exp((2.39) * logT - (197.764149661255) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[3] - g_RT[6] - g_RT_qss[14])) *
-                           (sc[6] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[169] - qr_qss[169];
     wdot[0] -= qdot;
     wdot[3] -= qdot;
     wdot[6] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 240:  NC12H26 + OH <=> H2O + S3XC12H25
-    const amrex::Real k_f =
-      0.101 * exp((2.39) * logT - (197.764149661255) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[3]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[3] - g_RT[6] - g_RT_qss[15])) *
-                           (sc[6] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[170] - qr_qss[170];
     wdot[0] -= qdot;
     wdot[3] -= qdot;
     wdot[6] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 241:  NC12H26 + O2 <=> HO2 + PXC12H25
-    const amrex::Real k_f = 40000000 * exp(-(25628.8247894344) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[8]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] - g_RT[4] + g_RT[8] - g_RT_qss[13])) *
-                           (sc[4] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[171] - qr_qss[171];
     wdot[0] -= qdot;
     wdot[4] += qdot;
     wdot[8] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 242:  NC12H26 + O2 <=> HO2 + SXC12H25
-    const amrex::Real k_f = 80000000 * exp(-(23948.0811256466) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[8]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] - g_RT[4] + g_RT[8] - g_RT_qss[14])) *
-                           (sc[4] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[172] - qr_qss[172];
     wdot[0] -= qdot;
     wdot[4] += qdot;
     wdot[8] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 243:  NC12H26 + O2 <=> HO2 + S3XC12H25
-    const amrex::Real k_f = 120000000 * exp(-(23948.0811256466) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[8]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] - g_RT[4] + g_RT[8] - g_RT_qss[15])) *
-                           (sc[4] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[173] - qr_qss[173];
     wdot[0] -= qdot;
     wdot[4] += qdot;
     wdot[8] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 244:  HO2 + NC12H26 <=> H2O2 + PXC12H25
-    const amrex::Real k_f =
-      0.0676 * exp((2.55) * logT - (8298.04281911983) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[4] - g_RT[7] - g_RT_qss[13])) *
-                           (sc[7] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[174] - qr_qss[174];
     wdot[0] -= qdot;
     wdot[4] -= qdot;
     wdot[7] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 245:  HO2 + NC12H26 <=> H2O2 + SXC12H25
-    const amrex::Real k_f =
-      0.089 * exp((2.6) * logT - (6999.74382134365) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[4] - g_RT[7] - g_RT_qss[14])) *
-                           (sc[7] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[175] - qr_qss[175];
     wdot[0] -= qdot;
     wdot[4] -= qdot;
     wdot[7] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 246:  HO2 + NC12H26 <=> H2O2 + S3XC12H25
-    const amrex::Real k_f =
-      0.0885 * exp((2.6) * logT - (6999.74382134365) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[4]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[4] - g_RT[7] - g_RT_qss[15])) *
-                           (sc[7] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[176] - qr_qss[176];
     wdot[0] -= qdot;
     wdot[4] -= qdot;
     wdot[7] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 247:  CH3 + NC12H26 <=> CH4 + PXC12H25
-    const amrex::Real k_f =
-      1.81e-06 * exp((3.65) * logT - (3599.50881050116) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[9] - g_RT[10] - g_RT_qss[13])) *
-                           (sc[10] * sc_qss[13]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[177] - qr_qss[177];
     wdot[0] -= qdot;
     wdot[9] -= qdot;
     wdot[10] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 248:  CH3 + NC12H26 <=> CH4 + SXC12H25
-    const amrex::Real k_f =
-      6e-06 * exp((3.46) * logT - (2757.62732860986) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[9] - g_RT[10] - g_RT_qss[14])) *
-                           (sc[10] * sc_qss[14]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[178] - qr_qss[178];
     wdot[0] -= qdot;
     wdot[9] -= qdot;
     wdot[10] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 249:  CH3 + NC12H26 <=> CH4 + S3XC12H25
-    const amrex::Real k_f =
-      9e-06 * exp((3.46) * logT - (2757.62732860986) * invT);
-    const amrex::Real qf = k_f * (sc[0] * sc[9]);
-    const amrex::Real qr = k_f *
-                           exp(-(g_RT[0] + g_RT[9] - g_RT[10] - g_RT_qss[15])) *
-                           (sc[10] * sc_qss[15]);
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[179] - qr_qss[179];
     wdot[0] -= qdot;
     wdot[9] -= qdot;
     wdot[10] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 250:  O2 + PXC12H25 => C12H25O2
-    const amrex::Real k_f = 50000000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[13]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[180] * sc_qss[13] - qr_qss[180] * sc_qss[13];
     wdot[8] -= qdot;
     wdot[32] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 251:  C12H25O2 => O2 + PXC12H25
-    const amrex::Real k_f = 27500000000000 * exp(-(13788.1366430493) * invT);
-    const amrex::Real qf = k_f * (sc[32]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[181] - qr_qss[181];
     wdot[8] += qdot;
     wdot[32] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 252:  O2 + SXC12H25 => C12H25O2
-    const amrex::Real k_f = 50000000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[14]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[182] * sc_qss[14] - qr_qss[182] * sc_qss[14];
     wdot[8] -= qdot;
     wdot[32] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 253:  C12H25O2 => O2 + SXC12H25
-    const amrex::Real k_f = 27500000000000 * exp(-(13788.1366430493) * invT);
-    const amrex::Real qf = k_f * (sc[32]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[183] - qr_qss[183];
     wdot[8] += qdot;
     wdot[32] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 254:  O2 + S3XC12H25 => C12H25O2
-    const amrex::Real k_f = 50000000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[15]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[184] * sc_qss[15] - qr_qss[184] * sc_qss[15];
     wdot[8] -= qdot;
     wdot[32] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 255:  C12H25O2 => O2 + S3XC12H25
-    const amrex::Real k_f = 27500000000000 * exp(-(13788.1366430493) * invT);
-    const amrex::Real qf = k_f * (sc[32]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[185] - qr_qss[185];
     wdot[8] += qdot;
     wdot[32] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 256:  C12H25O2 => C12OOH
-    const amrex::Real k_f = 1510000000000 * exp(-(9561.11665028967) * invT);
-    const amrex::Real qf = k_f * (sc[32]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[186] - qr_qss[186];
     wdot[32] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 257:  C12OOH => C12H25O2
-    const amrex::Real k_f = 100000000000 * exp(-(5786.99165675428) * invT);
-    const amrex::Real qf = k_f * (sc_qss[16]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[16]
+    amrex::Real qdot = qf_qss[187] * sc_qss[16] - qr_qss[187] * sc_qss[16];
     wdot[32] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 258:  O2 + PXC12H25 => C12H24 + HO2
-    const amrex::Real k_f = 350000 * exp(-(3019.29999482832) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[13]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[13]
+    amrex::Real qdot = qf_qss[188] * sc_qss[13] - qr_qss[188] * sc_qss[13];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[31] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 259:  C12H24 + HO2 => O2 + PXC12H25
-    const amrex::Real k_f = 316000 * exp(-(9812.72498319203) * invT);
-    const amrex::Real qf = k_f * (sc[4] * sc[31]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[189] - qr_qss[189];
     wdot[4] -= qdot;
     wdot[8] += qdot;
     wdot[31] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 260:  O2 + SXC12H25 => C12H24 + HO2
-    const amrex::Real k_f = 350000 * exp(-(3019.29999482832) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[14]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[14]
+    amrex::Real qdot = qf_qss[190] * sc_qss[14] - qr_qss[190] * sc_qss[14];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[31] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 261:  C12H24 + HO2 => O2 + SXC12H25
-    const amrex::Real k_f = 316000 * exp(-(9812.72498319203) * invT);
-    const amrex::Real qf = k_f * (sc[4] * sc[31]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[191] - qr_qss[191];
     wdot[4] -= qdot;
     wdot[8] += qdot;
     wdot[31] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 262:  O2 + S3XC12H25 => C12H24 + HO2
-    const amrex::Real k_f = 350000 * exp(-(3019.29999482832) * invT);
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[15]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[15]
+    amrex::Real qdot = qf_qss[192] * sc_qss[15] - qr_qss[192] * sc_qss[15];
     wdot[4] += qdot;
     wdot[8] -= qdot;
     wdot[31] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 263:  C12H24 + HO2 => O2 + S3XC12H25
-    const amrex::Real k_f = 316000 * exp(-(9812.72498319203) * invT);
-    const amrex::Real qf = k_f * (sc[4] * sc[31]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[193] - qr_qss[193];
     wdot[4] -= qdot;
     wdot[8] += qdot;
     wdot[31] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 264:  C12OOH + O2 => O2C12H24OOH
-    const amrex::Real k_f = 46000;
-    const amrex::Real qf = k_f * (sc[8] * sc_qss[16]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // *sc_qss[16]
+    amrex::Real qdot = qf_qss[194] * sc_qss[16] - qr_qss[194] * sc_qss[16];
     wdot[8] -= qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 265:  O2C12H24OOH => C12OOH + O2
-    const amrex::Real k_f = 25100000000000 * exp(-(13788.1366430493) * invT);
-    const amrex::Real qf = k_f * (sc_qss[17]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[17]
+    amrex::Real qdot = qf_qss[195] * sc_qss[17] - qr_qss[195] * sc_qss[17];
     wdot[8] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 266:  O2C12H24OOH <=> OC12H23OOH + OH
-    const amrex::Real k_f = 89000000000 * exp(-(8554.68331868023) * invT);
-    const amrex::Real qf = k_f * (sc_qss[17]);
-    const amrex::Real qr = k_f * exp(-(-g_RT[3] - g_RT[33] + g_RT_qss[17])) *
-                           (refCinv) * (sc[3] * sc[33]);
-    const amrex::Real qdot = qf - qr;
+    // sc_qss[17]
+    amrex::Real qdot = qf_qss[196] * sc_qss[17] - qr_qss[196] * sc_qss[17];
     wdot[3] += qdot;
     wdot[33] += qdot;
   }
 
   {
+    // THIS IS QSS
     // reaction 267:  OC12H23OOH => 3 C2H4 + C2H5 + 2 CH2CHO + OH
-    const amrex::Real k_f = 1.8e+15 * exp(-(21167.8090470755) * invT);
-    const amrex::Real qf = k_f * (sc[33]);
-    const amrex::Real qr = 0.0;
-    const amrex::Real qdot = qf - qr;
+    amrex::Real qdot = qf_qss[197] - qr_qss[197];
     wdot[3] += qdot;
     wdot[15] += 3.000000 * qdot;
     wdot[17] += 2.000000 * qdot;
