@@ -580,6 +580,7 @@ def production_rate(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
+        i_qss=0
         # Loop like you're going through them in the mech.Linp order
         for orig_idx, _ in reaction_info.idxmap.items():
             reaction = mechanism.reaction(orig_idx)
@@ -600,6 +601,112 @@ def production_rate(
             else:
                 reverse_sc = "0.0"
                 reverse_sc_smp = 0.0
+
+            if orig_idx in reaction_info.qssa_reactions:
+                cw.writer(
+                    fstream,
+                    cw.comment(f"THIS IS QSS"),
+                )
+                cw.writer(
+                    fstream,
+                    cw.comment(f"reaction {orig_idx}:  {reaction.equation}"),
+                )
+
+                if bool(reaction.orders):
+                    forward_scq, forward_sc_smpq = qssa_return_coeff(
+                        mechanism, species_info, reaction, reaction.orders
+                    )
+                else:
+                    forward_scq, forward_sc_smpq = qssa_return_coeff(
+                        mechanism, species_info, reaction, reaction.reactants
+                    )
+                if reaction.reversible:
+                    reverse_scq, reverse_sc_smpq = qssa_return_coeff(
+                        mechanism, species_info, reaction, reaction.products
+                    )
+                else:
+                    reverse_scq = "0.0"
+                    reverse_sc_smpq = 0.0
+
+                if forward_scq != forward_sc:
+                    cw.writer(
+                        fstream,
+                        cw.comment(f"{forward_sc.replace(forward_scq,'')}")
+                    )
+                if reverse_scq != reverse_sc:
+                    cw.writer(
+                        fstream,
+                        cw.comment(f"{reverse_sc.replace(reverse_scq,'')}")
+                    )
+
+                qfstring =      forward_sc.replace(forward_scq,'')
+                if qfstring.strip() != '' and  not qfstring.startswith('*'):
+                    qfstring = '*'+qfstring
+                qrstring = reverse_sc.replace(reverse_scq,'')
+                if qrstring.strip() != '' and  not qrstring.startswith('*'):
+                    qrstring = '*'+qrstring
+                cw.writer(
+                    fstream,
+                    f"amrex::Real qdot = qf_qss[{i_qss}]{qfstring} - qr_qss[{i_qss}]{qrstring};"
+                )
+
+                i_qss = i_qss + 1
+
+                reaction = mechanism.reaction(orig_idx)
+                lst_reactants = [(k, v) for k, v in reaction.reactants.items()]
+                lst_products = [(k, v) for k, v in reaction.products.items()]
+                all_agents = list(set(lst_reactants + lst_products))
+                agents = []
+                # remove QSS species from agents
+                for symbol, coefficient in all_agents:
+                    if symbol not in species_info.qssa_species_list:
+                        agents.append((symbol, coefficient))
+                dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
+                agents = sorted(
+                    agents,
+                    key=lambda v, dict_species=dict_species: dict_species[v[0]],
+                )
+                # Check for duplicates
+                assert len(agents) == len(
+                    set(agents)
+                ), f"Reaction {reaction} contains duplicate agents"
+                # note that a species might appear as both reactant and product
+                # a species might also appear twice or more on on each side
+                # agents is a set that contains unique (symbol, coefficient)
+                for a in agents:
+                    symbol, coefficient = a
+                    for b in reaction.reactants:
+                        if b == a[0] and reaction.reactants[b] == a[1]:
+                            if coefficient == 1.0:
+                                cw.writer(
+                                    fstream,
+                                    f"wdot[{species_info.ordered_idx_map[symbol]}]"
+                                    " -= qdot;",
+                                )
+                            else:
+                                cw.writer(
+                                    fstream,
+                                    f"wdot[{species_info.ordered_idx_map[symbol]}]"
+                                    f" -= {coefficient:f} * qdot;",
+                                )
+                    for b in reaction.products:
+                        if b == a[0] and reaction.products[b] == a[1]:
+                            if coefficient == 1.0:
+                                cw.writer(
+                                    fstream,
+                                    f"wdot[{species_info.ordered_idx_map[symbol]}]"
+                                    " += qdot;",
+                                )
+                            else:
+                                cw.writer(
+                                    fstream,
+                                    f"wdot[{species_info.ordered_idx_map[symbol]}]"
+                                    f" += {coefficient:f} * qdot;",
+                                )
+                cw.writer(fstream, "}")
+                cw.writer(fstream)
+
+                continue
 
             kc_exp_arg, kc_exp_arg_smp = cu.sorted_kc_exp_arg(
                 mechanism, species_info, reaction, syms
