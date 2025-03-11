@@ -47,8 +47,10 @@ struct InitParm<PMF::PmfData::DataContainer>
   };
 
   static void
-  host_deallocate(PeleParams<PMF::PmfData::DataContainer>* /*parm_in*/)
+  host_deallocate(PeleParams<PMF::PmfData::DataContainer>* parm_in)
   {
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.pmf_X);
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.pmf_Y);
   }
 };
 
