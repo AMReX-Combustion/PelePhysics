@@ -34,7 +34,8 @@ struct TurbParm
   amrex::Real szlo = -1.0e12;        // Position of the current chunk low plane
   amrex::Real szhi = -1.0e11;        // Position of the current chunk high plane
 
-  bool isswirltype = false; // false indicates turb data is periodic normal to flow dir, true requires time array in turb data
+  bool isswirltype = false; // false indicates turb data is periodic normal to
+                            // flow dir, true requires time array in turb data
   amrex::Real turb_scale_loc =
     1.; // Spatial scale relating turbfile geom -> actual case scale
   amrex::Real turb_scale_vel = 1.; // Velocity scaling

@@ -83,7 +83,8 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       AMREX_D_TERM(is >> probsize[0], >> probsize[1], >> probsize[2]);
       AMREX_D_TERM(
         is >> iper[0], >> iper[1],
-        >> iper[2]); // Will use zperiodicity to single whether using periodic or time per plane mode
+        >> iper[2]); // Will use zperiodicity to single whether using periodic
+                     // or time per plane mode
 
       tp[n].isswirltype = iper[2] == 0;
 
@@ -95,18 +96,20 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       // The following is relative to the injection face:
       // 0 and 1 are transverse directions, 2 is normal
       // one ghost point on each side, tangential to inflow face
-      AMREX_D_TERM(tp[n].pboxsize[0] = probsize[0] - 2.0 * tp[n].dx[0];
-                   , tp[n].pboxsize[1] = probsize[1] - 2.0 * tp[n].dx[1];
-                   , tp[n].pboxsize[2] = probsize[2];)
+      AMREX_D_TERM(
+        tp[n].pboxsize[0] = probsize[0] - 2.0 * tp[n].dx[0];
+        , tp[n].pboxsize[1] = probsize[1] - 2.0 * tp[n].dx[1];
+        , tp[n].pboxsize[2] = probsize[2];)
 
-      AMREX_D_TERM(tp[n].npboxcells[0] = npts[0] - 3;
-                   , tp[n].npboxcells[1] = npts[1] - 3;
-                   , tp[n].npboxcells[2] = npts[2];)
+      AMREX_D_TERM(
+        tp[n].npboxcells[0] = npts[0] - 3;, tp[n].npboxcells[1] = npts[1] - 3;
+        , tp[n].npboxcells[2] = npts[2];)
 
       // Center the turbulence
-      AMREX_D_TERM(tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
-                   , tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
-                   , tp[n].pboxlo[2] = 0.0;)
+      AMREX_D_TERM(
+        tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
+        , tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
+        , tp[n].pboxlo[2] = 0.0;)
 
       amrex::Box sbx(
         amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
@@ -125,9 +128,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       if (tp[n].isswirltype) {
-	tp[n].m_planeTimes.resize(tp[n].kmax);
-	tp[n].planeTimes = tp[n].m_planeTimes.data();
-	tp[n].planeTimes_size = tp[n].m_planeTimes.size();
+        tp[n].m_planeTimes.resize(tp[n].kmax);
+        tp[n].planeTimes = tp[n].m_planeTimes.data();
+        tp[n].planeTimes_size = tp[n].m_planeTimes.size();
         for (int i = 0; i < tp[n].kmax; i++) {
           is >> tp[n].planeTimes[i]; // Time for each plane
         }
@@ -192,7 +195,8 @@ TurbInflow::add_turb(
 
       // Get the turbulence
       amrex::Real z =
-        (time + tpn.time_shift) * (tpn.isswirltype ? 1 : tpn.turb_conv_vel * tpn.turb_scale_loc);
+        (time + tpn.time_shift) *
+        (tpn.isswirltype ? 1 : tpn.turb_conv_vel * tpn.turb_scale_loc);
       fill_turb_plane(tpn, x, y, z, v);
     }
   }
@@ -277,36 +281,42 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
   if (a_tp.isswirltype) {
 
-    AMREX_ALWAYS_ASSERT(z >= a_tp.planeTimes[0] && z <= a_tp.planeTimes[a_tp.nplane-1]);
+    AMREX_ALWAYS_ASSERT(
+      z >= a_tp.planeTimes[0] && z <= a_tp.planeTimes[a_tp.nplane - 1]);
     a_tp.izlo = 0;
-    for (; a_tp.izlo<a_tp.kmax-a_tp.nplane && z<a_tp.planeTimes[a_tp.izlo]; ++a_tp.izlo) {} // Stop when first plane later than time=z
-    a_tp.izhi = a_tp.izlo + a_tp.nplane-1;
+    for (;
+         a_tp.izlo < a_tp.kmax - a_tp.nplane && z < a_tp.planeTimes[a_tp.izlo];
+         ++a_tp.izlo) {
+    } // Stop when first plane later than time=z
+    a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
     a_tp.szlo = a_tp.planeTimes[a_tp.izlo];
     a_tp.szhi = a_tp.planeTimes[a_tp.izhi];
-    AMREX_ALWAYS_ASSERT(a_tp.szlo <= z && a_tp.szhi >= z); // Fails if z time is outside turb dataset
+    AMREX_ALWAYS_ASSERT(
+      a_tp.szlo <= z &&
+      a_tp.szhi >= z); // Fails if z time is outside turb dataset
     if (a_tp.verbose > 1) {
-      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to " << a_tp.izhi
-		     << " covering " << a_tp.szlo << " to "
-		     << a_tp.szhi << " for z = " << z
-		     << std::endl;
+      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
+                     << a_tp.izhi << " covering " << a_tp.szlo << " to "
+                     << a_tp.szhi << " for z = " << z << std::endl;
     }
-  }
-  else {
+  } else {
     a_tp.izlo = (int)(round(z * a_tp.dxinv[2])) - 1;
     a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
     a_tp.szlo = static_cast<amrex::Real>(a_tp.izlo) * a_tp.dx[2];
     a_tp.szhi = static_cast<amrex::Real>(a_tp.izhi) * a_tp.dx[2];
     if (a_tp.verbose > 1) {
-      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to " << a_tp.izhi
-		     << " covering " << a_tp.szlo + 0.5 * a_tp.dx[2] << " to "
-		     << a_tp.szhi - 0.5 * a_tp.dx[2] << " for z = " << z
-		     << std::endl;
+      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
+                     << a_tp.izhi << " covering "
+                     << a_tp.szlo + 0.5 * a_tp.dx[2] << " to "
+                     << a_tp.szhi - 0.5 * a_tp.dx[2] << " for z = " << z
+                     << std::endl;
     }
   }
 
   for (int iplane = 1; iplane <= a_tp.nplane; ++iplane) {
     int k = a_tp.izlo + iplane - 1;
-    if (!a_tp.isswirltype) k = k % (a_tp.npboxcells[2] - 2); // "wrap" planes if data is periodic
+    if (!a_tp.isswirltype)
+      k = k % (a_tp.npboxcells[2] - 2); // "wrap" planes if data is periodic
     read_one_turb_plane(a_tp, iplane, k);
   }
 }
@@ -319,15 +329,17 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  const amrex::Real tplanes_lo = a_tp.isswirltype ? a_tp.planeTimes[a_tp.izlo] : a_tp.szlo + 0.5 * a_tp.dx[2];
-  const amrex::Real tplanes_hi = a_tp.isswirltype ? a_tp.planeTimes[a_tp.izhi] : a_tp.szhi - 0.5 * a_tp.dx[2];
+  const amrex::Real tplanes_lo = a_tp.isswirltype
+                                   ? a_tp.planeTimes[a_tp.izlo]
+                                   : a_tp.szlo + 0.5 * a_tp.dx[2];
+  const amrex::Real tplanes_hi = a_tp.isswirltype
+                                   ? a_tp.planeTimes[a_tp.izhi]
+                                   : a_tp.szhi - 0.5 * a_tp.dx[2];
 
-  if ( (z < tplanes_lo) || (z > tplanes_hi) )
-  {
-    if (a_tp.verbose > 1)
-    {
+  if ((z < tplanes_lo) || (z > tplanes_hi)) {
+    if (a_tp.verbose > 1) {
       amrex::Print() << "Reading new data because z " << z << " is outside "
-		     << tplanes_lo << " and " << tplanes_hi << std::endl;
+                     << tplanes_lo << " and " << tplanes_hi << std::endl;
     }
     read_turb_planes(a_tp, z);
   }
@@ -355,20 +367,21 @@ TurbInflow::fill_turb_plane(
   amrex::Real cz[3];
   int k0 = -1;
   if (a_tp.isswirltype) {
-    AMREX_ALWAYS_ASSERT(z >= a_tp.planeTimes[a_tp.izlo] && z <= a_tp.planeTimes[a_tp.izhi]);
+    AMREX_ALWAYS_ASSERT(
+      z >= a_tp.planeTimes[a_tp.izlo] && z <= a_tp.planeTimes[a_tp.izhi]);
     k0 = 0;
-    for (; k0<a_tp.nplane-2 && z<a_tp.planeTimes[a_tp.izlo+k0]; ++k0) {} // Stop when first plane later than time=z
+    for (; k0 < a_tp.nplane - 2 && z < a_tp.planeTimes[a_tp.izlo + k0]; ++k0) {
+    } // Stop when first plane later than time=z
     const auto& t0 = a_tp.planeTimes[k0];
-    const auto& t1 = a_tp.planeTimes[k0+1];
-    const auto& t2 = a_tp.planeTimes[k0+2];
+    const auto& t1 = a_tp.planeTimes[k0 + 1];
+    const auto& t2 = a_tp.planeTimes[k0 + 2];
     AMREX_ASSERT(z >= t0 && z <= t2);
-    cz[0] = (z-t1)*(z-t2)/((t0-t1)*(t0-t2));
-    cz[1] = (z-t0)*(z-t2)/((t1-t0)*(t1-t2));
-    cz[2] = (z-t0)*(z-t1)/((t2-t0)*(t2-t1));
-  }
-  else {
+    cz[0] = (z - t1) * (z - t2) / ((t0 - t1) * (t0 - t2));
+    cz[1] = (z - t0) * (z - t2) / ((t1 - t0) * (t1 - t2));
+    cz[2] = (z - t0) * (z - t1) / ((t2 - t0) * (t2 - t1));
+  } else {
     amrex::Real zz =
-      (z - szlo) * dxinv[2];        // How many dz away from the left side ?
+      (z - szlo) * dxinv[2];    // How many dz away from the left side ?
     k0 = (int)(std::round(zz)); // What's the closest point ?
     zz -= amrex::Real(k0);
     cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0 - 1
