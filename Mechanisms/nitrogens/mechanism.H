@@ -1617,10 +1617,6 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[9] = 2.91297621E+00;
   COFD[10] = -1.61544771E-01;
   COFD[11] = 6.90271324E-03;
-  COFD[12] = -1.42056777E+01;
-  COFD[13] = 2.91297621E+00;
-  COFD[14] = -1.61544771E-01;
-  COFD[15] = 6.90271324E-03;
 }
 
 // List of specs with small weight, dim NLITE
