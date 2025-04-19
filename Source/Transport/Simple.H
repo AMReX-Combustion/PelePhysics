@@ -154,15 +154,12 @@ struct BinaryDiff
     for (int i = 1; i < NUM_SPECIES; ++i) {
 
       for (int j = 0; j < i; ++j) {
-        // cppcheck-suppress knownCon|ditionTrueFalse
+        // cppcheck-suppress knownConditionTrueFalse
         const int four_idx_ij = 4 * (i * (i + 1) / 2 + j);
-        const amrex::Real a0 = tparm->fitdbin[four_idx_ij];
-        const amrex::Real a1 = tparm->fitdbin[four_idx_ij + 1];
-        const amrex::Real a2 = tparm->fitdbin[four_idx_ij + 2];
-        const amrex::Real a3 = tparm->fitdbin[four_idx_ij + 3];
 
-        const amrex::Real dbintemp =
-          a0 + a1 * logT[0] + a2 * logT[1] + a3 * logT[2];
+        amrex::Real dbintemp =
+          tparm->fitdbin[four_idx_ij] + tparm->fitdbin[four_idx_ij + 1] +
+          tparm->fitdbin[four_idx_ij + 2] + tparm->fitdbin[four_idx_ij + 3];
 
         const amrex::Real dexp = std::exp(-dbintemp);
         Ddiag[i] += Xloc[j] * dexp;
