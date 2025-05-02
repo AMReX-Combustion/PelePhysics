@@ -119,10 +119,17 @@ readHIT(HITData* a_data)
   if (not std::is_sorted(xarray.begin(), xarray.end())) {
     amrex::Abort("Error: non ascending x-coordinate array.");
   }
+  if (std::abs(xarray[0] - 0.5 * xdiff[0]) > 1e-14 * xdiff[0]) {
+    amrex::Abort("Error: domain must start at 0");
+  }
+  for (const amrex::Real& xd : xdiff) {
+    if (std::abs(xd - xdiff[0]) / xdiff[0] > 1e-14) {
+      amrex::Abort("Error: grid must be uniformly spaced");
+    }
+  }
 
   // Pass data to the prob_parm
   a_data->Linput = xarray[nx - 1] + 0.5 * xdiff[nx - 1];
-
   a_data->d_xarray =
     (amrex::Real*)amrex::The_Arena()->alloc(nx * sizeof(amrex::Real));
   a_data->d_xdiff =
@@ -157,8 +164,8 @@ main(int argc, char* argv[])
     readHIT(&data);
 
     int ncell = data.input_ncell;
-    Real xlo = data.d_xarray[0];
-    Real xhi = data.d_xarray[ncell - 1];
+    Real xlo = 0.0;
+    Real xhi = data.Linput;
 
     Box box_turb(
       IntVect(AMREX_D_DECL(0, 0, 0)),
