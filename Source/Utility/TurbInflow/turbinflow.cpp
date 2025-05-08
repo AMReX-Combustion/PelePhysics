@@ -344,8 +344,8 @@ TurbInflow::fill_turb_plane(
     for (int n = 0; n < AMREX_SPACEDIM; ++n) {
       amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
       amrex::Real yy = (yd[j - bx.smallEnd(1)] - pboxlo[1]) * dxinv[1];
-      int i0 = (int)(std::round(xx));
-      int j0 = (int)(std::round(yy));
+      int i0 = (int)(std::floor(xx));
+      int j0 = (int)(std::floor(yy));
       xx -= amrex::Real(i0);
       yy -= amrex::Real(j0);
       cx[0] = 0.5 * (xx - 1.0) * (xx - 2.0);
@@ -356,8 +356,8 @@ TurbInflow::fill_turb_plane(
       cy[2] = 0.5 * yy * (yy - 1.0);
 
       if (i0 >= 0 && i0 < npboxcells[0] && j0 >= 0 && j0 < npboxcells[1]) {
-        i0 += 2;
-        j0 += 2;
+        i0 += 1;
+        j0 += 1;
         for (int ii = 0; ii <= 2; ++ii) {
           for (int jj = 0; jj <= 2; ++jj) {
             zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0 - 1, n) +
