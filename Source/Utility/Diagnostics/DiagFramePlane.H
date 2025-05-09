@@ -84,6 +84,7 @@ private:
   // Plane definition
   int m_normal;
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_center;
+  bool m_dump_ghost_if_OOB;
 
   // Interpolation data
   InterpType m_interpType;
