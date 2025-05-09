@@ -65,7 +65,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       pp.query("turb_nplane", tp[n].nplane);
-      AMREX_ASSERT(tp[n].nplane > 0);
+      AMREX_ASSERT(
+        tp[n].nplane >
+        3); // need at least 4 planes for quadratic interpolation + 1 extra
       pp.query("turb_conv_vel", tp[n].turb_conv_vel);
       AMREX_ASSERT(tp[n].turb_conv_vel > 0);
 
@@ -99,7 +101,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       AMREX_D_TERM(tp[n].npboxcells[0] = npts[0] - 3;
                    , tp[n].npboxcells[1] = npts[1] - 3;
-                   , tp[n].npboxcells[2] = npts[2];)
+                   , tp[n].npboxcells[2] = npts[2] - 1;)
 
       // Center the turbulence
       AMREX_D_TERM(tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
@@ -271,20 +273,19 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 void
 TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
-  int izlo = (int)(round(z * a_tp.dxinv[2])) - 1;
+  int izlo = (int)(floor(z * a_tp.dxinv[2])) - 1; // one extra plane to the left
   int izhi = izlo + a_tp.nplane - 1;
   a_tp.szlo = static_cast<amrex::Real>(izlo) * a_tp.dx[2];
   a_tp.szhi = static_cast<amrex::Real>(izhi) * a_tp.dx[2];
 
   if (a_tp.verbose > 1) {
     amrex::Print() << "read_turb_planes filling " << izlo << " to " << izhi
-                   << " covering " << a_tp.szlo + 0.5 * a_tp.dx[2] << " to "
-                   << a_tp.szhi - 0.5 * a_tp.dx[2] << " for z = " << z
-                   << std::endl;
+                   << " covering " << a_tp.szlo << " to " << a_tp.szhi
+                   << " for z = " << z << std::endl;
   }
 
   for (int iplane = 1; iplane <= a_tp.nplane; ++iplane) {
-    int k = (izlo + iplane - 1) % (a_tp.npboxcells[2] - 2);
+    int k = (izlo + iplane - 1) % (a_tp.npboxcells[2]);
     read_one_turb_plane(a_tp, iplane, k);
   }
 }
@@ -297,12 +298,11 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  if (
-    (z < a_tp.szlo + 0.5 * a_tp.dx[2]) || (z > a_tp.szhi - 0.5 * a_tp.dx[2])) {
+  if ((z < a_tp.szlo) || (z >= a_tp.szhi - 1.0 * a_tp.dx[2])) {
     if (a_tp.verbose > 1) {
       amrex::Print() << "Reading new data because z " << z << " is outside "
-                     << a_tp.szlo + 0.5 * a_tp.dx[2] << " and "
-                     << a_tp.szhi - 0.5 * a_tp.dx[2] << std::endl;
+                     << a_tp.szlo << " and " << a_tp.szhi
+                     << " - (dz = " << a_tp.dx[2] << ")" << std::endl;
     }
     read_turb_planes(a_tp, z);
   }
@@ -328,18 +328,19 @@ TurbInflow::fill_turb_plane(
   const auto& dxinv = a_tp.dxinv;
   const auto& sd = a_tp.sdata->array();
 
-  amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    amrex::Real cx[3], cy[3], cz[3], ydata[3];
-    amrex::Real zdata[3][3];
+  amrex::Real cz[3];
+  amrex::Real zz =
+    (z - szlo) * dxinv[2];        // How many dz away from the left side ?
+  int k0 = (int)(std::floor(zz)); // What's the closest point ?
+  zz -= amrex::Real(k0);
+  cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0
+  cz[1] = zz * (2.0 - zz);               // Weight of k0 + 1
+  cz[2] = 0.5 * zz * (zz - 1.0);         // Weight of k0 + 2
+  k0 += 1;                               // Index starting at 1
 
-    amrex::Real zz =
-      (z - szlo) * dxinv[2];        // How many dz away from the left side ?
-    int k0 = (int)(std::round(zz)); // What's the closest point ?
-    zz -= amrex::Real(k0);
-    cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0 - 1
-    cz[1] = zz * (2.0 - zz);               // Weight of k0
-    cz[2] = 0.5 * zz * (zz - 1.0);         // Weight of k0 + 1
-    k0 += 1;                               // Index starting at 1
+  amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    amrex::Real cx[3], cy[3], ydata[3];
+    amrex::Real zdata[3][3];
 
     for (int n = 0; n < AMREX_SPACEDIM; ++n) {
       amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
@@ -356,13 +357,13 @@ TurbInflow::fill_turb_plane(
       cy[2] = 0.5 * yy * (yy - 1.0);
 
       if (i0 >= 0 && i0 < npboxcells[0] && j0 >= 0 && j0 < npboxcells[1]) {
-        i0 += 1;
-        j0 += 1;
+        i0 += 2;
+        j0 += 2;
         for (int ii = 0; ii <= 2; ++ii) {
           for (int jj = 0; jj <= 2; ++jj) {
-            zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0 - 1, n) +
-                            cz[1] * sd(i0 + ii, j0 + jj, k0, n) +
-                            cz[2] * sd(i0 + ii, j0 + jj, k0 + 1, n);
+            zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0, n) +
+                            cz[1] * sd(i0 + ii, j0 + jj, k0 + 1, n) +
+                            cz[2] * sd(i0 + ii, j0 + jj, k0 + 2, n);
           }
         }
         for (int ii = 0; ii <= 2; ++ii) {
