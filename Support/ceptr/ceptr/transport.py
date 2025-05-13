@@ -407,7 +407,7 @@ def viscosity(fstream, mechanism, species_info, species_transport, ntfit):
             f_vib = rho_atm * diffcoef / visc
             # eq. (20)
             a = 2.5 - f_vib
-            # eqs. (21) + (32 - 33)
+            # eqs. (21) + (32-33)
             cv_rot_r = m_crot[spec.idx]
             # note: the T corr is not applied in CANTERA
             b = float(species_transport[spec][5]) * f_corr(
@@ -556,8 +556,8 @@ def diffcoefs(fstream, species_info, species_transport, ntfit):
     # use the symmetry for upper triangular terms
     # note: starting with this would be preferable (only one bigger loop)
     # note2: or write stuff differently !
-    # for i, spec1 in enumerate(spec_ordered):
-    #    for j, spec2 in enumerate(spec_ordered[i+1:]):
+    # for i,spec1 in enumerate(spec_ordered):
+    #    for j,spec2 in enumerate(spec_ordered[i+1:]):
     #        cofd[i].append(cofd[spec2.id][spec1.id])
 
     # header for diffusion coefs
