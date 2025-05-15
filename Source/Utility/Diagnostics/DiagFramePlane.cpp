@@ -185,10 +185,11 @@ DiagFramePlane::prepare(
           "DiagFramePlane: Requested location is out of bounds (" + m_diagfile +
           ")");
       } else if (lev == 0) {
-        amrex::Warning(
-          "DiagFramePlane: Dumping ghost cells because requested location is "
-          "of bounds (" +
-          m_diagfile + ")");
+        amrex::Print() << "DiagFramePlane: Dumping ghost cells because "
+                          "requested location is "
+                          "of bounds (" +
+                            m_diagfile + ")"
+                       << std::endl;
       }
       k0 = a_geoms[lev].Domain().smallEnd(m_normal);
       m_intwgt[lev][0] = 1.0;
@@ -200,10 +201,11 @@ DiagFramePlane::prepare(
           "DiagFramePlane: Requested location is out of bounds (" + m_diagfile +
           ")");
       } else if (lev == 0) {
-        amrex::Warning(
-          "DiagFramePlane: Dumping ghost cells because requested location is "
-          "of bounds (" +
-          m_diagfile + ")");
+        amrex::Print() << "DiagFramePlane: Dumping ghost cells because "
+                          "requested location is "
+                          "of bounds (" +
+                            m_diagfile + ")"
+                       << std::endl;
       }
       k0 = a_geoms[lev].Domain().bigEnd(m_normal);
       m_intwgt[lev][0] = 0.0;
