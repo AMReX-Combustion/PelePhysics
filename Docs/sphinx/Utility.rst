@@ -132,7 +132,7 @@ The following provide examples for each diagnostic in PeleLMeX (in PeleC, all di
     peleLM.xnormP.interpolation = Linear                            # [OPT, DEF=Linear] Interpolation type : Linear or Quadratic
     peleLM.xnormP.field_names = x_velocity mag_vort density         # List of variables outputted to the 2D pltfile
     peleLM.xnormP.n_files = 2                                       # [OPT, DEF="min(256,NProcs)"] Number of files to write per level
-    peleLM.xnormP.dump_ghost_if_OOB = 1                             # if the specified coordinate is out-of-bounds, a plane of ghost cells in that direction will be dumped (for debugging purposes) 
+    peleLM.xnormP.dump_ghost_if_OOB = 1                             # [OPT, DEF=false] if the specified coordinate is out-of-bounds, a plane of ghost cells in that direction will be dumped (for debugging purposes). If false, an error is raised if the requested plane is OOB.
 
     peleLM.condT.type = DiagConditional                             # Diagnostic type
     peleLM.condT.file = condTest                                    # Output file prefix
