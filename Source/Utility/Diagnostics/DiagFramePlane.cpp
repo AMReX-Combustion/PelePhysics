@@ -76,7 +76,7 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
   } else if (center.size() == 1) {
     m_center[m_normal] = center[0];
   }
-  m_dump_ghost_if_OOB = 0;
+  m_dump_ghost_if_OOB = false;
   pp.query("dump_ghost_if_OOB", m_dump_ghost_if_OOB);
 
   // Interpolation
