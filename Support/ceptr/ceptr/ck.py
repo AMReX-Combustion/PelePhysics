@@ -546,7 +546,7 @@ def cksbms(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:f}*YOW); ",
+            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:.16e}*YOW); ",
         )
 
     # call routine
@@ -684,7 +684,7 @@ def ckgbms(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:f}*YOW); ",
+            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:.16e}*YOW); ",
         )
 
     # call routine
@@ -822,7 +822,7 @@ def ckabms(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:f}*YOW); ",
+            f"x[{spec_idx}] = y[{spec_idx}]/({species.weight:.16e}*YOW); ",
         )
 
     # call routine
@@ -868,7 +868,8 @@ def ckpx(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"XW += x[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"XW += x[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(
@@ -948,7 +949,8 @@ def ckpc(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"W += c[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"W += c[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream)
@@ -993,7 +995,8 @@ def ckrhox(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"XW += x[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"XW += x[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(
@@ -1063,7 +1066,8 @@ def ckrhoc(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"W += c[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"W += c[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
 
     cw.writer(fstream)
@@ -1144,7 +1148,8 @@ def ckmmwx(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"XW += x[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"XW += x[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
     cw.writer(fstream, "wtm = XW;")
     cw.writer(fstream)
@@ -1174,7 +1179,8 @@ def ckmmwc(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"W += c[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"W += c[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
     cw.writer(fstream)
     cw.writer(fstream, f"for (int id = 0; id < {n_species}; ++id) {{")
@@ -1374,7 +1380,8 @@ def ckxty(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"XW += x[{spec_idx}]*{species.weight:f}; " + cw.comment(f"{species.name}"),
+            f"XW += x[{spec_idx}]*{species.weight:.16e}; "
+            + cw.comment(f"{species.name}"),
         )
 
     # now compute conversion
@@ -1385,7 +1392,7 @@ def ckxty(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
-            f"y[{spec_idx}] = x[{spec_idx}]*{species.weight:f}*XWinv; ",
+            f"y[{spec_idx}] = x[{spec_idx}]*{species.weight:.16e}*XWinv; ",
         )
 
     cw.writer(fstream)
@@ -1457,7 +1464,7 @@ def ckxtcr(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
-            f"XW += x[{species.idx}]*{species.weight:f}; "
+            f"XW += x[{species.idx}]*{species.weight:.16e}; "
             + cw.comment(f"{species.name}"),
         )
 
@@ -1535,7 +1542,7 @@ def ckcty(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
-            f"CW += c[{species.idx}]*{species.weight:f}; "
+            f"CW += c[{species.idx}]*{species.weight:.16e}; "
             + cw.comment(f"{species.name}"),
         )
 
@@ -1546,7 +1553,7 @@ def ckcty(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
-            f"y[{species.idx}] = c[{species.idx}]*{species.weight:f}*CWinv; ",
+            f"y[{species.idx}] = c[{species.idx}]*{species.weight:.16e}*CWinv; ",
         )
 
     cw.writer(fstream)
@@ -2227,7 +2234,7 @@ def ckwxr(fstream, mechanism, species_info):
         species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
-            f"XW += x[{species.idx}]*{species.weight:f}; "
+            f"XW += x[{species.idx}]*{species.weight:.16e}; "
             + cw.comment(f"{species.name}"),
         )
 

@@ -32,14 +32,20 @@ def parse_qss_lst_file(lst):
     """Return mechanism paths give a file containing a list of qss mechanism files."""
     lpath = pathlib.Path(lst)
     fnames = []
+    plog_pressures = []
     with open(lst, "r") as f:
         for line in f:
             if not line.startswith("#"):
-                fnames.append(line)
+                parts = line.split("--plog=")
+                fnames.append(parts[0])
+                if len(parts) > 1:
+                    plog_pressures.append(float(parts[1].strip()))
+                else:
+                    plog_pressures.append(None)
 
     mechnames = [lpath.parents[0] / fn.split()[0].strip() for fn in fnames]
     qss_format_inputs = [lpath.parents[0] / fn.split()[1].strip() for fn in fnames]
-    return mechnames, qss_format_inputs
+    return mechnames, qss_format_inputs, plog_pressures
 
 
 def convert(
@@ -118,7 +124,7 @@ def convert_lst_qss(
     interface_name,
 ):
     """Convert QSS mechanisms from a file of directories and format input."""
-    mechnames, qss_format_inputs = parse_qss_lst_file(lst)
+    mechnames, qss_format_inputs, plog_pressures = parse_qss_lst_file(lst)
     print(f"Using {ncpu} processes")
     with Pool(ncpu) as pool:
         pool.starmap(
@@ -131,6 +137,7 @@ def convert_lst_qss(
                 repeat(chemistry),
                 repeat(gas_name),
                 repeat(interface_name),
+                plog_pressures,
             ),
         )
 
