@@ -1,0 +1,11 @@
+This is a reduced version of the skeletal HyChem mechanism for A2
+(Jet-A surrogate) without low temperature chemistry obtained here:
+https://web.stanford.edu/group/haiwanglab/HyChem/pages/download_cantera.html
+
+See the comments at the top of mechanism.inp for more details and citation
+information.
+
+Note that this may be a bit different from the reduced mechanism provided by
+HyChem. It takes the same non-QSSA species, but rather than using the ckwyp.f
+provided by HyChem, uses CEPTR to generate similar routines. Perhaps this
+can lead to some minor differences.
