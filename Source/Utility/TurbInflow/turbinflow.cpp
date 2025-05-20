@@ -29,7 +29,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       pp.query("turb_file", tp[n].m_turb_file);
       tp[n].dir = -1;
       pp.query("dir", tp[n].dir);
-      AMREX_ASSERT_WITH_MESSAGE(
+      AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         tp[n].dir >= 0 && tp[n].dir < AMREX_SPACEDIM,
         "Injection direction is needed: 0, 1 or 2");
       std::string side;
@@ -57,7 +57,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       // Get the turbcenter on the injection face
       amrex::Vector<amrex::Real> turb_center(AMREX_SPACEDIM - 1, 0);
       pp.getarr("turb_center", turb_center);
-      AMREX_ASSERT_WITH_MESSAGE(
+      AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         turb_center.size() == AMREX_SPACEDIM - 1,
         "turb_center must have AMREX_SPACEDIM-1 elements");
       for (amrex::Real& tc : turb_center) {
@@ -65,9 +65,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       pp.query("turb_nplane", tp[n].nplane);
-      AMREX_ASSERT(tp[n].nplane > 0);
+      AMREX_ALWAYS_ASSERT(tp[n].nplane > 0);
       pp.query("turb_conv_vel", tp[n].turb_conv_vel);
-      AMREX_ASSERT(tp[n].turb_conv_vel > 0);
+      AMREX_ALWAYS_ASSERT(tp[n].turb_conv_vel > 0);
 
       // Set other stuff
       std::string turb_header = tp[n].m_turb_file + "/HDR";
@@ -109,6 +109,10 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
                    , tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
                    , tp[n].pboxlo[2] = 0.0;)
 
+      // Swirl type: we can't load more planes than are available
+      if (tp[n].isswirltype) {
+        tp[n].nplane = std::min(tp[n].nplane, npts[2]);
+      }
       amrex::Box sbx(
         amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
         amrex::IntVect(AMREX_D_DECL(npts[0], npts[1], tp[n].nplane)));
@@ -118,17 +122,13 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       AMREX_D_TERM(, , tp[n].kmax = npts[2];)
 
       // Offset for each plane in Binary TurbFile
-      tp[n].m_offset.resize(tp[n].kmax * AMREX_SPACEDIM);
-      tp[n].offset = tp[n].m_offset.data();
-      tp[n].offset_size = tp[n].m_offset.size();
-      for (int i = 0; i < tp[n].offset_size; i++) {
-        is >> tp[n].offset[i];
+      tp[n].offset.resize(tp[n].kmax * AMREX_SPACEDIM);
+      for (auto& off : tp[n].offset) {
+        is >> off;
       }
 
       if (tp[n].isswirltype) {
-        tp[n].m_planeTimes.resize(tp[n].kmax);
-        tp[n].planeTimes = tp[n].m_planeTimes.data();
-        tp[n].planeTimes_size = tp[n].m_planeTimes.size();
+        tp[n].planeTimes.resize(tp[n].kmax);
         for (int i = 0; i < tp[n].kmax; i++) {
           is >> tp[n].planeTimes[i]; // Time for each plane
         }
@@ -149,7 +149,7 @@ TurbInflow::add_turb(
   const int dir,
   const amrex::Orientation::Side& side)
 {
-  AMREX_ASSERT(turbinflow_initialized);
+  AMREX_ALWAYS_ASSERT(turbinflow_initialized);
 
   // Box on which we will access data
   amrex::Box bvalsBox = bx;
@@ -253,12 +253,11 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 
   for (int n = 0; n < AMREX_SPACEDIM; ++n) {
 
-    const long offset_idx = (k + 1) + (n * a_tp.kmax);
-    AMREX_ASSERT_WITH_MESSAGE(
-      offset_idx < a_tp.offset_size, "Bad turb fab offset idx");
+    const long offset_idx = k + (n * a_tp.kmax);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+      offset_idx < a_tp.offset.size(), "Bad turb fab offset idx");
 
     const long start = a_tp.offset[offset_idx];
-
     ifs.seekg(start, std::ios::beg);
 
     if (!ifs.good()) {
@@ -278,20 +277,22 @@ void
 TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
   if (a_tp.isswirltype) {
-
-    AMREX_ALWAYS_ASSERT(
-      z >= a_tp.planeTimes[0] && z <= a_tp.planeTimes[a_tp.nplane - 1]);
-    a_tp.izlo = 0;
-    for (;
-         a_tp.izlo < a_tp.kmax - a_tp.nplane && z < a_tp.planeTimes[a_tp.izlo];
+    if (z < a_tp.planeTimes[0] || z >= a_tp.planeTimes[a_tp.kmax - 2]) {
+      amrex::Error(
+        "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
+        ") is outside bounds of turbulence data (" +
+        std::to_string(a_tp.planeTimes[0]) + " to " +
+        std::to_string(a_tp.planeTimes[a_tp.nplane - 2]) +
+        ")"); // Need one turbplane forward for interpolation
+    }
+    for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane)) &&
+                        (a_tp.planeTimes[a_tp.izlo] <= z);
          ++a_tp.izlo) {
     } // Stop when first plane later than time=z
+    a_tp.izlo -= 1;
     a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
     a_tp.szlo = a_tp.planeTimes[a_tp.izlo];
     a_tp.szhi = a_tp.planeTimes[a_tp.izhi];
-    AMREX_ALWAYS_ASSERT(
-      a_tp.szlo <= z &&
-      a_tp.szhi >= z); // Fails if z time is outside turb dataset
     if (a_tp.verbose > 1) {
       amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
                      << a_tp.izhi << " covering " << a_tp.szlo << " to "
@@ -327,12 +328,10 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  const amrex::Real tplanes_lo = a_tp.isswirltype
-                                   ? a_tp.planeTimes[a_tp.izlo]
-                                   : a_tp.szlo + 0.5 * a_tp.dx[2];
-  const amrex::Real tplanes_hi = a_tp.isswirltype
-                                   ? a_tp.planeTimes[a_tp.izhi]
-                                   : a_tp.szhi - 0.5 * a_tp.dx[2];
+  const amrex::Real tplanes_lo =
+    a_tp.isswirltype ? a_tp.szlo : a_tp.szlo + 0.5 * a_tp.dx[2];
+  const amrex::Real tplanes_hi =
+    a_tp.isswirltype ? a_tp.szhi : a_tp.szhi - 0.5 * a_tp.dx[2];
 
   if ((z < tplanes_lo) || (z > tplanes_hi)) {
     if (a_tp.verbose > 1) {
@@ -367,13 +366,13 @@ TurbInflow::fill_turb_plane(
   if (a_tp.isswirltype) {
     AMREX_ALWAYS_ASSERT(
       z >= a_tp.planeTimes[a_tp.izlo] && z <= a_tp.planeTimes[a_tp.izhi]);
-    k0 = 0;
-    for (; k0 < a_tp.nplane - 2 && z < a_tp.planeTimes[a_tp.izlo + k0]; ++k0) {
+    for (k0 = 0; k0 < a_tp.nplane - 2 && a_tp.planeTimes[a_tp.izlo + k0] <= z;
+         ++k0) {
     } // Stop when first plane later than time=z
-    const auto& t0 = a_tp.planeTimes[k0];
-    const auto& t1 = a_tp.planeTimes[k0 + 1];
-    const auto& t2 = a_tp.planeTimes[k0 + 2];
-    AMREX_ASSERT(z >= t0 && z <= t2);
+    const auto& t0 = a_tp.planeTimes[a_tp.izlo + k0 - 1];
+    const auto& t1 = a_tp.planeTimes[a_tp.izlo + k0];
+    const auto& t2 = a_tp.planeTimes[a_tp.izlo + k0 + 1];
+    AMREX_ALWAYS_ASSERT(z >= t0 && z <= t2);
     cz[0] = (z - t1) * (z - t2) / ((t0 - t1) * (t0 - t2));
     cz[1] = (z - t0) * (z - t2) / ((t1 - t0) * (t1 - t2));
     cz[2] = (z - t0) * (z - t1) / ((t2 - t0) * (t2 - t1));

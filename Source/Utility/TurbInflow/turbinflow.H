@@ -42,14 +42,10 @@ struct TurbParm
   amrex::Real turb_conv_vel =
     1.; // Mean inlet velocity, used to move through data planes
 
-  amrex::Vector<amrex::Real> m_planeTimes;
-  amrex::Real* planeTimes;
-  long planeTimes_size;
+  amrex::Vector<amrex::Real> planeTimes;
 
-  amrex::Vector<long> m_offset;
-  int kmax;     // Number of plane in Turbfile
-  long* offset; // Binary offset of each data plane in Turbfile
-  long offset_size;
+  amrex::Vector<long> offset;
+  int kmax; // Number of plane in Turbfile
 };
 
 struct TurbInflow
