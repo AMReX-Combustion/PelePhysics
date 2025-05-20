@@ -1,0 +1,11 @@
+ELEMENTS
+O  H  C  N  AR  HE
+END       
+
+SPECIES
+POSF10264        POSF10289        POSF10325        POSF11498             
+O2               N2               H2O              CO2              
+END
+
+REACTIONS
+END
