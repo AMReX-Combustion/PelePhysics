@@ -1,21 +1,21 @@
 description: QSSA of gas
 generator: YamlWriter
-cantera-version: 3.0.1
-git-commit: 5c7a0a0
-date: Mon Jul 22 12:00:42 2024
+cantera-version: 3.1.0
+git-commit: '6e00275'
+date: Tue May 20 15:25:11 2025
 phases:
-  - forward_to_remove_idx: [15, 105, 178]
-    n_qssa_species: 10
-    kinetics: gas
-    transport: mixture-averaged
-    qssa_species: [C2H3, C2H5, C6H5, C6H5CO, CH2, CH2*, CH2CHO, CH3O, HCCO, HCO]
-    name: gas-qssa
+  - name: gas-qssa
     thermo: ideal-gas
     elements: [C, H, O, N]
     species: [POSF10325, C2H4, CH4, C3H6, iC4H8, C4H81, H2, C2H6, CO, C6H6, C2H2,
     C6H5CH3, CH3, O2, O, OH, HO2, H2O, H2O2, H, CH2, CH2*, HCO, CH2O, CH3O,
     CO2, C2H3, C2H5, HCCO, CH2CO, CH2CHO, C3H3, aC3H5, C5H4O, C5H5, C6H5,
     C6H5CH2, C6H5O, C6H5CO, C6H5CHO, N2]
+    kinetics: bulk
+    transport: mixture-averaged
+    qssa_species: [C2H3, C2H5, C6H5, C6H5CO, CH2, CH2*, CH2CHO, CH3O, HCCO, HCO]
+    n_qssa_species: 10
+    forward_to_remove_idx: [15, 105, 178]
     state:
       T: 1.0e-03
       density: 1.0e-03
@@ -84,7 +84,7 @@ species:
         1074.826, 16.14534]
         - [6.732257, 0.01490834, -4.949899e-06, 7.212022e-10, -3.766204e-14,
         -923.5703, -13.31335]
-      note: 120186
+      note: '120186'
     transport:
       model: gas
       geometry: nonlinear
@@ -726,7 +726,7 @@ species:
         -1020.8999, 3.950372]
         - [2.92664, 1.4879768e-03, -5.68476e-07, 1.0097038e-10, -6.753351e-15,
         -922.7977, 5.980528]
-      note: 121286
+      note: '121286'
     transport:
       model: gas
       geometry: linear
@@ -909,7 +909,7 @@ reactions:
     efficiencies: {C2H6: 3.0, CH4: 2.0, CO: 1.5, CO2: 2.0, H2: 2.0, H2O: 6.0}
     note: |
       R174
-      kinf (assumed, reduced from 2.6E14)
+        kinf (assumed, reduced from 2.6E14)
   - equation: C6H5 + H (+M) <=> C6H6 (+M)
     type: falloff
     low-P-rate-constant: {A: 6.6e+69, b: -16.3, Ea: 2.9288e+07}
@@ -1048,19 +1048,19 @@ reactions:
     duplicate: true
     note: |
       R24
-      Wang07
+       Wang07
   - equation: HO2 + OH <=> H2O + O2
     rate-constant: {A: 5.37e+67, b: -16.72, Ea: 1.376536e+08}
     duplicate: true
     note: |
       R25
-      Wang07
+       Wang07
   - equation: HO2 + OH <=> H2O + O2
     rate-constant: {A: 2.51e+09, b: 2.0, Ea: 1.6736e+08}
     duplicate: true
     note: |
       R26
-      Wang07
+       Wang07
   - equation: H + H2O2 <=> H2 + HO2
     rate-constant: {A: 6050.0, b: 2.0, Ea: 2.17568e+07}
     note: |
@@ -1496,7 +1496,7 @@ reactions:
   - equation: C2H4 + H <=> C2H3 + H2
     rate-constant: {A: 5.07e+04, b: 1.9, Ea: 5.41828e+07}
     note: |
-      	MK04
+      MK04
       R128
       96KNY/BEN
   - equation: C2H4 + O <=> C2H3 + OH
@@ -1668,176 +1668,176 @@ reactions:
     rate-constant: {A: 6.16e+19, b: -2.538, Ea: 4.8655736e+07}
     note: |
       R166
-      KW; 01-28-16; 1.0E+00 atm !N2;  300-1500K;  7% err
+       KW; 01-28-16; 1.0E+00 atm !N2;  300-1500K;  7% err
   - equation: O + iC4H8 <=> CH2CO + 2 CH3
     rate-constant: {A: 2.4e+05, b: 1.65, Ea: 1.368168e+06}
     note: |
       R167
-      =(C3H6+O) TS5 * 2 due to symmetry
+       =(C3H6+O) TS5 * 2 due to symmetry
   - equation: C6H5 + CH3 <=> C6H5CH3
     rate-constant: {A: 1.38e+10, b: 0.0, Ea: 1.92464e+05}
     note: |
       R168
-      99-TOK-LIN (added 5/2)
+        99-TOK-LIN (added 5/2)
   - equation: C6H5CH3 + O2 <=> C6H5CH2 + HO2
     rate-constant: {A: 3.0e+11, b: 0.0, Ea: 1.79878528e+08}
     note: |
       R169
-      98-ENG-FIT
+        98-ENG-FIT
   - equation: C6H5CH3 + OH <=> C6H5CH2 + H2O
     rate-constant: {A: 1.62e+10, b: 0.0, Ea: 1.158968e+07}
     note: |
       R170
-      05-VAS-DAV
+       05-VAS-DAV
   - equation: C6H5CH3 + H <=> C6H5CH2 + H2
     rate-constant: {A: 1.259e+11, b: 0.0, Ea: 3.4974056e+07}
     note: |
       R171
-      90-HIP-REI
+        90-HIP-REI
   - equation: C6H5CH3 + H <=> C6H6 + CH3
     rate-constant: {A: 1930.0, b: 2.17, Ea: 1.7417992e+07}
     note: |
       R172
-      01-TOK-LIN (added 5/2)
+        01-TOK-LIN (added 5/2)
   - equation: C6H5CH3 + CH3 <=> C6H5CH2 + CH4
     rate-constant: {A: 3.16e+08, b: 0.0, Ea: 3.9748e+07}
     note: |
       R173
-      76-KER-PAR
+        76-KER-PAR
   - equation: C6H5CH2 + H <=> C6H5 + CH3
     rate-constant: {A: 1.5e+63, b: -13.94, Ea: 2.7020272e+08}
     note: |
       k0 (RRKM)
       R175
-      RRKM at 1 atm,
+        RRKM at 1 atm,
   - equation: C6H5CH2 + O <=> C6H5CHO + H
     rate-constant: {A: 4.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R176
-      (90a-HIP-REI)
+       (90a-HIP-REI)
   - equation: C6H5CH2 + HO2 <=> C6H5CHO + H + OH
     rate-constant: {A: 5.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R177
-      90a-HIP-REI
+        90a-HIP-REI
   - equation: C6H5 + HCO <=> C6H5CHO
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R178
-      Est.
+       Est.
   - equation: C6H5CHO <=> C6H5CO + H
     rate-constant: {A: 3.98e+15, b: 0.0, Ea: 3.635896e+08}
     note: |
       R179
-      86-GRE,Eamodified
+        86-GRE,Eamodified
   - equation: C6H5CHO + O2 <=> C6H5CO + HO2
     rate-constant: {A: 1.02e+10, b: 0.0, Ea: 1.629668e+08}
     note: |
       R180
-      est. Tsang
+        est. Tsang
   - equation: C6H5CHO + OH <=> C6H5CO + H2O
     rate-constant: {A: 2.35e+07, b: 0.73, Ea: -4.64424e+06}
     note: |
       R181
-      est.,(CH3CHO+OH)
+       est.,(CH3CHO+OH)
   - equation: C6H5CHO + H <=> C6H5CO + H2
     rate-constant: {A: 4.1e+06, b: 1.16, Ea: 1.00416e+07}
     note: |
       R182
-      est.,(CH3CHO+H).
+       est.,(CH3CHO+H).
   - equation: C6H5CHO + H <=> C6H6 + HCO
     rate-constant: {A: 1930.0, b: 2.17, Ea: 1.7417992e+07}
     note: |
       R183
-      est.,(C6H5CH3 + H = C6H6 + CH3)
+       est.,(C6H5CH3 + H = C6H6 + CH3)
   - equation: C6H5CHO + O <=> C6H5CO + OH
     rate-constant: {A: 5.8e+09, b: 0.0, Ea: 7.5312e+06}
     note: |
       R184
-      est.,(CH3CHO+O)
+       est.,(CH3CHO+O)
   - equation: C6H5CHO + CH3 <=> C6H5CO + CH4
     rate-constant: {A: 2.0e-09, b: 5.6, Ea: 1.029264e+07}
     note: |
       R185
-      est.(CH3CHO+CH3).
+       est.(CH3CHO+CH3).
   - equation: C6H5CO + H2O2 <=> C6H5CHO + HO2
     rate-constant: {A: 1.8e+08, b: 0.0, Ea: 3.4417584e+07}
     note: |
       R186
-      est.(CH3CO+H2O2 = CH3CHO+HO2)
+       est.(CH3CO+H2O2 = CH3CHO+HO2)
   - equation: C6H5CO <=> C6H5 + CO
     rate-constant: {A: 5.27e+14, b: 0.0, Ea: 1.21390392e+08}
     note: |
       R187
-      00-NAM-LIN (rep 5/1)
+        00-NAM-LIN (rep 5/1)
   - equation: C6H6 + OH <=> C6H5 + H2O
     rate-constant: {A: 398.5, b: 2.286, Ea: 4.426672e+06}
     note: |
       (HW, RRKM)
       R189
-      Fit,AJ
+       Fit,AJ
   - equation: C6H6 + O <=> C6H5O + H
     rate-constant: {A: 1.39e+10, b: 0.0, Ea: 2.054344e+07}
     note: |
       R190
-      50% split 82-NIC-GUM
+        50% split 82-NIC-GUM
   - equation: C6H6 + O <=> C5H5 + HCO
     rate-constant: {A: 1.39e+10, b: 0.0, Ea: 1.895352e+07}
     note: |
       R191
-      50% split based on McKinnon
+        50% split based on McKinnon
   - equation: C6H5 + H2 <=> C6H6 + H
     rate-constant: {A: 57.07, b: 2.43, Ea: 2.6246232e+07}
     note: |
       R192
-      97-MEB-LIN
+        97-MEB-LIN
   - equation: C6H5 + O2 <=> C6H5O + O
     rate-constant: {A: 2.6e+10, b: 0.0, Ea: 2.560608e+07}
     note: |
       R193
-      94-FRA-HER
+        94-FRA-HER
   - equation: C6H5 + O <=> C5H5 + CO
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R194
-      94-FRA-HER
+        94-FRA-HER
   - equation: C6H5 + OH <=> C6H5O + H
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R195
-      Est.
+        Est.
   - equation: C6H5 + HO2 <=> C6H6 + O2
     rate-constant: {A: 1.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R196
-      Estimated, 10/01
+        Estimated, 10/01
   - equation: C6H5 + CH4 <=> C6H6 + CH3
     rate-constant: {A: 3.89e-06, b: 4.57, Ea: 2.1991104e+07}
     note: |
       R197
-      99-TOK-LIN (added 5/1)
+        99-TOK-LIN (added 5/1)
   - equation: C6H5O <=> C5H5 + CO
     rate-constant: {A: 3.76e+54, b: -12.06, Ea: 3.045952e+08}
     note: |
       R198
-      DAVIS, RRKM 1 atm (Ea reduced by 1.5 kcal/mol = change in hf,ch65O)
+       DAVIS, RRKM 1 atm (Ea reduced by 1.5 kcal/mol = change in hf,ch65O)
   - equation: C5H5 + O <=> C5H4O + H
     rate-constant: {A: 5.81e+10, b: -0.02, Ea: 8.368e+04}
     note: |
       R199
-      98-ZHO-BOZ
+       98-ZHO-BOZ
   - equation: C5H5 + O2 <=> C5H4O + OH
     rate-constant: {A: 1.8e+09, b: 0.08, Ea: 7.5312e+07}
     note: |
       R200
-      RRKM 1 atm
+       RRKM 1 atm
   - equation: C5H4O <=> 2 C2H2 + CO
     rate-constant: {A: 6.2e+41, b: -7.87, Ea: 4.129608e+08}
     note: |
       R201
-      RRKM (10/18)
+       RRKM (10/18)
   - equation: C5H4O + O <=> C3H3 + CO + HCO
     rate-constant: {A: 6.2e+05, b: 1.45, Ea: -3.589872e+06}
     note: |
       R202
-      Est. HW = C4H6 + O
+       Est. HW = C4H6 + O
