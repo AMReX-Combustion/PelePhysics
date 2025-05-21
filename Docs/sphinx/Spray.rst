@@ -441,7 +441,7 @@ Spray data derived from ANSYS Fluent DPM solution files can also be used to inje
    +===============================+=================================================+====================+
    |``read_from_dpm_file``         |Boolean. Should be set to true                   |Yes                 |
    +-------------------------------+---------------------+---------------------------+--------------------+
-   |``dpm_filename                 |Name of the DPM file                             |Yes                 |
+   |``dpm_filename``               |Name of the DPM file                             |Yes                 |
    +-------------------------------+---------------------+---------------------------+--------------------+
    |``initial_injection_dpm_time`` |Time in DPM file at which injection should start |Yes                 |
    +-------------------------------+---------------------+---------------------------+--------------------+
