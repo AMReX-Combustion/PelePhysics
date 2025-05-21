@@ -1,0 +1,55 @@
+!****************************************************************************
+!
+! An 8-species non-reacting skeletal model for A1, A2, A3 and C1
+! Developed by Yang Gao, Tianfeng Lu (tianfeng.lu@uconn.edu)
+! University of Connecticut
+!
+! based on
+!
+! HyChem model for A1, A2, A3, and C1
+! Version 2.0 - High temperature chemistry
+!
+! Copyright Â© 2018 HyChem
+!
+!****************************************************************************
+!
+! HyChem non-reacting model for A1, A2, A3, and C1
+! Version 2.0 - High temperature chemistry
+!
+! H. Wang, R. Xu, K. Wang, C.T. Bowman, D.F. Davidson, R.K. Hanson,
+! K. Brezinsky, F.N. Egolfopoulos, A physics-based approach to modeling
+! real-fuel combustion chemistry - I. Evidence from experiments, and
+! thermodynamic, chemical kinetic and statistical considerations,
+! Combustion and Flame 193 (2018) 502-519.
+!
+! R. Xu, K. Wang, S. Banerjee, J. Shao, T. Parise, Y. Zhu, S. Wang,
+! A. Movaghar, D.J. Lee, R. Zhao, X. Han, Y. Gao, T. Lu, K. Brezinsky,
+! F.N. Egolfopoulos, D.F. Davidson, R.K. Hanson, C.T. Bowman, H. Wang,
+! A physics-based approach to modeling real-fuel combustion chemistry -
+! II. Reaction kinetic models of jet and rocket fuels,
+! Combustion and Flame 193 (2018) 520-537.
+!
+! Please contact Hai Wang at haiwang@stanford.edu for questions and comments.
+!
+! Copyright Â© 2018 HyChem
+!
+!****************************************************************************
+!
+! Model description: Seven reaction steps to describe Jet A POSF10325 thermal
+! decomposition and USC Mech IIa as the foundational fuel chemistry model.
+! The cracked products considered are C2H4, H2, CH4, C3H6, 1-C4H8, i-C4H8,
+! benzene, tuluene, CH3 and H. The oxidation kinetics of these cracking
+! products are described by USC Mech IIa.
+!
+!****************************************************************************
+ELEMENTS
+O  H  C  N  AR  HE
+END       
+
+SPECIES
+POSF10264        POSF10289        POSF10325        POSF11498             
+O2               N2               H2O              CO2              
+END
+
+REACTIONS
+END
