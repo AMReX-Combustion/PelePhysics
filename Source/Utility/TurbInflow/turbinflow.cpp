@@ -393,23 +393,24 @@ TurbInflow::fill_turb_plane(
     amrex::Real cx[3], cy[3], ydata[3];
     amrex::Real zdata[3][3];
 
-    for (int n = 0; n < AMREX_SPACEDIM; ++n) {
-      amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
-      amrex::Real yy = (yd[j - bx.smallEnd(1)] - pboxlo[1]) * dxinv[1];
-      int i0 = (int)(std::round(xx));
-      int j0 = (int)(std::round(yy));
-      xx -= amrex::Real(i0);
-      yy -= amrex::Real(j0);
-      cx[0] = 0.5 * (xx - 1.0) * (xx - 2.0);
-      cy[0] = 0.5 * (yy - 1.0) * (yy - 2.0);
-      cx[1] = xx * (2.0 - xx);
-      cy[1] = yy * (2.0 - yy);
-      cx[2] = 0.5 * xx * (xx - 1.0);
-      cy[2] = 0.5 * yy * (yy - 1.0);
+    amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
+    amrex::Real yy = (yd[j - bx.smallEnd(1)] - pboxlo[1]) * dxinv[1];
+    int i0 = (int)(std::round(xx));
+    int j0 = (int)(std::round(yy));
+    xx -= amrex::Real(i0);
+    yy -= amrex::Real(j0);
+    cx[0] = 0.5 * (xx - 1.0) * (xx - 2.0);
+    cy[0] = 0.5 * (yy - 1.0) * (yy - 2.0);
+    cx[1] = xx * (2.0 - xx);
+    cy[1] = yy * (2.0 - yy);
+    cx[2] = 0.5 * xx * (xx - 1.0);
+    cy[2] = 0.5 * yy * (yy - 1.0);
 
-      if (i0 >= 0 && i0 < npboxcells[0] && j0 >= 0 && j0 < npboxcells[1]) {
-        i0 += 2;
-        j0 += 2;
+    if (i0 >= 0 && i0 < npboxcells[0] && j0 >= 0 && j0 < npboxcells[1]) {
+      i0 += 2;
+      j0 += 2;
+
+      for (int n = 0; n < AMREX_SPACEDIM; ++n) {
         for (int ii = 0; ii <= 2; ++ii) {
           for (int jj = 0; jj <= 2; ++jj) {
             zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0, n) +
