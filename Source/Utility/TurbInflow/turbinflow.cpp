@@ -65,7 +65,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       pp.query("turb_nplane", tp[n].nplane);
-      AMREX_ALWAYS_ASSERT(tp[n].nplane > 0);
+      AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        tp[n].nplane > 3, "need at least 4 turb planes for 3 point "
+                          "interpolation stencil + 1 extra");
       pp.query("turb_conv_vel", tp[n].turb_conv_vel);
       AMREX_ALWAYS_ASSERT(tp[n].turb_conv_vel > 0);
 
@@ -102,7 +104,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       AMREX_D_TERM(tp[n].npboxcells[0] = npts[0] - 3;
                    , tp[n].npboxcells[1] = npts[1] - 3;
-                   , tp[n].npboxcells[2] = npts[2];)
+                   , tp[n].npboxcells[2] = npts[2] - 1;)
 
       // Center the turbulence
       AMREX_D_TERM(tp[n].pboxlo[0] = turb_center[0] - 0.5 * tp[n].pboxsize[0];
@@ -113,6 +115,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       if (tp[n].isswirltype) {
         tp[n].nplane = std::min(tp[n].nplane, npts[2]);
       }
+
       amrex::Box sbx(
         amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
         amrex::IntVect(AMREX_D_DECL(npts[0], npts[1], tp[n].nplane)));
@@ -282,7 +285,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
         "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
         ") is outside bounds of turbulence data (" +
         std::to_string(a_tp.planeTimes[0]) + " to " +
-        std::to_string(a_tp.planeTimes[a_tp.nplane - 2]) +
+        std::to_string(a_tp.planeTimes[a_tp.kmax - 2]) +
         ")"); // Need one turbplane forward for interpolation
     }
     for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane)) &&
