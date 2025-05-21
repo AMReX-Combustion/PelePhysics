@@ -430,7 +430,7 @@ Care must be taken to ensure the amount of mass injected during a time step matc
 
 4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
-Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the Pele domain. To use this feature, initialise a spray jet (named `jet_dpm`, say) by using the statement `spray.jetnames=jet_dpm` in the input file. Set the following DPM-specific inputs as described in the table below: 
+Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the Pele domain. To use this feature, initialise a spray jet (named ``jet_dpm``, say) by using the statement `spray.jetnames=jet_dpm` in the input file. Set the following DPM-specific inputs as described in the table below: 
 
 .. table::
    :widths: 40 50 20
@@ -459,6 +459,10 @@ Spray data derived from ANSYS Fluent DPM solution files can also be used to inje
    |                               |after final DPM time.                            |                    |   
    +-------------------------------+-------------------------------------------------+--------------------+
 
+   A typical DPM file will have the following format. 
+.. figure:: /Visualization/DPMFileFormat.png
+   :align: center
+   :figwidth: 60%
 
 Spray Validation
 ================
