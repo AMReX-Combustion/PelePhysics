@@ -29,20 +29,23 @@ struct TurbParm
 
   int nplane = 32; // Number of turb planes stored at once in memory
   amrex::FArrayBox* sdata = nullptr; // Currently loaded chunk of turb data
+  int izlo = -1;                     // Currently loaded low plane
+  int izhi = -1;                     // Currently loaded high plane
   amrex::Real szlo = -1.0e12;        // Position of the current chunk low plane
   amrex::Real szhi = -1.0e11;        // Position of the current chunk high plane
 
-  bool isswirltype = false; // Unused: enable rotating velocity
+  bool isswirltype = false; // false indicates turb data is periodic normal to
+                            // flow dir, true requires time array in turb data
   amrex::Real turb_scale_loc =
     1.; // Spatial scale relating turbfile geom -> actual case scale
   amrex::Real turb_scale_vel = 1.; // Velocity scaling
   amrex::Real turb_conv_vel =
     1.; // Mean inlet velocity, used to move through data planes
 
-  amrex::Vector<long> m_offset;
-  int kmax;     // Number of plane in Turbfile
-  long* offset; // Binary offset of each data plane in Turbfile
-  long offset_size;
+  amrex::Vector<amrex::Real> planeTimes;
+
+  amrex::Vector<long> offset;
+  int kmax; // Number of plane in Turbfile
 };
 
 struct TurbInflow

@@ -99,7 +99,66 @@ This code contains data structures used to handle data read from plt files that 
 Diagnostics
 ===========
 
-Placeholder. Once the porting of diagnostics from PeleLMeX to PelePhysics/PeleC is complete, documentation can be added here.
+Analysing the data a-posteriori can become extremely cumbersome when dealing with extreme datasets.
+PelePhysics supports shared capability for diagnostics available at runtime during PeleC and PeleLMeX simulation
+and more are under development.
+Currently, the list of diagnostic contains:
+
+* ``DiagFramePlane`` : extract a plane aligned in the 'x','y' or 'z' direction across the AMR hierarchy, writing
+  a 2D plotfile compatible with Amrvis, Paraview or yt. Only available for 3D simulations.
+* ``DiagPDF`` : extract the PDF of a given variable and write it to an ASCII file.
+* ``DiagConditional`` : extract statistics (average and standard deviation, integral or sum) of a
+  set of variables conditioned on the value of given variable and write it to an ASCII file.
+
+When using `DiagPDF` or `DiagConditional`, it is possible to narrow down the diagnostic to a region of interest
+by specifying a set of filters, defining a range of interest for a variable. Note also that for these two diagnostics,
+fine-covered regions are masked. An arbitrary number of diagnostics can be named in a list with the ``diagnostics``
+keyword, then each diagnostic name in the list becomes a keyword allowing the type and specific options for
+that diagnostic to be specified.
+The following provide examples for each diagnostic in PeleLMeX (in PeleC, all diagnostics would be prefixed with
+`pelec` instead of `peleLM`:
+
+::
+
+    #--------------------------DIAGNOSTICS------------------------
+
+    peleLM.diagnostics = xnormP condT pdfTest
+
+    peleLM.xnormP.type = DiagFramePlane                             # Diagnostic type
+    peleLM.xnormP.file = xNorm5mm                                   # Output file prefix
+    peleLM.xnormP.normal = 0                                        # Plane normal (0, 1 or 2 for x, y or z)
+    peleLM.xnormP.center = 0.005                                    # Coordinate in the normal direction
+    peleLM.xnormP.int    = 5                                        # Frequency (as step #) for performing the diagnostic
+    peleLM.xnormP.interpolation = Linear                            # [OPT, DEF=Linear] Interpolation type : Linear or Quadratic
+    peleLM.xnormP.field_names = x_velocity mag_vort density         # List of variables outputted to the 2D pltfile
+    peleLM.xnormP.n_files = 2                                       # [OPT, DEF="min(256,NProcs)"] Number of files to write per level
+    peleLM.xnormP.dump_ghost_if_OOB = 1                             # [OPT, DEF=false] if the specified coordinate is out-of-bounds, a plane of ghost cells in that direction will be dumped (for debugging purposes). If false, an error is raised if the requested plane is OOB.
+
+    peleLM.condT.type = DiagConditional                             # Diagnostic type
+    peleLM.condT.file = condTest                                    # Output file prefix
+    peleLM.condT.int  = 5                                           # Frequency (as step #) for performing the diagnostic
+    peleLM.condT.filters = xHigh stoich                             # [OPT, DEF=None] List of filters
+    peleLM.condT.xHigh.field_name = x                               # Filter field
+    peleLM.condT.xHigh.value_greater = 0.006                        # Filter definition : value_greater, value_less, value_inrange
+    peleLM.condT.stoich.field_name = mixture_fraction               # Filter field
+    peleLM.condT.stoich.value_inrange = 0.053 0.055                 # Filter definition : value_greater, value_less, value_inrange
+    peleLM.condT.conditional_type = Average                         # Conditional type : Average, Integral or Sum
+    peleLM.condT.nBins = 50                                         # Number of bins for the conditioning variable
+    peleLM.condT.condition_field_name = temp                        # Conditioning variable name
+    peleLM.condT.field_names = HeatRelease I_R(CH4) I_R(H2)         # List of variables to be treated
+
+    peleLM.pdfTest.type = DiagPDF                                   # Diagnostic type
+    peleLM.pdfTest.file = PDFTest                                   # Output file prefix
+    peleLM.pdfTest.int  = 5                                         # Frequency (as step #) for performing the diagnostic
+    peleLM.pdfTest.filters = innerFlame                             # [OPT, DEF=None] List of filters
+    peleLM.pdfTest.innerFlame.field_name = temp                     # Filter field
+    peleLM.pdfTest.innerFlame.value_inrange = 450.0 1500.0          # Filter definition : value_greater, value_less, value_inrange
+    peleLM.pdfTest.nBins = 50                                       # Number of bins for the PDF
+    peleLM.pdfTest.normalized = 1                                   # [OPT, DEF=1] PDF is normalized (i.e. integral is unity) ?
+    peleLM.pdfTest.volume_weighted = 1                              # [OPT, DEF=1] Computation of the PDF is volume weighted ?
+    peleLM.pdfTest.range = 0.0 2.0                                  # [OPT, DEF=data min/max] Specify the range of the PDF
+    peleLM.pdfTest.field_name = x_velocity                          # Variable of interest
+
 
 Filter
 ======
