@@ -79,7 +79,7 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
   m_dump_ghost_if_OOB = false;
   pp.query("dump_ghost_if_OOB", m_dump_ghost_if_OOB);
   m_dump_flat_3D_plotfile = false;
-  pp.query("dumo_flat_3D_plotfile", m_dump_flat_3D_plotfile);
+  pp.query("dump_flat_3D_plotfile", m_dump_flat_3D_plotfile);
 
   // Interpolation
   std::string intType = "Quadratic";
