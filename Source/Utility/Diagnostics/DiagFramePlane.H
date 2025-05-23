@@ -80,6 +80,7 @@ private:
   amrex::Vector<std::string> m_fieldNames;
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
   int m_nfiles_plane;
+  bool m_dump_flat_3D_plotfile;
 
   // Plane definition
   int m_normal;
