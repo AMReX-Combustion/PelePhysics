@@ -37,7 +37,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 
     const SprayData* fdat = m_sprayData;
 
-    while ((fabs(time - spray_jet->m_nxt_inj_flw_time) < smallnum ||
+    while ((std::fabs(time - spray_jet->m_nxt_inj_flw_time) < smallnum ||
             time >= spray_jet->m_nxt_inj_flw_time) &&
            spray_jet->jet_active(time)) {
       // Line numbers in the dpm file
@@ -62,7 +62,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       long int ctr = 0;
 
       // Locate the current injection dpm time in the dpm file
-      while (abs(dummy_time - spray_jet->m_cur_inj_dpm_time) > verysmallnum &&
+      while (std::fabs(dummy_time - spray_jet->m_cur_inj_dpm_time) > verysmallnum &&
              ctr <= spray_jet->m_dpm_num_of_time_instants) {
         if (ctr == 0) {
           is_dpm >> dummy_time >> lineno_first_dpm_time_begin;
@@ -130,7 +130,6 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
                            // little bit downstream
         amrex::Real pmov = amrex::Random();
         amrex::Real Y_part[SPRAY_FUEL_NUM]; // Spray fuel mass fraction
-        amrex::Real rho_part = 0.;          // density of particle
         bool set_part_Y = false;
 
         // Reading parcel/particle details from dpm input file
@@ -180,15 +179,12 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
           temperature; // Setting the particle temperature
         set_part_Y = spray_jet->get_new_particle(
           Y_part);              // Getting particle mass fractions
-        if (SPRAY_FUEL_NUM > 1) // Setting particle mass fractions
+        if (SPRAY_FUEL_NUM > 1 && set_part_Y) // Setting particle mass fractions
         {
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
-            rho_part += Y_part[spf] / fdat->rhoL(temperature, spf);
           }
-          rho_part = 1. / rho_part;
         } else {
-          rho_part = fdat->rhoL(temperature, 0);
           p.rdata(SprayComps::pstateY) = 1.;
         }
 

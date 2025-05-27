@@ -70,10 +70,10 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     if (is_dpm_periodic) {
       set_jet_endtime(verylargenum);
     } else {
-      // amrex::Real
-      // final_flow_time=m_flow_time_initial_injection+(m_dpm_time_final-m_dpm_time_initial_injection);
-      // set_jet_endtime((m_endTime<final_flow_time?m_endTime:final_flow_time));
-      set_jet_endtime(verylargenum);
+      amrex::Real
+      final_flow_time=m_flow_time_initial_injection+(m_dpm_time_final-m_dpm_time_initial_injection);
+      set_jet_endtime((m_endTime<final_flow_time?m_endTime:final_flow_time));
+      //set_jet_endtime(verylargenum);
     }
     m_cur_inj_dpm_time = m_dpm_time_initial_injection;
     m_nxt_inj_flw_time = m_flow_time_initial_injection;

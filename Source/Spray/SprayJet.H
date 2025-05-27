@@ -43,7 +43,6 @@ public:
   const amrex::RealVect& jet_norm() const { return m_norm; }
   const amrex::RealVect& jet_cent() const { return m_cent; }
   amrex::Real jet_vel(const amrex::Real time) const
-
   {
     if (m_useROI) {
       return interpolateVel(time);
@@ -54,7 +53,6 @@ public:
   const amrex::Real& jet_dia() const { return m_jetDia; }
   const amrex::Real& spread_angle() const { return m_spreadAngle; }
   amrex::Real mass_flow_rate(const amrex::Real time) const
-
   {
     if (m_useROI) {
       return interpolateMdot(time);
@@ -113,9 +111,9 @@ public:
   void set_final_injection_flow_time()
   {
     const amrex::Real largenum = 1e8;
-    const amrex::Real smallnum = 1e-15;
+
     if (is_dpm_periodic) {
-      m_flow_time_final_injection = 1E8;
+      m_flow_time_final_injection = largenum;
     } else {
       m_flow_time_final_injection = m_flow_time_initial_injection +
                                     m_dpm_time_final -
@@ -307,7 +305,7 @@ public:
     return val1 + (val2 - val1) * invt;
   }
 
-  inline void transform_to_new_cs(amrex::Real vec[AMREX_SPACEDIM])
+  void transform_to_new_cs(amrex::Real vec[AMREX_SPACEDIM])
   {
     amrex::Real x, y, z;
     if (AMREX_SPACEDIM == 2) {
