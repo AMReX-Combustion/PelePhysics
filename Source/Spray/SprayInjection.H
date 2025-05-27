@@ -34,10 +34,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
   if (amrex::ParallelDescriptor::IOProcessor()) {
     amrex::Real dt = sim_dt;
     const amrex::Real smallnum = 1e-15;
-    const amrex::Real verysmallnum = 1.e-15;
-    const amrex::Real verylargenum = 1.e15;
 
-    SprayUnits SPU;
+
     const SprayData* fdat = m_sprayData;
 
     while ((fabs(time - spray_jet->m_nxt_inj_flw_time) < smallnum ||
@@ -49,7 +47,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       long int lineno_next_dpm_time_begin = 0;
       long int lineno_first_dpm_time_begin = 0;
       long int lineno_last_dpm_time_end = 0;
-      bool found_dpm_time_in_file = false;
+
 
       long int ln; // iterating index
       amrex::Real dummy_time = -1;
@@ -133,10 +131,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
           amrex::Random(); // Random number to make sure particle is advanced a
                            // little bit downstream
         amrex::Real pmov = amrex::Random();
-        int num_ppp = 2;                    // number of particles per parcel
         amrex::Real Y_part[SPRAY_FUEL_NUM]; // Spray fuel mass fraction
         amrex::Real rho_part = 0.;          // density of particle
-        amrex::Real dummy_coordinates[AMREX_SPACEDIM];
         bool set_part_Y = false;
 
         // Reading parcel/particle details from dpm input file
@@ -197,7 +193,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
           rho_part = fdat->rhoL(temperature, 0);
           p.rdata(SprayComps::pstateY) = 1.;
         }
-        amrex::Real pmass = particle_mass; // Setting parcel mass
+
+
+
         spray_jet->m_totalInjMass += parcel_mass;
 
         // If KHRT is used, BM1 is shed mass
