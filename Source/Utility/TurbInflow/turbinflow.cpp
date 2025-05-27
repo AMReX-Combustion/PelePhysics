@@ -405,9 +405,10 @@ TurbInflow::fill_turb_plane(
       (z - szlo) * dxinv[2];    // How many dz away from the left side ?
     k0 = (int)(std::floor(zz)); // What's the closest point ?
     zz -= amrex::Real(k0);
-    cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0
-    cz[1] = zz * (2.0 - zz);               // Weight of k0 + 1
-    cz[2] = 0.5 * zz * (zz - 1.0);         // Weight of k0 + 2
+    cz[0] =
+      lininterp ? 1.0 - zz : 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0
+    cz[1] = lininterp ? zz : zz * (2.0 - zz);               // Weight of k0 + 1
+    cz[2] = lininterp ? 0.0 : 0.5 * zz * (zz - 1.0);        // Weight of k0 + 2
   }
 
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
