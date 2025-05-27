@@ -35,8 +35,6 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
     amrex::Real dt = sim_dt;
     const amrex::Real smallnum = 1e-15;
 
-    const SprayData* fdat = m_sprayData;
-
     while ((std::fabs(time - spray_jet->m_nxt_inj_flw_time) < smallnum ||
             time >= spray_jet->m_nxt_inj_flw_time) &&
            spray_jet->jet_active(time)) {
@@ -259,6 +257,7 @@ SprayParticleContainer::sprayInjection(
     return;
   }
   SprayUnits SPU;
+  const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     rho_avg +=
