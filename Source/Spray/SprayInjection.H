@@ -62,7 +62,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       long int ctr = 0;
 
       // Locate the current injection dpm time in the dpm file
-      while (std::fabs(dummy_time - spray_jet->m_cur_inj_dpm_time) > verysmallnum &&
+      while (std::fabs(dummy_time - spray_jet->m_cur_inj_dpm_time) >
+               verysmallnum &&
              ctr <= spray_jet->m_dpm_num_of_time_instants) {
         if (ctr == 0) {
           is_dpm >> dummy_time >> lineno_first_dpm_time_begin;
@@ -178,7 +179,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.rdata(SprayComps::pstateT) =
           temperature; // Setting the particle temperature
         set_part_Y = spray_jet->get_new_particle(
-          Y_part);              // Getting particle mass fractions
+          Y_part);                            // Getting particle mass fractions
         if (SPRAY_FUEL_NUM > 1 && set_part_Y) // Setting particle mass fractions
         {
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -258,7 +259,6 @@ SprayParticleContainer::sprayInjection(
     return;
   }
   SprayUnits SPU;
-  const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     rho_avg +=
