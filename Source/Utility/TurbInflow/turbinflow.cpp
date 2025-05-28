@@ -282,8 +282,9 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
     tmp.readFrom(ifs);
     if (a_tp.verbose > 2) {
       amrex::Print() << "   for d = " << n << " and k = " << k
-                     << ": minval = " << tmp.min(0)
-                     << ", maxval = " << tmp.max(0) << std::endl;
+                     << ": minval = " << tmp.min<amrex::RunOn::Device>(0)
+                     << ", maxval = " << tmp.max<amrex::RunOn::Device>(0)
+                     << std::endl;
     }
     amrex::Box srcBox = tmp.box();
     a_tp.sdata->copy<amrex::RunOn::Device>(tmp, srcBox, 0, dstBox, n, 1);
