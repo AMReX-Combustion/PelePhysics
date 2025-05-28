@@ -36,7 +36,7 @@ struct TurbParm
   amrex::Real szlo = -1.0e12;        // Position of the current chunk low plane
   amrex::Real szhi = -1.0e11;        // Position of the current chunk high plane
 
-  amrex::IntVect periodicity{1, 1, 1};
+  amrex::IntVect periodicity{AMREX_D_DECL(1, 1, 1)};
   bool isswirltype = false; // false indicates turb data is periodic normal to
                             // flow dir, true requires time array in turb data
 
