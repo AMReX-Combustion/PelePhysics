@@ -303,7 +303,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
         std::to_string(a_tp.planeTimes[a_tp.kmax - 2]) +
         ")"); // Need one turbplane forward for interpolation
     }
-    for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane + 2)) &&
+    for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane + 1)) &&
                         (a_tp.planeTimes[a_tp.izlo] <= z);
          ++a_tp.izlo) {
     } // Stop when first plane later than time=z

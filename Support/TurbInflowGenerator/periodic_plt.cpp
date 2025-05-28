@@ -124,9 +124,6 @@ turbinflow_from_periodic_plt(std::ofstream& ifsd, std::ofstream& ifsh)
         const IntVect idx_plt =
           index_mapper(idx_plane, dim_map, domain, periodicity);
         planearr(idx_plane) = pltarr(idx_plt);
-        if (i == 0 && j == 0) {
-          std::cout << idx_plane << " " << idx_plt << std::endl;
-        }
       });
       TMP.shift({0, 0, -k});
       ifsh << ifsd.tellp() << std::endl;
