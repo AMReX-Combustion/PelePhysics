@@ -42,7 +42,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       long int lineno_current_dpm_time_begin = 0;
       long int lineno_current_dpm_time_end = 0;
       long int lineno_next_dpm_time_begin = 0;
-      long int lineno_first_dpm_time_begin = 0;
+      long int lineno_first_dpm_time_begin;
       long int lineno_last_dpm_time_end = 0;
 
       long int ln; // iterating index

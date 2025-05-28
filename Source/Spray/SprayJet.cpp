@@ -2,6 +2,7 @@
 #include "SprayJet.H"
 #include <AMReX_ParmParse.H>
 #include "SprayParticles.H"
+#include <list>
 
 // Constructor where parameters are set from input file
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
@@ -42,8 +43,9 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     }
     is_dpm.close();
     ps.query("m_override_inj_plane_dir", m_override_inj_plane_dir);
-    if (!(m_override_inj_plane_dir == -1 || m_override_inj_plane_dir == 0 ||
-          m_override_inj_plane_dir == 1 || m_override_inj_plane_dir == 2)) {
+    std::list<int> override_inj_plane_dir_list = {-1, 0, 1, 2};
+    auto override_inj_plane_dir_iter = std::find(override_inj_plane_dir_list.begin(), override_inj_plane_dir_list.end(), m_override_inj_plane_dir);
+    if (override_inj_plane_dir_iter==override_inj_plane_dir_list.end()) {
       amrex::Abort("Override injection plane direction should be -1,0,1 or 2");
     }
     ps.query(".", m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile);
