@@ -90,7 +90,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         >> tp[n].periodicity[2]); // Will use zperiodicity to single whether
                                   // using periodic or time per plane mode
 
-      tp[n].isswirltype = tp[n].periodicity[2] == 0;
+      tp[n].isswirltype = AMREX_D_PICK(, false, tp[n].periodicity[2] == 0);
       if (tp[n].periodicity[0] == 0 || tp[n].periodicity[1] == 0) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
           tp[n].interp_type == TurbInterpType::linear,
@@ -123,7 +123,8 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       // Swirl type: we can't load more planes than are available
       if (tp[n].isswirltype) {
-        tp[n].nplane = std::min(tp[n].nplane, npts[2]);
+        tp[n].nplane = AMREX_D_PICK(
+          tp[n].nplane, tp[n].nplane, std::min(tp[n].nplane, npts[2]));
       }
 
       amrex::Box sbx(
