@@ -1,7 +1,45 @@
+description: |-
+  ****************************************************************************
+
+   An 12-species non-reacting mechanism for testing evaporation models
+   Skeletal model for A1, A2, A3 and C1 developed by Yang Gao, 
+   Tianfeng Lu (tianfeng.lu@uconn.edu) University of Connecticut
+
+   based on
+
+   HyChem model for A1, A2, A3, and C1
+   Version 2.0 - High temperature chemistry
+
+   Copyright Â© 2018 HyChem
+
+  ****************************************************************************
+
+   HyChem non-reacting model for A1, A2, A3, and C1
+   Version 2.0 - High temperature chemistry
+
+   H. Wang, R. Xu, K. Wang, C.T. Bowman, D.F. Davidson, R.K. Hanson,
+   K. Brezinsky, F.N. Egolfopoulos, A physics-based approach to modeling
+   real-fuel combustion chemistry - I. Evidence from experiments, and
+   thermodynamic, chemical kinetic and statistical considerations,
+   Combustion and Flame 193 (2018) 502-519.
+
+   R. Xu, K. Wang, S. Banerjee, J. Shao, T. Parise, Y. Zhu, S. Wang,
+   A. Movaghar, D.J. Lee, R. Zhao, X. Han, Y. Gao, T. Lu, K. Brezinsky,
+   F.N. Egolfopoulos, D.F. Davidson, R.K. Hanson, C.T. Bowman, H. Wang,
+   A physics-based approach to modeling real-fuel combustion chemistry -
+   II. Reaction kinetic models of jet and rocket fuels,
+   Combustion and Flame 193 (2018) 520-537.
+
+   Please contact Hai Wang at haiwang@stanford.edu for questions and comments.
+
+   Copyright Â© 2018 HyChem
+
+  ****************************************************************************
+
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 3.1.0
-date: Tue, 20 May 2025 13:02:21 -0600
+date: Thu, 29 May 2025 16:44:54 -0600
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -9,7 +47,8 @@ phases:
 - name: gas
   thermo: ideal-gas
   elements: [O, H, C, N, Ar, He]
-  species: [POSF10264, POSF10289, POSF10325, POSF11498, O2, N2, H2O, CO2]
+  species: [POSF10264, POSF10289, POSF10325, POSF11498, NC7H16, NC10H22,
+    NC12H26, IC8H18, O2, N2, H2O, CO2]
   transport: mixture-averaged
   state: {T: 300.0, P: 1 atm}
 
@@ -86,6 +125,74 @@ species:
     diameter: 10.607
     rotational-relaxation: 1.0
     note: C13H28; sigma and epsilon derived from NC13H28-N2
+- name: NC7H16
+  composition: {C: 7, H: 16}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1391.0, 5000.0]
+    data:
+    - [-1.26836187, 0.085435582, -5.25346786e-05, 1.62945721e-08, -2.02394925e-12,
+      -2.56586565e+04, 35.3732912]
+    - [22.2148969, 0.034767575, -1.18407129e-05, 1.83298478e-09, -1.06130266e-13,
+      -3.42760081e+04, -92.3040196]
+    note: 7/19/ 0 THERM
+  transport:
+    model: gas
+    geometry: nonlinear
+    well-depth: 459.6
+    diameter: 6.253
+    rotational-relaxation: 1.0
+- name: NC10H22
+  composition: {C: 10, H: 22}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1391.0, 5000.0]
+    data:
+    - [-2.08416969, 0.122535012, -7.76815739e-05, 2.49834877e-08, -3.23548038e-12,
+      -3.43021863e+04, 44.226014]
+    - [31.9882239, 0.0477244922, -1.62276391e-05, 2.50963259e-09, -1.45215772e-13,
+      -4.6639284e+04, -140.504121]
+    note: 1/ 2/ 7 THERM
+  transport:
+    model: gas
+    geometry: nonlinear
+    well-depth: 704.917
+    diameter: 6.675
+    rotational-relaxation: 1.0
+- name: NC12H26
+  composition: {C: 12, H: 26}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1391.0, 5000.0]
+    data:
+    - [-2.62181594, 0.147237711, -9.43970271e-05, 3.07441268e-08, -4.0360223e-12,
+      -4.00654253e+04, 50.0994626]
+    - [38.5095037, 0.0563550048, -1.914932e-05, 2.96024862e-09, -1.7124415e-13,
+      -5.48843465e+04, -172.670922]
+    note: 1/ 2/ 7 THERM
+  transport:
+    model: gas
+    geometry: nonlinear
+    well-depth: 789.98
+    diameter: 7.047
+    rotational-relaxation: 1.0
+- name: IC8H18
+  composition: {C: 8, H: 18}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1396.0, 5000.0]
+    data:
+    - [-4.20868893, 0.111440581, -7.91346582e-05, 2.92406242e-08, -4.43743191e-12,
+      -2.99446875e+04, 44.9521701]
+    - [27.137359, 0.037900489, -1.29437358e-05, 2.00760372e-09, -1.1640058e-13,
+      -4.07958177e+04, -123.277495]
+    note: 7/20/ 0 THERM
+  transport:
+    model: gas
+    geometry: nonlinear
+    well-depth: 458.5
+    diameter: 6.414
+    rotational-relaxation: 1.0
 - name: O2
   composition: {O: 2}
   thermo:

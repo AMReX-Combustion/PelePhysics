@@ -1,8 +1,8 @@
 !****************************************************************************
 !
-! An 8-species non-reacting skeletal model for A1, A2, A3 and C1
-! Developed by Yang Gao, Tianfeng Lu (tianfeng.lu@uconn.edu)
-! University of Connecticut
+! An 12-species non-reacting mechanism for testing evaporation models
+! Skeletal model for A1, A2, A3 and C1 developed by Yang Gao, 
+! Tianfeng Lu (tianfeng.lu@uconn.edu) University of Connecticut
 !
 ! based on
 !
@@ -34,20 +34,13 @@
 ! Copyright Â© 2018 HyChem
 !
 !****************************************************************************
-!
-! Model description: Seven reaction steps to describe Jet A POSF10325 thermal
-! decomposition and USC Mech IIa as the foundational fuel chemistry model.
-! The cracked products considered are C2H4, H2, CH4, C3H6, 1-C4H8, i-C4H8,
-! benzene, tuluene, CH3 and H. The oxidation kinetics of these cracking
-! products are described by USC Mech IIa.
-!
-!****************************************************************************
 ELEMENTS
 O  H  C  N  AR  HE
 END       
 
 SPECIES
 POSF10264        POSF10289        POSF10325        POSF11498             
+NC7H16           NC10H22          NC12H26          IC8H18
 O2               N2               H2O              CO2              
 END
 
