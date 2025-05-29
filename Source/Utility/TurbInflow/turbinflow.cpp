@@ -102,8 +102,8 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         tp[n].dx[idim] = probsize[idim] / amrex::Real(npts[idim] - 1);
         tp[n].dxinv[idim] = 1.0 / tp[n].dx[idim];
       }
-      tp[n].dx[2] = probsize[2] / amrex::Real(npts[2]);
-      tp[n].dxinv[2] = 1.0 / tp[n].dx[2];
+      AMREX_D_TERM(, , tp[n].dx[2] = probsize[2] / amrex::Real(npts[2]);)
+      AMREX_D_TERM(, , tp[n].dxinv[2] = 1.0 / tp[n].dx[2];)
 
       // The following is relative to the injection face:
       // 0 and 1 are transverse directions, 2 is normal
