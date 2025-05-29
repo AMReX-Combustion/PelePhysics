@@ -111,9 +111,9 @@ However, some aspects of the implementation are still influenced by the legacy i
 is that an inflow generated from a precursor simulation (using either of the ``periodic_plt`` or ``diag_frame_plane`` generation options) can
 be directly applied as an inflow to a second simulation on the same grid without interpolation or data shifting.
 
-Each TurbInflow plane containts a valid box, plus one ghost cell on the low side and two ghost cells on the high side. But the dimension listed
+Each TurbInflow plane contains a valid box, plus one ghost cell on the low side and two ghost cells on the high side. But the dimension listed
 in the ``HDR`` corresponds to the size of valid box in the tangential directions plus two grid cell sizes. The normal direction dimension is just
-the valid box size. The behavior of the utlity depends on the periodicity of the data. If the data is periodic in the normal direction, it is
+the valid box size. The behavior of the utility depends on the periodicity of the data. If the data is periodic in the normal direction, it is
 treated as spatial data, the normal direction is traversed based on the specified ``turb_conv_vel``, and the inflow data can be recycled to allow
 arbitrarily long simulations. If the data is not periodic in the normal direction, a list of time stamps for each plane is provided at the end of
 the ``HDR`` file. The inflow is only valid from the first time stamp through, but not including, the 2nd last time stamp (the final plane
