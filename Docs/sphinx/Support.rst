@@ -25,12 +25,12 @@ mechanisms in the ``Mechanisms/`` directory. For a full description of CEPTR and
 
 .. _sec_turbfile:
 
-TurbFileHIT
-===========
+TurbFileGenerator
+=================
 
 This support code contains two separate pieces: a python script that generates a synthetic 3D isotropic turbulence velocity field and
-an AMReX-based C++ code that converts that data into a format that can be used by the PelePhysics :ref:`TurbInflow Utility <sec_turbinflow>`
-to provide turbulent inflow boundary conditions in either PeleC or PeleLMeX.
+an AMReX-based C++ code that converts data from a variety of sources into a format that can be used by the PelePhysics
+:ref:`TurbInflow Utility <sec_turbinflow>` to provide turbulent inflow boundary conditions in either PeleC or PeleLMeX.
 
 Generating an HIT File
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -72,25 +72,48 @@ Generating an initial condition file is as easy as: ::
    dependencies, then run the script using ``poetry run -C ../ceptr/ python gen_hit_ic.py -N 16``.
 
 Generating Inflow Files
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
-The ``TurbFileHIT`` directory also contains C++ source code for a small program that reads the ``.dat`` files created using the python script
-above and saves them as AMReX data structures that can be read by the TurbInflow utility, which uses Taylor's hypothesis to provide
-temporally varying boundary data by marching through the 3rd dimension of the HIT files at a constant velocity.
+The ``TurbFileHIT`` directory also contains C++ source code for a small program that reads data from a variety of sources and converts
+it into a format interpretable by PelePhysics (planes of data saved as many AMReX FArrayBox in binary format in a `DAT` file with a text
+`HDR` file with metadata that allows the binary data to be read properly).
 
 Build options can be specified in the ``GNUmakefile``. Notably, if you did not recursively clone PelePhysics with the AMReX submodule, you
 will need to specify a path to AMReX (``AMREX_HOME``). But in most cases, you should be able to directly build the utility simply by running: ::
 
   make -j
 
-Then run the resulting executable using the provided input file: ::
+Then run the resulting executable without specifying an inputs to see a full list of options: ::
 
-  ./PeleTurb3d.gnu.ex input
+  ./PeleTurb3d.gnu.ex
 
-Adjust the ``hit_file`` and ``input_ncell`` parameters in the input file to match the file name and number of cells from the previous step.
-The ``urms0`` parameter is a scale factor to rescale the velocity fluctuations. ``TurbFile`` specified the name of the directory where the
+This capability currently supports three different data sources, specified with the ``type`` keyword on the command line or in an
+input file. The currently supported data types are :
+
+1. ``type=turb_box``, which uses the ``.dat`` files created using the python script above. With this input type, the TurbInflow utility
+   uses Taylor's hypothesis to provide temporally varying boundary data by marching through the 3rd dimension of the HIT files at a
+   constant velocity. A sample ``input`` file for this type is included and can be used by running ``./PeleTurb3d.gnu.ex input``.
+   Adjust the ``hit_file`` and ``input_ncell`` parameters in the input file to match the file name and number of cells from the previous
+   step. The ``urms0`` parameter is a scale factor to rescale the velocity fluctuations. The length scale of the turbulence data will be 2pi
+   in length and periodic in all directions.
+2. ``type=periodic_plt``, which uses a PeleLMeX plot file as the input (``ifile``) that must be periodic in the designated ``normal``
+   direction and contains at least the following variables: `x_velocity`, `y_velocity`, `z_velocity`. Similarly to the option above,
+   the TurbInflow utility uses Taylor's hypothesis to provide temporally varying boundary data by marching through the normal dimension
+   of the plt files at a constant velocity. The data files that get generated are single-level, but the user can specify which level
+   of the plt file this data should match with the ``level`` keyword. The user may also specify which directions are periodic in the
+   input plt file; the normal direction must be peirodic. For the other directions, ghost cells are populated by first-order extrapolation
+   if not periodic. The dimensions of the generated turbulence files will match the plt file used.
+3. ``type=diag_frame_plane``, which compiles temporally evolving data from a set of planes specified with the ``ifiles`` keyword, saved as 3D
+   AMReX plt files with a single cell in the z-direction. Appropriate files may be saved from a PeleLMeX simulation using
+   the :ref:`DiagFramePlane <sec_diagnostics>` capability, specifying the ``dump_flat_3D_plotfile=1`` option for that diagnostic.
+   These files must contain at least the following variables: `x_velocity`, `y_velocity`, `z_velocity`. The ``normal`` direction used
+   for generating the DiagFramePlanes should be specified.  The user may also specify which directions are periodic in the
+   input plt files; ghost cells are populated by first-order extrapolation if not periodic. The dimensions of the generated turbulence files
+   will match the plt files used. The valid time range also comes from these plt files. Due to the interpolation stencils used,
+   the turbinflow will be valid from the timestamp of the first plt file used (inclusive) through the second last timestamp (exclusive).
+
+For all of the above data types, an ``ofile`` keyword must be specified, which is the name of the directory where the
 output files will be saved. After successful execution, the output directory should contain two files: ``HDR`` and ``DAT``.
-
 
 MechanismPAH
 ============
