@@ -94,7 +94,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         if (spray_jet->is_dpm_periodic) {
 
           spray_jet->m_nxt_inj_dpm_time = spray_jet->dpm_intial_time();
-          lineno_next_dpm_time_begin = lineno_first_dpm_time_begin;
+          //lineno_next_dpm_time_begin = lineno_first_dpm_time_begin;
         } else {
           amrex::Print() << "\nWARNING! No more injection time found in DPM "
                             "file. To continue the same injection again, set "
@@ -178,6 +178,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
           temperature; // Setting the particle temperature
         set_part_Y = spray_jet->get_new_particle(
           Y_part);                            // Getting particle mass fractions
+
         if (SPRAY_FUEL_NUM > 1 && set_part_Y) // Setting particle mass fractions
         {
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -186,6 +187,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         } else {
           p.rdata(SprayComps::pstateY) = 1.;
         }
+
+
+
 
         spray_jet->m_totalInjMass += parcel_mass;
 
