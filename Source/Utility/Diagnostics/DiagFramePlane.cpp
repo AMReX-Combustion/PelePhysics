@@ -78,6 +78,8 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
   }
   m_dump_ghost_if_OOB = false;
   pp.query("dump_ghost_if_OOB", m_dump_ghost_if_OOB);
+  m_dump_flat_3D_plotfile = false;
+  pp.query("dump_flat_3D_plotfile", m_dump_flat_3D_plotfile);
 
   // Interpolation
   std::string intType = "Quadratic";
@@ -333,9 +335,16 @@ DiagFramePlane::processDiag(
       diagfile = m_diagfile + std::to_string(a_time);
     }
     amrex::Vector<int> step_array(nlevs, a_nstep);
-    Write2DMultiLevelPlotfile(
-      diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
-      a_time, step_array, ref_ratio, m_nfiles_plane);
+
+    if (m_dump_flat_3D_plotfile) {
+      WriteMultiLevelPlotfile(
+        diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
+        a_time, step_array, ref_ratio);
+    } else {
+      Write2DMultiLevelPlotfile(
+        diagfile, nlevs, GetVecOfConstPtrs(planeData), m_fieldNames, pltGeoms,
+        a_time, step_array, ref_ratio, m_nfiles_plane);
+    }
   }
 }
 

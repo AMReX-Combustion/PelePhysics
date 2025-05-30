@@ -45,6 +45,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       pp.query("turb_scale_loc", tp[n].turb_scale_loc);
       pp.query("turb_scale_vel", tp[n].turb_scale_vel);
       pp.query("verbose", tp[n].verbose);
+      pp.query("extrap_nonperiodic", tp[n].extrap_nonperiodic);
+      pp.query("tile_periodic", tp[n].tile_periodic);
+      pp.query("interp_type", tp[n].interp_type);
       if (tp[n].verbose > 0) {
         amrex::Print() << "Initializing turbInflow " << tp_list[n]
                        << " with file " << tp[n].m_turb_file
@@ -65,7 +68,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       pp.query("turb_nplane", tp[n].nplane);
-      AMREX_ALWAYS_ASSERT(tp[n].nplane > 0);
+      AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        tp[n].nplane > 3, "need at least 4 turb planes for 3 point "
+                          "interpolation stencil + 1 extra");
       pp.query("turb_conv_vel", tp[n].turb_conv_vel);
       AMREX_ALWAYS_ASSERT(tp[n].turb_conv_vel > 0);
 
@@ -77,21 +82,28 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
       amrex::Array<int, AMREX_SPACEDIM> npts = {{0}};
       amrex::Array<amrex::Real, AMREX_SPACEDIM> probsize = {{0}};
-      amrex::Array<int, AMREX_SPACEDIM> iper = {{0}};
 
       AMREX_D_TERM(is >> npts[0], >> npts[1], >> npts[2]);
       AMREX_D_TERM(is >> probsize[0], >> probsize[1], >> probsize[2]);
       AMREX_D_TERM(
-        is >> iper[0], >> iper[1],
-        >> iper[2]); // Will use zperiodicity to single whether using periodic
-                     // or time per plane mode
+        is >> tp[n].periodicity[0], >> tp[n].periodicity[1],
+        >> tp[n].periodicity[2]); // Will use zperiodicity to single whether
+                                  // using periodic or time per plane mode
 
-      tp[n].isswirltype = iper[2] == 0;
+      tp[n].isswirltype = AMREX_D_PICK(, false, tp[n].periodicity[2] == 0);
+      if (tp[n].periodicity[0] == 0 || tp[n].periodicity[1] == 0) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+          tp[n].interp_type == TurbInterpType::linear,
+          "Linear interpolation required for turbinflow with nonperiodic "
+          "directions");
+      }
 
-      for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+      for (int idim = 0; idim < 2; ++idim) {
         tp[n].dx[idim] = probsize[idim] / amrex::Real(npts[idim] - 1);
         tp[n].dxinv[idim] = 1.0 / tp[n].dx[idim];
       }
+      AMREX_D_TERM(, , tp[n].dx[2] = probsize[2] / amrex::Real(npts[2]);)
+      AMREX_D_TERM(, , tp[n].dxinv[2] = 1.0 / tp[n].dx[2];)
 
       // The following is relative to the injection face:
       // 0 and 1 are transverse directions, 2 is normal
@@ -111,11 +123,14 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
 
       // Swirl type: we can't load more planes than are available
       if (tp[n].isswirltype) {
-        tp[n].nplane = std::min(tp[n].nplane, npts[2]);
+        tp[n].nplane = AMREX_D_PICK(
+          tp[n].nplane, tp[n].nplane, std::min(tp[n].nplane, npts[2]));
       }
+
       amrex::Box sbx(
-        amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
-        amrex::IntVect(AMREX_D_DECL(npts[0], npts[1], tp[n].nplane)));
+        amrex::IntVect(AMREX_D_DECL(0, 0, 0)),
+        amrex::IntVect(
+          AMREX_D_DECL(npts[0] - 1, npts[1] - 1, tp[n].nplane - 1)));
 
       tp[n].sdata = new amrex::FArrayBox(sbx, 3, amrex::The_Async_Arena());
 
@@ -266,8 +281,13 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 
     amrex::FArrayBox tmp;
     tmp.readFrom(ifs);
+    if (a_tp.verbose > 2) {
+      amrex::Print() << "   for d = " << n << " and k = " << k
+                     << ": minval = " << tmp.min<amrex::RunOn::Device>(0)
+                     << ", maxval = " << tmp.max<amrex::RunOn::Device>(0)
+                     << std::endl;
+    }
     amrex::Box srcBox = tmp.box();
-
     a_tp.sdata->copy<amrex::RunOn::Device>(tmp, srcBox, 0, dstBox, n, 1);
   }
   ifs.close();
@@ -280,42 +300,44 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
     if (z < a_tp.planeTimes[0] || z >= a_tp.planeTimes[a_tp.kmax - 2]) {
       amrex::Error(
         "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
-        ") is outside bounds of turbulence data (" +
-        std::to_string(a_tp.planeTimes[0]) + " to " +
-        std::to_string(a_tp.planeTimes[a_tp.nplane - 2]) +
+        ") is outside bounds of turbulence data [" +
+        std::to_string(a_tp.planeTimes[0]) + ", " +
+        std::to_string(a_tp.planeTimes[a_tp.kmax - 2]) +
         ")"); // Need one turbplane forward for interpolation
     }
-    for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane)) &&
+    for (a_tp.izlo = 0; (a_tp.izlo <= (a_tp.kmax - a_tp.nplane + 1)) &&
                         (a_tp.planeTimes[a_tp.izlo] <= z);
          ++a_tp.izlo) {
     } // Stop when first plane later than time=z
-    a_tp.izlo -= 1;
+    a_tp.izlo -= 2; // read one extra earlier tplane to prevent rereading
+    a_tp.izlo = std::max(a_tp.izlo, 0);
     a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
     a_tp.szlo = a_tp.planeTimes[a_tp.izlo];
-    a_tp.szhi = a_tp.planeTimes[a_tp.izhi];
-    if (a_tp.verbose > 1) {
-      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
-                     << a_tp.izhi << " covering " << a_tp.szlo << " to "
-                     << a_tp.szhi << " for z = " << z << std::endl;
-    }
+    a_tp.szhi = a_tp.planeTimes[a_tp.izhi - 1]; // need one plane forward in
+                                                // time for interpolating
   } else {
-    a_tp.izlo = (int)(round(z * a_tp.dxinv[2])) - 1;
+    a_tp.izlo = (int)(floor(z * a_tp.dxinv[2] - 0.5)) -
+                1; // read one extra earlier tplane to prevent rereading
     a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
-    a_tp.szlo = static_cast<amrex::Real>(a_tp.izlo) * a_tp.dx[2];
-    a_tp.szhi = static_cast<amrex::Real>(a_tp.izhi) * a_tp.dx[2];
-    if (a_tp.verbose > 1) {
-      amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
-                     << a_tp.izhi << " covering "
-                     << a_tp.szlo + 0.5 * a_tp.dx[2] << " to "
-                     << a_tp.szhi - 0.5 * a_tp.dx[2] << " for z = " << z
-                     << std::endl;
-    }
+    a_tp.szlo = (static_cast<amrex::Real>(a_tp.izlo) + 0.5) * a_tp.dx[2];
+    a_tp.szhi = (static_cast<amrex::Real>(a_tp.izhi) - 0.5) *
+                a_tp.dx[2]; // need one plane forward in time for interpolating
+  }
+  if (a_tp.verbose > 1) {
+    std::string varname = a_tp.isswirltype ? "t" : "z";
+    amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
+                   << a_tp.izhi << std::endl
+                   << " --> now have interp data for range [" << a_tp.szlo
+                   << ", " << a_tp.szhi << ") with current " << varname << " = "
+                   << z << std::endl;
   }
 
-  for (int iplane = 1; iplane <= a_tp.nplane; ++iplane) {
-    int k = a_tp.izlo + iplane - 1;
-    if (!a_tp.isswirltype)
-      k = k % (a_tp.npboxcells[2] - 2); // "wrap" planes if data is periodic
+  for (int iplane = 0; iplane < a_tp.nplane; ++iplane) {
+    int k = a_tp.izlo + iplane;
+    if (!a_tp.isswirltype) {
+      k = (a_tp.npboxcells[2] + k) %
+          a_tp.npboxcells[2]; // "wrap" planes if data is periodic
+    }
     read_one_turb_plane(a_tp, iplane, k);
   }
 }
@@ -328,15 +350,15 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  const amrex::Real tplanes_lo =
-    a_tp.isswirltype ? a_tp.szlo : a_tp.szlo + 0.5 * a_tp.dx[2];
-  const amrex::Real tplanes_hi =
-    a_tp.isswirltype ? a_tp.szhi : a_tp.szhi - 0.5 * a_tp.dx[2];
+  const amrex::Real tplanes_lo = a_tp.szlo;
+  const amrex::Real tplanes_hi = a_tp.szhi;
 
-  if ((z < tplanes_lo) || (z > tplanes_hi)) {
+  if ((z < tplanes_lo) || (z >= tplanes_hi)) {
     if (a_tp.verbose > 1) {
-      amrex::Print() << "Reading new data because z " << z << " is outside "
-                     << tplanes_lo << " and " << tplanes_hi << std::endl;
+      std::string varname = a_tp.isswirltype ? "t" : "z";
+      amrex::Print() << "Reading new data because " << varname << " = " << z
+                     << " is outside the range [" << tplanes_lo << ", "
+                     << tplanes_hi << ")" << std::endl;
     }
     read_turb_planes(a_tp, z);
   }
@@ -358,20 +380,27 @@ TurbInflow::fill_turb_plane(
                            : a_tp.turb_scale_vel;
   const auto& npboxcells = a_tp.npboxcells;
   const auto& pboxlo = a_tp.pboxlo;
+  const auto& pboxsize = a_tp.pboxsize;
   const auto& szlo = a_tp.szlo;
   const auto& dxinv = a_tp.dxinv;
+  const auto& dx = a_tp.dx;
   const auto& sd = a_tp.sdata->array();
+  const auto& ext_nonper = a_tp.extrap_nonperiodic;
+  const auto& tile_per = a_tp.tile_periodic;
+  const auto& periodicity = a_tp.periodicity;
+  const bool lininterp = a_tp.interp_type == TurbInterpType::linear;
   amrex::Real cz[3];
   int k0 = -1;
   if (a_tp.isswirltype) {
     AMREX_ALWAYS_ASSERT(
       z >= a_tp.planeTimes[a_tp.izlo] && z <= a_tp.planeTimes[a_tp.izhi]);
-    for (k0 = 0; k0 < a_tp.nplane - 2 && a_tp.planeTimes[a_tp.izlo + k0] <= z;
+    for (k0 = 1; k0 < a_tp.nplane - 2 && a_tp.planeTimes[a_tp.izlo + k0] <= z;
          ++k0) {
-    } // Stop when first plane later than time=z
-    const auto& t0 = a_tp.planeTimes[a_tp.izlo + k0 - 1];
-    const auto& t1 = a_tp.planeTimes[a_tp.izlo + k0];
-    const auto& t2 = a_tp.planeTimes[a_tp.izlo + k0 + 1];
+    } // Stop when first plane later than time=z, then go back one
+    k0 -= 1;
+    const auto& t0 = a_tp.planeTimes[a_tp.izlo + k0];
+    const auto& t1 = a_tp.planeTimes[a_tp.izlo + k0 + 1];
+    const auto& t2 = a_tp.planeTimes[a_tp.izlo + k0 + 2];
     AMREX_ALWAYS_ASSERT(z >= t0 && z <= t2);
     cz[0] = (z - t1) * (z - t2) / ((t0 - t1) * (t0 - t2));
     cz[1] = (z - t0) * (z - t2) / ((t1 - t0) * (t1 - t2));
@@ -379,47 +408,79 @@ TurbInflow::fill_turb_plane(
   } else {
     amrex::Real zz =
       (z - szlo) * dxinv[2];    // How many dz away from the left side ?
-    k0 = (int)(std::round(zz)); // What's the closest point ?
+    k0 = (int)(std::floor(zz)); // What's the closest point ?
     zz -= amrex::Real(k0);
-    cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0 - 1
-    cz[1] = zz * (2.0 - zz);               // Weight of k0
-    cz[2] = 0.5 * zz * (zz - 1.0);         // Weight of k0 + 1
+    cz[0] =
+      lininterp ? 1.0 - zz : 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0
+    cz[1] = lininterp ? zz : zz * (2.0 - zz);               // Weight of k0 + 1
+    cz[2] = lininterp ? 0.0 : 0.5 * zz * (zz - 1.0);        // Weight of k0 + 2
   }
 
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     amrex::Real cx[3], cy[3], ydata[3];
     amrex::Real zdata[3][3];
 
-    for (int n = 0; n < AMREX_SPACEDIM; ++n) {
-      amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
-      amrex::Real yy = (yd[j - bx.smallEnd(1)] - pboxlo[1]) * dxinv[1];
-      int i0 = (int)(std::round(xx));
-      int j0 = (int)(std::round(yy));
-      xx -= amrex::Real(i0);
-      yy -= amrex::Real(j0);
-      cx[0] = 0.5 * (xx - 1.0) * (xx - 2.0);
-      cy[0] = 0.5 * (yy - 1.0) * (yy - 2.0);
-      cx[1] = xx * (2.0 - xx);
-      cy[1] = yy * (2.0 - yy);
-      cx[2] = 0.5 * xx * (xx - 1.0);
-      cy[2] = 0.5 * yy * (yy - 1.0);
+    const amrex::Real x_from_pboxlo = xd[i - bx.smallEnd(0)] - pboxlo[0];
+    amrex::Real xx =
+      (x_from_pboxlo)*dxinv[0] +
+      0.5; // from 1st cell center (ghost cell so 1/2 dx outside of pbox)
+    const amrex::Real y_from_pboxlo = yd[j - bx.smallEnd(1)] - pboxlo[1];
+    amrex::Real yy =
+      (y_from_pboxlo)*dxinv[1] +
+      0.5; // from 1st cell center (ghost cell so 1/2 dx outside of pbox)
+    int i0 = (int)(std::floor(xx));
+    int j0 = (int)(std::floor(yy));
+    xx -= amrex::Real(i0);
+    yy -= amrex::Real(j0);
+    // Wrap if needed
+    if (tile_per) {
+      i0 = (i0 % npboxcells[0] + npboxcells[0]) % npboxcells[0];
+      j0 = (j0 % npboxcells[1] + npboxcells[1]) % npboxcells[1];
+    }
+    cx[0] = lininterp ? 1.0 - xx : 0.5 * (xx - 1.0) * (xx - 2.0);
+    cy[0] = lininterp ? 1.0 - yy : 0.5 * (yy - 1.0) * (yy - 2.0);
+    cx[1] = lininterp ? xx : xx * (2.0 - xx);
+    cy[1] = lininterp ? yy : yy * (2.0 - yy);
+    cx[2] = lininterp ? 0.0 : 0.5 * xx * (xx - 1.0);
+    cy[2] = lininterp ? 0.0 : 0.5 * yy * (yy - 1.0);
 
-      if (i0 >= 0 && i0 < npboxcells[0] && j0 >= 0 && j0 < npboxcells[1]) {
-        i0 += 2;
-        j0 += 2;
-        for (int ii = 0; ii <= 2; ++ii) {
-          for (int jj = 0; jj <= 2; ++jj) {
-            zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0, n) +
-                            cz[1] * sd(i0 + ii, j0 + jj, k0 + 1, n) +
-                            cz[2] * sd(i0 + ii, j0 + jj, k0 + 2, n);
+    if (
+      (x_from_pboxlo >= 0.0 && x_from_pboxlo < pboxsize[0]) ||
+      (tile_per && periodicity[0] != 0)) {
+      if (
+        (x_from_pboxlo < 0.5 * dx[0] || x_from_pboxlo > pboxsize[0] - dx[0]) &&
+        (periodicity[0] == 0) && !ext_nonper) {
+        amrex::Error(
+          "TurbInflow interp stencil touches ghost cell for nonperiodic "
+          "direction and extrap_nonperiodic option not used");
+      }
+      if (
+        (y_from_pboxlo >= 0.0 && y_from_pboxlo < pboxsize[1]) ||
+        (tile_per && periodicity[1] != 0)) {
+        if (
+          (y_from_pboxlo < 0.5 * dx[1] ||
+           y_from_pboxlo > pboxsize[1] - dx[1]) &&
+          (periodicity[1] == 0) && !ext_nonper) {
+          amrex::Error(
+            "TurbInflow interp stencil touches ghost cell for nonperiodic "
+            "direction and extrap_nonperiodic option not used");
+        }
+
+        for (int n = 0; n < AMREX_SPACEDIM; ++n) {
+          for (int ii = 0; ii <= 2; ++ii) {
+            for (int jj = 0; jj <= 2; ++jj) {
+              zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0, n) +
+                              cz[1] * sd(i0 + ii, j0 + jj, k0 + 1, n) +
+                              cz[2] * sd(i0 + ii, j0 + jj, k0 + 2, n);
+            }
           }
+          for (int ii = 0; ii <= 2; ++ii) {
+            ydata[ii] = cy[0] * zdata[ii][0] + cy[1] * zdata[ii][1] +
+                        cy[2] * zdata[ii][2];
+          }
+          vd(i, j, k, n) +=
+            velScale * (cx[0] * ydata[0] + cx[1] * ydata[1] + cx[2] * ydata[2]);
         }
-        for (int ii = 0; ii <= 2; ++ii) {
-          ydata[ii] =
-            cy[0] * zdata[ii][0] + cy[1] * zdata[ii][1] + cy[2] * zdata[ii][2];
-        }
-        vd(i, j, k, n) +=
-          velScale * (cx[0] * ydata[0] + cx[1] * ydata[1] + cx[2] * ydata[2]);
       }
     }
   });
