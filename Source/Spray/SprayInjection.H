@@ -26,8 +26,10 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 {
 
   if (!spray_jet->jet_active(time) || sim_dt <= 0.) {
-    amrex::Print() << "Warning! Spray jet " << spray_jet->jet_name()
-                   << " is inactive and hence 0 particles are injected.\n";
+    if (m_verbose > 0) {
+      amrex::Print() << "Warning! Spray jet " << spray_jet->jet_name()
+                     << " is inactive and hence 0 particles are injected.\n";
+    }
     return;
   }
 
@@ -78,14 +80,18 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       }
 
       // If at the last dpm time
-      amrex::Print() << "\nCollecting particle data at DPM time " << dummy_time
-                     << std::endl;
+      if (m_verbose > 0) {
+        amrex::Print() << "\nCollecting particle data at DPM time "
+                       << dummy_time << std::endl;
+      }
       if (
         dummy_time == spray_jet->m_cur_inj_dpm_time &&
         spray_jet->m_cur_inj_dpm_time ==
           spray_jet->dpm_final_time()) // The last time in the dpm file
       {
-        amrex::Print() << " (last dpm time) \n";
+        if (m_verbose > 0) {
+          amrex::Print() << " (last dpm time) \n";
+        }
         is_dpm >> lineno_last_dpm_time_end; // includes the last line no
         lineno_current_dpm_time_begin = dummy_line_no;
         lineno_current_dpm_time_end = lineno_last_dpm_time_end;
@@ -94,7 +100,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         if (spray_jet->is_dpm_periodic) {
 
           spray_jet->m_nxt_inj_dpm_time = spray_jet->dpm_intial_time();
-          //lineno_next_dpm_time_begin = lineno_first_dpm_time_begin;
+          // lineno_next_dpm_time_begin = lineno_first_dpm_time_begin;
         } else {
           amrex::Print() << "\nWARNING! No more injection time found in DPM "
                             "file. To continue the same injection again, set "
@@ -111,8 +117,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         spray_jet->dt_dpm =
           spray_jet->m_nxt_inj_dpm_time - spray_jet->m_cur_inj_dpm_time;
       } else {
-        amrex::Abort("Error! Unable to find the current injection dpm time in "
-                     "the dpm file");
+        amrex::Abort(
+          "Error! Unable to find the current injection dpm time in "
+          "the dpm file");
       }
       is_dpm.close();
 
@@ -177,7 +184,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.rdata(SprayComps::pstateT) =
           temperature; // Setting the particle temperature
         set_part_Y = spray_jet->get_new_particle(
-          Y_part);                            // Getting particle mass fractions
+          Y_part); // NOLINT(clang-analyzer-deadcode.DeadStores)
 
         if (SPRAY_FUEL_NUM > 1 && set_part_Y) // Setting particle mass fractions
         {
@@ -187,9 +194,6 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         } else {
           p.rdata(SprayComps::pstateY) = 1.;
         }
-
-
-
 
         spray_jet->m_totalInjMass += parcel_mass;
 
@@ -227,17 +231,21 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       }
       is_dpm1.close();
 
-      amrex::Print() << "Injected " << ln << " particles through "
-                     << spray_jet->jet_name()
-                     << " at flow time = " << spray_jet->m_nxt_inj_flw_time
-                     << "\n";
+      if (m_verbose > 0) {
+        amrex::Print() << "Injected " << ln << " particles through "
+                       << spray_jet->jet_name()
+                       << " at flow time = " << spray_jet->m_nxt_inj_flw_time
+                       << "\n";
+      }
       spray_jet->m_nxt_inj_flw_time += spray_jet->dt_dpm;
       spray_jet->m_cur_inj_dpm_time = spray_jet->m_nxt_inj_dpm_time;
 
-      amrex::Print() << "\tNext injection flow time = "
-                     << spray_jet->m_nxt_inj_flw_time << "\n";
-      amrex::Print() << "\tNext injection DPM time = "
-                     << spray_jet->m_cur_inj_dpm_time << "\n\n";
+      if (m_verbose > 0) {
+        amrex::Print() << "\tNext injection flow time = "
+                       << spray_jet->m_nxt_inj_flw_time << "\n";
+        amrex::Print() << "\tNext injection DPM time = "
+                       << spray_jet->m_cur_inj_dpm_time << "\n\n";
+      }
     }
   }
   Redistribute();
@@ -480,8 +488,9 @@ SprayParticleContainer::uniformSprayInit(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),
     Geom(level).ProbLength(2) / amrex::Real(num_part[2])));
-  AMREX_D_TERM(amrex::ULong np0 = num_part[0];, amrex::ULong np1 = num_part[1];
-               , amrex::ULong np2 = num_part[2];);
+  AMREX_D_TERM(
+    amrex::ULong np0 = num_part[0];, amrex::ULong np1 = num_part[1];
+    , amrex::ULong np2 = num_part[2];);
   const amrex::ULong total_part_num = AMREX_D_TERM(np0, *np1, *np2);
   amrex::ULong parts_pp = total_part_num / amrex::ULong(NProcs);
   // Number of particles per processor to be initialized
