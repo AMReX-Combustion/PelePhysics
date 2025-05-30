@@ -103,17 +103,18 @@ provided below. ::
   turbinflow.high.time_offset    = 0.0006
   turbinflow.high.verbose        = 2
 
-Subtleties
-~~~~~~~~~~
+TurbInflow Implementation Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To facilitate application of inflows generated from precursor Pele simulations, the data in the inflow files is now always interpreted as
 cell-centered, which is a departure from legacy implementations designed to use fully-periodic data originating from solvers with nodal data.
 However, some aspects of the implementation are still influenced by the legacy implementation. A main consideration in the current implementation
 is that an inflow generated from a precursor simulation (using either of the ``periodic_plt`` or ``diag_frame_plane`` generation options) can
 be directly applied as an inflow to a second simulation on the same grid without interpolation or data shifting.
 
-Each TurbInflow plane contains a valid box, plus one ghost cell on the low side and two ghost cells on the high side. But the dimension listed
-in the ``HDR`` corresponds to the size of valid box in the tangential directions plus two grid cell sizes. The normal direction dimension is just
-the valid box size. The behavior of the utility depends on the periodicity of the data. If the data is periodic in the normal direction, it is
+Each TurbInflow plane contains a valid box corresponding to the physical domain used to generate the inflow plane,
+plus one ghost cell on the low side and two ghost cells on the high side. But the dimensions listed
+in the ``HDR`` correspond to the size of valid domain in the tangential directions plus two grid cell sizes. The normal direction dimension is just
+the valid domain size. The behavior of the utility depends on the periodicity of the data. If the data is periodic in the normal direction, it is
 treated as spatial data, the normal direction is traversed based on the specified ``turb_conv_vel``, and the inflow data can be recycled to allow
 arbitrarily long simulations. If the data is not periodic in the normal direction, a list of time stamps for each plane is provided at the end of
 the ``HDR`` file. The inflow is only valid from the first time stamp through, but not including, the 2nd last time stamp (the final plane
