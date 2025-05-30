@@ -303,7 +303,7 @@ Spray Flags and Inputs
 
     particles.SP_psat = 4.07857 1501.268 -78.67 1.E5
 
-  where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+  where the numbers represent coefficients :math:`a`, :math:`b`, :math:`c`, and unit conversion :math:`d`, respectively in:
 
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
@@ -436,7 +436,7 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed and compared with computational or experimental results published in literature. These tests are setup in ``PeleProduction/PeleMPruns/single_drop_test``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
+Single droplet tests are performed in PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
 
   case = TestCaseName()
 
@@ -449,41 +449,49 @@ The following table details the parameters of each test:
    |Test Case Name | :math:`T_g` [K] |:math:`p_g` [bar]|:math:`T_d` [K]  |:math:`d_d` [um] | :math:`\Delta u` [m/s]|Ref              |
    |               |                 |                 |                 |                 |                       |                 |
    +===============+=================+=================+=================+=================+=======================+=================+
-   |``Tonini_4_33``|1000             |1                |300              |200              |6.786                  |[#ton]_          |
+   |``Nomura``     |471              |1                |298              |700              |0.0                    |[#nomura]_       |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``Abramzon``   |1500             |10               |300              |100              |15                     |[#abram]_        |
+   |``WongLin``    |1000             |1.01325          |315              |1961             |0.385                  |[#wonglin]_      |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``Daif``       |348              |1                |294              |1334             |3.10                   |[#daif]_         |
+   |``Daif``       |348              |1.01325          |291              |1334             |3.1                    |[#daif]_         |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``RungeHep``   |273              |1                |272              |500-570          |2.5                    |[#runge]_        |
+   |``RungeHep``   |273              |1.01325          |272              |500-570          |2.5                    |[#runge]_        |
    |``RungeDec``   |                 |                 |                 |                 |                       |                 |
    |``RungeMix``   |                 |                 |                 |                 |                       |                 |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   |``RungePOSF``  |298              |1                |298              |639              |3.0                    |[#runge]_        |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
 
-.. figure:: /Visualization/ton_res.png
+.. figure:: /Visualization/nomura_res_2025.png
+   :align: center
+   :figwidth: 40%
+
+   Heptane droplet diameter comparisons with Nomura et al. [#nomura]_
+
+.. figure:: /Visualization/wonglin_res_2025.png
    :align: center
    :figwidth: 80%
 
-   Droplet diameter, temperature, and n-octane mass fraction comparisons with Figure 4.33 in [#ton]_
+   Decane droplet diameter and temperature comparisons with Wong & Lin [#wonglin]_
 
-.. figure:: /Visualization/abram_res.png
+.. figure:: /Visualization/daif_res_2025.png
    :align: center
    :figwidth: 80%
 
-   Droplet diameter and temperature comparisons with [#abram]_
+   Binary mixture of heptane and decane droplet diameter and temperature comparisons with Daı̈f et al. [#daif]_
 
-.. figure:: /Visualization/daif_res.png
-   :align: center
-   :figwidth: 80%
 
-   Droplet diameter and temperature comparisons with [#daif]_
-
-.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006)
+.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006), url: `https://openaccess.city.ac.uk/id/eprint/8486/ <https://openaccess.city.ac.uk/id/eprint/8486/>`_.
 
 .. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol. 32, No. 9, pp. 1605-1618 (1989)
 
-.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998)
+.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020), doi: `10.1016/j.ijmultiphaseflow.2020.103293 <https://doi.org/10.1016/j.ijmultiphaseflow.2020.103293>`_.
 
-.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998)
+.. [#nomura] “Experimental study on high-pressure droplet evaporation using microgravity conditions”, H. Nomura and Y. Ujiie and H. J. Rath and J. Sato and M. Kono, Symposium (International) on Combustion, vol. 26, no. 1, pp. 1267–1273 (1996), doi: `10.1016/S0082-0784(96)80344-4 <https://doi.org/10.1016/S0082-0784(96)80344-4>`_.
 
-.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020)
+.. [#wonglin] “Internal temperature distributions of droplets vaporizing in high-temperature convective flows”, S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.  
+
+.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998), doi: `10.1016/S0894-1777(98)10035-3 <https://doi.org/10.1016/S0894-1777(98)10035-3>`_.
+
+.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998), doi: `10.1615/AtomizSpr.v8.i1.20 <https://doi.org/10.1615/AtomizSpr.v8.i1.20>`_.
+
