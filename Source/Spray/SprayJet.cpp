@@ -25,25 +25,22 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     } else {
       long int dummy_line_no;
       amrex::Real dummy_dpm_time;
-      if (m_verbose > 0) {
-        amrex::Print() << "Using spray particle injection file: "
-                       << m_FluentDPMFile << "\n";
-      }
+      amrex::Print() << "Using spray particle injection file: "
+                     << m_FluentDPMFile << "\n";
+
       is_dpm >> m_dpm_num_of_time_instants;
       is_dpm >> m_dpm_time_initial >> dummy_line_no;
       for (long int i = 0; i < m_dpm_num_of_time_instants - 1; i++) {
         is_dpm >> dummy_dpm_time >> dummy_line_no;
       }
       m_dpm_time_final = dummy_dpm_time;
-      if (m_verbose > 0) {
 
-        amrex::Print() << "Total number of DPM time instants = "
-                       << m_dpm_num_of_time_instants << "\n";
-        amrex::Print() << "Spray injection initial time = "
-                       << m_dpm_time_initial << "\n";
-        amrex::Print() << "Spray injection final time = " << m_dpm_time_final
-                       << "\n";
-      }
+      amrex::Print() << "Total number of DPM time instants = "
+                     << m_dpm_num_of_time_instants << "\n";
+      amrex::Print() << "Spray injection initial time = "
+                     << m_dpm_time_initial << "\n";
+      amrex::Print() << "Spray injection final time = " << m_dpm_time_final
+                     << "\n";
     }
     is_dpm.close();
     ps.query("m_override_inj_plane_dir", m_override_inj_plane_dir);
