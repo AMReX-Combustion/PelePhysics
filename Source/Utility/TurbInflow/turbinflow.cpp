@@ -301,7 +301,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
       amrex::Error(
         "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
         ") is outside bounds of turbulence data [" +
-        std::to_string(a_tp.planeTimes[0]) + " to " +
+        std::to_string(a_tp.planeTimes[0]) + ", " +
         std::to_string(a_tp.planeTimes[a_tp.kmax - 2]) +
         ")"); // Need one turbplane forward for interpolation
     }
@@ -324,11 +324,12 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
                 a_tp.dx[2]; // need one plane forward in time for interpolating
   }
   if (a_tp.verbose > 1) {
+    std::string varname = a_tp.isswirltype ? "t" : "z";
     amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
                    << a_tp.izhi << std::endl
                    << " --> now have interp data for range [" << a_tp.szlo
-                   << ", " << a_tp.szhi << ") with current z = " << z
-                   << std::endl;
+                   << ", " << a_tp.szhi << ") with current " << varname << " = "
+                   << z << std::endl;
   }
 
   for (int iplane = 0; iplane < a_tp.nplane; ++iplane) {
@@ -354,8 +355,10 @@ TurbInflow::fill_turb_plane(
 
   if ((z < tplanes_lo) || (z >= tplanes_hi)) {
     if (a_tp.verbose > 1) {
-      amrex::Print() << "Reading new data because z " << z << " is outside "
-                     << tplanes_lo << " and " << tplanes_hi << std::endl;
+      std::string varname = a_tp.isswirltype ? "t" : "z";
+      amrex::Print() << "Reading new data because " << varname << " = " << z
+                     << " is outside the range [" << tplanes_lo << ", "
+                     << tplanes_hi << ")" << std::endl;
     }
     read_turb_planes(a_tp, z);
   }
