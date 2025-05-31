@@ -37,8 +37,8 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 
       amrex::Print() << "Total number of DPM time instants = "
                      << m_dpm_num_of_time_instants << "\n";
-      amrex::Print() << "Spray injection initial time = "
-                     << m_dpm_time_initial << "\n";
+      amrex::Print() << "Spray injection initial time = " << m_dpm_time_initial
+                     << "\n";
       amrex::Print() << "Spray injection final time = " << m_dpm_time_final
                      << "\n";
     }
