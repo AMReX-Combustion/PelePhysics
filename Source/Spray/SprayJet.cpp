@@ -67,8 +67,8 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
       m_translation[dir] = dX_translation[dir];
     }
     ps.query("start_time", m_startTime);
-    // ps.query("end_time", m_endTime);
-    m_endTime = verylargenum;
+    ps.query("end_time", m_endTime);
+    // m_endTime = verylargenum;
 
     ps.get("initial_injection_dpm_time", m_dpm_time_initial_injection);
     ps.get("initial_injection_flow_time", m_flow_time_initial_injection);
