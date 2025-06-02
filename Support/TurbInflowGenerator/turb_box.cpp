@@ -73,11 +73,11 @@ readHIT(HITData* a_data)
   if (not std::is_sorted(xarray.begin(), xarray.end())) {
     amrex::Abort("Error: non ascending x-coordinate array.");
   }
-  if (std::abs(xarray[0] - 0.5 * xdiff[0]) > 1e-14 * xdiff[0]) {
+  if (std::abs(xarray[0] - 0.5 * xdiff[0]) > 1e-12 * xdiff[0]) {
     amrex::Abort("Error: domain must start at 0");
   }
   for (const amrex::Real& xd : xdiff) {
-    if (std::abs(xd - xdiff[0]) / xdiff[0] > 1e-14) {
+    if (std::abs(xd - xdiff[0]) / xdiff[0] > 1e-12) {
       amrex::Abort("Error: grid must be uniformly spaced");
     }
   }
