@@ -182,8 +182,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.rdata(SprayComps::pstateDia) = dia; // Setting the particle density
         p.rdata(SprayComps::pstateT) =
           temperature; // Setting the particle temperature
-        set_part_Y =
-          spray_jet
+        set_part_Y = // NOLINT(clang-analyzer-deadcode.DeadStores)
+          spray_jet // NOLINT(clang-analyzer-deadcode.DeadStores)
             ->get_new_particle( // NOLINT(clang-analyzer-deadcode.DeadStores)
               Y_part);          // NOLINT(clang-analyzer-deadcode.DeadStores)
 
