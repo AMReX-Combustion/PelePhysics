@@ -46,7 +46,7 @@ public:
     const std::string& a_mf_name,
     amrex::VisMF::Header& hdr,
     int coordinatorProc,
-    MPI_Comm comm);
+    amrex::mpidatatypes::MPI_Comm comm);
 
   static void Find2FOffsets(
     const amrex::FabArray<amrex::FArrayBox>& mf,
@@ -55,7 +55,7 @@ public:
     amrex::VisMF::Header::Version /*whichVersion*/,
     amrex::NFilesIter& nfi,
     int nOutFile,
-    MPI_Comm comm);
+    amrex::mpidatatypes::MPI_Comm comm);
 
   static void
   write_2D_header(std::ostream& os, const amrex::FArrayBox& f, int nvar);
