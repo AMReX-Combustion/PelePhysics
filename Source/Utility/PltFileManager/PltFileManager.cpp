@@ -65,7 +65,7 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
   int PLT_SPACEDIM = AMREX_SPACEDIM;
   is >> PLT_SPACEDIM;
   GotoNextLine(is);
-  AMREX_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
+  AMREX_ALWAYS_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
 
   // Simulation time
   is >> m_time;

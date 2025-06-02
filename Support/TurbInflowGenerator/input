@@ -1,0 +1,5 @@
+type = turb_box
+hit_file = hit_ic_2_64.dat
+input_ncell = 64
+urms0 = 1.0
+ofile = TurbTEST

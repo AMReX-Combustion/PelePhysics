@@ -50,15 +50,24 @@ An additional script is provided to allow plotting of the PMF solutions. This sc
 Turbulent Inflows
 =================
 
-PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed turbulence data (3 components of velocity fluctuations).
-A three-dimensional synthetic istropic turbulence is generated and Taylor's hypothesis is used to convert this data into two-dimensional planar data by moving through the third dimension at fixed velocity (the TurbInflow capability is currently not supported for 2D simulations). To reduce memory requirements, a fixed number of planes in the third dimension are read at a time and then replaced when exhausted. This number of planes can be specified at runtime to balance I/O and memory requirements. Multiple turbulent inflow patches can be applied on any domain boundary or on multiple domain boundaries. If multiple patches overlap on the same face, the data from each overlapping patch are superimposed.
+PelePhysics supports the capability of the flow solvers to have spatially and temporally varying inflow conditions based on precomputed planes of
+turbulence data (3 components of velocity fluctuations). To reduce memory requirements, a fixed number of planes in the third dimension are read
+at a time and then replaced when exhausted. This number of planes can be specified at runtime to balance I/O and memory requirements. Multiple
+turbulent inflow patches can be applied on any domain boundary or on multiple domain boundaries. If multiple patches overlap on the same face, the
+data from each overlapping patch are superimposed and added together.
 
-This PelePhysics utility provides the machinery to load the data files and interpolate in space and time onto boundary patches, which may or may not cover an entire boundary. Additional code within PeleC and PeleLMeX is required to drive this functionality, and the documentation for the relevant code should be consulted to fully understand the necessary steps. Typically, the TurbInflow capability provides veloicity fluctuations, and the mean inflow velocity must be provided through another means. For each code, an example test case for the capability is provided in `Exec/RegTests/TurbInflow`. Note that the turbulence data is always a square of size 2pi and has a fluctuation velocity scale of unity. Inputs are available as part of this utility to rescale the data as needed. If differently shaped inlet patches are required, this must be done by masking undesired parts of the patch on the PeleC or PeleLMeX side of the implementation.
+This PelePhysics utility provides the machinery to load the data files and interpolate in space and time onto rectangular boundary patches,
+which may or may not cover an entire boundary. Additional code within PeleC and PeleLMeX is required to drive this functionality, and the
+documentation for the
+relevant code should be consulted to fully understand the necessary steps. Typically, the TurbInflow capability provides velocity fluctuations,
+and the mean inflow velocity must be provided through another means. For each code, an example test case for the capability is provided
+in `Exec/RegTests/TurbInflow`. Inputs are available as part of this utility to rescale the data as needed. If differently shaped inlet patches
+are required, this must be done by masking undesired parts of the patch on the PeleC or PeleLMeX side of the implementation.
 
 Generating a turbulence file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The relevant data files are generated using the tools in ``Support/TurbFileHIT``
+The relevant data files are generated using the tools in ``Support/TurbInflowGenerator``
 and usage instructions are available in the :ref:`documentation <sec_turbfile>` on these tools.
 
 Input file options
@@ -79,6 +88,9 @@ provided below. ::
   turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time
   turbinflow.low.time_offset    = 0.0                     # Offset in time for reading through the 3rd dimension
   turbinflow.low.verbose        = 0                       # verbosity level
+  turbinflow.low.extrap_nonperiodic = 0                   # Allow interpolation near edges of inflow patch where stencil may touch ghost cells
+  turbinflow.low.tile_periodic  = 0                       # cover the entire inflow face by periodically repeating/tiling the inflow patch
+  turbinflow.interp_type        = quadratic               # either quadratic (default) or linear (required if there are nonperiodic directions)
 
   turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
   turbinflow.high.dir            = 1
@@ -91,10 +103,45 @@ provided below. ::
   turbinflow.high.time_offset    = 0.0006
   turbinflow.high.verbose        = 2
 
+TurbInflow Implementation Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To facilitate application of inflows generated from precursor Pele simulations, the data in the inflow files is now always interpreted as
+cell-centered, which is a departure from legacy implementations designed to use fully-periodic data originating from solvers with nodal data.
+However, some aspects of the implementation are still influenced by the legacy implementation. A main consideration in the current implementation
+is that an inflow generated from a precursor simulation (using either of the ``periodic_plt`` or ``diag_frame_plane`` generation options) can
+be directly applied as an inflow to a second simulation on the same grid without interpolation or data shifting.
+
+Each TurbInflow plane contains a valid box corresponding to the physical domain used to generate the inflow plane,
+plus one ghost cell on the low side and two ghost cells on the high side. But the dimensions listed
+in the ``HDR`` correspond to the size of valid domain in the tangential directions plus two grid cell sizes. The normal direction dimension is just
+the valid domain size. The behavior of the utility depends on the periodicity of the data. If the data is periodic in the normal direction, it is
+treated as spatial data, the normal direction is traversed based on the specified ``turb_conv_vel``, and the inflow data can be recycled to allow
+arbitrarily long simulations. If the data is not periodic in the normal direction, a list of time stamps for each plane is provided at the end of
+the ``HDR`` file. The inflow is only valid from the first time stamp through, but not including, the 2nd last time stamp (the final plane
+is necessary for interpolation).
+
+For tangential directions, periodicity influences the type of interpolation that may be applied. For periodic tangential dimensions, quadratic
+interpolation with a three point stencil is used by default, but linear interpolation is also available. The quadratic stencil is asymmetric,
+using one point to the left and two to the right. Periodic directions may be tiled to cover the full face of the inflow using the `tile_periodic`
+option, but by default they cover any cell of the simulation that has its center within the valid domain of the inflow. For nonperiodic
+directions, linear interpolation is required. Because interpolation the outer 1/2 cell perimeter of a nonperiodic valid domain would
+require an interpolation stencil that uses a ghost cell, and ghost cells may not be meaningfully populated (they are currently filled by
+first order extrapolation), by default an error is raised if the TurbInflow utility is asked to populate a cell center in this region. This
+error can be disabled with the ``extrap_nonperiodic`` option. In general, for nonperiodic directions, it is recommended to generate an inflow
+that matches the grid from the finest level of the simulation using the inflow. The figure below demonstrates the structure of the turb
+inflow plane data and interpolation approaches for periodic and nonperiodic tangential directions.
+
+.. note:: The TurbInflow capability was not designed with embedded boundaries in mind. It can be applied for simulations using EB, but care should
+          be take. Inflows should not be generated from simulations where EBs intersect the inflow plane.
+
+.. figure:: ./Visualization/TurbInflowData.png
+
 Plt File Management
 ===================
 
 This code contains data structures used to handle data read from plt files that is utilized by the routines that allow the code to be restarted based on data from plt files.
+
+.. _sec_diagnostics:
 
 Diagnostics
 ===========
@@ -133,6 +180,7 @@ The following provide examples for each diagnostic in PeleLMeX (in PeleC, all di
     peleLM.xnormP.field_names = x_velocity mag_vort density         # List of variables outputted to the 2D pltfile
     peleLM.xnormP.n_files = 2                                       # [OPT, DEF="min(256,NProcs)"] Number of files to write per level
     peleLM.xnormP.dump_ghost_if_OOB = 1                             # [OPT, DEF=false] if the specified coordinate is out-of-bounds, a plane of ghost cells in that direction will be dumped (for debugging purposes). If false, an error is raised if the requested plane is OOB.
+    peleLM.xNormP.dump_flat_3D_plotfile                             # instead of a 2D plotfile, dump a 2D plotfile with 1 cell in the z-direction
 
     peleLM.condT.type = DiagConditional                             # Diagnostic type
     peleLM.condT.file = condTest                                    # Output file prefix
@@ -225,7 +273,7 @@ For example, users can call ``eos.PYT2R`` as follows:
    amrex::Real massfrac[NUM_SPECIES]; // Mass fractions tracked by PeleLM(eX)
    amrex::Real Temp = 300.0_rt; // Temp in K
    amrex::Real rho_cgs = 0.0_rt; // Density in g/cm^3 (CGS)
-   
+
    // Calculate density in CGS units, then convert to MKS
    eos.PYT2R(m2c::P(P_mean), massfrac, Temp, rho_cgs);
    amrex::Real rho = c2m::Rho(rho_cgs); // Convert eos density to MKS

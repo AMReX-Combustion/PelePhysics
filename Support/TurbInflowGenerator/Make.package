@@ -1,0 +1,2 @@
+CEXE_headers += main.H
+CEXE_sources += main.cpp diag_frame_planes.cpp turb_box.cpp periodic_plt.cpp Utilities.cpp

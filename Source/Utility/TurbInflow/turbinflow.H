@@ -8,6 +8,8 @@
 
 namespace pele::physics::turbinflow {
 
+AMREX_ENUM(TurbInterpType, linear, quadratic);
+
 struct TurbParm
 {
   // Turbulence data file
@@ -34,8 +36,18 @@ struct TurbParm
   amrex::Real szlo = -1.0e12;        // Position of the current chunk low plane
   amrex::Real szhi = -1.0e11;        // Position of the current chunk high plane
 
+  amrex::IntVect periodicity{AMREX_D_DECL(1, 1, 1)};
   bool isswirltype = false; // false indicates turb data is periodic normal to
                             // flow dir, true requires time array in turb data
+
+  bool extrap_nonperiodic =
+    false; // if true, allow interpolation where stencil touches ghost cells for
+           // nonperiodic directions
+  bool tile_periodic = false; // if true, turbulence is patched over entire face
+                              // with a periodic tiled pattern
+  TurbInterpType interp_type =
+    TurbInterpType::quadratic; // linear required for non-periodic directions
+
   amrex::Real turb_scale_loc =
     1.; // Spatial scale relating turbfile geom -> actual case scale
   amrex::Real turb_scale_vel = 1.; // Velocity scaling
