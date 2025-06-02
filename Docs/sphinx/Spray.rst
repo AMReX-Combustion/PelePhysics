@@ -436,11 +436,11 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
+Single droplet tests are performed in PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
 
-  case = TestCaseName()
+  case = WongLin()
 
-then do ``python Validate.py``.
+then run ``python Validate.py``.
 The following table details the parameters of each test:
 
 .. table::
@@ -459,7 +459,7 @@ The following table details the parameters of each test:
    |``RungeDec``,  |                 |                 |                 |                 |                       |decane,          |                 |
    |``RungeMix``   |                 |                 |                 |                 |                       |mix              |                 |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
-   
+
 
 .. figure:: /Visualization/nomura_res_2025.png
    :align: center
