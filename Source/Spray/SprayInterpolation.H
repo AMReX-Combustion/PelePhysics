@@ -170,7 +170,7 @@ trilinear_interp(
   // Note: if near a reflective boundary, ijk has been shifted in check_bounds
   AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];)
 
-  const amrex::RealVect sx_hi = lx - ijk;
+  const amrex::RealVect sx_hi = lx - amrex::RealVect(ijk);
   const amrex::RealVect sx_lo = 1. - sx_hi;
   amrex::GpuArray<amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, 2> ssv;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
