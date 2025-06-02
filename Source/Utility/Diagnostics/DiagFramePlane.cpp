@@ -646,7 +646,7 @@ DiagFramePlane::Write2DMFHeader(
   const std::string& a_mf_name,
   amrex::VisMF::Header& hdr,
   int coordinatorProc,
-  amrex::mpidatatypes::MPI_Comm comm)
+  MPI_Comm comm)
 {
   const int myProc(amrex::ParallelDescriptor::MyProc(comm));
   if (myProc == coordinatorProc) {
@@ -717,7 +717,7 @@ DiagFramePlane::Find2FOffsets(
   amrex::VisMF::Header::Version /*whichVersion*/,
   amrex::NFilesIter& nfi,
   int nOutFiles,
-  amrex::mpidatatypes::MPI_Comm comm)
+  MPI_Comm comm)
 {
   bool groupSets = false;
 
