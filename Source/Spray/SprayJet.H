@@ -96,7 +96,7 @@ public:
 
   amrex::Real get_avg_Y(const int spf) const { return m_jetY[spf]; }
 
-  bool use_FluentDPMFile() { return m_use_Fluentdpmfile; }
+  bool use_FluentDPMFile() const { return m_use_Fluentdpmfile; }
 
   void set_initial_injection_flow_time(amrex::Real time)
   {
@@ -178,20 +178,23 @@ public:
 
   void set_dpm_periodic(bool b) { is_dpm_periodic = b; }
 
-  amrex::Real get_flow_time_initial_injection()
+  amrex::Real get_flow_time_initial_injection() const
   {
     return m_flow_time_initial_injection;
   }
-  amrex::Real get_dpm_time_initial_injection()
+  amrex::Real get_dpm_time_initial_injection() const
   {
     return m_dpm_time_initial_injection;
   }
 
-  amrex::Real dpm_final_time() { return m_dpm_time_final; }
-  amrex::Real dpm_intial_time() { return m_dpm_time_initial; }
+  amrex::Real dpm_final_time() const { return m_dpm_time_final; }
+  amrex::Real dpm_intial_time() const { return m_dpm_time_initial; }
 
-  int get_override_injection_plane_dir() { return m_override_inj_plane_dir; }
-  amrex::Real get_override_injection_plane_loc()
+  int get_override_injection_plane_dir() const
+  {
+    return m_override_inj_plane_dir;
+  }
+  amrex::Real get_override_injection_plane_loc() const
   {
     return m_override_inj_plane_loc;
   }
