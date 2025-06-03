@@ -26,8 +26,8 @@ Precond(
   auto nbThreads = udata->nbThreads;
   auto nbBlocks = udata->nbBlocks;
   auto csr_val_d = udata->csr_val_d;
-  auto csr_row_count_d = udata->csr_row_count_d;
-  auto csr_col_index_d = udata->csr_col_index_d;
+  // auto csr_row_count_d = udata->csr_row_count_d;
+  // auto csr_col_index_d = udata->csr_col_index_d;
   auto NNZ = udata->NNZ;
   auto react_type = udata->reactor_type;
 
@@ -111,8 +111,7 @@ PSolve(
   amrex::Real* z_d = N_VGetDeviceArrayPointer_Cuda(z);
   amrex::Real* r_d = N_VGetDeviceArrayPointer_Cuda(r);
 
-  cusolverStatus_t cuS_st = CUSOLVER_STATUS_SUCCESS;
-  cuS_st = cusolverSpDcsrqrsvBatched(
+  cusolverStatus_t cuS_st = cusolverSpDcsrqrsvBatched(
     udata->cusolverHandle, NUM_SPECIES + 1, NUM_SPECIES + 1, NNZ, udata->descrA,
     csr_val_d, csr_row_count_d, csr_col_index_d, r_d, z_d, ncells, udata->info,
     udata->buffer_qr);
