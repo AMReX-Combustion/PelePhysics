@@ -8,9 +8,10 @@ SprayParticleContainer::SprayParticleIO(
   const int level, const bool is_checkpoint, const std::string& dir)
 {
   Vector<std::string> real_comp_names(NSR_SPR);
-  AMREX_D_TERM(real_comp_names[SprayComps::pstateVel] = "xvel";
-               , real_comp_names[SprayComps::pstateVel + 1] = "yvel";
-               , real_comp_names[SprayComps::pstateVel + 2] = "zvel";);
+  AMREX_D_TERM(
+    real_comp_names[SprayComps::pstateVel] = "xvel";
+    , real_comp_names[SprayComps::pstateVel + 1] = "yvel";
+    , real_comp_names[SprayComps::pstateVel + 2] = "zvel";);
   real_comp_names[SprayComps::pstateT] = "temperature";
   real_comp_names[SprayComps::pstateDia] = "diam";
   for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {

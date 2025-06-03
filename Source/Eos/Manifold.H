@@ -62,16 +62,18 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real* /*mw[]*/)
   {
-    amrex::Error("molecular_weight for species does not have significance for "
-                 "Manifold EOS");
+    amrex::Error(
+      "molecular_weight for species does not have significance for "
+      "Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void inv_molecular_weight(amrex::Real* /*imw[]*/)
   {
-    amrex::Error("inv_molecular_weight for species does not have significance "
-                 "for Manifold EOS");
+    amrex::Error(
+      "inv_molecular_weight for species does not have significance "
+      "for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -355,8 +357,9 @@ struct Manifold
   template <class... Args>
   AMREX_GPU_HOST_DEVICE Manifold()
   {
-    amrex::Error("Manifold EOS must be initialized with table data or neural "
-                 "network via EosParm");
+    amrex::Error(
+      "Manifold EOS must be initialized with table data or neural "
+      "network via EosParm");
   }
 
   AMREX_GPU_HOST_DEVICE

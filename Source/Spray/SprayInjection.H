@@ -117,8 +117,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         spray_jet->dt_dpm =
           spray_jet->m_nxt_inj_dpm_time - spray_jet->m_cur_inj_dpm_time;
       } else {
-        amrex::Abort("Error! Unable to find the current injection dpm time in "
-                     "the dpm file");
+        amrex::Abort(
+          "Error! Unable to find the current injection dpm time in "
+          "the dpm file");
       }
       is_dpm.close();
 
@@ -489,8 +490,9 @@ SprayParticleContainer::uniformSprayInit(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),
     Geom(level).ProbLength(2) / amrex::Real(num_part[2])));
-  AMREX_D_TERM(amrex::ULong np0 = num_part[0];, amrex::ULong np1 = num_part[1];
-               , amrex::ULong np2 = num_part[2];);
+  AMREX_D_TERM(
+    amrex::ULong np0 = num_part[0];, amrex::ULong np1 = num_part[1];
+    , amrex::ULong np2 = num_part[2];);
   const amrex::ULong total_part_num = AMREX_D_TERM(np0, *np1, *np2);
   amrex::ULong parts_pp = total_part_num / amrex::ULong(NProcs);
   // Number of particles per processor to be initialized

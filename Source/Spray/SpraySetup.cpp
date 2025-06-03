@@ -150,8 +150,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   } else if (breakup_model_str == "None") {
     breakup_model = 0;
   } else {
-    Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
-          "'None'");
+    Abort(
+      "'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
+      "'None'");
   }
   if (splash_model || (breakup_model > 0)) {
     pp.query("breakup_parcel_factor", m_breakupPPPFact);

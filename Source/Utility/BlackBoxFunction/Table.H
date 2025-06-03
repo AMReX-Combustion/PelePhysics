@@ -105,8 +105,9 @@ struct InitParm<TabulatedFunctionData, BlackBoxFunctionData>
     for (int ii = 0; ii < m_h_tf_data.Ndim; ii++) {
       Ngridtot += m_h_tf_data.dimLengths[ii];
       if (m_h_tf_data.dimLengths[ii] < 2) {
-        amrex::Abort("TabulatedFunction: Each dimension must have at least two "
-                     "grid points.");
+        amrex::Abort(
+          "TabulatedFunction: Each dimension must have at least two "
+          "grid points.");
       }
     }
     m_h_tf_data.grids = static_cast<amrex::Real*>(
@@ -251,8 +252,9 @@ interpolate<0>(
     out_value = interpolate<5>(indices, alphas, data, data_spacing, numdim);
     break;
   default:
-    amrex::Abort("Tabulated function: Failure: only 1D-5D tables are allowed "
-                 "at runtime \n");
+    amrex::Abort(
+      "Tabulated function: Failure: only 1D-5D tables are allowed "
+      "at runtime \n");
   }
   return out_value;
 }
@@ -349,8 +351,9 @@ differentiate<0>(
       indices, alphas, dxinv, data, data_spacing, numdim, derivs);
     break;
   default:
-    amrex::Abort("Tabulated function: Failure: only 1D-5D tables are allowed "
-                 "at runtime \n");
+    amrex::Abort(
+      "Tabulated function: Failure: only 1D-5D tables are allowed "
+      "at runtime \n");
   }
   return out_value;
 }

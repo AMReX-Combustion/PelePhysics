@@ -15,8 +15,9 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   ps.query("read_from_dpm_file", m_use_Fluentdpmfile);
   if (m_use_Fluentdpmfile) {
     if (AMREX_SPACEDIM != 3) {
-      amrex::Abort("Injection through Fluent DPM files not implemented for "
-                   "dimensions other than 3, \n");
+      amrex::Abort(
+        "Injection through Fluent DPM files not implemented for "
+        "dimensions other than 3, \n");
     }
     ps.get("dpm_filename", m_FluentDPMFile);
     std::ifstream is_dpm(m_FluentDPMFile, std::ios::in);
