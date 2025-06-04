@@ -72,7 +72,6 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         tp[n].nplane > 3, "need at least 4 turb planes for 3 point "
                           "interpolation stencil + 1 extra");
       pp.query("turb_conv_vel", tp[n].turb_conv_vel);
-      AMREX_ALWAYS_ASSERT(tp[n].turb_conv_vel > 0);
 
       // Set other stuff
       std::string turb_header = tp[n].m_turb_file + "/HDR";
