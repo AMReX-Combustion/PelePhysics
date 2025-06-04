@@ -1,7 +1,7 @@
 !****************************************************************************
 !
-! An 12-species non-reacting mechanism for testing evaporation models
-! Skeletal model for A1, A2, A3 and C1 developed by Yang Gao, 
+! A 12-species non-reacting mechanism for testing evaporation models.
+! Extracted from skeletal model for A1, A2, A3 and C1 developed by Yang Gao, 
 ! Tianfeng Lu (tianfeng.lu@uconn.edu) University of Connecticut
 !
 ! based on
