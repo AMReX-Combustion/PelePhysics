@@ -2,6 +2,7 @@
 #include "SprayJet.H"
 #include <AMReX_ParmParse.H>
 #include "SprayParticles.H"
+#include <list>
 
 // Constructor where parameters are set from input file
 SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
@@ -9,81 +10,173 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 {
   std::string ppspray = "spray." + m_jetName;
   amrex::ParmParse ps(ppspray);
-  std::string dist_type;
-  ps.get("dist_type", dist_type);
-  m_dropDist = DistBase::create(dist_type);
-  m_dropDist->init(ppspray);
-  m_avgDia = m_dropDist->get_avg_dia();
-  std::vector<amrex::Real> jcent(AMREX_SPACEDIM);
-  ps.getarr("jet_cent", jcent);
-  std::vector<amrex::Real> jnorm(AMREX_SPACEDIM);
-  ps.getarr("jet_norm", jnorm);
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    m_cent[dir] = jcent[dir];
-    m_norm[dir] = jnorm[dir];
-  }
-  amrex::Real mag = m_norm.vectorLength();
-  m_norm /= mag;
-  check_jet_cent(geom);
-  ps.get("jet_dia", m_jetDia);
-  ps.get("spread_angle", m_spreadAngle);
-  if (m_spreadAngle < 0. || m_spreadAngle > 180.) {
-    amrex::Abort("'spread_angle' must be between 0 and 180");
-  }
-  m_spreadAngle *= M_PI / 180.; // Assumes spread angle is in degrees
-  ps.query("swirl_angle", m_swirlAngle);
-  if (m_swirlAngle < 0. || m_swirlAngle > 90.) {
-    amrex::Abort("'swirl_angle' must be between 0 and 90");
-  }
-  m_swirlAngle *= M_PI / 180.;
-  ps.get("T", m_jetT);
-  amrex::Real rho_part = 0.;
-  SprayData* fdat = SprayParticleContainer::getSprayData();
-  if (SPRAY_FUEL_NUM == 1) {
-    m_jetY[0] = 1.;
-    rho_part = fdat->rhoL(m_jetT, 0);
-  } else {
-    std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
-    ps.getarr("Y", in_Y_jet);
-    amrex::Real sumY = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      m_jetY[spf] = in_Y_jet[spf];
-      sumY += in_Y_jet[spf];
-      rho_part += m_jetY[spf] / fdat->rhoL(m_jetT, spf);
+  amrex::Real verylargenum = std::numeric_limits<amrex::Real>::max();
+
+  ps.query("read_from_dpm_file", m_use_Fluentdpmfile);
+  if (m_use_Fluentdpmfile) {
+    if (AMREX_SPACEDIM != 3) {
+      amrex::Abort("Injection through Fluent DPM files not implemented for "
+                   "dimensions other than 3, \n");
     }
-    rho_part = 1. / rho_part;
-    if (std::abs(sumY - 1.) > 1.E-8) {
-      amrex::Abort(ppspray + ".Y must sum to 1");
+    ps.get("dpm_filename", m_FluentDPMFile);
+    std::ifstream is_dpm(m_FluentDPMFile, std::ios::in);
+    if (!is_dpm.good()) {
+      amrex::FileOpenFailed(m_FluentDPMFile);
+    } else {
+      long int dummy_line_no;
+      amrex::Real dummy_dpm_time;
+      amrex::Print() << "Using spray particle injection file: "
+                     << m_FluentDPMFile << "\n";
+
+      is_dpm >> m_dpm_num_of_time_instants;
+      is_dpm >> m_dpm_time_initial >> dummy_line_no;
+      for (long int i = 0; i < m_dpm_num_of_time_instants - 1; i++) {
+        is_dpm >> dummy_dpm_time >> dummy_line_no;
+      }
+      m_dpm_time_final = dummy_dpm_time;
+
+      amrex::Print() << "Total number of DPM time instants = "
+                     << m_dpm_num_of_time_instants << "\n";
+      amrex::Print() << "Spray injection initial time = " << m_dpm_time_initial
+                     << "\n";
+      amrex::Print() << "Spray injection final time = " << m_dpm_time_final
+                     << "\n";
     }
-  }
-  ps.query("inject_ppp", m_numPPP);
-  // If a rate shape profile is generated at
-  // https://www.cmt.upv.es/#/ecn/download/InjectionRateGenerator/InjectionRateGenerator,
-  // it can be provided here for use
-  if (ps.contains("roi_file")) {
-    amrex::Real cd = 0.;
-    ps.get("discharge_coeff", cd);
-    std::string roi_file;
-    ps.get("roi_file", roi_file);
-    readROI(roi_file, rho_part, cd);
-    m_useROI = true;
-  } else {
+    is_dpm.close();
+    ps.query("m_override_inj_plane_dir", m_override_inj_plane_dir);
+    std::list<int> override_inj_plane_dir_list = {-1, 0, 1, 2};
+    auto override_inj_plane_dir_iter = std::find(
+      override_inj_plane_dir_list.begin(), override_inj_plane_dir_list.end(),
+      m_override_inj_plane_dir);
+    if (override_inj_plane_dir_iter == override_inj_plane_dir_list.end()) {
+      amrex::Abort("Override injection plane direction should be -1,0,1 or 2");
+    }
+    ps.query(".", m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile);
+    ps.query("m_override_inj_plane_loc", m_override_inj_plane_loc);
+    ps.query("is_dpm_periodic", is_dpm_periodic);
+
+    std::vector<amrex::Real> tmatrix(AMREX_SPACEDIM * AMREX_SPACEDIM);
+    std::vector<amrex::Real> dX_translation(AMREX_SPACEDIM);
+    ps.getarr("trans_matrix", tmatrix);
+    ps.getarr("translation", dX_translation);
+    for (int dir = 0; dir < AMREX_SPACEDIM * AMREX_SPACEDIM; ++dir) {
+      m_trans_matrix[dir] = tmatrix[dir];
+    }
+
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      m_translation[dir] = dX_translation[dir];
+    }
     ps.query("start_time", m_startTime);
     ps.query("end_time", m_endTime);
-    ps.get("jet_vel", m_jetVel);
-    m_maxJetVel = m_jetVel;
-    ps.get("mass_flow_rate", m_massFlow);
-    if (m_jetVel < 0. || m_massFlow < 0.) {
-      amrex::Abort("Jet u, T, and mdot must be greater than 0");
+    // m_endTime = verylargenum;
+
+    ps.get("initial_injection_dpm_time", m_dpm_time_initial_injection);
+    ps.get("initial_injection_flow_time", m_flow_time_initial_injection);
+    if (is_dpm_periodic) {
+      set_jet_endtime(verylargenum);
+    } else {
+      amrex::Real final_flow_time =
+        m_flow_time_initial_injection +
+        (m_dpm_time_final - m_dpm_time_initial_injection);
+      set_jet_endtime(
+        (m_endTime < final_flow_time ? m_endTime : final_flow_time));
+      // set_jet_endtime(verylargenum);
     }
-  }
-  ps.query("hollow_spray", m_hollowSpray);
-  if (m_hollowSpray) {
-    ps.query("hollow_spread", m_hollowSpread);
-    if (m_hollowSpread < 0. || m_hollowSpread > 180.) {
-      amrex::Abort("'hollow_spread' must be between 0 and 180");
+    m_cur_inj_dpm_time = m_dpm_time_initial_injection;
+    m_nxt_inj_flw_time = m_flow_time_initial_injection;
+
+    if (SPRAY_FUEL_NUM == 1) {
+      m_jetY[0] = 1.;
+    } else {
+      std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
+      ps.getarr("Y", in_Y_jet);
+      amrex::Real sumY = 0.;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        m_jetY[spf] = in_Y_jet[spf];
+        sumY += in_Y_jet[spf];
+      }
+      if (std::abs(sumY - 1.) > 1.E-8) {
+        amrex::Abort(ppspray + ".Y must sum to 1");
+      }
     }
-    m_hollowSpread *= M_PI / 180.;
+  } else {
+    std::string dist_type;
+    ps.get("dist_type", dist_type);
+    m_dropDist = DistBase::create(dist_type);
+    m_dropDist->init(ppspray);
+    m_avgDia = m_dropDist->get_avg_dia();
+    std::vector<amrex::Real> jcent(AMREX_SPACEDIM);
+    ps.getarr("jet_cent", jcent);
+    std::vector<amrex::Real> jnorm(AMREX_SPACEDIM);
+    ps.getarr("jet_norm", jnorm);
+
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      m_cent[dir] = jcent[dir];
+      m_norm[dir] = jnorm[dir];
+    }
+    amrex::Real mag = m_norm.vectorLength();
+    m_norm /= mag;
+    check_jet_cent(geom);
+    ps.get("jet_dia", m_jetDia);
+    ps.get("spread_angle", m_spreadAngle);
+    if (m_spreadAngle < 0. || m_spreadAngle > 180.) {
+      amrex::Abort("'spread_angle' must be between 0 and 180");
+    }
+    m_spreadAngle *= M_PI / 180.; // Assumes spread angle is in degrees
+    ps.query("swirl_angle", m_swirlAngle);
+    if (m_swirlAngle < 0. || m_swirlAngle > 90.) {
+      amrex::Abort("'swirl_angle' must be between 0 and 90");
+    }
+    m_swirlAngle *= M_PI / 180.;
+    ps.get("T", m_jetT);
+    amrex::Real rho_part = 0.;
+    SprayData* fdat = SprayParticleContainer::getSprayData();
+    if (SPRAY_FUEL_NUM == 1) {
+      m_jetY[0] = 1.;
+      rho_part = fdat->rhoL(m_jetT, 0);
+    } else {
+      std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
+      ps.getarr("Y", in_Y_jet);
+      amrex::Real sumY = 0.;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        m_jetY[spf] = in_Y_jet[spf];
+        sumY += in_Y_jet[spf];
+        rho_part += m_jetY[spf] / fdat->rhoL(m_jetT, spf);
+      }
+      rho_part = 1. / rho_part;
+      if (std::abs(sumY - 1.) > 1.E-8) {
+        amrex::Abort(ppspray + ".Y must sum to 1");
+      }
+    }
+    ps.query("inject_ppp", m_numPPP);
+    // If a rate shape profile is generated at
+    // https://www.cmt.upv.es/#/ecn/download/InjectionRateGenerator/InjectionRateGenerator,
+    // it can be provided here for use
+    if (ps.contains("roi_file")) {
+      amrex::Real cd = 0.;
+      ps.get("discharge_coeff", cd);
+      std::string roi_file;
+      ps.get("roi_file", roi_file);
+      readROI(roi_file, rho_part, cd);
+      m_useROI = true;
+    } else {
+      ps.query("start_time", m_startTime);
+      ps.query("end_time", m_endTime);
+      ps.get("jet_vel", m_jetVel);
+      m_maxJetVel = m_jetVel;
+      ps.get("mass_flow_rate", m_massFlow);
+      if (m_jetVel < 0. || m_massFlow < 0.) {
+        amrex::Abort("Jet u, T, and mdot must be greater than 0");
+      }
+    }
+    ps.query("hollow_spray", m_hollowSpray);
+    if (m_hollowSpray) {
+      ps.query("hollow_spread", m_hollowSpread);
+      if (m_hollowSpread < 0. || m_hollowSpread > 180.) {
+        amrex::Abort("'hollow_spread' must be between 0 and 180");
+      }
+      m_hollowSpread *= M_PI / 180.;
+    }
   }
 }
 
@@ -142,6 +235,15 @@ SprayJet::SprayJet(
   amrex::Real mag = m_norm.vectorLength();
   m_norm /= mag;
   check_jet_cent(geom);
+}
+
+bool
+SprayJet::get_new_particle(amrex::Real* Y_part)
+{
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    Y_part[spf] = m_jetY[spf];
+  }
+  return true;
 }
 
 // Default get_new_particle

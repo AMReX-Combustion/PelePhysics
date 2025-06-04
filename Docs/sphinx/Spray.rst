@@ -430,6 +430,18 @@ Care must be taken to ensure the amount of mass injected during a time step matc
 
 4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
+Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the fluid domain. To use this feature, initialize a spray jet (named ``jet_dpm``, say) by using the statement `spray.jetnames=jet_dpm` in the input file as previously mentioned. In order to use the ANSYS Fluent DPM capability, set the boolean input variable ``spray.jet_dpm.read_from_dpm_file`` to true and specify the DPM file name by ``spray.jet_dpm.dpm_filename=<filename>``. 
+The DPM data in the file will correspond to a specified time-gap, but it can be made to repeat periodically by specifying ``spray.jet_dpm.is_dpm_periodic=true``. Otherwise, spray particle injection will cease after the final DPM time is reached. The spray injection can be set to start from a specific DPM time stamp by specifying 
+``spray.jet_dpm.initial_injection_dpm_time=<DPM time stamp>``. Similarly, the spray injection can also be set to start from a specific flow time by setting ``spray.jet_dpm.initial_injection_flow_time`` to the appropriate value. If the coordinate system used in the ANSYS Fluent DPM file is different from that in Pele, 
+one can use ``spray.jet_dpm.trans_matrix`` and ``spray.jet_dpm.translation`` to specify the direction cosine matrix (3X3 matrix) and the translation vector (<dx,dy,dz>) to align both the coordinate systems. 
+
+
+  The DPM file has a specific format and a typical file is shown below:
+
+.. figure:: /Visualization/DPMFileFormat.png
+   :align: center
+   :figwidth: 60%
+
 Spray Validation
 ================
 
