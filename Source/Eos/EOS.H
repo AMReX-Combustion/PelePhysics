@@ -137,8 +137,9 @@ speciesNames<Manifold>(
   amrex::Vector<std::string>& spn, const EosParm<Manifold>* eparm)
 {
   if (eparm == nullptr) {
-    amrex::Abort("Manifold EOS requires an EosParm input in order to determine "
-                 "species names");
+    amrex::Abort(
+      "Manifold EOS requires an EosParm input in order to determine "
+      "species names");
   }
   spn.resize(NUM_SPECIES);
   const auto* mani_data = eparm->manf_data;

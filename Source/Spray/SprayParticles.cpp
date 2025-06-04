@@ -421,8 +421,9 @@ SprayParticleContainer::updateParticles(
             Real cur_coef = -cvol * sub_dt / flow_dt;
             if (!src_box.contains(cur_indx)) {
               if (!isGhost) {
-                Abort("SprayParticleContainer::updateParticles() -- source box "
-                      "too small");
+                Abort(
+                  "SprayParticleContainer::updateParticles() -- source box "
+                  "too small");
               }
             }
             if (fdat->mom_trans) {

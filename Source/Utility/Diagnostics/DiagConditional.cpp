@@ -75,8 +75,9 @@ DiagConditional::prepare(
   for (int lev = 0; lev < a_nlevels; lev++) {
     m_geoms[lev] = a_geoms[lev];
     if (lev > 0) {
-      m_refRatio[lev - 1] = amrex::IntVect(static_cast<int>(
-        a_geoms[lev - 1].CellSize(0) / a_geoms[lev].CellSize(0)));
+      m_refRatio[lev - 1] = amrex::IntVect(
+        static_cast<int>(
+          a_geoms[lev - 1].CellSize(0) / a_geoms[lev].CellSize(0)));
     }
   }
 }
@@ -364,9 +365,10 @@ DiagConditional::writeAverageDataToFile(
                  << std::setprecision(prec) << std::scientific
                  << a_cond[binOffset + n] << " " << std::setw(widths[4 + 2 * f])
                  << std::setprecision(prec) << std::scientific
-                 << std::sqrt(std::abs(
-                      a_condSq[binOffset + n] -
-                      a_cond[binOffset + n] * a_cond[binOffset + n]))
+                 << std::sqrt(
+                      std::abs(
+                        a_condSq[binOffset + n] -
+                        a_cond[binOffset + n] * a_cond[binOffset + n]))
                  << " ";
       }
       condFile << "\n";

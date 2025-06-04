@@ -83,8 +83,6 @@ int
 SUNLinSolSolve_Dense_custom(
   SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol)
 {
-  cudaError_t cuda_status = cudaSuccess;
-
   amrex::Real* x_d = N_VGetDeviceArrayPointer_Cuda(x);
   amrex::Real* b_d = N_VGetDeviceArrayPointer_Cuda(b);
 
@@ -108,7 +106,7 @@ SUNLinSolSolve_Dense_custom(
   //  SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, SUN_CUSP_SUBSYS_SIZE(S),
   //  SUN_CUSP_SUBSYS_NNZ(S), d_data);
 
-  cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));
+  cudaError_t cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));
   AMREX_ASSERT(cuda_status == cudaSuccess);
 
   BL_PROFILE_VAR_STOP(fKernelDenseSolve);

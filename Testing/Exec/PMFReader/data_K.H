@@ -23,17 +23,20 @@ initdata(
   const amrex::Real* prob_hi = geomdata.ProbHi();
   const amrex::Real* dx = geomdata.CellSize();
 
-  AMREX_D_TERM(const amrex::Real x = prob_lo[0] + (i + 0.5) * dx[0];
-               , const amrex::Real y = prob_lo[1] + (j + 0.5) * dx[1];
-               , const amrex::Real z = prob_lo[2] + (k + 0.5) * dx[2];);
+  AMREX_D_TERM(
+    const amrex::Real x = prob_lo[0] + (i + 0.5) * dx[0];
+    , const amrex::Real y = prob_lo[1] + (j + 0.5) * dx[1];
+    , const amrex::Real z = prob_lo[2] + (k + 0.5) * dx[2];);
 
-  AMREX_D_TERM(const amrex::Real Lx = prob_hi[0] - prob_lo[0];
-               , const amrex::Real Ly = prob_hi[1] - prob_lo[1];
-               , const amrex::Real Lz = prob_hi[2] - prob_lo[2]);
+  AMREX_D_TERM(
+    const amrex::Real Lx = prob_hi[0] - prob_lo[0];
+    , const amrex::Real Ly = prob_hi[1] - prob_lo[1];
+    , const amrex::Real Lz = prob_hi[2] - prob_lo[2]);
 
-  AMREX_D_TERM(const amrex::Real xc = prob_lo[0] + Lx / 2.0;
-               , const amrex::Real yc = prob_lo[1] + Ly / 2.0;
-               , const amrex::Real zc = prob_lo[2] + Lz / 2.0);
+  AMREX_D_TERM(
+    const amrex::Real xc = prob_lo[0] + Lx / 2.0;
+    , const amrex::Real yc = prob_lo[1] + Ly / 2.0;
+    , const amrex::Real zc = prob_lo[2] + Lz / 2.0);
 
   constexpr amrex::Real Pi = 3.14159265358979323846264338327950288;
   amrex::Real molefrac[NUM_SPECIES] = {0.0};

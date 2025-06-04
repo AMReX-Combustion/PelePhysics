@@ -364,9 +364,10 @@ calculateSpraySource(
     const amrex::Real part_dt = fdat.dtmod * dt;
     if (!fdat.fixed_parts) {
       // Update particle velocity
-      AMREX_D_TERM(vel_part[0] += part_dt * part_vel_src[0];
-                   , vel_part[1] += part_dt * part_vel_src[1];
-                   , vel_part[2] += part_dt * part_vel_src[2];);
+      AMREX_D_TERM(
+        vel_part[0] += part_dt * part_vel_src[0];
+        , vel_part[1] += part_dt * part_vel_src[1];
+        , vel_part[2] += part_dt * part_vel_src[2];);
     }
     if (fdat.mass_trans) {
       amrex::Real newT = T_part + part_dt * part_temp_src;

@@ -188,11 +188,12 @@ main(int argc, char* argv[])
   amrex::EB2::BoxIF box(
     {AMREX_D_DECL(-la, -la, -1.0)}, {AMREX_D_DECL(la, la, -1.0 + 4.0 * shift)},
     true);
-  auto gshop = amrex::EB2::makeShop(amrex::EB2::translate(
-    amrex::EB2::rotate(
-      amrex::EB2::translate(box, {AMREX_D_DECL(-0.0, -0.0, -0.0)}),
-      std::atan(1.0) * 1.0, 2),
-    {AMREX_D_DECL(0.0, 0.0, 0.0)}));
+  auto gshop = amrex::EB2::makeShop(
+    amrex::EB2::translate(
+      amrex::EB2::rotate(
+        amrex::EB2::translate(box, {AMREX_D_DECL(-0.0, -0.0, -0.0)}),
+        std::atan(1.0) * 1.0, 2),
+      {AMREX_D_DECL(0.0, 0.0, 0.0)}));
   amrex::EB2::Build(
     gshop, geom.back(), max_level, max_level + max_coarsening_level);
 
