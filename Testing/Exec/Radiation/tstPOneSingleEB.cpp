@@ -189,8 +189,6 @@ main(int argc, char* argv[])
       {AMREX_D_DECL(0.0, 0.0, 0.0)}));
   amrex::EB2::Build(gshop, geom, 0, max_coarsening_level);
 
-  amrex::IntVect ng = amrex::IntVect{1};
-
   dmap.define(grids);
 
   amrex::EB2::IndexSpace const& eb_is = amrex::EB2::IndexSpace::top();
