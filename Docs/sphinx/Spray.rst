@@ -226,6 +226,27 @@ The procedure is as follows for updating the spray droplet:
 
     :math:`N_{d}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on AMR level and if an EB is present.
 
+
+.. warning::
+
+   **Dimensional Assumptions in the Spray Model**
+
+   The spray model assumes spherically symmetric droplets and is inherently three-dimensional. 
+   For two-dimensional simulations, the domain is treated as one cell wide in the :math:`z`-direction, 
+   with :math:`L_z = \Delta x`, so the volume gas-phase source terms is:
+
+   .. math::
+
+      V_{\rm{cell}} = \Delta x \, \Delta y \, \Delta x
+
+   This effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`, 
+   exaggerating Stefan flow in the :math:`x`- and :math:`y`-directions and omitting flow in :math:`z`. While this has minimal impact on 
+   droplet diameter or temperature, it can distort the surrounding gas-phase flow, especially for low :math:`\text{Re}_d`.
+
+   For such cases, fully three-dimensional simulations are recommended.
+
+
+   
 Spray Flags and Inputs
 ======================
 
@@ -442,13 +463,15 @@ one can use ``spray.jet_dpm.trans_matrix`` and ``spray.jet_dpm.translation`` to 
    :align: center
    :figwidth: 60%
 
+.. _spray_validation:
+
 Spray Validation
 ================
 
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
 
   case = WongLin()
 
