@@ -218,7 +218,11 @@ SprayParticleContainer::updateParticles(
       bndry_hi[dir] = 0;
     }
   }
-  const Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+  Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+#if AMREX_SPACEDIM == 2
+  // Warning: Spray model in 2D is non-physical for flows with low Re
+  vol *= dx[0];
+#endif
   const Real inv_vol = 1. / vol;
   // If particle subcycling is being done, determine the number of subcycles
   // Note: this is different than the AMR subcycling
