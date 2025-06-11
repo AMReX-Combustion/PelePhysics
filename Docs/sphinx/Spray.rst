@@ -239,7 +239,7 @@ The procedure is as follows for updating the spray droplet:
 
       V_{\rm{cell}} = \Delta x \, \Delta y \, \Delta x
 
-   This effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`, 
+   For nominally single droplet cases, this effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`, 
    exaggerating Stefan flow in the :math:`x`- and :math:`y`-directions and omitting flow in :math:`z`. While this has minimal impact on 
    droplet diameter or temperature, it can distort the surrounding gas-phase flow, especially for low :math:`\text{Re}_d`.
 

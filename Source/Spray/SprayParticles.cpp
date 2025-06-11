@@ -220,7 +220,7 @@ SprayParticleContainer::updateParticles(
   }
   Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
 #if AMREX_SPACEDIM == 2
-  // Warning: Spray model in 2D is non-physical for flows with low Re
+  // Spray model in 2D assumes narrow domain in z-direction (Lz = dx)
   vol *= dx[0];
 #endif
   const Real inv_vol = 1. / vol;

@@ -79,7 +79,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
 #elif AMREX_SPACEDIM == 2
   amrex::Warning(
     " Warning: Spray model in 2D assumes narrow domain in z-direction (Lz = "
-    "dx), and is non-physical in flows with low Re");
+    "dz)");
 #endif
   m_sprayData = new SprayData{};
   d_sprayData =
