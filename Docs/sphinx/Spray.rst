@@ -233,7 +233,7 @@ The procedure is as follows for updating the spray droplet:
 
    The spray model assumes spherically symmetric droplets and is inherently three-dimensional. 
    For two-dimensional simulations, the domain is treated as one cell wide in the :math:`z`-direction, 
-   with :math:`L_z = \Delta x`, so the volume gas-phase source terms is:
+   with :math:`L_z = \Delta x`, so the volume in the gas-phase source terms is:
 
    .. math::
 
