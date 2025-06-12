@@ -455,7 +455,7 @@ SprayParticleContainer::uniformSprayInit(
   const int MyProc = amrex::ParallelDescriptor::MyProc();
   const int NProcs = amrex::ParallelDescriptor::NProcs();
   int NRedist = num_redist;
-  if (NRedist < 0) {
+  if (NRedist <= 0) {
     NRedist = 1;
     if (NProcs <= 1024) {
       NRedist = 2;
