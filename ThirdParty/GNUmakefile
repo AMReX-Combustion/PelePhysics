@@ -7,7 +7,7 @@ CUDA_ARCH       ?= 70
 AMD_ARCH        ?= gfx90a
 
 SS_VERSION=5.4.0
-MAGMA_VERSION=2.7.1
+MAGMA_VERSION=2.9.0
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
