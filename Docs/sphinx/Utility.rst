@@ -135,7 +135,7 @@ inflow plane data and interpolation approaches for periodic and nonperiodic tang
 .. note:: The TurbInflow capability was not designed with embedded boundaries in mind. It can be applied for simulations using EB, but care should
           be take. Inflows should not be generated from simulations where EBs intersect the inflow plane.
 
-.. figure:: ./Visualization/TurbInflowData.
+.. figure:: ./Visualization/TurbInflowData.png
 
 .. _sec_turbforce:
 
