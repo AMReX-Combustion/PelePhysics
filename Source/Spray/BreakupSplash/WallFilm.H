@@ -87,6 +87,7 @@ calculateFilmSource(
   amrex::Real T_skin = T_film + rule * delT;
 
   // Calculate the C_p at the skin temperature for each species
+  // Sreejith: no equivalent functions for T2Cpi in manifold
   eos.T2Cpi(T_skin, cp_n.data());
   eos.T2Hi(T_film, h_film.data());
   for (int n = 0; n < NUM_SPECIES; ++n) {
