@@ -6,7 +6,7 @@ GET_RMAP(int* /*_rmap*/)
 {
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int* /*ki*/, int* /*nu*/)
