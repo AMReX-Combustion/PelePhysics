@@ -10,6 +10,7 @@
 import argparse
 import csv
 import os
+import re
 
 import numpy as np
 import yaml
@@ -31,7 +32,7 @@ parser.add_argument(
     help="Name of PelePhysics mechanism from Mechanisms",
 )
 parser.add_argument(
-    "-pp", "--pp_home", default="../../", help="Path to PelePhysics directory"
+    "-pp", "--pp_home", default="../../../", help="Path to PelePhysics directory"
 )
 parser.add_argument(
     "-f", "--fuel", default="CH4:1", help="Fuel stream mole-basis Cantera composition"
@@ -111,7 +112,7 @@ if not (os.path.exists(pp_path)):
     raise RuntimeError("Invalid path to PelePhysics: " + args.pp_home)
 
 mech_paths = [
-    name.strip()
+    re.sub(r'\s--plog=\S+', '', name).strip()
     for name in open(os.path.join(pp_path, "list_mech")).readlines()
     if not name.startswith("#")
 ]
