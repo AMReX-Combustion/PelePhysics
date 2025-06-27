@@ -2296,8 +2296,19 @@ def ckchrgmass(fstream, species_info):
     cw.writer(fstream, "}")
 
 
-def temp_given_ey(fstream):
+def temp_given_ey(fstream, mechanism, species_list):
     """Write temperature given internal energy."""
+    tmax = 4000  # default value, will be updated below
+    tmin = 90
+    tmax_ar = [0.0 for _ in range(len(species_list))]
+    tmin_ar = [1000.0 for _ in range(len(species_list))]
+    for idx, symbol in enumerate(species_list):
+        species = mechanism.species(symbol)
+        model = species.thermo
+        tmax_ar[idx] = max(tmax_ar[idx], model.max_temp)
+        tmin_ar[idx] = min(tmin_ar[idx], model.min_temp)
+    tmax = min(tmax_ar)
+    tmin = max(tmin_ar)
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -2321,11 +2332,12 @@ def temp_given_ey(fstream):
     cw.writer(fstream, "#endif")
     cw.writer(
         fstream,
-        "amrex::Real tmin = 90;" + cw.comment("max lower bound for thermo def"),
+        f"amrex::Real tmin = {tmin};" + cw.comment("max lower bound for thermo def"),
     )
+    
     cw.writer(
         fstream,
-        "amrex::Real tmax = 4000;" + cw.comment("min upper bound for thermo def"),
+        f"amrex::Real tmax = {tmax};" + cw.comment("min upper bound for thermo def"),
     )
     cw.writer(fstream, "amrex::Real e1,emin,emax,cv,t1,dt;")
     cw.writer(fstream, "CKUBMS(tmin, y, emin);")
@@ -2363,8 +2375,19 @@ def temp_given_ey(fstream):
     cw.writer(fstream)
 
 
-def temp_given_hy(fstream):
+def temp_given_hy(fstream, mechanism, species_list):
     """Write temperature given enthalpy."""
+    tmax = 4000  # default value, will be updated below
+    tmin = 90
+    tmax_ar = [0.0 for _ in range(len(species_list))]
+    tmin_ar = [1000.0 for _ in range(len(species_list))]
+    for idx, symbol in enumerate(species_list):
+        species = mechanism.species(symbol)
+        model = species.thermo
+        tmax_ar[idx] = max(tmax_ar[idx], model.max_temp)
+        tmin_ar[idx] = min(tmin_ar[idx], model.min_temp)
+    tmax = min(tmax_ar)
+    tmin = max(tmin_ar)
     cw.writer(
         fstream,
         cw.comment(" get temperature given enthalpy in mass units and mass fracs"),
@@ -2385,11 +2408,11 @@ def temp_given_hy(fstream):
     cw.writer(fstream, "#endif")
     cw.writer(
         fstream,
-        "amrex::Real tmin = 90;" + cw.comment("max lower bound for thermo def"),
+        f"amrex::Real tmin = {tmin};" + cw.comment("max lower bound for thermo def"),
     )
     cw.writer(
         fstream,
-        "amrex::Real tmax = 4000;" + cw.comment("min upper bound for thermo def"),
+        f"amrex::Real tmax = {tmax};" + cw.comment("min upper bound for thermo def"),
     )
     cw.writer(fstream, "amrex::Real h1,hmin,hmax,cp,t1,dt;")
     cw.writer(fstream, "CKHBMS(tmin, y, hmin);")
