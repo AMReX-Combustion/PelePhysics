@@ -38,7 +38,7 @@ namespace pele::physics::turbforcing::mersenne_twister {
 class mt19937
 {
 public:
-  using unsigned long seed_type;
+  using seed_type = unsigned long;
   explicit mt19937(seed_type seed = 4357UL);
   mt19937(seed_type array[], int array_len);
   void rewind();
