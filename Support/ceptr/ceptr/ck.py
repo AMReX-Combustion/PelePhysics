@@ -2298,11 +2298,15 @@ def ckchrgmass(fstream, species_info):
 
 def temp_given_ey(fstream, mechanism, species_list):
     """Write temperature given internal energy."""
-    tmin_ar, tmax_ar = zip(*[
-        (mechanism.species(symbol).thermo.min_temp,
-         mechanism.species(symbol).thermo.max_temp)
-        for symbol in species_list
-    ])
+    tmin_ar, tmax_ar = zip(
+        *[
+            (
+                mechanism.species(symbol).thermo.min_temp,
+                mechanism.species(symbol).thermo.max_temp,
+            )
+            for symbol in species_list
+        ]
+    )
     tmax = min(tmax_ar)
     tmin = max(tmin_ar)
 
@@ -2331,7 +2335,7 @@ def temp_given_ey(fstream, mechanism, species_list):
         fstream,
         f"amrex::Real tmin = {tmin};" + cw.comment("max lower bound for thermo def"),
     )
-    
+
     cw.writer(
         fstream,
         f"amrex::Real tmax = {tmax};" + cw.comment("min upper bound for thermo def"),
@@ -2374,11 +2378,15 @@ def temp_given_ey(fstream, mechanism, species_list):
 
 def temp_given_hy(fstream, mechanism, species_list):
     """Write temperature given enthalpy."""
-    tmin_ar, tmax_ar = zip(*[
-        (mechanism.species(symbol).thermo.min_temp,
-         mechanism.species(symbol).thermo.max_temp)
-        for symbol in species_list
-    ])
+    tmin_ar, tmax_ar = zip(
+        *[
+            (
+                mechanism.species(symbol).thermo.min_temp,
+                mechanism.species(symbol).thermo.max_temp,
+            )
+            for symbol in species_list
+        ]
+    )
     tmax = min(tmax_ar)
     tmin = max(tmin_ar)
 
