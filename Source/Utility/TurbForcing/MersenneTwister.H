@@ -40,7 +40,6 @@ class mt19937
 public:
   typedef unsigned long seed_type;
   explicit mt19937(seed_type seed = 4357UL);
-  mt19937(seed_type seed, int numprocs);
   mt19937(seed_type array[], int array_len);
   void rewind();
   void reset(unsigned long seed);
