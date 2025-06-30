@@ -38,7 +38,7 @@ namespace pele::physics::turbforcing::mersenne_twister {
 class mt19937
 {
 public:
-  typedef unsigned long seed_type;
+  using unsigned long seed_type;
   explicit mt19937(seed_type seed = 4357UL);
   mt19937(seed_type array[], int array_len);
   void rewind();
@@ -63,9 +63,7 @@ private:
 #ifdef _OPENMP
 #pragma omp threadprivate(init_seed, mt, mti)
 #endif
-private:
   void sgenrand(unsigned long seed);
-  void sgenrand(seed_type seed_array[], int len);
   unsigned long igenrand();
   void reload();
 };

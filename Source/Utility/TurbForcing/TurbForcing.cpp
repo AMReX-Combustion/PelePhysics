@@ -84,9 +84,9 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   m_tfp.m_Lmin = std::min(Lx, std::min(Ly, Lz));
   m_tfp.m_kappaMax =
     static_cast<amrex::Real>(m_tfp.m_nmodes) / m_tfp.m_Lmin + 1.0e-8;
-  m_tfp.m_nxmodes = m_tfp.m_nmodes * (int)(0.5 + Lx / m_tfp.m_Lmin);
-  m_tfp.m_nymodes = m_tfp.m_nmodes * (int)(0.5 + Ly / m_tfp.m_Lmin);
-  m_tfp.m_nzmodes = m_tfp.m_nmodes * (int)(0.5 + Lz / m_tfp.m_Lmin);
+  m_tfp.m_nxmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin;));
+  m_tfp.m_nymodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin;));
+  m_tfp.m_nzmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin;));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Lmin = " << m_tfp.m_Lmin << std::endl;
@@ -112,16 +112,16 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   }
 
   // tmp CPU storage that holds everything in one flat array
-  constexpr int num_elmts =
+  const int num_elmts =
     m_tfp.m_array_size * m_tfp.m_array_size * m_tfp.m_array_size;
-  constexpr int tmp_buffer_size = m_tfp.m_num_fdarray * num_elmts;
-  amrex::Real tmp_buffer[tmp_buffer_size];
+  const int tmp_buffer_size = m_tfp.m_num_fdarray * num_elmts;
+  auto tmp_buffer = std::make_unique<amrex::Real[]>(tmp_buffer_size);
 
   // Separate out forcing data into individual Array4's
   int i_arr = 0;
-  constexpr int fd_ncomp = 1;
-  constexpr amrex::Dim3 fd_begin{0, 0, 0};
-  constexpr amrex::Dim3 fd_end{
+  const int fd_ncomp = 1;
+  const amrex::Dim3 fd_begin{0, 0, 0};
+  const amrex::Dim3 fd_end{
     m_tfp.m_array_size, m_tfp.m_array_size, m_tfp.m_array_size};
 
   amrex::Array4<amrex::Real> FTX(
@@ -164,24 +164,24 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
 
   int mode_count = 0;
 
-  const int xstep = (int)(Lx / m_tfp.m_Lmin + 0.5);
-  const int ystep = (int)(Ly / m_tfp.m_Lmin + 0.5);
-  const int zstep = (int)(Lz / m_tfp.m_Lmin + 0.5);
+  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin;));
+  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin;));
+  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin;));
 
-  if (m_tfp.m_verbose) {
+  if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Mode step = " << xstep << " " << ystep << " " << zstep
                    << std::endl;
   }
 
   for (int kz = m_tfp.m_mode_start * zstep; kz <= m_tfp.m_nzmodes;
        kz += zstep) {
-    const amrex::Real kzd = static_cast<amrex::Real>(kz);
+    const auto kzd = static_cast<amrex::Real>(kz);
     for (int ky = m_tfp.m_mode_start * ystep; ky <= m_tfp.m_nymodes;
          ky += ystep) {
-      const amrex::Real kyd = static_cast<amrex::Real>(ky);
+      const auto kyd = static_cast<amrex::Real>(ky);
       for (int kx = m_tfp.m_mode_start * xstep; kx <= m_tfp.m_nxmodes;
            kx += xstep) {
-        const amrex::Real kxd = static_cast<amrex::Real>(kx);
+        const auto kxd = static_cast<amrex::Real>(kx);
         const amrex::Real kappa = std::sqrt(
           (kxd * kxd) / (Lx * Lx) + (kyd * kyd) / (Ly * Ly) +
           (kzd * kzd) / (Lz * Lz));
@@ -247,12 +247,15 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
             Ekh /= kappa;
 
             if (m_tfp.m_moderate_zero_modes == 1) {
-              if (kx == 0)
+              if (kx == 0) {
                 Ekh /= 2.;
-              if (ky == 0)
+              }
+              if (ky == 0) {
                 Ekh /= 2.;
-              if (kz == 0)
+              }
+              if (kz == 0) {
                 Ekh /= 2.;
+              }
             }
             if (m_tfp.m_force_scale > 0.0) {
               FAX(kx, ky, kz) = m_tfp.m_force_scale * px * Ekh / mp2;
@@ -298,12 +301,12 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   int reduced_mode_count = 0;
 
   for (int kz = 1; kz < zstep; ++kz) {
-    const amrex::Real kzd = static_cast<amrex::Real>(kz);
+    const auto kzd = static_cast<amrex::Real>(kz);
     for (int ky = m_tfp.m_mode_start; ky <= m_tfp.m_nymodes; ky += ystep) {
-      const amrex::Real kyd = static_cast<amrex::Real>(kz);
+      const auto kyd = static_cast<amrex::Real>(kz);
       for (int kx = m_tfp.m_mode_start; kx <= m_tfp.m_nxmodes; kx += xstep) {
-        const amrex::Real kxd = static_cast<amrex::Real>(kx);
-        const amrex::Real kappa = std::sqrt(
+        const auto kxd = static_cast<amrex::Real>(kx);
+        const auto kappa = std::sqrt(
           (kxd * kxd) / (Lx * Lx) + (kyd * kyd) / (Ly * Ly) +
           (kzd * kzd) / (Lz * Lz));
 
@@ -368,12 +371,15 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
             Ekh /= kappa;
 
             if (m_tfp.m_moderate_zero_modes == 1) {
-              if (kx == 0)
+              if (kx == 0) {
                 Ekh /= 2.;
-              if (ky == 0)
+              }
+              if (ky == 0) {
                 Ekh /= 2.;
-              if (kz == 0)
+              }
+              if (kz == 0) {
                 Ekh /= 2.;
+              }
             }
             if (m_tfp.m_force_scale > 0.) {
               FAX(kx, ky, kz) =
@@ -484,9 +490,9 @@ TurbForcing::addTurbVelForces(
   const int* f_lo = bx.loVect();
   const int* f_hi = bx.hiVect();
 
-  const int xstep = static_cast<int>(Lx / m_tfp.m_Lmin + 0.5);
-  const int ystep = static_cast<int>(Ly / m_tfp.m_Lmin + 0.5);
-  const int zstep = static_cast<int>(Lz / m_tfp.m_Lmin + 0.5);
+  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin;));
+  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin;));
+  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin;));
 
   const amrex::Real kappaMax = m_tfp.m_nmodes / m_tfp.m_Lmin + 1.0e-8;
 
@@ -496,11 +502,11 @@ TurbForcing::addTurbVelForces(
 
   // Separate out forcing data into individual Array4's
   int i_arr = 0;
-  constexpr int fd_ncomp = 1;
-  constexpr int num_elmts =
+  const int fd_ncomp = 1;
+  const int num_elmts =
     m_tfp.m_array_size * m_tfp.m_array_size * m_tfp.m_array_size;
-  constexpr amrex::Dim3 fd_begin{0, 0, 0};
-  constexpr amrex::Dim3 fd_end{
+  const amrex::Dim3 fd_begin{0, 0, 0};
+  const amrex::Dim3 fd_end{
     m_tfp.m_array_size, m_tfp.m_array_size, m_tfp.m_array_size};
 
   amrex::Array4<amrex::Real> FTX(
