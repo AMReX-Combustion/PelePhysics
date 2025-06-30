@@ -154,22 +154,6 @@ mt19937::mt19937(unsigned long seed)
   sgenrand(seed);
 }
 
-mt19937::mt19937(unsigned long seed, int numprocs)
-{
-#ifdef _OPENMP
-#pragma omp parallel
-  {
-    init_seed = seed + omp_get_thread_num() * numprocs;
-    mti = N;
-    sgenrand(init_seed);
-  }
-#else
-  init_seed = seed;
-  mti = N;
-  sgenrand(init_seed);
-#endif
-}
-
 void
 mt19937::rewind()
 {
@@ -262,12 +246,6 @@ void
 InitRandom(unsigned long seed)
 {
   the_generator = mt19937(seed);
-}
-
-void
-InitRandom(unsigned long seed, int numprocs)
-{
-  the_generator = mt19937(seed, numprocs);
 }
 
 void

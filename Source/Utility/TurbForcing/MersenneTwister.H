@@ -107,7 +107,6 @@ unsigned long Random_int(unsigned long n); // [0,n-1], where n<=2^32-1
   call blinitrand(seed)
 */
 void InitRandom(unsigned long seed);
-void InitRandom(unsigned long seed, int numprocs);
 
 void ResetRandomSeed(unsigned long seed);
 //
