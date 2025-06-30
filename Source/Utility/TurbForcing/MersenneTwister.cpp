@@ -95,9 +95,9 @@ mt19937::igenrand()
   //
   // Generate N words at one time.
   //
-  if (mti >= N)
+  if (mti >= N) {
     reload();
-
+  }
   unsigned long y = mt[mti++];
 
   /* Tempering */
@@ -198,12 +198,14 @@ mt19937::restore(const amrex::Vector<unsigned long>& state)
   }
 
   init_seed = state[0];
-  for (int i = 0; i < N; i++)
+  for (int i = 0; i < N; i++) {
     mt[i] = state[i + 1];
-  mti = state[N + 1];
+  }
+  mti = static_cast<int>(state[N + 1]);
 
-  if (mti < 0 || mti > N)
+  if (mti < 0 || mti > N) {
     amrex::Error("mt19937::restore(): mti out-of-bounds");
+  }
 }
 
 namespace {
@@ -280,8 +282,8 @@ UniqueRandomSubset(
   }
   std::set<int> copySet;
   amrex::Vector<int> uSetTemp;
-  while (copySet.size() < (unsigned long)setSize) {
-    int r(Random_int(poolSize));
+  while (copySet.size() < static_cast<unsigned long>(setSize)) {
+    int r = static_cast<int>(Random_int(poolSize));
     if (copySet.find(r) == copySet.end()) {
       copySet.insert(r);
       uSetTemp.push_back(r);
