@@ -84,9 +84,9 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   m_tfp.m_Lmin = std::min(Lx, std::min(Ly, Lz));
   m_tfp.m_kappaMax =
     static_cast<amrex::Real>(m_tfp.m_nmodes) / m_tfp.m_Lmin + 1.0e-8;
-  m_tfp.m_nxmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin;));
-  m_tfp.m_nymodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin;));
-  m_tfp.m_nzmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin;));
+  m_tfp.m_nxmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin));
+  m_tfp.m_nymodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin));
+  m_tfp.m_nzmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Lmin = " << m_tfp.m_Lmin << std::endl;
@@ -164,9 +164,9 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
 
   int mode_count = 0;
 
-  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin;));
-  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin;));
-  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin;));
+  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
+  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
+  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Mode step = " << xstep << " " << ystep << " " << zstep
@@ -490,9 +490,9 @@ TurbForcing::addTurbVelForces(
   const int* f_lo = bx.loVect();
   const int* f_hi = bx.hiVect();
 
-  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin;));
-  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin;));
-  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin;));
+  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
+  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
+  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
 
   const amrex::Real kappaMax = m_tfp.m_nmodes / m_tfp.m_Lmin + 1.0e-8;
 
