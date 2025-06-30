@@ -134,7 +134,9 @@ mt19937::reset(unsigned long seed)
 double
 mt19937::d_value()
 {
-  return double(igenrand()) * (1.0 / 4294967295.0); // divided by 2^32-1
+  const double num =
+    static_cast<double>(igenrand()) * (1.0 / 4294967295.0); // divided by 2^32-1
+  return num;
 }
 
 //
@@ -143,7 +145,9 @@ mt19937::d_value()
 double
 mt19937::d1_value()
 {
-  return double(igenrand()) * (1.0 / 4294967296.0); // divided by 2^32
+  const double num =
+    static_cast<double>(igenrand()) * (1.0 / 4294967296.0); // divided by 2^32
+  return num;
 }
 
 //
@@ -152,13 +156,15 @@ mt19937::d1_value()
 double
 mt19937::d2_value()
 {
-  return (double(igenrand()) + .5) * (1.0 / 4294967296.0); // divided by 2^32
+  const double num = (static_cast<double>(igenrand()) + 0.5) *
+                     (1.0 / 4294967296.0); // divided by 2^3
+  return num;
 }
 
 long
 mt19937::l_value()
 {
-  return (long)(igenrand() >> 1);
+  return static_cast<long>(igenrand() >> 1);
 }
 
 unsigned long

@@ -74,19 +74,24 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
     m_tfp.m_fsr = 1.41e7; // non-cubic reference value
   }
   m_tfp.m_force_scale = m_tfp.m_force_scale_fudge * m_tfp.m_fsr *
-                        pow(m_tfp.m_urms / m_tfp.m_fvr, 2) *
-                        pow(m_tfp.m_flr / Lx, 3);
+                        pow(m_tfp.m_urms / TurbForcingParm::m_fvr, 2) *
+                        pow(TurbForcingParm::m_flr / Lx, 3);
   m_tfp.m_forcing_time_scale_min =
-    m_tfp.m_fts_min * (m_tfp.m_fvr / m_tfp.m_flr) * (Lx / m_tfp.m_urms);
+    TurbForcingParm::m_fts_min *
+    (TurbForcingParm::m_fvr / TurbForcingParm::m_flr) * (Lx / m_tfp.m_urms);
   m_tfp.m_forcing_time_scale_max =
-    m_tfp.m_fts_max * (m_tfp.m_fvr / m_tfp.m_flr) * (Lx / m_tfp.m_urms);
+    TurbForcingParm::m_fts_max *
+    (TurbForcingParm::m_fvr / TurbForcingParm::m_flr) * (Lx / m_tfp.m_urms);
 
   m_tfp.m_Lmin = std::min(Lx, std::min(Ly, Lz));
   m_tfp.m_kappaMax =
     static_cast<amrex::Real>(m_tfp.m_nmodes) / m_tfp.m_Lmin + 1.0e-8;
-  m_tfp.m_nxmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin));
-  m_tfp.m_nymodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin));
-  m_tfp.m_nzmodes = m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin));
+  m_tfp.m_nxmodes =
+    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin));
+  m_tfp.m_nymodes =
+    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin));
+  m_tfp.m_nzmodes =
+    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Lmin = " << m_tfp.m_Lmin << std::endl;
@@ -112,17 +117,18 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   }
 
   // tmp CPU storage that holds everything in one flat array
-  const int num_elmts =
-    m_tfp.m_array_size * m_tfp.m_array_size * m_tfp.m_array_size;
-  const int tmp_buffer_size = m_tfp.m_num_fdarray * num_elmts;
-  auto tmp_buffer = std::make_unique<amrex::Real[]>(tmp_buffer_size);
-
+  constexpr int num_elmts = TurbForcingParm::m_array_size *
+                            TurbForcingParm::m_array_size *
+                            TurbForcingParm::m_array_size;
+  constexpr int tmp_buffer_size = TurbForcingParm::m_num_fdarray * num_elmts;
+  amrex::Real tmp_buffer[tmp_buffer_size];
   // Separate out forcing data into individual Array4's
   int i_arr = 0;
-  const int fd_ncomp = 1;
-  const amrex::Dim3 fd_begin{0, 0, 0};
-  const amrex::Dim3 fd_end{
-    m_tfp.m_array_size, m_tfp.m_array_size, m_tfp.m_array_size};
+  constexpr int fd_ncomp = 1;
+  constexpr amrex::Dim3 fd_begin{0, 0, 0};
+  constexpr amrex::Dim3 fd_end{
+    TurbForcingParm::m_array_size, TurbForcingParm::m_array_size,
+    TurbForcingParm::m_array_size};
 
   amrex::Array4<amrex::Real> FTX(
     &tmp_buffer[(i_arr++) * num_elmts], fd_begin, fd_end, fd_ncomp);
@@ -164,9 +170,9 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
 
   int mode_count = 0;
 
-  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
-  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
-  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
+  const auto xstep = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
+  const auto ystep = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
+  const auto zstep = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Mode step = " << xstep << " " << ystep << " " << zstep
@@ -490,9 +496,9 @@ TurbForcing::addTurbVelForces(
   const int* f_lo = bx.loVect();
   const int* f_hi = bx.hiVect();
 
-  const auto xstep   = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
-  const auto ystep   = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
-  const auto zstep   = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
+  const auto xstep = static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
+  const auto ystep = static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
+  const auto zstep = static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
 
   const amrex::Real kappaMax = m_tfp.m_nmodes / m_tfp.m_Lmin + 1.0e-8;
 
