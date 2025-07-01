@@ -192,7 +192,9 @@ def production_rate(
                 plog = True
             elif reaction.rate.type == "three-body-pressure-dependent-Arrhenius":
                 if not third_body:
-                    raise ValueError(f"Inconsistent reaction type in reaction {orig_idx}.")
+                    raise ValueError(
+                        f"Inconsistent reaction type in reaction {orig_idx}."
+                    )
                 plog = True
             else:
                 plog = False
@@ -583,7 +585,9 @@ def production_rate(
                 plog = True
             elif reaction.rate.type == "three-body-pressure-dependent-Arrhenius":
                 if not third_body:
-                    raise ValueError(f"Inconsistent reaction type in reaction {orig_idx}.")
+                    raise ValueError(
+                        f"Inconsistent reaction type in reaction {orig_idx}."
+                    )
                 plog = True
             else:
                 plog = False
