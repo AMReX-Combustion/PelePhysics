@@ -18,10 +18,21 @@
 #define AR_ID 2
 #define H2O_ID 3
 
-#define NUM_ELEMENTS 5
-#define NUM_SPECIES 4
+#define NUM_GAS_ELEMENTS 5  // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 4   // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 0 // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 0
 
 #define NUM_FIT 4
 
@@ -71,43 +82,43 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
 //  inverse molecular weights
 #ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_imw[4] = {
-  0.0227226249176305, // CO2
-  0.0356964374955379, // N2
-  0.0250312891113892, // AR
-  0.0555092978073827, // H2O
+  2.2722624917630486e-02, // CO2
+  3.5696437495537948e-02, // N2
+  2.5031289111389236e-02, // AR
+  5.5509297807382736e-02, // H2O
 };
 #endif
 const amrex::Real h_global_imw[4] = {
-  0.0227226249176305, // CO2
-  0.0356964374955379, // N2
-  0.0250312891113892, // AR
-  0.0555092978073827, // H2O
+  2.2722624917630486e-02, // CO2
+  3.5696437495537948e-02, // N2
+  2.5031289111389236e-02, // AR
+  5.5509297807382736e-02, // H2O
 };
 
 //  molecular weights
 #ifdef AMREX_USE_GPU
 AMREX_GPU_CONSTANT const amrex::Real global_mw[4] = {
-  44.009000, // CO2
-  28.014000, // N2
-  39.950000, // AR
-  18.015000, // H2O
+  4.4009000000000000e+01, // CO2
+  2.8013999999999999e+01, // N2
+  3.9950000000000003e+01, // AR
+  1.8015000000000001e+01, // H2O
 };
 #endif
 const amrex::Real h_global_mw[4] = {
-  44.009000, // CO2
-  28.014000, // N2
-  39.950000, // AR
-  18.015000, // H2O
+  4.4009000000000000e+01, // CO2
+  2.8013999999999999e+01, // N2
+  3.9950000000000003e+01, // AR
+  1.8015000000000001e+01, // H2O
 };
 
 //  inverse molecular weights
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_imw(amrex::Real* imw_new)
 {
-  imw_new[0] = 0.0227226249176305; // CO2
-  imw_new[1] = 0.0356964374955379; // N2
-  imw_new[2] = 0.0250312891113892; // AR
-  imw_new[3] = 0.0555092978073827; // H2O
+  imw_new[0] = 2.2722624917630486e-02; // CO2
+  imw_new[1] = 3.5696437495537948e-02; // N2
+  imw_new[2] = 2.5031289111389236e-02; // AR
+  imw_new[3] = 5.5509297807382736e-02; // H2O
 }
 
 //  inverse molecular weight
@@ -124,10 +135,10 @@ imw(const int n)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_mw(amrex::Real* mw_new)
 {
-  mw_new[0] = 44.009000; // CO2
-  mw_new[1] = 28.014000; // N2
-  mw_new[2] = 39.950000; // AR
-  mw_new[3] = 18.015000; // H2O
+  mw_new[0] = 4.4009000000000000e+01; // CO2
+  mw_new[1] = 2.8013999999999999e+01; // N2
+  mw_new[2] = 3.9950000000000003e+01; // AR
+  mw_new[3] = 1.8015000000000001e+01; // H2O
 }
 
 //  molecular weight
@@ -152,328 +163,339 @@ CKRP(amrex::Real& ru, amrex::Real& ruc, amrex::Real& pa)
 
 // compute Cv/R at the given temperature
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-cv_R(amrex::Real* species, const amrex::Real* tc)
+cv_R(amrex::Real* species, const amrex::Real T)
 {
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
 
-  // temperature
-  const amrex::Real T = tc[1];
+  // species with no change across T
+  // species 2: AR
+  species[2] = +1.50000000e+00;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
-    species[0] = +1.35677352e+00 + 8.98459677e-03 * tc[1] -
-                 7.12356269e-06 * tc[2] + 2.45919022e-09 * tc[3] -
-                 1.43699548e-13 * tc[4];
+    species[0] = +1.35677352e+00 + 8.98459677e-03 * T - 7.12356269e-06 * T2 +
+                 2.45919022e-09 * T3 - 1.43699548e-13 * T4;
     // species 1: N2
-    species[1] = +2.29867700e+00 + 1.40824040e-03 * tc[1] -
-                 3.96322200e-06 * tc[2] + 5.64151500e-09 * tc[3] -
-                 2.44485400e-12 * tc[4];
+    species[1] = +2.29867700e+00 + 1.40824040e-03 * T - 3.96322200e-06 * T2 +
+                 5.64151500e-09 * T3 - 2.44485400e-12 * T4;
     // species 3: H2O
-    species[3] = +3.19864056e+00 - 2.03643410e-03 * tc[1] +
-                 6.52040211e-06 * tc[2] - 5.48797062e-09 * tc[3] +
-                 1.77197817e-12 * tc[4];
+    species[3] = +3.19864056e+00 - 2.03643410e-03 * T + 6.52040211e-06 * T2 -
+                 5.48797062e-09 * T3 + 1.77197817e-12 * T4;
   } else {
     // species 0: CO2
-    species[0] = +2.85746029e+00 + 4.41437026e-03 * tc[1] -
-                 2.21481404e-06 * tc[2] + 5.23490188e-10 * tc[3] -
-                 4.72084164e-14 * tc[4];
+    species[0] = +2.85746029e+00 + 4.41437026e-03 * T - 2.21481404e-06 * T2 +
+                 5.23490188e-10 * T3 - 4.72084164e-14 * T4;
     // species 1: N2
-    species[1] = +1.92664000e+00 + 1.48797680e-03 * tc[1] -
-                 5.68476000e-07 * tc[2] + 1.00970380e-10 * tc[3] -
-                 6.75335100e-15 * tc[4];
+    species[1] = +1.92664000e+00 + 1.48797680e-03 * T - 5.68476000e-07 * T2 +
+                 1.00970380e-10 * T3 - 6.75335100e-15 * T4;
     // species 3: H2O
-    species[3] = +2.03399249e+00 + 2.17691804e-03 * tc[1] -
-                 1.64072518e-07 * tc[2] - 9.70419870e-11 * tc[3] +
-                 1.68200992e-14 * tc[4];
+    species[3] = +2.03399249e+00 + 2.17691804e-03 * T - 1.64072518e-07 * T2 -
+                 9.70419870e-11 * T3 + 1.68200992e-14 * T4;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-               0.00000000e+00 * tc[4];
 }
 
 // compute Cp/R at the given temperature
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-cp_R(amrex::Real* species, const amrex::Real* tc)
+cp_R(amrex::Real* species, const amrex::Real T)
 {
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
 
-  // temperature
-  const amrex::Real T = tc[1];
+  // species with no change across T
+  // species 2: AR
+  species[2] = +2.50000000e+00;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
-    species[0] = +2.35677352e+00 + 8.98459677e-03 * tc[1] -
-                 7.12356269e-06 * tc[2] + 2.45919022e-09 * tc[3] -
-                 1.43699548e-13 * tc[4];
+    species[0] = +2.35677352e+00 + 8.98459677e-03 * T - 7.12356269e-06 * T2 +
+                 2.45919022e-09 * T3 - 1.43699548e-13 * T4;
     // species 1: N2
-    species[1] = +3.29867700e+00 + 1.40824040e-03 * tc[1] -
-                 3.96322200e-06 * tc[2] + 5.64151500e-09 * tc[3] -
-                 2.44485400e-12 * tc[4];
+    species[1] = +3.29867700e+00 + 1.40824040e-03 * T - 3.96322200e-06 * T2 +
+                 5.64151500e-09 * T3 - 2.44485400e-12 * T4;
     // species 3: H2O
-    species[3] = +4.19864056e+00 - 2.03643410e-03 * tc[1] +
-                 6.52040211e-06 * tc[2] - 5.48797062e-09 * tc[3] +
-                 1.77197817e-12 * tc[4];
+    species[3] = +4.19864056e+00 - 2.03643410e-03 * T + 6.52040211e-06 * T2 -
+                 5.48797062e-09 * T3 + 1.77197817e-12 * T4;
   } else {
     // species 0: CO2
-    species[0] = +3.85746029e+00 + 4.41437026e-03 * tc[1] -
-                 2.21481404e-06 * tc[2] + 5.23490188e-10 * tc[3] -
-                 4.72084164e-14 * tc[4];
+    species[0] = +3.85746029e+00 + 4.41437026e-03 * T - 2.21481404e-06 * T2 +
+                 5.23490188e-10 * T3 - 4.72084164e-14 * T4;
     // species 1: N2
-    species[1] = +2.92664000e+00 + 1.48797680e-03 * tc[1] -
-                 5.68476000e-07 * tc[2] + 1.00970380e-10 * tc[3] -
-                 6.75335100e-15 * tc[4];
+    species[1] = +2.92664000e+00 + 1.48797680e-03 * T - 5.68476000e-07 * T2 +
+                 1.00970380e-10 * T3 - 6.75335100e-15 * T4;
     // species 3: H2O
-    species[3] = +3.03399249e+00 + 2.17691804e-03 * tc[1] -
-                 1.64072518e-07 * tc[2] - 9.70419870e-11 * tc[3] +
-                 1.68200992e-14 * tc[4];
+    species[3] = +3.03399249e+00 + 2.17691804e-03 * T - 1.64072518e-07 * T2 -
+                 9.70419870e-11 * T3 + 1.68200992e-14 * T4;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-               0.00000000e+00 * tc[4];
 }
 
 // compute the g/(RT) at the given temperature
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-gibbs(amrex::Real* species, const amrex::Real* tc)
+gibbs(amrex::Real* species, const amrex::Real T)
 {
-
-  // temperature
-  const amrex::Real T = tc[1];
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
+
+  // species with no change across T
+  // species 2: AR
+  species[2] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
+               2.500000000000000e+00 * logT;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
     species[0] = -4.837196970000000e+04 * invT - 7.544278700000000e+00 -
-                 2.356773520000000e+00 * tc[0] - 4.492298385000000e-03 * tc[1] +
-                 1.187260448333333e-06 * tc[2] - 2.049325183333333e-10 * tc[3] +
-                 7.184977399999999e-15 * tc[4];
+                 2.356773520000000e+00 * logT - 4.492298385000000e-03 * T +
+                 1.187260448333333e-06 * T2 - 2.049325183333333e-10 * T3 +
+                 7.184977399999999e-15 * T4;
     // species 1: N2
     species[1] = -1.020899900000000e+03 * invT - 6.516950000000001e-01 -
-                 3.298677000000000e+00 * tc[0] - 7.041202000000000e-04 * tc[1] +
-                 6.605369999999999e-07 * tc[2] - 4.701262500000001e-10 * tc[3] +
-                 1.222427000000000e-13 * tc[4];
+                 3.298677000000000e+00 * logT - 7.041202000000000e-04 * T +
+                 6.605369999999999e-07 * T2 - 4.701262500000001e-10 * T3 +
+                 1.222427000000000e-13 * T4;
     // species 3: H2O
     species[3] = -3.029372670000000e+04 * invT + 5.047672768000000e+00 -
-                 4.198640560000000e+00 * tc[0] + 1.018217050000000e-03 * tc[1] -
-                 1.086733685000000e-06 * tc[2] + 4.573308850000000e-10 * tc[3] -
-                 8.859890850000000e-14 * tc[4];
+                 4.198640560000000e+00 * logT + 1.018217050000000e-03 * T -
+                 1.086733685000000e-06 * T2 + 4.573308850000000e-10 * T3 -
+                 8.859890850000000e-14 * T4;
   } else {
     // species 0: CO2
     species[0] = -4.875916600000000e+04 * invT + 1.585822230000000e+00 -
-                 3.857460290000000e+00 * tc[0] - 2.207185130000000e-03 * tc[1] +
-                 3.691356733333334e-07 * tc[2] - 4.362418233333334e-11 * tc[3] +
-                 2.360420820000000e-15 * tc[4];
+                 3.857460290000000e+00 * logT - 2.207185130000000e-03 * T +
+                 3.691356733333334e-07 * T2 - 4.362418233333334e-11 * T3 +
+                 2.360420820000000e-15 * T4;
     // species 1: N2
     species[1] = -9.227977000000000e+02 * invT - 3.053888000000000e+00 -
-                 2.926640000000000e+00 * tc[0] - 7.439884000000000e-04 * tc[1] +
-                 9.474600000000001e-08 * tc[2] - 8.414198333333333e-12 * tc[3] +
-                 3.376675500000000e-16 * tc[4];
+                 2.926640000000000e+00 * logT - 7.439884000000000e-04 * T +
+                 9.474600000000001e-08 * T2 - 8.414198333333333e-12 * T3 +
+                 3.376675500000000e-16 * T4;
     // species 3: H2O
     species[3] = -3.000429710000000e+04 * invT - 1.932777610000000e+00 -
-                 3.033992490000000e+00 * tc[0] - 1.088459020000000e-03 * tc[1] +
-                 2.734541966666666e-08 * tc[2] + 8.086832250000000e-12 * tc[3] -
-                 8.410049600000000e-16 * tc[4];
+                 3.033992490000000e+00 * logT - 1.088459020000000e-03 * T +
+                 2.734541966666666e-08 * T2 + 8.086832250000000e-12 * T3 -
+                 8.410049600000000e-16 * T4;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = -7.453750000000000e+02 * invT - 1.866000000000000e+00 -
-               2.500000000000000e+00 * tc[0] - 0.000000000000000e+00 * tc[1] -
-               0.000000000000000e+00 * tc[2] - 0.000000000000000e+00 * tc[3] -
-               0.000000000000000e+00 * tc[4];
 }
 
 // compute the a/(RT) at the given temperature
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-helmholtz(amrex::Real* species, const amrex::Real* tc)
+helmholtz(amrex::Real* species, const amrex::Real T)
 {
-
-  // temperature
-  const amrex::Real T = tc[1];
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
+  const amrex::Real logT = log(T);
+
+  // species with no change across T
+  // species 2: AR
+  species[2] = -7.45375000e+02 * invT - 2.86600000e+00 - 2.50000000e+00 * logT;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
     species[0] = -4.83719697e+04 * invT - 8.54427870e+00 -
-                 2.35677352e+00 * tc[0] - 4.49229839e-03 * tc[1] +
-                 1.18726045e-06 * tc[2] - 2.04932518e-10 * tc[3] +
-                 7.18497740e-15 * tc[4];
+                 2.35677352e+00 * logT - 4.49229839e-03 * T +
+                 1.18726045e-06 * T2 - 2.04932518e-10 * T3 +
+                 7.18497740e-15 * T4;
     // species 1: N2
     species[1] = -1.02089990e+03 * invT - 1.65169500e+00 -
-                 3.29867700e+00 * tc[0] - 7.04120200e-04 * tc[1] +
-                 6.60537000e-07 * tc[2] - 4.70126250e-10 * tc[3] +
-                 1.22242700e-13 * tc[4];
+                 3.29867700e+00 * logT - 7.04120200e-04 * T +
+                 6.60537000e-07 * T2 - 4.70126250e-10 * T3 +
+                 1.22242700e-13 * T4;
     // species 3: H2O
     species[3] = -3.02937267e+04 * invT + 4.04767277e+00 -
-                 4.19864056e+00 * tc[0] + 1.01821705e-03 * tc[1] -
-                 1.08673369e-06 * tc[2] + 4.57330885e-10 * tc[3] -
-                 8.85989085e-14 * tc[4];
+                 4.19864056e+00 * logT + 1.01821705e-03 * T -
+                 1.08673369e-06 * T2 + 4.57330885e-10 * T3 -
+                 8.85989085e-14 * T4;
   } else {
     // species 0: CO2
     species[0] = -4.87591660e+04 * invT + 5.85822230e-01 -
-                 3.85746029e+00 * tc[0] - 2.20718513e-03 * tc[1] +
-                 3.69135673e-07 * tc[2] - 4.36241823e-11 * tc[3] +
-                 2.36042082e-15 * tc[4];
+                 3.85746029e+00 * logT - 2.20718513e-03 * T +
+                 3.69135673e-07 * T2 - 4.36241823e-11 * T3 +
+                 2.36042082e-15 * T4;
     // species 1: N2
     species[1] = -9.22797700e+02 * invT - 4.05388800e+00 -
-                 2.92664000e+00 * tc[0] - 7.43988400e-04 * tc[1] +
-                 9.47460000e-08 * tc[2] - 8.41419833e-12 * tc[3] +
-                 3.37667550e-16 * tc[4];
+                 2.92664000e+00 * logT - 7.43988400e-04 * T +
+                 9.47460000e-08 * T2 - 8.41419833e-12 * T3 +
+                 3.37667550e-16 * T4;
     // species 3: H2O
     species[3] = -3.00042971e+04 * invT - 2.93277761e+00 -
-                 3.03399249e+00 * tc[0] - 1.08845902e-03 * tc[1] +
-                 2.73454197e-08 * tc[2] + 8.08683225e-12 * tc[3] -
-                 8.41004960e-16 * tc[4];
+                 3.03399249e+00 * logT - 1.08845902e-03 * T +
+                 2.73454197e-08 * T2 + 8.08683225e-12 * T3 -
+                 8.41004960e-16 * T4;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = -7.45375000e+02 * invT - 2.86600000e+00 -
-               2.50000000e+00 * tc[0] - 0.00000000e+00 * tc[1] -
-               0.00000000e+00 * tc[2] - 0.00000000e+00 * tc[3] -
-               0.00000000e+00 * tc[4];
 }
 
 // compute the e/(RT) at the given temperature
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
+speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
 {
-
-  // temperature
-  const amrex::Real T = tc[1];
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
+
+  // species with no change across T
+  // species 2: AR
+  species[2] = +1.50000000e+00 - 7.45375000e+02 * invT;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
-    species[0] = +1.35677352e+00 + 4.49229839e-03 * tc[1] -
-                 2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
-                 2.87399096e-14 * tc[4] - 4.83719697e+04 * invT;
+    species[0] = +1.35677352e+00 + 4.49229839e-03 * T - 2.37452090e-06 * T2 +
+                 6.14797555e-10 * T3 - 2.87399096e-14 * T4 -
+                 4.83719697e+04 * invT;
     // species 1: N2
-    species[1] = +2.29867700e+00 + 7.04120200e-04 * tc[1] -
-                 1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
-                 4.88970800e-13 * tc[4] - 1.02089990e+03 * invT;
+    species[1] = +2.29867700e+00 + 7.04120200e-04 * T - 1.32107400e-06 * T2 +
+                 1.41037875e-09 * T3 - 4.88970800e-13 * T4 -
+                 1.02089990e+03 * invT;
     // species 3: H2O
-    species[3] = +3.19864056e+00 - 1.01821705e-03 * tc[1] +
-                 2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
-                 3.54395634e-13 * tc[4] - 3.02937267e+04 * invT;
+    species[3] = +3.19864056e+00 - 1.01821705e-03 * T + 2.17346737e-06 * T2 -
+                 1.37199266e-09 * T3 + 3.54395634e-13 * T4 -
+                 3.02937267e+04 * invT;
   } else {
     // species 0: CO2
-    species[0] = +2.85746029e+00 + 2.20718513e-03 * tc[1] -
-                 7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
-                 9.44168328e-15 * tc[4] - 4.87591660e+04 * invT;
+    species[0] = +2.85746029e+00 + 2.20718513e-03 * T - 7.38271347e-07 * T2 +
+                 1.30872547e-10 * T3 - 9.44168328e-15 * T4 -
+                 4.87591660e+04 * invT;
     // species 1: N2
-    species[1] = +1.92664000e+00 + 7.43988400e-04 * tc[1] -
-                 1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
-                 1.35067020e-15 * tc[4] - 9.22797700e+02 * invT;
+    species[1] = +1.92664000e+00 + 7.43988400e-04 * T - 1.89492000e-07 * T2 +
+                 2.52425950e-11 * T3 - 1.35067020e-15 * T4 -
+                 9.22797700e+02 * invT;
     // species 3: H2O
-    species[3] = +2.03399249e+00 + 1.08845902e-03 * tc[1] -
-                 5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
-                 3.36401984e-15 * tc[4] - 3.00042971e+04 * invT;
+    species[3] = +2.03399249e+00 + 1.08845902e-03 * T - 5.46908393e-08 * T2 -
+                 2.42604967e-11 * T3 + 3.36401984e-15 * T4 -
+                 3.00042971e+04 * invT;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = +1.50000000e+00 + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
 // compute the h/(RT) at the given temperature (Eq 20)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
+speciesEnthalpy(amrex::Real* species, const amrex::Real T)
 {
-
-  // temperature
-  const amrex::Real T = tc[1];
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
+
+  // species with no change across T
+  // species 2: AR
+  species[2] = +2.50000000e+00 - 7.45375000e+02 * invT;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
-    species[0] = +2.35677352e+00 + 4.49229839e-03 * tc[1] -
-                 2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
-                 2.87399096e-14 * tc[4] - 4.83719697e+04 * invT;
+    species[0] = +2.35677352e+00 + 4.49229839e-03 * T - 2.37452090e-06 * T2 +
+                 6.14797555e-10 * T3 - 2.87399096e-14 * T4 -
+                 4.83719697e+04 * invT;
     // species 1: N2
-    species[1] = +3.29867700e+00 + 7.04120200e-04 * tc[1] -
-                 1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
-                 4.88970800e-13 * tc[4] - 1.02089990e+03 * invT;
+    species[1] = +3.29867700e+00 + 7.04120200e-04 * T - 1.32107400e-06 * T2 +
+                 1.41037875e-09 * T3 - 4.88970800e-13 * T4 -
+                 1.02089990e+03 * invT;
     // species 3: H2O
-    species[3] = +4.19864056e+00 - 1.01821705e-03 * tc[1] +
-                 2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
-                 3.54395634e-13 * tc[4] - 3.02937267e+04 * invT;
+    species[3] = +4.19864056e+00 - 1.01821705e-03 * T + 2.17346737e-06 * T2 -
+                 1.37199266e-09 * T3 + 3.54395634e-13 * T4 -
+                 3.02937267e+04 * invT;
   } else {
     // species 0: CO2
-    species[0] = +3.85746029e+00 + 2.20718513e-03 * tc[1] -
-                 7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
-                 9.44168328e-15 * tc[4] - 4.87591660e+04 * invT;
+    species[0] = +3.85746029e+00 + 2.20718513e-03 * T - 7.38271347e-07 * T2 +
+                 1.30872547e-10 * T3 - 9.44168328e-15 * T4 -
+                 4.87591660e+04 * invT;
     // species 1: N2
-    species[1] = +2.92664000e+00 + 7.43988400e-04 * tc[1] -
-                 1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
-                 1.35067020e-15 * tc[4] - 9.22797700e+02 * invT;
+    species[1] = +2.92664000e+00 + 7.43988400e-04 * T - 1.89492000e-07 * T2 +
+                 2.52425950e-11 * T3 - 1.35067020e-15 * T4 -
+                 9.22797700e+02 * invT;
     // species 3: H2O
-    species[3] = +3.03399249e+00 + 1.08845902e-03 * tc[1] -
-                 5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
-                 3.36401984e-15 * tc[4] - 3.00042971e+04 * invT;
+    species[3] = +3.03399249e+00 + 1.08845902e-03 * T - 5.46908393e-08 * T2 -
+                 2.42604967e-11 * T3 + 3.36401984e-15 * T4 -
+                 3.00042971e+04 * invT;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = +2.50000000e+00 + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-               0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
 // compute the S/R at the given temperature (Eq 21)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-speciesEntropy(amrex::Real* species, const amrex::Real* tc)
+speciesEntropy(amrex::Real* species, const amrex::Real T)
 {
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real logT = log(T);
 
-  // temperature
-  const amrex::Real T = tc[1];
+  // species with no change across T
+  // species 2: AR
+  species[2] = +2.50000000e+00 * logT + 4.36600000e+00;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
     // species 0: CO2
-    species[0] = +2.35677352e+00 * tc[0] + 8.98459677e-03 * tc[1] -
-                 3.56178134e-06 * tc[2] + 8.19730073e-10 * tc[3] -
-                 3.59248870e-14 * tc[4] + 9.90105222e+00;
+    species[0] = +2.35677352e+00 * logT + 8.98459677e-03 * T -
+                 3.56178134e-06 * T2 + 8.19730073e-10 * T3 -
+                 3.59248870e-14 * T4 + 9.90105222e+00;
     // species 1: N2
-    species[1] = +3.29867700e+00 * tc[0] + 1.40824040e-03 * tc[1] -
-                 1.98161100e-06 * tc[2] + 1.88050500e-09 * tc[3] -
-                 6.11213500e-13 * tc[4] + 3.95037200e+00;
+    species[1] = +3.29867700e+00 * logT + 1.40824040e-03 * T -
+                 1.98161100e-06 * T2 + 1.88050500e-09 * T3 -
+                 6.11213500e-13 * T4 + 3.95037200e+00;
     // species 3: H2O
-    species[3] = +4.19864056e+00 * tc[0] - 2.03643410e-03 * tc[1] +
-                 3.26020105e-06 * tc[2] - 1.82932354e-09 * tc[3] +
-                 4.42994543e-13 * tc[4] - 8.49032208e-01;
+    species[3] = +4.19864056e+00 * logT - 2.03643410e-03 * T +
+                 3.26020105e-06 * T2 - 1.82932354e-09 * T3 +
+                 4.42994543e-13 * T4 - 8.49032208e-01;
   } else {
     // species 0: CO2
-    species[0] = +3.85746029e+00 * tc[0] + 4.41437026e-03 * tc[1] -
-                 1.10740702e-06 * tc[2] + 1.74496729e-10 * tc[3] -
-                 1.18021041e-14 * tc[4] + 2.27163806e+00;
+    species[0] = +3.85746029e+00 * logT + 4.41437026e-03 * T -
+                 1.10740702e-06 * T2 + 1.74496729e-10 * T3 -
+                 1.18021041e-14 * T4 + 2.27163806e+00;
     // species 1: N2
-    species[1] = +2.92664000e+00 * tc[0] + 1.48797680e-03 * tc[1] -
-                 2.84238000e-07 * tc[2] + 3.36567933e-11 * tc[3] -
-                 1.68833775e-15 * tc[4] + 5.98052800e+00;
+    species[1] = +2.92664000e+00 * logT + 1.48797680e-03 * T -
+                 2.84238000e-07 * T2 + 3.36567933e-11 * T3 -
+                 1.68833775e-15 * T4 + 5.98052800e+00;
     // species 3: H2O
-    species[3] = +3.03399249e+00 * tc[0] + 2.17691804e-03 * tc[1] -
-                 8.20362590e-08 * tc[2] - 3.23473290e-11 * tc[3] +
-                 4.20502480e-15 * tc[4] + 4.96677010e+00;
+    species[3] = +3.03399249e+00 * logT + 2.17691804e-03 * T -
+                 8.20362590e-08 * T2 - 3.23473290e-11 * T3 +
+                 4.20502480e-15 * T4 + 4.96677010e+00;
   }
+}
 
-  // species with no change at a midpoint T
+// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+dcvpRdT(amrex::Real* species, const amrex::Real T)
+{
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+
+  // species with no change across T
   // species 2: AR
-  species[2] = +2.50000000e+00 * tc[0] + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
-               0.00000000e+00 * tc[4] + 4.36600000e+00;
+  species[2] = 0.0;
+
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: CO2
+    species[0] = +8.98459677e-03 - 1.42471254e-05 * T + 7.37757066e-09 * T2 -
+                 5.74798192e-13 * T3;
+    // species 1: N2
+    species[1] = +1.40824040e-03 - 7.92644400e-06 * T + 1.69245450e-08 * T2 -
+                 9.77941600e-12 * T3;
+    // species 3: H2O
+    species[3] = -2.03643410e-03 + 1.30408042e-05 * T - 1.64639119e-08 * T2 +
+                 7.08791268e-12 * T3;
+  } else {
+    // species 0: CO2
+    species[0] = +4.41437026e-03 - 4.42962808e-06 * T + 1.57047056e-09 * T2 -
+                 1.88833666e-13 * T3;
+    // species 1: N2
+    species[1] = +1.48797680e-03 - 1.13695200e-06 * T + 3.02911140e-10 * T2 -
+                 2.70134040e-14 * T3;
+    // species 3: H2O
+    species[3] = +2.17691804e-03 - 3.28145036e-07 * T - 2.91125961e-10 * T2 +
+                 6.72803968e-14 * T3;
+  }
 }
 
 // Returns the mean specific heat at CP (Eq. 33)
@@ -481,11 +503,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
 {
   amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cpor[4];                                //  temporary storage
-  cp_R(cpor, tc);
+  amrex::Real cpor[4]; //  temporary storage
+  cp_R(cpor, T);
 
   // perform dot product
   for (int id = 0; id < 4; ++id) {
@@ -500,59 +519,50 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 {
   amrex::Real result = 0.0;
-  const amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
 
   // compute Cp/R at the given temperature
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
+
+  // species with no change across T
+  // species 2: AR
+  result += y[2] * (+2.50000000e+00) * 0.0250312891113892;
 
   // species with midpoint at T=1000 kelvin
-  if (tT < 1000) {
+  if (T < 1000) {
     // species 0: CO2
-    result +=
-      y[0] *
-      (+2.35677352e+00 + 8.98459677e-03 * tc[1] - 7.12356269e-06 * tc[2] +
-       2.45919022e-09 * tc[3] - 1.43699548e-13 * tc[4]) *
-      0.0227226249176305;
+    result += y[0] *
+              (+2.35677352e+00 + 8.98459677e-03 * T - 7.12356269e-06 * T2 +
+               2.45919022e-09 * T3 - 1.43699548e-13 * T4) *
+              0.0227226249176305;
     // species 1: N2
-    result +=
-      y[1] *
-      (+3.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
-       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
-      0.0356964374955379;
+    result += y[1] *
+              (+3.29867700e+00 + 1.40824040e-03 * T - 3.96322200e-06 * T2 +
+               5.64151500e-09 * T3 - 2.44485400e-12 * T4) *
+              0.0356964374955379;
     // species 3: H2O
-    result +=
-      y[3] *
-      (+4.19864056e+00 - 2.03643410e-03 * tc[1] + 6.52040211e-06 * tc[2] -
-       5.48797062e-09 * tc[3] + 1.77197817e-12 * tc[4]) *
-      0.0555092978073827;
+    result += y[3] *
+              (+4.19864056e+00 - 2.03643410e-03 * T + 6.52040211e-06 * T2 -
+               5.48797062e-09 * T3 + 1.77197817e-12 * T4) *
+              0.0555092978073827;
   } else {
     // species 0: CO2
-    result +=
-      y[0] *
-      (+3.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
-       5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
-      0.0227226249176305;
+    result += y[0] *
+              (+3.85746029e+00 + 4.41437026e-03 * T - 2.21481404e-06 * T2 +
+               5.23490188e-10 * T3 - 4.72084164e-14 * T4) *
+              0.0227226249176305;
     // species 1: N2
-    result +=
-      y[1] *
-      (+2.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
-       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
-      0.0356964374955379;
+    result += y[1] *
+              (+2.92664000e+00 + 1.48797680e-03 * T - 5.68476000e-07 * T2 +
+               1.00970380e-10 * T3 - 6.75335100e-15 * T4) *
+              0.0356964374955379;
     // species 3: H2O
-    result +=
-      y[3] *
-      (+3.03399249e+00 + 2.17691804e-03 * tc[1] - 1.64072518e-07 * tc[2] -
-       9.70419870e-11 * tc[3] + 1.68200992e-14 * tc[4]) *
-      0.0555092978073827;
+    result += y[3] *
+              (+3.03399249e+00 + 2.17691804e-03 * T - 1.64072518e-07 * T2 -
+               9.70419870e-11 * T3 + 1.68200992e-14 * T4) *
+              0.0555092978073827;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  result += y[2] *
-            (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
-             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]) *
-            0.0250312891113892;
 
   cpbs = result * 8.31446261815324e+07;
 }
@@ -562,11 +572,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cvbl)
 {
   amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cvor[4];                                //  temporary storage
-  cv_R(cvor, tc);
+  amrex::Real cvor[4]; //  temporary storage
+  cv_R(cvor, T);
 
   // perform dot product
   for (int id = 0; id < 4; ++id) {
@@ -581,58 +588,49 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
 {
   amrex::Real result = 0.0;
-  const amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   // compute Cv/R at the given temperature
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
+
+  // species with no change across T
+  // species 2: AR
+  result += y[2] * (+1.50000000e+00) * 0.0250312891113892;
 
   // species with midpoint at T=1000 kelvin
-  if (tT < 1000) {
+  if (T < 1000) {
     // species 0: CO2
-    result +=
-      y[0] *
-      (+1.35677352e+00 + 8.98459677e-03 * tc[1] - 7.12356269e-06 * tc[2] +
-       2.45919022e-09 * tc[3] - 1.43699548e-13 * tc[4]) *
-      0.0227226249176305;
+    result += y[0] *
+              (+1.35677352e+00 + 8.98459677e-03 * T - 7.12356269e-06 * T2 +
+               2.45919022e-09 * T3 - 1.43699548e-13 * T4) *
+              0.0227226249176305;
     // species 1: N2
-    result +=
-      y[1] *
-      (+2.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
-       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
-      0.0356964374955379;
+    result += y[1] *
+              (+2.29867700e+00 + 1.40824040e-03 * T - 3.96322200e-06 * T2 +
+               5.64151500e-09 * T3 - 2.44485400e-12 * T4) *
+              0.0356964374955379;
     // species 3: H2O
-    result +=
-      y[3] *
-      (+3.19864056e+00 - 2.03643410e-03 * tc[1] + 6.52040211e-06 * tc[2] -
-       5.48797062e-09 * tc[3] + 1.77197817e-12 * tc[4]) *
-      0.0555092978073827;
+    result += y[3] *
+              (+3.19864056e+00 - 2.03643410e-03 * T + 6.52040211e-06 * T2 -
+               5.48797062e-09 * T3 + 1.77197817e-12 * T4) *
+              0.0555092978073827;
   } else {
     // species 0: CO2
-    result +=
-      y[0] *
-      (+2.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
-       5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
-      0.0227226249176305;
+    result += y[0] *
+              (+2.85746029e+00 + 4.41437026e-03 * T - 2.21481404e-06 * T2 +
+               5.23490188e-10 * T3 - 4.72084164e-14 * T4) *
+              0.0227226249176305;
     // species 1: N2
-    result +=
-      y[1] *
-      (+1.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
-       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
-      0.0356964374955379;
+    result += y[1] *
+              (+1.92664000e+00 + 1.48797680e-03 * T - 5.68476000e-07 * T2 +
+               1.00970380e-10 * T3 - 6.75335100e-15 * T4) *
+              0.0356964374955379;
     // species 3: H2O
-    result +=
-      y[3] *
-      (+2.03399249e+00 + 2.17691804e-03 * tc[1] - 1.64072518e-07 * tc[2] -
-       9.70419870e-11 * tc[3] + 1.68200992e-14 * tc[4]) *
-      0.0555092978073827;
+    result += y[3] *
+              (+2.03399249e+00 + 2.17691804e-03 * T - 1.64072518e-07 * T2 -
+               9.70419870e-11 * T3 + 1.68200992e-14 * T4) *
+              0.0555092978073827;
   }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  result += y[2] *
-            (+1.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
-             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]) *
-            0.0250312891113892;
 
   cvbs = result * 8.31446261815324e+07;
 }
@@ -642,12 +640,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
 {
   amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real hml[4];                                 //  temporary storage
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  speciesEnthalpy(hml, tc);
+  amrex::Real hml[4];                        //  temporary storage
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
+  speciesEnthalpy(hml, T);
 
   // perform dot product
   for (int id = 0; id < 4; ++id) {
@@ -662,61 +657,58 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 {
   amrex::Real result = 0.0;
-  const amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with midpoint at T=1000 kelvin
-  if (tT < 1000) {
-    // species 0: CO2
-    result += y[0] *
-              (+2.35677352e+00 + 4.49229839e-03 * tc[1] -
-               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
-               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT) *
-              0.0227226249176305;
-    // species 1: N2
-    result += y[1] *
-              (+3.29867700e+00 + 7.04120200e-04 * tc[1] -
-               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
-               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
-              0.0356964374955379;
-    // species 3: H2O
-    result += y[3] *
-              (+4.19864056e+00 - 1.01821705e-03 * tc[1] +
-               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
-               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT) *
-              0.0555092978073827;
-  } else {
-    // species 0: CO2
-    result += y[0] *
-              (+3.85746029e+00 + 2.20718513e-03 * tc[1] -
-               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
-               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
-              0.0227226249176305;
-    // species 1: N2
-    result += y[1] *
-              (+2.92664000e+00 + 7.43988400e-04 * tc[1] -
-               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
-               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
-              0.0356964374955379;
-    // species 3: H2O
-    result += y[3] *
-              (+3.03399249e+00 + 1.08845902e-03 * tc[1] -
-               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
-               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT) *
-              0.0555092978073827;
-  }
-
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 2: AR
   result +=
-    y[2] *
-    (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
-     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT) *
-    0.0250312891113892;
+    y[2] * (+2.50000000e+00 - 7.45375000e+02 * invT) * 0.0250312891113892;
 
-  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: CO2
+    result +=
+      y[0] *
+      (+2.35677352e+00 + 4.49229839e-03 * T - 2.37452090e-06 * T2 +
+       6.14797555e-10 * T3 - 2.87399096e-14 * T4 - 4.83719697e+04 * invT) *
+      0.0227226249176305;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+3.29867700e+00 + 7.04120200e-04 * T - 1.32107400e-06 * T2 +
+       1.41037875e-09 * T3 - 4.88970800e-13 * T4 - 1.02089990e+03 * invT) *
+      0.0356964374955379;
+    // species 3: H2O
+    result +=
+      y[3] *
+      (+4.19864056e+00 - 1.01821705e-03 * T + 2.17346737e-06 * T2 -
+       1.37199266e-09 * T3 + 3.54395634e-13 * T4 - 3.02937267e+04 * invT) *
+      0.0555092978073827;
+  } else {
+    // species 0: CO2
+    result +=
+      y[0] *
+      (+3.85746029e+00 + 2.20718513e-03 * T - 7.38271347e-07 * T2 +
+       1.30872547e-10 * T3 - 9.44168328e-15 * T4 - 4.87591660e+04 * invT) *
+      0.0227226249176305;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+2.92664000e+00 + 7.43988400e-04 * T - 1.89492000e-07 * T2 +
+       2.52425950e-11 * T3 - 1.35067020e-15 * T4 - 9.22797700e+02 * invT) *
+      0.0356964374955379;
+    // species 3: H2O
+    result +=
+      y[3] *
+      (+3.03399249e+00 + 1.08845902e-03 * T - 5.46908393e-08 * T2 -
+       2.42604967e-11 * T3 + 3.36401984e-15 * T4 - 3.00042971e+04 * invT) *
+      0.0555092978073827;
+  }
+
+  const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
 
   hbms = result * RT;
 }
@@ -726,12 +718,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBML(const amrex::Real T, const amrex::Real x[], amrex::Real& ubml)
 {
   amrex::Real result = 0;
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real uml[4];                                 //  temporary energy array
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  speciesInternalEnergy(uml, tc);
+  amrex::Real uml[4];                        //  temporary energy array
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
+  speciesInternalEnergy(uml, T);
 
   // perform dot product
   for (int id = 0; id < 4; ++id) {
@@ -746,61 +735,58 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
 {
   amrex::Real result = 0.0;
-  const amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  const amrex::Real T2 = T * T;
+  const amrex::Real T3 = T * T * T;
+  const amrex::Real T4 = T * T * T * T;
   const amrex::Real invT = 1.0 / T;
 
-  // species with midpoint at T=1000 kelvin
-  if (tT < 1000) {
-    // species 0: CO2
-    result += y[0] *
-              (+1.35677352e+00 + 4.49229839e-03 * tc[1] -
-               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
-               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT) *
-              0.0227226249176305;
-    // species 1: N2
-    result += y[1] *
-              (+2.29867700e+00 + 7.04120200e-04 * tc[1] -
-               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
-               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
-              0.0356964374955379;
-    // species 3: H2O
-    result += y[3] *
-              (+3.19864056e+00 - 1.01821705e-03 * tc[1] +
-               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
-               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT) *
-              0.0555092978073827;
-  } else {
-    // species 0: CO2
-    result += y[0] *
-              (+2.85746029e+00 + 2.20718513e-03 * tc[1] -
-               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
-               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
-              0.0227226249176305;
-    // species 1: N2
-    result += y[1] *
-              (+1.92664000e+00 + 7.43988400e-04 * tc[1] -
-               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
-               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
-              0.0356964374955379;
-    // species 3: H2O
-    result += y[3] *
-              (+2.03399249e+00 + 1.08845902e-03 * tc[1] -
-               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
-               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT) *
-              0.0555092978073827;
-  }
-
-  // species with no change at a midpoint T
+  // species with no change across T
   // species 2: AR
   result +=
-    y[2] *
-    (+1.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
-     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT) *
-    0.0250312891113892;
+    y[2] * (+1.50000000e+00 - 7.45375000e+02 * invT) * 0.0250312891113892;
 
-  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: CO2
+    result +=
+      y[0] *
+      (+1.35677352e+00 + 4.49229839e-03 * T - 2.37452090e-06 * T2 +
+       6.14797555e-10 * T3 - 2.87399096e-14 * T4 - 4.83719697e+04 * invT) *
+      0.0227226249176305;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+2.29867700e+00 + 7.04120200e-04 * T - 1.32107400e-06 * T2 +
+       1.41037875e-09 * T3 - 4.88970800e-13 * T4 - 1.02089990e+03 * invT) *
+      0.0356964374955379;
+    // species 3: H2O
+    result +=
+      y[3] *
+      (+3.19864056e+00 - 1.01821705e-03 * T + 2.17346737e-06 * T2 -
+       1.37199266e-09 * T3 + 3.54395634e-13 * T4 - 3.02937267e+04 * invT) *
+      0.0555092978073827;
+  } else {
+    // species 0: CO2
+    result +=
+      y[0] *
+      (+2.85746029e+00 + 2.20718513e-03 * T - 7.38271347e-07 * T2 +
+       1.30872547e-10 * T3 - 9.44168328e-15 * T4 - 4.87591660e+04 * invT) *
+      0.0227226249176305;
+    // species 1: N2
+    result +=
+      y[1] *
+      (+1.92664000e+00 + 7.43988400e-04 * T - 1.89492000e-07 * T2 +
+       2.52425950e-11 * T3 - 1.35067020e-15 * T4 - 9.22797700e+02 * invT) *
+      0.0356964374955379;
+    // species 3: H2O
+    result +=
+      y[3] *
+      (+2.03399249e+00 + 1.08845902e-03 * T - 5.46908393e-08 * T2 -
+       2.42604967e-11 * T3 + 3.36401984e-15 * T4 - 3.00042971e+04 * invT) *
+      0.0555092978073827;
+  }
+
+  const amrex::Real RT = 8.31446261815324e+07 * T; // R*T
 
   ubms = result * RT;
 }
@@ -816,11 +802,8 @@ CKSBML(
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
   amrex::Real logPratio = log(P / 1013250.0);
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real sor[4]; //  temporary storage
-  speciesEntropy(sor, tc);
+  speciesEntropy(sor, T);
 
   // Compute Eq 42
   for (int id = 0; id < 4; ++id) {
@@ -841,9 +824,6 @@ CKSBMS(
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
   amrex::Real logPratio = log(P / 1013250.0);
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real sor[4];  //  temporary storage
   amrex::Real x[4];    //  need a ytx conversion
   amrex::Real YOW = 0; // See Eq 4, 6 in CK Manual
@@ -853,11 +833,11 @@ CKSBMS(
     YOW += y[i] * imw(i);
   }
   // Now compute y to x conversion
-  x[0] = y[0] / (44.009000 * YOW);
-  x[1] = y[1] / (28.014000 * YOW);
-  x[2] = y[2] / (39.950000 * YOW);
-  x[3] = y[3] / (18.015000 * YOW);
-  speciesEntropy(sor, tc);
+  x[0] = y[0] / (4.4009000000000000e+01 * YOW);
+  x[1] = y[1] / (2.8013999999999999e+01 * YOW);
+  x[2] = y[2] / (3.9950000000000003e+01 * YOW);
+  x[3] = y[3] / (1.8015000000000001e+01 * YOW);
+  speciesEntropy(sor, T);
   // Perform computation in Eq 42 and 43
   for (int i = 0; i < 4; i++) {
     result += x[i] * (sor[i] - log((x[i] + 1e-100)) - logPratio);
@@ -878,8 +858,8 @@ GET_T_GIVEN_EY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 3500.0; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
   CKUBMS(tmin, y, emin);
   CKUBMS(tmax, y, emax);
@@ -930,8 +910,8 @@ GET_T_GIVEN_HY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 3500.0; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
   CKHBMS(tmin, y, hmin);
   CKHBMS(tmax, y, hmax);
@@ -979,10 +959,10 @@ CKPX(
   amrex::Real& P)
 {
   amrex::Real XW = 0;                      //  To hold mean molecular wt
-  XW += x[0] * 44.009000;                  // CO2
-  XW += x[1] * 28.014000;                  // N2
-  XW += x[2] * 39.950000;                  // AR
-  XW += x[3] * 18.015000;                  // H2O
+  XW += x[0] * 4.4009000000000000e+01;     // CO2
+  XW += x[1] * 2.8013999999999999e+01;     // N2
+  XW += x[2] * 3.9950000000000003e+01;     // AR
+  XW += x[3] * 1.8015000000000001e+01;     // H2O
   P = rho * 8.31446261815324e+07 * T / XW; // P = rho*R*T/W
 }
 
@@ -1013,10 +993,10 @@ CKPC(
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
-  W += c[0] * 44.009000; // CO2
-  W += c[1] * 28.014000; // N2
-  W += c[2] * 39.950000; // AR
-  W += c[3] * 18.015000; // H2O
+  W += c[0] * 4.4009000000000000e+01; // CO2
+  W += c[1] * 2.8013999999999999e+01; // N2
+  W += c[2] * 3.9950000000000003e+01; // AR
+  W += c[3] * 1.8015000000000001e+01; // H2O
 
   for (int id = 0; id < 4; ++id) {
     sumC += c[id];
@@ -1033,10 +1013,10 @@ CKRHOX(
   amrex::Real& rho)
 {
   amrex::Real XW = 0;                        //  To hold mean molecular wt
-  XW += x[0] * 44.009000;                    // CO2
-  XW += x[1] * 28.014000;                    // N2
-  XW += x[2] * 39.950000;                    // AR
-  XW += x[3] * 18.015000;                    // H2O
+  XW += x[0] * 4.4009000000000000e+01;       // CO2
+  XW += x[1] * 2.8013999999999999e+01;       // N2
+  XW += x[2] * 3.9950000000000003e+01;       // AR
+  XW += x[3] * 1.8015000000000001e+01;       // H2O
   rho = P * XW / (8.31446261815324e+07 * T); // rho = P*W/(R*T)
 }
 
@@ -1068,10 +1048,10 @@ CKRHOC(
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
-  W += c[0] * 44.009000; // CO2
-  W += c[1] * 28.014000; // N2
-  W += c[2] * 39.950000; // AR
-  W += c[3] * 18.015000; // H2O
+  W += c[0] * 4.4009000000000000e+01; // CO2
+  W += c[1] * 2.8013999999999999e+01; // N2
+  W += c[2] * 3.9950000000000003e+01; // AR
+  W += c[3] * 1.8015000000000001e+01; // H2O
 
   for (int id = 0; id < 4; ++id) {
     sumC += c[id];
@@ -1105,11 +1085,11 @@ CKMMWY(const amrex::Real y[], amrex::Real& wtm)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWX(const amrex::Real x[], amrex::Real& wtm)
 {
-  amrex::Real XW = 0;     //  see Eq 4 in CK Manual
-  XW += x[0] * 44.009000; // CO2
-  XW += x[1] * 28.014000; // N2
-  XW += x[2] * 39.950000; // AR
-  XW += x[3] * 18.015000; // H2O
+  amrex::Real XW = 0;                  //  see Eq 4 in CK Manual
+  XW += x[0] * 4.4009000000000000e+01; // CO2
+  XW += x[1] * 2.8013999999999999e+01; // N2
+  XW += x[2] * 3.9950000000000003e+01; // AR
+  XW += x[3] * 1.8015000000000001e+01; // H2O
   wtm = XW;
 }
 
@@ -1121,10 +1101,10 @@ CKMMWC(const amrex::Real c[], amrex::Real& wtm)
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
-  W += c[0] * 44.009000; // CO2
-  W += c[1] * 28.014000; // N2
-  W += c[2] * 39.950000; // AR
-  W += c[3] * 18.015000; // H2O
+  W += c[0] * 4.4009000000000000e+01; // CO2
+  W += c[1] * 2.8013999999999999e+01; // N2
+  W += c[2] * 3.9950000000000003e+01; // AR
+  W += c[3] * 1.8015000000000001e+01; // H2O
 
   for (int id = 0; id < 4; ++id) {
     sumC += c[id];
@@ -1138,10 +1118,7 @@ CKMMWC(const amrex::Real c[], amrex::Real& wtm)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPOR(const amrex::Real T, amrex::Real cpor[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  cp_R(cpor, tc);
+  cp_R(cpor, T);
 }
 
 // get H/RT as a function of T
@@ -1149,10 +1126,7 @@ CKCPOR(const amrex::Real T, amrex::Real cpor[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHORT(const amrex::Real T, amrex::Real hort[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  speciesEnthalpy(hort, tc);
+  speciesEnthalpy(hort, T);
 }
 
 // get S/R as a function of T
@@ -1160,10 +1134,7 @@ CKHORT(const amrex::Real T, amrex::Real hort[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSOR(const amrex::Real T, amrex::Real sor[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  speciesEntropy(sor, tc);
+  speciesEntropy(sor, T);
 }
 
 // convert y[species] (mass fracs) to x[species] (mole fracs)
@@ -1231,16 +1202,16 @@ CKXTY(const amrex::Real x[], amrex::Real y[])
 {
   amrex::Real XW = 0; // See Eq 4, 9 in CK Manual
   // Compute mean molecular wt first
-  XW += x[0] * 44.009000; // CO2
-  XW += x[1] * 28.014000; // N2
-  XW += x[2] * 39.950000; // AR
-  XW += x[3] * 18.015000; // H2O
+  XW += x[0] * 4.4009000000000000e+01; // CO2
+  XW += x[1] * 2.8013999999999999e+01; // N2
+  XW += x[2] * 3.9950000000000003e+01; // AR
+  XW += x[3] * 1.8015000000000001e+01; // H2O
   // Now compute conversion
   amrex::Real XWinv = 1.0 / XW;
-  y[0] = x[0] * 44.009000 * XWinv;
-  y[1] = x[1] * 28.014000 * XWinv;
-  y[2] = x[2] * 39.950000 * XWinv;
-  y[3] = x[3] * 18.015000 * XWinv;
+  y[0] = x[0] * 4.4009000000000000e+01 * XWinv;
+  y[1] = x[1] * 2.8013999999999999e+01 * XWinv;
+  y[2] = x[2] * 3.9950000000000003e+01 * XWinv;
+  y[3] = x[3] * 1.8015000000000001e+01 * XWinv;
 }
 
 // convert x[species] (mole fracs) to c[species] (molar conc)
@@ -1270,10 +1241,10 @@ CKXTCR(
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
   // Compute mean molecular wt first
-  XW += x[0] * 44.009000; // CO2
-  XW += x[1] * 28.014000; // N2
-  XW += x[2] * 39.950000; // AR
-  XW += x[3] * 18.015000; // H2O
+  XW += x[0] * 4.4009000000000000e+01; // CO2
+  XW += x[1] * 2.8013999999999999e+01; // N2
+  XW += x[2] * 3.9950000000000003e+01; // AR
+  XW += x[3] * 1.8015000000000001e+01; // H2O
   ROW = rho / XW;
 
   // Compute conversion, see Eq 11
@@ -1306,16 +1277,16 @@ CKCTY(const amrex::Real c[], amrex::Real y[])
 {
   amrex::Real CW = 0; // See Eq 12 in CK Manual
   // compute denominator in eq 12 first
-  CW += c[0] * 44.009000; // CO2
-  CW += c[1] * 28.014000; // N2
-  CW += c[2] * 39.950000; // AR
-  CW += c[3] * 18.015000; // H2O
+  CW += c[0] * 4.4009000000000000e+01; // CO2
+  CW += c[1] * 2.8013999999999999e+01; // N2
+  CW += c[2] * 3.9950000000000003e+01; // AR
+  CW += c[3] * 1.8015000000000001e+01; // H2O
   // Now compute conversion
   amrex::Real CWinv = 1.0 / CW;
-  y[0] = c[0] * 44.009000 * CWinv;
-  y[1] = c[1] * 28.014000 * CWinv;
-  y[2] = c[2] * 39.950000 * CWinv;
-  y[3] = c[3] * 18.015000 * CWinv;
+  y[0] = c[0] * 4.4009000000000000e+01 * CWinv;
+  y[1] = c[1] * 2.8013999999999999e+01 * CWinv;
+  y[2] = c[2] * 3.9950000000000003e+01 * CWinv;
+  y[3] = c[3] * 1.8015000000000001e+01 * CWinv;
 }
 
 // get specific heat at constant volume as a function
@@ -1323,10 +1294,7 @@ CKCTY(const amrex::Real c[], amrex::Real y[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVML(const amrex::Real T, amrex::Real cvml[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  cv_R(cvml, tc);
+  cv_R(cvml, T);
 
   // convert to chemkin units
   for (int id = 0; id < 4; ++id) {
@@ -1339,10 +1307,7 @@ CKCVML(const amrex::Real T, amrex::Real cvml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPML(const amrex::Real T, amrex::Real cpml[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  cp_R(cpml, tc);
+  cp_R(cpml, T);
 
   // convert to chemkin units
   for (int id = 0; id < 4; ++id) {
@@ -1355,11 +1320,8 @@ CKCPML(const amrex::Real T, amrex::Real cpml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUML(const amrex::Real T, amrex::Real uml[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  speciesInternalEnergy(uml, tc);
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
+  speciesInternalEnergy(uml, T);
 
   // convert to chemkin units
   for (int id = 0; id < 4; ++id) {
@@ -1372,11 +1334,8 @@ CKUML(const amrex::Real T, amrex::Real uml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHML(const amrex::Real T, amrex::Real hml[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  speciesEnthalpy(hml, tc);
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
+  speciesEnthalpy(hml, T);
 
   // convert to chemkin units
   for (int id = 0; id < 4; ++id) {
@@ -1388,10 +1347,7 @@ CKHML(const amrex::Real T, amrex::Real hml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSML(const amrex::Real T, amrex::Real sml[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  speciesEntropy(sml, tc);
+  speciesEntropy(sml, T);
 
   // convert to chemkin units
   for (int id = 0; id < 4; ++id) {
@@ -1404,10 +1360,7 @@ CKSML(const amrex::Real T, amrex::Real sml[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVMS(const amrex::Real T, amrex::Real cvms[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  cv_R(cvms, tc);
+  cv_R(cvms, T);
   // multiply by R/molecularweight
   cvms[0] *= 1.889264154639560e+06; // CO2
   cvms[1] *= 2.967966951578939e+06; // N2
@@ -1420,10 +1373,7 @@ CKCVMS(const amrex::Real T, amrex::Real cvms[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPMS(const amrex::Real T, amrex::Real cpms[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  cp_R(cpms, tc);
+  cp_R(cpms, T);
   // multiply by R/molecularweight
   cpms[0] *= 1.889264154639560e+06; // CO2
   cpms[1] *= 2.967966951578939e+06; // N2
@@ -1435,12 +1385,9 @@ CKCPMS(const amrex::Real T, amrex::Real cpms[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUMS(const amrex::Real T, amrex::Real ums[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
 
-  speciesInternalEnergy(ums, tc);
+  speciesInternalEnergy(ums, T);
 
   for (int i = 0; i < 4; i++) {
     ums[i] *= RT * imw(i);
@@ -1451,12 +1398,9 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHMS(const amrex::Real T, amrex::Real hms[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+  amrex::Real RT = 8.31446261815324e+07 * T; // R*T
 
-  speciesEnthalpy(hms, tc);
+  speciesEnthalpy(hms, T);
 
   for (int i = 0; i < 4; i++) {
     hms[i] *= RT * imw(i);
@@ -1467,10 +1411,7 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSMS(const amrex::Real T, amrex::Real sms[])
 {
-  amrex::Real tT = T; // temporary temperature
-  const amrex::Real tc[5] = {
-    log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  speciesEntropy(sms, tc);
+  speciesEntropy(sms, T);
   // multiply by R/molecularweight
   sms[0] *= 1.889264154639560e+06; // CO2
   sms[1] *= 2.967966951578939e+06; // N2
@@ -1485,8 +1426,9 @@ comp_qfqr(
   amrex::Real* /*qr*/,
   const amrex::Real* /*sc*/,
   const amrex::Real* /*sc_qss*/,
-  const amrex::Real* /*tc*/,
-  const amrex::Real /*invT*/)
+  const amrex::Real /*T*/,
+  const amrex::Real /*invT*/,
+  const amrex::Real /*logT*/)
 {
 }
 
@@ -1620,10 +1562,10 @@ CKWXR(
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
   // Compute mean molecular wt first
-  XW += x[0] * 44.009000; // CO2
-  XW += x[1] * 28.014000; // N2
-  XW += x[2] * 39.950000; // AR
-  XW += x[3] * 18.015000; // H2O
+  XW += x[0] * 4.4009000000000000e+01; // CO2
+  XW += x[1] * 2.8013999999999999e+01; // N2
+  XW += x[2] * 3.9950000000000003e+01; // AR
+  XW += x[3] * 1.8015000000000001e+01; // H2O
   // Extra 1e6 factor to take c to SI
   ROW = 1e6 * rho / XW;
 
@@ -1662,43 +1604,6 @@ CKCHRGMASS(amrex::Real zk[])
   for (int id = 0; id < 4; ++id) {
     zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
   }
-}
-
-// compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-dcvpRdT(amrex::Real* species, const amrex::Real* tc)
-{
-
-  // temperature
-  const amrex::Real T = tc[1];
-
-  // species with midpoint at T=1000 kelvin
-  if (T < 1000) {
-    // species 0: CO2
-    species[0] = +8.98459677e-03 - 1.42471254e-05 * tc[1] +
-                 7.37757066e-09 * tc[2] - 5.74798192e-13 * tc[3];
-    // species 1: N2
-    species[1] = +1.40824040e-03 - 7.92644400e-06 * tc[1] +
-                 1.69245450e-08 * tc[2] - 9.77941600e-12 * tc[3];
-    // species 3: H2O
-    species[3] = -2.03643410e-03 + 1.30408042e-05 * tc[1] -
-                 1.64639119e-08 * tc[2] + 7.08791268e-12 * tc[3];
-  } else {
-    // species 0: CO2
-    species[0] = +4.41437026e-03 - 4.42962808e-06 * tc[1] +
-                 1.57047056e-09 * tc[2] - 1.88833666e-13 * tc[3];
-    // species 1: N2
-    species[1] = +1.48797680e-03 - 1.13695200e-06 * tc[1] +
-                 3.02911140e-10 * tc[2] - 2.70134040e-14 * tc[3];
-    // species 3: H2O
-    species[3] = +2.17691804e-03 - 3.28145036e-07 * tc[1] -
-                 2.91125961e-10 * tc[2] + 6.72803968e-14 * tc[3];
-  }
-
-  // species with no change at a midpoint T
-  // species 2: AR
-  species[2] = +0.00000000e+00 + 0.00000000e+00 * tc[1] +
-               0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3];
 }
 
 // compute an approx to the reaction Jacobian
