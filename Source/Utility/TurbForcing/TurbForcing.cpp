@@ -508,12 +508,14 @@ TurbForcing::addTurbVelForces(
 
   // Separate out forcing data into individual Array4's
   int i_arr = 0;
-  const int fd_ncomp = 1;
-  const int num_elmts =
-    m_tfp.m_array_size * m_tfp.m_array_size * m_tfp.m_array_size;
-  const amrex::Dim3 fd_begin{0, 0, 0};
-  const amrex::Dim3 fd_end{
-    m_tfp.m_array_size, m_tfp.m_array_size, m_tfp.m_array_size};
+  constexpr int fd_ncomp = 1;
+  constexpr int num_elmts = TurbForcingParm::m_array_size *
+                            TurbForcingParm::m_array_size *
+                            TurbForcingParm::m_array_size;
+  constexpr amrex::Dim3 fd_begin{0, 0, 0};
+  constexpr amrex::Dim3 fd_end{
+    TurbForcingParm::m_array_size, TurbForcingParm::m_array_size,
+    TurbForcingParm::m_array_size};
 
   amrex::Array4<amrex::Real> FTX(
     &m_tfp.m_forcedata[(i_arr++) * num_elmts], fd_begin, fd_end, fd_ncomp);
