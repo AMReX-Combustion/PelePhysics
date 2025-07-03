@@ -10,7 +10,7 @@ In addition to routines for evaluating chemical reactions, transport properties,
 
 * Premixed Flame (``PMF``) initialization from precomputed 1D flame profiles
 * Turbulent inflows (``TurbInflow``) on domain boundaries from saved turbulence data
-* Forced Turbulence (``TurbForce``) on maintained HIT
+* Forced Turbulence (``TurbForce``) for maintained HIT
 * Plt file management (``PltFileManager``)
 * Output of runtime ``Diagnostics``
 * Basic ``Utilities``, including unit conversions
@@ -172,9 +172,9 @@ Forced Turbulence Implementation Details
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The strategy is to inject energy into the large scales using a source term in the momentum equation; the turbulence then develops naturally through the
-Richardson-Kolmogorov cascade.  The original description is in Aspden et al (`DOI: 10.2140/camcos.2008.3.103 https://msp.org/camcos/2008/3-1/p06.xhtml`__);
+Richardson-Kolmogorov cascade.  The original description is in Aspden et al. (see `here <https://doi.org/10.2140/camcos.2008.3.103>`_);
 a few modifications (e.g. tweaking the amplitudes of the modes through the random seed, which reduced the temporal variation in u_rms) and explicitly using
-a divergence-free form (see `https://doi.org/10.1137/110829386`__). We typically run in a cube, or 4:1 box; larger boxes can achieved using the hack_lz
+a divergence-free form (see `here <https://doi.org/10.1137/110829386>`_). We typically run in a cube, or 4:1 box; larger boxes can achieved using the hack_lz
 option, which uses a periodic reproduction of the forcing in the z direction.  As the source term is a superposition of a substantial number of fourier
 modes, the direct evaluation is computationally expensive.  The resulting field is smooth (as we're forcing the large scales), so for computational efficiency,
 the source term is evaluated on a coarser box (by ff_factor, usually 4), and interpolated onto the required resolution; this is substantially faster, and
