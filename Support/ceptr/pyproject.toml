@@ -19,7 +19,7 @@ pandas = ">=2.0.3"
 toml = ">=0.10.2"
 pyarrow = "^15.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 black = {version = "^24.3.0"}
 isort = "^5.12.0"

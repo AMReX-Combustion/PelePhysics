@@ -8676,8 +8676,8 @@ GET_T_GIVEN_EY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 4000.0; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
   CKUBMS(tmin, y, emin);
   CKUBMS(tmax, y, emax);
@@ -8728,8 +8728,8 @@ GET_T_GIVEN_HY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 4000.0; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
   CKHBMS(tmin, y, hmin);
   CKHBMS(tmax, y, hmax);
@@ -39216,11 +39216,10 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
     1.02867715078631e+16 * x185 * exp(-1321.446964403191 * invT - 5.45 * logT);
   amrex::Real x2169 =
     -0.29097730287517898 * x2166 + 0.43429448190325198 * log(x2168) - 0.4;
-  amrex::Real x2173 =
-    1.7777777777777777 * ((x2169) * (x2169)) /
-      ((-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1) *
-       (-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1)) +
-    1.0;
+  amrex::Real x2173 = ((x2169) * (x2169)) /
+                        ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
+                         (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75)) +
+                      1.0;
   const amrex::Real x2176 =
     exp(M_LN10 * (0.43429448190325198 * x2166 / x2173)) / (x2168 + 1.0);
   const amrex::Real x2182 =
@@ -39367,13 +39366,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   const amrex::Real x2359 =
     refC * sc[15] * exp(-g_RT[0] - g_RT[14] + g_RT[15] + x2163);
   const amrex::Real x2362 =
-    1.7777777777777777 * x2169 * x2333 /
-    ((-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1) *
-     (-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1));
-  x2169 = 2.3703703703703702 * ((x2169) * (x2169)) * x2333 /
-          ((-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1) *
-           (-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1) *
-           (-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1));
+    x2169 * x2333 /
+    ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
+     (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75));
+  x2169 = ((x2169) * (x2169)) * x2333 /
+          ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
+           (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
+           (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75));
   const amrex::Real x2366 =
     1.112e+22 * x185 * x2166 * x2176 * x2356 / ((x2173) * (x2173));
   const amrex::Real x2368 =
@@ -39770,11 +39769,11 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   const amrex::Real x3985 = exp(-0.5 * logT);
   const amrex::Real x3987 = ((sc[2]) * (sc[2])) * x3985;
   const amrex::Real x3990 =
-    1.7777777777777778e-16 /
-    ((x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
-      1.3333333333333334e-8) *
-     (x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
-      1.3333333333333334e-8));
+    (1.0 /
+     ((75000000.0 * x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
+       1.0) *
+      (75000000.0 * x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
+       1.0)));
   const amrex::Real x3992 = -g_RT[2] - g_RT[6] + g_RT[7];
   const amrex::Real x3995 =
     refC * sc[7] * x196 * exp(-3018.29356149671 * invT - 5.576 * logT + x3992);

@@ -5132,8 +5132,8 @@ GET_T_GIVEN_EY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 2000.0; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
   CKUBMS(tmin, y, emin);
   CKUBMS(tmax, y, emax);
@@ -5184,8 +5184,8 @@ GET_T_GIVEN_HY(
   const int maxiter = 200;
   const amrex::Real tol = 1.e-6;
 #endif
-  amrex::Real tmin = 90;   // max lower bound for thermo def
-  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real tmin = 300.0;  // max lower bound for thermo def
+  amrex::Real tmax = 2000.0; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
   CKHBMS(tmin, y, hmin);
   CKHBMS(tmax, y, hmax);
@@ -8951,8 +8951,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     wdot[5] += 0.239186 * qdot;
     wdot[9] += 0.246500 * qdot;
     wdot[11] += 0.236833 * qdot;
-    wdot[12] -= qdot;
     wdot[12] += 0.700000 * qdot;
+    wdot[12] -= qdot;
     wdot[19] += 0.300000 * qdot;
   }
 
