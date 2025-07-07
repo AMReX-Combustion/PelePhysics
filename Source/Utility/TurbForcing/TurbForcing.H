@@ -23,8 +23,6 @@ struct TurbForcingParm
   // or as the factor itself
   int m_hack_lz = 0;
 
-  amrex::Real m_rho_incompressible = -1;
-
   // Tuned by Andrew Aspden, change at own risk!
   int m_ff_factor = 4;
   int m_nmodes = 4;
@@ -71,13 +69,16 @@ public:
   void init(amrex::GeometryData const& geomdata);
 
   // builds the forcing term
+  // note: a_rho_incompressible is unused if a_incompressible
+  // == false.
   void addTurbVelForces(
     amrex::GeometryData const& geomdata,
     const amrex::Box& bx,
     const amrex::Real& a_time,
     amrex::Array4<amrex::Real> const& force,
     amrex::Array4<const amrex::Real> const& rho,
-    const int a_incompressible);
+    const int a_incompressible,
+    const amrex::Real a_rho_incompressible = -1.0);
 
 private:
   TurbForcingParm m_tfp;

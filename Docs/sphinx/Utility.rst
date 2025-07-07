@@ -156,7 +156,6 @@ provided below. ::
   turbforce.time_offset         = 0.0                     # Offset of the forcing function.
   turbforce.hack_lz             = 0                       # Allow periodic reproduction in z.
   turbforce.force_scale_fudge   = 1.0                     # Used for fine scale tuning of the forcing function.
-  turbforce.rho_incompressible  = -1.0                    # Density if running in incompressible mode (otherwise this is not used).
 
   turbforce.ff_factor           = 4                       # Fast force coarsening factor.
   turbforce.nmodes              = 4                       # Largest mode to force.

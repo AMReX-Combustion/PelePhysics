@@ -34,8 +34,6 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   // or as the factor itself
   pp.query("hack_lz", m_tfp.m_hack_lz);
 
-  pp.query("rho_incompressible", m_tfp.m_rho_incompressible);
-
   // Tuned by Andrew Aspden, change at own risk!
   // fast force coarsening factor
   pp.query("ff_factor", m_tfp.m_ff_factor);
@@ -473,13 +471,14 @@ TurbForcing::addTurbVelForces(
   const amrex::Real& time,
   amrex::Array4<amrex::Real> const& force,
   amrex::Array4<const amrex::Real> const& rho,
-  const int a_incompressible)
+  const int a_incompressible,
+  const amrex::Real a_rho_incompressible)
 {
   AMREX_ALWAYS_ASSERT(m_turbforcing_initialized);
 
-  if (a_incompressible != 0 && m_tfp.m_rho_incompressible <= 0.0) {
+  if (a_incompressible != 0 && a_rho_incompressible <= 0.0) {
     amrex::Abort(
-      "turbforce.rho_incompressible must be greater than 0 when "
+      "rho_incompressible must be greater than 0 when "
       "incompressible\n");
   }
 
@@ -730,7 +729,7 @@ TurbForcing::addTurbVelForces(
 
   // Need all of ffarr filled for next lambda
   amrex::Gpu::synchronize();
-
+ 
   // Now interpolate onto fine grid
   if (a_incompressible == 0) {
     amrex::ParallelFor(
@@ -767,8 +766,7 @@ TurbForcing::addTurbVelForces(
       bx, AMREX_SPACEDIM,
       [=, ff_factor = m_tfp.m_ff_factor,
        rho =
-         m_tfp
-           .m_rho_incompressible] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
+         a_rho_incompressible] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
         const int ff_k = k / ff_factor;
         const int ff_j = j / ff_factor;
         const int ff_i = i / ff_factor;
