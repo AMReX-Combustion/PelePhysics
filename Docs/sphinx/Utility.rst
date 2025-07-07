@@ -10,6 +10,7 @@ In addition to routines for evaluating chemical reactions, transport properties,
 
 * Premixed Flame (``PMF``) initialization from precomputed 1D flame profiles
 * Turbulent inflows (``TurbInflow``) on domain boundaries from saved turbulence data
+* Forced Turbulence (``TurbForce``) for maintained HIT
 * Plt file management (``PltFileManager``)
 * Output of runtime ``Diagnostics``
 * Basic ``Utilities``, including unit conversions
@@ -135,6 +136,42 @@ inflow plane data and interpolation approaches for periodic and nonperiodic tang
           be take. Inflows should not be generated from simulations where EBs intersect the inflow plane.
 
 .. figure:: ./Visualization/TurbInflowData.png
+
+.. _sec_turbforce:
+
+Forced Turbulence
+=================
+
+PelePhysics supports the capability for maintained homogeneous isotropic turbulence.  A source term in the momentum equation injects energy at
+large scales, which naturally cascades to form (maintained) homogeneous isotropic turbulence.
+
+Input file options
+~~~~~~~~~~~~~~~~~~
+
+The input file options that drive this utility (and thus are inherited by PeleC and PeleLMeX) are
+provided below. ::
+
+  turbforce.v                   = 0                       # Verbosity level
+  turbforce.urms                = [Must be User Defined]  # Target urms
+  turbforce.time_offset         = 0.0                     # Offset of the forcing function.
+  turbforce.hack_lz             = 0                       # Allow periodic reproduction in z.
+  turbforce.force_scale_fudge   = 1.0                     # Used for fine scale tuning of the forcing function.
+
+  turbforce.ff_factor           = 4                       # Fast force coarsening factor.
+  turbforce.nmodes              = 4                       # Largest mode to force.
+  turbforce.forcing_epsilon     = 0.1                     # Reduce amplitude of modes used for breaking symmetry.
+  turbforce.spectrum_type       = 2                       # Shape of the spectrum of the forcing.
+  turbforce.moderate_zero_modes = 1                       # Reduce the impact of any zero mode.
+  turbforce.mode_start          = 0                       # Starting mode
+
+For ff_factor, nmodes, forcing_epsilon, spectrum_type and moderate_zero_modes, it is best to leave these as defaults unless you are confident on
+the consiquences.
+
+Forced Turbulence Implementation Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The strategy is to inject energy into the large scales using a source term in the momentum equation; the turbulence then develops naturally through the Richardson-Kolmogorov cascade.  The original description is in `Aspden et al. <https://doi.org/10.2140/camcos.2008.3.103>`_; a few modifications (e.g. tweaking the amplitudes of the modes through the random seed, which reduced the temporal variation in u_rms) and explicitly using a divergence-free form (see `Almgren et al. <https://doi.org/10.1137/110829386>`_). We typically run in a cube, or 4:1 box; larger boxes can achieved using the hack_lz option, which uses a periodic reproduction of the forcing in the z direction.  As the source term is a superposition of a substantial number of fourier modes, the direct evaluation is computationally expensive.  The resulting field is smooth (as we're forcing the large scales), so for computational efficiency, the source term is evaluated on a coarser box (by ff_factor, usually 4), and interpolated onto the required resolution; this is substantially faster, and indistinguishable from the direct approach.
+
 
 Plt File Management
 ===================
