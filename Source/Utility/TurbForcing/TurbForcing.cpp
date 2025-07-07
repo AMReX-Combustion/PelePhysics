@@ -729,7 +729,8 @@ TurbForcing::addTurbVelForces(
 
   // Need all of ffarr filled for next lambda
   amrex::Gpu::synchronize();
- 
+
+  
   // Now interpolate onto fine grid
   if (a_incompressible == 0) {
     amrex::ParallelFor(
