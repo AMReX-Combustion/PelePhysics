@@ -137,8 +137,9 @@ speciesNames<Manifold>(
   amrex::Vector<std::string>& spn, const EosParm<Manifold>* eparm)
 {
   if (eparm == nullptr) {
+	  amrex::Print()<<"\n How come this function gets called without passing a eparm obj in spraySetup() line 271?";
     amrex::Abort(
-      "Manifold EOS requires an EosParm input in order to determine "
+      "\nManifold EOS requires an EosParm input in order to determine "
       "species names");
   }
   spn.resize(NUM_SPECIES);
