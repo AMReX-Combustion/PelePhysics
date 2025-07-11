@@ -217,6 +217,7 @@ calculateSpraySource(
       T_skin = T_part + rule * delT;
     }
     // Calculate the C_p at the skin temperature for each species
+    //Sreejith: T2Cpi not yet implemented for manifold model
     eos.T2Cpi(T_skin, cp_n.data());
     eos.T2Hi(T_part, h_part.data());
     for (int n = 0; n < NUM_SPECIES; ++n) {
