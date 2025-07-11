@@ -2,6 +2,7 @@
 #define SPRAYFUELDATA_H
 
 #include "PelePhysics.H"
+#include "UnitConversions.H"
 #include <AMReX_RealVect.H>
 
 // Spray flags and indices
@@ -38,32 +39,35 @@ enum splash_breakup {
   splash_wet_splash
 };
 
+using m2c = pele::physics::utilities::mks2cgs;
+
 // Units for sprays
 struct SprayUnits
 {
 #ifdef PELELM_USE_SPRAY
   // For converting CGS to MKS
-  amrex::Real ru_conv = 1.E-7;
-  amrex::Real eng_conv = 1.E-4;
-  amrex::Real rho_conv = 1.E3;
-  amrex::Real mass_conv = 1.E-3;
-  amrex::Real rhod_conv = 0.1; // rho D conversion
-  amrex::Real mu_conv = 0.1;
-  amrex::Real lambda_conv = 1.E-5;
-  amrex::Real pres_conv = 0.1;
-  amrex::Real len_conv = 0.01;
+  static constexpr amrex::Real ru_conv = m2c::Energy(1.0);
+  static constexpr amrex::Real eng_conv = m2c::H(1.0);
+  static constexpr amrex::Real rho_conv = m2c::Rho(1.0);
+  static constexpr amrex::Real mass_conv = m2c::Mass(1.0);
+  static constexpr amrex::Real rhod_conv =
+    m2c::Rho(1.0) * m2c::Alpha(1.0); // rho D conversion
+  static constexpr amrex::Real mu_conv = m2c::Mu(1.0);
+  static constexpr amrex::Real lambda_conv = m2c::Lambda(1.0);
+  static constexpr amrex::Real pres_conv = m2c::P(1.0);
+  static constexpr amrex::Real len_conv = m2c::Length(1.0);
 #else
-  amrex::Real ru_conv = 1.;
-  amrex::Real eng_conv = 1.;
-  amrex::Real rho_conv = 1.;
-  amrex::Real mass_conv = 1.;
-  amrex::Real rhod_conv = 1.;
-  amrex::Real mu_conv = 1.;
-  amrex::Real lambda_conv = 1.;
-  amrex::Real pres_conv = 1.;
-  amrex::Real len_conv = 1.;
+  static constexpr amrex::Real ru_conv = 1.;
+  static constexpr amrex::Real eng_conv = 1.;
+  static constexpr amrex::Real rho_conv = 1.;
+  static constexpr amrex::Real mass_conv = 1.;
+  static constexpr amrex::Real rhod_conv = 1.;
+  static constexpr amrex::Real mu_conv = 1.;
+  static constexpr amrex::Real lambda_conv = 1.;
+  static constexpr amrex::Real pres_conv = 1.;
+  static constexpr amrex::Real len_conv = 1.;
 #endif
-  amrex::Real min_mass = 1.E-13 * mass_conv;
+  static constexpr amrex::Real min_mass = 1.E-13 * mass_conv;
 };
 
 // Structure that contains the interpolated gas phase state
