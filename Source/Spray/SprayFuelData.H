@@ -101,18 +101,6 @@ struct GasPhaseVals
       fluid_Y_dot[n] = 0.;
     }
   }
-
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void define()
-  {
-    SprayUnits SPU;
-    mw_mix = 0.;
-    for (int n = 0; n < NUM_SPECIES; ++n) {
-      mw_mix += Y_fluid[n] / mw[n];
-    }
-    p_fluid =
-      rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid * SPU.ru_conv;
-    mw_mix = 1. / mw_mix;
-  }
 };
 
 // Structure containing values for the liquid sprays
