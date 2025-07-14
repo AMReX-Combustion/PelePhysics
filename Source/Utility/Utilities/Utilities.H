@@ -64,6 +64,11 @@ rectangle_circle_intersection_area(
   const amrex::Real y0new = y0 - cy;
   const amrex::Real y1new = y1 - cy;
 
+  // Return 0 if fully outside the square that circumscribes the circle
+  if (x0new >= r || x1new <= -r || y0new >= r || y1new <= -r) {
+    return 0.0;
+  }
+
   // Compute the area
   const amrex::Real sign = copysign(1.0, y0new) * copysign(1.0, y1new);
   const amrex::Real y0mod = amrex::min(std::abs(y0new), std::abs(y1new));
