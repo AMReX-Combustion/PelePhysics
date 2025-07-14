@@ -489,14 +489,14 @@ private:
       auto* beg = &tf_data->grids[start];
       int idx = static_cast<int>(
         std::lower_bound(beg + 1, beg + dimLen - 1, interpdata[dim]) - beg - 1);
-      idx = std::min(
-        std::max(idx, 0),
-        dimLen - 2); // don't let idx be negative or out of bounds
 #else
       int idx = 0;
       utilities::locate(&tf_data->grids[start], dimLen, interpdata[dim], idx);
 #endif
 
+      idx = std::min(
+        std::max(idx, 0),
+        dimLen - 2); // don't let idx be negative or out of bounds
       indices[dim] = idx;
       idx += start;
       amrex::Real dx_inv =

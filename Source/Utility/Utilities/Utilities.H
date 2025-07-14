@@ -95,8 +95,8 @@ void
 locate(const amrex::Real* xtable, const int n, const amrex::Real& x, int& idxlo)
 {
   // If x is out of bounds, return boundary index
-  if (x >= xtable[n - 2]) {
-    idxlo = n - 2;
+  if (x >= xtable[n - 1]) {
+    idxlo = n - 1;
     return;
   }
   if (x <= xtable[0]) {
@@ -106,7 +106,7 @@ locate(const amrex::Real* xtable, const int n, const amrex::Real& x, int& idxlo)
 
   // Do the bisection
   idxlo = 0;
-  int idxhi = n - 2;
+  int idxhi = n - 1;
   bool notdone = true;
   while (notdone) {
     if (idxhi - idxlo <= 1) {
