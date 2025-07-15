@@ -195,23 +195,23 @@ struct BinaryDiff<eos::SRK>
     for (int i = 1; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < i; ++j) {
         // cppcheck-suppress knownConditionTrueFalse
-          const int idx_ij = 4 * (i * (i + 1) / 2 + j);
-          const int idx_ijk = (i + NUM_SPECIES * j) * NUM_SPECIES;
-          amrex::Real dbintemp = tparm->fitdbin[idx_ij] +
-                                 tparm->fitdbin[idx_ij + 1] * logT[0] +
-                                 tparm->fitdbin[idx_ij + 2] * logT[1] +
-                                 tparm->fitdbin[idx_ij + 3] * logT[2];
-          dbintemp = std::exp(-dbintemp);
+        const int idx_ij = 4 * (i * (i + 1) / 2 + j);
+        const int idx_ijk = (i + NUM_SPECIES * j) * NUM_SPECIES;
+        amrex::Real dbintemp = tparm->fitdbin[idx_ij] +
+                               tparm->fitdbin[idx_ij + 1] * logT[0] +
+                               tparm->fitdbin[idx_ij + 2] * logT[1] +
+                               tparm->fitdbin[idx_ij + 3] * logT[2];
+        dbintemp = std::exp(-dbintemp);
 
-          amrex::Real Upsilonij = 0.0;
-          for (int k = 0; k < NUM_SPECIES; ++k) {
-            Upsilonij += tparm->Upsilonijk[idx_ijk+ k] * Yloc[k];
-          }
-          // here we have a symetry 
-          Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
-          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
-          Ddiag[i] += Xloc[j] * dbintemp;
-          Ddiag[j] += Xloc[i] * dbintemp; 
+        amrex::Real Upsilonij = 0.0;
+        for (int k = 0; k < NUM_SPECIES; ++k) {
+          Upsilonij += tparm->Upsilonijk[idx_ijk + k] * Yloc[k];
+        }
+        // here we have a symetry
+        Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
+        dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
+        Ddiag[i] += Xloc[j] * dbintemp;
+        Ddiag[j] += Xloc[i] * dbintemp;
       }
     }
     for (int i = 0; i < NUM_SPECIES; ++i) {
