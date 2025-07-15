@@ -106,16 +106,34 @@ calcVaporState(
   amrex::Real sumYSkin = 0.; // Mass fraction of fuel in the modeled skin phase
   amrex::Real sumYfFluid = 0.; // Mass fraction of fuel in the gas phase
   amrex::Real sumYVap = 0.;    // Mass fraction of fuel in the vapor phase
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yfv{0.0};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     if (X_vapor[spf] > 0.) {
       const int fspec = fdat.indx[spf];
       const int fdspec = fdat.dep_indx[spf];
       const amrex::Real mw_fuel = gpv.mw[fspec];
-      amrex::Real Yfv = X_vapor[spf] * mw_fuel / totalmwx;
-      sumYVap += Yfv;
+      Yfv[spf] = X_vapor[spf] * mw_fuel / totalmwx;
+      sumYVap += Yfv[spf];
+    }
+  }
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    if (X_vapor[spf] > 0.) {
+      const int fspec = fdat.indx[spf];
+      const int fdspec = fdat.dep_indx[spf];
       amrex::Real gasY = gpv.Y_fluid[fdspec];
+      // If multiple species share a dep spec, split gas phase across them
+      // in proportion to their contribution at equilibrium
+      if (fdat.liquid_spec_share_gas_dep) {
+        amrex::Real Yvap_sum = 0.0;
+        for (int spf2 = 0; spf2 < SPRAY_FUEL_NUM; ++spf2) {
+          if (fdat.dep_indx[spf2] == fdspec) {
+            Yvap_sum += Yfv[spf2];
+          }
+        }
+        gasY *= (Yfv[spf] / Yvap_sum);
+      }
       sumYfFluid += gasY;
-      amrex::Real Ysk = Yfv + rule * (gasY - Yfv);
+      amrex::Real Ysk = Yfv[spf] + rule * (gasY - Yfv[spf]);
       Y_skin[fspec] = Ysk;
       sumYSkin += Ysk;
     }

@@ -286,6 +286,14 @@ SprayParticleContainer::spraySetup(const Real* body_force)
       Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
     }
   }
+
+  for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+    for (int j = i + 1; j < SPRAY_FUEL_NUM; ++j) {
+      if (m_sprayData->dep_indx[i] == m_sprayData->dep_indx[j]) {
+        m_sprayData->liquid_spec_share_gas_dep = true;
+      }
+    }
+  }
 #else
   m_sprayData->indx[0] = 0;
   m_sprayData->dep_indx[0] = 0;
