@@ -169,8 +169,9 @@ struct InitParm<eos::EosParm<eos::Manifold>>
         // The info file / metadata loader will ensure we have a definition for
         // each
         parm_in->m_h_parm.idx_Wdot[idim] = -1;
-        amrex::Abort("Computation of manifold src terms from species src terms "
-                     "needs to be reimplemented");
+        amrex::Abort(
+          "Computation of manifold src terms from species src terms "
+          "needs to be reimplemented");
       }
     }
 
@@ -178,17 +179,19 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     // the variance of another parameter - e.g. ZMIXVAR would be the variance
     // of ZMIX
     for (int idim = 0; idim < h_manf_data_in->Ndim; idim++) {
-      const std::string dimname = amrex::trim(std::string(
-        &h_manf_data_in->dimnames[idim * h_manf_data_in->len_str],
-        h_manf_data_in->len_str));
+      const std::string dimname = amrex::trim(
+        std::string(
+          &h_manf_data_in->dimnames[idim * h_manf_data_in->len_str],
+          h_manf_data_in->len_str));
       size_t suffix_start = std::max(dimname.length() - 3, size_t(0));
       if (dimname.substr(suffix_start) == "VAR") {
         const std::string variance_of = dimname.substr(0, suffix_start);
         int jdim;
         for (jdim = 0; jdim < h_manf_data_in->Ndim; jdim++) {
-          const std::string test_dimname = amrex::trim(std::string(
-            &h_manf_data_in->dimnames[jdim * h_manf_data_in->len_str],
-            h_manf_data_in->len_str));
+          const std::string test_dimname = amrex::trim(
+            std::string(
+              &h_manf_data_in->dimnames[jdim * h_manf_data_in->len_str],
+              h_manf_data_in->len_str));
           if (variance_of == test_dimname) {
             parm_in->m_h_parm.is_variance_of[idim] = jdim;
             if (verbose > 0) {

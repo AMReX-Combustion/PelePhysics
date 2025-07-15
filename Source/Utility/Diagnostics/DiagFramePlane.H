@@ -4,8 +4,11 @@
 #include "DiagBase.H"
 #include <AMReX_VisMF.H>
 
+using namespace amrex::mpidatatypes;
+
 class DiagFramePlane : public DiagBase::Register<DiagFramePlane>
 {
+
 public:
   static std::string identifier() { return "DiagFramePlane"; }
 
@@ -80,10 +83,12 @@ private:
   amrex::Vector<std::string> m_fieldNames;
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
   int m_nfiles_plane;
+  bool m_dump_flat_3D_plotfile;
 
   // Plane definition
   int m_normal;
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_center;
+  bool m_dump_ghost_if_OOB;
 
   // Interpolation data
   InterpType m_interpType;

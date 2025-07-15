@@ -316,8 +316,12 @@ class Converter:
             cck.ckubms(hdr, self.mechanism, self.species_info)
             cck.cksbml(hdr, self.mechanism, self.species_info)
             cck.cksbms(hdr, self.mechanism, self.species_info)
-            cck.temp_given_ey(hdr)
-            cck.temp_given_hy(hdr)
+            cck.temp_given_ey(
+                hdr, self.mechanism, self.species_info.nonqssa_species_list
+            )
+            cck.temp_given_hy(
+                hdr, self.mechanism, self.species_info.nonqssa_species_list
+            )
             cck.ckpx(hdr, self.mechanism, self.species_info)
             cck.ckpy(hdr, self.mechanism, self.species_info)
             cck.ckpc(hdr, self.mechanism, self.species_info)

@@ -226,6 +226,27 @@ The procedure is as follows for updating the spray droplet:
 
     :math:`N_{d}` is the number of droplets per computational parcel, and :math:`V_{\rm{cell}}` is the volume for the cell of interest. Note that the cell volume can vary depending on AMR level and if an EB is present.
 
+
+.. warning::
+
+   **Dimensional Assumptions in the Spray Model**
+
+   The spray model assumes spherically symmetric droplets and is inherently three-dimensional. 
+   For two-dimensional simulations, the domain is treated as one cell wide in the :math:`z`-direction, 
+   with :math:`L_z = \Delta x`, so the volume in the gas-phase source terms is:
+
+   .. math::
+
+      V_{\rm{cell}} = \Delta x \, \Delta y \, \Delta x
+
+   For nominally single droplet cases, this effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`, 
+   exaggerating Stefan flow in the :math:`x`- and :math:`y`-directions and omitting flow in :math:`z`. While this has minimal impact on 
+   droplet diameter or temperature, it can distort the surrounding gas-phase flow, especially for low :math:`\text{Re}_d`.
+
+   For such cases, fully three-dimensional simulations are recommended.
+
+
+   
 Spray Flags and Inputs
 ======================
 
@@ -303,7 +324,7 @@ Spray Flags and Inputs
 
     particles.SP_psat = 4.07857 1501.268 -78.67 1.E5
 
-  where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+  where the numbers represent coefficients :math:`a`, :math:`b`, :math:`c`, and unit conversion :math:`d`, respectively in:
 
   .. math::
      p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
@@ -430,60 +451,87 @@ Care must be taken to ensure the amount of mass injected during a time step matc
 
 4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
+Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the fluid domain. To use this feature, initialize a spray jet (named ``jet_dpm``, say) by using the statement `spray.jetnames=jet_dpm` in the input file as previously mentioned. In order to use the ANSYS Fluent DPM capability, set the boolean input variable ``spray.jet_dpm.read_from_dpm_file`` to true and specify the DPM file name by ``spray.jet_dpm.dpm_filename=<filename>``. 
+The DPM data in the file will correspond to a specified time-gap, but it can be made to repeat periodically by specifying ``spray.jet_dpm.is_dpm_periodic=true``. Otherwise, spray particle injection will cease after the final DPM time is reached. The spray injection can be set to start from a specific DPM time stamp by specifying 
+``spray.jet_dpm.initial_injection_dpm_time=<DPM time stamp>``. Similarly, the spray injection can also be set to start from a specific flow time by setting ``spray.jet_dpm.initial_injection_flow_time`` to the appropriate value. If the coordinate system used in the ANSYS Fluent DPM file is different from that in Pele, 
+one can use ``spray.jet_dpm.trans_matrix`` and ``spray.jet_dpm.translation`` to specify the direction cosine matrix (3X3 matrix) and the translation vector (<dx,dy,dz>) to align both the coordinate systems. 
+
+
+  The DPM file has a specific format and a typical file is shown below:
+
+.. figure:: /Visualization/DPMFileFormat.png
+   :align: center
+   :figwidth: 60%
+
+.. _spray_validation:
+
 Spray Validation
 ================
 
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed and compared with computational or experimental results published in literature. These tests are setup in ``PeleProduction/PeleMPruns/single_drop_test``. To run a test case, simply open ``Validate.py`` and set the case name from the table below ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
 
-  case = TestCaseName()
+  case = WongLin()
 
-then do ``python Validate.py``.
+then run ``python Validate.py``.
 The following table details the parameters of each test:
 
 .. table::
 
-   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |Test Case Name | :math:`T_g` [K] |:math:`p_g` [bar]|:math:`T_d` [K]  |:math:`d_d` [um] | :math:`\Delta u` [m/s]|Ref              |
-   |               |                 |                 |                 |                 |                       |                 |
-   +===============+=================+=================+=================+=================+=======================+=================+
-   |``Tonini_4_33``|1000             |1                |300              |200              |6.786                  |[#ton]_          |
-   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``Abramzon``   |1500             |10               |300              |100              |15                     |[#abram]_        |
-   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``Daif``       |348              |1                |294              |1334             |3.10                   |[#daif]_         |
-   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
-   |``RungeHep``   |273              |1                |272              |500-570          |2.5                    |[#runge]_        |
-   |``RungeDec``   |                 |                 |                 |                 |                       |                 |
-   |``RungeMix``   |                 |                 |                 |                 |                       |                 |
-   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |Test Name      | :math:`T_g` [K] |:math:`p_g` [bar]|:math:`T_d` [K]  |:math:`d_d` [um] | :math:`\Delta u` [m/s]|Fuel             |Ref              |
+   |               |                 |                 |                 |                 |                       |                 |                 |
+   +===============+=================+=================+=================+=================+=======================+=================+=================+
+   |``Nomura``     |471              |1                |298              |700              |0.0                    |heptane          |[#nomura]_       |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |``WongLin``    |1000             |1.01325          |315              |1961             |0.385                  |decane           |[#wonglin]_      |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |``Daif``       |348              |1.01325          |291              |1334             |3.1                    |heptane/decane   |[#daif]_         |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |``RungeHep``,  |272              |1.01325          |272              |570-594          |2.5                    |heptane,         |[#runge]_        |
+   |``RungeDec``,  |                 |                 |                 |                 |                       |decane,          |                 |
+   |``RungeMix``   |                 |                 |                 |                 |                       |mix              |                 |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
 
-.. figure:: /Visualization/ton_res.png
+
+.. figure:: /Visualization/nomura_res_2025.png
+   :align: center
+   :figwidth: 40%
+
+   Heptane droplet diameter comparisons with Nomura et al. [#nomura]_
+
+.. figure:: /Visualization/wonglin_res_2025.png
    :align: center
    :figwidth: 80%
 
-   Droplet diameter, temperature, and n-octane mass fraction comparisons with Figure 4.33 in [#ton]_
+   Decane droplet diameter and temperature comparisons with Wong & Lin [#wonglin]_
 
-.. figure:: /Visualization/abram_res.png
+.. figure:: /Visualization/daif_res_2025.png
    :align: center
    :figwidth: 80%
 
-   Droplet diameter and temperature comparisons with [#abram]_
+   Binary mixture of heptane and decane droplet diameter and temperature comparisons with Daı̈f et al. [#daif]_
 
-.. figure:: /Visualization/daif_res.png
+.. figure:: /Visualization/runge_simple_res_2025.png
    :align: center
    :figwidth: 80%
 
-   Droplet diameter and temperature comparisons with [#daif]_
+   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_
 
-.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006)
+
+.. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006), url: `https://openaccess.city.ac.uk/id/eprint/8486/ <https://openaccess.city.ac.uk/id/eprint/8486/>`_.
 
 .. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol. 32, No. 9, pp. 1605-1618 (1989)
 
-.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998)
+.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020), doi: `10.1016/j.ijmultiphaseflow.2020.103293 <https://doi.org/10.1016/j.ijmultiphaseflow.2020.103293>`_.
 
-.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998)
+.. [#nomura] “Experimental study on high-pressure droplet evaporation using microgravity conditions”, H. Nomura and Y. Ujiie and H. J. Rath and J. Sato and M. Kono, Symposium (International) on Combustion, vol. 26, no. 1, pp. 1267–1273 (1996), doi: `10.1016/S0082-0784(96)80344-4 <https://doi.org/10.1016/S0082-0784(96)80344-4>`_.
 
-.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020)
+.. [#wonglin] “Internal temperature distributions of droplets vaporizing in high-temperature convective flows”, S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.  
+
+.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998), doi: `10.1016/S0894-1777(98)10035-3 <https://doi.org/10.1016/S0894-1777(98)10035-3>`_.
+
+.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998), doi: `10.1615/AtomizSpr.v8.i1.20 <https://doi.org/10.1615/AtomizSpr.v8.i1.20>`_.
+

@@ -218,7 +218,11 @@ SprayParticleContainer::updateParticles(
       bndry_hi[dir] = 0;
     }
   }
-  const Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+  Real vol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+#if AMREX_SPACEDIM == 2
+  // Spray model in 2D assumes narrow domain in z-direction (Lz = dx)
+  vol *= dx[0];
+#endif
   const Real inv_vol = 1. / vol;
   // If particle subcycling is being done, determine the number of subcycles
   // Note: this is different than the AMR subcycling
@@ -421,8 +425,9 @@ SprayParticleContainer::updateParticles(
             Real cur_coef = -cvol * sub_dt / flow_dt;
             if (!src_box.contains(cur_indx)) {
               if (!isGhost) {
-                Abort("SprayParticleContainer::updateParticles() -- source box "
-                      "too small");
+                Abort(
+                  "SprayParticleContainer::updateParticles() -- source box "
+                  "too small");
               }
             }
             if (fdat->mom_trans) {

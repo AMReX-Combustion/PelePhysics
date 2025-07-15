@@ -140,8 +140,9 @@ ReactorCvode::initCvode(
       return (1);
     }
 #else
-    amrex::Abort("solve_type=magma_direct only available with "
-                 "PELE_USE_MAGMA=TRUE with YCOrder");
+    amrex::Abort(
+      "solve_type=magma_direct only available with "
+      "PELE_USE_MAGMA=TRUE with YCOrder");
 #endif
   } else if (a_udata->solve_type == cvode::GMRES) {
     a_LS = SUNLinSol_SPGMR(
@@ -459,8 +460,9 @@ ReactorCvode::initCvode(
     if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1))
       return (1);
 #else
-    amrex::Abort("precond_type=sparseSimpleAJac not valid without KLU library "
-                 "and YCOrder");
+    amrex::Abort(
+      "precond_type=sparseSimpleAJac not valid without KLU library "
+      "and YCOrder");
 #endif
   } else if (a_udata->precond_type == cvode::customSimpleAJac) {
     // Set the JAcobian-times-vector function
@@ -758,11 +760,13 @@ ReactorCvode::checkCvodeOptions(
           << " % fill-in pattern\n";
       }
 #elif defined(AMREX_USE_HIP)
-      amrex::Abort("\n--> Analytical Jacobian not available with HIP. Change "
-                   "solve_type.\n");
+      amrex::Abort(
+        "\n--> Analytical Jacobian not available with HIP. Change "
+        "solve_type.\n");
 #elif defined(AMREX_USE_SYCL)
-      amrex::Abort("\n--> Analytical Jacobian not available with SYCL. Change "
-                   "solve_type.\n");
+      amrex::Abort(
+        "\n--> Analytical Jacobian not available with SYCL. Change "
+        "solve_type.\n");
 #endif
     }
 
@@ -987,14 +991,13 @@ ReactorCvode::allocUserData(
     udata->csr_col_index_h = static_cast<int*>(
       amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int)));
 
-    cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-    cusolver_status = cusolverSpCreate(&(udata->cusolverHandle));
+    cusolverStatus_t cusolver_status =
+      cusolverSpCreate(&(udata->cusolverHandle));
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
     cusolver_status = cusolverSpSetStream(udata->cusolverHandle, stream);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-    cusparse_status = cusparseCreate(&(udata->cuSPHandle));
+    cusparseStatus_t cusparse_status = cusparseCreate(&(udata->cuSPHandle));
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
     cusparse_status = cusparseSetStream(udata->cuSPHandle, stream);
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
@@ -1133,14 +1136,13 @@ ReactorCvode::allocUserData(
     size_t workspaceInBytes = 0;
     size_t internalDataInBytes = 0;
 
-    cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-    cusolver_status = cusolverSpCreate(&(udata->cusolverHandle));
+    cusolverStatus_t cusolver_status =
+      cusolverSpCreate(&(udata->cusolverHandle));
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
     cusolver_status = cusolverSpSetStream(udata->cusolverHandle, stream);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-    cusparse_status = cusparseCreateMatDescr(&(udata->descrA));
+    cusparseStatus_t cusparse_status = cusparseCreateMatDescr(&(udata->descrA));
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
     cusparse_status =
       cusparseSetMatType(udata->descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
@@ -1173,8 +1175,8 @@ ReactorCvode::allocUserData(
     // <<
     // "\n";
 
-    cudaError_t cudaStat1 = cudaSuccess;
-    cudaStat1 = cudaMalloc((void**)&(udata->buffer_qr), workspaceInBytes);
+    cudaError_t cudaStat1 =
+      cudaMalloc((void**)&(udata->buffer_qr), workspaceInBytes);
     AMREX_ASSERT(cudaStat1 == cudaSuccess);
 #else
     amrex::Abort("cuSparse_simplified_AJacobian is only available with CUDA");

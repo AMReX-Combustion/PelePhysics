@@ -170,7 +170,7 @@ trilinear_interp(
   // Note: if near a reflective boundary, ijk has been shifted in check_bounds
   AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];)
 
-  const amrex::RealVect sx_hi = lx - ijk;
+  const amrex::RealVect sx_hi = lx - amrex::RealVect(ijk);
   const amrex::RealVect sx_lo = 1. - sx_hi;
   amrex::GpuArray<amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, 2> ssv;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -192,8 +192,9 @@ trilinear_interp(
   for (int kk = ks; kk < 1; kk++) {
     for (int jj = -1; jj < 1; jj++) {
       for (int ii = -1; ii < 1; ii++) {
-        AMREX_D_TERM(indx_array[cc][0] = i + ii;, indx_array[cc][1] = j + jj;
-                     , indx_array[cc][2] = k + kk;)
+        AMREX_D_TERM(
+          indx_array[cc][0] = i + ii;, indx_array[cc][1] = j + jj;
+          , indx_array[cc][2] = k + kk;)
         weights[cc] =
           AMREX_D_TERM(ssv[ii + 1][0], *ssv[jj + 1][1], *ssv[kk + 1][2]);
         cc++;
@@ -590,17 +591,19 @@ eb_interp(
     for (int kk = ks; kk <= ke; kk++) {
       for (int jj = jc - 1; jj <= jc; jj++) {
         for (int ii = ic - 1; ii <= ic; ii++) {
-          AMREX_D_TERM(nodes[lc][0] = (ii + 0.5 + ccent(ii, jj, kk, 0));
-                       , nodes[lc][1] = (jj + 0.5 + ccent(ii, jj, kk, 1));
-                       , nodes[lc][2] = (kk + 0.5 + ccent(ii, jj, kk, 2));)
+          AMREX_D_TERM(
+            nodes[lc][0] = (ii + 0.5 + ccent(ii, jj, kk, 0));
+            , nodes[lc][1] = (jj + 0.5 + ccent(ii, jj, kk, 1));
+            , nodes[lc][2] = (kk + 0.5 + ccent(ii, jj, kk, 2));)
           lc += 1;
         }
       }
     }
 
     amrex::Real xi = 0., eta = 0., zeta = 0.;
-    AMREX_D_TERM(xi = normpos[0] - nodes[0][0];, eta = normpos[1] - nodes[0][1];
-                 , zeta = normpos[2] - nodes[0][2];);
+    AMREX_D_TERM(
+      xi = normpos[0] - nodes[0][0];, eta = normpos[1] - nodes[0][1];
+      , zeta = normpos[2] - nodes[0][2];);
 
     get_interp_mapping(normpos, nodes, xi, eta, zeta);
 #if AMREX_SPACEDIM == 3

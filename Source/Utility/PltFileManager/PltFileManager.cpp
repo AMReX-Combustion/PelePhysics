@@ -65,7 +65,7 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
   int PLT_SPACEDIM = AMREX_SPACEDIM;
   is >> PLT_SPACEDIM;
   GotoNextLine(is);
-  AMREX_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
+  AMREX_ALWAYS_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
 
   // Simulation time
   is >> m_time;
@@ -294,8 +294,9 @@ PltFileManager::fillPatchFromPlt(
 
     } else {
       // Otherwise bail out because we don't handle averaging_down (TODO ?)
-      Abort("When initializing dataFromPlt, our level 0 can't be coarser than "
-            "the PltFile one");
+      Abort(
+        "When initializing dataFromPlt, our level 0 can't be coarser than "
+        "the PltFile one");
     }
   } else {
     // Check the refRatio between PltFile level 0 and the current level

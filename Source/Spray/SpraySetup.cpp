@@ -73,6 +73,15 @@ getInpVal(
 void
 SprayParticleContainer::readSprayParams(int& particle_verbose)
 {
+  amrex::Print() << "\n Reading spray model parameters ..." << std::endl;
+#if AMREX_SPACEDIM == 1
+  amrex::Abort("Spray model not valid in 1D");
+#elif AMREX_SPACEDIM == 2
+  amrex::Print()
+    << " Warning: Spray model in 2D assumes narrow domain in z-direction (Lz = "
+       "dz)!"
+    << std::endl;
+#endif
   m_sprayData = new SprayData{};
   d_sprayData =
     static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
@@ -150,8 +159,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   } else if (breakup_model_str == "None") {
     breakup_model = 0;
   } else {
-    Abort("'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
-          "'None'");
+    Abort(
+      "'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
+      "'None'");
   }
   if (splash_model || (breakup_model > 0)) {
     pp.query("breakup_parcel_factor", m_breakupPPPFact);
@@ -274,6 +284,14 @@ SprayParticleContainer::spraySetup(const Real* body_force)
     }
     if (m_sprayData->dep_indx[i] < 0) {
       Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
+    }
+  }
+
+  for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+    for (int j = i + 1; j < SPRAY_FUEL_NUM; ++j) {
+      if (m_sprayData->dep_indx[i] == m_sprayData->dep_indx[j]) {
+        m_sprayData->liquid_spec_share_gas_dep = true;
+      }
     }
   }
 #else

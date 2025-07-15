@@ -335,8 +335,9 @@ main(int argc, char* argv[])
         }
       }
       if (idFirstSpec * idFirstSpecForce * idrhoH * idT * idrhoHForce < 0) {
-        amrex::Abort("All of 'rhoY(<spec>)', 'F_rhoY(<spec>)', 'rhoH', 'Temp' "
-                     "and 'F_rhoH' must be in the pltfile !");
+        amrex::Abort(
+          "All of 'rhoY(<spec>)', 'F_rhoY(<spec>)', 'rhoH', 'Temp' "
+          "and 'F_rhoH' must be in the pltfile !");
       }
 
       // Load the data from pltfile
