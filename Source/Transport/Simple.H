@@ -207,7 +207,7 @@ struct BinaryDiff<eos::SRK>
         for (int k = 0; k < NUM_SPECIES; ++k) {
           Upsilonij += tparm->Upsilonijk[idx_ijk + k] * Yloc[k];
         }
-        // here we have a symetry
+        // here we have a symmetry
         Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
         dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
         Ddiag[i] += Xloc[j] * dbintemp;
