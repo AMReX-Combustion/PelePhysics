@@ -157,8 +157,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cv_R(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
 
@@ -209,8 +209,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cp_R(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
 
@@ -261,8 +261,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 gibbs(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -330,8 +330,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 helmholtz(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -393,8 +393,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -454,8 +454,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEnthalpy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -515,8 +515,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEntropy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -576,7 +576,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 dcvpRdT(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
+  const amrex::Real T3 = T * T2;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real invT3 = invT * invT * invT;
@@ -647,8 +647,8 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 
   // compute Cp/R at the given temperature
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
 
@@ -735,8 +735,8 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   amrex::Real result = 0.0;
   // compute Cv/R at the given temperature
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
 
@@ -823,8 +823,8 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 {
   amrex::Real result = 0.0;
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -922,8 +922,8 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
 {
   amrex::Real result = 0.0;
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real invT2 = invT * invT;
   const amrex::Real logT = log(T);
@@ -2027,34 +2027,22 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[5] = 2.40345064E+00;
   COFD[6] = -9.91400939E-02;
   COFD[7] = 4.36235570E-03;
-  COFD[8] = -1.29858715E+01;
-  COFD[9] = 2.88754338E+00;
-  COFD[10] = -1.58249632E-01;
-  COFD[11] = 6.76021204E-03;
-  COFD[12] = -1.15519216E+01;
-  COFD[13] = 2.40345064E+00;
-  COFD[14] = -9.91400939E-02;
-  COFD[15] = 4.36235570E-03;
-  COFD[16] = -1.42465946E+01;
-  COFD[17] = 2.92213383E+00;
-  COFD[18] = -1.62707676E-01;
-  COFD[19] = 6.95211737E-03;
-  COFD[20] = -1.70267092E+01;
-  COFD[21] = 3.87660436E+00;
-  COFD[22] = -2.80627494E-01;
-  COFD[23] = 1.18138535E-02;
-  COFD[24] = -1.29858715E+01;
-  COFD[25] = 2.88754338E+00;
-  COFD[26] = -1.58249632E-01;
-  COFD[27] = 6.76021204E-03;
-  COFD[28] = -1.70267092E+01;
-  COFD[29] = 3.87660436E+00;
-  COFD[30] = -2.80627494E-01;
-  COFD[31] = 1.18138535E-02;
-  COFD[32] = -2.03925872E+01;
-  COFD[33] = 4.98567306E+00;
-  COFD[34] = -4.11537609E-01;
-  COFD[35] = 1.69766778E-02;
+  COFD[8] = -1.42465946E+01;
+  COFD[9] = 2.92213383E+00;
+  COFD[10] = -1.62707676E-01;
+  COFD[11] = 6.95211737E-03;
+  COFD[12] = -1.29858715E+01;
+  COFD[13] = 2.88754338E+00;
+  COFD[14] = -1.58249632E-01;
+  COFD[15] = 6.76021204E-03;
+  COFD[16] = -1.70267092E+01;
+  COFD[17] = 3.87660436E+00;
+  COFD[18] = -2.80627494E-01;
+  COFD[19] = 1.18138535E-02;
+  COFD[20] = -2.03925872E+01;
+  COFD[21] = 4.98567306E+00;
+  COFD[22] = -4.11537609E-01;
+  COFD[23] = 1.69766778E-02;
 }
 
 // List of specs with small weight, dim NLITE
