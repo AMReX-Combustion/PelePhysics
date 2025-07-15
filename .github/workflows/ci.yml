@@ -176,11 +176,6 @@ jobs:
           printf "\n-------- PelePhysics TPLs --------\n"; \
           cmake --version
           make TPL ${{matrix.amrex_build_args}};
-          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
-            make TPL DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}};
-            cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/ceptr
-            poetry install
-          fi
           printf "\n-------- AMReX --------\n"; \
           cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Submodules/amrex/
           ./configure --dim=2 --with-mpi=no --enable-particle=no --with-fortran=no --enable-linear-solver=no --enable-fortran-api=no --prefix=./ --enable-tiny-profile=yes ${{matrix.amrex_build_flags}}
@@ -307,9 +302,11 @@ jobs:
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               ccache -z
               cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/ceptr
+              poetry install
               poetry run qssa -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/skeletal.yaml -n ${{github.workspace}}/Mechanisms/dodecane_lu_qss/non_qssa_list.yaml
               poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
               cd ${{env.JAC_WORKING_DIRECTORY}}
+              make TPL DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE USE_AMREX_LIB=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               ./Pele3d.${{matrix.comp}}.DEBUG.TPROF.ex; \
               if [ $? -ne 0 ]; then exit 1; fi; \
