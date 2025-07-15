@@ -80,10 +80,9 @@ jobs:
         run: poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
-    #needs: Formatting
+    needs: Formatting
     runs-on: ubuntu-24.04
     strategy:
-      fail-fast: false
       matrix:
         comp: [gnu, llvm, cuda, hip, sycl]
         python-version: ['3.11']
@@ -156,7 +155,6 @@ jobs:
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
-          # ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Submodules/amrex/.github/workflows/dependencies/ubuntu_free_disk_space.sh
           printf "\n-------- Compiler Dependencies --------\n"; \
           if [ "${{matrix.comp}}" == 'cuda' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
@@ -180,7 +178,7 @@ jobs:
           printf "\n-------- AMReX --------\n"; \
           cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Submodules/amrex/
           ./configure --dim=2 --with-mpi=no --enable-particle=no --with-fortran=no --enable-linear-solver=no --enable-fortran-api=no --prefix=./ --enable-tiny-profile=yes ${{matrix.amrex_build_flags}}
-          make -j
+          make -j ${{env.NPROCS}} ${{matrix.amrex_build_args}}
           make install
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
@@ -308,7 +306,7 @@ jobs:
               poetry run convert -f ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa.yaml --qss_format_input ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Mechanisms/dodecane_lu_qss/qssa_input_non_optimized.toml --qss_symbolic_jacobian
               cd ${{env.JAC_WORKING_DIRECTORY}}
               make TPL DEBUG=TRUE TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
-              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE USE_AMREX_LIB=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
+              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu_qss DEBUG=TRUE TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}
               ./Pele3d.${{matrix.comp}}.DEBUG.TPROF.ex; \
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
