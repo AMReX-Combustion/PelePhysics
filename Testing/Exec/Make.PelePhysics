@@ -132,10 +132,17 @@ include $(UTILITY_HOME)/TurbInflow/Make.package
 include $(UTILITY_HOME)/BlackBoxFunction/Make.package
 include $(UTILITY_HOME)/Utilities/Make.package
 
-Pdirs   := Base Boundary AmrCore
-
-Bpack	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
-Blocs	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir))
+ifeq ($(USE_AMREX_LIB), TRUE)
+  AMREX_LIBRARY_HOME ?= $(AMREX_HOME)
+  LIBDIR := $(AMREX_LIBRARY_HOME)/lib
+  INCDIR := $(AMREX_LIBRARY_HOME)/include
+  COMPILE_CPP_FLAGS ?= $(shell awk '/Cflags:/ {$$1=$$2=""; print $$0}' $(LIBDIR)/pkgconfig/amrex.pc)
+  COMPILE_LIB_FLAGS ?= $(shell awk '/Libs:/ {$$1=$$2=""; print $$0}' $(LIBDIR)/pkgconfig/amrex.pc)
+else
+  Pdirs := Base Boundary AmrCore
+  Bpack	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
+  Blocs	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir))
+endif
 
 include $(Bpack)
 
@@ -164,6 +171,10 @@ else
 	@echo SUCCESS
 endif
 
+ifeq ($(USE_AMREX_LIB), TRUE)
+  CXXFLAGS += -I$(INCDIR) $(COMPILE_CPP_FLAGS)
+  LIBRARIES += -L$(LIBDIR) $(COMPILE_LIB_FLAGS)
+endif
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 
 ifeq ($(USE_CUDA),TRUE)
