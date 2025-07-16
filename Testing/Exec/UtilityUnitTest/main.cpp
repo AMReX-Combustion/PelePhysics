@@ -2,14 +2,15 @@
 #include <AMReX_Print.H>
 #include "Utilities.H"
 
+namespace m2c = pele::physics::utilities::mks2cgs;
+namespace c2m = pele::physics::utilities::cgs2mks;
+
 int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
 
   // Test Unit Conversions
-  namespace m2c = pele::physics::utilities::mks2cgs;
-  namespace c2m = pele::physics::utilities::cgs2mks;
   AMREX_ALWAYS_ASSERT(m2c::Length(1.0) == 100.0);
   AMREX_ALWAYS_ASSERT(c2m::Length(1.0, 2) == 1.0e-4);
   AMREX_ALWAYS_ASSERT(m2c::Mass(c2m::Mass(1.0)) == 1.0);
