@@ -184,7 +184,7 @@ jobs:
           ccache -z
           make -j TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
-            ./PelePhysicsUnitTest2d.${{matrix.comp}}.TPROF.ex;
+            ./Pele2d.${{matrix.comp}}.TPROF.ex;
           fi;
           make realclean;
           if [ $? -ne 0 ]; then exit 1; fi; \
