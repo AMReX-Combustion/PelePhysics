@@ -294,7 +294,9 @@ The user must ensure that the correct number of grow cells is present in the Fab
 
 Utilities
 =============================
-The utilities namespace contains unit conversions, which are particularly useful for PeleLM(eX) users working with mixed unit systems. The following aliases, defined in a file header, enable straightforward conversions between MKS and CGS units for use in equation of state (``eos``) function calls:
+The ``utilities`` namespace contains some functions that may be useful to users when writing problem-specific source code.
+
+This includes unit conversions, which are particularly useful for PeleLM(eX) users working with mixed unit systems. The following aliases, defined in a file header, enable straightforward conversions between MKS and CGS units for use in equation of state (``eos``) function calls:
 
 ::
 
@@ -314,3 +316,6 @@ For example, users can call ``eos.PYT2R`` as follows:
    // Calculate density in CGS units, then convert to MKS
    eos.PYT2R(m2c::P(P_mean), massfrac, Temp, rho_cgs);
    amrex::Real rho = c2m::Rho(rho_cgs); // Convert eos density to MKS
+
+The ``utilities`` namespace also contains some other useful functions: ``locate`` to find the nearby indices of a value in an array for interpolation
+and ``rectangle_circle_intersection_area`` to find the area of the intersections between rectangles and circles.
