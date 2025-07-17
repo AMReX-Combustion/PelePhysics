@@ -179,7 +179,7 @@ jobs:
           printf "\n-------- AMReX --------\n"; \
           cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Submodules/amrex/
           ./configure --dim=2 --with-mpi=no --enable-particle=no --with-fortran=no --enable-linear-solver=no --enable-fortran-api=no --prefix=./ --enable-tiny-profile=yes ${{matrix.amrex_build_flags}}
-          make -j ${{env.NPROCS}} ${{matrix.amrex_build_args}}
+          make -j ${{env.NPROCS}} ${{matrix.amrex_build_args}} USE_SUNDIALS=TRUE SUNDIALS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}/ThirdParty/INSTALL/*/
           make install
       - name: Unit Test Utilities
         working-directory: ${{env.UTILITIES_WORKING_DIRECTORY}}
