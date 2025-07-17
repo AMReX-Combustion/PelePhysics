@@ -18,6 +18,10 @@ VERBOSE = TRUE
 EXTERN_CORE ?=
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
+ifeq ($(USE_AMREX_LIB), TRUE)
+  CEXE_sources :=
+endif
+
 
 include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
 
@@ -175,6 +179,7 @@ ifeq ($(USE_AMREX_LIB), TRUE)
   CXXFLAGS += -I$(INCDIR) $(COMPILE_CPP_FLAGS)
   LIBRARIES += -L$(LIBDIR) $(COMPILE_LIB_FLAGS)
 endif
+
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 
 ifeq ($(USE_CUDA),TRUE)
