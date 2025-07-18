@@ -39,7 +39,7 @@ enum splash_breakup {
   splash_wet_splash
 };
 
-using m2c = pele::physics::utilities::mks2cgs;
+namespace m2c = pele::physics::utilities::mks2cgs;
 
 // Units for sprays
 struct SprayUnits
