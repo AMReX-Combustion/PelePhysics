@@ -84,7 +84,7 @@ public:
 
   /// \brief Setup spray parameters
   static void spraySetup(const amrex::Real* body_force);
-  static void spraySetup(const amrex::Real* body_force,pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> eosparm);
+  static void spraySetup(const amrex::Real* body_force,const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm);
 
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);

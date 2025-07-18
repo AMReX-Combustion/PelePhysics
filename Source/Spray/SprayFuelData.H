@@ -141,6 +141,10 @@ struct SprayData
   amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
   amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
 
+  //adding a eosparm here to be used with Spray and manifold
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm;
+
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real rhoL(const amrex::Real& T, const int spf) const

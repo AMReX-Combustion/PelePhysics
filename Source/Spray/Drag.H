@@ -148,7 +148,9 @@ calculateSpraySource(
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
 {
-  auto eos = pele::physics::PhysicsType::eos();
+	amrex::Print()<<"\n Insdie calculateSpraySource (before eos call): ";
+  auto eos = pele::physics::PhysicsType::eos(fdat.eosparm);
+  amrex::Print()<<"\n Insdie calculateSpraySource: (after eos call)";
   SprayUnits SPU;
   const amrex::Real rule = 1. / 3.;
   const amrex::Real C_eps = 1.E-15;
