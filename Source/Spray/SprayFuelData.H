@@ -39,23 +39,23 @@ enum splash_breakup {
   splash_wet_splash
 };
 
-namespace m2c = pele::physics::utilities::mks2cgs;
+namespace c2m = pele::physics::utilities::cgs2mks;
 
 // Units for sprays
 struct SprayUnits
 {
 #ifdef PELELM_USE_SPRAY
   // For converting CGS to MKS
-  static constexpr amrex::Real ru_conv = m2c::Energy(1.0);
-  static constexpr amrex::Real eng_conv = m2c::H(1.0);
-  static constexpr amrex::Real rho_conv = m2c::Rho(1.0);
-  static constexpr amrex::Real mass_conv = m2c::Mass(1.0);
+  static constexpr amrex::Real ru_conv = c2m::Energy(1.0);
+  static constexpr amrex::Real eng_conv = c2m::H(1.0);
+  static constexpr amrex::Real rho_conv = c2m::Rho(1.0);
+  static constexpr amrex::Real mass_conv = c2m::Mass(1.0);
   static constexpr amrex::Real rhod_conv =
-    m2c::Rho(1.0) * m2c::Alpha(1.0); // rho D conversion
-  static constexpr amrex::Real mu_conv = m2c::Mu(1.0);
-  static constexpr amrex::Real lambda_conv = m2c::Lambda(1.0);
-  static constexpr amrex::Real pres_conv = m2c::P(1.0);
-  static constexpr amrex::Real len_conv = m2c::Length(1.0);
+    c2m::Rho(1.0) * c2m::Alpha(1.0); // rho D conversion
+  static constexpr amrex::Real mu_conv = c2m::Mu(1.0);
+  static constexpr amrex::Real lambda_conv = c2m::Lambda(1.0);
+  static constexpr amrex::Real pres_conv = c2m::P(1.0);
+  static constexpr amrex::Real len_conv = c2m::Length(1.0);
 #else
   static constexpr amrex::Real ru_conv = 1.;
   static constexpr amrex::Real eng_conv = 1.;

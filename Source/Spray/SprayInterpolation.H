@@ -153,8 +153,10 @@ InterpolateGasPhase(
 
   // Fill in some other data with EOS calls
   eos.Y2WBAR(gpv.Y_fluid.data(), gpv.mw_mix);
+  gpv.mw_mix *= SprayUnits::mass_conv;
+
   eos.RTY2P(
-    SprayUnits::rho_conv * gpv.rho_fluid, gpv.T_fluid, gpv.Y_fluid.data(),
+    gpv.rho_fluid / SprayUnits::rho_conv, gpv.T_fluid, gpv.Y_fluid.data(),
     gpv.p_fluid);
   gpv.p_fluid *= SprayUnits::pres_conv;
 }
