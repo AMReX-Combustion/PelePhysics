@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include "BlackBoxFunction.H"
+#include "Utilities.H"
 
 namespace pele::physics {
 
@@ -469,48 +470,6 @@ private:
   const TabulatedFunctionData* tf_data;
   static constexpr int maxdim = TableDim != 0 ? TableDim : MAXD_TABLE;
 
-  // -----------------------------------------------------------
-  // Search for the closest index in an array to a given value
-  // using the bisection technique.
-  // INPUTS/OUTPUTS:
-  // xtable(0:n-1) => array to search in (ascending order)
-  // n             => array size
-  // x             => x location
-  // idxlo (return)=> output st. xtable(idxlo) <= x < xtable(idxlo+1)
-  // -----------------------------------------------------------
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  int locate(const amrex::Real* xtable, const int n, const amrex::Real x)
-  {
-    int idxlo = 0;
-    // If x is out of bounds, return boundary index
-    if (x >= xtable[n - 2]) {
-      idxlo = n - 2;
-      return idxlo;
-    }
-    if (x <= xtable[0]) {
-      idxlo = 0;
-      return idxlo;
-    }
-
-    // Do the bisection
-    int idxhi = n - 2;
-    bool notdone = true;
-    while (notdone) {
-      if (idxhi - idxlo <= 1) {
-        notdone = false;
-      } else {
-        const int idxmid = (idxhi + idxlo) / 2;
-        if (x >= xtable[idxmid]) {
-          idxlo = idxmid;
-        } else {
-          idxhi = idxmid;
-        }
-      }
-    }
-    return idxlo;
-  }
-
   // Get quantities for use in interpolation
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -530,18 +489,14 @@ private:
       auto* beg = &tf_data->grids[start];
       int idx = static_cast<int>(
         std::lower_bound(beg + 1, beg + dimLen - 1, interpdata[dim]) - beg - 1);
+#else
+      int idx = 0;
+      utilities::locate(&tf_data->grids[start], dimLen, interpdata[dim], idx);
+#endif
+
       idx = std::min(
         std::max(idx, 0),
         dimLen - 2); // don't let idx be negative or out of bounds
-#else
-      // home rolled
-      // int idx = 1;
-      // while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen)
-      //    {idx+=1;};
-      // idx-=1;
-      int idx = locate(&tf_data->grids[start], dimLen, interpdata[dim]);
-#endif
-
       indices[dim] = idx;
       idx += start;
       amrex::Real dx_inv =

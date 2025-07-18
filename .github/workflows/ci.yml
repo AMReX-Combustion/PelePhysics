@@ -120,6 +120,7 @@ jobs:
       - name: Set Environment Variables
         run: |
           echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
+          echo "UTILITIES_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/UtilityUnitTest" >> $GITHUB_ENV
           echo "TRANSPORT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/TranEval" >> $GITHUB_ENV
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
           echo "REACT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/ReactEval" >> $GITHUB_ENV
@@ -174,6 +175,24 @@ jobs:
             cd ${{github.workspace}}/PelePhysics-${{matrix.comp}}/Support/ceptr
             poetry install
           fi
+      - name: Unit Test Utilities
+        working-directory: ${{env.UTILITIES_WORKING_DIRECTORY}}
+        run: |
+          echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
+          if [ "${{matrix.comp}}" == 'sycl' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
+          ccache -z
+          make -j ${{env.NPROCS}} TINY_PROFILE=TRUE USE_CCACHE=TRUE ${{matrix.amrex_build_args}}; \
+          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+            ./Pele2d.${{matrix.comp}}.TPROF.ex;
+          fi;
+          make realclean;
+          if [ $? -ne 0 ]; then exit 1; fi; \
+      - name: Utilities ccache report
+        working-directory: ${{env.UTILITIES_WORKING_DIRECTORY}}
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
