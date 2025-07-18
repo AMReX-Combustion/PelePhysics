@@ -387,7 +387,6 @@ SprayParticleContainer::updateParticles(
               gpv, state_box, rhoarr, rhoYarr, Tarr, momarr, engarr,
               indx_array.data(), weights.data());
             // Solve for avg mw and pressure at droplet location
-            gpv.define();
             fdat->calcBoilT(gpv, cBoilT.data());
             if (is_film) {
               calculateFilmSource(
