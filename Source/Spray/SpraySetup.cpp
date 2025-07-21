@@ -141,7 +141,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       } else {
         m_sprayDepNames[i] = m_sprayFuelNames[i];
       }
-      m_sprayData->latent[i] = m_sprayData->ref_latent[i];
+      m_sprayData->liqprops.latent[i] = m_sprayData->liqprops.ref_latent[i];
     }
   }
 
@@ -310,7 +310,7 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   eos.T2Hi(m_sprayData->ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
-    m_sprayData->latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
+    m_sprayData->liqprops.latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
   }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
