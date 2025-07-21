@@ -125,46 +125,12 @@ struct SprayData
   amrex::RealVect body_force = amrex::RealVect::TheZeroVector();
   amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
   amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
+
+  // Instance of the liquid properties for the specified model
   pele::physics::SprayProps::LiqPropType liqprops;
 
-  /*
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real rhoL(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = rho_coef[4 * spf];
-    amrex::Real b = rho_coef[4 * spf + 1];
-    amrex::Real c = rho_coef[4 * spf + 2];
-    amrex::Real d = rho_coef[4 * spf + 3];
-    return a + T * (b + T * (c + T * d));
-  }
-  */
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real lambdaL(const amrex::Real& T, const int spf) const
-  {
-    const auto& lambda_coef = liqprops.lambda_coef; 
-    amrex::Real a = lambda_coef[4 * spf];
-    amrex::Real b = lambda_coef[4 * spf + 1];
-    amrex::Real c = lambda_coef[4 * spf + 2];
-    amrex::Real d = lambda_coef[4 * spf + 3];
-    return a + T * (b + T * (c + T * d));
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real muL(const amrex::Real& T, const int spf) const
-  {
-    const auto& mu_coef = liqprops.mu_coef; 
-    amrex::Real a = mu_coef[4 * spf];
-    amrex::Real b = mu_coef[4 * spf + 1];
-    amrex::Real c = mu_coef[4 * spf + 2];
-    amrex::Real d = mu_coef[4 * spf + 3];
-    return a + ((d / T + c) / T + b) / T;
-  }
-
   // Estimate the boil temperature
+  // TODO: Generalize for use with GCM
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
@@ -192,17 +158,6 @@ struct SprayData
     }
   }
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real psat(const amrex::Real& T, const int spf) const
-  {
-    const auto& psat_coef = liqprops.psat_coef; 
-    amrex::Real a = psat_coef[4 * spf];
-    amrex::Real b = psat_coef[4 * spf + 1];
-    amrex::Real c = psat_coef[4 * spf + 2];
-    amrex::Real d = psat_coef[4 * spf + 3];
-    return d * std::pow(10., a - b / (T + c));
-  }
 };
 
 #endif

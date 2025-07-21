@@ -68,7 +68,7 @@ calculateFilmSource(
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
     rho_film += Y_film[spf] / fdat.liqprops.rhoL(minT, spf);
     cp_film += Y_film[spf] * fdat.liqprops.cp[spf];
-    lambda_film += Y_film[spf] * fdat.lambdaL(minT, spf);
+    lambda_film += Y_film[spf] * fdat.liqprops.lambdaL(minT, spf);
     Tcrit += Y_film[spf] * fdat.liqprops.critT[spf];
     mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];
   }

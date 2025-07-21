@@ -77,19 +77,23 @@ calcVaporState(
     const amrex::Real boilT_ref = fdat.liqprops.boilT[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
+    
     // Compute latent heat
+    // TODO: Generelize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
       h_part[fspec] + fdat.liqprops.latent[spf] - fdat.liqprops.cp[spf] * (T_part - fdat.ref_T);
     L_fuel[spf] = part_latent;
+    
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
+    //TODO: Generalize for multiple psat correlations based on liqprops
     if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
       pres_sat =
         PATM *
         std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
       // Using the Antoine equation
     } else {
-      pres_sat = fdat.psat(T_part, spf);
+      pres_sat = fdat.liqprops.psat(T_part, spf);
     }
     amrex::Real X_fluid = gpv.Y_fluid[fdspec] * gpv.mw_mix / mw_fuel;
     if (pres_sat > X_fluid * gpv.p_fluid) {

@@ -44,7 +44,7 @@ updateBreakupTAB(
     amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
     amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
     rho_part += Y_part / fdat.liqprops.rhoL(minT, spf);
-    mu_part += Y_part * fdat.muL(minT, spf);
+    mu_part += Y_part * fdat.liqprops.muL(minT, spf);
   }
   rho_part = 1. / rho_part;
   amrex::Real Utan_total = 0.;
