@@ -67,7 +67,7 @@ calculateFilmSource(
     amrex::Real minT = amrex::min(T_film, cBoilT[spf]);
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
     rho_film += Y_film[spf] / fdat.rhoL(minT, spf);
-    cp_film += Y_film[spf] * fdat.cp[spf];
+    cp_film += Y_film[spf] * fdat.liqprops.cp[spf];
     lambda_film += Y_film[spf] * fdat.lambdaL(minT, spf);
     Tcrit += Y_film[spf] * fdat.critT[spf];
     mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];

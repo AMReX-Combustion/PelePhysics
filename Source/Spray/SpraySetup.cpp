@@ -19,6 +19,7 @@ Real SprayParticleContainer::m_khrtB1 = 7.;
 Real SprayParticleContainer::m_khrtC3 = 1.;
 std::string SprayParticleContainer::spray_init_file;
 
+/*
 void
 getInpCoef(
   Real* coef,
@@ -69,6 +70,7 @@ getInpVal(
     ppp.get(var_read.c_str(), coef[spf]);
   }
 }
+*/
 
 void
 SprayParticleContainer::readSprayParams(int& particle_verbose)
@@ -117,6 +119,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       has_dep_spec = true;
       pp.getarr("dep_fuel_species", dep_fuel_names);
     }
+    pele::physics::SprayProps::InitLiqProps<pele::physics::SprayProps::LiqPropType> init_liq_props;
+    init_liq_props(&(m_sprayData->liqprops), fuel_names);
+    /*
     getInpVal(m_sprayData->critT.data(), pp, fuel_names.data(), "crit_temp");
     getInpVal(m_sprayData->boilT.data(), pp, fuel_names.data(), "boil_temp");
     getInpVal(m_sprayData->cp.data(), pp, fuel_names.data(), "cp");
@@ -128,6 +133,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     getInpCoef(
       m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
     getInpCoef(m_sprayData->mu_coef.data(), pp, fuel_names.data(), "mu");
+    */
     for (int i = 0; i < nfuel; ++i) {
       m_sprayFuelNames[i] = fuel_names[i];
       if (has_dep_spec) {

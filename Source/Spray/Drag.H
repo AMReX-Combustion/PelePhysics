@@ -74,16 +74,16 @@ calcVaporState(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const int fdspec = fdat.dep_indx[spf];
-    const amrex::Real boilT_ref = fdat.boilT[spf];
+    const amrex::Real boilT_ref = fdat.liqprops.boilT[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
     // Compute latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
+      h_part[fspec] + fdat.liqprops.latent[spf] - fdat.liqprops.cp[spf] * (T_part - fdat.ref_T);
     L_fuel[spf] = part_latent;
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
-    if (fdat.psat_coef[4 * spf + 3] == 0.) {
+    if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
       pres_sat =
         PATM *
         std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
@@ -207,7 +207,7 @@ calculateSpraySource(
   amrex::Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
+    rho_part += Y_part[spf] / fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
   }
   rho_part = 1. / rho_part;
   amrex::Real dt = flow_dt;
@@ -223,7 +223,7 @@ calculateSpraySource(
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tboil += Y_part[spf] * cBoilT[spf];
-      cp_part += Y_part[spf] * fdat.cp[spf];
+      cp_part += Y_part[spf] * fdat.liqprops.cp[spf];
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }
     mw_part = 1. / mw_part;
@@ -408,11 +408,11 @@ calculateSpraySource(
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             Y_part[spf] /= sumY;
             rho_part +=
-              Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
+              Y_part[spf] / fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
           }
           rho_part = 1. / rho_part;
         } else {
-          rho_part = fdat.rhoL(amrex::min(T_part, cBoilT[0]), 0);
+          rho_part = fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[0]), 0);
         }
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
