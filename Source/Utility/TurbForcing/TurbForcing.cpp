@@ -488,9 +488,17 @@ TurbForcing::addTurbVelForces(
   const amrex::Real* problo = geomdata.ProbLo();
   const amrex::Real* probhi = geomdata.ProbHi();
 
-  const amrex::Real Lx = probhi[0] - problo[0];
-  const amrex::Real Ly = probhi[1] - problo[1];
-  const amrex::Real Lz = probhi[2] - problo[2];
+  amrex::Real Lx = probhi[0] - problo[0];
+  amrex::Real Ly = probhi[1] - problo[1];
+  amrex::Real Lz = probhi[2] - problo[2];
+
+  if (m_tfp.m_hack_lz > 0) {
+    if (m_tfp.m_hack_lz == 1) {
+      Lz = Lz / 2.0;
+    } else {
+      Lz = Lz / m_tfp.m_hack_lz;
+    }
+  }
 
   const int* f_lo = bx.loVect();
   const int* f_hi = bx.hiVect();
