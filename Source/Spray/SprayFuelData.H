@@ -6,6 +6,7 @@
 #include "SprayProperties.H"
 #include <AMReX_RealVect.H>
 
+using namespace amrex;
 
 // Spray flags and indices
 struct SprayComps
@@ -116,7 +117,7 @@ struct SprayData
   int do_breakup = 0; // 0 - no breakup modeling, 1 - TAB model, 2 - KHRT model
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
-  amrex::Real ref_T;
+  //amrex::Real ref_T;
   amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
   amrex::Real theta_c = -1.; // Contact angle for wall film
@@ -130,12 +131,10 @@ struct SprayData
   pele::physics::SprayProps::LiqPropType liqprops;
 
   // Estimate the boil temperature
-  // TODO: Generalize for use with GCM
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
   {
-    const auto& ref_latent = liqprops.ref_latent; 
     const auto& critT = liqprops.critT; 
     const auto& boilT = liqprops.boilT; 
     SprayUnits SPU;
@@ -144,11 +143,8 @@ struct SprayData
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
       const amrex::Real mw_fuel = gpv.mw[fspec];
-      // Since we only know the latent heat at the reference temperature,
-      // modify Watsons power law to find latent heat at boiling conditions
-      amrex::Real Hboil_ref =
-        ref_latent[spf] *
-        std::pow((critT[spf] - ref_T) / (critT[spf] - boilT[spf]), -0.38);
+      amrex::Real Hboil_ref = liqprops.latent_Li(boilT[spf], spf);
+    
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =

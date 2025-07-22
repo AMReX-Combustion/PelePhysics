@@ -40,13 +40,13 @@ updateBreakupTAB(
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
   amrex::Real rho_part = 0.;
   amrex::Real mu_part = 0.;
+  amrex::Real Y_part[SPRAY_FUEL_NUM] = {0.0};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
-    amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part / fdat.liqprops.rhoL(minT, spf);
-    mu_part += Y_part * fdat.liqprops.muL(minT, spf);
+    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
+    mu_part += Y_part[spf] * fdat.liqprops.mu_Li(minT, spf);
   }
-  rho_part = 1. / rho_part;
+  rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
   amrex::Real Utan_total = 0.;
   amrex::Real sigma = fdat.sigma;
   amrex::Real rad_part = 0.5 * dia_part;

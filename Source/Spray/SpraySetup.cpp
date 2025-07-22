@@ -83,7 +83,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     }
   }
 
-  Real spray_ref_T = 300.;
   bool splash_model = false;
   int breakup_model = 0;
   //
@@ -139,9 +138,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     m_sprayData->do_breakup = breakup_model;
   }
 
-  // Must use same reference temperature for all fuels
-  pp.get("fuel_ref_temp", spray_ref_T);
-  //
   // Set if spray ascii files should be written
   //
   pp.query("write_ascii_files", write_ascii_files);
@@ -160,8 +156,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   //
   pp.query("min_eb_vfrac", m_sprayData->min_eb_vfrac);
 #endif
-
-  m_sprayData->ref_T = spray_ref_T;
 
   // List of known derived spray quantities
   std::vector<std::string> derive_names = {
@@ -245,7 +239,7 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
   auto eos = pele::physics::PhysicsType::eos();
-  eos.T2Hi(m_sprayData->ref_T, fuelEnth.data());
+  eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
     m_sprayData->liqprops.latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;

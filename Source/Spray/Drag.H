@@ -74,26 +74,26 @@ calcVaporState(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const int fdspec = fdat.dep_indx[spf];
-    const amrex::Real boilT_ref = fdat.liqprops.boilT[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
     
     // Compute latent heat
-    // TODO: Generelize this to allow for temperature dependent latent heat
+    // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.liqprops.latent[spf] - fdat.liqprops.cp[spf] * (T_part - fdat.ref_T);
+      h_part[fspec] + fdat.liqprops.latent[spf] - fdat.liqprops.cp[spf] * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
     
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
     //TODO: Generalize for multiple psat correlations based on liqprops
     if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
+      const amrex::Real boilT_ref = fdat.liqprops.boilT[spf];
       pres_sat =
         PATM *
         std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
       // Using the Antoine equation
     } else {
-      pres_sat = fdat.liqprops.psat(T_part, spf);
+      pres_sat = fdat.liqprops.psat_i(T_part, spf);
     }
     amrex::Real X_fluid = gpv.Y_fluid[fdspec] * gpv.mw_mix / mw_fuel;
     if (pres_sat > X_fluid * gpv.p_fluid) {
@@ -208,12 +208,13 @@ calculateSpraySource(
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
-  amrex::Real rho_part = 0.;
+  
+  // This is inefficient, but we need Y_part for multiple computations below
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part[spf] / fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
   }
-  rho_part = 1. / rho_part;
+  amrex::Real rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
+  
   amrex::Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
@@ -411,12 +412,10 @@ calculateSpraySource(
           }
           for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
             Y_part[spf] /= sumY;
-            rho_part +=
-              Y_part[spf] / fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
           }
-          rho_part = 1. / rho_part;
+          rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
         } else {
-          rho_part = fdat.liqprops.rhoL(amrex::min(T_part, cBoilT[0]), 0);
+          rho_part = fdat.liqprops.rho_Li(amrex::min(T_part, cBoilT[0]), 0);
         }
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));

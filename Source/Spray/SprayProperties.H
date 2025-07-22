@@ -3,73 +3,112 @@
 
 using namespace amrex;
 
-// Structs for liquid physical data
+// Structs for liquid fuel properties
 namespace pele::physics{
-
   namespace SprayProps{
 
     // Original spray properties ported from PeleMP to PelePhysics
     struct MPLiqProps
     {
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> ref_latent;
+      Real ref_T = 300.; // Reference temperature for liquid properties
+      GpuArray<Real, SPRAY_FUEL_NUM> critT;
+      GpuArray<Real, SPRAY_FUEL_NUM> boilT;
+      GpuArray<Real, SPRAY_FUEL_NUM> cp;
+      GpuArray<Real, SPRAY_FUEL_NUM> latent;
+      GpuArray<Real, SPRAY_FUEL_NUM> ref_latent;
+      Real sigma = -1.; // Surface tension
       // 3 coefficients for Antoine equation and conversion to appropriate units
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> lambda_coef;
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> mu_coef;
-      amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
-      amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
+      GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
+      GpuArray<Real, SPRAY_FUEL_NUM * 4> rho_coef;
+      GpuArray<Real, SPRAY_FUEL_NUM * 4> lambda_coef;
+      GpuArray<Real, SPRAY_FUEL_NUM * 4> mu_coef;
+      GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
+      GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
 
       
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      amrex::Real rhoL(const amrex::Real& T, const int spf) const
+      Real rho_Li(const Real& T, const int spf) const
       {
-        amrex::Real a = rho_coef[4 * spf];
-        amrex::Real b = rho_coef[4 * spf + 1];
-        amrex::Real c = rho_coef[4 * spf + 2];
-        amrex::Real d = rho_coef[4 * spf + 3];
+        Real a = rho_coef[4 * spf];
+        Real b = rho_coef[4 * spf + 1];
+        Real c = rho_coef[4 * spf + 2];
+        Real d = rho_coef[4 * spf + 3];
         return a + T * (b + T * (c + T * d));
       }
 
       
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      amrex::Real lambdaL(const amrex::Real& T, const int spf) const
+      Real lambda_Li(const Real& T, const int spf) const
       {
-        amrex::Real a = lambda_coef[4 * spf];
-        amrex::Real b = lambda_coef[4 * spf + 1];
-        amrex::Real c = lambda_coef[4 * spf + 2];
-        amrex::Real d = lambda_coef[4 * spf + 3];
+        Real a = lambda_coef[4 * spf];
+        Real b = lambda_coef[4 * spf + 1];
+        Real c = lambda_coef[4 * spf + 2];
+        Real d = lambda_coef[4 * spf + 3];
         return a + T * (b + T * (c + T * d));
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      amrex::Real muL(const amrex::Real& T, const int spf) const
+      Real mu_Li(const Real& T, const int spf) const
       {
-        amrex::Real a = mu_coef[4 * spf];
-        amrex::Real b = mu_coef[4 * spf + 1];
-        amrex::Real c = mu_coef[4 * spf + 2];
-        amrex::Real d = mu_coef[4 * spf + 3];
+        Real a = mu_coef[4 * spf];
+        Real b = mu_coef[4 * spf + 1];
+        Real c = mu_coef[4 * spf + 2];
+        Real d = mu_coef[4 * spf + 3];
         return a + ((d / T + c) / T + b) / T;
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      amrex::Real psat(const amrex::Real& T, const int spf) const
+      Real psat_i(const Real& T, const int spf) const
       {
-        amrex::Real a = psat_coef[4 * spf];
-        amrex::Real b = psat_coef[4 * spf + 1];
-        amrex::Real c = psat_coef[4 * spf + 2];
-        amrex::Real d = psat_coef[4 * spf + 3];
+        Real a = psat_coef[4 * spf];
+        Real b = psat_coef[4 * spf + 1];
+        Real c = psat_coef[4 * spf + 2];
+        Real d = psat_coef[4 * spf + 3];
         return d * std::pow(10., a - b / (T + c));
       }
-      
+
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      Real latent_Li(const Real& T, const int spf) const
+      {
+        // Since we only know the latent heat at the reference temperature,
+        // modify Watsons power law to find latent heat at any temperature
+        return ref_latent[spf] *
+                std::pow((critT[spf] - ref_T) / (critT[spf] - T), -0.38);
+      }
+
+      // ReallArrayLike can be anything with an [] operator that returns
+      // amrex::Real&
+      template <typename RealArrayLike>
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      Real rho_part(const RealArrayLike& Y, const Real& T) const
+      {
+        Real rho_part = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          rho_part += Y[spf] / rho_Li(T, spf);
+        }
+        rho_part = 1. / rho_part;
+        return rho_part;
+      }
+
+      template <typename RealArrayLike>
+      AMREX_GPU_HOST_DEVICE
+      AMREX_FORCE_INLINE
+      Real rho_part(const RealArrayLike& Y, const Real& T, const Real* cBoilT) const
+      {
+        Real rho_part = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          rho_part += Y[spf] / rho_Li(amrex::min(T, cBoilT[spf]), spf);
+        }
+        rho_part = 1. / rho_part;
+        return rho_part;
+      }
+
     };
     
     // Struct of properties for GCM
@@ -87,11 +126,11 @@ namespace pele::physics{
 
     template <typename LiqPropType>
     struct InitLiqProps {
-        void operator()(LiqPropType* ldata, std::vector<std::string>& fuel_names) {
-            amrex::Abort("InitLiqProps not implemented for this LiqPropType.");
+        void operator()(LiqPropType* /*ldata*/, std::vector<std::string>& /*fuel_names*/) {
+            Abort("InitLiqProps not implemented for this LiqPropType.");
         }
     };
-
+    
     // Specialization for MPLiqProps
     template <>
     struct InitLiqProps<MPLiqProps> {
@@ -101,6 +140,7 @@ namespace pele::physics{
             getInpVal(ldata->boilT.data(), pp, fuel_names.data(), "boil_temp");
             getInpVal(ldata->cp.data(), pp, fuel_names.data(), "cp");
             getInpVal(ldata->ref_latent.data(), pp, fuel_names.data(), "latent");
+            pp.get("fuel_ref_temp", ldata->ref_T);
 
             getInpCoef(
               ldata->lambda_coef.data(), pp, fuel_names.data(), "lambda");
@@ -112,7 +152,7 @@ namespace pele::physics{
 
         void getInpCoef(
             Real* coef,
-            const amrex::ParmParse& ppp,
+            const ParmParse& ppp,
             const std::string* fuel_names,
             const std::string& varname,
             bool is_required = false) {
@@ -146,7 +186,7 @@ namespace pele::physics{
 
         void getInpVal(
             Real* coef,
-            const amrex::ParmParse& ppp,
+            const ParmParse& ppp,
             const std::string* fuel_names,
             const std::string& varname) {
             for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -156,17 +196,17 @@ namespace pele::physics{
         }
     };
 
-    /*
+    
     // Specialization for GCMLiqProps
     template <>
     struct InitLiqProps<GCMLiqProps> {
-        void operator()(GCMLiqProps* ldata, std::vector<std::string>& fuel_names) {
-            amrex::ParmParse pp("particles");
+        void operator()(GCMLiqProps* /*ldata*/, std::vector<std::string>& /*fuel_names*/) {
+            //ParmParse pp("particles");
 
             
         }
     };
-    */
+    
   } // namespace SprayProps
 } // namespace pele::physics
 
