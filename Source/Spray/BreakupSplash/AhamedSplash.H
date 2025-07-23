@@ -239,7 +239,7 @@ droplet_splashing(
   const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
-  const amrex::Real We = rho_part * dia_part * U0norm * U0norm / fdat.sigma;
+  const amrex::Real We = rho_part * dia_part * U0norm * U0norm / fdat.liqprops.sigma;
   const amrex::Real Re_L = std::abs(U0norm) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   // Inclination of on-coming particle to surface in radians

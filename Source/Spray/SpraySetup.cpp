@@ -133,7 +133,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       m_sprayData->theta_c = theta_c_deg * M_PI / 180.;
     }
     // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", m_sprayData->sigma);
+    pp.get("fuel_sigma", m_sprayData->liqprops.sigma);
     m_sprayData->do_splash = splash_model;
     m_sprayData->do_breakup = breakup_model;
   }

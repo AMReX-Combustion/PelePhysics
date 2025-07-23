@@ -117,8 +117,6 @@ struct SprayData
   int do_breakup = 0; // 0 - no breakup modeling, 1 - TAB model, 2 - KHRT model
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
-  //amrex::Real ref_T;
-  amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
   amrex::Real theta_c = -1.; // Contact angle for wall film
   // If particle is updated half dt or whole dt

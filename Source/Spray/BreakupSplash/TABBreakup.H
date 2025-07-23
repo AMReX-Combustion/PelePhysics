@@ -48,7 +48,7 @@ updateBreakupTAB(
   }
   rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
   amrex::Real Utan_total = 0.;
-  amrex::Real sigma = fdat.sigma;
+  amrex::Real sigma = fdat.liqprops.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::Real min_rad =
     4. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
