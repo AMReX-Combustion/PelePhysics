@@ -4,6 +4,7 @@
 #define MAXD_TABLE 5
 #include <iostream>
 #include <fstream>
+#include <AMReX_ParmParse.H>
 #include "BlackBoxFunction.H"
 #include "Utilities.H"
 

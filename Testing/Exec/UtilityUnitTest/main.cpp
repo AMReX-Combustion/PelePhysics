@@ -1,6 +1,8 @@
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include "Utilities.H"
+#include "Table.H"
+#include "BlackBoxFunction.H"
 
 namespace m2c = pele::physics::utilities::mks2cgs;
 namespace c2m = pele::physics::utilities::cgs2mks;
@@ -9,6 +11,23 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
+
+  // Test table interpolation
+  pele::physics::TabulatedFunctionParams tabfunc_par;
+  tabfunc_par.host_only_parm().parm_parse_prefix = "test";
+  tabfunc_par.initialize();
+  pele::physics::TabulatedFunction tabfunc(
+    static_cast<const pele::physics::TabulatedFunctionData*>(
+      &tabfunc_par.host_parm()));
+  amrex::Real outval;
+  const amrex::GpuArray<amrex::Real, 2> invals{1.0, 1.0};
+  const std::string varname = "T";
+  const int idxT =
+    pele::physics::get_var_index(varname.c_str(), &tabfunc_par.host_parm());
+  tabfunc.get_value(idxT, invals.data(), outval);
+  AMREX_ALWAYS_ASSERT(amrex::almostEqual(outval, 3.60));
+  tabfunc_par.deallocate();
+  amrex::Print() << "TabulatedFunction Tests passed" << std::endl;
 
   // Test Unit Conversions
   AMREX_ALWAYS_ASSERT(m2c::Length(1.0) == 100.0);
