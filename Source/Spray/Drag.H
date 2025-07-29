@@ -80,7 +80,7 @@ calcVaporState(
     // Compute latent heat
     // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.liqprops.diff_liq_gas_latent[spf] -
+      h_part[fspec] + fdat.liqprops.diff_liqLatent_gasEnth[spf] -
       fdat.liqprops.cp[spf] * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
 
