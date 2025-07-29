@@ -68,9 +68,11 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     }
 
     // Read input parameters for liquid properties
-    pele::physics::SprayProps::InitLiqProps<pele::physics::SprayProps::LiqPropType> init_liq_props;
+    pele::physics::SprayProps::InitLiqProps<
+      pele::physics::SprayProps::LiqPropType>
+      init_liq_props;
     init_liq_props(&(m_sprayData->liqprops), fuel_names);
-    
+
     // Set the fuel names
     for (int i = 0; i < nfuel; ++i) {
       m_sprayFuelNames[i] = fuel_names[i];
@@ -241,7 +243,8 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
-    m_sprayData->liqprops.diff_liq_gas_latent[ns] = m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SPU.eng_conv;
+    m_sprayData->liqprops.diff_liq_gas_latent[ns] =
+      m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SPU.eng_conv;
   }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];

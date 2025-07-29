@@ -274,8 +274,8 @@ SprayParticleContainer::sprayInjection(
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    rho_avg +=
-      spray_jet->get_avg_Y(spf) / fdat->liqprops.rho_Li(spray_jet->get_avg_T(), spf);
+    rho_avg += spray_jet->get_avg_Y(spf) /
+               fdat->liqprops.rho_Li(spray_jet->get_avg_T(), spf);
   }
   rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;

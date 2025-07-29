@@ -76,16 +76,17 @@ calcVaporState(
     const int fdspec = fdat.dep_indx[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
-    
+
     // Compute latent heat
     // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.liqprops.diff_liq_gas_latent[spf] - fdat.liqprops.cp[spf] * (T_part - fdat.liqprops.ref_T);
+      h_part[fspec] + fdat.liqprops.diff_liq_gas_latent[spf] -
+      fdat.liqprops.cp[spf] * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
-    
+
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
-    //TODO: Generalize for multiple psat correlations based on liqprops
+    // TODO: Generalize for multiple psat correlations based on liqprops
     if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
       const amrex::Real boilT_ref = fdat.liqprops.boilT[spf];
       pres_sat =
@@ -208,13 +209,13 @@ calculateSpraySource(
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
-  
+
   // This is inefficient, but we need Y_part for multiple computations below
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
   amrex::Real rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
-  
+
   amrex::Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
