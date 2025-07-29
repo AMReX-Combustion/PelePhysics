@@ -15,7 +15,7 @@ namespace pele::physics{
       GpuArray<Real, SPRAY_FUEL_NUM> boilT;
       GpuArray<Real, SPRAY_FUEL_NUM> cp;
       GpuArray<Real, SPRAY_FUEL_NUM> latent;
-      GpuArray<Real, SPRAY_FUEL_NUM> ref_latent;
+      GpuArray<Real, SPRAY_FUEL_NUM> diff_liq_gas_latent;
       Real sigma = -1.; // Surface tension
       // 3 coefficients for Antoine equation and conversion to appropriate units
       GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
@@ -77,7 +77,7 @@ namespace pele::physics{
       {
         // Since we only know the latent heat at the reference temperature,
         // modify Watsons power law to find latent heat at any temperature
-        return ref_latent[spf] *
+        return latent[spf] *
                 std::pow((critT[spf] - ref_T) / (critT[spf] - T), -0.38);
       }
 
@@ -139,7 +139,7 @@ namespace pele::physics{
             getInpVal(ldata->critT.data(), pp, fuel_names.data(), "crit_temp");
             getInpVal(ldata->boilT.data(), pp, fuel_names.data(), "boil_temp");
             getInpVal(ldata->cp.data(), pp, fuel_names.data(), "cp");
-            getInpVal(ldata->ref_latent.data(), pp, fuel_names.data(), "latent");
+            getInpVal(ldata->latent.data(), pp, fuel_names.data(), "latent");
             pp.get("fuel_ref_temp", ldata->ref_T);
 
             getInpCoef(
