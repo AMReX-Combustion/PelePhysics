@@ -145,23 +145,29 @@ struct BinaryDiff
     TransParm<EOSType, SimpleTransport> const* tparm)
   {
     const amrex::Real scale = Constants::PATM / (Constants::RU * Tloc);
+
+    amrex::Real sum_of_Yloc = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      amrex::Real term1 = 0.0;
-      amrex::Real term2 = 0.0;
-      for (int j = 0; j < NUM_SPECIES; ++j) {
+      sum_of_Yloc += Yloc[i];
+    }
+
+    for (int i = 1; i < NUM_SPECIES; ++i) {
+      for (int j = 0; j < i; ++j) {
         // cppcheck-suppress knownConditionTrueFalse
-        if (i != j) {
-          const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
-          const amrex::Real dbintemp =
-            tparm->fitdbin[four_idx_ij] +
-            tparm->fitdbin[1 + four_idx_ij] * logT[0] +
-            tparm->fitdbin[2 + four_idx_ij] * logT[1] +
-            tparm->fitdbin[3 + four_idx_ij] * logT[2];
-          term1 += Yloc[j];
-          term2 += Xloc[j] * std::exp(-dbintemp);
-        }
+        const int four_idx_ij = 4 * (i * (i + 1) / 2 + j);
+        amrex::Real dbintemp = tparm->fitdbin[four_idx_ij] +
+                               tparm->fitdbin[four_idx_ij + 1] * logT[0] +
+                               tparm->fitdbin[four_idx_ij + 2] * logT[1] +
+                               tparm->fitdbin[four_idx_ij + 3] * logT[2];
+
+        dbintemp = std::exp(-dbintemp);
+        Ddiag[i] += Xloc[j] * dbintemp;
+        Ddiag[j] += Xloc[i] * dbintemp;
       }
-      Ddiag[i] = tparm->wt[i] * term1 / term2 * scale;
+    }
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      const amrex::Real term1 = sum_of_Yloc - Yloc[i];
+      Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
     }
   }
 };
@@ -180,30 +186,37 @@ struct BinaryDiff<eos::SRK>
     amrex::Real* Ddiag,
     TransParm<eos::SRK, SimpleTransport> const* tparm)
   {
-    for (int i = 0; i < NUM_SPECIES; ++i) {
-      amrex::Real term1 = 0.0;
-      amrex::Real term2 = 0.0;
-      for (int j = 0; j < NUM_SPECIES; ++j) {
-        // cppcheck-suppress knownConditionTrueFalse
-        if (i != j) {
-          const int idx_ij = i + NUM_SPECIES * j;
-          amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
-                                 tparm->fitdbin[1 + 4 * idx_ij] * logT[0] +
-                                 tparm->fitdbin[2 + 4 * idx_ij] * logT[1] +
-                                 tparm->fitdbin[3 + 4 * idx_ij] * logT[2];
-          dbintemp = std::exp(-dbintemp);
 
-          amrex::Real Upsilonij = 0.0;
-          for (int k = 0; k < NUM_SPECIES; ++k) {
-            Upsilonij += tparm->Upsilonijk[idx_ij * NUM_SPECIES + k] * Yloc[k];
-          }
-          Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
-          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
-          term1 += Yloc[j];
-          term2 += Xloc[j] * dbintemp;
+    amrex::Real sum_of_Yloc = 0.0;
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      sum_of_Yloc += Yloc[i];
+    }
+
+    for (int i = 1; i < NUM_SPECIES; ++i) {
+      for (int j = 0; j < i; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
+        const int idx_ij = 4 * (i * (i + 1) / 2 + j);
+        const int idx_ijk = (i + NUM_SPECIES * j) * NUM_SPECIES;
+        amrex::Real dbintemp = tparm->fitdbin[idx_ij] +
+                               tparm->fitdbin[idx_ij + 1] * logT[0] +
+                               tparm->fitdbin[idx_ij + 2] * logT[1] +
+                               tparm->fitdbin[idx_ij + 3] * logT[2];
+        dbintemp = std::exp(-dbintemp);
+
+        amrex::Real Upsilonij = 0.0;
+        for (int k = 0; k < NUM_SPECIES; ++k) {
+          Upsilonij += tparm->Upsilonijk[idx_ijk + k] * Yloc[k];
         }
+        // here we have a symmetry
+        Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
+        dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
+        Ddiag[i] += Xloc[j] * dbintemp;
+        Ddiag[j] += Xloc[i] * dbintemp;
       }
-      Ddiag[i] = tparm->wt[i] * term1 / term2;
+    }
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      const amrex::Real term1 = sum_of_Yloc - Yloc[i];
+      Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i];
     }
   }
 };

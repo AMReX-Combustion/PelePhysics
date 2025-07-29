@@ -108,9 +108,8 @@ InterpolateGasPhase(
   const amrex::IntVect* indx_array,
   const amrex::Real* weights)
 {
-#ifndef PELELM_USE_SPRAY
   auto eos = pele::physics::PhysicsType::eos();
-#else
+#ifdef PELELM_USE_SPRAY
   amrex::ignore_unused(engarr);
 #endif
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
@@ -151,6 +150,15 @@ InterpolateGasPhase(
       gpv.T_fluid += cw * T_i;
     }
   }
+
+  // Fill in some other data with EOS calls
+  eos.Y2WBAR(gpv.Y_fluid.data(), gpv.mw_mix);
+  gpv.mw_mix *= SprayUnits::mass_conv;
+
+  eos.RTY2P(
+    gpv.rho_fluid / SprayUnits::rho_conv, gpv.T_fluid, gpv.Y_fluid.data(),
+    gpv.p_fluid);
+  gpv.p_fluid *= SprayUnits::pres_conv;
 }
 
 // Slightly modified from MFIX code
