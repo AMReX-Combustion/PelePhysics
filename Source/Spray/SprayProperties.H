@@ -14,7 +14,7 @@ struct MPLiqProps
   GpuArray<Real, SPRAY_FUEL_NUM> boilT;
   GpuArray<Real, SPRAY_FUEL_NUM> cp;
   GpuArray<Real, SPRAY_FUEL_NUM> latent;
-  GpuArray<Real, SPRAY_FUEL_NUM> diff_liq_gas_latent;
+  GpuArray<Real, SPRAY_FUEL_NUM> diff_liqLatent_gasEnth;
   Real sigma = -1.; // Surface tension
   // 3 coefficients for Antoine equation and conversion to appropriate units
   GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
