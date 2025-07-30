@@ -4,8 +4,7 @@
 using namespace amrex;
 
 // Structs for liquid fuel properties
-namespace pele::physics {
-namespace SprayProps {
+namespace pele::physics::SprayProps {
 
 // Original spray properties ported from PeleMP to PelePhysics
 struct MPLiqProps
@@ -15,8 +14,9 @@ struct MPLiqProps
   GpuArray<Real, SPRAY_FUEL_NUM> boilT;
   GpuArray<Real, SPRAY_FUEL_NUM> cp;
   GpuArray<Real, SPRAY_FUEL_NUM> latent;
-  GpuArray<Real, SPRAY_FUEL_NUM> diff_liqLatent_gasEnth;
+  GpuArray<Real, SPRAY_FUEL_NUM> diff_liq_gas_latent;
   Real sigma = -1.; // Surface tension
+  // 3 coefficients for Antoine equation and conversion to appropriate units
   GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
   GpuArray<Real, SPRAY_FUEL_NUM * 4> rho_coef;
   GpuArray<Real, SPRAY_FUEL_NUM * 4> lambda_coef;
@@ -203,7 +203,6 @@ struct InitLiqProps<GCMLiqProps>
   }
 };
 
-} // namespace SprayProps
-} // namespace pele::physics
+} // namespace pele::physics::SprayProps
 
 #endif

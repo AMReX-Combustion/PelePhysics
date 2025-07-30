@@ -80,7 +80,7 @@ calcVaporState(
     // Compute latent heat
     // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.liqprops.diff_liqLatent_gasEnth[spf] -
+      h_part[fspec] + fdat.liqprops.diff_liq_gas_latent[spf] -
       fdat.liqprops.cp[spf] * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
 
@@ -398,26 +398,26 @@ calculateSpraySource(
       // If droplet is still reasonable size and temperature
       if (new_mass > min_mass && newT < Tboil) {
         T_part = newT;
-        if (SPRAY_FUEL_NUM > 1) {
-          rho_part = 0.;
-          amrex::Real sumY = 0.;
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            Y_part[spf] = amrex::min(
-              1.,
-              amrex::max(
-                0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
-            if (Y_part[spf] <= 1.E-12) {
-              Y_part[spf] = 0.;
-            }
-            sumY += Y_part[spf];
+#if SPRAY_FUEL_NUM > 1
+        rho_part = 0.;
+        amrex::Real sumY = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          Y_part[spf] = amrex::min(
+            1.,
+            amrex::max(
+              0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
+          if (Y_part[spf] <= 1.E-12) {
+            Y_part[spf] = 0.;
           }
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            Y_part[spf] /= sumY;
-          }
-          rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
-        } else {
-          rho_part = fdat.liqprops.rho_Li(amrex::min(T_part, cBoilT[0]), 0);
+          sumY += Y_part[spf];
         }
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          Y_part[spf] /= sumY;
+        }
+        rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
+#else
+        rho_part = fdat.liqprops.rho_Li(amrex::min(T_part, cBoilT[0]), 0);
+#endif
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
       } else {
