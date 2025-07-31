@@ -1,6 +1,5 @@
 
 #include "SprayParticles.H"
-//#include "PeleLMeX.H"
 
 using namespace amrex;
 
@@ -95,7 +94,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
   pp.query("mass_transfer", m_sprayData->mass_trans);
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
-  //Sreejith: initializing spraydata eosparm with host_parm
+  //Sreejith: initializing spraydata eosparm with host_parm and device_parm
   m_sprayData->eosparm=&leosparm->host_parm();
   d_sprayData->eosparm=leosparm->device_parm();
 #ifdef PELELM_USE_SPRAY
@@ -295,9 +294,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   pp.query("mass_transfer", m_sprayData->mass_trans);
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
-  //Sreejith: initializing spraydata eosparm with host_parm
-  //m_sprayData->eosparm=&(PeleLM::eos_parms.host_parm());
-  //d_sprayData->eosparm=PeleLM::eos_parms.device_parm();
 #ifdef PELELM_USE_SPRAY
   Real max_cfl = 2.;
 #else
@@ -473,7 +469,6 @@ SprayParticleContainer::spraySetup(const Real* body_force)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
-  amrex::Print()<<"\n EOS Tyep = "<<pele::physics::PhysicsType::eos_type::identifier();
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     spec_names);
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {

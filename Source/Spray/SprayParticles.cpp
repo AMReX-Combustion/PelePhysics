@@ -7,7 +7,6 @@
 #include "TABBreakup.H"
 #include "ReitzKHRT.H"
 #include "WallFilm.H"
-#include "PeleLMeX.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
 #endif
@@ -142,8 +141,6 @@ SprayParticleContainer::estTimestep(int level) const
   return dt;
 }
 
-
-
 void
 SprayParticleContainer::updateParticles(
   const int& level,
@@ -162,8 +159,6 @@ SprayParticleContainer::updateParticles(
   const Real spray_cfl_lev)
 {
   BL_PROFILE("SprayParticleContainer::updateParticles()");
-
-  amrex::Print()<<"\n Tyring smething: "<<ltransparm->idx_rhoD;
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   bool isActive = !(isVirt || isGhost);
@@ -332,8 +327,7 @@ SprayParticleContainer::updateParticles(
         refv.fillPtrs_d(rf_d);
       }
       auto* N_SB = N_SB_d.dataPtr();
-      auto const* leosparm = PeleLM::eos_parms.device_parm();
-
+      auto const* leosparm = m_sprayData->eosparm;
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {

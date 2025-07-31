@@ -62,9 +62,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real* /*mw[]*/)
   {
-    /*amrex::Error(
-      "molecular_weight for species does not have significance for "
-      "Manifold EOS");*/
+    //DO NOTHING. MOLECULAR WEIGHT HAS NO SIGNIFICANCE IN MANIFOLD MODELS
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -114,6 +112,7 @@ struct Manifold
     for (int i = 0; i < NUM_SPECIES; i++) {
       Hi[i] = 0.0;
     }
+    //amrex::Print()<<"\nSreejith: Fixing Hi = 0.0 in manifold model";
     // amrex::Error("T2Hi does not have significance for Manifold EOS");
   }
 
