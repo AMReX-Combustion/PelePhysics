@@ -1,5 +1,5 @@
 # AMReX
-DIM        = 3
+DIM        = 2
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 VERBOSE    = FALSE

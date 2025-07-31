@@ -1,17 +1,10 @@
 description: QSSA of gas
 generator: YamlWriter
-cantera-version: 2.6.0
-git-commit: 9573e6b
-date: Thu Mar 30 22:33:26 2023
+cantera-version: 3.1.0
+git-commit: '6e00275'
+date: Fri Jul 18 15:41:49 2025
 phases:
-  - forward_to_remove_idx: [13, 66, 119, 120, 123, 146, 227, 229, 230, 231]
-    n_qssa_species: 18
-    kinetics: gas
-    transport: mixture-averaged
-    qssa_species: [C12OOH, C2H3, C2H5, CH2, CH2*, CH3O, HCO, O2C12H24OOH, PXC10H21,
-    PXC12H25, PXC5H11, PXC6H13, PXC7H15, PXC8H17, S3XC12H25, SXC12H25, nC3H7,
-    pC4H9]
-    name: gas-qssa
+  - name: gas-qssa
     thermo: ideal-gas
     elements: [C, H, O, N]
     species: [NC12H26, H, O, OH, HO2, H2, H2O, H2O2, O2, CH2, CH2*, CH3, CH4, HCO,
@@ -20,6 +13,13 @@ phases:
     C7H14, PXC7H15, C8H16, PXC8H17, C9H18, PXC9H19, C10H20, PXC10H21,
     PXC12H25, SXC12H25, S3XC12H25, C12H24, C12H25O2, C12OOH, O2C12H24OOH,
     OC12H23OOH, N2]
+    kinetics: bulk
+    transport: mixture-averaged
+    qssa_species: [C12OOH, C2H3, C2H5, CH2, CH2*, CH3O, HCO, O2C12H24OOH, PXC10H21,
+    PXC12H25, PXC5H11, PXC6H13, PXC7H15, PXC8H17, S3XC12H25, SXC12H25, nC3H7,
+    pC4H9]
+    n_qssa_species: 18
+    forward_to_remove_idx: [13, 66, 119, 120, 123, 146, 227, 229, 230, 231]
     state:
       T: 1.0e-03
       density: 1.0e-03
@@ -460,7 +460,7 @@ species:
         1074.826, 16.14534]
         - [6.732257, 0.01490834, -4.949899e-06, 7.212022e-10, -3.766204e-14,
         -923.5703, -13.31335]
-      note: 120186
+      note: '120186'
     transport:
       model: gas
       geometry: nonlinear
@@ -562,7 +562,7 @@ species:
         2812.1887, 36.459244]
         - [10.13864, 0.022714138, -7.7910463e-06, 1.1876522e-09, -6.5932448e-14,
         -1721.8359, -33.125885]
-      note: 000000
+      note: '000000'
     transport:
       model: gas
       geometry: nonlinear
@@ -851,7 +851,7 @@ species:
         16.9741]
         - [28.4782, 0.0537539, -1.68186e-05, 2.51367e-09, -1.47208e-13,
         -3.74118e+04, -109.121]
-      note: 000000
+      note: '000000'
     transport:
       model: gas
       geometry: nonlinear
@@ -871,9 +871,9 @@ species:
       note: |
         000000
         C12H25O2   1/24/ 7 THERMC  12H  25O   2    0G   300.000  5000.000 1389.000    21
-        4.10720559E+01 5.76223879E-02-1.98682057E-05 3.10098353E-09-1.80567383E-13    2
+         4.10720559E+01 5.76223879E-02-1.98682057E-05 3.10098353E-09-1.80567383E-13    2
         -4.84961160E+04-1.77176648E+02 4.13301762E-01 1.47893311E-01-9.69755376E-05    3
-        3.35724323E-08-4.91454646E-12-3.36844450E+04 4.32258761E+01                   4
+         3.35724323E-08-4.91454646E-12-3.36844450E+04 4.32258761E+01                   4
     transport:
       model: gas
       geometry: nonlinear
@@ -890,7 +890,7 @@ species:
         41.3429]
         - [35.0907, 0.051059, -1.54345e-05, 2.24627e-09, -1.28901e-13, -5.12675e+04,
         -137.75]
-      note: 000000
+      note: '000000'
     transport:
       model: gas
       geometry: nonlinear
@@ -910,9 +910,9 @@ species:
       note: |
         000000
         O2C12H24OOH        THERMC  12H  25O   4    0G   300.000  5000.000 1389.000    41
-        4.78237378E+01 5.66012764E-02-1.96226767E-05 3.07404604E-09-1.79468346E-13    2
+         4.78237378E+01 5.66012764E-02-1.96226767E-05 3.07404604E-09-1.79468346E-13    2
         -6.30929400E+04-2.07768890E+02 6.91692611E-01 1.67000994E-01-1.20729787E-04    3
-        4.63412670E-08-7.45842745E-12-4.65446291E+04 4.56074372E+01                   4
+         4.63412670E-08-7.45842745E-12-4.65446291E+04 4.56074372E+01                   4
     transport:
       model: gas
       geometry: nonlinear
@@ -929,7 +929,7 @@ species:
         -1020.8999, 3.950372]
         - [2.92664, 1.4879768e-03, -5.68476e-07, 1.0097038e-10, -6.753351e-15,
         -922.7977, 5.980528]
-      note: 121286
+      note: '121286'
     transport:
       model: gas
       geometry: linear
