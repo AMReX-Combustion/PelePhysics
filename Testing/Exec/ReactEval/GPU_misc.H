@@ -39,10 +39,10 @@ initialize_data(
   amrex::Real y = plo[1] + (j + 0.5) * dx[1];
   // amrex::Real x = plo[0] + (i+0.5)*dx[0];
   amrex::Real pi = 3.1415926535897932;
-  amrex::GpuArray<amrex::Real, 3> L;
-  amrex::GpuArray<amrex::Real, 3> P;
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> L;
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> P;
 
-  for (int n = 0; n < 3; n++) {
+  for (int n = 0; n < AMREX_SPACEDIM; n++) {
     L[n] = phi[n] - plo[n];
     P[n] = L[n] / 4.0;
   }
