@@ -88,6 +88,8 @@ public:
 
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);
+  static void readSprayParams(int& particle_verbose,
+		  	  	  	  	  	  pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> *leosparm);
 
   /// \brief Create droplets from splashing or breakup
   void CreateSBDroplets(
@@ -242,6 +244,29 @@ public:
       pele::physics::EosType,
       pele::physics::TransportType> const* ltransparm,
     const amrex::Real spray_cfl_lev);
+
+  /// \brief Update particle data and solve gas-phase source terms (to be used with manifold model)
+  void updateParticles(
+    const int& level,
+    amrex::MultiFab& state,
+    amrex::MultiFab& source,
+    const amrex::Real& flow_dt,
+    const amrex::Real& time,
+    const int state_ghosts,
+    const int source_ghosts,
+    const bool isVirt,
+    const bool isGhost,
+    const bool do_move,
+    pele::physics::transport::TransParm<
+      pele::physics::EosType,
+      pele::physics::TransportType> const* ltransparm,
+    const amrex::Real spray_cfl_lev,
+	pele::physics::PeleParams<
+	  pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> const* leosparm);
+
+
+  //pele::physics::PeleParams<
+  //pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> const* leosparm
 
   /// \brief Sum boundary and copy temporary source term
   /// @param source_ghosts Number of ghost cells needed for source terms

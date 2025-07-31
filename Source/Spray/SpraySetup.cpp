@@ -1,6 +1,6 @@
 
 #include "SprayParticles.H"
-#include "PeleLMeX.H"
+//#include "PeleLMeX.H"
 
 using namespace amrex;
 
@@ -71,6 +71,208 @@ getInpVal(
   }
 }
 
+
+
+void
+SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> *leosparm)
+{
+  amrex::Print() << "\n Reading spray model parameters ..." << std::endl;
+#if AMREX_SPACEDIM == 1
+  amrex::Abort("Spray model not valid in 1D");
+#elif AMREX_SPACEDIM == 2
+  amrex::Print()
+    << " Warning: Spray model in 2D assumes narrow domain in z-direction (Lz = "
+       "dz)!"
+    << std::endl;
+#endif
+  m_sprayData = new SprayData{};
+  d_sprayData =
+    static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
+  ParmParse pp("particles");
+  // Control the verbosity of the Particle class
+  pp.query("v", particle_verbose);
+
+  pp.query("mass_transfer", m_sprayData->mass_trans);
+  pp.query("mom_transfer", m_sprayData->mom_trans);
+  pp.query("fixed_parts", m_sprayData->fixed_parts);
+  //Sreejith: initializing spraydata eosparm with host_parm
+  m_sprayData->eosparm=&leosparm->host_parm();
+  d_sprayData->eosparm=leosparm->device_parm();
+#ifdef PELELM_USE_SPRAY
+  Real max_cfl = 2.;
+#else
+  Real max_cfl = 0.5;
+#endif
+  pp.query("cfl", spray_cfl);
+  if (spray_cfl > max_cfl) {
+    Abort("particles.cfl must be <= " + std::to_string(max_cfl));
+  }
+  // Number of fuel species in spray droplets
+  // Must match the number specified at compile time
+  const int nfuel = pp.countval("fuel_species");
+  if (nfuel != SPRAY_FUEL_NUM) {
+    amrex::Print()<<"Warning! Number of fuel species in input file must match SPRAY_FUEL_NUM";
+  }
+
+  std::vector<std::string> fuel_names;
+  std::vector<std::string> dep_fuel_names;
+  bool has_dep_spec = false;
+  {
+    pp.getarr("fuel_species", fuel_names);
+    if (pp.contains("dep_fuel_species")) {
+      has_dep_spec = true;
+      pp.getarr("dep_fuel_species", dep_fuel_names);
+    }
+    getInpVal(m_sprayData->critT.data(), pp, fuel_names.data(), "crit_temp");
+    getInpVal(m_sprayData->boilT.data(), pp, fuel_names.data(), "boil_temp");
+    getInpVal(m_sprayData->cp.data(), pp, fuel_names.data(), "cp");
+    getInpVal(m_sprayData->ref_latent.data(), pp, fuel_names.data(), "latent");
+
+    getInpCoef(
+      m_sprayData->lambda_coef.data(), pp, fuel_names.data(), "lambda");
+    getInpCoef(m_sprayData->psat_coef.data(), pp, fuel_names.data(), "psat");
+    getInpCoef(
+      m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
+    getInpCoef(m_sprayData->mu_coef.data(), pp, fuel_names.data(), "mu");
+    for (int i = 0; i < nfuel; ++i) {
+      m_sprayFuelNames[i] = fuel_names[i];
+      if (has_dep_spec) {
+        m_sprayDepNames[i] = dep_fuel_names[i];
+      } else {
+        m_sprayDepNames[i] = m_sprayFuelNames[i];
+      }
+      m_sprayData->latent[i] = m_sprayData->ref_latent[i];
+    }
+  }
+
+  Real spray_ref_T = 300.;
+  bool splash_model = false;
+  int breakup_model = 0;
+  //
+  // Set the number of particles per parcel
+  //
+  pp.query("use_splash_model", splash_model);
+  std::string breakup_model_str = "None";
+  pp.query("use_breakup_model", breakup_model_str);
+  if (breakup_model_str == "TAB") {
+    breakup_model = 1;
+    pp.query("max_parcel_size", m_maxNumPPP);
+  } else if (breakup_model_str == "KHRT") {
+    breakup_model = 2;
+    pp.query("KHRT_B0", m_khrtB0);
+    pp.query("KHRT_B1", m_khrtB1);
+    pp.query("KHRT_C3", m_khrtC3);
+  } else if (breakup_model_str == "None") {
+    breakup_model = 0;
+  } else {
+    Abort(
+      "'use_breakup_model' input not recognized. Must be 'TAB', 'KHRT', or "
+      "'None'");
+  }
+  if (splash_model || (breakup_model > 0)) {
+    pp.query("breakup_parcel_factor", m_breakupPPPFact);
+    if (m_breakupPPPFact > 1. || m_breakupPPPFact < 0.) {
+      Abort("'breakup_parcel_factor' must be between 0 and 1");
+    }
+    bool wrong_data = false;
+    for (int i = 0; i < nfuel; ++i) {
+      std::string var_read = fuel_names[i] + "_mu";
+      if (!pp.contains(var_read.c_str())) {
+        wrong_data = true;
+      }
+    }
+    if (wrong_data || !pp.contains("fuel_sigma")) {
+      Abort(
+        "fuel_sigma and mu coeffs must be set for splash or breakup model.");
+    }
+    if (splash_model) {
+      // TODO: Have this retrieved from proper boundary data
+      pp.get("wall_temp", m_sprayData->wall_T);
+      Real theta_c_deg = -1.;
+      pp.get("contact_angle", theta_c_deg);
+      if (theta_c_deg < 0. || theta_c_deg > 180.) {
+        Abort("'contact_angle' must be between 0 and 180");
+      }
+      m_sprayData->theta_c = theta_c_deg * M_PI / 180.;
+    }
+    // Set the fuel surface tension and contact angle
+    pp.get("fuel_sigma", m_sprayData->sigma);
+    m_sprayData->do_splash = splash_model;
+    m_sprayData->do_breakup = breakup_model;
+  }
+
+  // Must use same reference temperature for all fuels
+  pp.get("fuel_ref_temp", spray_ref_T);
+  //
+  // Set if spray ascii files should be written
+  //
+  pp.query("write_ascii_files", write_ascii_files);
+  //
+  // Set if gas phase spray source term should be written
+  //
+  pp.query("plot_src", plot_spray_src);
+  //
+  // Used in initData() on startup to read in a file of particles.
+  //
+  pp.query("init_file", spray_init_file);
+#ifdef AMREX_USE_EB
+  //
+  // Spray source terms are only added to cells with a volume fraction higher
+  // than this value
+  //
+  pp.query("min_eb_vfrac", m_sprayData->min_eb_vfrac);
+#endif
+
+  m_sprayData->ref_T = spray_ref_T;
+
+  // List of known derived spray quantities
+  std::vector<std::string> derive_names = {
+    "spray_mass",      // Total liquid mass in a cell
+    "spray_density",   // Liquid mass divided by cell volume
+    "spray_num",       // Number of spray droplets in a cell
+    "spray_vol",       // Total liquid volume in a cell
+    "spray_surf_area", // Total liquid surface area in a cell
+    "spray_vol_frac",  // Volume fraction of liquid in cell
+    "d10",             // Average diameter
+    "d32",             // SMD
+    "wall_film_hght",  // Wall film height
+    "wall_film_mass",  // Wall film mass
+    "spray_temp",      // Mass-weighted average temperature
+    "num_parcels",     // Number of parcels in a cell
+    AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
+  int derive_plot_vars = 1;
+  pp.query("derive_plot_vars", derive_plot_vars);
+  int derive_plot_species = 1;
+  pp.query("derive_plot_species", derive_plot_species);
+  // If derive_spray_vars if present, add above spray quantities in the same
+  // order
+  for (const auto& derive_name : derive_names) {
+    m_sprayDeriveVars.push_back(derive_name);
+  }
+  if (derive_plot_species == 1 && SPRAY_FUEL_NUM > 1) {
+    for (auto& fuel_name : m_sprayFuelNames) {
+      m_sprayDeriveVars.push_back("spray_mass_" + fuel_name);
+    }
+  }
+
+  if (particle_verbose >= 1 && ParallelDescriptor::IOProcessor()) {
+    Print() << "Spray fuel species " << m_sprayFuelNames[0];
+#if SPRAY_FUEL_NUM > 1
+    for (int i = 1; i < SPRAY_FUEL_NUM; ++i) {
+      Print() << ", " << m_sprayFuelNames[i];
+    }
+#endif
+    Print() << std::endl;
+  }
+  Gpu::streamSynchronize();
+  ParallelDescriptor::Barrier();
+}
+
+
+
+
+
+
 void
 SprayParticleContainer::readSprayParams(int& particle_verbose)
 {
@@ -94,8 +296,8 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
   //Sreejith: initializing spraydata eosparm with host_parm
-  m_sprayData->eosparm=&(PeleLM::eos_parms.host_parm());
-  d_sprayData->eosparm=PeleLM::eos_parms.device_parm();
+  //m_sprayData->eosparm=&(PeleLM::eos_parms.host_parm());
+  //d_sprayData->eosparm=PeleLM::eos_parms.device_parm();
 #ifdef PELELM_USE_SPRAY
   Real max_cfl = 2.;
 #else
