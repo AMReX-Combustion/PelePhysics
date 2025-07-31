@@ -521,7 +521,6 @@ SprayParticleContainer::spraySetup(const Real* body_force, const pele::physics::
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
-  amrex::Print()<<"\n EOS Tyep = "<<pele::physics::PhysicsType::eos_type::identifier();
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     spec_names,(eosparm));
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {

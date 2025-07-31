@@ -112,7 +112,6 @@ struct Manifold
     for (int i = 0; i < NUM_SPECIES; i++) {
       Hi[i] = 0.0;
     }
-    //amrex::Print()<<"\nSreejith: Fixing Hi = 0.0 in manifold model";
     // amrex::Error("T2Hi does not have significance for Manifold EOS");
   }
 
@@ -146,7 +145,6 @@ struct Manifold
     amrex::Error("RTY2Cv is not yet implemented for Manifold EOS");
   }
 
-  //Sreejith: Adding a dummy T2Cpi function
   AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     static void T2Cpi(const amrex::Real T, amrex::Real Cpi[NUM_SPECIES])
