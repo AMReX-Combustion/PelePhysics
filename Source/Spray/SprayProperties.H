@@ -24,25 +24,15 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real critT_i(const int spf) const
-  {
-    return critT[spf];
-  }
+  Real critT_i(const int spf) const { return critT[spf]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real boilT_i(const int spf) const
-  {
-    return boilT[spf];
-  }
+  Real boilT_i(const int spf) const { return boilT[spf]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real cp_i(const Real& /*T*/, const int spf) const
-  {
-    return cp[spf];
-  }
-
+  Real cp_i(const Real& /*T*/, const int spf) const { return cp[spf]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE

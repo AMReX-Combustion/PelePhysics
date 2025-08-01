@@ -81,7 +81,7 @@ calcVaporState(
     // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
       h_part[fspec] + fdat.liqprops.latentRef_minus_gasRefH_i[spf] -
-      fdat.liqprops.cp_i(T_part,spf) * (T_part - fdat.liqprops.ref_T);
+      fdat.liqprops.cp_i(T_part, spf) * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
 
     amrex::Real pres_sat = 0.;
@@ -229,7 +229,7 @@ calculateSpraySource(
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tboil += Y_part[spf] * cBoilT[spf];
-      cp_part += Y_part[spf] * fdat.liqprops.cp_i(T_part,spf);
+      cp_part += Y_part[spf] * fdat.liqprops.cp_i(T_part, spf);
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }
     mw_part = 1. / mw_part;
