@@ -275,7 +275,7 @@ SprayParticleContainer::sprayInjection(
   amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     rho_avg += spray_jet->get_avg_Y(spf) /
-               fdat->liqprops.rho_Li(spray_jet->get_avg_T(), spf);
+               fdat->liqprops.rho_i(spray_jet->get_avg_T(), spf);
   }
   rho_avg = 1. / rho_avg;
   const amrex::Real Pi_six = M_PI / 6.;
@@ -370,9 +370,9 @@ SprayParticleContainer::sprayInjection(
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
         }
-        rho_part = fdat->liqprops.rho_part(Y_part, T_part);
+        rho_part = fdat->liqprops.rho_mix(Y_part, T_part);
       } else {
-        rho_part = fdat->liqprops.rho_Li(T_part, 0);
+        rho_part = fdat->liqprops.rho_i(T_part, 0);
         p.rdata(SprayComps::pstateY) = 1.;
       }
       // Add particles as if they have advanced some random portion of

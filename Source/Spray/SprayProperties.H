@@ -14,7 +14,7 @@ struct MPLiqProps
   GpuArray<Real, SPRAY_FUEL_NUM> boilT;
   GpuArray<Real, SPRAY_FUEL_NUM> cp;
   GpuArray<Real, SPRAY_FUEL_NUM> latent;
-  GpuArray<Real, SPRAY_FUEL_NUM> diff_liqLatent_gasEnth;
+  GpuArray<Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
   Real sigma = -1.; // Surface tension
   // 3 coefficients for Antoine equation and conversion to appropriate units
   GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
@@ -24,7 +24,29 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real rho_Li(const Real& T, const int spf) const
+  Real critT_i(const int spf) const
+  {
+    return critT[spf];
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  Real boilT_i(const int spf) const
+  {
+    return boilT[spf];
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  Real cp_i(const Real& /*T*/, const int spf) const
+  {
+    return cp[spf];
+  }
+
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  Real rho_i(const Real& T, const int spf) const
   {
     Real a = rho_coef[4 * spf];
     Real b = rho_coef[4 * spf + 1];
@@ -35,7 +57,7 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real lambda_Li(const Real& T, const int spf) const
+  Real lambda_i(const Real& T, const int spf) const
   {
     Real a = lambda_coef[4 * spf];
     Real b = lambda_coef[4 * spf + 1];
@@ -46,7 +68,7 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real mu_Li(const Real& T, const int spf) const
+  Real mu_i(const Real& T, const int spf) const
   {
     Real a = mu_coef[4 * spf];
     Real b = mu_coef[4 * spf + 1];
@@ -68,38 +90,38 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  Real latent_Li(const Real& T, const int spf) const
+  Real latent_i(const Real& T, const int spf) const
   {
     // Since we only know the latent heat at the reference temperature,
     // modify Watsons power law to find latent heat at any temperature
     return latent[spf] *
-           std::pow((critT[spf] - ref_T) / (critT[spf] - T), -0.38);
+           std::pow((critT_i(spf) - ref_T) / (critT_i(spf) - T), -0.38);
   }
 
   // ReallArrayLike can be anything with an [] operator that returns
   // amrex::Real&
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE Real
-  rho_part(const RealArrayLike& Y, const Real& T) const
+  rho_mix(const RealArrayLike& Y, const Real& T) const
   {
-    Real rho_part = 0.;
+    Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      rho_part += Y[spf] / rho_Li(T, spf);
+      rho += Y[spf] / rho_i(T, spf);
     }
-    rho_part = 1. / rho_part;
-    return rho_part;
+    rho = 1. / rho;
+    return rho;
   }
 
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE Real
-  rho_part(const RealArrayLike& Y, const Real& T, const Real* cBoilT) const
+  rho_mix(const RealArrayLike& Y, const Real& T, const Real* cBoilT) const
   {
-    Real rho_part = 0.;
+    Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      rho_part += Y[spf] / rho_Li(amrex::min(T, cBoilT[spf]), spf);
+      rho += Y[spf] / rho_i(amrex::min(T, cBoilT[spf]), spf);
     }
-    rho_part = 1. / rho_part;
-    return rho_part;
+    rho = 1. / rho;
+    return rho;
   }
 };
 

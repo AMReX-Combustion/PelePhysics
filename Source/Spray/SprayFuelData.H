@@ -133,22 +133,21 @@ struct SprayData
   AMREX_FORCE_INLINE
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
   {
-    const auto& critT = liqprops.critT;
-    const auto& boilT = liqprops.boilT;
+
     SprayUnits SPU;
     amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
     amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
       const amrex::Real mw_fuel = gpv.mw[fspec];
-      amrex::Real Hboil_ref = liqprops.latent_Li(boilT[spf], spf);
+      amrex::Real Hboil_ref = liqprops.latent_i(liqprops.boilT_i(spf), spf);
 
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =
         1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
-              1. / boilT[spf]);
-      cBoilT[spf] = amrex::min(critT[spf], cBoilT[spf]);
+              1. / liqprops.boilT_i(spf));
+      cBoilT[spf] = amrex::min(liqprops.critT_i(spf), cBoilT[spf]);
     }
   }
 };

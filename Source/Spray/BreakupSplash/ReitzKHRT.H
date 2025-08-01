@@ -44,9 +44,9 @@ updateBreakupKHRT(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    mu_part += Y_part[spf] * fdat.liqprops.mu_Li(minT, spf);
+    mu_part += Y_part[spf] * fdat.liqprops.mu_i(minT, spf);
   }
-  rho_part = fdat.liqprops.rho_part(Y_part, T_part, cBoilT);
+  rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
   // Minimum droplet radius for child droplets
   // Should not create child droplets that are near to or less than the minimum
   // allowable mass to avoid unphysical evaporation of mass

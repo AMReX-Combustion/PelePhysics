@@ -54,9 +54,9 @@ SprayParticleContainer::CreateSBDroplets(
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         Y0[spf] = rfh.Y0[vy + spf];
       }
-      rho_part = fdat->liqprops.rho_part(Y0, T0);
+      rho_part = fdat->liqprops.rho_mix(Y0, T0);
 #else
-      Real rho_part = fdat->liqprops.rho_Li(T0, 0);
+      Real rho_part = fdat->liqprops.rho_i(T0, 0);
       Y0[0] = 1.;
 #endif
       // Real pmass = M_PI / 6. * rho_part * std::pow(ref_dia, 3);
