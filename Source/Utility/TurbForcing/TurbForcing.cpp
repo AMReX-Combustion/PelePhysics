@@ -85,11 +85,11 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   m_tfp.m_kappaMax =
     static_cast<amrex::Real>(m_tfp.m_nmodes) / m_tfp.m_Lmin + 1.0e-8;
   m_tfp.m_nxmodes =
-    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lx / m_tfp.m_Lmin));
+    m_tfp.m_nmodes * static_cast<int>(std::lround(Lx / m_tfp.m_Lmin));
   m_tfp.m_nymodes =
-    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Ly / m_tfp.m_Lmin));
+    m_tfp.m_nmodes * static_cast<int>(std::lround(Ly / m_tfp.m_Lmin));
   m_tfp.m_nzmodes =
-    m_tfp.m_nmodes * static_cast<int>(std::lround(0.5 + Lz / m_tfp.m_Lmin));
+    m_tfp.m_nmodes * static_cast<int>(std::lround(Lz / m_tfp.m_Lmin));
 
   if (m_tfp.m_verbose > 0) {
     amrex::Print() << "Lmin = " << m_tfp.m_Lmin << std::endl;
@@ -307,7 +307,7 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
   for (int kz = 1; kz < zstep; ++kz) {
     const auto kzd = static_cast<amrex::Real>(kz);
     for (int ky = m_tfp.m_mode_start; ky <= m_tfp.m_nymodes; ky += ystep) {
-      const auto kyd = static_cast<amrex::Real>(kz);
+      const auto kyd = static_cast<amrex::Real>(ky);
       for (int kx = m_tfp.m_mode_start; kx <= m_tfp.m_nxmodes; kx += xstep) {
         const auto kxd = static_cast<amrex::Real>(kx);
         const auto kappa = std::sqrt(
@@ -488,9 +488,17 @@ TurbForcing::addTurbVelForces(
   const amrex::Real* problo = geomdata.ProbLo();
   const amrex::Real* probhi = geomdata.ProbHi();
 
-  const amrex::Real Lx = probhi[0] - problo[0];
-  const amrex::Real Ly = probhi[1] - problo[1];
-  const amrex::Real Lz = probhi[2] - problo[2];
+  amrex::Real Lx = probhi[0] - problo[0];
+  amrex::Real Ly = probhi[1] - problo[1];
+  amrex::Real Lz = probhi[2] - problo[2];
+
+  if (m_tfp.m_hack_lz > 0) {
+    if (m_tfp.m_hack_lz == 1) {
+      Lz = Lz / 2.0;
+    } else {
+      Lz = Lz / m_tfp.m_hack_lz;
+    }
+  }
 
   const int* f_lo = bx.loVect();
   const int* f_hi = bx.hiVect();

@@ -186,8 +186,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cv_R(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -242,8 +242,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cp_R(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -298,8 +298,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 gibbs(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
@@ -384,8 +384,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 helmholtz(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
   const amrex::Real logT = log(T);
 
@@ -470,8 +470,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesInternalEnergy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -541,8 +541,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEnthalpy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -612,8 +612,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEntropy(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real logT = log(T);
 
   // species with midpoint at T=1000 kelvin
@@ -683,7 +683,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 dcvpRdT(amrex::Real* species, const amrex::Real T)
 {
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
+  const amrex::Real T3 = T * T2;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -757,8 +757,8 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 
   // compute Cp/R at the given temperature
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -861,8 +861,8 @@ CKCVBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cvbs)
   amrex::Real result = 0.0;
   // compute Cv/R at the given temperature
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -965,8 +965,8 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 {
   amrex::Real result = 0.0;
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -1086,8 +1086,8 @@ CKUBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& ubms)
 {
   amrex::Real result = 0.0;
   const amrex::Real T2 = T * T;
-  const amrex::Real T3 = T * T * T;
-  const amrex::Real T4 = T * T * T * T;
+  const amrex::Real T3 = T * T2;
+  const amrex::Real T4 = T * T3;
   const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
@@ -2940,194 +2940,110 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[5] = 4.01337907E+00;
   COFD[6] = -3.10488902E-01;
   COFD[7] = 1.36288975E-02;
-  COFD[8] = -1.95657595E+01;
-  COFD[9] = 4.78813616E+00;
-  COFD[10] = -3.65976019E-01;
-  COFD[11] = 1.42215118E-02;
-  COFD[12] = -1.65706931E+01;
-  COFD[13] = 3.92005093E+00;
-  COFD[14] = -2.99040611E-01;
-  COFD[15] = 1.31607610E-02;
-  COFD[16] = -1.65940113E+01;
-  COFD[17] = 3.92553905E+00;
-  COFD[18] = -2.99706984E-01;
-  COFD[19] = 1.31876655E-02;
-  COFD[20] = -1.93937242E+01;
-  COFD[21] = 4.87146645E+00;
-  COFD[22] = -4.13323360E-01;
-  COFD[23] = 1.77408400E-02;
-  COFD[24] = -1.29544979E+01;
-  COFD[25] = 2.96758239E+00;
-  COFD[26] = -1.76586224E-01;
-  COFD[27] = 7.90559536E-03;
-  COFD[28] = -1.68102679E+01;
-  COFD[29] = 4.01337907E+00;
-  COFD[30] = -3.10488902E-01;
-  COFD[31] = 1.36288975E-02;
-  COFD[32] = -1.60936459E+01;
-  COFD[33] = 3.70633871E+00;
-  COFD[34] = -2.71897253E-01;
-  COFD[35] = 1.20097588E-02;
-  COFD[36] = -1.99035490E+01;
-  COFD[37] = 5.01694632E+00;
-  COFD[38] = -4.08962988E-01;
-  COFD[39] = 1.66143402E-02;
-  COFD[40] = -1.58214949E+01;
-  COFD[41] = 3.60000113E+00;
-  COFD[42] = -2.58255120E-01;
-  COFD[43] = 1.14251480E-02;
+  COFD[8] = -1.60936459E+01;
+  COFD[9] = 3.70633871E+00;
+  COFD[10] = -2.71897253E-01;
+  COFD[11] = 1.20097588E-02;
+  COFD[12] = -1.95657595E+01;
+  COFD[13] = 4.78813616E+00;
+  COFD[14] = -3.65976019E-01;
+  COFD[15] = 1.42215118E-02;
+  COFD[16] = -1.99035490E+01;
+  COFD[17] = 5.01694632E+00;
+  COFD[18] = -4.08962988E-01;
+  COFD[19] = 1.66143402E-02;
+  COFD[20] = -1.16123739E+01;
+  COFD[21] = 8.27753087E-01;
+  COFD[22] = 2.52262500E-01;
+  COFD[23] = -1.62567542E-02;
+  COFD[24] = -1.65706931E+01;
+  COFD[25] = 3.92005093E+00;
+  COFD[26] = -2.99040611E-01;
+  COFD[27] = 1.31607610E-02;
+  COFD[28] = -1.58214949E+01;
+  COFD[29] = 3.60000113E+00;
+  COFD[30] = -2.58255120E-01;
+  COFD[31] = 1.14251480E-02;
+  COFD[32] = -1.99472346E+01;
+  COFD[33] = 5.05636620E+00;
+  COFD[34] = -4.17733674E-01;
+  COFD[35] = 1.71403498E-02;
+  COFD[36] = -1.56019684E+01;
+  COFD[37] = 3.51542686E+00;
+  COFD[38] = -2.47677471E-01;
+  COFD[39] = 1.09841319E-02;
+  COFD[40] = -1.65940113E+01;
+  COFD[41] = 3.92553905E+00;
+  COFD[42] = -2.99706984E-01;
+  COFD[43] = 1.31876655E-02;
   COFD[44] = -1.58458185E+01;
   COFD[45] = 3.60600362E+00;
   COFD[46] = -2.59019961E-01;
   COFD[47] = 1.14576923E-02;
-  COFD[48] = -1.87633989E+01;
-  COFD[49] = 4.61060397E+00;
-  COFD[50] = -3.83564503E-01;
-  COFD[51] = 1.66168246E-02;
-  COFD[52] = -1.22181330E+01;
-  COFD[53] = 2.70415313E+00;
-  COFD[54] = -1.41236971E-01;
-  COFD[55] = 6.32236816E-03;
-  COFD[56] = -1.95657595E+01;
-  COFD[57] = 4.78813616E+00;
-  COFD[58] = -3.65976019E-01;
-  COFD[59] = 1.42215118E-02;
-  COFD[60] = -1.99035490E+01;
-  COFD[61] = 5.01694632E+00;
-  COFD[62] = -4.08962988E-01;
-  COFD[63] = 1.66143402E-02;
-  COFD[64] = -1.16123739E+01;
-  COFD[65] = 8.27753087E-01;
-  COFD[66] = 2.52262500E-01;
-  COFD[67] = -1.62567542E-02;
-  COFD[68] = -1.99472346E+01;
-  COFD[69] = 5.05636620E+00;
-  COFD[70] = -4.17733674E-01;
-  COFD[71] = 1.71403498E-02;
-  COFD[72] = -1.99647324E+01;
-  COFD[73] = 5.05179382E+00;
-  COFD[74] = -4.16351089E-01;
-  COFD[75] = 1.70488542E-02;
-  COFD[76] = -1.82187534E+01;
-  COFD[77] = 3.93854125E+00;
-  COFD[78] = -2.28424577E-01;
-  COFD[79] = 7.18603064E-03;
-  COFD[80] = -1.73864192E+01;
-  COFD[81] = 4.71143120E+00;
-  COFD[82] = -3.95288666E-01;
-  COFD[83] = 1.70702288E-02;
-  COFD[84] = -1.65706931E+01;
-  COFD[85] = 3.92005093E+00;
-  COFD[86] = -2.99040611E-01;
-  COFD[87] = 1.31607610E-02;
-  COFD[88] = -1.58214949E+01;
-  COFD[89] = 3.60000113E+00;
-  COFD[90] = -2.58255120E-01;
-  COFD[91] = 1.14251480E-02;
-  COFD[92] = -1.99472346E+01;
-  COFD[93] = 5.05636620E+00;
-  COFD[94] = -4.17733674E-01;
-  COFD[95] = 1.71403498E-02;
-  COFD[96] = -1.56019684E+01;
-  COFD[97] = 3.51542686E+00;
-  COFD[98] = -2.47677471E-01;
-  COFD[99] = 1.09841319E-02;
-  COFD[100] = -1.56221646E+01;
-  COFD[101] = 3.51977302E+00;
-  COFD[102] = -2.48210923E-01;
-  COFD[103] = 1.10059241E-02;
-  COFD[104] = -1.85068911E+01;
-  COFD[105] = 4.52122572E+00;
-  COFD[106] = -3.73088946E-01;
-  COFD[107] = 1.62076520E-02;
-  COFD[108] = -1.20381551E+01;
-  COFD[109] = 2.61421687E+00;
-  COFD[110] = -1.28887086E-01;
-  COFD[111] = 5.75609167E-03;
-  COFD[112] = -1.65940113E+01;
-  COFD[113] = 3.92553905E+00;
-  COFD[114] = -2.99706984E-01;
-  COFD[115] = 1.31876655E-02;
-  COFD[116] = -1.58458185E+01;
-  COFD[117] = 3.60600362E+00;
-  COFD[118] = -2.59019961E-01;
-  COFD[119] = 1.14576923E-02;
-  COFD[120] = -1.99647324E+01;
-  COFD[121] = 5.05179382E+00;
-  COFD[122] = -4.16351089E-01;
-  COFD[123] = 1.70488542E-02;
-  COFD[124] = -1.56221646E+01;
-  COFD[125] = 3.51977302E+00;
-  COFD[126] = -2.48210923E-01;
-  COFD[127] = 1.10059241E-02;
-  COFD[128] = -1.56423496E+01;
-  COFD[129] = 3.52412711E+00;
-  COFD[130] = -2.48745351E-01;
-  COFD[131] = 1.10277551E-02;
-  COFD[132] = -1.85324272E+01;
-  COFD[133] = 4.52748688E+00;
-  COFD[134] = -3.73847542E-01;
-  COFD[135] = 1.62384117E-02;
-  COFD[136] = -1.20607836E+01;
-  COFD[137] = 2.61969379E+00;
-  COFD[138] = -1.29638429E-01;
-  COFD[139] = 5.79050588E-03;
-  COFD[140] = -1.93937242E+01;
-  COFD[141] = 4.87146645E+00;
-  COFD[142] = -4.13323360E-01;
-  COFD[143] = 1.77408400E-02;
-  COFD[144] = -1.87633989E+01;
-  COFD[145] = 4.61060397E+00;
-  COFD[146] = -3.83564503E-01;
-  COFD[147] = 1.66168246E-02;
-  COFD[148] = -1.82187534E+01;
-  COFD[149] = 3.93854125E+00;
-  COFD[150] = -2.28424577E-01;
-  COFD[151] = 7.18603064E-03;
-  COFD[152] = -1.85068911E+01;
-  COFD[153] = 4.52122572E+00;
-  COFD[154] = -3.73088946E-01;
-  COFD[155] = 1.62076520E-02;
-  COFD[156] = -1.85324272E+01;
-  COFD[157] = 4.52748688E+00;
-  COFD[158] = -3.73847542E-01;
-  COFD[159] = 1.62384117E-02;
-  COFD[160] = -2.05810575E+01;
-  COFD[161] = 5.07469434E+00;
-  COFD[162] = -4.25340301E-01;
-  COFD[163] = 1.76800795E-02;
-  COFD[164] = -1.43978813E+01;
-  COFD[165] = 3.49721576E+00;
-  COFD[166] = -2.45465191E-01;
-  COFD[167] = 1.08948372E-02;
-  COFD[168] = -1.29544979E+01;
-  COFD[169] = 2.96758239E+00;
-  COFD[170] = -1.76586224E-01;
-  COFD[171] = 7.90559536E-03;
-  COFD[172] = -1.22181330E+01;
-  COFD[173] = 2.70415313E+00;
-  COFD[174] = -1.41236971E-01;
-  COFD[175] = 6.32236816E-03;
-  COFD[176] = -1.73864192E+01;
-  COFD[177] = 4.71143120E+00;
-  COFD[178] = -3.95288666E-01;
-  COFD[179] = 1.70702288E-02;
-  COFD[180] = -1.20381551E+01;
-  COFD[181] = 2.61421687E+00;
-  COFD[182] = -1.28887086E-01;
-  COFD[183] = 5.75609167E-03;
-  COFD[184] = -1.20607836E+01;
-  COFD[185] = 2.61969379E+00;
-  COFD[186] = -1.29638429E-01;
-  COFD[187] = 5.79050588E-03;
-  COFD[188] = -1.43978813E+01;
-  COFD[189] = 3.49721576E+00;
-  COFD[190] = -2.45465191E-01;
-  COFD[191] = 1.08948372E-02;
-  COFD[192] = -1.04285243E+01;
-  COFD[193] = 2.23477534E+00;
-  COFD[194] = -8.11809423E-02;
-  COFD[195] = 3.77342041E-03;
+  COFD[48] = -1.99647324E+01;
+  COFD[49] = 5.05179382E+00;
+  COFD[50] = -4.16351089E-01;
+  COFD[51] = 1.70488542E-02;
+  COFD[52] = -1.56221646E+01;
+  COFD[53] = 3.51977302E+00;
+  COFD[54] = -2.48210923E-01;
+  COFD[55] = 1.10059241E-02;
+  COFD[56] = -1.56423496E+01;
+  COFD[57] = 3.52412711E+00;
+  COFD[58] = -2.48745351E-01;
+  COFD[59] = 1.10277551E-02;
+  COFD[60] = -1.93937242E+01;
+  COFD[61] = 4.87146645E+00;
+  COFD[62] = -4.13323360E-01;
+  COFD[63] = 1.77408400E-02;
+  COFD[64] = -1.87633989E+01;
+  COFD[65] = 4.61060397E+00;
+  COFD[66] = -3.83564503E-01;
+  COFD[67] = 1.66168246E-02;
+  COFD[68] = -1.82187534E+01;
+  COFD[69] = 3.93854125E+00;
+  COFD[70] = -2.28424577E-01;
+  COFD[71] = 7.18603064E-03;
+  COFD[72] = -1.85068911E+01;
+  COFD[73] = 4.52122572E+00;
+  COFD[74] = -3.73088946E-01;
+  COFD[75] = 1.62076520E-02;
+  COFD[76] = -1.85324272E+01;
+  COFD[77] = 4.52748688E+00;
+  COFD[78] = -3.73847542E-01;
+  COFD[79] = 1.62384117E-02;
+  COFD[80] = -2.05810575E+01;
+  COFD[81] = 5.07469434E+00;
+  COFD[82] = -4.25340301E-01;
+  COFD[83] = 1.76800795E-02;
+  COFD[84] = -1.29544979E+01;
+  COFD[85] = 2.96758239E+00;
+  COFD[86] = -1.76586224E-01;
+  COFD[87] = 7.90559536E-03;
+  COFD[88] = -1.22181330E+01;
+  COFD[89] = 2.70415313E+00;
+  COFD[90] = -1.41236971E-01;
+  COFD[91] = 6.32236816E-03;
+  COFD[92] = -1.73864192E+01;
+  COFD[93] = 4.71143120E+00;
+  COFD[94] = -3.95288666E-01;
+  COFD[95] = 1.70702288E-02;
+  COFD[96] = -1.20381551E+01;
+  COFD[97] = 2.61421687E+00;
+  COFD[98] = -1.28887086E-01;
+  COFD[99] = 5.75609167E-03;
+  COFD[100] = -1.20607836E+01;
+  COFD[101] = 2.61969379E+00;
+  COFD[102] = -1.29638429E-01;
+  COFD[103] = 5.79050588E-03;
+  COFD[104] = -1.43978813E+01;
+  COFD[105] = 3.49721576E+00;
+  COFD[106] = -2.45465191E-01;
+  COFD[107] = 1.08948372E-02;
+  COFD[108] = -1.04285243E+01;
+  COFD[109] = 2.23477534E+00;
+  COFD[110] = -8.11809423E-02;
+  COFD[111] = 3.77342041E-03;
 }
 
 // List of specs with small weight, dim NLITE

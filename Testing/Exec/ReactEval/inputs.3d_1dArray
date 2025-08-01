@@ -7,7 +7,7 @@ chem_integrator = "ReactorRK64"
 
 ode.dt  = 2.e-05
 ode.ndt = 30
-ode.ode_ncells = 1024
+ode.ode_ncells = 128
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
 ode.use_typ_vals = 0

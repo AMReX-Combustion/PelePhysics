@@ -1,20 +1,20 @@
 description: QSSA of gas
 generator: YamlWriter
-cantera-version: 2.6.0
-git-commit: 9573e6b
-date: Thu Mar 30 22:33:26 2023
+cantera-version: 3.1.0
+git-commit: '6e00275'
+date: Fri Jul 18 15:41:49 2025
 phases:
-  - qssa_species: [C2H3, C2H5, CH, CH2, CH2*, CH2CHO, CH3O, H2CC, HCO, nC3H7]
-    name: gas-qssa
-    forward_to_remove_idx: [72, 73, 149, 180, 205]
-    n_qssa_species: 10
-    kinetics: gas
-    transport: mixture-averaged
+  - name: gas-qssa
     thermo: ideal-gas
     elements: [H, O, C, N]
     species: [H2, H, O, O2, OH, H2O, HO2, H2O2, CH, CH2, CH2*, CH3, CH4, CO, CO2, HCO,
     CH2O, CH3O, C2H2, H2CC, C2H3, C2H4, C2H5, C2H6, HCCO, CH2CO, CH2CHO,
     CH3CHO, aC3H5, C3H6, nC3H7, N2]
+    kinetics: bulk
+    transport: mixture-averaged
+    qssa_species: [C2H3, C2H5, CH, CH2, CH2*, CH2CHO, CH3O, H2CC, HCO, nC3H7]
+    n_qssa_species: 10
+    forward_to_remove_idx: [72, 73, 149, 180, 205]
     state:
       T: 1.0e-03
       density: 1.0e-03
@@ -317,7 +317,7 @@ species:
         978.6011, 13.152177]
         - [3.770799, 7.871497e-03, -2.656384e-06, 3.944431e-10, -2.112616e-14,
         127.83252, 2.929575]
-      note: 121686
+      note: '121686'
     transport:
       model: gas
       geometry: nonlinear
@@ -522,7 +522,7 @@ species:
         1074.826, 16.14534]
         - [6.732257, 0.01490834, -4.949899e-06, 7.212022e-10, -3.766204e-14,
         -923.5703, -13.31335]
-      note: 120186
+      note: '120186'
     transport:
       model: gas
       geometry: nonlinear
@@ -556,7 +556,7 @@ species:
         -1020.8999, 3.950372]
         - [2.92664, 1.4879768e-03, -5.68476e-07, 1.0097038e-10, -6.753351e-15,
         -922.7977, 5.980528]
-      note: 121286
+      note: '121286'
     transport:
       model: gas
       geometry: linear
@@ -574,7 +574,7 @@ reactions:
     H2O: 6.0}
     note: |
       R16
-      GRI1.2
+        GRI1.2
   - equation: CO + H2 (+M) <=> CH2O (+M)
     type: falloff
     low-P-rate-constant: {A: 5.07e+21, b: -3.42, Ea: 3.529204e+08}
@@ -584,7 +584,7 @@ reactions:
     H2O: 6.0}
     note: |
       R31
-      GRI1.2
+        GRI1.2
   - equation: CH + CO (+M) <=> HCCO (+M)
     type: falloff
     low-P-rate-constant: {A: 2.69e+22, b: -3.74, Ea: 8.100224e+06}
@@ -594,7 +594,7 @@ reactions:
     H2O: 6.0}
     note: |
       R39
-      GRI1.2
+        GRI1.2
   - equation: H + HCO (+M) <=> CH2O (+M)
     type: falloff
     low-P-rate-constant: {A: 1.35e+18, b: -2.57, Ea: 5.9622e+06}
@@ -604,7 +604,7 @@ reactions:
     H2O: 6.0}
     note: |
       R41
-      GRI1.2
+        GRI1.2
   - equation: CH2 + H (+M) <=> CH3 (+M)
     type: falloff
     low-P-rate-constant: {A: 3.2e+21, b: -3.14, Ea: 5.14632e+06}
@@ -614,7 +614,7 @@ reactions:
     H2O: 6.0}
     note: |
       R48
-      GRI1.2
+        GRI1.2
   - equation: CH2 + CO (+M) <=> CH2CO (+M)
     type: falloff
     low-P-rate-constant: {A: 2.69e+27, b: -5.11, Ea: 2.968548e+07}
@@ -624,7 +624,7 @@ reactions:
     H2O: 6.0}
     note: |
       R56
-      GRI1.2
+        GRI1.2
   - equation: CH2O + H (+M) <=> CH3O (+M)
     type: falloff
     low-P-rate-constant: {A: 2.2e+24, b: -4.8, Ea: 2.326304e+07}
@@ -634,7 +634,7 @@ reactions:
     H2O: 6.0}
     note: |
       R71
-      GRI1.2
+        GRI1.2
   - equation: CH3 + H (+M) <=> CH4 (+M)
     type: falloff
     low-P-rate-constant: {A: 2.477e+27, b: -4.76, Ea: 1.020896e+07}
@@ -644,7 +644,7 @@ reactions:
     H2O: 6.0}
     note: |
       R78
-      GRI1.2
+        GRI1.2
   - equation: CH3 + HCO (+M) <=> CH3CHO (+M)
     type: falloff
     low-P-rate-constant: {A: 2.2e+42, b: -9.588, Ea: 2.13384e+07}
@@ -654,7 +654,7 @@ reactions:
     H2O: 6.0}
     note: |
       R89
-      TS1, RRKM
+        TS1, RRKM
   - equation: 2 CH3 (+M) <=> C2H6 (+M)
     type: falloff
     low-P-rate-constant: {A: 1.77e+44, b: -9.67, Ea: 2.602448e+07}
@@ -664,7 +664,7 @@ reactions:
     H2O: 6.0}
     note: |
       R93
-      GRI1.2
+        GRI1.2
   - equation: C2H3 (+M) <=> C2H2 + H (+M)
     type: falloff
     low-P-rate-constant: {A: 2.565e+24, b: -3.4, Ea: 1.4978184448e+08}
@@ -674,7 +674,7 @@ reactions:
     H2O: 6.0}
     note: |
       R115
-      96KNY/SLA, Zorans Fc fit
+        96KNY/SLA, Zorans Fc fit
   - equation: CH2CO + H (+M) <=> CH2CHO (+M)
     type: falloff
     low-P-rate-constant: {A: 3.8e+35, b: -7.64, Ea: 4.97896e+07}
@@ -684,7 +684,7 @@ reactions:
     H2O: 6.0}
     note: |
       R126
-      kinf, RRKM, Ko for He
+        kinf, RRKM, Ko for He
   - equation: C2H3 + H (+M) <=> C2H4 (+M)
     type: falloff
     low-P-rate-constant: {A: 1.4e+24, b: -3.86, Ea: 1.389088e+07}
@@ -694,7 +694,7 @@ reactions:
     H2O: 6.0}
     note: |
       R132
-      GRI1.2
+        GRI1.2
   - equation: C2H3 + CH3 (+M) <=> C3H6 (+M)
     type: falloff
     low-P-rate-constant: {A: 4.27e+52, b: -11.94, Ea: 4.08768432e+07}
@@ -704,7 +704,7 @@ reactions:
     H2O: 6.0}
     note: |
       R145
-      TS1 600cm-1
+        TS1 600cm-1
   - equation: CH2CHO + H (+M) <=> CH3CHO (+M)
     type: falloff
     low-P-rate-constant: {A: 5.2e+33, b: -7.297, Ea: 1.96648e+07}
@@ -714,7 +714,7 @@ reactions:
     H2O: 6.0}
     note: |
       R148
-      Estimated, RRKM
+        Estimated, RRKM
   - equation: C2H4 (+M) <=> H2 + H2CC (+M)
     type: falloff
     low-P-rate-constant: {A: 7.0e+47, b: -9.31, Ea: 4.1781424e+08}
@@ -724,7 +724,7 @@ reactions:
     H2O: 6.0}
     note: |
       R155
-      GRI1.2
+        GRI1.2
   - equation: C2H4 + H (+M) <=> C2H5 (+M)
     type: falloff
     low-P-rate-constant: {A: 1.2e+36, b: -7.62, Ea: 2.916248e+07}
@@ -734,7 +734,7 @@ reactions:
     H2O: 6.0}
     note: |
       R156
-      GRI1.2
+        GRI1.2
   - equation: C2H5 + H (+M) <=> C2H6 (+M)
     type: falloff
     low-P-rate-constant: {A: 1.99e+35, b: -7.08, Ea: 2.797004e+07}
@@ -744,7 +744,7 @@ reactions:
     H2O: 6.0}
     note: |
       R170
-      GRI1.2
+        GRI1.2
   - equation: H + aC3H5 (+M) <=> C3H6 (+M)
     type: falloff
     low-P-rate-constant: {A: 1.33e+54, b: -12.0, Ea: 2.49692752e+07}
@@ -754,7 +754,7 @@ reactions:
     H2O: 6.0}
     note: |
       R185
-      TS5 600cm-1
+        TS5 600cm-1
   - equation: C3H6 + H (+M) <=> nC3H7 (+M)
     type: falloff
     low-P-rate-constant: {A: 6.26e+32, b: -6.66, Ea: 2.9288e+07}
@@ -763,7 +763,7 @@ reactions:
     efficiencies: {C2H6: 3.0, CH4: 2.0, CO: 1.5, CO2: 2.0, H2: 2.0, H2O: 6.0}
     note: |
       R190
-      TS5 600 cm-1
+       TS5 600 cm-1
   - equation: C2H2 (+M) <=> H2CC (+M)
     type: falloff
     low-P-rate-constant: {A: 2.45e+12, b: -0.64, Ea: 2.079448e+08}
@@ -772,36 +772,36 @@ reactions:
     H2O: 6.0}
     note: |
       R114
-      RRKM with 97.7 kcal/mol for H2CC
+        RRKM with 97.7 kcal/mol for H2CC
   - equation: 2 H + M <=> H2 + M
     type: three-body
     rate-constant: {A: 1.0e+12, b: -1.0, Ea: 0.0}
     efficiencies: {C2H2: 3.0, C2H4: 3.0, C2H6: 3.0, CH4: 2.0, CO2: 0.0, H2: 0.0, H2O: 0.0}
     note: |
       R5
-      GRI1.2
+        GRI1.2
   - equation: 2 H + H2 <=> H2 + H2
     rate-constant: {A: 9.0e+10, b: -0.6, Ea: 0.0}
     note: |
       R6
-      GRI1.2
+        GRI1.2
   - equation: 2 H + H2O <=> H2 + H2O
     rate-constant: {A: 6.0e+13, b: -1.25, Ea: 0.0}
     note: |
       R7
-      GRI1.2
+        GRI1.2
   - equation: 2 H + CO2 <=> H2 + CO2
     rate-constant: {A: 5.5e+14, b: -2.0, Ea: 0.0}
     note: |
       R8
-      GRI1.2
+        GRI1.2
   - equation: H + OH + M <=> H2O + M
     type: three-body
     rate-constant: {A: 2.2e+16, b: -2.0, Ea: 0.0}
     efficiencies: {C2H2: 3.0, C2H4: 3.0, C2H6: 3.0, CH4: 2.0, H2: 0.73, H2O: 3.65}
     note: |
       R9
-      GRI1.2
+        GRI1.2
   - equation: H + O + M <=> OH + M
     type: three-body
     rate-constant: {A: 5.0e+11, b: -1.0, Ea: 0.0}
@@ -809,7 +809,7 @@ reactions:
     H2O: 6.0}
     note: |
       R10
-      GRI1.2
+        GRI1.2
   - equation: 2 O + M <=> O2 + M
     type: three-body
     rate-constant: {A: 1.2e+11, b: -1.0, Ea: 0.0}
@@ -817,7 +817,7 @@ reactions:
     H2O: 15.4}
     note: |
       R11
-      GRI1.2
+        GRI1.2
   - equation: H + O2 + M <=> HO2 + M
     type: three-body
     rate-constant: {A: 2.8e+12, b: -0.86, Ea: 0.0}
@@ -825,22 +825,22 @@ reactions:
     O2: 0.0}
     note: |
       R12
-      GRI1.2
+        GRI1.2
   - equation: H + O2 + O2 <=> HO2 + O2
     rate-constant: {A: 3.0e+14, b: -1.72, Ea: 0.0}
     note: |
       R13
-      GRI1.2
+        GRI1.2
   - equation: H + O2 + H2O <=> HO2 + H2O
     rate-constant: {A: 1.652e+13, b: -0.76, Ea: 0.0}
     note: |
       R14
-      GRI-Mech 1.2a
+        GRI-Mech 1.2a
   - equation: H + O2 + N2 <=> HO2 + N2
     rate-constant: {A: 2.6e+13, b: -1.24, Ea: 0.0}
     note: |
       R15
-      New Stanf. measur.
+        New Stanf. measur.
   - equation: CO + O + M <=> CO2 + M
     type: three-body
     rate-constant: {A: 6.02e+08, b: 0.0, Ea: 1.2552e+07}
@@ -848,7 +848,7 @@ reactions:
     H2O: 6.0, O2: 6.0}
     note: |
       R29
-      GRI1.2
+        GRI1.2
   - equation: HCO + M <=> CO + H + M
     type: three-body
     rate-constant: {A: 1.87e+14, b: -1.0, Ea: 7.1128e+07}
@@ -856,870 +856,869 @@ reactions:
     H2O: 6.0}
     note: |
       R46
-      GRI1.2 beta(H2O)=18
+        GRI1.2 beta(H2O)=18
   - equation: C2H2 + CH3 + M <=> aC3H5 + M
     type: three-body
     rate-constant: {A: 2.2e+49, b: -11.82, Ea: 1.4949432e+08}
-    efficiencies: {}
     note: |
       R121
-      WD RRKM p < 10 atm, T > 500 K, low-p limit
+        WD RRKM p < 10 atm, T > 500 K, low-p limit
   - equation: H + O2 <=> O + OH
     rate-constant: {A: 8.3e+10, b: 0.0, Ea: 6.0303992e+07}
     note: |
       R1
-      GRI1.2
+        GRI1.2
   - equation: H2 + O <=> H + OH
     rate-constant: {A: 50.0, b: 2.67, Ea: 2.631736e+07}
     note: |
       R2
-      GRI1.2
+        GRI1.2
   - equation: H2 + OH <=> H + H2O
     rate-constant: {A: 2.16e+05, b: 1.51, Ea: 1.435112e+07}
     note: |
       R3
-      GRI1.2
+        GRI1.2
   - equation: 2 OH <=> H2O + O
     rate-constant: {A: 35.7, b: 2.4, Ea: -8.82824e+06}
     note: |
       R4
-      GRI1.2
+        GRI1.2
   - equation: H + HO2 <=> H2O + O
     rate-constant: {A: 3.97e+09, b: 0.0, Ea: 2.807464e+06}
     note: |
       R17
-      GRI1.2
+        GRI1.2
   - equation: H + HO2 <=> H2 + O2
     rate-constant: {A: 1.66e+10, b: 0.0, Ea: 3.43088e+06}
     note: |
       R18
-      Mueller et al.
+        Mueller et al.
   - equation: H + HO2 <=> 2 OH
     rate-constant: {A: 7.08e+10, b: 0.0, Ea: 1.2552e+06}
     note: |
       R19
-      Mueller et al.
+        Mueller et al.
   - equation: HO2 + O <=> O2 + OH
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R20
-      GRI1.2
+        GRI1.2
   - equation: HO2 + OH <=> H2O + O2
     rate-constant: {A: 4.64e+10, b: 0.0, Ea: -2.092e+06}
     note: |
       R21
-      GRI-Mech 1.2a
+        GRI-Mech 1.2a
   - equation: 2 HO2 <=> H2O2 + O2
     rate-constant: {A: 1.3e+08, b: 0.0, Ea: -6.81992e+06}
     duplicate: true
     note: |
       R22
-      GRI1.2
+        GRI1.2
   - equation: 2 HO2 <=> H2O2 + O2
     rate-constant: {A: 4.2e+11, b: 0.0, Ea: 5.0208e+07}
     duplicate: true
     note: |
       R23
-      GRI1.2
+        GRI1.2
   - equation: H + H2O2 <=> H2 + HO2
     rate-constant: {A: 1.21e+04, b: 2.0, Ea: 2.17568e+07}
     note: |
       R24
-      GRI1.2
+        GRI1.2
   - equation: H + H2O2 <=> H2O + OH
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 1.50624e+07}
     note: |
       R25
-      GRI1.2
+        GRI1.2
   - equation: H2O2 + O <=> HO2 + OH
     rate-constant: {A: 9630.0, b: 2.0, Ea: 1.6736e+07}
     note: |
       R26
-      GRI1.2
+        GRI1.2
   - equation: H2O2 + OH <=> H2O + HO2
     rate-constant: {A: 1.75e+09, b: 0.0, Ea: 1.33888e+06}
     duplicate: true
     note: |
       R27
-      GRI1.2
+        GRI1.2
   - equation: H2O2 + OH <=> H2O + HO2
     rate-constant: {A: 5.8e+11, b: 0.0, Ea: 3.999904e+07}
     duplicate: true
     note: |
       R28
-      GRI1.2
+        GRI1.2
   - equation: CO + OH <=> CO2 + H
     rate-constant: {A: 4.76e+04, b: 1.228, Ea: 2.9288e+05}
     note: |
       R30
-      GRI1.2
+        GRI1.2
   - equation: CO + O2 <=> CO2 + O
     rate-constant: {A: 2.5e+09, b: 0.0, Ea: 1.999952e+08}
     note: |
       R32
-      GRI1.2
+        GRI1.2
   - equation: CO + HO2 <=> CO2 + OH
     rate-constant: {A: 1.5e+11, b: 0.0, Ea: 9.87424e+07}
     note: |
       R33
-      GRI1.2
+        GRI1.2
   - equation: CH + O <=> CO + H
     rate-constant: {A: 5.7e+10, b: 0.0, Ea: 0.0}
     note: |
       R34
-      GRI1.2
+        GRI1.2
   - equation: CH + OH <=> H + HCO
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R35
-      GRI1.2
+        GRI1.2
   - equation: CH + H2 <=> CH2 + H
     rate-constant: {A: 1.107e+05, b: 1.79, Ea: 6.98728e+06}
     note: |
       R36
-      GRI1.2
+        GRI1.2
   - equation: CH + H2O <=> CH2O + H
     rate-constant: {A: 5.71e+09, b: 0.0, Ea: -3.15892e+06}
     note: |
       R37
-      GRI1.2
+        GRI1.2
   - equation: CH + O2 <=> HCO + O
     rate-constant: {A: 3.3e+10, b: 0.0, Ea: 0.0}
     note: |
       R38
-      GRI1.2
+        GRI1.2
   - equation: CH + CO2 <=> CO + HCO
     rate-constant: {A: 3.4e+09, b: 0.0, Ea: 2.88696e+06}
     note: |
       R40
-      GRI1.2
+        GRI1.2
   - equation: H + HCO <=> CO + H2
     rate-constant: {A: 7.34e+10, b: 0.0, Ea: 0.0}
     note: |
       R42
-      GRI1.2
+        GRI1.2
   - equation: HCO + O <=> CO + OH
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R43
-      GRI1.2
+        GRI1.2
   - equation: HCO + O <=> CO2 + H
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R44
-      GRI1.2
+        GRI1.2
   - equation: HCO + OH <=> CO + H2O
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R45
-      GRI1.2
+        GRI1.2
   - equation: HCO + O2 <=> CO + HO2
     rate-constant: {A: 7.6e+09, b: 0.0, Ea: 1.6736e+06}
     note: |
       R47
-      GRI1.2
+        GRI1.2
   - equation: CH2 + H2 <=> CH3 + H
     rate-constant: {A: 500.0, b: 2.0, Ea: 3.025032e+07}
     note: |
       R49
-      GRI1.2
+        GRI1.2
   - equation: CH2 + O <=> H + HCO
     rate-constant: {A: 8.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R50
-      GRI1.2
+        GRI1.2
   - equation: CH2 + O2 <=> HCO + OH
     rate-constant: {A: 1.056e+10, b: 0.0, Ea: 6.276e+06}
     note: |
       R51
-      GRI1.2 alpha = 0.8
+        GRI1.2 alpha = 0.8
   - equation: CH2 + O2 <=> CO2 + 2 H
     rate-constant: {A: 2.64e+09, b: 0.0, Ea: 6.276e+06}
     note: |
       R52
-      Wagners CO/CO2 ratio, alpha = 0.2
+        Wagners CO/CO2 ratio, alpha = 0.2
   - equation: CH2 + OH <=> CH2O + H
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R53
-      GRI1.2
+        GRI1.2
   - equation: CH2 + OH <=> CH + H2O
     rate-constant: {A: 1.13e+04, b: 2.0, Ea: 1.2552e+07}
     note: |
       R54
-      GRI1.2
+        GRI1.2
   - equation: CH2 + HO2 <=> CH2O + OH
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R55
-      GRI1.2
+        GRI1.2
   - equation: CH + CH2 <=> C2H2 + H
     rate-constant: {A: 4.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R57
-      GRI1.2
+        GRI1.2
   - equation: 2 CH2 <=> C2H2 + H2
     rate-constant: {A: 3.2e+10, b: 0.0, Ea: 0.0}
     note: |
       R58
-      GRI1.2
+        GRI1.2
   - equation: CH2* + N2 <=> CH2 + N2
     rate-constant: {A: 1.5e+10, b: 0.0, Ea: 2.5104e+06}
     note: |
       R59
-      GRI1.2
+        GRI1.2
   - equation: CH2* + H <=> CH + H2
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R60
-      GRI1.2
+        GRI1.2
   - equation: CH2* + O <=> CO + H2
     rate-constant: {A: 1.5e+10, b: 0.0, Ea: 0.0}
     note: |
       R61
-      GRI1.2
+        GRI1.2
   - equation: CH2* + O <=> H + HCO
     rate-constant: {A: 1.5e+10, b: 0.0, Ea: 0.0}
     note: |
       R62
-      GRI1.2
+        GRI1.2
   - equation: CH2* + OH <=> CH2O + H
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R63
-      GRI1.2
+        GRI1.2
   - equation: CH2* + H2 <=> CH3 + H
     rate-constant: {A: 7.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R64
-      GRI1.2
+        GRI1.2
   - equation: CH2* + O2 <=> CO + H + OH
     rate-constant: {A: 2.8e+10, b: 0.0, Ea: 0.0}
     note: |
       R65
-      GRI1.2
+        GRI1.2
   - equation: CH2* + O2 <=> CO + H2O
     rate-constant: {A: 1.2e+10, b: 0.0, Ea: 0.0}
     note: |
       R66
-      GRI1.2
+        GRI1.2
   - equation: CH2* + H2O <=> CH2 + H2O
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R67
-      GRI1.2
+        GRI1.2
   - equation: CH2* + CO <=> CH2 + CO
     rate-constant: {A: 9.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R68
-      GRI1.2
+        GRI1.2
   - equation: CH2* + CO2 <=> CH2 + CO2
     rate-constant: {A: 7.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R69
-      GRI1.2
+        GRI1.2
   - equation: CH2* + CO2 <=> CH2O + CO
     rate-constant: {A: 1.4e+10, b: 0.0, Ea: 0.0}
     note: |
       R70
-      GRI1.2
+        GRI1.2
   - equation: CH2O + H <=> H2 + HCO
     rate-constant: {A: 2.3e+07, b: 1.05, Ea: 1.37026e+07}
     note: |
       R72
-      GRI1.2
+        GRI1.2
   - equation: CH2O + O <=> HCO + OH
     rate-constant: {A: 3.9e+10, b: 0.0, Ea: 1.481136e+07}
     note: |
       R73
-      GRI1.2
+        GRI1.2
   - equation: CH2O + OH <=> H2O + HCO
     rate-constant: {A: 3.43e+06, b: 1.18, Ea: -1.870248e+06}
     note: |
       R74
-      GRI1.2
+        GRI1.2
   - equation: CH2O + O2 <=> HCO + HO2
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 1.6736e+08}
     note: |
       R75
-      GRI1.2
+        GRI1.2
   - equation: CH2O + HO2 <=> H2O2 + HCO
     rate-constant: {A: 1.0e+09, b: 0.0, Ea: 3.3472e+07}
     note: |
       R76
-      GRI1.2
+        GRI1.2
   - equation: CH + CH2O <=> CH2CO + H
     rate-constant: {A: 9.46e+10, b: 0.0, Ea: -2.15476e+06}
     note: |
       R77
-      GRI1.2
+        GRI1.2
   - equation: CH3 + O <=> CH2O + H
     rate-constant: {A: 8.43e+10, b: 0.0, Ea: 0.0}
     note: |
       R79
-      GRI1.2
+        GRI1.2
   - equation: CH3 + OH <=> CH2 + H2O
     rate-constant: {A: 5.6e+04, b: 1.6, Ea: 2.267728e+07}
     note: |
       R80
-      GRI1.2
+        GRI1.2
   - equation: CH3 + OH <=> CH2* + H2O
     rate-constant: {A: 2.501e+10, b: 0.0, Ea: 0.0}
     note: |
       R81
-      GRI1.2
+        GRI1.2
   - equation: CH3 + O2 <=> CH3O + O
     rate-constant: {A: 3.083e+10, b: 0.0, Ea: 1.204992e+08}
     note: |
       R82
-      GRI-Mech 1.2a
+        GRI-Mech 1.2a
   - equation: CH3 + O2 <=> CH2O + OH
     rate-constant: {A: 3.6e+07, b: 0.0, Ea: 3.740496e+07}
     note: |
       R83
-      GRI1.2
+        GRI1.2
   - equation: CH3 + HO2 <=> CH4 + O2
     rate-constant: {A: 1.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R84
-      GRI1.2
+        GRI1.2
   - equation: CH3 + HO2 <=> CH3O + OH
     rate-constant: {A: 1.34e+10, b: 0.0, Ea: 0.0}
     note: |
       R85
-      GRI-Mech 1.2a
+        GRI-Mech 1.2a
   - equation: CH3 + H2O2 <=> CH4 + HO2
     rate-constant: {A: 24.5, b: 2.47, Ea: 2.167312e+07}
     note: |
       R86
-      GRI1.2
+        GRI1.2
   - equation: CH + CH3 <=> C2H3 + H
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R87
-      GRI1.2
+        GRI1.2
   - equation: CH3 + HCO <=> CH4 + CO
     rate-constant: {A: 8.48e+09, b: 0.0, Ea: 0.0}
     note: |
       R88
-      GRI1.2 - 1.8E13 for recombination
+        GRI1.2 - 1.8E13 for recombination
   - equation: CH2O + CH3 <=> CH4 + HCO
     rate-constant: {A: 3.32, b: 2.81, Ea: 2.451824e+07}
     note: |
       R90
-      GRI1.2
+        GRI1.2
   - equation: CH2 + CH3 <=> C2H4 + H
     rate-constant: {A: 4.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R91
-      GRI1.2
+        GRI1.2
   - equation: CH2* + CH3 <=> C2H4 + H
     rate-constant: {A: 1.2e+10, b: 0.0, Ea: -2.38488e+06}
     note: |
       R92
-      GRI1.2
+        GRI1.2
   - equation: 2 CH3 <=> C2H5 + H
     rate-constant: {A: 4.99e+09, b: 0.1, Ea: 4.43504e+07}
     note: |
       R94
-      GRI1.2
+        GRI1.2
   - equation: CH3 + HCCO <=> C2H4 + CO
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R95
-      Est. HW AL
+        Est. HW AL
   - equation: CH3O + H <=> CH2O + H2
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R96
-      GRI1.2
+        GRI1.2
   - equation: CH3O + H <=> CH3 + OH
     rate-constant: {A: 3.2e+10, b: 0.0, Ea: 0.0}
     note: |
       R97
-      GRI1.2
+        GRI1.2
   - equation: CH3O + H <=> CH2* + H2O
     rate-constant: {A: 1.6e+10, b: 0.0, Ea: 0.0}
     note: |
       R98
-      GRI1.2
+        GRI1.2
   - equation: CH3O + O <=> CH2O + OH
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R99
-      GRI1.2
+        GRI1.2
   - equation: CH3O + OH <=> CH2O + H2O
     rate-constant: {A: 5.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R100
-      GRI1.2
+        GRI1.2
   - equation: CH3O + O2 <=> CH2O + HO2
     rate-constant: {A: 4.28e-16, b: 7.6, Ea: -1.476952e+07}
     note: |
       R101
-      GRI1.2
+        GRI1.2
   - equation: CH4 + H <=> CH3 + H2
     rate-constant: {A: 6.6e+05, b: 1.62, Ea: 4.535456e+07}
     note: |
       R102
-      GRI1.2
+        GRI1.2
   - equation: CH4 + O <=> CH3 + OH
     rate-constant: {A: 1.02e+06, b: 1.5, Ea: 3.59824e+07}
     note: |
       R103
-      GRI1.2
+        GRI1.2
   - equation: CH4 + OH <=> CH3 + H2O
     rate-constant: {A: 1.0e+05, b: 1.6, Ea: 1.305408e+07}
     note: |
       R104
-      GRI1.2
+        GRI1.2
   - equation: CH + CH4 <=> C2H4 + H
     rate-constant: {A: 6.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R105
-      GRI1.2
+        GRI1.2
   - equation: CH2 + CH4 <=> 2 CH3
     rate-constant: {A: 2460.0, b: 2.0, Ea: 3.460168e+07}
     note: |
       R106
-      GRI1.2
+        GRI1.2
   - equation: CH2* + CH4 <=> 2 CH3
     rate-constant: {A: 1.6e+10, b: 0.0, Ea: -2.38488e+06}
     note: |
       R107
-      GRI1.2
+        GRI1.2
   - equation: H + HCCO <=> CH2* + CO
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R108
-      GRI1.2
+        GRI1.2
   - equation: HCCO + O <=> 2 CO + H
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R109
-      GRI1.2
+        GRI1.2
   - equation: HCCO + O2 <=> 2 CO + OH
     rate-constant: {A: 1.6e+09, b: 0.0, Ea: 3.573136e+06}
     note: |
       R110
-      GRI1.2
+        GRI1.2
   - equation: CH + HCCO <=> C2H2 + CO
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R111
-      GRI1.2
+        GRI1.2
   - equation: CH2 + HCCO <=> C2H3 + CO
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R112
-      GRI1.2
+        GRI1.2
   - equation: 2 HCCO <=> C2H2 + 2 CO
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R113
-      GRI1.2
+        GRI1.2
   - equation: C2H2 + O <=> H + HCCO
     rate-constant: {A: 1.632e+04, b: 2.0, Ea: 7.9496e+06}
     note: |
       R116
-      GRI1.2, alpha = 0.8 Michael & Wagner
+        GRI1.2, alpha = 0.8 Michael & Wagner
   - equation: C2H2 + O <=> CH2 + CO
     rate-constant: {A: 4080.0, b: 2.0, Ea: 7.9496e+06}
     note: |
       R117
-      GRI1.2, alpha = 0.2
+        GRI1.2, alpha = 0.2
   - equation: C2H2 + OH <=> CH2CO + H
     rate-constant: {A: 2.18e-07, b: 4.5, Ea: -4.184e+06}
     note: |
       R118
-      GRI1.2
+        GRI1.2
   - equation: C2H2 + OH <=> CH3 + CO
     rate-constant: {A: 4.83e-07, b: 4.0, Ea: -8.368e+06}
     note: |
       R119
-      GRI1.2
+        GRI1.2
   - equation: C2H2 + HCO <=> C2H3 + CO
     rate-constant: {A: 1.0e+04, b: 2.0, Ea: 2.5104e+07}
     note: |
       R120
-      Estimated
+        Estimated
   - equation: H + H2CC <=> C2H2 + H
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R122
-      Estimated
+        Estimated
   - equation: H2CC + O <=> CH2 + CO
     rate-constant: {A: 1.0e+11, b: 0.0, Ea: 0.0}
     note: |
       R123
-      Estimated
+        Estimated
   - equation: H2CC + OH <=> CH2CO + H
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R124
-      Estimated
+        Estimated
   - equation: H2CC + O2 <=> CH2 + CO2
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R125
-      Estimated
+        Estimated
   - equation: CH2CO + H <=> H2 + HCCO
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 3.3472e+07}
     note: |
       R127
-      GRI1.2
+        GRI1.2
   - equation: CH2CO + H <=> CH3 + CO
     rate-constant: {A: 1.5e+06, b: 1.43, Ea: 1.125496e+07}
     note: |
       R128
-      RRKM, vista
+        RRKM, vista
   - equation: CH2CO + O <=> HCCO + OH
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 3.3472e+07}
     note: |
       R129
-      GRI1.2
+        GRI1.2
   - equation: CH2CO + O <=> CH2 + CO2
     rate-constant: {A: 1.75e+09, b: 0.0, Ea: 5.6484e+06}
     note: |
       R130
-      GRI1.2
+        GRI1.2
   - equation: CH2CO + OH <=> H2O + HCCO
     rate-constant: {A: 7.5e+09, b: 0.0, Ea: 8.368e+06}
     note: |
       R131
-      GRI1.2
+        GRI1.2
   - equation: C2H3 + H <=> C2H2 + H2
     rate-constant: {A: 3.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R133
-      GRI1.2
+        GRI1.2
   - equation: C2H3 + H <=> H2 + H2CC
     rate-constant: {A: 6.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R134
-      Estmated (Chemically activated)
+        Estmated (Chemically activated)
   - equation: C2H3 + O <=> CH2CO + H
     rate-constant: {A: 4.8e+10, b: 0.0, Ea: 0.0}
     note: |
       R135
-      86TSA/HAM, alpha = 0.5
+        86TSA/HAM, alpha = 0.5
   - equation: C2H3 + O <=> CH3 + CO
     rate-constant: {A: 4.8e+10, b: 0.0, Ea: 0.0}
     note: |
       R136
-      86TSA/HAM, alpha = 0.5, Donaldson et al.
+        86TSA/HAM, alpha = 0.5, Donaldson et al.
   - equation: C2H3 + OH <=> C2H2 + H2O
     rate-constant: {A: 3.011e+10, b: 0.0, Ea: 0.0}
     note: |
       R137
-      86TSA/HAM
+        86TSA/HAM
   - equation: C2H3 + O2 <=> C2H2 + HO2
     rate-constant: {A: 1340.0, b: 1.61, Ea: -1.6041456e+06}
     note: |
       R138
-      96MEB/DIA, 1 atm, negligible p dependence
+        96MEB/DIA, 1 atm, negligible p dependence
   - equation: C2H3 + O2 <=> CH2CHO + O
     rate-constant: {A: 3.0e+08, b: 0.29, Ea: 4.6024e+04}
     note: |
       R139
-      96MEB/DIA, 1 atm, negligible p dependence
+        96MEB/DIA, 1 atm, negligible p dependence
   - equation: C2H3 + O2 <=> CH2O + HCO
     rate-constant: {A: 4.6e+13, b: -1.39, Ea: 4.22584e+06}
     note: |
       R140
-      96MEB/DIA, 1 atm, negligible p dependence
+        96MEB/DIA, 1 atm, negligible p dependence
   - equation: C2H3 + HO2 <=> CH2CHO + OH
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R141
-      Estimated
+        Estimated
   - equation: C2H3 + H2O2 <=> C2H4 + HO2
     rate-constant: {A: 1.21e+07, b: 0.0, Ea: -2.493664e+06}
     note: |
       R142
-      Tsang Hampson 1
+        Tsang Hampson 1
   - equation: C2H3 + HCO <=> C2H4 + CO
     rate-constant: {A: 9.033e+10, b: 0.0, Ea: 0.0}
     note: |
       R143
-      86TSA/HAM
+        86TSA/HAM
   - equation: C2H3 + CH3 <=> C2H2 + CH4
     rate-constant: {A: 3.92e+08, b: 0.0, Ea: 0.0}
     note: |
       R144
-      Tsang Hampson 1
+        Tsang Hampson 1
   - equation: C2H3 + CH3 <=> H + aC3H5
     rate-constant: {A: 1.5e+21, b: -2.83, Ea: 7.7897712e+07}
     note: |
       R146
-      TS1  1 atm, but need to be further examined
+        TS1  1 atm, but need to be further examined
   - equation: CH2CHO <=> CH3 + CO
     rate-constant: {A: 7.8e+41, b: -9.147, Ea: 1.962296e+08}
     note: |
       R147
-      RRKM 760 Torr
+        RRKM 760 Torr
   - equation: CH2CHO + H <=> CH3 + HCO
     rate-constant: {A: 9.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R149
-      RRKM, *1.2 /3
+        RRKM, *1.2 /3
   - equation: CH2CHO + H <=> CH2CO + H2
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 1.6736e+07}
     note: |
       R150
-      82MIL/MIT
+        82MIL/MIT
   - equation: CH2CHO + O <=> CH2CO + OH
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 1.6736e+07}
     note: |
       R151
-      82MIL/MIT
+        82MIL/MIT
   - equation: CH2CHO + OH <=> CH2CO + H2O
     rate-constant: {A: 1.0e+10, b: 0.0, Ea: 8.368e+06}
     note: |
       R152
-      82MIL/MIT
+        82MIL/MIT
   - equation: CH2CHO + O2 <=> CH2CO + HO2
     rate-constant: {A: 1.4e+08, b: 0.0, Ea: 0.0}
     note: |
       R153
-      Baulch et al 1994
+        Baulch et al 1994
   - equation: CH2CHO + O2 <=> CH2O + CO + OH
     rate-constant: {A: 1.8e+07, b: 0.0, Ea: 0.0}
     note: |
       R154
-      Baulch et al 1994
+        Baulch et al 1994
   - equation: C2H4 + H <=> C2H3 + H2
     rate-constant: {A: 5.07e+04, b: 1.93, Ea: 5.41828e+07}
     note: |
       R157
-      96KNY/BEN
+        96KNY/BEN
   - equation: C2H4 + O <=> C2H3 + OH
     rate-constant: {A: 1.51e+04, b: 1.91, Ea: 1.564816e+07}
     note: |
       R158
-      87MAH/MAR
+        87MAH/MAR
   - equation: C2H4 + O <=> CH3 + HCO
     rate-constant: {A: 1.92e+04, b: 1.83, Ea: 9.2048e+05}
     note: |
       R159
-      GRI 1.2
+        GRI 1.2
   - equation: C2H4 + O <=> CH2 + CH2O
     rate-constant: {A: 384.0, b: 1.83, Ea: 9.2048e+05}
     note: |
       R160
-      2% GRI-Mech, Estimated for CH2 production
+         2% GRI-Mech, Estimated for CH2 production
   - equation: C2H4 + OH <=> C2H3 + H2O
     rate-constant: {A: 3600.0, b: 2.0, Ea: 1.046e+07}
     note: |
       R161
-      GRI1.2
+        GRI1.2
   - equation: C2H4 + O2 <=> C2H3 + HO2
     rate-constant: {A: 4.22e+10, b: 0.0, Ea: 2.543872e+08}
     note: |
       R162
-      Tsang-Hampson1+3.2 kcal/mol
+        Tsang-Hampson1+3.2 kcal/mol
   - equation: C2H4 + HO2 <=> CH3CHO + OH
     rate-constant: {A: 2.0e+09, b: 0.0, Ea: 5.8576e+07}
     note: |
       R163
-      Estimated (QM in progress)
+        Estimated (QM in progress)
   - equation: C2H4 + HCO <=> C2H5 + CO
     rate-constant: {A: 1.0e+04, b: 2.0, Ea: 3.3472e+07}
     note: |
       R164
-      Estimated
+        Estimated
   - equation: C2H4 + CH2 <=> H + aC3H5
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 2.5104e+07}
     note: |
       R165
-      Estimated
+        Estimated
   - equation: C2H4 + CH2* <=> CH4 + H2CC
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R166
-      Estimated
+        Estimated
   - equation: C2H4 + CH2* <=> H + aC3H5
     rate-constant: {A: 5.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R167
-      Estimated
+        Estimated
   - equation: C2H4 + CH3 <=> C2H3 + CH4
     rate-constant: {A: 227.0, b: 2.0, Ea: 3.84928e+07}
     note: |
       R168
-      GRI1.2
+        GRI1.2
   - equation: C2H4 + CH3 <=> nC3H7
     rate-constant: {A: 3.3e+08, b: 0.0, Ea: 3.22168e+07}
     note: |
       R169
-      KP
+       KP
   - equation: C2H5 + H <=> C2H4 + H2
     rate-constant: {A: 2.0e+09, b: 0.0, Ea: 0.0}
     note: |
       R171
-      GRI1.2
+        GRI1.2
   - equation: C2H5 + O <=> CH2O + CH3
     rate-constant: {A: 1.604e+10, b: 0.0, Ea: 0.0}
     note: |
       R172
-      86TSA/HAM
+        86TSA/HAM
   - equation: C2H5 + O <=> CH3CHO + H
     rate-constant: {A: 8.02e+10, b: 0.0, Ea: 0.0}
     note: |
       R173
-      86TSA/HAM
+        86TSA/HAM
   - equation: C2H5 + O2 <=> C2H4 + HO2
     rate-constant: {A: 2.0e+07, b: 0.0, Ea: 0.0}
     note: |
       R174
-      Based on Bozzelli (avoid pressure dependence)
+        Based on Bozzelli (avoid pressure dependence)
   - equation: C2H5 + HO2 <=> C2H6 + O2
     rate-constant: {A: 3.0e+08, b: 0.0, Ea: 0.0}
     note: |
       R175
-      TS1
+        TS1
   - equation: C2H5 + HO2 <=> C2H4 + H2O2
     rate-constant: {A: 3.0e+08, b: 0.0, Ea: 0.0}
     note: |
       R176
-      TS1
+        TS1
   - equation: C2H5 + HO2 <=> CH2O + CH3 + OH
     rate-constant: {A: 2.4e+10, b: 0.0, Ea: 0.0}
     note: |
       R177
-      TS1
+        TS1
   - equation: C2H5 + H2O2 <=> C2H6 + HO2
     rate-constant: {A: 8.7e+06, b: 0.0, Ea: 4.075216e+06}
     note: |
       R178
-      TS1
+        TS1
   - equation: C2H5 + HCO <=> C2H6 + CO
     rate-constant: {A: 1.2e+11, b: 0.0, Ea: 0.0}
     note: |
       R179
-      TS1
+        TS1
   - equation: C2H6 + H <=> C2H5 + H2
     rate-constant: {A: 1.15e+05, b: 1.9, Ea: 3.150552e+07}
     note: |
       R180
-      GRI1.2
+        GRI1.2
   - equation: C2H6 + O <=> C2H5 + OH
     rate-constant: {A: 8.98e+04, b: 1.92, Ea: 2.380696e+07}
     note: |
       R181
-      GRI1.2
+        GRI1.2
   - equation: C2H6 + OH <=> C2H5 + H2O
     rate-constant: {A: 3540.0, b: 2.12, Ea: 3.64008e+06}
     note: |
       R182
-      GRI1.2
+        GRI1.2
   - equation: C2H6 + CH2* <=> C2H5 + CH3
     rate-constant: {A: 4.0e+10, b: 0.0, Ea: -2.3012e+06}
     note: |
       R183
-      GRI1.2
+        GRI1.2
   - equation: C2H6 + CH3 <=> C2H5 + CH4
     rate-constant: {A: 6140.0, b: 1.74, Ea: 4.37228e+07}
     note: |
       R184
-      GRI1.2
+        GRI1.2
   - equation: H + aC3H5 <=> CH4 + H2CC
     rate-constant: {A: 2.0e+10, b: 0.0, Ea: 8.368e+06}
     note: |
       R186
-      Estimated
+        Estimated
   - equation: HO2 + aC3H5 <=> C3H6 + O2
     rate-constant: {A: 2.66e+09, b: 0.0, Ea: 0.0}
     note: |
       R187
-      CEC
+        CEC
   - equation: HO2 + aC3H5 <=> C2H3 + CH2O + OH
     rate-constant: {A: 6.6e+09, b: 0.0, Ea: 0.0}
     note: |
       R188
-      CEC
+        CEC
   - equation: HCO + aC3H5 <=> C3H6 + CO
     rate-constant: {A: 6.0e+10, b: 0.0, Ea: 0.0}
     note: |
       R189
-      TS5
+        TS5
   - equation: C3H6 + H <=> C2H4 + CH3
     rate-constant: {A: 1.6e+19, b: -2.39, Ea: 4.677712e+07}
     note: |
       R191
-      TS5 1 atm little p dependence above 1000 K
+        TS5 1 atm little p dependence above 1000 K
   - equation: C3H6 + H <=> H2 + aC3H5
     rate-constant: {A: 170.0, b: 2.5, Ea: 1.041816e+07}
     note: |
       R192
-      TS5 k(a)
+        TS5 k(a)
   - equation: C3H6 + O <=> CH2CO + CH3 + H
     rate-constant: {A: 1.2e+05, b: 1.65, Ea: 1.368168e+06}
     note: |
       R193
-      TS5 k(a+b) tot
+        TS5 k(a+b) tot
   - equation: C3H6 + O => C2H5 + HCO
     rate-constant: {A: 3.5e+04, b: 1.65, Ea: -4.066848e+06}
     note: |
       R194
-      TS5 k(c)
+        TS5 k(c)
   - equation: C3H6 + O <=> OH + aC3H5
     rate-constant: {A: 1.8e+08, b: 0.7, Ea: 2.460192e+07}
     note: |
       R195
-      TS5 k(d)
+        TS5 k(d)
   - equation: C3H6 + OH <=> H2O + aC3H5
     rate-constant: {A: 3100.0, b: 2.0, Ea: -1.246832e+06}
     note: |
       R196
-      TS5
+        TS5
   - equation: C3H6 + HO2 <=> H2O2 + aC3H5
     rate-constant: {A: 9.6, b: 2.6, Ea: 5.819944e+07}
     note: |
       R197
-      TS5
+        TS5
   - equation: C3H6 + CH3 <=> CH4 + aC3H5
     rate-constant: {A: 2.2e-03, b: 3.5, Ea: 2.37442e+07}
     note: |
       R198
-      TS5
+        TS5
   - equation: H + nC3H7 <=> C2H5 + CH3
     rate-constant: {A: 3.7e+21, b: -2.92, Ea: 5.232092e+07}
     note: |
       R199
-      TS3 1 atm
+       TS3 1 atm
   - equation: H + nC3H7 <=> C3H6 + H2
     rate-constant: {A: 1.8e+09, b: 0.0, Ea: 0.0}
     note: |
       R200
-      TS3
+       TS3
   - equation: O + nC3H7 <=> C2H5 + CH2O
     rate-constant: {A: 9.6e+10, b: 0.0, Ea: 0.0}
     note: |
       R201
-      TS3 ka+kb
+       TS3 ka+kb
   - equation: OH + nC3H7 <=> C3H6 + H2O
     rate-constant: {A: 2.4e+10, b: 0.0, Ea: 0.0}
     note: |
       R202
-      TS3
+       TS3
   - equation: O2 + nC3H7 <=> C3H6 + HO2
     rate-constant: {A: 9.0e+07, b: 0.0, Ea: 0.0}
     note: |
       R203
-      TS3
+       TS3
   - equation: HO2 + nC3H7 <=> C2H5 + CH2O + OH
     rate-constant: {A: 2.4e+10, b: 0.0, Ea: 0.0}
     note: |
       R204
-      TS3
+       TS3
   - equation: CH3 + nC3H7 <=> C3H6 + CH4
     rate-constant: {A: 1.1e+10, b: 0.0, Ea: 0.0}
     note: |
       R205
-      TS3
+       TS3
   - equation: C2H3 + C2H5 <=> CH3 + aC3H5
     rate-constant: {A: 3.9e+29, b: -5.22, Ea: 8.2621448e+07}
     note: |
       R206
-      TS1 1 atm
+       TS1 1 atm
