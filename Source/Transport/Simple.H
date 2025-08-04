@@ -146,9 +146,7 @@ struct BinaryDiff
   {
     const amrex::Real scale = Constants::PATM / (Constants::RU * Tloc);
 
-    amrex::Real sum_of_Yloc = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      sum_of_Yloc += Yloc[i];
       Ddiag[i] = 0.0;
     }
 
@@ -160,14 +158,18 @@ struct BinaryDiff
                                tparm->fitdbin[four_idx_ij + 1] * logT[0] +
                                tparm->fitdbin[four_idx_ij + 2] * logT[1] +
                                tparm->fitdbin[four_idx_ij + 3] * logT[2];
-
         dbintemp = std::exp(-dbintemp);
         Ddiag[i] += Xloc[j] * dbintemp;
         Ddiag[j] += Xloc[i] * dbintemp;
       }
     }
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      const amrex::Real term1 = sum_of_Yloc - Yloc[i];
+        amrex::Real term1 = 0;
+        for (int j = 0; j < NUM_SPECIES; ++j) {
+            if (i != j) {
+                term1 += Yloc[j];
+            }
+        }
       Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
     }
   }
