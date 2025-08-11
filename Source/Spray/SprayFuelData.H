@@ -6,8 +6,6 @@
 #include "SprayProperties.H"
 #include <AMReX_RealVect.H>
 
-using namespace amrex;
-
 // Spray flags and indices
 struct SprayComps
 {
