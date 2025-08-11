@@ -87,7 +87,7 @@ struct MPLiqProps
   }
 
   // RealArrayLike can be anything with an [] operator that returns
-  // amrex::amrex::Real&
+  // amrex::Real&
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
   rho_mix(const RealArrayLike& Y, const amrex::Real& T) const
