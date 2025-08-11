@@ -164,12 +164,12 @@ struct BinaryDiff
       }
     }
     for (int i = 0; i < NUM_SPECIES; ++i) {
-        amrex::Real term1 = 0;
-        for (int j = 0; j < NUM_SPECIES; ++j) {
-            if (i != j) {
-                term1 += Yloc[j];
-            }
+      amrex::Real term1 = 0;
+      for (int j = 0; j < NUM_SPECIES; ++j) {
+        if (i != j) {
+          term1 += Yloc[j];
         }
+      }
       Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
     }
   }
@@ -190,9 +190,7 @@ struct BinaryDiff<eos::SRK>
     TransParm<eos::SRK, SimpleTransport> const* tparm)
   {
 
-    amrex::Real sum_of_Yloc = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      sum_of_Yloc += Yloc[i];
       Ddiag[i] = 0.0;
     }
 
@@ -219,7 +217,12 @@ struct BinaryDiff<eos::SRK>
       }
     }
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      const amrex::Real term1 = sum_of_Yloc - Yloc[i];
+      amrex::Real term1 = 0;
+      for (int j = 0; j < NUM_SPECIES; ++j) {
+        if (i != j) {
+          term1 += Yloc[j];
+        }
+      }
       Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i];
     }
   }
@@ -296,7 +299,7 @@ struct SimpleTransport
     const bool wtr_get_chi,
     const amrex::Real Tloc,
     const amrex::Real rholoc,
-    amrex::Real* Yloc,
+    const amrex::Real* Yloc,
     amrex::Real* Ddiag,
     amrex::Real* chi_mix,
     amrex::Real& mu,
@@ -306,6 +309,7 @@ struct SimpleTransport
   {
     amrex::Real trace = 1.e-15;
     amrex::Real Xloc[NUM_SPECIES] = {0.0};
+    amrex::Real Yloc_mod[NUM_SPECIES] = {0.0};
     amrex::Real muloc[NUM_SPECIES] = {0.0};
     amrex::Real xiloc[NUM_SPECIES] = {0.0};
     amrex::Real logT[NUM_FIT - 1] = {0.0};
@@ -314,23 +318,22 @@ struct SimpleTransport
     logT[1] = logT[0] * logT[0];
     logT[2] = logT[0] * logT[1];
 
+    // Modify Yloc to avoid potential divide by 0 for pure components
     amrex::Real sum = 0.0;
-
     for (int i = 0; i < NUM_SPECIES; ++i) {
       sum += Yloc[i];
     }
-
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      Yloc[i] += trace * (sum / NUM_SPECIES - Yloc[i]);
+      Yloc_mod[i] = Yloc[i] + trace * (sum / NUM_SPECIES - Yloc[i]);
     }
 
     amrex::Real wbar = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      wbar += Yloc[i] * tparm->iwt[i];
+      wbar += Yloc_mod[i] * tparm->iwt[i];
     }
     wbar = 1.0 / wbar;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      Xloc[i] = Yloc[i] * wbar * tparm->iwt[i];
+      Xloc[i] = Yloc_mod[i] * wbar * tparm->iwt[i];
     }
     if (wtr_get_mu) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
@@ -382,7 +385,7 @@ struct SimpleTransport
       wtr_get_mu, wtr_get_lam, Tloc, Xloc, rholoc, wbar, mu, lam, tparm);
 
     if (wtr_get_Ddiag) {
-      BinaryDiff<EosType>()(Xloc, Yloc, logT, rholoc, Tloc, Ddiag, tparm);
+      BinaryDiff<EosType>()(Xloc, Yloc_mod, logT, rholoc, Tloc, Ddiag, tparm);
     }
 
     if (wtr_get_chi) {
