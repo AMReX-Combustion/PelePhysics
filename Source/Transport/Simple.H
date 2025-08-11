@@ -158,7 +158,6 @@ struct BinaryDiff
                                tparm->fitdbin[four_idx_ij + 1] * logT[0] +
                                tparm->fitdbin[four_idx_ij + 2] * logT[1] +
                                tparm->fitdbin[four_idx_ij + 3] * logT[2];
-
         dbintemp = std::exp(-dbintemp);
         Ddiag[i] += Xloc[j] * dbintemp;
         Ddiag[j] += Xloc[i] * dbintemp;
