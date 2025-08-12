@@ -71,12 +71,11 @@ SprayParticleContainer::computeDerivedVars(
         IntVect ijkc = lxc.floor(); // Cell with particle
         Real T_part = p.rdata(SprayComps::pstateT);
         Real dia_part = p.rdata(SprayComps::pstateDia);
-        Real rho_part = 0.;
+        Real Y_part[SPRAY_FUEL_NUM] = {0.0};
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          rho_part +=
-            p.rdata(SprayComps::pstateY + spf) / fdat->rhoL(T_part, spf);
+          Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
         }
-        rho_part = 1. / rho_part;
+        Real rho_part = fdat->liqprops.rho_mix(Y_part, T_part);
         Real surf = M_PI * dia_part * dia_part;
         Real vol = M_PI / 6. * std::pow(dia_part, 3);
         Real pmass = vol * rho_part;

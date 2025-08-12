@@ -74,22 +74,27 @@ calcVaporState(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const int fdspec = fdat.dep_indx[spf];
-    const amrex::Real boilT_ref = fdat.boilT[spf];
     const amrex::Real mw_fuel = gpv.mw[fspec];
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
+
     // Compute latent heat
+    // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
-      h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
+      h_part[fspec] + fdat.liqprops.latentRef_minus_gasRefH_i[spf] -
+      fdat.liqprops.cp_i(T_part, spf) * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
+
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
-    if (fdat.psat_coef[4 * spf + 3] == 0.) {
+    // TODO: Generalize for multiple psat correlations based on liqprops
+    if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
+      const amrex::Real boilT_ref = fdat.liqprops.boilT_i(spf);
       pres_sat =
         PATM *
         std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
       // Using the Antoine equation
     } else {
-      pres_sat = fdat.psat(T_part, spf);
+      pres_sat = fdat.liqprops.psat_i(T_part, spf);
     }
     amrex::Real X_fluid = gpv.Y_fluid[fdspec] * gpv.mw_mix / mw_fuel;
     if (pres_sat > X_fluid * gpv.p_fluid) {
@@ -204,12 +209,13 @@ calculateSpraySource(
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
-  amrex::Real rho_part = 0.;
+
+  // This is inefficient, but we need Y_part for multiple computations below
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
   }
-  rho_part = 1. / rho_part;
+  amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+
   amrex::Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
@@ -223,7 +229,7 @@ calculateSpraySource(
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tboil += Y_part[spf] * cBoilT[spf];
-      cp_part += Y_part[spf] * fdat.cp[spf];
+      cp_part += Y_part[spf] * fdat.liqprops.cp_i(T_part, spf);
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }
     mw_part = 1. / mw_part;
@@ -392,28 +398,25 @@ calculateSpraySource(
       // If droplet is still reasonable size and temperature
       if (new_mass > min_mass && newT < Tboil) {
         T_part = newT;
-        if (SPRAY_FUEL_NUM > 1) {
-          rho_part = 0.;
-          amrex::Real sumY = 0.;
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            Y_part[spf] = amrex::min(
-              1.,
-              amrex::max(
-                0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
-            if (Y_part[spf] <= 1.E-12) {
-              Y_part[spf] = 0.;
-            }
-            sumY += Y_part[spf];
+#if SPRAY_FUEL_NUM > 1
+        amrex::Real sumY = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          Y_part[spf] = amrex::min(
+            1.,
+            amrex::max(
+              0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
+          if (Y_part[spf] <= 1.E-12) {
+            Y_part[spf] = 0.;
           }
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-            Y_part[spf] /= sumY;
-            rho_part +=
-              Y_part[spf] / fdat.rhoL(amrex::min(T_part, cBoilT[spf]), spf);
-          }
-          rho_part = 1. / rho_part;
-        } else {
-          rho_part = fdat.rhoL(amrex::min(T_part, cBoilT[0]), 0);
+          sumY += Y_part[spf];
         }
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          Y_part[spf] /= sumY;
+        }
+        rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+#else
+        rho_part = fdat.liqprops.rho_i(amrex::min(T_part, cBoilT[0]), 0);
+#endif
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
       } else {

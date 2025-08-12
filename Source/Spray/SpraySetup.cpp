@@ -20,57 +20,6 @@ Real SprayParticleContainer::m_khrtC3 = 1.;
 std::string SprayParticleContainer::spray_init_file;
 
 void
-getInpCoef(
-  Real* coef,
-  const ParmParse& ppp,
-  const std::string* fuel_names,
-  const std::string& varname,
-  bool is_required = false)
-{
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    std::string var_read = fuel_names[spf] + "_" + varname;
-    int numvals = ppp.countval(var_read.c_str());
-    // If 4 values are specified, assume fit coefficients
-    if (numvals == 4) {
-      std::vector<Real> inp_coef(4, 0.);
-      if (is_required) {
-        ppp.getarr(var_read.c_str(), inp_coef);
-      } else {
-        ppp.queryarr(var_read.c_str(), inp_coef);
-      }
-      for (int i = 0; i < 4; ++i) {
-        coef[4 * spf + i] = inp_coef[i];
-      }
-    } else if (numvals == 1) {
-      // If 1 value is specified, assume constant value
-      Real inp_coef = 0.;
-      for (int i = 0; i < 4; ++i) {
-        coef[4 * spf + i] = 0.;
-      }
-      if (is_required) {
-        ppp.get(var_read.c_str(), inp_coef);
-      } else {
-        ppp.query(var_read.c_str(), inp_coef);
-      }
-      coef[4 * spf] = inp_coef;
-    }
-  }
-}
-
-void
-getInpVal(
-  Real* coef,
-  const ParmParse& ppp,
-  const std::string* fuel_names,
-  const std::string& varname)
-{
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    std::string var_read = fuel_names[spf] + "_" + varname;
-    ppp.get(var_read.c_str(), coef[spf]);
-  }
-}
-
-void
 SprayParticleContainer::readSprayParams(int& particle_verbose)
 {
   amrex::Print() << "\n Reading spray model parameters ..." << std::endl;
@@ -117,17 +66,14 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       has_dep_spec = true;
       pp.getarr("dep_fuel_species", dep_fuel_names);
     }
-    getInpVal(m_sprayData->critT.data(), pp, fuel_names.data(), "crit_temp");
-    getInpVal(m_sprayData->boilT.data(), pp, fuel_names.data(), "boil_temp");
-    getInpVal(m_sprayData->cp.data(), pp, fuel_names.data(), "cp");
-    getInpVal(m_sprayData->ref_latent.data(), pp, fuel_names.data(), "latent");
 
-    getInpCoef(
-      m_sprayData->lambda_coef.data(), pp, fuel_names.data(), "lambda");
-    getInpCoef(m_sprayData->psat_coef.data(), pp, fuel_names.data(), "psat");
-    getInpCoef(
-      m_sprayData->rho_coef.data(), pp, fuel_names.data(), "rho", true);
-    getInpCoef(m_sprayData->mu_coef.data(), pp, fuel_names.data(), "mu");
+    // Read input parameters for liquid properties
+    pele::physics::SprayProps::InitLiqProps<
+      pele::physics::SprayProps::LiqPropType>
+      init_liq_props;
+    init_liq_props(&(m_sprayData->liqprops), fuel_names);
+
+    // Set the fuel names
     for (int i = 0; i < nfuel; ++i) {
       m_sprayFuelNames[i] = fuel_names[i];
       if (has_dep_spec) {
@@ -135,11 +81,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       } else {
         m_sprayDepNames[i] = m_sprayFuelNames[i];
       }
-      m_sprayData->latent[i] = m_sprayData->ref_latent[i];
     }
   }
 
-  Real spray_ref_T = 300.;
   bool splash_model = false;
   int breakup_model = 0;
   //
@@ -190,14 +134,11 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       m_sprayData->theta_c = theta_c_deg * M_PI / 180.;
     }
     // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", m_sprayData->sigma);
+    pp.get("fuel_sigma", m_sprayData->liqprops.sigma);
     m_sprayData->do_splash = splash_model;
     m_sprayData->do_breakup = breakup_model;
   }
 
-  // Must use same reference temperature for all fuels
-  pp.get("fuel_ref_temp", spray_ref_T);
-  //
   // Set if spray ascii files should be written
   //
   pp.query("write_ascii_files", write_ascii_files);
@@ -216,8 +157,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   //
   pp.query("min_eb_vfrac", m_sprayData->min_eb_vfrac);
 #endif
-
-  m_sprayData->ref_T = spray_ref_T;
 
   // List of known derived spray quantities
   std::vector<std::string> derive_names = {
@@ -301,10 +240,11 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
   auto eos = pele::physics::PhysicsType::eos();
-  eos.T2Hi(m_sprayData->ref_T, fuelEnth.data());
+  eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
-    m_sprayData->latent[ns] -= fuelEnth[fspec] * SPU.eng_conv;
+    m_sprayData->liqprops.latentRef_minus_gasRefH_i[ns] =
+      m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SPU.eng_conv;
   }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];

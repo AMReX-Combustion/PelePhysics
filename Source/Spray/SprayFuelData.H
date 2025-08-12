@@ -3,6 +3,7 @@
 
 #include "PelePhysics.H"
 #include "UnitConversions.H"
+#include "SprayProperties.H"
 #include <AMReX_RealVect.H>
 
 // Spray flags and indices
@@ -114,93 +115,38 @@ struct SprayData
   int do_breakup = 0; // 0 - no breakup modeling, 1 - TAB model, 2 - KHRT model
   // Min cell volume fraction to add sources to
   amrex::Real min_eb_vfrac = 0.05;
-  amrex::Real ref_T;
-  amrex::Real sigma = -1.; // Surface tension
   amrex::Real wall_T = -1.;
   amrex::Real theta_c = -1.; // Contact angle for wall film
   // If particle is updated half dt or whole dt
   amrex::Real dtmod = 0.5;
   amrex::RealVect body_force = amrex::RealVect::TheZeroVector();
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> ref_latent;
-  // 3 coefficients for Antoine equation and conversion to appropriate units
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> lambda_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> mu_coef;
   amrex::GpuArray<int, SPRAY_FUEL_NUM> indx = {{-1}};
   amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx = {{-1}};
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real rhoL(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = rho_coef[4 * spf];
-    amrex::Real b = rho_coef[4 * spf + 1];
-    amrex::Real c = rho_coef[4 * spf + 2];
-    amrex::Real d = rho_coef[4 * spf + 3];
-    return a + T * (b + T * (c + T * d));
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real lambdaL(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = lambda_coef[4 * spf];
-    amrex::Real b = lambda_coef[4 * spf + 1];
-    amrex::Real c = lambda_coef[4 * spf + 2];
-    amrex::Real d = lambda_coef[4 * spf + 3];
-    return a + T * (b + T * (c + T * d));
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real muL(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = mu_coef[4 * spf];
-    amrex::Real b = mu_coef[4 * spf + 1];
-    amrex::Real c = mu_coef[4 * spf + 2];
-    amrex::Real d = mu_coef[4 * spf + 3];
-    return a + ((d / T + c) / T + b) / T;
-  }
+  // Instance of the liquid properties for the specified model
+  pele::physics::SprayProps::LiqPropType liqprops;
 
   // Estimate the boil temperature
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
   {
+
     SprayUnits SPU;
     amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
     amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
       const amrex::Real mw_fuel = gpv.mw[fspec];
-      // Since we only know the latent heat at the reference temperature,
-      // modify Watsons power law to find latent heat at boiling conditions
-      amrex::Real Hboil_ref =
-        ref_latent[spf] *
-        std::pow((critT[spf] - ref_T) / (critT[spf] - boilT[spf]), -0.38);
+      amrex::Real Hboil_ref = liqprops.latent_i(liqprops.boilT_i(spf), spf);
+
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =
         1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
-              1. / boilT[spf]);
-      cBoilT[spf] = amrex::min(critT[spf], cBoilT[spf]);
+              1. / liqprops.boilT_i(spf));
+      cBoilT[spf] = amrex::min(liqprops.critT_i(spf), cBoilT[spf]);
     }
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real psat(const amrex::Real& T, const int spf) const
-  {
-    amrex::Real a = psat_coef[4 * spf];
-    amrex::Real b = psat_coef[4 * spf + 1];
-    amrex::Real c = psat_coef[4 * spf + 2];
-    amrex::Real d = psat_coef[4 * spf + 3];
-    return d * std::pow(10., a - b / (T + c));
   }
 };
 

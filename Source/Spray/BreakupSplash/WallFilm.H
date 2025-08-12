@@ -66,10 +66,10 @@ calculateFilmSource(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     amrex::Real minT = amrex::min(T_film, cBoilT[spf]);
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_film += Y_film[spf] / fdat.rhoL(minT, spf);
-    cp_film += Y_film[spf] * fdat.cp[spf];
-    lambda_film += Y_film[spf] * fdat.lambdaL(minT, spf);
-    Tcrit += Y_film[spf] * fdat.critT[spf];
+    rho_film += Y_film[spf] / fdat.liqprops.rho_i(minT, spf);
+    cp_film += Y_film[spf] * fdat.liqprops.cp_i(minT, spf);
+    lambda_film += Y_film[spf] * fdat.liqprops.lambda_i(minT, spf);
+    Tcrit += Y_film[spf] * fdat.liqprops.critT_i(spf);
     mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];
   }
   mw_film = 1. / mw_film;
@@ -166,11 +166,11 @@ calculateFilmSource(
           if (Y_film[spf] < 1.E-12) {
             Y_film[spf] = 0.;
           }
-          // rho_film += Y_film[spf] / fdat.rhoL(T_film, spf);
+          // rho_film += Y_film[spf] / fdat.liqprops.rho_i(T_film, spf);
         }
         // rho_film = 1. / rho_film;
       } // else {
-        //  rho_film = fdat.rhoL(T_film, 0);
+        //  rho_film = fdat.liqprops.rho_i(T_film, 0);
       //}
     } else {
       film_height = 0.;
