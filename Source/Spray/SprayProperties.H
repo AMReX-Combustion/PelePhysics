@@ -159,7 +159,8 @@ struct InitLiqProps<MPLiqProps>
     getInpCoef(ldata->mu_coef.data(), pp, fuel_names.data(), "mu");
   }
 
-  void getInpCoef(
+
+  static void getInpCoef(
     amrex::Real* coef,
     const amrex::ParmParse& ppp,
     const std::string* fuel_names,
@@ -194,7 +195,8 @@ struct InitLiqProps<MPLiqProps>
     }
   }
 
-  void getInpVal(
+
+  static void getInpVal(
     amrex::Real* coef,
     const amrex::ParmParse& ppp,
     const std::string* fuel_names,
