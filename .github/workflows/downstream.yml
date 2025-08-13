@@ -1,9 +1,6 @@
 name: Downstream CI (PeleLMeX clang-tidy)
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [development]
   pull_request:
     branches: [development]
 
