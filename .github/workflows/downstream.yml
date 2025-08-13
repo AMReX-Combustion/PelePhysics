@@ -1,0 +1,127 @@
+name: Downstream CI (PeleLMeX clang-tidy)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+  PeleLMeX-clang-tidy:
+    name: PeleLMeX clang-tidy
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        enable_eb: [EB-OFF, EB-ON]
+        include:
+          - enable_eb: EB-OFF
+            use_eb: "OFF"
+          - enable_eb: EB-ON
+            use_eb: "ON"
+      fail-fast: false
+
+    env:
+      BUILD_DIR: ${{ runner.workspace }}/build-clang-tidy
+
+    steps:
+      - name: Checkout PelePhysics
+        uses: actions/checkout@v4
+        with:
+          path: pelephysics-pr
+          fetch-depth: 0
+
+      - name: Clone PeleLMeX
+        run: |
+          git clone --recursive --shallow-submodules --single-branch \
+            https://github.com/AMReX-Combustion/PeleLMeX.git
+
+      - name: Point PeleLMeX/Submodules/PelePhysics to this PR
+        working-directory: PeleLMeX
+        shell: bash
+        run: |
+          PR_ABS="$(cd "${GITHUB_WORKSPACE}/pelephysics-pr" && pwd)"
+          git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://${PR_ABS}"
+          git submodule sync -- Submodules/PelePhysics
+          # Re-init that single submodule from the PR checkout
+          git submodule update --init --recursive --depth 1 -- Submodules/PelePhysics
+          # Init the rest (stays shallow)
+          git submodule update --init --recursive --depth 1
+          echo "PeleLMeX/Submodules/PelePhysics -> $(git -C Submodules/PelePhysics rev-parse --short HEAD)"
+          echo "PR checkout                    -> $(git -C "${PR_ABS}" rev-parse --short HEAD)"
+
+      - name: Setup
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
+          # Point to PeleLMeX's .clang-tidy (workspace here is PelePhysics)
+          echo "CCACHE_EXTRAFILES=${{github.workspace}}/PeleLMeX/.clang-tidy" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=100M" >> $GITHUB_ENV
+          echo "CTCACHE_DIR=~/.cache/ctcache" >> $GITHUB_ENV
+
+      - name: Install ccache & clang-tidy cache wrapper
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xz-utils curl clang clang++ cmake
+          wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+          sudo curl https://raw.githubusercontent.com/matus-chochlik/ctcache/7fd516e91c17779cbc6fc18bd119313d9532dd90/clang-tidy-cache -Lo /usr/bin/clang-tidy-cache
+          tar xvf ccache-4.8-linux-x86_64.tar.xz
+          sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+          sudo chmod +x /usr/bin/clang-tidy-cache
+          mkdir -p ~/.cache/ctcache
+
+      - name: Cache (ccache & ctcache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ matrix.enable_eb }}-git-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ github.workflow }}-${{ github.job }}-${{ matrix.enable_eb }}-git-
+
+      - name: Configure
+        working-directory: PeleLMeX
+        run: |
+          cmake -B"${BUILD_DIR}" \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=clang++ \
+            -DCMAKE_C_COMPILER:STRING=clang \
+            -DPELE_ENABLE_EB:BOOL=${{ matrix.use_eb }} \
+            -DPELE_ENABLE_MPI:BOOL=OFF \
+            -DPELE_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
+            -DPELE_ENABLE_CLANG_TIDY:BOOL=ON \
+            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
+            ${{ github.workspace }}/PeleLMeX
+
+      - name: Check (build to run clang-tidy)
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          cmake --build . --parallel ${{ env.NPROCS }} 2>&1 | tee -a clang-tidy-full-report.txt
+          egrep "Warning:|Error:|warning:|error:" clang-tidy-full-report.txt \
+            | egrep -v "Submodules/amrex|Submodules/sundials|Submodules/AMReX-Hydro" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-warnings.txt
+
+      - name: Ccache Report
+        run: |
+          ls ~/.cache || true
+          ls ~/.cache/ccache || true
+          du -hs ~/.cache/ccache || true
+          ls ~/.cache/ctcache || true
+          du -hs ~/.cache/ctcache || true
+          ccache -s || true
+
+      - name: Full report
+        working-directory: ${{ env.BUILD_DIR }}
+        run: cat clang-tidy-full-report.txt
+
+      - name: Short report (fail on warnings)
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          # Use absolute matcher path since we're not at repo root
+          echo "::add-matcher::${{ github.workspace }}/PeleLMeX/.github/problem-matchers/gcc.json"
+          cat clang-tidy-warnings.txt
+          export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
+          exit ${return}
