@@ -1,9 +1,9 @@
-name: Downstream CI (PeleLMeX clang-tidy)
+name: Downstream-CI
 
 on:
   workflow_dispatch:
   push:
-    branches: 
+    branches:
       - '**'
   pull_request:
     branches: [development]
@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
 
     env:
-      BUILD_DIR: ${{ runner.workspace }}/build-clang-tidy
+      BUILD_DIR: ${{ github.workspace }}/build-clang-tidy
 
     steps:
       - name: Checkout PelePhysics
@@ -42,6 +42,7 @@ jobs:
         shell: bash
         run: |
           PR_ABS="$(cd "${GITHUB_WORKSPACE}/pelephysics-pr" && pwd)"
+          git config --global protocol.file.allow always    # allow file:// remote
           git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://${PR_ABS}"
           git submodule sync -- Submodules/PelePhysics
           # Re-init that single submodule from the PR checkout
@@ -57,7 +58,6 @@ jobs:
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
           echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
-          # Point to PeleLMeX's .clang-tidy (workspace here is PelePhysics)
           echo "CCACHE_EXTRAFILES=${{github.workspace}}/PeleLMeX/.clang-tidy" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=100M" >> $GITHUB_ENV
           echo "CTCACHE_DIR=~/.cache/ctcache" >> $GITHUB_ENV
@@ -121,7 +121,6 @@ jobs:
       - name: Short report (fail on warnings)
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          # Use absolute matcher path since we're not at repo root
           echo "::add-matcher::${{ github.workspace }}/PeleLMeX/.github/problem-matchers/gcc.json"
           cat clang-tidy-warnings.txt
           export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
