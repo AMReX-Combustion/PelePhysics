@@ -36,6 +36,7 @@ jobs:
         with:
           path: pelephysics-pr
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Clone PeleLMeX
         run: |
