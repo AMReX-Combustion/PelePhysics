@@ -1,13 +1,15 @@
 name: Downstream-CI
 
 on:
-  workflow_run:
-    workflows: ["PelePhysics-CI"]
-    types:
-      - completed
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches: [development]
 
 concurrency:
-  group: ${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}-downstream
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 
