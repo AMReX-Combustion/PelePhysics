@@ -47,16 +47,12 @@ jobs:
         working-directory: PeleLMeX
         shell: bash
         run: |
-          # Allow use of file:// remotes for submodules
-          git config --global protocol.file.allow always
+          cd Submodules/PelePhysics
+          git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
+          git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
 
-          # Point the submodule to the checked-out PR
-          git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://$GITHUB_WORKSPACE/pelephysics-pr"
-          git submodule sync -- Submodules/PelePhysics
-          git submodule update --init --depth 1 -- Submodules/PelePhysics
-
-          echo "Submodule now points to:"
-          git -C Submodules/PelePhysics rev-parse --short HEAD
+          echo "PelePhysics Submodule now points to:"
+          git rev-parse --short HEAD
 
       - name: Setup
         run: |
@@ -143,6 +139,7 @@ jobs:
         with:
           path: pelephysics-pr
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Clone PeleC
         run: |
@@ -153,16 +150,12 @@ jobs:
         working-directory: PeleC
         shell: bash
         run: |
-          # Allow use of file:// remotes for submodules
-          git config --global protocol.file.allow always
+          cd Submodules/PelePhysics
+          git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
+          git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
 
-          # Point the submodule to the checked-out PR
-          git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://$GITHUB_WORKSPACE/pelephysics-pr"
-          git submodule sync -- Submodules/PelePhysics
-          git submodule update --init --depth 1 -- Submodules/PelePhysics
-
-          echo "Submodule now points to:"
-          git -C Submodules/PelePhysics rev-parse --short HEAD
+          echo "PelePhysics Submodule now points to:"
+          git rev-parse --short HEAD
 
       - name: Setup
         run: |
