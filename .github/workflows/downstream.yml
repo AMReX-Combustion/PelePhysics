@@ -62,10 +62,8 @@ jobs:
           echo "CCACHE_MAXSIZE=100M" >> $GITHUB_ENV
           echo "CTCACHE_DIR=~/.cache/ctcache" >> $GITHUB_ENV
 
-      - name: Install ccache & clang-tidy cache wrapper
+      - name: Install Ccache
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xz-utils curl clang clang++ cmake
           wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
           sudo curl https://raw.githubusercontent.com/matus-chochlik/ctcache/7fd516e91c17779cbc6fc18bd119313d9532dd90/clang-tidy-cache -Lo /usr/bin/clang-tidy-cache
           tar xvf ccache-4.8-linux-x86_64.tar.xz
@@ -73,7 +71,7 @@ jobs:
           sudo chmod +x /usr/bin/clang-tidy-cache
           mkdir -p ~/.cache/ctcache
 
-      - name: Cache (ccache & ctcache)
+      - name: Set Up Ccache
         uses: actions/cache@v4
         with:
           path: ~/.cache
@@ -96,7 +94,7 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
             ${{ github.workspace }}/PeleLMeX
 
-      - name: Check (build to run clang-tidy)
+      - name: Check
         working-directory: ${{ env.BUILD_DIR }}
         run: |
           cmake --build . --parallel ${{ env.NPROCS }} 2>&1 | tee -a clang-tidy-full-report.txt
@@ -107,18 +105,18 @@ jobs:
 
       - name: Ccache Report
         run: |
-          ls ~/.cache || true
-          ls ~/.cache/ccache || true
-          du -hs ~/.cache/ccache || true
-          ls ~/.cache/ctcache || true
-          du -hs ~/.cache/ctcache || true
-          ccache -s || true
+          ls ~/.cache
+          ls ~/.cache/ccache
+          du -hs ~/.cache/ccache
+          ls ~/.cache/ctcache
+          du -hs ~/.cache/ctcache
+          ccache -s
 
       - name: Full report
         working-directory: ${{ env.BUILD_DIR }}
         run: cat clang-tidy-full-report.txt
 
-      - name: Short report (fail on warnings)
+      - name: Short report 
         working-directory: ${{ env.BUILD_DIR }}
         run: |
           echo "::add-matcher::${{ github.workspace }}/PeleLMeX/.github/problem-matchers/gcc.json"
