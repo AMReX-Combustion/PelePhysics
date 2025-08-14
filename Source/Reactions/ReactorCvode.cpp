@@ -22,7 +22,7 @@ ReactorCvode::init(int reactor_type, int /*ncells*/)
   pp.query("atomic_reductions", atomic_reductions);
   pp.query("max_nls_iters", max_nls_iters);
   pp.query("max_fp_accel", max_fp_accel);
-  pp.query("clean_init_massfrac", m_clean_init_massfrac);
+  // pp.query("clean_init_massfrac", m_clean_init_massfrac);
   pp.query("print_profiling", m_print_profiling);
 
   // Query CVODE options
@@ -1284,7 +1284,7 @@ ReactorCvode::react(
 )
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
-
+  
   // CPU and GPU version are very different such that most of the function
   // is split between a GPU region and a CPU region
 
@@ -1332,13 +1332,11 @@ ReactorCvode::react(
   flatten(
     box, ncells, rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
     udata->rYsrc_ext, udata->rhoe_init, udata->rhoesrc_ext);
-
 #ifdef AMREX_USE_OMP
   amrex::Gpu::Device::streamSynchronize();
 #endif
 
   initCvode(y, A, udata, NLS, LS, cvode_mem, stream, time_start, ncells);
-
   // Setup tolerances with typical values
   utils::set_sundials_solver_tols<Ordering>(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata->ncells, relTol,
@@ -1372,7 +1370,6 @@ ReactorCvode::react(
   unflatten(
     box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
     udata->rhoe_init, d_nfe, dt_react);
-
   if (udata->verbose > 1) {
     print_final_stats(cvode_mem, LS != nullptr);
   }
@@ -1486,7 +1483,6 @@ ReactorCvode::react(
     SUNMatDestroy(A);
   }
   freeUserData(udata);
-
   return static_cast<int>(nfe);
 }
 

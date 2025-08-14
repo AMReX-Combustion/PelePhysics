@@ -193,7 +193,7 @@ private:
   int m_solve_type{-1};
   int m_analytical_jacobian{-1};
   int m_precond_type{-1};
-  bool m_clean_init_massfrac{false};
+  static const bool m_clean_init_massfrac{false};
 };
 } // namespace pele::physics::reactions
 #endif
