@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
 
     env:
-      BUILD_DIR: ${{ github.workspace }}/build-clang-tidy
+      BUILD_DIR: ${{ github.workspace }}/build-clang-tidy-lmex
 
     steps:
       - name: Checkout PelePhysics
@@ -41,16 +41,16 @@ jobs:
         working-directory: PeleLMeX
         shell: bash
         run: |
-          PR_ABS="$(cd "${GITHUB_WORKSPACE}/pelephysics-pr" && pwd)"
-          git config --global protocol.file.allow always    # allow file:// remote
-          git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://${PR_ABS}"
+          # Allow use of file:// remotes for submodules
+          git config --global protocol.file.allow always
+
+          # Point the submodule to the checked-out PR
+          git config -f .gitmodules submodule.Submodules/PelePhysics.url "file://$GITHUB_WORKSPACE/pelephysics-pr"
           git submodule sync -- Submodules/PelePhysics
-          # Re-init that single submodule from the PR checkout
-          git submodule update --init --recursive --depth 1 -- Submodules/PelePhysics
-          # Init the rest (stays shallow)
-          git submodule update --init --recursive --depth 1
-          echo "PeleLMeX/Submodules/PelePhysics -> $(git -C Submodules/PelePhysics rev-parse --short HEAD)"
-          echo "PR checkout                    -> $(git -C "${PR_ABS}" rev-parse --short HEAD)"
+          git submodule update --init --depth 1 -- Submodules/PelePhysics
+
+          echo "Submodule now points to:"
+          git -C Submodules/PelePhysics rev-parse --short HEAD
 
       - name: Setup
         run: |
@@ -83,16 +83,16 @@ jobs:
         working-directory: PeleLMeX
         run: |
           cmake -B"${BUILD_DIR}" \
-            -DCMAKE_BUILD_TYPE:STRING=Release \
-            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-            -DCMAKE_CXX_COMPILER:STRING=clang++ \
-            -DCMAKE_C_COMPILER:STRING=clang \
-            -DPELE_ENABLE_EB:BOOL=${{ matrix.use_eb }} \
-            -DPELE_ENABLE_MPI:BOOL=OFF \
-            -DPELE_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
-            -DPELE_ENABLE_CLANG_TIDY:BOOL=ON \
-            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
-            ${{ github.workspace }}/PeleLMeX
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+          -DCMAKE_CXX_COMPILER:STRING=clang++ \
+          -DCMAKE_C_COMPILER:STRING=clang \
+          -DPELE_ENABLE_EB:BOOL=${{ matrix.use_eb }} \
+          -DPELE_ENABLE_MPI:BOOL=OFF \
+          -DPELE_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
+          -DPELE_ENABLE_CLANG_TIDY:BOOL=ON \
+          -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
+          ${{ github.workspace }}/PeleLMeX
 
       - name: Check
         working-directory: ${{ env.BUILD_DIR }}
@@ -123,3 +123,4 @@ jobs:
           cat clang-tidy-warnings.txt
           export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
           exit ${return}
+
