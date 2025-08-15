@@ -53,14 +53,70 @@ jobs:
         run: |
           make TPL COMP=gnu USE_MPI=TRUE
           make -j 2 DIM=2 COMP=gnu USE_MPI=TRUE
+
       - name: Run
         working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
         run: |
-          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64
+          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64 
+
+  PeleC-PMF:
+    name: PeleC GNU@9.3 MPI Run [PMF]
+    runs-on: ubuntu-latest
+    env:
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    
+    steps:
+      - name: Checkout PelePhysics
+        uses: actions/checkout@v4
+        with:
+          path: pelephysics-pr
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Clone PeleC
+        run: |
+          git clone --recursive --shallow-submodules --single-branch \
+            https://github.com/AMReX-Combustion/PeleC.git
+
+      - name: Point PeleC/Submodules/PelePhysics to this PR
+        working-directory: PeleC
+        shell: bash
+        run: |
+          cd Submodules/PelePhysics
+          git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
+          git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+
+          echo "PelePhysics Submodule now points to:"
+          git rev-parse --short HEAD
+      
+      - name: System Dependencies
+        working-directory: PeleC
+        run: |
+          set -eu -o pipefail
+
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+
+          sudo apt-get install -y --no-install-recommends \
+              build-essential    \
+              gcc-10 \
+              libopenmpi-dev     \
+              openmpi-bin
+      
+      - name: Build
+        working-directory: PeleC/Exec/RegTests/PMF/
+        run: |
+          make TPL COMP=gnu USE_MPI=TRUE
+          make -j 2 DIM=3 COMP=gnu USE_MPI=TRUE
+
+      - name: Run
+        working-directory: PeleC/Exec/RegTests/PMF/
+        run: |
+          mpirun -n 2 ./PeleC3d.gnu.MPI.ex example.inp max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=0 amr.n_cell=8 8 128
 
   PeleLMeX-clang-tidy:
     name: PeleLMeX clang-tidy
-    needs: PeleLMeX-FlameSheet
+    needs: [PeleLMeX-FlameSheet, PeleC-PMF]
     runs-on: ubuntu-24.04
     strategy:
       matrix:
@@ -173,6 +229,7 @@ jobs:
 
   PeleC-clang-tidy:
     name: PeleC clang-tidy
+    needs: [PeleLMeX-FlameSheet, PeleC-PMF]
     runs-on: ubuntu-24.04
 
     env:
