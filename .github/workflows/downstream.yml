@@ -229,3 +229,50 @@ jobs:
           cat clang-tidy-warnings.txt
           export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
           exit ${return}
+
+  PeleLMeX FlameSheet:
+    name: GNU@9.3 MPI Run [PeleLMeX-FS]
+    runs-on: ubuntu-latest
+    env:
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    
+    steps:
+      - name: Checkout PelePhysics
+        uses: actions/checkout@v4
+        with:
+          path: pelephysics-pr
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Clone PeleLMeX
+        run: |
+          git clone --recursive --shallow-submodules --single-branch \
+            https://github.com/AMReX-Combustion/PeleLMeX.git
+
+      - name: Point PeleLMeX/Submodules/PelePhysics to this PR
+        working-directory: PeleLMeX
+        shell: bash
+        run: |
+          cd Submodules/PelePhysics
+          git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
+          git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+
+          echo "PelePhysics Submodule now points to:"
+          git rev-parse --short HEAD
+      
+      - name: System Dependencies
+        working-directory: PeleLMeX
+        run: .github/workflows/dependencies/dependencies_gcc10.sh
+      - name: Repo Dependencies
+        working-directory: PeleLMeX
+        run: Utils/CloneDeps.sh
+      - name: Build
+        working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
+        run: |
+          make TPL COMP=gnu USE_MPI=TRUE
+          make -j 2 DIM=3 COMP=gnu USE_MPI=TRUE
+      - name: Run
+        working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
+        run: |
+          mpirun -n 2 ./PeleLMeX3d.gnu.MPI.ex input.3d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 32 64
+
