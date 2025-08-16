@@ -57,7 +57,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
   // Must match the number specified at compile time
   const int nfuel = pp.countval("fuel_species");
   if (nfuel != SPRAY_FUEL_NUM) {
-    amrex::Print()<<"Warning! Number of fuel species in input file must match SPRAY_FUEL_NUM";
+    amrex::Abort("Warning! Number of fuel species in input file must match SPRAY_FUEL_NUM");
   }
 
   std::vector<std::string> fuel_names;
@@ -205,12 +205,14 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
 }
 
 void
-SprayParticleContainer::spraySetup(const Real* body_force, const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm)
+SprayParticleContainer::spraySetup(	const Real* body_force,
+									const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     spec_names,(eosparm));
+
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
       std::string gas_spec = spec_names[ns];

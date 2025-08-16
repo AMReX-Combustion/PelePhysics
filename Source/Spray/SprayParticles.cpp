@@ -331,7 +331,7 @@ SprayParticleContainer::updateParticles(
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
-          auto eos = pele::physics::PhysicsType::eos(leosparm);
+          auto eos = pele::physics::PhysicsType::eos(fdat->eosparm);
           SprayUnits SPU;
           GasPhaseVals gpv;
           GpuArray<Real, SPRAY_FUEL_NUM>
