@@ -145,7 +145,7 @@ struct Manifold
     amrex::Error("RTY2Cv is not yet implemented for Manifold EOS");
   }
 
-  //Sreejith: Adding a dummy T2Cpi function
+  //Adding a dummy T2Cpi function
   AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     static void T2Cpi(const amrex::Real T, amrex::Real Cpi[NUM_SPECIES])
@@ -373,7 +373,7 @@ struct Manifold
   template <class... Args>
   AMREX_GPU_HOST_DEVICE Manifold()
   {
-	  amrex::Print()<<"\n Why the hell am i here?";
+
     amrex::Error(
       "Manifold EOS must be initialized with table data or neural "
       "network via EosParm");

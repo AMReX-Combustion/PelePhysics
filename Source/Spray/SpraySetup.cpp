@@ -41,7 +41,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
   pp.query("mass_transfer", m_sprayData->mass_trans);
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
-  //Sreejith: initializing spraydata eosparm with host_parm and device_parm
+  //Initializing spraydata eosparm with host_parm and device_parm
   m_sprayData->eosparm=&leosparm->host_parm();
   d_sprayData->eosparm=leosparm->device_parm();
 #ifdef PELELM_USE_SPRAY
