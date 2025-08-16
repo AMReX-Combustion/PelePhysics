@@ -6,7 +6,8 @@ VERBOSE    = FALSE
 DEBUG      = FALSE
 
 # Compiler
-COMP	   = gnu
+COMP       = gnu
+FCOMP      = gfortran
 USE_MPI    = FALSE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE
@@ -22,6 +23,7 @@ PELE_PHYSICS_HOME    ?= ../../..
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
+# Activates use of SUNDIALS
 ifeq ($(USE_CUDA), TRUE)
   PELE_USE_KLU = FALSE
 else
@@ -32,15 +34,9 @@ else
   endif
 endif
 
-ifeq ($(FUEGO_GAS), TRUE)
-  Eos_Model       = Fuego
-  Chemistry_Model = dodecane_lu
-  Transport_Model = Simple
-else
-  Eos_Model       = GammaLaw
-  Chemistry_Model = Null
-  Transport_Model = Constant
-endif
+Eos_Model       = GammaLaw
+Chemistry_Model = Null
+Transport_Model = Constant
 
 Bpack   := ./Make.package
 Blocs   := .
