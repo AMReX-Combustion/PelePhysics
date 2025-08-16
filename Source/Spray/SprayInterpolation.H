@@ -96,8 +96,7 @@ check_bounds(
   return false;
 }
 
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
-InterpolateGasPhase(
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void InterpolateGasPhase(
   GasPhaseVals& gpv,
   const amrex::Box& state_box,
   amrex::Array4<const amrex::Real> const& rhoarr,
@@ -107,7 +106,8 @@ InterpolateGasPhase(
   amrex::Array4<const amrex::Real> const& engarr,
   const amrex::IntVect* indx_array,
   const amrex::Real* weights,
-  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm=nullptr);
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm = nullptr);
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 InterpolateGasPhase(
@@ -120,7 +120,8 @@ InterpolateGasPhase(
   amrex::Array4<const amrex::Real> const& engarr,
   const amrex::IntVect* indx_array,
   const amrex::Real* weights,
-  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm)
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm)
 {
   auto eos = pele::physics::PhysicsType::eos(eosparm);
 #ifdef PELELM_USE_SPRAY

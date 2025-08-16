@@ -20,7 +20,11 @@ Real SprayParticleContainer::m_khrtC3 = 1.;
 std::string SprayParticleContainer::spray_init_file;
 
 void
-SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> *leosparm)
+SprayParticleContainer::readSprayParams(
+  int& particle_verbose,
+  pele::physics::PeleParams<
+    pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
+    leosparm)
 {
   amrex::Print() << "\n Reading spray model parameters ..." << std::endl;
 #if AMREX_SPACEDIM == 1
@@ -41,9 +45,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
   pp.query("mass_transfer", m_sprayData->mass_trans);
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
-  //Initializing spraydata eosparm with host_parm and device_parm
-  m_sprayData->eosparm=&leosparm->host_parm();
-  d_sprayData->eosparm=leosparm->device_parm();
+  // Initializing spraydata eosparm with host_parm and device_parm
+  m_sprayData->eosparm = &leosparm->host_parm();
+  d_sprayData->eosparm = leosparm->device_parm();
 #ifdef PELELM_USE_SPRAY
   Real max_cfl = 2.;
 #else
@@ -57,7 +61,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
   // Must match the number specified at compile time
   const int nfuel = pp.countval("fuel_species");
   if (nfuel != SPRAY_FUEL_NUM) {
-    amrex::Abort("Warning! Number of fuel species in input file must match SPRAY_FUEL_NUM");
+    amrex::Abort(
+      "Warning! Number of fuel species in input file must match "
+      "SPRAY_FUEL_NUM");
   }
 
   std::vector<std::string> fuel_names;
@@ -205,13 +211,15 @@ SprayParticleContainer::readSprayParams(int& particle_verbose,pele::physics::Pel
 }
 
 void
-SprayParticleContainer::spraySetup(	const Real* body_force,
-									const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type> *eosparm)
+SprayParticleContainer::spraySetup(
+  const Real* body_force,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
-    spec_names,(eosparm));
+    spec_names, (eosparm));
 
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
