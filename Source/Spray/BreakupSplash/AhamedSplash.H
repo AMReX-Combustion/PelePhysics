@@ -225,21 +225,22 @@ droplet_splashing(
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
   amrex::Real mu_part = 0.;
   amrex::Real rho_part = 0.;
+  amrex::Real Y_part[SPRAY_FUEL_NUM] = {0.0};
   // TODO: Determine correct method for handling multi-component liquids
   amrex::Real Tboil = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int ysp = SprayComps::pstateY + spf;
+    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
     amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
-    mu_part += p.rdata(ysp) * fdat.muL(minT, spf);
-    rho_part += p.rdata(ysp) / fdat.rhoL(minT, spf);
-    Tboil += p.rdata(ysp) * cBoilT[spf];
+    mu_part += Y_part[spf] * fdat.liqprops.mu_i(minT, spf);
+    Tboil += Y_part[spf] * cBoilT[spf];
   }
-  rho_part = 1. / rho_part;
+  rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
   amrex::Real Tstar = fdat.wall_T / Tboil;
   const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
-  const amrex::Real We = rho_part * dia_part * U0norm * U0norm / fdat.sigma;
+  const amrex::Real We =
+    rho_part * dia_part * U0norm * U0norm / fdat.liqprops.sigma;
   const amrex::Real Re_L = std::abs(U0norm) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   // Inclination of on-coming particle to surface in radians

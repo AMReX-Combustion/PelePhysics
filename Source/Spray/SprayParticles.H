@@ -246,7 +246,7 @@ public:
     const amrex::Real spray_cfl_lev);
 
   /// \brief Update particle data and solve gas-phase source terms (to be used with manifold model)
-  void updateParticles(
+  /*void updateParticles(
     const int& level,
     amrex::MultiFab& state,
     amrex::MultiFab& source,
@@ -262,7 +262,7 @@ public:
       pele::physics::TransportType> const* ltransparm,
     const amrex::Real spray_cfl_lev,
 	pele::physics::PeleParams<
-	  pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> const* leosparm);
+	  pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>> const* leosparm);*/
 
 
   //pele::physics::PeleParams<

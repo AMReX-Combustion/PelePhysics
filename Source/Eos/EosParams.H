@@ -122,7 +122,10 @@ struct InitParm<eos::EosParm<eos::Manifold>>
       }
     } else if (density_lookup_type_string == "log") {
       parm_in->m_h_parm.dens_lookup = eos::density_lookup_type::log;
-      parm_in->m_h_parm.idx_density = get_var_index("lnRHO", h_manf_data_in);
+      parm_in->m_h_parm.idx_density = get_var_index("lnRHO", h_manf_data_in, 0);
+      if (parm_in->m_h_parm.idx_density < 0) {
+        parm_in->m_h_parm.idx_density = get_var_index("logRHO", h_manf_data_in);
+      }
       if (verbose > 0) {
         amrex::Print()
           << "Manifold EOS: Using logarithmic density lookups : index = "

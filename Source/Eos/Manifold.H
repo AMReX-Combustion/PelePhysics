@@ -78,7 +78,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void Y2WBAR(const amrex::Real* /*Y*/, amrex::Real& /*WBAR*/)
   {
-    amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
+    //amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -112,7 +112,6 @@ struct Manifold
     for (int i = 0; i < NUM_SPECIES; i++) {
       Hi[i] = 0.0;
     }
-    //amrex::Print()<<"\nSreejith: Fixing Hi = 0.0 in manifold model";
     // amrex::Error("T2Hi does not have significance for Manifold EOS");
   }
 
@@ -374,6 +373,7 @@ struct Manifold
   template <class... Args>
   AMREX_GPU_HOST_DEVICE Manifold()
   {
+	  amrex::Print()<<"\n Why the hell am i here?";
     amrex::Error(
       "Manifold EOS must be initialized with table data or neural "
       "network via EosParm");
