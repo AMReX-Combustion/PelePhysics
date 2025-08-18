@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   PeleLMeX-FlameSheet:
-    name: PeleLMeX GNU@9.3 MPI Run [FlameSheet]
+    name: PeleLMeX GNU MPI Run [FlameSheet]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -58,7 +58,7 @@ jobs:
           mpirun -n 2 ./PeleLMeX2d.gnu.MPI.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64 
 
   PeleC-PMF:
-    name: PeleC GNU@9.3 MPI Run [PMF]
+    name: PeleC GNU MPI Run [PMF]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -97,7 +97,6 @@ jobs:
 
           sudo apt-get install -y --no-install-recommends \
               build-essential    \
-              gcc-10 \
               libopenmpi-dev     \
               openmpi-bin
       
@@ -116,10 +115,6 @@ jobs:
     name: PeleLMeX clang-tidy
     needs: [PeleLMeX-FlameSheet, PeleC-PMF]
     runs-on: ubuntu-24.04
-
-    env:
-      BUILD_DIR: ${{ github.workspace }}/build-clang-tidy-lmex
-      use_eb: "OFF"
 
     steps:
       - name: Checkout PelePhysics
@@ -180,7 +175,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           -DCMAKE_CXX_COMPILER:STRING=clang++ \
           -DCMAKE_C_COMPILER:STRING=clang \
-          -DPELE_ENABLE_EB:BOOL=${{ env.use_eb }} \
+          -DPELE_ENABLE_EB:BOOL=OFF \
           -DPELE_ENABLE_MPI:BOOL=OFF \
           -DPELE_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
           -DPELE_ENABLE_CLANG_TIDY:BOOL=ON \
@@ -188,7 +183,7 @@ jobs:
           ${{ github.workspace }}/PeleLMeX
 
       - name: Check
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-lmex
         run: |
           cmake --build . --parallel ${{ env.NPROCS }} 2>&1 | tee -a clang-tidy-full-report.txt
           egrep "Warning:|Error:|warning:|error:" clang-tidy-full-report.txt \
@@ -206,11 +201,11 @@ jobs:
           ccache -s
 
       - name: Full report
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-lmex
         run: cat clang-tidy-full-report.txt
 
       - name: Short report 
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-lmex
         run: |
           echo "::add-matcher::${{ github.workspace }}/PeleLMeX/.github/problem-matchers/gcc.json"
           cat clang-tidy-warnings.txt
@@ -221,9 +216,6 @@ jobs:
     name: PeleC clang-tidy
     needs: [PeleLMeX-FlameSheet, PeleC-PMF]
     runs-on: ubuntu-24.04
-
-    env:
-      BUILD_DIR: ${{ github.workspace }}/build-clang-tidy-c
 
     steps:
       - name: Checkout PelePhysics
@@ -293,7 +285,7 @@ jobs:
           ${{github.workspace}}/PeleC
 
       - name: Check
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-c
         run: |
           cmake --build . --parallel ${{ env.NPROCS }} 2>&1 | tee -a clang-tidy-full-report.txt
           egrep "Warning:|Error:|warning:|error:" clang-tidy-full-report.txt \
@@ -311,11 +303,11 @@ jobs:
           ccache -s
 
       - name: Full report
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-c
         run: cat clang-tidy-full-report.txt
 
       - name: Short report 
-        working-directory: ${{ env.BUILD_DIR }}
+        working-directory: ${{ github.workspace }}/build-clang-tidy-c
         run: |
           echo "::add-matcher::${{ github.workspace }}/PeleC/.github/problem-matchers/gcc.json"
           cat clang-tidy-warnings.txt
