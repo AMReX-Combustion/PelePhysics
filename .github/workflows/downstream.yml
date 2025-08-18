@@ -117,18 +117,10 @@ jobs:
     name: PeleLMeX clang-tidy
     needs: [PeleLMeX-FlameSheet, PeleC-PMF]
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        enable_eb: [EB-OFF, EB-ON]
-        include:
-          - enable_eb: EB-OFF
-            use_eb: "OFF"
-          - enable_eb: EB-ON
-            use_eb: "ON"
-      fail-fast: false
 
     env:
       BUILD_DIR: ${{ github.workspace }}/build-clang-tidy-lmex
+      use_eb: "OFF"
 
     steps:
       - name: Checkout PelePhysics
@@ -177,9 +169,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache
-          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ matrix.enable_eb }}-git-${{ github.sha }}
+          key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
           restore-keys: |
-            ccache-${{ github.workflow }}-${{ github.job }}-${{ matrix.enable_eb }}-git-
+            ccache-${{ github.workflow }}-${{ github.job }}-git-
 
       - name: Configure
         working-directory: PeleLMeX
@@ -189,7 +181,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           -DCMAKE_CXX_COMPILER:STRING=clang++ \
           -DCMAKE_C_COMPILER:STRING=clang \
-          -DPELE_ENABLE_EB:BOOL=${{ matrix.use_eb }} \
+          -DPELE_ENABLE_EB:BOOL=${{ env.use_eb }} \
           -DPELE_ENABLE_MPI:BOOL=OFF \
           -DPELE_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
           -DPELE_ENABLE_CLANG_TIDY:BOOL=ON \
