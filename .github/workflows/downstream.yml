@@ -1,12 +1,11 @@
 name: Downstream-CI
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches: [development]
+   workflow_dispatch:
+   push:
+     branches: [development]
+   pull_request:
+     branches: [development]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
