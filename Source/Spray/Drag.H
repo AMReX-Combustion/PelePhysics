@@ -210,7 +210,6 @@ calculateSpraySource(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
 
-  // This is inefficient, but we need Y_part for multiple computations below
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
@@ -225,10 +224,9 @@ calculateSpraySource(
   amrex::RealVect part_vel_src;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
-    amrex::Real Tboil = 0.;   // Liquid mixture boiling temperature
+    amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, T_part, cBoilT);
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Tboil += Y_part[spf] * cBoilT[spf];
       cp_part += Y_part[spf] * fdat.liqprops.cp_i(T_part, spf);
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }

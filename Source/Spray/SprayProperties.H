@@ -116,6 +116,19 @@ struct MPLiqProps
     rho = 1. / rho;
     return rho;
   }
+
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real boilT_mix(
+    const RealArrayLike& Y, 
+    const amrex::Real& /*T*/,
+    const amrex::Real* cBoilT) const
+  {
+    amrex::Real Tboil = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      Tboil += Y[spf] * cBoilT[spf];
+    }
+    return Tboil;
+  }
 };
 
 // Struct of properties for GCM
