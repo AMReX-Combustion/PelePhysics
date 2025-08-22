@@ -231,12 +231,13 @@ droplet_splashing(
   amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, T_part, cBoilT);
   amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
   amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
+  amrex::Real sigma_part = fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
   amrex::Real Tstar = fdat.wall_T / Tboil;
   const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   // Weber number
   const amrex::Real We =
-    rho_part * dia_part * U0norm * U0norm / fdat.liqprops.sigma;
+    rho_part * dia_part * U0norm * U0norm / sigma_part;
   const amrex::Real Re_L = std::abs(U0norm) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   // Inclination of on-coming particle to surface in radians

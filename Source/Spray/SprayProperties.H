@@ -219,7 +219,16 @@ struct MPLiqProps
   
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
-  sigma_mix(const RealArrayLike& Y, const amrex::Real& T) const
+  sigma_mix(const RealArrayLike& /*Y*/, const amrex::Real& /*T*/) const
+  {
+    return sigma;
+  }
+
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real sigma_mix(
+    const RealArrayLike& /*Y*/, 
+    const amrex::Real& /*T*/,
+    const amrex::Real* /*cBoilT*/) const
   {
     return sigma;
   }
