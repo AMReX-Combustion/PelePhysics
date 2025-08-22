@@ -61,10 +61,10 @@ struct Manifold
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real* /*mw[]*/)
-  {
+  {/*
     amrex::Error(
       "molecular_weight for species does not have significance for "
-      "Manifold EOS");
+      "Manifold EOS");*/
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -80,7 +80,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void Y2WBAR(const amrex::Real* /*Y*/, amrex::Real& /*WBAR*/)
   {
-    amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
+    //amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -153,7 +153,7 @@ struct Manifold
   static void T2Cpi(const amrex::Real T, amrex::Real Cpi[NUM_SPECIES])
   {
     // TODO: FIXME (T2Cpi need to be implemented for manifold model)
-    amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
+    //amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
   }
 
   AMREX_GPU_HOST_DEVICE
