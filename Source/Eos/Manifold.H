@@ -186,9 +186,6 @@ struct Manifold
   void EY2T(
     const amrex::Real /*E*/, const amrex::Real Y[NUM_SPECIES], amrex::Real& T)
   {
-    // TODO: We need a corresponding function for this. For now, I am just
-    // aborting
-
     if (eosparm->compute_temperature) {
       manfunc.get_func()->get_value(eosparm->idx_T, Y, T);
     } else {

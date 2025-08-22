@@ -327,7 +327,6 @@ SprayParticleContainer::updateParticles(
         refv.fillPtrs_d(rf_d);
       }
       auto* N_SB = N_SB_d.dataPtr();
-      auto const* leosparm = d_sprayData->eosparm;
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {

@@ -20,8 +20,7 @@ Real SprayParticleContainer::m_khrtC3 = 1.;
 std::string SprayParticleContainer::spray_init_file;
 
 void
-SprayParticleContainer::readSprayParams(
-  int& particle_verbose)
+SprayParticleContainer::readSprayParams(int& particle_verbose)
 {
   amrex::Print() << "\n Reading spray model parameters ..." << std::endl;
 #if AMREX_SPACEDIM == 1
@@ -56,7 +55,7 @@ SprayParticleContainer::readSprayParams(
   const int nfuel = pp.countval("fuel_species");
   if (nfuel != SPRAY_FUEL_NUM) {
     amrex::Abort(
-      "Warning! Number of fuel species in input file must match "
+      "Error! Number of fuel species in input file must match "
       "SPRAY_FUEL_NUM");
   }
 
@@ -207,13 +206,14 @@ SprayParticleContainer::readSprayParams(
 void
 SprayParticleContainer::spraySetup(
   const Real* body_force,
-  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*eosparm,
-	pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>* leosparm)
+  pele::physics::PeleParams<
+    pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
+    eosparms)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
-    spec_names, (eosparm));
+    spec_names, &eosparms->host_parm());
 
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
@@ -246,7 +246,7 @@ SprayParticleContainer::spraySetup(
 #endif
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
-  auto eos = pele::physics::PhysicsType::eos(eosparm);
+  auto eos = pele::physics::PhysicsType::eos(&eosparms->host_parm());
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
@@ -256,9 +256,9 @@ SprayParticleContainer::spraySetup(
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }
-  m_sprayData->eosparm = leosparm->device_parm();
+  m_sprayData->eosparm = eosparms->device_parm();
   Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
-  m_sprayData->eosparm = &leosparm->host_parm();
+  m_sprayData->eosparm = &eosparms->host_parm();
   Gpu::streamSynchronize();
   ParallelDescriptor::Barrier();
 }

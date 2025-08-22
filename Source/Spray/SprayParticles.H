@@ -86,10 +86,8 @@ public:
   // static void spraySetup(const amrex::Real* body_force);
   static void spraySetup(
     const amrex::Real* body_force,
-    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-      eosparm = nullptr,
-      pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
-	  leosparm=nullptr);
+    pele::physics::PeleParams<pele::physics::eos::EosParm<
+      pele::physics::PhysicsType::eos_type>>* eosparms = nullptr);
 
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);
