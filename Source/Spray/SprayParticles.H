@@ -87,16 +87,12 @@ public:
   static void spraySetup(
     const amrex::Real* body_force,
     const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-      eosparm = nullptr,pele::physics::PeleParams<
-	    pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
-	    leosparm=nullptr);
+      eosparm = nullptr,
+      pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
+	  leosparm=nullptr);
 
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);
-  /*static void readSprayParams(
-    int& particle_verbose,
-    pele::physics::PeleParams<pele::physics::eos::EosParm<
-      pele::physics::PhysicsType::eos_type>>* leosparm = nullptr);*/
 
   /// \brief Create droplets from splashing or breakup
   void CreateSBDroplets(

@@ -42,9 +42,6 @@ SprayParticleContainer::readSprayParams(
   pp.query("mass_transfer", m_sprayData->mass_trans);
   pp.query("mom_transfer", m_sprayData->mom_trans);
   pp.query("fixed_parts", m_sprayData->fixed_parts);
-  // Initializing spraydata eosparm with host_parm and device_parm
-  //m_sprayData->eosparm = &leosparm->host_parm();
-  //d_sprayData->eosparm = leosparm->device_parm();
 #ifdef PELELM_USE_SPRAY
   Real max_cfl = 2.;
 #else
@@ -210,11 +207,8 @@ SprayParticleContainer::readSprayParams(
 void
 SprayParticleContainer::spraySetup(
   const Real* body_force,
-  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-    eosparm,
-	pele::physics::PeleParams<
-	    pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>*
-	    leosparm)
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*eosparm,
+	pele::physics::PeleParams<pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>>* leosparm)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
@@ -262,8 +256,6 @@ SprayParticleContainer::spraySetup(
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }
-
-  //m_sprayData->eosparm = &leosparm->host_parm();
   m_sprayData->eosparm = leosparm->device_parm();
   Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
   m_sprayData->eosparm = &leosparm->host_parm();
