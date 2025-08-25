@@ -95,8 +95,7 @@ struct MPLiqProps
 
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real critT_mix(
-    const RealArrayLike& Y, 
-    const amrex::Real& /*T*/) const
+    const RealArrayLike& Y) const
   {
     amrex::Real Tcrit = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -108,7 +107,6 @@ struct MPLiqProps
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real boilT_mix(
     const RealArrayLike& Y, 
-    const amrex::Real& /*T*/,
     const amrex::Real* cBoilT) const
   {
     amrex::Real Tboil = 0.;
