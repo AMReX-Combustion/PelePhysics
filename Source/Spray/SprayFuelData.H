@@ -125,6 +125,9 @@ struct SprayData
 
   // Instance of the liquid properties for the specified model
   pele::physics::SprayProps::LiqPropType liqprops;
+  // adding a eosparm here to be used with Spray and manifold
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparm;
 
   // Estimate the boil temperature
   AMREX_GPU_HOST_DEVICE

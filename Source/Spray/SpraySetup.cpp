@@ -54,7 +54,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   // Must match the number specified at compile time
   const int nfuel = pp.countval("fuel_species");
   if (nfuel != SPRAY_FUEL_NUM) {
-    Abort("Number of fuel species in input file must match SPRAY_FUEL_NUM");
+    amrex::Abort(
+      "Error! Number of fuel species in input file must match "
+      "SPRAY_FUEL_NUM");
   }
 
   std::vector<std::string> fuel_names;
@@ -202,12 +204,17 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
 }
 
 void
-SprayParticleContainer::spraySetup(const Real* body_force)
+SprayParticleContainer::spraySetup(
+  const Real* body_force,
+  pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>* eosparms_h,
+  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+    eosparms_d)
 {
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
-    spec_names);
+    spec_names, eosparms_h);
+
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
       std::string gas_spec = spec_names[ns];
@@ -239,7 +246,7 @@ SprayParticleContainer::spraySetup(const Real* body_force)
 #endif
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
-  auto eos = pele::physics::PhysicsType::eos();
+  auto eos = pele::physics::PhysicsType::eos(eosparms_h);
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
@@ -249,7 +256,9 @@ SprayParticleContainer::spraySetup(const Real* body_force)
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }
+  m_sprayData->eosparm = eosparms_d;
   Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
+  m_sprayData->eosparm = eosparms_h;
   Gpu::streamSynchronize();
   ParallelDescriptor::Barrier();
 }
