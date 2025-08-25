@@ -55,7 +55,8 @@ calculateFilmSource(
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film = {{0.0}}; // Liquid mass fractions
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film = {
+    {0.0}}; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor = {{0.0}};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
