@@ -256,19 +256,23 @@ calculateSpraySource(
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
-        cp_skin += gpv.Y_fluid[n] * cp_n[n];
       }
+      eos.TY2Cp(T_skin, Y_skin.data(), cp_skin);
+      cp_skin *= SPU.eng_conv;
       mw_skin = gpv.mw_mix;
     }
     amrex::Real lambda_skin = 0.;
     amrex::Real mu_skin = 0.;
     amrex::Real xi_skin = 0.;
-    amrex::Real rho_skin = gpv.rho_fluid;
+    amrex::Real rho_skin, rho_cgs;
     if (fdat.mass_trans) {
-      rho_skin = mw_skin * gpv.p_fluid /
-                 (pele::physics::Constants::RU * SPU.ru_conv * T_skin);
+      eos.PYT2R(
+        gpv.p_fluid / SprayUnits::pres_conv, Y_skin.data(), T_skin, rho_cgs);
+      rho_skin = rho_cgs * SprayUnits::rho_conv;
+    } else {
+      rho_skin = gpv.rho_fluid;
+      rho_cgs = rho_skin / SprayUnits::rho_conv;
     }
-    amrex::Real rho_cgs = rho_skin / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
       get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,
