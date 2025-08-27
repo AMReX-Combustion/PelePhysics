@@ -54,7 +54,8 @@ updateBreakupKHRT(
   // To prolong RT breakup, rt_time is set to -1 on injection. RT breakup can
   // then only occur after KH breakup happens at least once
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
-  const amrex::Real sigma_part = fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
+  const amrex::Real sigma_part =
+    fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
   amrex::Real rad_part = 0.5 * dia_part;
   if (rad_part < min_rad) {
     return;

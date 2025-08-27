@@ -231,7 +231,8 @@ droplet_splashing(
   const amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, cBoilT);
   const amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
   const amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
-  const amrex::Real sigma_part = fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
+  const amrex::Real sigma_part =
+    fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
   amrex::Real Tstar = fdat.wall_T / Tboil;
   const amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   const amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);

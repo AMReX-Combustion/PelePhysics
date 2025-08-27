@@ -90,8 +90,17 @@ struct MPLiqProps
   }
 
   // Mixture functions use RealArrayLike to allow for different types of arrays
-  // RealArrayLike can be anything with an [] operator that returns amrex::Real&
+  // with an [] operator that returns amrex::Real (or convertible to
+  // amrex::Real). Most mixture functions require amrex::Real* cBoilT parameter.
+  // Only rho_mix has optional cBoilT to allow dual calling patterns.
 
+  // Helper function to get effective temperature considering boiling point
+  template <typename cBoilTLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real effectiveT(
+    const amrex::Real& T, const int spf, const cBoilTLike& cBoilT) const
+  {
+    return amrex::min(T, cBoilT[spf]);
+  }
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
   critT_mix(const RealArrayLike& Y) const
@@ -103,9 +112,9 @@ struct MPLiqProps
     return Tcrit;
   }
 
-  template <typename RealArrayLike>
+  template <typename RealArrayLike, typename cBoilTLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
-  boilT_mix(const RealArrayLike& Y, const amrex::Real* cBoilT) const
+  boilT_mix(const RealArrayLike& Y, const cBoilTLike& cBoilT) const
   {
     amrex::Real Tboil = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -117,29 +126,32 @@ struct MPLiqProps
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real cp_mix(
     const RealArrayLike& Y,
-    const amrex::Real T,
-    const amrex::Real* cBoilT = nullptr) const
+    const amrex::Real& T,
+    const amrex::Real* cBoilT) const
   {
     amrex::Real Cp = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      amrex::Real boil_temp =
-        (cBoilT != nullptr) ? cBoilT[spf] : AMREX_REAL_MAX;
-      Cp += Y[spf] * cp_i(amrex::min(T, boil_temp), spf);
+      Cp += Y[spf] * cp_i(effectiveT(T, spf, cBoilT), spf);
     }
     return Cp;
   }
 
-  template <typename RealArrayLike>
+  // rho_mix can be called as rho_mix(Y,T) or rho_mix(Y,T,cBoilT)
+  template <
+    typename RealArrayLike,
+    typename cBoilTLike = amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real rho_mix(
     const RealArrayLike& Y,
-    const amrex::Real T,
-    const amrex::Real* cBoilT = nullptr) const
+    const amrex::Real& T,
+    const cBoilTLike& cBoilT = [] {
+      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> arr;
+      arr.fill(AMREX_REAL_MAX);
+      return arr;
+    }()) const
   {
     amrex::Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      amrex::Real boil_temp =
-        (cBoilT != nullptr) ? cBoilT[spf] : AMREX_REAL_MAX;
-      rho += Y[spf] / rho_i(amrex::min(T, boil_temp), spf);
+      rho += Y[spf] / rho_i(effectiveT(T, spf, cBoilT), spf);
     }
     rho = 1. / rho;
     return rho;
@@ -148,14 +160,12 @@ struct MPLiqProps
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real lambda_mix(
     const RealArrayLike& Y,
-    const amrex::Real T,
-    const amrex::Real* cBoilT = nullptr) const
+    const amrex::Real& T,
+    const amrex::Real* cBoilT) const
   {
     amrex::Real lambda = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      amrex::Real boil_temp =
-        (cBoilT != nullptr) ? cBoilT[spf] : AMREX_REAL_MAX;
-      lambda += Y[spf] * lambda_i(amrex::min(T, boil_temp), spf);
+      lambda += Y[spf] * lambda_i(effectiveT(T, spf, cBoilT), spf);
     }
     return lambda;
   }
@@ -163,14 +173,12 @@ struct MPLiqProps
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real mu_mix(
     const RealArrayLike& Y,
-    const amrex::Real T,
-    const amrex::Real* cBoilT = nullptr) const
+    const amrex::Real& T,
+    const amrex::Real* cBoilT) const
   {
     amrex::Real mu = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      amrex::Real boil_temp =
-        (cBoilT != nullptr) ? cBoilT[spf] : AMREX_REAL_MAX;
-      mu += Y[spf] * mu_i(amrex::min(T, boil_temp), spf);
+      mu += Y[spf] * mu_i(effectiveT(T, spf, cBoilT), spf);
     }
     return mu;
   }
@@ -178,8 +186,8 @@ struct MPLiqProps
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real sigma_mix(
     const RealArrayLike& /*Y*/,
-    const amrex::Real /*T*/,
-    const amrex::Real* /*cBoilT*/ = nullptr) const
+    const amrex::Real& /*T*/,
+    const amrex::Real* /*cBoilT*/) const
   {
     return sigma;
   }
