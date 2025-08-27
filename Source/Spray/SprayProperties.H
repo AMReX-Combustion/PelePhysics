@@ -91,8 +91,8 @@ struct MPLiqProps
 
   // Mixture functions use RealArrayLike to allow for different types of arrays
   // with an [] operator that returns amrex::Real (or convertible to
-  // amrex::Real). Most mixture functions require amrex::Real* cBoilT parameter.
-  // Only rho_mix has optional cBoilT to allow dual calling patterns.
+  // amrex::Real). cBoilTLike is used in templated functions to allow both
+  // amrex::GpuArray and amrex::Real* types for boiling temperature arrays.
 
   // Helper function to get effective temperature considering boiling point
   template <typename cBoilTLike>
