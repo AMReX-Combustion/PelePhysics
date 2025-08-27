@@ -62,10 +62,10 @@ calculateFilmSource(
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
   }
   amrex::Real T_film = p.rdata(SprayComps::pstateT);
-  amrex::Real rho_film = fdat.liqprops.rho_mix(Y_film, T_film, cBoilT);
-  amrex::Real Tcrit = fdat.liqprops.critT_mix(Y_film);
-  amrex::Real cp_film = fdat.liqprops.cp_mix(Y_film, T_film, cBoilT);
-  amrex::Real lambda_film = fdat.liqprops.lambda_mix(Y_film, T_film, cBoilT);
+  const amrex::Real rho_film = fdat.liqprops.rho_mix(Y_film, T_film, cBoilT);
+  const amrex::Real Tcrit = fdat.liqprops.critT_mix(Y_film);
+  const amrex::Real cp_film = fdat.liqprops.cp_mix(Y_film, T_film, cBoilT);
+  const amrex::Real lambda_film = fdat.liqprops.lambda_mix(Y_film, T_film, cBoilT);
   amrex::Real mw_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];

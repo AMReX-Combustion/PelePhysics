@@ -42,8 +42,8 @@ updateBreakupKHRT(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
-  amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
-  amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
+  const amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+  const amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
   // Minimum droplet radius for child droplets
   // Should not create child droplets that are near to or less than the minimum
   // allowable mass to avoid unphysical evaporation of mass
@@ -54,7 +54,7 @@ updateBreakupKHRT(
   // To prolong RT breakup, rt_time is set to -1 on injection. RT breakup can
   // then only occur after KH breakup happens at least once
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
-  amrex::Real sigma_part = fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
+  const amrex::Real sigma_part = fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
   amrex::Real rad_part = 0.5 * dia_part;
   if (rad_part < min_rad) {
     return;
