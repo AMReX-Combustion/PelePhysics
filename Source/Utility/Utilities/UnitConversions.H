@@ -6,6 +6,24 @@
 #include <AMReX_Utility.H>
 
 namespace pele::physics::utilities {
+
+// Temperature conversions
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+constexpr amrex::Real
+C2K(const amrex::Real T)
+{
+  return T + 273.15; // Celsius to Kelvin
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+constexpr amrex::Real
+K2C(const amrex::Real T)
+{
+  return T - 273.15; // Kelvin to Celsius
+}
+
 namespace cgs2mks {
 // CGS to MKS conversions
 AMREX_GPU_HOST_DEVICE
