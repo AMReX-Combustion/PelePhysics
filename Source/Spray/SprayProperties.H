@@ -37,16 +37,17 @@ struct SprayUnits
 // Structs for liquid fuel properties
 namespace pele::physics::SprayProps {
 
+template <typename parsedqty>
 // Function for reading particle input values
 static void getInpVal(
-  amrex::Real* coef,
+  parsedqty* val,
   const amrex::ParmParse& ppp,
   const std::string* fuel_names,
   const std::string& varname)
 {
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     std::string var_read = fuel_names[spf] + "_" + varname;
-    ppp.get(var_read.c_str(), coef[spf]);
+    ppp.get(var_read.c_str(), val[spf]);
   }
 }
 
@@ -660,6 +661,7 @@ struct InitLiqProps<GCMLiqProps>
   operator()(GCMLiqProps* ldata, std::vector<std::string>& fuel_names)
   {
     amrex::ParmParse pp("particles");
+    getInpVal(ldata->family.data(), pp, fuel_names.data(), "family");
     getInpVal(ldata->mw.data(), pp, fuel_names.data(), "molar_weight");
     getInpVal(ldata->critT.data(), pp, fuel_names.data(), "crit_temp");
     getInpVal(ldata->critP.data(), pp, fuel_names.data(), "crit_press");
