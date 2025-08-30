@@ -284,10 +284,11 @@ struct GCMLiqProps
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_c;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
+  amrex::Real sigma = -1.; // Surface tension
 
-  template <typename RealArrayLike>
+  template <typename RealArrayLike, typename RealArrayLike2>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-  Y2X(const RealArrayLike& Y, RealArrayLike& X)
+  Y2X(const RealArrayLike& Y, RealArrayLike2& X) const
   {
     // EOS::Y2X uses mw of gas species, which may not include all liquid species
     amrex::Real Mbar = 0.;
