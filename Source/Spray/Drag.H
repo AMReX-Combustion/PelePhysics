@@ -67,40 +67,26 @@ calcVaporState(
   amrex::Real& cp_skin,
   amrex::Real& mw_skin)
 {
-  SprayUnits SPU;
-  amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-  amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
   amrex::Real mbar_vap = 0.; // Average molar mass of evaporated fuel in vapor
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const int fdspec = fdat.dep_indx[spf];
-    const amrex::Real mw_fuel = gpv.mw[fspec];
+    const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
     amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
 
     // Compute latent heat
-    // TODO: Generalize this to allow for temperature dependent latent heat
     amrex::Real part_latent =
       h_part[fspec] + fdat.liqprops.latentRef_minus_gasRefH_i[spf] -
       fdat.liqprops.cp_i(T_part, spf) * (T_part - fdat.liqprops.ref_T);
     L_fuel[spf] = part_latent;
 
-    amrex::Real pres_sat = 0.;
-    // Using the Clasius-Clapeyron relation
-    // TODO: Generalize for multiple psat correlations based on liqprops
-    if (fdat.liqprops.psat_coef[4 * spf + 3] == 0.) {
-      const amrex::Real boilT_ref = fdat.liqprops.boilT_i(spf);
-      pres_sat =
-        PATM *
-        std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part));
-      // Using the Antoine equation
-    } else {
-      pres_sat = fdat.liqprops.psat_i(T_part, spf);
-    }
-    amrex::Real X_fluid = gpv.Y_fluid[fdspec] * gpv.mw_mix / mw_fuel;
+    amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);
+
+    amrex::Real X_fluid = gpv.Y_fluid[fdspec] * gpv.mw_mix / mw_li;
     if (pres_sat > X_fluid * gpv.p_fluid) {
-      amrex::Real Xl = Y_l[spf] * mw_part / mw_fuel;
+      amrex::Real Xl = Y_l[spf] * mw_part / mw_li;
       amrex::Real Xv = Xl * pres_sat / gpv.p_fluid;
-      mbar_vap += Xv * mw_fuel;
+      mbar_vap += Xv * mw_li;
       sumXVap += Xv;
       X_vapor[spf] = Xv;
     } else {
@@ -115,8 +101,8 @@ calcVaporState(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     if (X_vapor[spf] > 0.) {
       const int fspec = fdat.indx[spf];
-      const amrex::Real mw_fuel = gpv.mw[fspec];
-      Yfv[spf] = X_vapor[spf] * mw_fuel / totalmwx;
+      const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+      Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
       sumYVap += Yfv[spf];
     }
   }
@@ -225,11 +211,8 @@ calculateSpraySource(
   while (isub <= nsub) {
     const amrex::Real cp_part = fdat.liqprops.cp_mix(Y_part, T_part, cBoilT);
     const amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, cBoilT);
-    amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
-    }
-    mw_part = 1. / mw_part;
+    // Average molar mass of liquid droplet
+    const amrex::Real mw_part = fdat.liqprops.mw_mix(Y_part);
     // Model the fuel vapor using the one-third rule
     amrex::Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     amrex::Real T_skin = gpv.T_fluid;
