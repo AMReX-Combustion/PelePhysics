@@ -247,6 +247,11 @@ SprayParticleContainer::spraySetup(
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
   auto eos = pele::physics::PhysicsType::eos(eosparms_h);
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
+  eos.molecular_weight(mw.data());
+#ifndef SPRAY_GCM
+  m_sprayData->liqprops.init_mw(mw, m_sprayData->indx.data());
+#endif
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
