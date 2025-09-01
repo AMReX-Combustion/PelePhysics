@@ -61,6 +61,10 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
 
   std::vector<std::string> fuel_names;
   std::vector<std::string> dep_fuel_names;
+  pele::physics::SprayProps::InitLiqProps<
+      pele::physics::SprayProps::LiqPropType>
+      init_liq_props;
+      
   bool has_dep_spec = false;
   {
     pp.getarr("fuel_species", fuel_names);
@@ -70,9 +74,6 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     }
 
     // Read input parameters for liquid properties
-    pele::physics::SprayProps::InitLiqProps<
-      pele::physics::SprayProps::LiqPropType>
-      init_liq_props;
     init_liq_props(&(m_sprayData->liqprops), fuel_names);
 
     // Set the fuel names
@@ -114,17 +115,10 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     if (m_breakupPPPFact > 1. || m_breakupPPPFact < 0.) {
       Abort("'breakup_parcel_factor' must be between 0 and 1");
     }
-    bool wrong_data = false;
-    for (int i = 0; i < nfuel; ++i) {
-      std::string var_read = fuel_names[i] + "_mu";
-      if (!pp.contains(var_read.c_str())) {
-        wrong_data = true;
-      }
-    }
-    if (wrong_data || !pp.contains("fuel_sigma")) {
-      Abort(
-        "fuel_sigma and mu coeffs must be set for splash or breakup model.");
-    }
+    
+    // Check proper input data for sigma and mu
+    init_liq_props.init_breakupsplash(&(m_sprayData->liqprops), fuel_names);
+
     if (splash_model) {
       // TODO: Have this retrieved from proper boundary data
       pp.get("wall_temp", m_sprayData->wall_T);
@@ -135,8 +129,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
       }
       m_sprayData->theta_c = theta_c_deg * M_PI / 180.;
     }
-    // Set the fuel surface tension and contact angle
-    pp.get("fuel_sigma", m_sprayData->liqprops.sigma);
+    // Set the contact angle
     m_sprayData->do_splash = splash_model;
     m_sprayData->do_breakup = breakup_model;
   }

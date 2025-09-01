@@ -651,6 +651,24 @@ struct InitLiqProps<MPLiqProps>
       }
     }
   }
+
+  static void init_breakupsplash(MPLiqProps* ldata, std::vector<std::string>& fuel_names)
+  {
+    // Check for sigma and mu coeffs (copied from PeleMP implementation)
+    amrex::ParmParse pp("particles");
+    bool wrong_data = false;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      std::string var_read = fuel_names[spf] + "_mu";
+      if (!pp.contains(var_read.c_str())) {
+        wrong_data = true;
+      }
+    }
+    if (wrong_data || !pp.contains("fuel_sigma")) {
+      amrex::Abort(
+        "fuel_sigma and mu coeffs must be set for splash or breakup model.");
+    }
+    pp.get("fuel_sigma", ldata->sigma);
+  }
 };
 
 // Specialization for GCMLiqProps
@@ -673,6 +691,11 @@ struct InitLiqProps<GCMLiqProps>
     getInpVal(ldata->cp_b.data(), pp, fuel_names.data(), "cp_b");
     getInpVal(ldata->cp_c.data(), pp, fuel_names.data(), "cp_c");
     getInpVal(ldata->latent.data(), pp, fuel_names.data(), "latent");
+  }
+
+  static void init_breakupsplash(GCMLiqProps* /*ldata*/, std::vector<std::string>& /*fuel_names*/)
+  {
+    // GCM calculates surface tension and viscosity from other properties
   }
 };
 
