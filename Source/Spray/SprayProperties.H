@@ -2,7 +2,6 @@
 #define SPRAYPROPERTIES_H
 #include "UnitConversions.H"
 
-
 namespace c2m = pele::physics::utilities::cgs2mks;
 
 // Units for sprays
@@ -39,7 +38,8 @@ namespace pele::physics::SprayProps {
 
 template <typename parsedqty>
 // Function for reading particle input values
-static void getInpVal(
+static void
+getInpVal(
   parsedqty* val,
   const amrex::ParmParse& ppp,
   const std::string* fuel_names,
@@ -69,13 +69,13 @@ struct MPLiqProps
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> mu_coef;
 
   template <typename RealArrayLike>
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void init_mw(const RealArrayLike& mw_gas, const int* indx) {
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+  init_mw(const RealArrayLike& mw_gas, const int* indx)
+  {
     SprayUnits SPU;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = indx[spf];
-        mw[spf] = mw_gas[fspec] * SPU.mass_conv;
+      const int fspec = indx[spf];
+      mw[spf] = mw_gas[fspec] * SPU.mass_conv;
     }
   }
 
@@ -133,22 +133,25 @@ struct MPLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  amrex::Real psat_i(const amrex::Real T, int spf, amrex::Real part_latent) const {
-      if (psat_coef[4 * spf + 3] == 0.) {
-          // Using the Clasius-Clapeyron relation
-          SprayUnits SPU;
-          amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-          amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
-          const amrex::Real boilT_ref = boilT_i(spf);
-          return PATM * std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
-      } else {
-          // Using the Antoine equation
-          amrex::Real a = psat_coef[4 * spf];
-          amrex::Real b = psat_coef[4 * spf + 1];
-          amrex::Real c = psat_coef[4 * spf + 2];
-          amrex::Real d = psat_coef[4 * spf + 3];
-          return d * std::pow(10., a - b / (T + c));
-      }
+  amrex::Real
+  psat_i(const amrex::Real T, int spf, amrex::Real part_latent) const
+  {
+    if (psat_coef[4 * spf + 3] == 0.) {
+      // Using the Clasius-Clapeyron relation
+      SprayUnits SPU;
+      amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
+      amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
+      const amrex::Real boilT_ref = boilT_i(spf);
+      return PATM *
+             std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
+    } else {
+      // Using the Antoine equation
+      amrex::Real a = psat_coef[4 * spf];
+      amrex::Real b = psat_coef[4 * spf + 1];
+      amrex::Real c = psat_coef[4 * spf + 2];
+      amrex::Real d = psat_coef[4 * spf + 3];
+      return d * std::pow(10., a - b / (T + c));
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -285,7 +288,8 @@ struct GCMLiqProps
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_c;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
-  amrex::Real sigma = -1.; // Calculated below but need this for spray breakup initialization
+  amrex::Real sigma =
+    -1.; // Calculated below but need this for spray breakup initialization
 
   template <typename RealArrayLike, typename RealArrayLike2>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -427,7 +431,8 @@ struct GCMLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  amrex::Real psat_i(const amrex::Real T, int spf, amrex::Real /*part_latent*/) const
+  amrex::Real
+  psat_i(const amrex::Real T, int spf, amrex::Real /*part_latent*/) const
   {
     // Lee-Kesler correlation
     amrex::Real Tr = T / critT_i(spf);
@@ -652,7 +657,8 @@ struct InitLiqProps<MPLiqProps>
     }
   }
 
-  static void init_breakupsplash(MPLiqProps* ldata, std::vector<std::string>& fuel_names)
+  static void
+  init_breakupsplash(MPLiqProps* ldata, std::vector<std::string>& fuel_names)
   {
     // Check for sigma and mu coeffs (copied from PeleMP implementation)
     amrex::ParmParse pp("particles");
@@ -675,8 +681,7 @@ struct InitLiqProps<MPLiqProps>
 template <>
 struct InitLiqProps<GCMLiqProps>
 {
-  void
-  operator()(GCMLiqProps* ldata, std::vector<std::string>& fuel_names)
+  void operator()(GCMLiqProps* ldata, std::vector<std::string>& fuel_names)
   {
     amrex::ParmParse pp("particles");
     getInpVal(ldata->family.data(), pp, fuel_names.data(), "family");
@@ -693,7 +698,8 @@ struct InitLiqProps<GCMLiqProps>
     getInpVal(ldata->latent.data(), pp, fuel_names.data(), "latent");
   }
 
-  static void init_breakupsplash(GCMLiqProps* /*ldata*/, std::vector<std::string>& /*fuel_names*/)
+  static void init_breakupsplash(
+    GCMLiqProps* /*ldata*/, std::vector<std::string>& /*fuel_names*/)
   {
     // GCM calculates surface tension and viscosity from other properties
   }

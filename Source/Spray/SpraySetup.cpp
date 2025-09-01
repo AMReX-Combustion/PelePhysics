@@ -62,9 +62,9 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
   std::vector<std::string> fuel_names;
   std::vector<std::string> dep_fuel_names;
   pele::physics::SprayProps::InitLiqProps<
-      pele::physics::SprayProps::LiqPropType>
-      init_liq_props;
-      
+    pele::physics::SprayProps::LiqPropType>
+    init_liq_props;
+
   bool has_dep_spec = false;
   {
     pp.getarr("fuel_species", fuel_names);
@@ -115,7 +115,7 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     if (m_breakupPPPFact > 1. || m_breakupPPPFact < 0.) {
       Abort("'breakup_parcel_factor' must be between 0 and 1");
     }
-    
+
     // Check proper input data for sigma and mu
     init_liq_props.init_breakupsplash(&(m_sprayData->liqprops), fuel_names);
 

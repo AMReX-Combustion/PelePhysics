@@ -39,8 +39,6 @@ enum splash_breakup {
   splash_wet_splash
 };
 
-
-
 // Structure that contains the interpolated gas phase state
 // and gas phase source values
 struct GasPhaseVals

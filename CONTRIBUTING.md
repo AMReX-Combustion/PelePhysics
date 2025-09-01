@@ -8,10 +8,7 @@ The *PelePhysics* contributions workflow follows these steps:
 3. Open a Pull Request (PR) from `AmazingNewFeature` on your fork to branch `development` of the main *PelePhysics* repository
 
 Follow [GitHub directions](https://docs.github.com/en/free-pro-team@latest/github/getting-started-with-github/fork-a-repo)
-to fork *PelePhysics* main repo on your GitHub account, and use a recursive 
-~~~
-`git clone` to get your fork of *PelePhysics* and its dependencies.
-~~~
+to fork *PelePhysics* main repo on your GitHub account, and use a recursive `git clone` to get your fork of *PelePhysics* and its dependencies.
 
 Then step into the *PelePhysics* folder and add the main *PelePhysics* repository as the `upstream` remote in order to keep track of the main repo :
 ~~~
