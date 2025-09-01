@@ -562,9 +562,13 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be compiled with ``SPRAY_GCM=TRUE`` or ``FALSE``. To run a test case with the *PeleMP* or *GCM* liquid properties, simply open ``Validate.py`` and set the ``LiqPropsType`` and case name from the table below, for example ::
 
-  case = WongLin()
+   # Liquid properties model: "mp" or "gcm"
+   LiqPropsType = "mp" 
+
+   # Case object
+   case = WongLin(LiqPropsType)
 
 then run ``python Validate.py``.
 The following table details the parameters of each test:
