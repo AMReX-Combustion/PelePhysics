@@ -434,7 +434,7 @@ The following inputs are generated from FuelLib for each liquid fuel species.
    |``SP_latent``           |Latent heat at 298.15 K        |Yes          |
    +------------------------+-------------------------------+-------------+
 
-The specific equations, correlaitons and mixture rules used in the GCM implementation are detailed in the `Fuel Property Prediction Model <https://nrel.github.io/FuelLib/fuelprops.html>`_ section of FuelLib's documentaiton.
+The specific equations, correlaitons and mixture rules used in the GCM implementation are detailed in the `Fuel Property Prediction Model <https://nrel.github.io/FuelLib/fuelprops.html>`_ section of FuelLib's documentation.
 
 
 Spray Injection
