@@ -38,17 +38,16 @@ updateBreakupTAB(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
-  amrex::Real rho_part = 0.;
-  amrex::Real mu_part = 0.;
   amrex::Real Y_part[SPRAY_FUEL_NUM] = {0.0};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
-    mu_part += Y_part[spf] * fdat.liqprops.mu_i(minT, spf);
   }
-  rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+  const amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+  const amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
+  const amrex::Real sigma_part =
+    fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
+
   amrex::Real Utan_total = 0.;
-  amrex::Real sigma = fdat.liqprops.sigma;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::Real min_rad =
     4. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
@@ -56,11 +55,11 @@ updateBreakupTAB(
     return 0.;
   }
   amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
-  amrex::Real We_div_r = gpv.rho_fluid * diff_vel.radSquared() / sigma;
+  amrex::Real We_div_r = gpv.rho_fluid * diff_vel.radSquared() / sigma_part;
   amrex::Real We_crit = C_k * C_b / C_F;
   amrex::Real denom = rho_part * rad_part * rad_part;
   amrex::Real td = 2. * denom / (C_d * mu_part);
-  amrex::Real omega2 = C_k * sigma / (denom * rad_part) - 1. / (td * td);
+  amrex::Real omega2 = C_k * sigma_part / (denom * rad_part) - 1. / (td * td);
   amrex::Real tbconst =
     2. * std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
   if (omega2 <= 0.) {
@@ -157,7 +156,7 @@ updateBreakupTAB(
         subdt = amrex::min(dt, 0.1 * tb_est);
         denom = rho_part * rad_part * rad_part;
         td = 2. * denom / (C_d * mu_part);
-        omega2 = C_k * sigma / (denom * rad_part) - 1. / (td * td);
+        omega2 = C_k * sigma_part / (denom * rad_part) - 1. / (td * td);
         if (omega2 <= 0.) {
           p.rdata(SprayComps::pstateDia) = 2. * rad_part;
           p.rdata(SprayComps::pstateNumDens) = num_dens;

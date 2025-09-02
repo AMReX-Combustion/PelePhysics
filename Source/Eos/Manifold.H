@@ -147,6 +147,15 @@ struct Manifold
     amrex::Error("RTY2Cv is not yet implemented for Manifold EOS");
   }
 
+  // Adding a dummy T2Cpi function
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void T2Cpi(const amrex::Real /*T*/, amrex::Real* /*Cpi[NUM_SPECIES]*/)
+  {
+    // TODO: FIXME (T2Cpi need to be implemented for manifold model)
+    amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
+  }
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
@@ -170,6 +179,18 @@ struct Manifold
     // PeleLM)
     Cp = 100.0;
     // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void EY2T(
+    const amrex::Real /*E*/, const amrex::Real Y[NUM_SPECIES], amrex::Real& T)
+  {
+    if (eosparm->compute_temperature) {
+      manfunc.get_func()->get_value(eosparm->idx_T, Y, T);
+    } else {
+      T = 1.0;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE

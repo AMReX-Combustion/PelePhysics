@@ -170,7 +170,7 @@ calculateSpraySource(
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
 {
-  auto eos = pele::physics::PhysicsType::eos();
+  auto eos = pele::physics::PhysicsType::eos(fdat.eosparm);
   SprayUnits SPU;
   const amrex::Real rule = 1. / 3.;
   const amrex::Real C_eps = 1.E-15;
@@ -210,7 +210,6 @@ calculateSpraySource(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
 
-  // This is inefficient, but we need Y_part for multiple computations below
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
@@ -224,12 +223,10 @@ calculateSpraySource(
   amrex::Real Reyn;
   amrex::RealVect part_vel_src;
   while (isub <= nsub) {
-    amrex::Real cp_part = 0.; // Cp of the liquid state
-    amrex::Real Tboil = 0.;   // Liquid mixture boiling temperature
+    const amrex::Real cp_part = fdat.liqprops.cp_mix(Y_part, T_part, cBoilT);
+    const amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, cBoilT);
     amrex::Real mw_part = 0.; // Average molar mass of liquid droplet
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Tboil += Y_part[spf] * cBoilT[spf];
-      cp_part += Y_part[spf] * fdat.liqprops.cp_i(T_part, spf);
       mw_part += Y_part[spf] / gpv.mw[fdat.indx[spf]];
     }
     mw_part = 1. / mw_part;
@@ -259,19 +256,23 @@ calculateSpraySource(
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
-        cp_skin += gpv.Y_fluid[n] * cp_n[n];
       }
+      eos.TY2Cp(T_skin, Y_skin.data(), cp_skin);
+      cp_skin *= SPU.eng_conv;
       mw_skin = gpv.mw_mix;
     }
     amrex::Real lambda_skin = 0.;
     amrex::Real mu_skin = 0.;
     amrex::Real xi_skin = 0.;
-    amrex::Real rho_skin = gpv.rho_fluid;
+    amrex::Real rho_skin, rho_cgs;
     if (fdat.mass_trans) {
-      rho_skin = mw_skin * gpv.p_fluid /
-                 (pele::physics::Constants::RU * SPU.ru_conv * T_skin);
+      eos.PYT2R(
+        gpv.p_fluid / SprayUnits::pres_conv, Y_skin.data(), T_skin, rho_cgs);
+      rho_skin = rho_cgs * SprayUnits::rho_conv;
+    } else {
+      rho_skin = gpv.rho_fluid;
+      rho_cgs = rho_skin / SprayUnits::rho_conv;
     }
-    amrex::Real rho_cgs = rho_skin / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
       get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,

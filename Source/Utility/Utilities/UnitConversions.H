@@ -93,7 +93,7 @@ AMREX_FORCE_INLINE
 constexpr amrex::Real
 RhoH(const amrex::Real rhoh_cgs)
 {
-  return rhoh_cgs * 1.0e1; // erg/cm^3 to J/m^3
+  return rhoh_cgs * 1.0e-1; // erg/cm^3 to J/m^3
 }
 
 AMREX_GPU_HOST_DEVICE

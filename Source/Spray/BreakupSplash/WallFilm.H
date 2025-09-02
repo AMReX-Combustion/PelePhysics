@@ -55,25 +55,23 @@ calculateFilmSource(
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film; // Liquid mass fractions
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film = {
+    {0.0}}; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor = {{0.0}};
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
+  }
   amrex::Real T_film = p.rdata(SprayComps::pstateT);
-  amrex::Real rho_film = 0.;
-  amrex::Real Tcrit = 0.;
-  amrex::Real cp_film = 0.;
-  amrex::Real lambda_film = 0.;
+  const amrex::Real rho_film = fdat.liqprops.rho_mix(Y_film, T_film, cBoilT);
+  const amrex::Real Tcrit = fdat.liqprops.critT_mix(Y_film);
+  const amrex::Real cp_film = fdat.liqprops.cp_mix(Y_film, T_film, cBoilT);
+  const amrex::Real lambda_film =
+    fdat.liqprops.lambda_mix(Y_film, T_film, cBoilT);
   amrex::Real mw_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    amrex::Real minT = amrex::min(T_film, cBoilT[spf]);
-    Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
-    rho_film += Y_film[spf] / fdat.liqprops.rho_i(minT, spf);
-    cp_film += Y_film[spf] * fdat.liqprops.cp_i(minT, spf);
-    lambda_film += Y_film[spf] * fdat.liqprops.lambda_i(minT, spf);
-    Tcrit += Y_film[spf] * fdat.liqprops.critT_i(spf);
     mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];
   }
   mw_film = 1. / mw_film;
-  rho_film = 1. / rho_film;
   T_film = amrex::min(0.999 * Tcrit, T_film);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
