@@ -51,32 +51,32 @@ getInpVal(
   }
 }
 
-// Original spray properties ported from PeleMP to PelePhysics
-struct MPLiqProps
+// Base struct for liquid properties
+struct BaseLiqProps
 {
-  amrex::Real ref_T = 300.; // Reference temperature for liquid properties
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mw;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
-  amrex::Real sigma = -1.; // Surface tension
-  // 3 coefficients for Antoine equation and conversion to appropriate units
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> lambda_coef;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> mu_coef;
 
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   init_mw(const RealArrayLike& mw_gas, const int* indx)
   {
+    amrex::Print() << "Initializing liquid molecular weights:\n";
+#if SPRAY_FUEL_NUM <= NUM_SPECIES
     SprayUnits SPU;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
       mw[spf] = mw_gas[fspec] * SPU.mass_conv;
+      amrex::Print() << "Liquid species " << spf << " uses gas species "
+                     << fspec << " with mw = " << mw[spf] << "\n";
     }
+#else
+    amrex::Abort("SPRAY_FUEL_NUM > NUM_SPECIES");
+    // Will require mw to be read from input file in many-to-one case
+#endif
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -90,6 +90,46 @@ struct MPLiqProps
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real boilT_i(const int spf) const { return boilT[spf]; }
+
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+  mw_mix(const RealArrayLike& Y) const
+  {
+    amrex::Real mw_part = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      mw_part += Y[spf] / mw_i(spf);
+    }
+    mw_part = 1. / mw_part;
+    return mw_part;
+  }
+
+  template <typename RealArrayLike, typename RealArrayLike2>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+  Y2X(const RealArrayLike& Y, RealArrayLike2& X) const
+  {
+    // EOS::Y2X uses mw of gas species, which may not include all liquid species
+    amrex::Real Mbar = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      Mbar += Y[spf] / mw_i(spf);
+    }
+    Mbar = 1. / Mbar;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      X[spf] = Mbar * Y[spf] / mw_i(spf);
+    }
+  }
+};
+
+// Original spray properties ported from PeleMP to PelePhysics
+struct MPLiqProps : public BaseLiqProps
+{
+  amrex::Real ref_T = 300.; // Reference temperature for liquid properties
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
+  amrex::Real sigma = -1.; // Surface tension
+  // 3 coefficients for Antoine equation and conversion to appropriate units
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> rho_coef;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> lambda_coef;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> mu_coef;
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -169,18 +209,6 @@ struct MPLiqProps
 
   // Mixture functions use RealArrayLike to allow for different types of arrays
   // with an [] operator that returns amrex::Real
-
-  template <typename RealArrayLike>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
-  mw_mix(const RealArrayLike& Y) const
-  {
-    amrex::Real mw_part = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      mw_part += Y[spf] / mw_i(spf);
-    }
-    mw_part = 1. / mw_part;
-    return mw_part;
-  }
 
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
@@ -280,50 +308,18 @@ struct MPLiqProps
 
 // Struct of properties for GCM
 namespace utils = pele::physics::utilities;
-struct GCMLiqProps
+struct GCMLiqProps : public BaseLiqProps
 {
   // Only implemented for MKS units currently
   amrex::Real ref_T = 298.15; // Reference temperature for liquid properties
   amrex::GpuArray<int, SPRAY_FUEL_NUM> family;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mw;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critP;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critV;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> omega;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> molar_vol;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_a;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_b;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_c;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
-
-  template <typename RealArrayLike, typename RealArrayLike2>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-  Y2X(const RealArrayLike& Y, RealArrayLike2& X) const
-  {
-    // EOS::Y2X uses mw of gas species, which may not include all liquid species
-    amrex::Real Mbar = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Mbar += Y[spf] / mw_i(spf);
-    }
-    Mbar = 1. / Mbar;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      X[spf] = Mbar * Y[spf] / mw_i(spf);
-    }
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real mw_i(const int spf) const { return mw[spf]; }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real critT_i(const int spf) const { return critT[spf]; }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  amrex::Real boilT_i(const int spf) const { return boilT[spf]; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -699,7 +695,6 @@ struct InitLiqProps<GCMLiqProps>
   {
     amrex::ParmParse pp("particles");
     getInpVal(ldata->family.data(), pp, fuel_names.data(), "family");
-    getInpVal(ldata->mw.data(), pp, fuel_names.data(), "molar_weight");
     getInpVal(ldata->critT.data(), pp, fuel_names.data(), "crit_temp");
     getInpVal(ldata->critP.data(), pp, fuel_names.data(), "crit_press");
     getInpVal(ldata->critV.data(), pp, fuel_names.data(), "crit_vol");
