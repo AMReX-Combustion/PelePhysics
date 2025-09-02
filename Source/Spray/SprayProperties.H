@@ -217,17 +217,23 @@ struct MPLiqProps
   }
 
   // rho_mix can be called as rho_mix(Y,T) or rho_mix(Y,T,cBoilT)
-  template <
-    typename RealArrayLike,
-    typename RealArrayLike2 = amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>>
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+  rho_mix(const RealArrayLike& Y, const amrex::Real T) const
+  {
+    amrex::Real rho = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      rho += Y[spf] / rho_i(T, spf);
+    }
+    rho = 1. / rho;
+    return rho;
+  }
+
+  template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real rho_mix(
     const RealArrayLike& Y,
     const amrex::Real T,
-    const RealArrayLike2& cBoilT = [] {
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> arr;
-      arr.fill(AMREX_REAL_MAX);
-      return arr;
-    }()) const
+    const amrex::Real* cBoilT) const
   {
     amrex::Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -512,22 +518,27 @@ struct GCMLiqProps
   }
 
   // rho_mix can be called as rho_mix(Y,T) or rho_mix(Y,T,cBoilT)
-  template <
-    typename RealArrayLike,
-    typename RealArrayLike2 = amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real rho_mix(
-    const RealArrayLike& Y,
-    const amrex::Real T,
-    const RealArrayLike2& cBoilT = [] {
-      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> arr;
-      arr.fill(AMREX_REAL_MAX);
-      return arr;
-    }()) const
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+  rho_mix(const RealArrayLike& Y, const amrex::Real T) const
   {
     amrex::Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      // rho += Y[spf] / rho_i(amrex::min(T, cBoilT[spf]), spf);
       rho += Y[spf] / rho_i(T, spf);
+    }
+    rho = 1. / rho;
+    return rho;
+  }
+
+  template <typename RealArrayLike>
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real rho_mix(
+    const RealArrayLike& Y,
+    const amrex::Real T,
+    const amrex::Real* cBoilT) const
+  {
+    amrex::Real rho = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      rho += Y[spf] / rho_i(amrex::min(T, cBoilT[spf]), spf);
     }
     rho = 1. / rho;
     return rho;
