@@ -100,7 +100,6 @@ calcVaporState(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yfv{0.0};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     if (X_vapor[spf] > 0.) {
-      const int fspec = fdat.indx[spf];
       const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
       Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
       sumYVap += Yfv[spf];

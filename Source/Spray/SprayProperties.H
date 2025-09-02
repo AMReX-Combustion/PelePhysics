@@ -136,22 +136,25 @@ struct MPLiqProps
   amrex::Real
   psat_i(const amrex::Real T, int spf, amrex::Real part_latent) const
   {
+    amrex::Real pres_sat_i = 0.;
     if (psat_coef[4 * spf + 3] == 0.) {
       // Using the Clasius-Clapeyron relation
       SprayUnits SPU;
       amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
       amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
       const amrex::Real boilT_ref = boilT_i(spf);
-      return PATM *
-             std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
+      pres_sat_i =
+        PATM *
+        std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
     } else {
       // Using the Antoine equation
       amrex::Real a = psat_coef[4 * spf];
       amrex::Real b = psat_coef[4 * spf + 1];
       amrex::Real c = psat_coef[4 * spf + 2];
       amrex::Real d = psat_coef[4 * spf + 3];
-      return d * std::pow(10., a - b / (T + c));
+      pres_sat_i = d * std::pow(10., a - b / (T + c));
     }
+    return pres_sat_i;
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -288,8 +291,6 @@ struct GCMLiqProps
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp_c;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latentRef_minus_gasRefH_i;
-  amrex::Real sigma =
-    -1.; // Calculated below but need this for spray breakup initialization
 
   template <typename RealArrayLike, typename RealArrayLike2>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -393,7 +394,6 @@ struct GCMLiqProps
     amrex::Real Tc_i = critT_i(spf);
     amrex::Real Pc_i = critP[spf] * 1e-5; // Pa to bar
     amrex::Real Tb_i = boilT_i(spf);
-    amrex::Real omega_i = omega[spf];
     amrex::Real Tr = T / Tc_i;
     amrex::Real Tbr = Tb_i / Tc_i;
     amrex::Real Q =
@@ -401,7 +401,7 @@ struct GCMLiqProps
 
     amrex::Real sigma = std::pow(Pc_i, 2. / 3.) * std::pow(Tc_i, 1. / 3.) * Q *
                         std::pow(1 - Tr, 11. / 9.);
-    return sigma *= 1e-3; // Convert from dyn/cm to N/m;
+    return sigma * 1e-3; // Convert from dyn/cm to N/m;
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -452,12 +452,13 @@ struct GCMLiqProps
     amrex::Real Tb_i = boilT_i(spf);
     amrex::Real Tr = T / Tc_i;
     amrex::Real Trb = Tb_i / Tc_i;
-
+    amrex::Real latent_heat_i = 0.;
     if (T > Tc_i) {
-      return 0.0;
+      latent_heat_i = 0.0;
     } else {
-      return latent[spf] * std::pow((1.0 - Tr) / (1.0 - Trb), 0.38);
+      latent_heat_i = latent[spf] * std::pow((1.0 - Tr) / (1.0 - Trb), 0.38);
     }
+    return latent_heat_i;
   }
 
   // Mixture functions use RealArrayLike to allow for different types of arrays
@@ -504,7 +505,8 @@ struct GCMLiqProps
   {
     amrex::Real Cp = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Cp += Y[spf] * cp_i(amrex::min(T, cBoilT[spf]), spf);
+      // Cp += Y[spf] * cp_i(amrex::min(T, cBoilT[spf]), spf);
+      Cp += Y[spf] * cp_i(T, spf);
     }
     return Cp;
   }
@@ -524,7 +526,8 @@ struct GCMLiqProps
   {
     amrex::Real rho = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      rho += Y[spf] / rho_i(amrex::min(T, cBoilT[spf]), spf);
+      // rho += Y[spf] / rho_i(amrex::min(T, cBoilT[spf]), spf);
+      rho += Y[spf] / rho_i(T, spf);
     }
     rho = 1. / rho;
     return rho;
