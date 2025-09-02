@@ -507,8 +507,7 @@ struct GCMLiqProps : public BaseLiqProps
   {
     amrex::Real Cp = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      // Cp += Y[spf] * cp_i(amrex::min(T, cBoilT[spf]), spf);
-      Cp += Y[spf] * cp_i(T, spf);
+      Cp += Y[spf] * cp_i(amrex::min(T, cBoilT[spf]), spf);
     }
     return Cp;
   }
