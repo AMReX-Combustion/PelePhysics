@@ -78,8 +78,7 @@ struct BaseLiqProps
       getInpVal(mw_fl.data(), pp, fuel_names.data(), "molar_weight");
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const amrex::Real rel_diff =
-          std::abs(mw[spf] - mw_gas[indx[spf]] * SprayUnits::mass_conv) /
-          mw[spf];
+          std::abs(mw_fl[spf] - mw[spf] * SprayUnits::mass_conv) / mw[spf];
         if (rel_diff > 1.E-5) {
           amrex::Warning(
             "GCM species " + fuel_names[spf] +
@@ -612,14 +611,14 @@ struct GCMLiqProps : public BaseLiqProps
 };
 
 // Define the type of liquid properties based on the compilation flag
-#ifndef PELE_SPRAY_GCM
+#ifdef PELE_SPRAY_GCM
 #ifndef PELELM_USE_SPRAY
-amrex::static_assert(
+static_assert(
   false, "GCM liquid property model can currently only be used with PeleLMeX");
 #endif
-using LiqPropType = MPLiqProps;
-#else
 using LiqPropType = GCMLiqProps;
+#else
+using LiqPropType = MPLiqProps;
 #endif
 
 template <typename LiqPropType>
