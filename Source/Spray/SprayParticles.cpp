@@ -331,13 +331,12 @@ SprayParticleContainer::updateParticles(
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           auto eos = pele::physics::PhysicsType::eos(fdat->eosparm);
-          SprayUnits SPU;
           GasPhaseVals gpv;
           GpuArray<Real, SPRAY_FUEL_NUM>
             cBoilT; // Boiling temperature at current pressure
           eos.molecular_weight(gpv.mw.data());
           for (int n = 0; n < NUM_SPECIES; ++n) {
-            gpv.mw[n] *= SPU.mass_conv;
+            gpv.mw[n] *= SprayUnits::mass_conv;
           }
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
             indx_array; // array of adjacent cells

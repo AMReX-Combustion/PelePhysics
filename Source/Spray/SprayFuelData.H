@@ -103,9 +103,8 @@ struct SprayData
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
   {
 
-    SprayUnits SPU;
-    amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-    amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
+    amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
+    amrex::Real PATM = pele::physics::Constants::PATM * SprayUnits::pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const amrex::Real mw_li = liqprops.mw_i(spf);
       amrex::Real Hboil_ref = liqprops.latent_i(liqprops.boilT_i(spf), spf);

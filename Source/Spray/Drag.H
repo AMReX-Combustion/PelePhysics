@@ -156,11 +156,10 @@ calculateSpraySource(
     pele::physics::TransportType> const* trans_parm)
 {
   auto eos = pele::physics::PhysicsType::eos(fdat.eosparm);
-  SprayUnits SPU;
   const amrex::Real rule = 1. / 3.;
   const amrex::Real C_eps = 1.E-15;
   const amrex::Real B_eps = 1.E-7;
-  const amrex::Real min_mass = SPU.min_mass;
+  const amrex::Real min_mass = SprayUnits::min_mass;
   const int nSubMax = 100;
   bool get_xi = false;
   bool get_Ddiag = true;
@@ -223,8 +222,8 @@ calculateSpraySource(
     eos.T2Hi(T_part, h_part.data());
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_skin[n] = 0.;
-      h_part[n] *= SPU.eng_conv;
-      cp_n[n] *= SPU.eng_conv;
+      h_part[n] *= SprayUnits::eng_conv;
+      cp_n[n] *= SprayUnits::eng_conv;
     }
     amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
     amrex::Real mw_skin = 0.; // Average molar mass of skin phase
@@ -240,7 +239,7 @@ calculateSpraySource(
         Y_skin[n] = gpv.Y_fluid[n];
       }
       eos.TY2Cp(T_skin, Y_skin.data(), cp_skin);
-      cp_skin *= SPU.eng_conv;
+      cp_skin *= SprayUnits::eng_conv;
       mw_skin = gpv.mw_mix;
     }
     amrex::Real lambda_skin = 0.;
@@ -260,8 +259,8 @@ calculateSpraySource(
       get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,
       Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin,
       trans_parm);
-    mu_skin *= SPU.mu_conv;
-    lambda_skin *= SPU.lambda_conv;
+    mu_skin *= SprayUnits::mu_conv;
+    lambda_skin *= SprayUnits::lambda_conv;
     amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
     amrex::Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
@@ -317,7 +316,7 @@ calculateSpraySource(
           const int fspec = fdat.indx[spf];
           // Convert mass diffusion coefficient from mixture average
           // to binary for fuel only, not concerned with other species
-          Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SPU.rhod_conv;
+          Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SprayUnits::rhod_conv;
           // Get normalized vapor molar fraction
           amrex::Real X_norm = X_vapor[spf] / sumXVap;
           Ddiag[fspec] *= X_norm;

@@ -29,7 +29,6 @@ updateBreakupTAB(
   // Constants for ETAB
   const amrex::Real Wet = 80.;
   const amrex::Real k2 = 2. / 9.;
-  SprayUnits SPU;
 
   // Retrieve particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
@@ -50,7 +49,7 @@ updateBreakupTAB(
   amrex::Real Utan_total = 0.;
   amrex::Real rad_part = 0.5 * dia_part;
   amrex::Real min_rad =
-    4. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
+    4. * std::cbrt(SprayUnits::min_mass * 3. / (4. * M_PI * rho_part));
   if (rad_part < min_rad) {
     return 0.;
   }

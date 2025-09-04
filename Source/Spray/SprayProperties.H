@@ -46,7 +46,7 @@ getInpVal(
   const std::string& varname)
 {
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    std::string var_read = fuel_names[spf] + "_" + varname;
+    const std::string var_read = fuel_names[spf] + "_" + varname;
     ppp.get(var_read.c_str(), val[spf]);
   }
 }
@@ -64,15 +64,30 @@ struct BaseLiqProps
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   init_mw(const RealArrayLike& mw_gas, const int* indx)
   {
-    amrex::Print() << "Initializing liquid molecular weights:\n";
 #if SPRAY_FUEL_NUM <= NUM_SPECIES
-    SprayUnits SPU;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fspec = indx[spf];
-      mw[spf] = mw_gas[fspec] * SPU.mass_conv;
-      amrex::Print() << "Liquid species " << spf << " uses gas species "
-                     << fspec << " with mw = " << mw[spf] << "\n";
+      mw[spf] = mw_gas[fspec] * SprayUnits::mass_conv;
     }
+#ifdef PELE_SPRAY_GCM
+    {
+      amrex::ParmParse pp("particles");
+      std::vector<std::string> fuel_names;
+      pp.getarr("fuel_species", fuel_names);
+      amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mw_fl;
+      getInpVal(mw_fl.data(), pp, fuel_names.data(), "molar_weight");
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        const amrex::Real rel_diff =
+          std::abs(mw[spf] - mw_gas[indx[spf]] * SprayUnits::mass_conv) /
+          mw[spf];
+        if (rel_diff > 1.E-5) {
+          amrex::Warning(
+            "GCM species " + fuel_names[spf] +
+            " mw does not match gas-phase species mw");
+        }
+      }
+    }
+#endif // PELE_SPRAY_GCM
 #else
     amrex::Abort("SPRAY_FUEL_NUM > NUM_SPECIES");
     // Will require mw to be read from input file in many-to-one case
@@ -142,10 +157,10 @@ struct MPLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real rho_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real a = rho_coef[4 * spf];
-    amrex::Real b = rho_coef[4 * spf + 1];
-    amrex::Real c = rho_coef[4 * spf + 2];
-    amrex::Real d = rho_coef[4 * spf + 3];
+    const amrex::Real a = rho_coef[4 * spf];
+    const amrex::Real b = rho_coef[4 * spf + 1];
+    const amrex::Real c = rho_coef[4 * spf + 2];
+    const amrex::Real d = rho_coef[4 * spf + 3];
     return a + T * (b + T * (c + T * d));
   }
 
@@ -153,10 +168,10 @@ struct MPLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real lambda_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real a = lambda_coef[4 * spf];
-    amrex::Real b = lambda_coef[4 * spf + 1];
-    amrex::Real c = lambda_coef[4 * spf + 2];
-    amrex::Real d = lambda_coef[4 * spf + 3];
+    const amrex::Real a = lambda_coef[4 * spf];
+    const amrex::Real b = lambda_coef[4 * spf + 1];
+    const amrex::Real c = lambda_coef[4 * spf + 2];
+    const amrex::Real d = lambda_coef[4 * spf + 3];
     return a + T * (b + T * (c + T * d));
   }
 
@@ -164,34 +179,34 @@ struct MPLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real mu_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real a = mu_coef[4 * spf];
-    amrex::Real b = mu_coef[4 * spf + 1];
-    amrex::Real c = mu_coef[4 * spf + 2];
-    amrex::Real d = mu_coef[4 * spf + 3];
+    const amrex::Real a = mu_coef[4 * spf];
+    const amrex::Real b = mu_coef[4 * spf + 1];
+    const amrex::Real c = mu_coef[4 * spf + 2];
+    const amrex::Real d = mu_coef[4 * spf + 3];
     return a + ((d / T + c) / T + b) / T;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real
-  psat_i(const amrex::Real T, int spf, amrex::Real part_latent) const
+  psat_i(const amrex::Real T, int spf, const amrex::Real part_latent) const
   {
     amrex::Real pres_sat_i = 0.;
     if (psat_coef[4 * spf + 3] == 0.) {
       // Using the Clasius-Clapeyron relation
-      SprayUnits SPU;
-      amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-      amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
+      const amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
+      const amrex::Real PATM =
+        pele::physics::Constants::PATM * SprayUnits::pres_conv;
       const amrex::Real boilT_ref = boilT_i(spf);
       pres_sat_i =
         PATM *
         std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
     } else {
       // Using the Antoine equation
-      amrex::Real a = psat_coef[4 * spf];
-      amrex::Real b = psat_coef[4 * spf + 1];
-      amrex::Real c = psat_coef[4 * spf + 2];
-      amrex::Real d = psat_coef[4 * spf + 3];
+      const amrex::Real a = psat_coef[4 * spf];
+      const amrex::Real b = psat_coef[4 * spf + 1];
+      const amrex::Real c = psat_coef[4 * spf + 2];
+      const amrex::Real d = psat_coef[4 * spf + 3];
       pres_sat_i = d * std::pow(10., a - b / (T + c));
     }
     return pres_sat_i;
@@ -325,7 +340,7 @@ struct GCMLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real molar_vol_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real Tc_i = critT_i(spf);
+    const amrex::Real Tc_i = critT_i(spf);
     amrex::Real phi_i;
     if (T > Tc_i) {
       phi_i = -std::pow(1 - (ref_T / Tc_i), 2. / 7.);
@@ -333,7 +348,7 @@ struct GCMLiqProps : public BaseLiqProps
       phi_i = std::pow(1 - (T / Tc_i), 2. / 7.) -
               std::pow(1 - (ref_T / Tc_i), 2. / 7.);
     }
-    amrex::Real z_i = 0.29056 - 0.08775 * omega[spf];
+    const amrex::Real z_i = 0.29056 - 0.08775 * omega[spf];
     return molar_vol[spf] * std::pow(z_i, phi_i);
   }
 
@@ -341,8 +356,9 @@ struct GCMLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real cp_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real theta = (T - 298.) / 700.;
-    amrex::Real cp = cp_a[spf] + cp_b[spf] * theta + cp_c[spf] * theta * theta;
+    const amrex::Real theta = (T - 298.) / 700.;
+    const amrex::Real cp =
+      cp_a[spf] + cp_b[spf] * theta + cp_c[spf] * theta * theta;
     return cp;
   }
 
@@ -378,11 +394,12 @@ struct GCMLiqProps : public BaseLiqProps
       beta = 1.;
     }
 
-    amrex::Real mw_beta = std::pow(mw_i(spf) * 1e3, beta); // mw in g/mol
-    amrex::Real Tr = T / critT_i(spf);
-    amrex::Real A = Astar * std::pow(boilT_i(spf), alpha) /
-                    (mw_beta * std::pow(critT_i(spf), gamma));
-    amrex::Real lambda = A * std::pow(1 - Tr, 0.38) / std::pow(Tr, 1. / 6.);
+    const amrex::Real mw_beta = std::pow(mw_i(spf) * 1e3, beta); // mw in g/mol
+    const amrex::Real Tr = T / critT_i(spf);
+    const amrex::Real A = Astar * std::pow(boilT_i(spf), alpha) /
+                          (mw_beta * std::pow(critT_i(spf), gamma));
+    const amrex::Real lambda =
+      A * std::pow(1 - Tr, 0.38) / std::pow(Tr, 1. / 6.);
 
     return lambda;
   }
@@ -393,16 +410,17 @@ struct GCMLiqProps : public BaseLiqProps
   {
     // Brock-Bird method
     // Predictcs surface tension in dyn/cm and is converted to SI units
-    amrex::Real Tc_i = critT_i(spf);
-    amrex::Real Pc_i = critP[spf] * 1e-5; // Pa to bar
-    amrex::Real Tb_i = boilT_i(spf);
-    amrex::Real Tr = T / Tc_i;
-    amrex::Real Tbr = Tb_i / Tc_i;
-    amrex::Real Q =
+    const amrex::Real Tc_i = critT_i(spf);
+    const amrex::Real Pc_i = critP[spf] * 1e-5; // Pa to bar
+    const amrex::Real Tb_i = boilT_i(spf);
+    const amrex::Real Tr = T / Tc_i;
+    const amrex::Real Tbr = Tb_i / Tc_i;
+    const amrex::Real Q =
       0.1196 * (1. + (Tbr * std::log(Pc_i / 1.01325)) / (1.0 - Tbr)) - 0.279;
 
-    amrex::Real sigma = std::pow(Pc_i, 2. / 3.) * std::pow(Tc_i, 1. / 3.) * Q *
-                        std::pow(1 - Tr, 11. / 9.);
+    const amrex::Real sigma = std::pow(Pc_i, 2. / 3.) *
+                              std::pow(Tc_i, 1. / 3.) * Q *
+                              std::pow(1 - Tr, 11. / 9.);
     return sigma * 1e-3; // Convert from dyn/cm to N/m;
   }
 
@@ -412,12 +430,11 @@ struct GCMLiqProps : public BaseLiqProps
   {
     // Dutt's equation (4.23) from "Viscosity of Liquids"
     // Predicts viscosity in mm^2/s and is converted to SI units
-    amrex::Real T_cels = utils::K2C(T);
-    amrex::Real Tb_cels = utils::K2C(
-      boilT_i(spf)); // Flag: Should we use cBoilT here to account for high P?
-    amrex::Real rhs =
+    const amrex::Real T_cels = utils::K2C(T);
+    const amrex::Real Tb_cels = utils::K2C(boilT_i(spf));
+    const amrex::Real rhs =
       -3.0171 + (442.78 + 1.6452 * Tb_cels) / (T_cels + 239. - 0.19 * Tb_cels);
-    amrex::Real nu = std::exp(rhs) * 1.0e-6; // Convert from mm^2/s to m^2/s
+    const amrex::Real nu = std::exp(rhs) * 1.0e-6; // Convert to m^2/s
     return nu;
   }
 
@@ -425,24 +442,23 @@ struct GCMLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real mu_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real nu =
-      nu_i(T, spf); // Flag: Should we use cBoilT here to account for high P?
-    amrex::Real rho = rho_i(T, spf);
+    const amrex::Real nu = nu_i(T, spf);
+    const amrex::Real rho = rho_i(T, spf);
     return nu * rho;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   amrex::Real
-  psat_i(const amrex::Real T, int spf, amrex::Real /*part_latent*/) const
+  psat_i(const amrex::Real T, int spf, const amrex::Real /*part_latent*/) const
   {
     // Lee-Kesler correlation
-    amrex::Real Tr = T / critT_i(spf);
-    amrex::Real f0 = 5.92714 - (6.09648 / Tr) - 1.28862 * std::log(Tr) +
-                     0.169347 * std::pow(Tr, 6);
-    amrex::Real f1 = 15.2518 - (15.6875 / Tr) - 13.4721 * std::log(Tr) +
-                     0.43577 * std::pow(Tr, 6);
-    amrex::Real rhs = std::exp(f0 + omega[spf] * f1);
+    const amrex::Real Tr = T / critT_i(spf);
+    const amrex::Real f0 = 5.92714 - (6.09648 / Tr) - 1.28862 * std::log(Tr) +
+                           0.169347 * std::pow(Tr, 6);
+    const amrex::Real f1 = 15.2518 - (15.6875 / Tr) - 13.4721 * std::log(Tr) +
+                           0.43577 * std::pow(Tr, 6);
+    const amrex::Real rhs = std::exp(f0 + omega[spf] * f1);
     return critP[spf] * rhs;
   }
 
@@ -450,10 +466,10 @@ struct GCMLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real latent_i(const amrex::Real T, const int spf) const
   {
-    amrex::Real Tc_i = critT_i(spf);
-    amrex::Real Tb_i = boilT_i(spf);
-    amrex::Real Tr = T / Tc_i;
-    amrex::Real Trb = Tb_i / Tc_i;
+    const amrex::Real Tc_i = critT_i(spf);
+    const amrex::Real Tb_i = boilT_i(spf);
+    const amrex::Real Tr = T / Tc_i;
+    const amrex::Real Trb = Tb_i / Tc_i;
     amrex::Real latent_heat_i = 0.;
     if (T > Tc_i) {
       latent_heat_i = 0.0;
@@ -596,7 +612,11 @@ struct GCMLiqProps : public BaseLiqProps
 };
 
 // Define the type of liquid properties based on the compilation flag
-#ifndef SPRAY_GCM
+#ifndef PELE_SPRAY_GCM
+#ifndef PELELM_USE_SPRAY
+amrex::static_assert(
+  false, "GCM liquid property model can currently only be used with PeleLMeX");
+#endif
 using LiqPropType = MPLiqProps;
 #else
 using LiqPropType = GCMLiqProps;
@@ -616,7 +636,7 @@ struct InitLiqProps
 template <>
 struct InitLiqProps<MPLiqProps>
 {
-  void operator()(MPLiqProps* ldata, std::vector<std::string>& fuel_names)
+  void operator()(MPLiqProps* ldata, const std::vector<std::string>& fuel_names)
   {
     amrex::ParmParse pp("particles");
     getInpVal(ldata->critT.data(), pp, fuel_names.data(), "crit_temp");
@@ -639,8 +659,8 @@ struct InitLiqProps<MPLiqProps>
     bool is_required = false)
   {
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      std::string var_read = fuel_names[spf] + "_" + varname;
-      int numvals = ppp.countval(var_read.c_str());
+      const std::string var_read = fuel_names[spf] + "_" + varname;
+      const int numvals = ppp.countval(var_read.c_str());
       if (numvals == 4) {
         std::vector<amrex::Real> inp_coef(4, 0.);
         if (is_required) {
@@ -673,7 +693,7 @@ struct InitLiqProps<MPLiqProps>
     amrex::ParmParse pp("particles");
     bool wrong_data = false;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      std::string var_read = fuel_names[spf] + "_mu";
+      const std::string var_read = fuel_names[spf] + "_mu";
       if (!pp.contains(var_read.c_str())) {
         wrong_data = true;
       }
@@ -690,7 +710,8 @@ struct InitLiqProps<MPLiqProps>
 template <>
 struct InitLiqProps<GCMLiqProps>
 {
-  void operator()(GCMLiqProps* ldata, std::vector<std::string>& fuel_names)
+  void
+  operator()(GCMLiqProps* ldata, const std::vector<std::string>& fuel_names)
   {
     amrex::ParmParse pp("particles");
     getInpVal(ldata->family.data(), pp, fuel_names.data(), "family");
