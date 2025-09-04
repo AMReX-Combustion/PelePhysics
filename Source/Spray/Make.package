@@ -1,4 +1,6 @@
 CEXE_headers += SprayProperties.H
+CEXE_headers += SprayPropertiesPeleMP.H
+CEXE_headers += SprayPropertiesGCM.H
 CEXE_headers += SprayParticles.H
 CEXE_headers += SprayFuelData.H
 CEXE_headers += SprayInterpolation.H

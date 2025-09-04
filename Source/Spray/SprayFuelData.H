@@ -2,7 +2,8 @@
 #define SPRAYFUELDATA_H
 
 #include "PelePhysics.H"
-#include "SprayProperties.H"
+#include "SprayPropertiesPeleMP.H"
+#include "SprayPropertiesGCM.H"
 #include <AMReX_RealVect.H>
 
 // Spray flags and indices
