@@ -83,7 +83,6 @@ struct Manifold
     if (eosparm->idx_Wbar >= 0) {
       manfunc.get_func()->get_value(eosparm->idx_Wbar, Y, WBAR);
     } else {
-      WBAR = -1.0;
       amrex::Error("Wbar not in table");
     }
   }
