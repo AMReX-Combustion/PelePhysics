@@ -210,8 +210,11 @@ SprayParticleContainer::spraySetup(
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
     eosparms_d)
 {
+#ifndef USE_MANIFOLD_EOS
+	amrex::Print()<<"\n\n**Entering non manifold eos spray setup";
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
+  Vector<std::string> var_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     spec_names, eosparms_h);
 
@@ -244,6 +247,33 @@ SprayParticleContainer::spraySetup(
   m_sprayData->indx[0] = 0;
   m_sprayData->dep_indx[0] = 0;
 #endif
+#endif
+
+#ifdef USE_MANIFOLD_EOS
+    Vector<std::string> var_names;
+    //populating all the variables in the manifold table into varnames
+    pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
+  		  var_names, eosparms_h);
+
+    for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+      for (int ns = 0; ns < var_names.size(); ++ns) {
+        std::string gas_spec = var_names[ns];
+        if (gas_spec == m_sprayFuelNames[i]) {
+          m_sprayData->indx[i] = ns;
+        }
+        if (gas_spec == m_sprayDepNames[i]) {
+          m_sprayData->dep_indx[i] = ns;
+        }
+      }
+      if (m_sprayData->indx[i] < 0) {
+        Abort("Fuel " + m_sprayFuelNames[i] + " not found in species list");
+      }
+      if (m_sprayData->dep_indx[i] < 0) {
+        Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
+      }
+    }
+#endif
+
   SprayUnits SPU;
   Vector<Real> fuelEnth(NUM_SPECIES);
   auto eos = pele::physics::PhysicsType::eos(eosparms_h);
@@ -256,6 +286,7 @@ SprayParticleContainer::spraySetup(
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }
+
   m_sprayData->eosparm = eosparms_d;
   Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
   m_sprayData->eosparm = eosparms_h;

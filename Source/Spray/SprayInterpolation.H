@@ -166,6 +166,13 @@ InterpolateGasPhase(
     }
   }
 
+  //In the case of  manifold model simulations, the objective is to get the mass fractions of all the liquid fuel species, at the spray location, read from the manifold table.
+  //We already have the interpolated value of manifold variables at the spray particle location stored in 'mass_frac'.
+  //I just need to call GenericReadManifoldData
+
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mass_frac_spray_fuel;	//placeholder for storing liquid fuel species mass fractions corresponding to manifold variables read from manifold table
+  eos.GenericReadManifoldData(mass_frac.data(),SprayParticleContainer::m_sprayData->indx.data(), mass_frac_spray_fuel.data(),SPRAY_FUEL_NUM);
+
   // Fill in some other data with EOS calls
   eos.Y2WBAR(gpv.Y_fluid.data(), gpv.mw_mix);
   gpv.mw_mix *= SprayUnits::mass_conv;

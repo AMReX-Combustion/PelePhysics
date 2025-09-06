@@ -130,6 +130,22 @@ speciesNames(
   CKSYMS_STR(spn);
 }
 
+template <typename EOSType>
+void
+varNames(
+  amrex::Vector<std::string>& varn, const EosParm<EOSType>* /*eparm*/ = nullptr)
+{
+	CKSYMS_STR(varn);
+}
+
+template <typename EOSType>
+void
+chemSpeciesNames(
+  amrex::Vector<std::string>& varn, const EosParm<EOSType>* /*eparm*/ = nullptr)
+{
+	CKSYMS_STR(varn);
+}
+
 #ifndef AMREX_USE_SYCL
 template <>
 inline void
@@ -149,6 +165,50 @@ speciesNames<Manifold>(
     spn[n] = amrex::trim(nametmp);
   }
   spn[MANIFOLD_DIM] = "XRHO";
+}
+#endif
+
+#ifndef AMREX_USE_SYCL
+template <>
+inline void
+varNames<Manifold>(
+  amrex::Vector<std::string>& varn, const EosParm<Manifold>* eparm)
+{
+  if (eparm == nullptr) {
+    amrex::Abort(
+      "Manifold EOS requires an EosParm input in order to determine "
+      "species names");
+  }
+  const auto* mani_data = eparm->manf_data;
+  varn.resize(mani_data->Nvar);
+
+  for (int n = 0; n < mani_data->Nvar; n++) {
+    std::string nametmp = std::string(
+      &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+    varn[n] = amrex::trim(nametmp);
+  }
+}
+#endif
+
+#ifndef AMREX_USE_SYCL
+template <>
+inline void
+chemSpeciesNames<Manifold>(
+  amrex::Vector<std::string>& varn, const EosParm<Manifold>* eparm)
+{
+  if (eparm == nullptr) {
+    amrex::Abort(
+      "Manifold EOS requires an EosParm input in order to determine "
+      "species names");
+  }
+  const auto* mani_data = eparm->manf_data;
+  for (int n = 0; n < mani_data->Nvar; n++) {
+    std::string nametmp = std::string(&(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+    if(nametmp.substr(0,2)=="Y-"){
+    	varn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
+    }
+
+  }
 }
 #endif
 

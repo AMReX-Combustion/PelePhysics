@@ -89,6 +89,23 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void GenericReadManifoldData(const amrex::Real* Y, //manifold variables (z,c etc)
+		  	  	  	  	  	   int *table_idx, //Indices of the table columns
+							   amrex::Real *out_vars,
+							   int num_of_indices	 //len of table_idx
+							   )
+  {
+	  for(int i=0;i<num_of_indices;i++)
+	  {
+		  if(table_idx[i]>-1)
+		  {
+			  manfunc.get_func()->get_value(table_idx[i], Y, out_vars[i]);
+		  }
+	  }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void RTY2Ei(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
