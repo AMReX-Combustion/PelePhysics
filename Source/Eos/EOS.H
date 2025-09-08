@@ -135,7 +135,7 @@ void
 varNames(
   amrex::Vector<std::string>& varn, const EosParm<EOSType>* /*eparm*/ = nullptr)
 {
-	CKSYMS_STR(varn);
+  CKSYMS_STR(varn);
 }
 
 template <typename EOSType>
@@ -143,7 +143,7 @@ void
 chemSpeciesNames(
   amrex::Vector<std::string>& varn, const EosParm<EOSType>* /*eparm*/ = nullptr)
 {
-	CKSYMS_STR(varn);
+  CKSYMS_STR(varn);
 }
 
 #ifndef AMREX_USE_SYCL
@@ -203,11 +203,11 @@ chemSpeciesNames<Manifold>(
   }
   const auto* mani_data = eparm->manf_data;
   for (int n = 0; n < mani_data->Nvar; n++) {
-    std::string nametmp = std::string(&(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
-    if(nametmp.substr(0,2)=="Y-"){
-    	varn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
+    std::string nametmp = std::string(
+      &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+    if (nametmp.substr(0, 2) == "Y-") {
+      varn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
     }
-
   }
 }
 #endif

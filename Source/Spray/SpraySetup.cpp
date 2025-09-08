@@ -211,7 +211,7 @@ SprayParticleContainer::spraySetup(
     eosparms_d)
 {
 #ifndef USE_MANIFOLD_EOS
-	amrex::Print()<<"\n\n**Entering non manifold eos spray setup";
+  amrex::Print() << "\n\n**Entering non manifold eos spray setup";
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   Vector<std::string> var_names;
@@ -250,28 +250,28 @@ SprayParticleContainer::spraySetup(
 #endif
 
 #ifdef USE_MANIFOLD_EOS
-    Vector<std::string> var_names;
-    //populating all the variables in the manifold table into varnames
-    pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
-  		  var_names, eosparms_h);
+  Vector<std::string> var_names;
+  // populating all the variables in the manifold table into varnames
+  pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
+    var_names, eosparms_h);
 
-    for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
-      for (int ns = 0; ns < var_names.size(); ++ns) {
-        std::string gas_spec = var_names[ns];
-        if (gas_spec == m_sprayFuelNames[i]) {
-          m_sprayData->indx[i] = ns;
-        }
-        if (gas_spec == m_sprayDepNames[i]) {
-          m_sprayData->dep_indx[i] = ns;
-        }
+  for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+    for (int ns = 0; ns < var_names.size(); ++ns) {
+      std::string gas_spec = var_names[ns];
+      if (gas_spec == m_sprayFuelNames[i]) {
+        m_sprayData->indx[i] = ns;
       }
-      if (m_sprayData->indx[i] < 0) {
-        Abort("Fuel " + m_sprayFuelNames[i] + " not found in species list");
-      }
-      if (m_sprayData->dep_indx[i] < 0) {
-        Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
+      if (gas_spec == m_sprayDepNames[i]) {
+        m_sprayData->dep_indx[i] = ns;
       }
     }
+    if (m_sprayData->indx[i] < 0) {
+      Abort("Fuel " + m_sprayFuelNames[i] + " not found in species list");
+    }
+    if (m_sprayData->dep_indx[i] < 0) {
+      Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
+    }
+  }
 #endif
 
   SprayUnits SPU;
