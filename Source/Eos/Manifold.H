@@ -78,9 +78,13 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void Y2WBAR(const amrex::Real* /*Y*/, amrex::Real& /*WBAR*/)
+  void Y2WBAR(const amrex::Real* Y, amrex::Real& WBAR)
   {
-    amrex::Error("Y2WBAR is not yet implemented for Manifold EOS");
+    if (eosparm->idx_Wbar >= 0) {
+      manfunc.get_func()->get_value(eosparm->idx_Wbar, Y, WBAR);
+    } else {
+      amrex::Error("Wbar not in table");
+    }
   }
 
   AMREX_GPU_HOST_DEVICE

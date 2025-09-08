@@ -150,10 +150,10 @@ struct BinaryDiff
       Ddiag[i] = 0.0;
     }
 
-    for (int i = 1; i < NUM_SPECIES; ++i) {
-      for (int j = 0; j < i; ++j) {
-        // cppcheck-suppress knownConditionTrueFalse
-        const int four_idx_ij = 4 * (i * (i + 1) / 2 + j);
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      amrex::Real term1 = 0.0;
+      for (int j = NUM_SPECIES - 1; j > i; --j) {
+        const int four_idx_ij = 4 * (j * (j + 1) / 2 + i);
         amrex::Real dbintemp = tparm->fitdbin[four_idx_ij] +
                                tparm->fitdbin[four_idx_ij + 1] * logT[0] +
                                tparm->fitdbin[four_idx_ij + 2] * logT[1] +
@@ -161,14 +161,10 @@ struct BinaryDiff
         dbintemp = std::exp(-dbintemp);
         Ddiag[i] += Xloc[j] * dbintemp;
         Ddiag[j] += Xloc[i] * dbintemp;
+        term1 += Yloc[j];
       }
-    }
-    for (int i = 0; i < NUM_SPECIES; ++i) {
-      amrex::Real term1 = 0;
-      for (int j = 0; j < NUM_SPECIES; ++j) {
-        if (i != j) {
-          term1 += Yloc[j];
-        }
+      for (int j = 0; j < i; ++j) {
+        term1 += Yloc[j];
       }
       Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i] * scale;
     }
@@ -193,11 +189,10 @@ struct BinaryDiff<eos::SRK>
     for (int i = 0; i < NUM_SPECIES; ++i) {
       Ddiag[i] = 0.0;
     }
-
-    for (int i = 1; i < NUM_SPECIES; ++i) {
-      for (int j = 0; j < i; ++j) {
-        // cppcheck-suppress knownConditionTrueFalse
-        const int idx_ij = 4 * (i * (i + 1) / 2 + j);
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      amrex::Real term1 = 0.0;
+      for (int j = NUM_SPECIES - 1; j > i; --j) {
+        const int idx_ij = 4 * (j * (j + 1) / 2 + i);
         const int idx_ijk = (i + NUM_SPECIES * j) * NUM_SPECIES;
         amrex::Real dbintemp = tparm->fitdbin[idx_ij] +
                                tparm->fitdbin[idx_ij + 1] * logT[0] +
@@ -214,14 +209,10 @@ struct BinaryDiff<eos::SRK>
         dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
         Ddiag[i] += Xloc[j] * dbintemp;
         Ddiag[j] += Xloc[i] * dbintemp;
+        term1 += Yloc[j];
       }
-    }
-    for (int i = 0; i < NUM_SPECIES; ++i) {
-      amrex::Real term1 = 0;
-      for (int j = 0; j < NUM_SPECIES; ++j) {
-        if (i != j) {
-          term1 += Yloc[j];
-        }
+      for (int j = 0; j < i; ++j) {
+        term1 += Yloc[j];
       }
       Ddiag[i] = tparm->wt[i] * term1 / Ddiag[i];
     }

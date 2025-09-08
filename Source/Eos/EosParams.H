@@ -43,6 +43,7 @@ struct EosParm<Manifold>
   density_lookup_type dens_lookup;
   bool compute_temperature{false};
   int idx_density{0};
+  int idx_Wbar{0};
   int idx_T{0};
   int idx_Wdot[MANIFOLD_DIM];
   int is_variance_of[MANIFOLD_DIM];
@@ -146,6 +147,11 @@ struct InitParm<eos::EosParm<eos::Manifold>>
 
     // Get important indices
     parm_in->m_h_parm.idx_T = get_var_index("T", h_manf_data_in);
+#ifdef PELE_USE_SPRAY
+    parm_in->m_h_parm.idx_Wbar = get_var_index("WBAR", h_manf_data_in);
+#else
+    parm_in->m_h_parm.idx_Wbar = get_var_index("WBAR", h_manf_data_in, false);
+#endif
 
     // For manifold table parameter source terms, assume if index not found,
     // source term is 0 For neural net, require a definition to be supplied for
