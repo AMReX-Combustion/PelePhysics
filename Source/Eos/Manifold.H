@@ -96,11 +96,7 @@ struct Manifold
     int num_of_indices // len of table_idx
   )
   {
-    for (int i = 0; i < num_of_indices; i++) {
-      if (table_idx[i] > -1) {
-        manfunc.get_func()->get_value(table_idx[i], Y, out_vars[i]);
-      }
-    }
+    manfunc.get_func()->get_values(num_of_indices, table_idx, Y, out_vars);
   }
 
   AMREX_GPU_HOST_DEVICE
