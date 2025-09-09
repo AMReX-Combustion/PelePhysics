@@ -176,7 +176,7 @@ InterpolateGasPhase(
     mass_frac_spray_fuel; // placeholder for storing liquid fuel species mass
                           // fractions corresponding to manifold variables read
                           // from manifold table
-  eos.GenericReadManifoldData(
+  eos.Y2GenericManifodlData(
     mass_frac.data(), SprayParticleContainer::m_sprayData->indx.data(),
     mass_frac_spray_fuel.data(), SPRAY_FUEL_NUM);
 #endif

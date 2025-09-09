@@ -89,7 +89,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void GenericReadManifoldData(
+  void Y2GenericManifodlData(
     const amrex::Real* Y, // manifold variables (z,c etc)
     int* table_idx,       // Indices of the table columns
     amrex::Real* out_vars,
