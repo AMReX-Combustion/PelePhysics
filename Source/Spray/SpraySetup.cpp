@@ -214,7 +214,6 @@ SprayParticleContainer::spraySetup(
   amrex::Print() << "\n\n**Entering non manifold eos spray setup";
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
-  Vector<std::string> var_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     spec_names, eosparms_h);
 
