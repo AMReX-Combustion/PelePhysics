@@ -2,8 +2,8 @@
 #define SPRAYFUELDATA_H
 
 #include "PelePhysics.H"
-#include "UnitConversions.H"
-#include "SprayProperties.H"
+#include "SprayPropertiesPeleMP.H"
+#include "SprayPropertiesGCM.H"
 #include <AMReX_RealVect.H>
 
 // Spray flags and indices
@@ -38,37 +38,6 @@ enum splash_breakup {
   splash_dry_splash,
   splash_thermal_breakup,
   splash_wet_splash
-};
-
-namespace c2m = pele::physics::utilities::cgs2mks;
-
-// Units for sprays
-struct SprayUnits
-{
-#ifdef PELELM_USE_SPRAY
-  // For converting CGS to MKS
-  static constexpr amrex::Real ru_conv = c2m::Energy(1.0);
-  static constexpr amrex::Real eng_conv = c2m::H(1.0);
-  static constexpr amrex::Real rho_conv = c2m::Rho(1.0);
-  static constexpr amrex::Real mass_conv = c2m::Mass(1.0);
-  static constexpr amrex::Real rhod_conv =
-    c2m::Rho(1.0) * c2m::Alpha(1.0); // rho D conversion
-  static constexpr amrex::Real mu_conv = c2m::Mu(1.0);
-  static constexpr amrex::Real lambda_conv = c2m::Lambda(1.0);
-  static constexpr amrex::Real pres_conv = c2m::P(1.0);
-  static constexpr amrex::Real len_conv = c2m::Length(1.0);
-#else
-  static constexpr amrex::Real ru_conv = 1.;
-  static constexpr amrex::Real eng_conv = 1.;
-  static constexpr amrex::Real rho_conv = 1.;
-  static constexpr amrex::Real mass_conv = 1.;
-  static constexpr amrex::Real rhod_conv = 1.;
-  static constexpr amrex::Real mu_conv = 1.;
-  static constexpr amrex::Real lambda_conv = 1.;
-  static constexpr amrex::Real pres_conv = 1.;
-  static constexpr amrex::Real len_conv = 1.;
-#endif
-  static constexpr amrex::Real min_mass = 1.E-13 * mass_conv;
 };
 
 // Structure that contains the interpolated gas phase state
@@ -134,19 +103,18 @@ struct SprayData
   AMREX_FORCE_INLINE
   void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
   {
-
-    SprayUnits SPU;
-    amrex::Real RU = pele::physics::Constants::RU * SPU.ru_conv;
-    amrex::Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
+    const amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
+    const amrex::Real PATM =
+      pele::physics::Constants::PATM * SprayUnits::pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      const int fspec = indx[spf];
-      const amrex::Real mw_fuel = gpv.mw[fspec];
-      amrex::Real Hboil_ref = liqprops.latent_i(liqprops.boilT_i(spf), spf);
+      const amrex::Real mw_li = liqprops.mw_i(spf);
+      const amrex::Real Hboil_ref =
+        liqprops.latent_i(liqprops.boilT_i(spf), spf);
 
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =
-        1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
+        1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_li) +
               1. / liqprops.boilT_i(spf));
       cBoilT[spf] = amrex::min(liqprops.critT_i(spf), cBoilT[spf]);
     }

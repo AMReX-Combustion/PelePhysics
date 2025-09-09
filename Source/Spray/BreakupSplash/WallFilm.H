@@ -40,10 +40,9 @@ calculateFilmSource(
 {
   auto eos = pele::physics::PhysicsType::eos();
   const amrex::Real dt = flow_dt * fdat.dtmod;
-  SprayUnits SPU;
   const amrex::Real rule = 1. / 2.;
   amrex::Real C_eps = 1.E-15;
-  amrex::Real min_height = 1.E-5 * SPU.len_conv;
+  amrex::Real min_height = 1.E-5 * SprayUnits::len_conv;
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
@@ -67,11 +66,7 @@ calculateFilmSource(
   const amrex::Real cp_film = fdat.liqprops.cp_mix(Y_film, T_film, cBoilT);
   const amrex::Real lambda_film =
     fdat.liqprops.lambda_mix(Y_film, T_film, cBoilT);
-  amrex::Real mw_film = 0.;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    mw_film += Y_film[spf] / gpv.mw[fdat.indx[spf]];
-  }
-  mw_film = 1. / mw_film;
+  const amrex::Real mw_film = fdat.liqprops.mw_mix(Y_film);
   T_film = amrex::min(0.999 * Tcrit, T_film);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
@@ -89,8 +84,8 @@ calculateFilmSource(
   eos.T2Hi(T_film, h_film.data());
   for (int n = 0; n < NUM_SPECIES; ++n) {
     Y_skin[n] = 0.;
-    h_film[n] *= SPU.eng_conv;
-    cp_n[n] *= SPU.eng_conv;
+    h_film[n] *= SprayUnits::eng_conv;
+    cp_n[n] *= SprayUnits::eng_conv;
   }
   amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
   amrex::Real mw_skin = 0.; // Average molar mass of skin phase
@@ -103,15 +98,16 @@ calculateFilmSource(
   amrex::Real lambda_skin = 0.;
   amrex::Real mu_skin = 0.;
   amrex::Real xi_skin = 0.;
-  amrex::Real rho_skin = mw_skin * gpv.p_fluid /
-                         (pele::physics::Constants::RU * T_skin * SPU.ru_conv);
-  amrex::Real rho_cgs = rho_skin / SPU.rho_conv;
+  amrex::Real rho_skin =
+    mw_skin * gpv.p_fluid /
+    (pele::physics::Constants::RU * T_skin * SprayUnits::ru_conv);
+  amrex::Real rho_cgs = rho_skin / SprayUnits::rho_conv;
   auto trans = pele::physics::PhysicsType::transport();
   trans.transport(
     get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,
     Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin,
     trans_parm);
-  lambda_skin *= SPU.lambda_conv;
+  lambda_skin *= SprayUnits::lambda_conv;
   // If gas phase is not saturated
   if (sumXVap > 0.) {
     // Estimate convective heat transfer using O'Rourke and Amsden 1996 assuming
@@ -137,7 +133,7 @@ calculateFilmSource(
       // const int fdspec = fdat.dep_indx[spf];
       // Convert mass diffusion coefficient from mixture average
       // to binary for fuel only, not concerned with other species
-      Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SPU.rhod_conv;
+      Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SprayUnits::rhod_conv;
       if (X_vapor[spf] > 0.) {
         // Normalize mass diffusivity by fuel vapor molar fraction
         amrex::Real cur_rhoD = X_vapor[spf] * Ddiag[fspec] / sumXVap;

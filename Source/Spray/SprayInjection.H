@@ -270,7 +270,6 @@ SprayParticleContainer::sprayInjection(
   if (curProc != injProc) {
     return;
   }
-  SprayUnits SPU;
   const SprayData* fdat = m_sprayData;
   amrex::Real rho_avg = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -282,8 +281,9 @@ SprayParticleContainer::sprayInjection(
   // Check if mass must be injected across multiple timesteps
   const amrex::Real avg_dia = spray_jet->get_avg_dia();
   const amrex::Real avg_mass = Pi_six * rho_avg * std::pow(avg_dia, 3);
-  const amrex::Real min_dia = std::cbrt(6. * SPU.min_mass / (M_PI * rho_avg));
-  if (avg_dia < min_dia || avg_mass < SPU.min_mass) {
+  const amrex::Real min_dia =
+    std::cbrt(6. * SprayUnits::min_mass / (M_PI * rho_avg));
+  if (avg_dia < min_dia || avg_mass < SprayUnits::min_mass) {
     amrex::Abort(
       "Average droplet size too small, floating point issues expected");
   }
