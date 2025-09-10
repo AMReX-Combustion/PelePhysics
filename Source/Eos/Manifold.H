@@ -62,9 +62,11 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void molecular_weight(amrex::Real* /*mw[]*/)
   {
+
+	  /*
     amrex::Error(
       "molecular_weight for species does not have significance for "
-      "Manifold EOS");
+      "Manifold EOS");*/
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -78,7 +80,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Y2WBAR(const amrex::Real* Y, amrex::Real& WBAR)
+   void Y2WBAR(const amrex::Real* Y, amrex::Real& WBAR) const
   {
     if (eosparm->idx_Wbar >= 0) {
       manfunc.get_func()->get_value(eosparm->idx_Wbar, Y, WBAR);

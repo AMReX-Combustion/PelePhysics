@@ -88,6 +88,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   {
     amrex::ParmParse pp("manifold");
     std::string manifold_model;
+    std::string metadata_filename;
     pp.get("model", manifold_model);
     parm_in->m_host_only_parm.manfunc_par =
       PeleParamsGeneric<BlackBoxFunctionData>::create(manifold_model);
@@ -109,6 +110,9 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.get("nominal_pressure_cgs", parm_in->m_h_parm.Pnom_cgs);
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
+
+    pp.get("metadata_filename",metadata_filename);
+    pp.addfile(metadata_filename);
 
     // Setup density lookups
     std::string density_lookup_type_string{"linear"};
