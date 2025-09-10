@@ -385,7 +385,7 @@ public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void get_value(
-    const int ivar, const amrex::Real interpdata[], amrex::Real& out) const override
+    const int ivar, const amrex::Real interpdata[], amrex::Real& out) override
   {
     // Get alphas and indices
     int indices[maxdim];
