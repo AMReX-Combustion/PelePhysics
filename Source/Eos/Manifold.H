@@ -62,8 +62,14 @@ struct Manifold
   AMREX_FORCE_INLINE
   void molecular_weight(amrex::Real* mw)
   {
-    for (int n = 0; n < eosparm->num_chemspecies; n++) {
-      mw[n] = eosparm->chemSpecies_Mwt[n];
+    if (eosparm->has_species_mw) {
+      for (int n = 0; n < eosparm->num_chemspecies; n++) {
+        mw[n] = eosparm->chemSpecies_Mwt[n];
+      }
+    } else {
+      amrex::Error(
+        "molecular_weight for species does not have significance "
+        "for Manifold EOS");
     }
   }
 

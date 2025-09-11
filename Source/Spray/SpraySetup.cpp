@@ -238,13 +238,15 @@ SprayParticleContainer::spraySetup(
   m_sprayData->indx[0] = 0;
   m_sprayData->dep_indx[0] = 0;
 #endif
-  // I think the below code snippet,as they are, should be applicable to
-  // non-manifold models only.
-  SprayUnits SPU;
 
-  Vector<Real> fuelEnth(NUM_SPECIES);
+  if (!eosparms_h->has_spec_mw) {
+    amrex::Error(
+      "SpraySetup: Manifold EOS must contains spec molecular weights for "
+      "Spray");
+  }
   auto eos = pele::physics::PhysicsType::eos(eosparms_h);
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
+  Vector<Real> fuelEnth(NUM_SPECIES);
   eos.molecular_weight(mw.data());
   m_sprayData->liqprops.init_mw(mw, m_sprayData->indx.data());
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
