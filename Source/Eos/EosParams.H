@@ -49,6 +49,8 @@ struct EosParm<Manifold>
   int is_variance_of[MANIFOLD_DIM];
   int verbose{1};
   bool has_mani_src{true};
+  amrex::Real* chemSpecies_Mwt;
+  int num_chemspecies;
 };
 #endif
 
@@ -89,6 +91,11 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     amrex::ParmParse pp("manifold");
     std::string manifold_model;
     std::string metadata_filename;
+    int num_of_chemspecies = 0;
+    std::streamsize real_size = sizeof(amrex::Real);
+    std::string speciesname_search;
+    int indx = 0;
+
     pp.get("model", manifold_model);
     parm_in->m_host_only_parm.manfunc_par =
       PeleParamsGeneric<BlackBoxFunctionData>::create(manifold_model);
@@ -111,8 +118,37 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
 
-    pp.get("metadata_filename",metadata_filename);
+    pp.get("metadata_filename", metadata_filename);
     pp.addfile(metadata_filename);
+
+    const auto* mani_data = parm_in->m_h_parm.manf_data;
+    // First find the total number of chemical species in the table
+    for (int n = 0; n < mani_data->Nvar; n++) {
+      std::string nametmp = std::string(
+        &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+      if (nametmp.substr(0, 2) == "Y-") {
+        num_of_chemspecies++;
+      }
+    }
+    parm_in->m_h_parm.num_chemspecies = num_of_chemspecies;
+
+    // Dynamically allocate memory for chemSpecies_Mwt;
+    parm_in->m_h_parm.chemSpecies_Mwt = static_cast<amrex::Real*>(
+      amrex::The_Pinned_Arena()->alloc(num_of_chemspecies * real_size));
+
+    // Loop through table to find species names. Search these species names in
+    // the metadatafile and read molecular weights from the meta data file
+    for (int n = 0; n < mani_data->Nvar; n++) {
+      std::string nametmp = std::string(
+        &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+      if (nametmp.substr(0, 2) == "Y-") {
+        speciesname_search =
+          amrex::trim(nametmp.substr(2U, std::string::npos)) + "_mwt";
+        const char* cstylestring = speciesname_search.c_str();
+        pp.get(cstylestring, parm_in->m_h_parm.chemSpecies_Mwt[indx]);
+        indx++;
+      }
+    }
 
     // Setup density lookups
     std::string density_lookup_type_string{"linear"};
@@ -230,6 +266,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   {
     parm_in->m_host_only_parm.manfunc_par->deallocate();
     parm_in->m_host_only_parm.manfunc_par = nullptr;
+    amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.chemSpecies_Mwt);
   }
 };
 #endif
