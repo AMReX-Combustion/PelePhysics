@@ -65,11 +65,6 @@ struct Manifold
     for (int n = 0; n < eosparm->num_chemspecies; n++) {
       mw[n] = eosparm->chemSpecies_Mwt[n];
     }
-
-    /*
-    amrex::Error(
-      "molecular_weight for species does not have significance for "
-      "Manifold EOS");*/
   }
 
   AMREX_GPU_HOST_DEVICE
