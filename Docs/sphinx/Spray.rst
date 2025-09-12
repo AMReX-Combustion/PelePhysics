@@ -615,13 +615,13 @@ The following table details the parameters of each test:
    :align: center
    :figwidth: 80%
 
-   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_
+   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_ All three PeleMP cases utilized an Antoine fit for estimating the saturated vapor pressure.
 
 .. figure:: /Visualization/runge_jp8_res_2025.png
    :align: center
    :figwidth: 45%
 
-   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from with Runge et al. Note that all three cases represent a multicomponent fuel with a single liquid-phase and single gas-phase species.  [#runge]_
+   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from with Runge et al. [#runge]_ Note that all three cases represent a multicomponent fuel with a single liquid-phase and single gas-phase species.  
 
 .. [#owen] "PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite," L. D. Owen, W. Ge, M. Rieth, M. Arienti, L. Esclapez, B. S. Soriano, M. E. Mueller, M. Day, R. Sankaran, and J. H. Chen, J. Fluids Eng., vol. 146, no. 4, pp. 1-18 (2024), doi: `10.1115/1.4064494 <https://doi.org/10.1115/1.4064494>`_.
 
