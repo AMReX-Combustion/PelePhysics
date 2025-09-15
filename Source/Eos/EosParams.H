@@ -90,9 +90,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   static void host_initialize(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
   {
     amrex::ParmParse pp("manifold");
-    std::string speciesname_search;
-
-    std::string metadata_filename = "";
+    std::string metadata_filename;
     pp.query("metadata_filename", metadata_filename);
     if (!metadata_filename.empty()) {
       pp.addfile(metadata_filename);

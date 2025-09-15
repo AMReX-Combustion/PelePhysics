@@ -239,11 +239,6 @@ SprayParticleContainer::spraySetup(
   m_sprayData->dep_indx[0] = 0;
 #endif
 
-  if (!eosparms_h->has_spec_mw) {
-    amrex::Error(
-      "SpraySetup: Manifold EOS must contains spec molecular weights for "
-      "Spray");
-  }
   auto eos = pele::physics::PhysicsType::eos(eosparms_h);
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
   Vector<Real> fuelEnth(NUM_SPECIES);
@@ -261,6 +256,13 @@ SprayParticleContainer::spraySetup(
 #endif
 
 #ifdef USE_MANIFOLD_EOS
+  // Verify EOS can give molecular weights
+  if (!eosparms_h->has_spec_mw) {
+    amrex::Error(
+      "SpraySetup: Manifold EOS must contains spec molecular weights for "
+      "Spray");
+  }
+
   Vector<std::string> var_names;
   // populating all the variables in the manifold table into varnames
   pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
