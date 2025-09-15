@@ -77,12 +77,12 @@ struct BaseLiqProps
       amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mw_fl;
       getInpVal(mw_fl.data(), pp, fuel_names.data(), "molar_weight");
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const amrex::Real rel_diff =
-          std::abs(mw_fl[spf] - mw[spf] * SprayUnits::mass_conv) / mw[spf];
-        if (rel_diff > 1.E-5) {
+        const amrex::Real diff = std::abs(mw_fl[spf] - mw[spf]);
+        if (diff > 1.E-3) {
           amrex::Warning(
-            "GCM species " + fuel_names[spf] +
-            " mw does not match gas-phase species mw");
+            "Warning: GCM species " + fuel_names[spf] + " mw " +
+            std::to_string(mw_fl[spf]) +
+            " does not match gas-phase species mw " + std::to_string(mw[spf]));
         }
       }
     }

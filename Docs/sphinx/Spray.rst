@@ -562,13 +562,13 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be compiled with ``SPRAY_GCM=TRUE`` or ``FALSE``. To run a test case with the *PeleMP* or *GCM* liquid properties, simply open ``Validate.py`` and set the ``LiqPropsType`` and case name from the table below, for example ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be compiled with ``SPRAY_GCM=TRUE`` or ``FALSE``. To run a test case with the *PeleMP* or *GCM* liquid properties, simply open ``Validate.py`` and set the variables for ``case_name``, ``LiqPropsType``, and the method for calculating :math:`p_{\rm sat}` for the PeleMP model. For example ::
 
-   # Liquid properties model: "mp" or "gcm"
-   LiqPropsType = "mp" 
+   case_name = "WongLin"
+   LiqPropsType = "gcm"
 
-   # Case object
-   case = WongLin(LiqPropsType)
+   # Psat model for PeleMP: "Antoine" or "Clasius-Clapeyron"
+   PeleMP_PsatModel = "Antoine"
 
 then run ``python Validate.py``.
 The following table details the parameters of each test:
@@ -589,11 +589,13 @@ The following table details the parameters of each test:
    |``RungeDec``,  |                 |                 |                 |                 |                       |decane,          |                 |
    |``RungeMix``   |                 |                 |                 |                 |                       |mix              |                 |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |``RungeJP8``   |294.15           |1.01325          |294.15           |636              |3.0                    |POSF10264        |[#runge]_        |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
 
 
 .. figure:: /Visualization/nomura_res_2025.png
    :align: center
-   :figwidth: 40%
+   :figwidth: 45%
 
    Heptane droplet diameter comparisons with Nomura et al. [#nomura]_
 
@@ -613,7 +615,13 @@ The following table details the parameters of each test:
    :align: center
    :figwidth: 80%
 
-   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_
+   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_ All three PeleMP cases utilized an Antoine fit for estimating the saturated vapor pressure.
+
+.. figure:: /Visualization/runge_jp8_res_2025.png
+   :align: center
+   :figwidth: 45%
+
+   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from with Runge et al. [#runge]_ Note that all three cases represent a multicomponent fuel with a single liquid-phase and single gas-phase species.  
 
 .. [#owen] "PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite," L. D. Owen, W. Ge, M. Rieth, M. Arienti, L. Esclapez, B. S. Soriano, M. E. Mueller, M. Day, R. Sankaran, and J. H. Chen, J. Fluids Eng., vol. 146, no. 4, pp. 1-18 (2024), doi: `10.1115/1.4064494 <https://doi.org/10.1115/1.4064494>`_.
 
