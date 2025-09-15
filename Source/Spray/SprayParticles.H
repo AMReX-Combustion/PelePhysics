@@ -83,7 +83,12 @@ public:
     const amrex::Real num_ppp = 1.);
 
   /// \brief Setup spray parameters
-  static void spraySetup(const amrex::Real* body_force);
+  static void spraySetup(
+    const amrex::Real* body_force,
+    pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      eosparms_h = nullptr,
+    const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
+      eosparms_d = nullptr);
 
   /// \brief Read in spray parameters from input file
   static void readSprayParams(int& particle_verbose);

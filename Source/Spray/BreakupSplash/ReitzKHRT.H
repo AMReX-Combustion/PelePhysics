@@ -30,7 +30,6 @@ updateBreakupKHRT(
   const amrex::Real We_crit = 6.;
   // RT model constants
   const amrex::Real A1 = 0.188;
-  SprayUnits SPU;
   // Retrieve particle data
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SprayComps::pstateVel), p.rdata(SprayComps::pstateVel + 1),
@@ -38,26 +37,24 @@ updateBreakupKHRT(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
   amrex::Real num_dens = p.rdata(SprayComps::pstateNumDens);
-  amrex::Real rho_part = 0.;
-  amrex::Real mu_part = 0.;
+  amrex::Real Y_part[SPRAY_FUEL_NUM] = {0.0};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    amrex::Real minT = amrex::min(T_part, cBoilT[spf]);
-    amrex::Real Y_part = p.rdata(SprayComps::pstateY + spf);
-    rho_part += Y_part / fdat.rhoL(minT, spf);
-    mu_part += Y_part * fdat.muL(minT, spf);
+    Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
-  rho_part = 1. / rho_part;
+  const amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
+  const amrex::Real mu_part = fdat.liqprops.mu_mix(Y_part, T_part, cBoilT);
   // Minimum droplet radius for child droplets
   // Should not create child droplets that are near to or less than the minimum
   // allowable mass to avoid unphysical evaporation of mass
   amrex::Real min_rad =
-    4. * std::cbrt(SPU.min_mass * 3. / (4. * M_PI * rho_part));
+    4. * std::cbrt(SprayUnits::min_mass * 3. / (4. * M_PI * rho_part));
   amrex::Real shed_mass = p.rdata(SprayComps::pstateBM1);
   amrex::Real N0 = p.rdata(SprayComps::pstateN0);
   // To prolong RT breakup, rt_time is set to -1 on injection. RT breakup can
   // then only occur after KH breakup happens at least once
   amrex::Real rt_time = p.rdata(SprayComps::pstateBM2);
-  amrex::Real sigma = fdat.sigma;
+  const amrex::Real sigma_part =
+    fdat.liqprops.sigma_mix(Y_part, T_part, cBoilT);
   amrex::Real rad_part = 0.5 * dia_part;
   if (rad_part < min_rad) {
     return;
@@ -75,8 +72,8 @@ updateBreakupKHRT(
   } else if (Reyn > 0.) {
     C_D = 24. / Reyn;
   }
-  amrex::Real We_g = gpv.rho_fluid * vel_sq * rad_part / sigma;
-  amrex::Real Z = mu_part / std::sqrt(rho_part * rad_part * sigma);
+  amrex::Real We_g = gpv.rho_fluid * vel_sq * rad_part / sigma_part;
+  amrex::Real Z = mu_part / std::sqrt(rho_part * rad_part * sigma_part);
   amrex::Real T = Z * std::sqrt(We_g);
   bool breakupRT = false;
   // Check of RT breakup occurs
@@ -86,9 +83,9 @@ updateBreakupKHRT(
       3. / 8. * C_D * gpv.rho_fluid * vel_sq / (rho_part * rad_part);
     amrex::Real momdiff = a * (rho_part - gpv.rho_fluid);
     amrex::Real omega_RT = std::sqrt(
-      2. / (3. * std::sqrt(3. * sigma)) * momdiff * std::sqrt(momdiff) /
+      2. / (3. * std::sqrt(3. * sigma_part)) * momdiff * std::sqrt(momdiff) /
       (rho_part + gpv.rho_fluid));
-    amrex::Real KRT = std::sqrt(momdiff / (3. * sigma));
+    amrex::Real KRT = std::sqrt(momdiff / (3. * sigma_part));
     amrex::Real lam_RT = C3 * M_PI / KRT;
     if (rad_part < lam_RT) {
       rt_time = 0.;
@@ -111,7 +108,7 @@ updateBreakupKHRT(
                          std::pow(1. + 0.865 * std::pow(We_g, 1.67), 0.6);
     amrex::Real omega_KH = (0.34 + 0.385 * We_g * std::sqrt(We_g)) /
                            ((1. + Z) * (1. + 1.4 * std::pow(T, 0.6))) *
-                           std::sqrt(sigma / (rho_part * rad_part3));
+                           std::sqrt(sigma_part / (rho_part * rad_part3));
     amrex::Real tau_KH = 3.726 * B1 * rad_part / (lam_KH * omega_KH);
     amrex::Real rs = B0 * lam_KH;
     // KH breakup occurs

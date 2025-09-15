@@ -1,18 +1,18 @@
 description: QSSA of gas
 generator: YamlWriter
-cantera-version: 2.6.0
-git-commit: 9573e6b
-date: Thu Mar 30 22:33:26 2023
+cantera-version: 3.1.0
+git-commit: '6e00275'
+date: Fri Jul 18 15:41:49 2025
 phases:
-  - n_qssa_species: 4
-    kinetics: gas
-    transport: mixture-averaged
-    qssa_species: [CH2, CH2(S), CH2OH, HCO]
-    name: gas-qssa
+  - name: gas-qssa
     thermo: ideal-gas
     elements: [H, O, C, N]
     species: [H2, H, O, O2, OH, H2O, HO2, CH2, CH2(S), CH3, CH4, CO, CO2, HCO, CH2O,
     CH2OH, N2]
+    kinetics: bulk
+    transport: mixture-averaged
+    qssa_species: [CH2, CH2(S), CH2OH, HCO]
+    n_qssa_species: 4
     state:
       T: 1.0e-03
       density: 1.0e-03
@@ -301,7 +301,7 @@ species:
         -1020.8999, 3.950372]
         - [2.92664, 1.4879768e-03, -5.68476e-07, 1.0097038e-10, -6.753351e-15,
         -922.7977, 5.980528]
-      note: 121286
+      note: '121286'
     transport:
       model: gas
       geometry: linear

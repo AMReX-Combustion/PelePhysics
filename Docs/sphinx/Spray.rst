@@ -22,8 +22,17 @@ Firstly, spray modeling relies on the following assumptions:
 
 * The radiation, Soret, and Dufour effects are neglected
 
-The evaporation models follow the work by Abramzon and Sirignano [#abram]_ and the multicomponent evaporation is based on work by Tonini. [#ton]_ Details regarding the energy balance are provided in Ge et al. [#Ge]_
+Secondly, accurate spray modeling depends on accurate thermophysical and transport properties for both the gas and liquid phases.  
+Gas-phase properties are obtained directly from the mechanism files in `PelePhysics`, while liquid-phase properties are derived from user-provided inputs for each liquid fuel species.  
+Currently, two approaches are available for estimating liquid fuel properties:
 
+* The original PeleMP [#owen]_ method, which utilizes a combination of constant values and temperature-based fits.
+
+* A group contribution method (GCM) based on the work of Constantinou & Gani [#gani94]_ [#gani95]_ and Govindaraju & Ihme [#govindaraju]_, previously implemented and validated in `FuelLib <https://github.com/nrel/fuellib>`_. 
+
+Further details on the required inputs, as well as the formulations of both component-level and mixture-level liquid-phase properties, are provided in the :ref:`Liquid Spray Properties <SprayLiquidProperties>` section.
+
+The evaporation models follow the work by Abramzon and Sirignano [#abram]_ and the multicomponent evaporation is based on work by Tonini. [#ton]_ Details regarding the energy balance are provided in Ge et al. [#Ge]_
 The subscript notation for this section is: :math:`d` relates to the liquid droplet, :math:`v` relates to the vapor state that is in equilibrium with the liquid and gas phase, :math:`L` relates to the liquid phase, and :math:`g` relates to the gas phase. The subscript :math:`r` relates to the reference state with which to approximate the thermophysical and transport properties. This reference state is assumed to be in the evaporating film that surrounds the droplet state and is approximated as
 
 .. math::
@@ -84,16 +93,7 @@ The procedure is as follows for updating the spray droplet:
       h_{L,n}(T_d) = h_{g,n}(T_d) - h_{g,n}(T^*) + h_{L,n}(T^*) - c_{p,L,n}(T^*) (T_d - T^*) \,.
 
 
-   and the saturation pressure using either the Clasius-Clapeyron relation
-
-
-   .. math::
-      p_{{\rm{sat}}, n} = p_{\rm{atm}} \exp\left(\frac{h_{L,n}(T_d) M_n}{\mathcal{R}} \left(\frac{1}{T^*_{b,n}} - \frac{1}{T_d}\right)\right)
-
-   or the Antoine curve fit
-
-   .. math::
-      p_{{\rm{sat}},n} = d 10^{a - b / (T_d + c)}
+   and the saturation pressure, :math:`p_{{\rm{sat}}, n}`, using one of the methods described in the :ref:`Liquid Spray Properties <SprayLiquidProperties>` section.
 
 #. Estimate the mass fractions in the vapor state using Raoult's law
 
@@ -246,7 +246,6 @@ The procedure is as follows for updating the spray droplet:
    For such cases, fully three-dimensional simulations are recommended.
 
 
-   
 Spray Flags and Inputs
 ======================
 
@@ -254,17 +253,13 @@ Spray Flags and Inputs
 
 * Depending on the gas phase solver, spray solving functionality can be turned on in the input file using ``pelec.do_spray_particles = 1`` or ``peleLM.do_spray_particles = 1``.
 
-* The units for `PeleLM` and `PeleLMeX` are MKS while the units for `PeleC` are CGS. This is the same for the spray inputs. E.g. when running a spray simulation coupled with `PeleC`, the units for ``particles.fuel_cp`` must be in erg/g.
-
 * There are many required ``particles.`` flags in the input file. For demonstration purposes, 2 liquid species of ``NC7H16`` and ``NC10H22`` will be used.
 
   * The liquid fuel species names are specified using ``particles.fuel_species = NC7H16 NC10H22``. The number of fuel species listed must match ``SPRAY_FUEL_NUM``.
 
-  * Many values must be specified on a per-species basis. Following the current example, one would have to specify ``particles.NC7H16_crit_temp = 540.`` and ``particles.NC10H22_crit_temp = 617.`` to set a critical temperature of 540 K for ``NC7H16`` and 617 K for ``NC10H22``.
-
   * Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3``. All species specified must be present in the chemistry transport and thermodynamic data.
 
-* The following table lists other inputs related to ``particles.``, where ``SP`` will refer to a fuel species name
+* The following table lists other inputs related to ``particles.``
 
 .. table::
 
@@ -275,28 +270,6 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+-------------------+
    |``dep_fuel_species``   |Name of gas phase species to   |Yes          |Inputs to          |
    |                       |contribute                     |             |``fuel_species``   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``fuel_ref_temp``      |Liquid reference temperature   |Yes          |None               |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_crit_temp``       |Critical temperature           |Yes          |None               |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_boil_temp``       |Boiling temperature at         |Yes          |None               |
-   |                       |atmospheric pressure           |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_cp``              |Liquid :math:`c_p` at reference|Yes          |None               |
-   |                       |temperature                    |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_latent``          |Latent heat at reference       |Yes          |None               |
-   |                       |temperature                    |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_rho``             |Liquid density                 |Yes          |None               |
-   |                       |                               |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_lambda``          |Liquid thermal conductivity    |No           |0.                 |
-   |                       |(currently unused)             |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``SP_mu``              |Liquid dynamic viscosity       |No           |0.                 |
-   |                       |(currently unused)             |             |                   |
    +-----------------------+-------------------------------+-------------+-------------------+
    |``mom_transfer``       |Couple momentum with gas phase |No           |``1``              |
    |                       |                               |             |                   |
@@ -320,16 +293,86 @@ Spray Flags and Inputs
    +-----------------------+-------------------------------+-------------+-------------------+
 
 
+.. _SprayLiquidProperties:
+
+Liquid Spray Properties
+-----------------------
+
+The required inputs and corresponding correlations for the original *PeleMP* [#owen]_ 
+and the *FuelLib-based GCM* are outlined in the subsections below. Please note the following details:  
+
+**Units:**  
+
+* `PeleLM` and `PeleLMeX` use MKS units, while `PeleC` uses CGS units. The Spray inputs follow the same convention.  
+
+* For example, when running a spray simulation coupled with `PeleC`, the values for ``particles.fuel_cp`` must be provided in erg/g.  
+
+**Input flags:**  
+
+* A number of ``particles.`` flags are required in the input file to define liquid fuel properties.  
+
+* For demonstration purposes, two liquid species will be used: ``NC7H16`` and ``NC10H22``.  
+
+* Many values must be specified on a per-species basis. In this example, one would need to specify:  
+   
+   - ``particles.NC7H16_crit_temp = 540`` critical temperature of 540 K for ``NC7H16``  
+   
+   - ``particles.NC10H22_crit_temp = 617`` critical temperatures of 617 K for ``NC10H22``.
+
+**Additional method-specific inputs:**  
+   
+   * The following tables list other required inputs related to ``particles.``,  where ``SP`` refers to a given fuel species name.  
+
+The source code for the liquid spray properties can be found in ``SprayProperties.H``.
+
+PeleMP Implementation
+^^^^^^^^^^^^^^^^^^^^^
+
+.. table::
+
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |Input                  |Description                    |Required     |Default Value      |
+   +=======================+===============================+=============+===================+
+   |``fuel_ref_temp``      |Liquid reference temperature   |Yes          |None               |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_crit_temp``       |Critical temperature           |Yes          |None               |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_boil_temp``       |Boiling temperature at         |Yes          |None               |
+   |                       |atmospheric pressure           |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_cp``              |Liquid :math:`c_p` at reference|Yes          |None               |
+   |                       |temperature                    |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_latent``          |Latent heat at reference       |Yes          |None               |
+   |                       |temperature                    |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_rho``             |Liquid density                 |Yes          |None               |
+   |                       |                               |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_lambda``          |Liquid thermal conductivity    |No           |0.                 |
+   |                       |                               |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_mu``              |Liquid dynamic viscosity       |No           |0.                 |
+   |                       |                               |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+   |``SP_sigma``           |Liquid surface tension         |No           |0.                 |
+   |                       |                               |             |                   |
+   +-----------------------+-------------------------------+-------------+-------------------+
+
+
 * If an Antoine fit for saturation pressure is used, it must be specified for individual species, ::
 
     particles.SP_psat = 4.07857 1501.268 -78.67 1.E5
 
-  where the numbers represent coefficients :math:`a`, :math:`b`, :math:`c`, and unit conversion :math:`d`, respectively in:
+  where the numbers represent coefficients :math:`a_n`, :math:`b_n`, :math:`c_n`, and unit conversion :math:`d_n`, respectively in:
 
   .. math::
-     p_{\rm{sat}}(T) = d 10^{a - b / (T + c)}
+     p_{\rm{sat},n}(T) = d_n 10^{a_n - b_n / (T + c_n)}.
+  
+  * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation
 
-  * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation; see
+      .. math::
+         p_{{\rm{sat}}, n} = p_{\rm{atm}} \exp\left(\frac{h_{L,n}(T_d) M_n}{\mathcal{R}} \left(\frac{1}{T^*_{b,n}} - \frac{1}{T_d}\right)\right)
 
 * Temperature based fits for liquid density, thermal conductivity, and dynamic viscosity can be used; these can be specified as ::
 
@@ -337,14 +380,62 @@ Spray Flags and Inputs
     particles.SP_lambda = 7.243 1.223 4.223E-8 8.224E-9
     particles.SP_mu = 7.243 1.223 4.223E-8 8.224E-9
 
-  where the numbers represent :math:`a`, :math:`b`, :math:`c`, and :math:`d`, respectively in:
+  where the numbers represent :math:`a_n`, :math:`b_n`, :math:`c_n`, and :math:`d_n`, respectively in:
 
   .. math::
-     \rho_L \,, \lambda_L = a + b T + c T^2 + d T^3
+     \rho_{L,n} \,, \lambda_{L,n} = a_n + b_n T + c_n T^2 + d_n T^3
 
-     \mu_L = a + b / T + c / T^2 + d / T^3
+     \mu_{L,n} = a_n + b_n / T + c_n / T^2 + d_n / T^3
 
-  If only a single value is provided, :math:`a` is assigned to that value and the other coefficients are set to zero, effectively using a constant value for the parameters.
+  If only a single value is provided, :math:`a_n` is assigned to that value and the other coefficients are set to zero, effectively using a constant value for the parameters.
+
+
+FuelLib-Based GCM
+^^^^^^^^^^^^^^^^^
+
+Currently the *GCM* approach of estimating liquid fuel properties is only available in PeleLMeX and requires:
+
+* Setting the compile-time flag ``SPRAY_GCM=TRUE`` in the case's ``GNUmakefile``
+
+* Generating a liquid-fuel-specific GCM input file from FuelLib, and copying the input file into the case directory.
+   
+   - The process for generating this input file is provided in FuelLib's tutorial: `Exporting GCM Properties for Pele <https://nrel.github.io/FuelLib/tutorials.html#exporting-gcm-properties-for-pele>`_.
+
+   - An example of using the GCM in Pele is provided in ``PeleLMeX/Exec/RegTests/SingleDropEvap``.
+
+The following inputs are generated from FuelLib for each liquid fuel species.
+
+.. table::
+
+   +------------------------+-------------------------------+-------------+
+   |Input                   |Description                    |Required     |
+   +========================+===============================+=============+
+   |``SP_family``           |Compound family                |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_molar_weight``     |Molecular weight               |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_crit_temp``        |Critical temperature           |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_crit_press``       |Critical pressure              |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_crit_vol``         |Critical volume                |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_boil_temp``        |Boiling temperature at         |Yes          |
+   |                        |atmospheric pressure           |             |
+   +------------------------+-------------------------------+-------------+
+   |``SP_accentric_factor`` |Critical temperature           |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_molar_vol``        |Molecular volume               |Yes          |
+   +------------------------+-------------------------------+-------------+
+   |``SP_cp_a``,            |GCM coefficients for specific  |Yes          |
+   |``SP_cp_c``,            |heat                           |             |
+   |``SP_cp_c``             |                               |             |
+   +------------------------+-------------------------------+-------------+
+   |``SP_latent``           |Latent heat at 298.15 K        |Yes          |
+   +------------------------+-------------------------------+-------------+
+
+The specific equations, correlations and mixture rules used in the GCM implementation are detailed in the `Fuel Property Prediction Model <https://nrel.github.io/FuelLib/fuelprops.html>`_ section of FuelLib's documentation.
+
 
 Spray Injection
 ---------------
@@ -471,9 +562,13 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SprayEvap``. To run a test case, simply open ``Validate.py`` and set the case name from the table below, for example ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be compiled with ``SPRAY_GCM=TRUE`` or ``FALSE``. To run a test case with the *PeleMP* or *GCM* liquid properties, simply open ``Validate.py`` and set the variables for ``case_name``, ``LiqPropsType``, and the method for calculating :math:`p_{\rm sat}` for the PeleMP model. For example ::
 
-  case = WongLin()
+   case_name = "WongLin"
+   LiqPropsType = "gcm"
+
+   # Psat model for PeleMP: "Antoine" or "Clasius-Clapeyron"
+   PeleMP_PsatModel = "Antoine"
 
 then run ``python Validate.py``.
 The following table details the parameters of each test:
@@ -494,11 +589,13 @@ The following table details the parameters of each test:
    |``RungeDec``,  |                 |                 |                 |                 |                       |decane,          |                 |
    |``RungeMix``   |                 |                 |                 |                 |                       |mix              |                 |
    +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
+   |``RungeJP8``   |294.15           |1.01325          |294.15           |636              |3.0                    |POSF10264        |[#runge]_        |
+   +---------------+-----------------+-----------------+-----------------+-----------------+-----------------------+-----------------+-----------------+
 
 
 .. figure:: /Visualization/nomura_res_2025.png
    :align: center
-   :figwidth: 40%
+   :figwidth: 45%
 
    Heptane droplet diameter comparisons with Nomura et al. [#nomura]_
 
@@ -518,20 +615,33 @@ The following table details the parameters of each test:
    :align: center
    :figwidth: 80%
 
-   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_
+   Droplet evaporation of heptane, decane, and a binary mixture of heptane and decane compared to experimental measurements from with Runge et al. [#runge]_ All three PeleMP cases utilized an Antoine fit for estimating the saturated vapor pressure.
 
+.. figure:: /Visualization/runge_jp8_res_2025.png
+   :align: center
+   :figwidth: 45%
+
+   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from with Runge et al. [#runge]_ Note that all three cases represent a multicomponent fuel with a single liquid-phase and single gas-phase species.  
+
+.. [#owen] "PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite," L. D. Owen, W. Ge, M. Rieth, M. Arienti, L. Esclapez, B. S. Soriano, M. E. Mueller, M. Day, R. Sankaran, and J. H. Chen, J. Fluids Eng., vol. 146, no. 4, pp. 1-18 (2024), doi: `10.1115/1.4064494 <https://doi.org/10.1115/1.4064494>`_.
+
+.. [#gani94] "New group contribution method for estimating properties of pure compounds", L. Constantinou, and R. Gani, AIChE J., Vol. 40, No. 10, pp.1697-1710 (1994), doi: `10.1002/aic.690401011 <https://doi.org/10.1002/aic.690401011>`_. 
+
+.. [#gani95] "Estimation of the acentric factor and the liquid molar volume at 298 K using a new group contribution method", L. Constantinou, and R. Gani, Fluid Phase Equilibria, Vol. 103, No. 1, pp.11-22 (1995), doi: `10.1016/0378-3812(94)02593-P. <https://doi.org/10.1016/0378-3812(94)02593-P.>`_. 
+
+.. [#govindaraju] "Group contribution method for multicomponent evaporation with application to transportation fuels", Int. J. of Heat and Mass Transfer, Vol. 102, pp.833–845 (2016), doi: `10.1016/j.ijheatmasstransfer.2016.06.079 <https://doi.org/10.1016/j.ijheatmasstransfer.2016.06.079>`_.
+
+.. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, vol. 32, no. 9, pp. 1605-1618 (1989), doi: `10.1016/0017-9310(89)90043-4 <https://doi.org/10.1016/0017-9310(89)90043-4>`_.
 
 .. [#ton] "Fuel spray modeling in direct-injection diesel and gasoline engines", S. Tonini, Dissertation, City University London (2006), url: `https://openaccess.city.ac.uk/id/eprint/8486/ <https://openaccess.city.ac.uk/id/eprint/8486/>`_.
 
-.. [#abram] "Droplet vaporization model for spray combustion calculations", B. Abramzon and W. A. Sirignano, Int. J. Heat Mass Transfer, Vol. 32, No. 9, pp. 1605-1618 (1989)
+.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, vol. 128 (2020), doi: `10.1016/j.ijmultiphaseflow.2020.103293 <https://doi.org/10.1016/j.ijmultiphaseflow.2020.103293>`_.
 
-.. [#Ge] "Development of a CPU/GPU portable software library for Lagrangian-Eulerian simulations of liquid sprays", W. Ge and R. Sankaran and J. H. Chen, Int. J. Multiph. Flow, Vol. 128 (2020), doi: `10.1016/j.ijmultiphaseflow.2020.103293 <https://doi.org/10.1016/j.ijmultiphaseflow.2020.103293>`_.
+.. [#nomura] "Experimental study on high-pressure droplet evaporation using microgravity conditions", H. Nomura and Y. Ujiie and H. J. Rath and J. Sato and M. Kono, Symposium (International) on Combustion, vol. 26, no. 1, pp. 1267–1273 (1996), doi: `10.1016/S0082-0784(96)80344-4 <https://doi.org/10.1016/S0082-0784(96)80344-4>`_.
 
-.. [#nomura] “Experimental study on high-pressure droplet evaporation using microgravity conditions”, H. Nomura and Y. Ujiie and H. J. Rath and J. Sato and M. Kono, Symposium (International) on Combustion, vol. 26, no. 1, pp. 1267–1273 (1996), doi: `10.1016/S0082-0784(96)80344-4 <https://doi.org/10.1016/S0082-0784(96)80344-4>`_.
+.. [#wonglin] "Internal temperature distributions of droplets vaporizing in high-temperature convective flows", S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.  
 
-.. [#wonglin] “Internal temperature distributions of droplets vaporizing in high-temperature convective flows”, S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.  
+.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., vol. 18, no. 4, pp. 282-290, Issn 0894-1777 (1998), doi: `10.1016/S0894-1777(98)10035-3 <https://doi.org/10.1016/S0894-1777(98)10035-3>`_.
 
-.. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., Vol. 18, No. 4, pp. 282-290, Issn 0894-1777 (1998), doi: `10.1016/S0894-1777(98)10035-3 <https://doi.org/10.1016/S0894-1777(98)10035-3>`_.
-
-.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, Vol. 8, pp. 25-44 (1998), doi: `10.1615/AtomizSpr.v8.i1.20 <https://doi.org/10.1615/AtomizSpr.v8.i1.20>`_.
+.. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, vol. 8, pp. 25-44 (1998), doi: `10.1615/AtomizSpr.v8.i1.20 <https://doi.org/10.1615/AtomizSpr.v8.i1.20>`_.
 

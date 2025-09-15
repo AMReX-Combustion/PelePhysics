@@ -2,7 +2,7 @@
 PELE_PHYSICS_HOME    ?= ../../..
 
 # AMReX
-DIM          = 3
+DIM          = 2
 PRECISION    = DOUBLE
 PROFILE      = FALSE
 VERBOSE      = FALSE

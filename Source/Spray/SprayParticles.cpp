@@ -330,14 +330,13 @@ SprayParticleContainer::updateParticles(
       amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
-          auto eos = pele::physics::PhysicsType::eos();
-          SprayUnits SPU;
+          auto eos = pele::physics::PhysicsType::eos(fdat->eosparm);
           GasPhaseVals gpv;
           GpuArray<Real, SPRAY_FUEL_NUM>
             cBoilT; // Boiling temperature at current pressure
           eos.molecular_weight(gpv.mw.data());
           for (int n = 0; n < NUM_SPECIES; ++n) {
-            gpv.mw[n] *= SPU.mass_conv;
+            gpv.mw[n] *= SprayUnits::mass_conv;
           }
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
             indx_array; // array of adjacent cells
@@ -385,9 +384,8 @@ SprayParticleContainer::updateParticles(
             gpv.reset();
             InterpolateGasPhase(
               gpv, state_box, rhoarr, rhoYarr, Tarr, momarr, engarr,
-              indx_array.data(), weights.data());
+              indx_array.data(), weights.data(), fdat->eosparm);
             // Solve for avg mw and pressure at droplet location
-            gpv.define();
             fdat->calcBoilT(gpv, cBoilT.data());
             if (is_film) {
               calculateFilmSource(

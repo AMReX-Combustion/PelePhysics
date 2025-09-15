@@ -134,7 +134,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
     SprayData* fdat = SprayParticleContainer::getSprayData();
     if (SPRAY_FUEL_NUM == 1) {
       m_jetY[0] = 1.;
-      rho_part = fdat->rhoL(m_jetT, 0);
+      rho_part = fdat->liqprops.rho_i(m_jetT, 0);
     } else {
       std::vector<amrex::Real> in_Y_jet(SPRAY_FUEL_NUM, 0.);
       ps.getarr("Y", in_Y_jet);
@@ -142,9 +142,8 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         m_jetY[spf] = in_Y_jet[spf];
         sumY += in_Y_jet[spf];
-        rho_part += m_jetY[spf] / fdat->rhoL(m_jetT, spf);
       }
-      rho_part = 1. / rho_part;
+      rho_part = fdat->liqprops.rho_mix(m_jetY, m_jetT);
       if (std::abs(sumY - 1.) > 1.E-8) {
         amrex::Abort(ppspray + ".Y must sum to 1");
       }
