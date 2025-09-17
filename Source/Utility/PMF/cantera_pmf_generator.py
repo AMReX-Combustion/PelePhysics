@@ -31,7 +31,7 @@ parser.add_argument(
     help="Name of PelePhysics mechanism from Mechanisms",
 )
 parser.add_argument(
-    "-pp", "--pp_home", default="../../", help="Path to PelePhysics directory"
+    "-pp", "--pp_home", default="../../../", help="Path to PelePhysics directory"
 )
 parser.add_argument(
     "-f", "--fuel", default="CH4:1", help="Fuel stream mole-basis Cantera composition"
@@ -41,6 +41,12 @@ parser.add_argument(
     "--oxidizer",
     default="O2:1, N2:3.76",
     help="Oxidizer stream mole-basis Cantera composition",
+)
+parser.add_argument(
+    "-Y",
+    "--massfrac",
+    default=None,
+    help="String of mass fractions (overrides -f and -ox options)",
 )
 parser.add_argument(
     "-T",
@@ -74,6 +80,7 @@ args = parser.parse_args()
 mechanism = args.mechanism
 fuel_species = args.fuel
 ox_species = args.oxidizer
+Y_species = args.massfrac
 
 # General
 p = args.pressure  # pressure [Pa]
@@ -149,8 +156,16 @@ mech_path = os.path.join(pp_path, mech_path)
 
 # Set gas state to that of the unburned gas
 gas = Solution(mech_path, "gas")
-gas.TP = tin, p
-gas.set_equivalence_ratio(phi, fuel_species, ox_species, basis="mole")
+if Y_species is None:
+    gas.TP = tin, p
+    gas.set_equivalence_ratio(phi, fuel_species, ox_species, basis="mole")
+else:
+    gas.TPY = tin, p, Y_species
+    species_names = gas.species_names
+    mass_fractions = gas.Y  
+    print("\nMass fractions read into Cantera:")
+    for k in range(len(gas.Y)):
+        print(f"  {species_names[k]}: {mass_fractions[k]}")
 
 # Create the free laminar premixed flame
 f = FreeFlame(gas, initial_grid)
