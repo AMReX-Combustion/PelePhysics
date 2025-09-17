@@ -159,15 +159,11 @@ InterpolateGasPhase(
   // variables at the spray particle location stored in 'mass_frac'. I just need
   // to call GenericReadManifoldData
 #ifdef USE_MANIFOLD_EOS
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
-    mass_frac_spray_fuel; // placeholder for storing liquid fuel species mass
-                          // fractions corresponding to manifold variables read
-                          // from manifold table
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;
     eos.Y2ChemSpecies(
       mass_frac.data(), SprayParticleContainer::d_sprayData->indx[n], tempval);
-    mass_frac_spray_fuel[n] = tempval;
+    gpv.Yspec_fluid[n] = tempval;
   }
 #endif
 

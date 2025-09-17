@@ -291,9 +291,6 @@ SprayParticleContainer::spraySetup(
     }
     for (int ns = 0; ns < manivar_names.size(); ++ns) {
       std::string gas_spec = manivar_names[ns];
-      if (gas_spec == m_sprayFuelNames[i]) {
-        m_sprayData->indx[i] = ns;
-      }
       if (gas_spec == m_sprayDepNames[i]) {
         m_sprayData->dep_indx[i] = ns;
       }
