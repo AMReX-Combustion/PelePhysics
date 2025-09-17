@@ -102,7 +102,11 @@ refine_grid = True  # True to enable refinement
 
 # Print information
 label_pre = "pmf-" + mechanism
-label = fuel_species.split(":")[0] + "_PHI" + str(phi) + "_T" + str(tin) + "_P" + str(p)
+if Y_species is not None:
+    num_input_species = len([item for item in Y_species.split(',') if ':' in item])
+    label = "Y" + str(num_input_species) + "_T" + str(tin) + "_P" + str(p)
+else:
+    label = fuel_species.split(":")[0] + "_PHI" + str(phi) + "_T" + str(tin) + "_P" + str(p)
 
 #################
 # Find mechanism in PelePhysics
