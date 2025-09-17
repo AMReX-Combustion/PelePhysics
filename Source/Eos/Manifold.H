@@ -95,7 +95,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Y2GenericManifodlData(
+  void Y2GenericManifoldData(
     const amrex::Real* Y, // manifold variables (z,c etc)
     int* table_idx,       // Indices of the table columns
     amrex::Real* out_vars,
@@ -103,6 +103,17 @@ struct Manifold
   )
   {
     manfunc.get_func()->get_values(num_of_indices, table_idx, Y, out_vars);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void Y2ChemSpecies(
+    const amrex::Real* Y, // manifold variables (z,c etc)
+    const int spec_index,
+    amrex::Real& chem_spec)
+  {
+    manfunc.get_func()->get_value(
+      eosparm->idx_chemspecies[spec_index], Y, chem_spec);
   }
 
   AMREX_GPU_HOST_DEVICE
