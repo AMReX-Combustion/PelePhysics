@@ -250,10 +250,6 @@ SprayParticleContainer::spraySetup(
     m_sprayData->liqprops.latentRef_minus_gasRefH_i[ns] =
       m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SprayUnits::eng_conv;
   }
-  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    m_sprayData->body_force[dir] = body_force[dir];
-  }
-#endif
 
 #ifdef USE_MANIFOLD_EOS
   // Verify EOS can give molecular weights
@@ -303,12 +299,12 @@ SprayParticleContainer::spraySetup(
           m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] *
   SprayUnits::eng_conv;
       }
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        m_sprayData->body_force[dir] = body_force[dir];
-      }*/
-
+  */
 #endif
 
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    m_sprayData->body_force[dir] = body_force[dir];
+  }
   m_sprayData->eosparm = eosparms_d;
   Gpu::copy(Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
   m_sprayData->eosparm = eosparms_h;
