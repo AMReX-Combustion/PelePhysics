@@ -161,11 +161,9 @@ if Y_species is None:
     gas.set_equivalence_ratio(phi, fuel_species, ox_species, basis="mole")
 else:
     gas.TPY = tin, p, Y_species
-    species_names = gas.species_names
-    mass_fractions = gas.Y  
     print("\nMass fractions read into Cantera:")
-    for k in range(len(gas.Y)):
-        print(f"  {species_names[k]}: {mass_fractions[k]}")
+    for spec, massfrac in zip(gas.species_names, gas.Y):
+        print(f"  {spec}: {massfrac}")
 
 # Create the free laminar premixed flame
 f = FreeFlame(gas, initial_grid)
