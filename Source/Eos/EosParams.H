@@ -277,7 +277,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     parm_in->m_host_only_parm.manfunc_par = nullptr;
     if (parm_in->m_h_parm.has_species_mw) {
       amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.chemSpecies_Mwt);
-      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.idx_chemSpecies);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.idx_chemspecies);
     }
   }
 };

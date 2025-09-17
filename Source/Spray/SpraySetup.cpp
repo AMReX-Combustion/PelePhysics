@@ -305,26 +305,16 @@ SprayParticleContainer::spraySetup(
     }
   }
 
-  /*
-   * NUM_SPECIES in manifold model does not refer to the number of chemical
-  species. The commented code need to be adapted for manifold models. Not
-  attempting to address this now. SprayUnits SPU;
+  // Initialize MW for spray model
+  amrex::Vector<amrex::Real> mw(chemspec_names.size());
+  auto eos = pele::physics::PhysicsType::eos(eosparms_h);
+  eos.molecular_weight(mw.data());
+  m_sprayData->liqprops.init_mw(mw.data(), m_sprayData->indx.data());
 
-      Vector<Real> fuelEnth(NUM_SPECIES);
-      auto eos = pele::physics::PhysicsType::eos(eosparms_h);
-      amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
-      eos.molecular_weight(mw.data());
-      m_sprayData->liqprops.init_mw(mw, m_sprayData->indx.data());
-      eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
-      for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
-        const int fspec = m_sprayData->indx[ns];
-        m_sprayData->liqprops.latentRef_minus_gasRefH_i[ns] =
-          m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] *
-  SprayUnits::eng_conv;
-      }
-  */
+  // TODO: Handle latent head for Manifold EOS
 #endif
 
+  // Stuff for both detailed chem and manifold
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }
