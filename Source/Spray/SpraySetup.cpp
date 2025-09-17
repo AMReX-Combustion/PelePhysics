@@ -251,22 +251,46 @@ SprayParticleContainer::spraySetup(
       m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SprayUnits::eng_conv;
   }
 
-#ifdef USE_MANIFOLD_EOS
+#else // USE_MANIFOLD_EOS is defined
   // Verify EOS can give molecular weights
-  if (!eosparms_h->has_spec_mw) {
+  if (!eosparms_h->has_species_mw) {
     amrex::Error(
       "SpraySetup: Manifold EOS must contains spec molecular weights for "
       "Spray");
   }
 
-  Vector<std::string> var_names;
-  // populating all the variables in the manifold table into varnames
+  Vector<std::string> chemspec_names, manivar_names;
+  // Manifold: For now, we require that each liquid/spray species
+  // is cacuable from the Manifold model. We also require that
+  // each species contributes to exactly one manifold variable with weight 1
+  // which is specified through the "DepNames"
+  std::set<std::string> unique_dep_names(
+    m_sprayDepNames, m_sprayDepNames + SPRAY_FUEL_NUM);
+  if (unique_dep_names.size() != SPRAY_FUEL_NUM) {
+    amrex::Abort(
+      "Each liquid spray species must uniquely contribute to one manifold "
+      "parameter, as specified through dep_fuel_species");
+  }
+
   pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
-    var_names, eosparms_h);
+    chemspec_names, eosparms_h);
+  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+    manivar_names, eosparms_h);
 
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
-    for (int ns = 0; ns < var_names.size(); ++ns) {
-      std::string gas_spec = var_names[ns];
+    for (int ns = 0; ns < chemspec_names.size(); ++ns) {
+      std::string gas_spec = chemspec_names[ns];
+      if (gas_spec == m_sprayFuelNames[i]) {
+        m_sprayData->indx[i] = ns;
+      }
+    }
+    if (m_sprayData->indx[i] < 0) {
+      Abort(
+        "Fuel " + m_sprayFuelNames[i] +
+        " not found in species available in the manifold");
+    }
+    for (int ns = 0; ns < manivar_names.size(); ++ns) {
+      std::string gas_spec = manivar_names[ns];
       if (gas_spec == m_sprayFuelNames[i]) {
         m_sprayData->indx[i] = ns;
       }
@@ -274,11 +298,10 @@ SprayParticleContainer::spraySetup(
         m_sprayData->dep_indx[i] = ns;
       }
     }
-    if (m_sprayData->indx[i] < 0) {
-      Abort("Fuel " + m_sprayFuelNames[i] + " not found in species list");
-    }
     if (m_sprayData->dep_indx[i] < 0) {
-      Abort("Fuel " + m_sprayDepNames[i] + " not found in species list");
+      Abort(
+        "dep_fuel_species " + m_sprayDepNames[i] +
+        " not found as a manifold parameter");
     }
   }
 
