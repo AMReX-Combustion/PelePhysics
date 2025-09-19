@@ -133,7 +133,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
           spec_idx_vect.emplace_back(n);
         }
       }
-      const int num_of_chemspecies = spec_idx_vect.size();
+      const int num_of_chemspecies = static_cast<int>(spec_idx_vect.size());
       parm_in->m_h_parm.num_chemspecies = num_of_chemspecies;
 
       // Dynamically allocate memory for chemSpecies_Mwt;
@@ -146,7 +146,6 @@ struct InitParm<eos::EosParm<eos::Manifold>>
 
       // Loop through table to find species names. Search these species names in
       // the metadata file and read molecular weights from the metadata file
-      int indx = 0;
       for (int i = 0; i < num_of_chemspecies; i++) {
         const int n = spec_idx_vect[i];
         parm_in->m_h_parm.idx_chemspecies[i] = n;

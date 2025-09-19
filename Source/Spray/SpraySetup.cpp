@@ -308,7 +308,7 @@ SprayParticleContainer::spraySetup(
   eos.molecular_weight(mw.data());
   m_sprayData->liqprops.init_mw(mw.data(), m_sprayData->indx.data());
 
-  // TODO: Handle latent head for Manifold EOS
+  // TODO: Handle latent heat for Manifold EOS
 #endif
 
   // Stuff for both detailed chem and manifold
