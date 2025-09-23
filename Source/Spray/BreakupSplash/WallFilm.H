@@ -91,7 +91,7 @@ calculateFilmSource(
   amrex::Real mw_skin = 0.; // Average molar mass of skin phase
   amrex::Real B_M = 0.;     // Mass Spalding number
   amrex::Real sumXVap = 0.; // Sum of X_v
-  calcVaporState(
+  calcVaporState<pele::physics::PhysicsType::eos_type>()(
     fdat, gpv, rule, T_film, C_eps, mw_film, Y_film.data(), h_film.data(),
     cp_n.data(), cBoilT, Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M,
     sumXVap, cp_skin, mw_skin);

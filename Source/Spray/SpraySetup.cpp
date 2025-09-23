@@ -259,6 +259,7 @@ SprayParticleContainer::spraySetup(
       "Spray");
   }
 
+
   Vector<std::string> chemspec_names, manivar_names;
   // Manifold: For now, we require that each liquid/spray species
   // is cacuable from the Manifold model. We also require that
@@ -277,8 +278,12 @@ SprayParticleContainer::spraySetup(
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
     manivar_names, eosparms_h);
 
+
+
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+	  amrex::Print()<<"\n SpraySpec = "<<m_sprayFuelNames[i]<<" "<<" dep species = "<<m_sprayDepNames[i];
     for (int ns = 0; ns < chemspec_names.size(); ++ns) {
+    	amrex::Print()<<"\n ChemSpec from manifold = "<<chemspec_names[ns];
       std::string gas_spec = chemspec_names[ns];
       if (gas_spec == m_sprayFuelNames[i]) {
         m_sprayData->indx[i] = ns;
@@ -291,6 +296,7 @@ SprayParticleContainer::spraySetup(
     }
     for (int ns = 0; ns < manivar_names.size(); ++ns) {
       std::string gas_spec = manivar_names[ns];
+      amrex::Print()<<"\n Manivar = "<<manivar_names[ns];
       if (gas_spec == m_sprayDepNames[i]) {
         m_sprayData->dep_indx[i] = ns;
       }
