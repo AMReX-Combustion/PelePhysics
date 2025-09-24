@@ -171,6 +171,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
     amrex::Real& mw_skin)
   {
     amrex::Real mbar_vap = 0.; // mean molar mass of evaporated fuel in vapor
+    auto eos = pele::physics::PhysicsType::eos(fdat.eosparm);
 
     // Calculate X_{v,n}- the vapour state
 
@@ -244,12 +245,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
       Y_skin[n] = zi_rj[n];
     }
 
-    // Calculate the molecular weight of skin
-
-    for (int n = 0; n < SPRAY_FUEL_NUM; ++n) {
-      mw_skin += Y_ri_pc[n] / fdat.liqprops.mw_i(n);
-    }
-    mw_skin = 1.0 / mw_skin;
+    eos.Y2WBAR(Y_skin, mw_skin);
 
     B_M = (sumYVap - sumYgipc) / amrex::max(C_eps, (1. - sumYVap));
     B_M = amrex::min(20., B_M);
