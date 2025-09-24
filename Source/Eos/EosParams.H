@@ -46,10 +46,12 @@ struct EosParm<Manifold>
   int idx_Wbar{0};
   int idx_T{0};
   int idx_Wdot[MANIFOLD_DIM];
+  int idx_Cp_mix{0};
   int is_variance_of[MANIFOLD_DIM];
   int verbose{1};
   bool has_mani_src{true};
   bool has_species_mw{false};
+  bool has_Cp_mix{false};
   amrex::Real* chemSpecies_Mwt;
   int* idx_chemspecies;
   int num_chemspecies;
@@ -119,6 +121,11 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.get("nominal_pressure_cgs", parm_in->m_h_parm.Pnom_cgs);
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
+
+    pp.query("has_Cp_mix", parm_in->m_h_parm.has_Cp_mix);
+    if (parm_in->m_h_parm.has_Cp_mix) {
+      parm_in->m_h_parm.idx_Cp_mix = get_var_index("CP", h_manf_data_in);
+    }
 
     // Molecular weights and indices of chemical species if requested
     pp.query("has_species_mw", parm_in->m_h_parm.has_species_mw);
