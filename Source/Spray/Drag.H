@@ -226,7 +226,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
 		  Y_ri_pc[spf]=Yfv[spf]+rule*(gpv.Yspec_fluid[spf]-Yfv[spf]);
 	  	  }
 
-	  //Define W_ij
+	  //Define W_ij. There are better ways to do this, but lets keep it simple for now
 	  amrex::Real W_ij[NUM_SPECIES][SPRAY_FUEL_NUM]={{1.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};	//Will need to cross check if this definition is correct
 
 	  //Now calculate \zi_{r,j}
@@ -263,6 +263,21 @@ struct calcVaporState<pele::physics::eos::Manifold>
 		  mw_skin += Y_ri_pc[n] / fdat.liqprops.mw_i(n);
 	  }
 	  mw_skin=1.0/mw_skin;
+
+	  for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
+	  	  {
+	  		  amrex::Print()<<"\nDroplet species mole fractions: "<<Y_l[n]<<" "<<Y_l[n] * mw_part / fdat.liqprops.mw_i(n);
+	  	  }
+
+	  for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
+	  	  	  {
+	  	  		  amrex::Print()<<"\nDroplet vapour mole fractions: "<<X_vapor[n];
+	  	  	  }
+
+	  for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
+	  {
+		  amrex::Print()<<"\nVapour state mass fraction: "<<Yfv[n];
+	  }
 
 
   }

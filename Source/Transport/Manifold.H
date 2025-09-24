@@ -38,8 +38,8 @@ struct ManifoldTransport
 
     if (wtr_get_lam) {
       // could be added to table if desired
-      amrex::Abort(
-        "Use of thermal conductivity is not supported for ManifoldTransport");
+      //amrex::Abort(
+      //  "Use of thermal conductivity is not supported for ManifoldTransport");
     }
 
     if (wtr_get_xi) {
