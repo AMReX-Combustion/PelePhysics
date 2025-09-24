@@ -168,6 +168,102 @@ struct calcVaporState<pele::physics::eos::Manifold>
 		  amrex::Real& cp_skin,
 		  amrex::Real& mw_skin)
   {
+	  amrex::Real mbar_vap = 0.; // mean molar mass of evaporated fuel in vapor
+
+	  //Calculate X_{v,n}- the vapour state
+
+	  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+	  {
+		  const int fspec = fdat.indx[spf];
+		  const int fdspec = fdat.dep_indx[spf];
+		  const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+		  amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
+
+		  amrex::Print()<<"\n Inside calcVaporstate "<<spf<<" "<<mw_li;
+
+		  //Antoine based psat- should I use the PeleMP psat_i
+		  amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf,0.0);
+
+		  amrex::Real Xl = Y_l[spf] * mw_part / mw_li;		//X_{d,n} in documentation
+		  amrex::Real Xv = Xl * pres_sat / gpv.p_fluid;		//X_{v,n} in documentation
+		  mbar_vap += Xv * mw_li;
+		  sumXVap += Xv;
+		  X_vapor[spf] = Xv;
+	  }
+
+	  //Calculate Y_{v,i}
+	  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yfv{0.0};
+	  amrex::Real sumYVap=0.0;
+	  amrex::Real totalmwx = mbar_vap + (1. - sumXVap) * gpv.mw_mix;
+	  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+	  {
+		  if (X_vapor[spf] > 0.)		//I think this check is redundant
+		  {
+			  const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+			  Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
+			  sumYVap += Yfv[spf];		//\sigma Y_{r,k}^{pc} in the document
+		  }
+	  }
+
+	  //Now lets calculate Y_{v,i}^{pc}. But thats the same as Yfv for now.
+	  //Now lets calculate Y_{g,i}^{pc}. But that is already stored in gpv.Yspec_fluid
+
+	  //Now calculate theta
+	  //numerator is already calculated as 1.0-sumYVap
+	  //Calculate the denominator
+	  amrex::Real sumYgipc=0.0;
+	  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+	  {
+		  sumYgipc+=gpv.Yspec_fluid[spf];
+	  }
+
+	  amrex::Real theta = (1.0-sumYVap)/(1.0-sumYgipc);
+
+	  //Now calculate Y_{r,i}^{pc}
+	  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_ri_pc{0.0};
+	  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+	  	  {
+		  Y_ri_pc[spf]=Yfv[spf]+rule*(gpv.Yspec_fluid[spf]-Yfv[spf]);
+	  	  }
+
+	  //Define W_ij
+	  amrex::Real W_ij[NUM_SPECIES][SPRAY_FUEL_NUM]={{1.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};	//Will need to cross check if this definition is correct
+
+	  //Now calculate \zi_{r,j}
+	  amrex::GpuArray<amrex::Real, NUM_SPECIES> zi_rj{0.0};
+	  amrex::GpuArray<amrex::Real, NUM_SPECIES> WYgi{0.0}; //W_ij Y_{g,i}^{pc}
+
+	  for(int n=0;n<NUM_SPECIES;n++)
+	  	  {
+
+	  		  amrex::Real sum=0.0;
+	  		  for(int nls=0;nls<SPRAY_FUEL_NUM;nls++)
+	  		  {
+	  			  sum+=W_ij[n][nls]*gpv.Yspec_fluid[nls];
+	  		  }
+	  		WYgi[n]=sum;
+	  	  }
+
+	  for(int n=0;n<NUM_SPECIES;n++)
+	  {
+
+		  amrex::Real sum=0.0;
+		  for(int nls=0;nls<SPRAY_FUEL_NUM;nls++)
+		  {
+			  sum+=W_ij[n][nls]*Y_ri_pc[nls];
+
+		  }
+		  zi_rj[n]=sum+theta*(gpv.Y_fluid[n]-WYgi[n]);
+	  }
+
+	  //Calculate the molecular weight of skin
+
+	  for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
+	  {
+		  mw_skin += Y_ri_pc[n] / fdat.liqprops.mw_i(n);
+	  }
+	  mw_skin=1.0/mw_skin;
+
 
   }
 };
@@ -321,9 +417,11 @@ calculateSpraySource(
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
 
+  //Storing Y_{d,n}
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SprayComps::pstateY + spf);
   }
+  //Calculating \rho_{d}
   amrex::Real rho_part = fdat.liqprops.rho_mix(Y_part, T_part, cBoilT);
 
   amrex::Real dt = flow_dt;
