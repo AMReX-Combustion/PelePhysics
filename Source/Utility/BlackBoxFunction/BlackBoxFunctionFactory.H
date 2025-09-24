@@ -33,7 +33,7 @@ struct BlackBoxFunctionFactory<TabulatedFunction<Dimension>>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  TabulatedFunction<Dimension>* get_func()  { return &func; }
+  TabulatedFunction<Dimension>* get_func() { return &func; }
 
 private:
   TabulatedFunction<Dimension> func;
