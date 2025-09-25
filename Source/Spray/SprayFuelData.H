@@ -113,7 +113,7 @@ struct SprayData
       // Use correlation to avoid calling eos.T2Hi for each boilT_i(spf)
       const amrex::Real Hboil_ref =
         liqprops.latent_correlation_i(liqprops.boilT_i(spf), spf);
-      
+
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =

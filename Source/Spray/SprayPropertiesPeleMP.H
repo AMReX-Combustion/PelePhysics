@@ -84,10 +84,11 @@ struct MPLiqProps : public BaseLiqProps
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  amrex::Real latent_i(const amrex::Real T, const amrex::Real h_gas_spf, const int spf) const
+  amrex::Real latent_i(
+    const amrex::Real T, const amrex::Real h_gas_spf, const int spf) const
   {
-    amrex::Real latent_heat_i = h_gas_spf + latentRef_minus_gasRefH_i[spf] -
-      cp_i(T, spf) * (T - ref_T);
+    amrex::Real latent_heat_i =
+      h_gas_spf + latentRef_minus_gasRefH_i[spf] - cp_i(T, spf) * (T - ref_T);
     return latent_heat_i;
   }
 
