@@ -31,7 +31,7 @@ parser.add_argument(
     help="Name of PelePhysics mechanism from Mechanisms",
 )
 parser.add_argument(
-    "-pp", "--pp_home", default="../../", help="Path to PelePhysics directory"
+    "-pp", "--pp_home", default="../../../", help="Path to PelePhysics directory"
 )
 parser.add_argument(
     "-f", "--fuel", default="CH4:1", help="Fuel stream mole-basis Cantera composition"
@@ -41,6 +41,12 @@ parser.add_argument(
     "--oxidizer",
     default="O2:1, N2:3.76",
     help="Oxidizer stream mole-basis Cantera composition",
+)
+parser.add_argument(
+    "-Y",
+    "--massfrac",
+    default=None,
+    help="String of mass fractions (overrides -f and -ox options)",
 )
 parser.add_argument(
     "-T",
@@ -74,6 +80,7 @@ args = parser.parse_args()
 mechanism = args.mechanism
 fuel_species = args.fuel
 ox_species = args.oxidizer
+Y_species = args.massfrac
 
 # General
 p = args.pressure  # pressure [Pa]
@@ -95,7 +102,11 @@ refine_grid = True  # True to enable refinement
 
 # Print information
 label_pre = "pmf-" + mechanism
-label = fuel_species.split(":")[0] + "_PHI" + str(phi) + "_T" + str(tin) + "_P" + str(p)
+if Y_species is not None:
+    num_input_species = len([item for item in Y_species.split(',') if ':' in item])
+    label = "Y" + str(num_input_species) + "_T" + str(tin) + "_P" + str(p)
+else:
+    label = fuel_species.split(":")[0] + "_PHI" + str(phi) + "_T" + str(tin) + "_P" + str(p)
 
 #################
 # Find mechanism in PelePhysics
@@ -149,8 +160,14 @@ mech_path = os.path.join(pp_path, mech_path)
 
 # Set gas state to that of the unburned gas
 gas = Solution(mech_path, "gas")
-gas.TP = tin, p
-gas.set_equivalence_ratio(phi, fuel_species, ox_species, basis="mole")
+if Y_species is None:
+    gas.TP = tin, p
+    gas.set_equivalence_ratio(phi, fuel_species, ox_species, basis="mole")
+else:
+    gas.TPY = tin, p, Y_species
+    print("\nMass fractions read into Cantera:")
+    for spec, massfrac in zip(gas.species_names, gas.Y):
+        print(f"  {spec}: {massfrac}")
 
 # Create the free laminar premixed flame
 f = FreeFlame(gas, initial_grid)
