@@ -95,6 +95,7 @@ struct MPLiqProps : public BaseLiqProps
   AMREX_FORCE_INLINE
   amrex::Real latent_correlation_i(const amrex::Real T, const int spf) const
   {
+    // Correlation to be used with manifold model
     // Since we only know the latent heat at the reference temperature,
     // modify Watsons power law to find latent heat at any temperature
     return latent[spf] *

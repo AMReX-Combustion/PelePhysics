@@ -77,6 +77,9 @@ calcVaporState(
     // Compute latent heat
     amrex::Real part_latent = fdat.liqprops.latent_i(T_part, h_part, spf);
     // TODO: for Manifold model part_latent should be latent_correlation_i
+    // amrex::Real part_latent =
+    //   liqprops.latent_correlation_i(liqprops.boilT_i(spf), spf);
+
     L_fuel[spf] = part_latent;
 
     amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);

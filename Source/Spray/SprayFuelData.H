@@ -112,8 +112,10 @@ struct SprayData
       const amrex::Real Hboil_ref =
         liqprops.latent_i(liqprops.boilT_i(spf), h_gas, spf);
       
-      // TODO: Add set Hboil_ref to latent_correlation_i for Manifold model
-
+      // TODO: Set Hboil_ref using latent_correlation_i for Manifold model
+      // const amrex::Real Hboil_ref =
+      //  liqprops.latent_correlation_i(liqprops.boilT_i(spf), spf);
+      
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
       cBoilT[spf] =
