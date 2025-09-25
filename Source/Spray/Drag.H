@@ -204,7 +204,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
       }
     }
 
-    // Now lets calculate Y_{v,i}^{pc}. But thats the same as Yfv for now.
+    // Now lets calculate Y_{v,i}^{pc}. But that is the same as Yfv for now.
     // Now lets calculate Y_{g,i}^{pc}. But that is already stored in
     // gpv.Yspec_fluid
 
