@@ -101,15 +101,18 @@ struct SprayData
   // Estimate the boil temperature
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void calcBoilT(const GasPhaseVals& gpv, amrex::Real* cBoilT) const
+  void calcBoilT(const GasPhaseVals& gpv, const amrex::Real* h_gas, amrex::Real* cBoilT) const
   {
     const amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
     const amrex::Real PATM =
       pele::physics::Constants::PATM * SprayUnits::pres_conv;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const amrex::Real mw_li = liqprops.mw_i(spf);
+
       const amrex::Real Hboil_ref =
-        liqprops.latent_i(liqprops.boilT_i(spf), spf);
+        liqprops.latent_i(liqprops.boilT_i(spf), h_gas, spf);
+      
+      // TODO: Add set Hboil_ref to latent_correlation_i for Manifold model
 
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation

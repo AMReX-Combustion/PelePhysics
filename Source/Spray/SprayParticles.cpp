@@ -386,7 +386,13 @@ SprayParticleContainer::updateParticles(
               gpv, state_box, rhoarr, rhoYarr, Tarr, momarr, engarr,
               indx_array.data(), weights.data(), fdat->eosparm);
             // Solve for avg mw and pressure at droplet location
-            fdat->calcBoilT(gpv, cBoilT.data());
+            amrex::Real T_part = p.rdata(SprayComps::pstateT);
+            amrex::GpuArray<amrex::Real, NUM_SPECIES> h_part;
+            eos.T2Hi(T_part, h_part.data());
+            for (int n = 0; n < NUM_SPECIES; ++n) {
+              h_part[n] *= SprayUnits::eng_conv;
+            }
+            fdat->calcBoilT(gpv, h_part, cBoilT.data());
             if (is_film) {
               calculateFilmSource(
                 sub_dt, gpv, *fdat, p, cBoilT.data(), ltransparm);
