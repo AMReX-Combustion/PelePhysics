@@ -122,10 +122,12 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
 
+#ifdef PELE_USE_SPRAY
     pp.query("has_Cp_mix", parm_in->m_h_parm.has_Cp_mix);
     if (parm_in->m_h_parm.has_Cp_mix) {
       parm_in->m_h_parm.idx_Cp_mix = get_var_index("CP", h_manf_data_in);
     }
+#endif
 
     // Molecular weights and indices of chemical species if requested
     pp.query("has_species_mw", parm_in->m_h_parm.has_species_mw);

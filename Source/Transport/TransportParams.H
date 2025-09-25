@@ -215,8 +215,10 @@ struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
       "DIFF", &parm_in->m_host_only_parm.manfunc_par->host_parm());
     tparm->idx_mu = get_var_index(
       "VISC", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+#ifdef PELE_USE_SPRAY
     tparm->idx_cp =
       get_var_index("CP", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+#endif
   }
 
   static void host_deallocate(
