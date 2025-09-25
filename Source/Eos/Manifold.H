@@ -84,7 +84,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void Y2WBAR(const amrex::Real* Y, amrex::Real& WBAR) const
+  void Y2WBAR(const amrex::Real* Y, amrex::Real& WBAR)
   {
     if (eosparm->idx_Wbar >= 0) {
       manfunc.get_func()->get_value(eosparm->idx_Wbar, Y, WBAR);
