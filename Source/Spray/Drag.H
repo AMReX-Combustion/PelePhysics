@@ -159,8 +159,8 @@ struct calcVaporState<pele::physics::eos::Manifold>
     const amrex::Real& C_eps,
     const amrex::Real& mw_part,
     const amrex::Real* Y_l,
-    const amrex::Real* h_part,
-    const amrex::Real* cp_n,
+    const amrex::Real* /*h_part*/,
+    const amrex::Real* /*cp_n*/,
     const amrex::Real* cBoilT,
     amrex::Real* Y_skin,
     amrex::Real* X_vapor,
@@ -176,8 +176,8 @@ struct calcVaporState<pele::physics::eos::Manifold>
     // Calculate X_{v,n}- the vapour state
 
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      const int fspec = fdat.indx[spf];
-      const int fdspec = fdat.dep_indx[spf];
+      // const int fspec = fdat.indx[spf];
+      // const int fdspec = fdat.dep_indx[spf];
       const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
       amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
 
