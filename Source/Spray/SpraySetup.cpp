@@ -242,6 +242,7 @@ SprayParticleContainer::spraySetup(
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
   eos.molecular_weight(mw.data());
   m_sprayData->liqprops.init_mw(mw, m_sprayData->indx.data());
+  // Note: latentRef_minus_gasRefH_i is not needed for the Manifold model
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
   for (int ns = 0; ns < SPRAY_FUEL_NUM; ++ns) {
     const int fspec = m_sprayData->indx[ns];
