@@ -33,7 +33,7 @@ struct Manifold
 
   static std::string identifier() { return "Manifold"; }
 
-  // ReallArrayLike can be anything with an [] operator that returns
+  // RealArrayLike can be anything with an [] operator that returns
   // amrex::Real&
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
@@ -42,7 +42,7 @@ struct Manifold
     R = RY[first + NUM_SPECIES - 1];
   }
 
-  // ReallArrayLike can be anything with an [] operator that returns
+  // RealArrayLike can be anything with an [] operator that returns
   // amrex::Real&
   template <typename RealArrayLike1, typename RealArrayLike2>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void RY2RRinvY(
@@ -190,13 +190,17 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  TY2Cp(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& Cp)
+  static void TY2Cp(
+    const amrex::Real /*T*/, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
   {
-    // TODO: FIXME (need to remove enthalpy calculations from
-    // PeleLM)
-    Cp = 100.0;
-    // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    if (eosparm->idx_Cp >= 0) {
+      manfunc.get_func()->get_value(eosparm->idx_Cp, Y, Cp);
+    } else {
+      // TODO: FIXME (need to remove enthalpy calculations from
+      // PeleLM)
+      Cp = 1.234e56;
+      // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -205,12 +209,9 @@ struct Manifold
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,
     const amrex::Real* /*Y[]*/,
-    amrex::Real& Cp)
+    amrex::Real& /*Cp*/)
   {
-    // TODO: FIXME (need to remove enthalpy calculations from
-    // PeleLM)
-    Cp = 100.0;
-    // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    amrex::Error("RTY2Cp is not yet implemented for Manifold EOS");
   }
 
   AMREX_GPU_HOST_DEVICE
