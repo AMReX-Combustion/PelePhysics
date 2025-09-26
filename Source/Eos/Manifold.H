@@ -205,13 +205,13 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RTY2Cp(
+  void RTY2Cp(
     const amrex::Real /*R*/,
-    const amrex::Real /*T*/,
-    const amrex::Real* /*Y[]*/,
-    amrex::Real& /*Cp*/)
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cp)
   {
-    amrex::Error("RTY2Cp is not yet implemented for Manifold EOS");
+    TY2Cp(T, Y, Cp);
   }
 
   AMREX_GPU_HOST_DEVICE
