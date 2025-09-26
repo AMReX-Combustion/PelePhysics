@@ -185,7 +185,7 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void T2Cpi(const amrex::Real /*T*/, amrex::Real* /*Cpi[NUM_SPECIES]*/)
   {
-    //amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
+    // amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
   }
 
   AMREX_GPU_HOST_DEVICE

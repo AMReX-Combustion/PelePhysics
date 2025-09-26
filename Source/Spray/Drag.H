@@ -439,7 +439,7 @@ calculateSpraySource(
           amrex::Real X_norm = X_vapor[spf] / sumXVap;
           Ddiag[fspec] *= X_norm;
           rhoDtotal += Ddiag[fspec];
-          cp_fuel += Y_skin[fspec];// * cp_n[fspec];
+          cp_fuel += Y_skin[fspec]; // * cp_n[fspec];
 
           sumYSkin += Y_skin[fspec];
         }
