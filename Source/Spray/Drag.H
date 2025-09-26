@@ -178,8 +178,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
     // Calculate X_{v,n}- the vapour state
 
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      // const int fspec = fdat.indx[spf];
-      // const int fdspec = fdat.dep_indx[spf];
+      const int fdspec = fdat.dep_indx[spf];
       const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
       amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
 
@@ -188,48 +187,45 @@ struct calcVaporState<pele::physics::eos::Manifold>
         fdat.liqprops.latent_correlation_i(fdat.liqprops.boilT_i(spf), spf);
       L_fuel[spf] = part_latent;
 
-      // Antoine based psat- should I use the PeleMP psat_i
+      // psat - any approach should work because we populated part_latent
       amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);
 
-      amrex::Real Xl = Y_l[spf] * mw_part / mw_li;  // X_{d,n} in documentation
-      amrex::Real Xv = Xl * pres_sat / gpv.p_fluid; // X_{v,n} in documentation
-      mbar_vap += Xv * mw_li;
-      sumXVap += Xv;
-      X_vapor[spf] = Xv;
-    }
+      //
+      amrex::Real X_fluid = gpv.Yspec_fluid[fdspec] * gpv.mw_mix / mw_li;
 
-    // Calculate Y_{v,i}
-    amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yfv{0.0};
-    amrex::Real sumYVap = 0.0;
-    amrex::Real totalmwx = mbar_vap + (1. - sumXVap) * gpv.mw_mix;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      if (X_vapor[spf] > 0.) // I think this check is redundant
-      {
-        const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
-        Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
-        sumYVap += Yfv[spf]; //\sigma Y_{v,k}^{pc} in the document
+      if (pres_sat > X_fluid * gpv.p_fluid) {
+        amrex::Real Xl = Y_l[spf] * mw_part / mw_li; // X_{d,n} in documentation
+        amrex::Real Xv =
+          Xl * pres_sat / gpv.p_fluid; // X_{v,n} in documentation
+        mbar_vap += Xv * mw_li;
+        sumXVap += Xv;
+        X_vapor[spf] = Xv;
+      } else {
+        X_vapor[spf] = 0.;
       }
     }
 
-    // Now lets calculate Y_{v,i}^{pc}. But that is the same as Yfv for now.
-    // Now lets calculate Y_{g,i}^{pc}. But that is already stored in
-    // gpv.Yspec_fluid
+    // Y_{g,i}^{pc}  is already stored in  gpv.Yspec_fluid
+    // Calculate Y_{v,i}, Y_{r,i}^{pc}, and sum Y_{r,i}^{pc}
+    amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yfv{0.0};
+    amrex::Real sumYVap = 0.0;
+    amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_ri_pc{0.0};
+    amrex::Real sumYripc = 0.0;
+    amrex::Real sumYgipc = 0.0;
+    amrex::Real totalmwx = mbar_vap + (1. - sumXVap) * gpv.mw_mix;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      if (X_vapor[spf] > 0.) {
+        const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+        Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
+        sumYVap += Yfv[spf]; //\sigma Y_{v,k}^{pc} in the document
+        Y_ri_pc[spf] = Yfv[spf] + rule * (gpv.Yspec_fluid[spf] - Yfv[spf]);
+        sumYripc += Y_ri_pc[spf];         //\sigma Y_{r,k}^{pc} in the document
+        sumYgipc += gpv.Yspec_fluid[spf]; //\sigma Y_{g,k}^{pc} in the document
+      }
+    }
 
     // Now calculate theta
-    // numerator is already calculated as 1.0-sumYVap
-    // Calculate the denominator
-    amrex::Real sumYgipc = 0.0;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      sumYgipc += gpv.Yspec_fluid[spf];
-    }
-
-    amrex::Real theta = (1.0 - sumYVap) / (1.0 - sumYgipc);
-
-    // Now calculate Y_{r,i}^{pc}
-    amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_ri_pc{0.0};
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Y_ri_pc[spf] = Yfv[spf] + rule * (gpv.Yspec_fluid[spf] - Yfv[spf]);
-    }
+    amrex::Real theta = (1.0 - sumYripc) / (1.0 - sumYgipc);
 
     // Now calculate \zi_{r,j}
     amrex::GpuArray<amrex::Real, NUM_SPECIES> zi_rj{0.0};
@@ -240,11 +236,10 @@ struct calcVaporState<pele::physics::eos::Manifold>
     // row exchanged form of the identity matrix
 
     for (int nls = 0; nls < SPRAY_FUEL_NUM; nls++) {
-      WYgi[fdat.dep_indx[nls]] = gpv.Yspec_fluid[nls];
-    }
-
-    for (int nls = 0; nls < SPRAY_FUEL_NUM; nls++) {
-      WYri[fdat.dep_indx[nls]] = Y_ri_pc[nls];
+      if (X_vapor[nls] > 0.) {
+        WYgi[fdat.dep_indx[nls]] = gpv.Yspec_fluid[nls];
+        WYri[fdat.dep_indx[nls]] = Y_ri_pc[nls];
+      }
     }
 
     for (int n = 0; n < NUM_SPECIES; n++) {
@@ -254,6 +249,10 @@ struct calcVaporState<pele::physics::eos::Manifold>
 
     eos.Y2WBAR(Y_skin, mw_skin);
     mw_skin *= SprayUnits::mass_conv;
+
+    // T_skin is just a dummy here
+    eos.TY2Cp(T_skin, Y_skin, cp_skin);
+    cp_skin *= SprayUnits::eng_conv;
 
     B_M = (sumYVap - sumYgipc) / amrex::max(C_eps, (1. - sumYVap));
     B_M = amrex::min(20., B_M);
