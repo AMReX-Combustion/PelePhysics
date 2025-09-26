@@ -46,9 +46,9 @@ template <typename EOSType>
 struct TransParm<EOSType, ManifoldTransport>
 {
   const BlackBoxFunctionData* manf_data;
-  int idx_rhoD{0};
-  int idx_mu{0};
-  int idx_cp{0};
+  int idx_rhoD{-1};
+  int idx_mu{-1};
+  int idx_cp{-1};
 };
 
 template <typename EOSType>

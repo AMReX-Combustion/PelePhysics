@@ -40,7 +40,9 @@ struct ManifoldTransport
       // Under the Lewis number=1 assumption, lambda=rho*Cp*D
       amrex::Real cp = 0.0;
       amrex::Real rhoD = 0.0;
-      manfunc.get_func()->get_value(tparm->idx_cp, Yloc, cp);
+      if (tparm->idx_cp > 0) {
+        manfunc.get_func()->get_value(tparm->idx_cp, Yloc, cp);
+      }
       manfunc.get_func()->get_value(tparm->idx_rhoD, Yloc, rhoD);
       lam = cp * rhoD;
     }

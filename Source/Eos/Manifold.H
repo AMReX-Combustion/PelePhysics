@@ -190,7 +190,7 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void TY2Cp(
+  void TY2Cp(
     const amrex::Real /*T*/, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
   {
     if (eosparm->idx_Cp >= 0) {

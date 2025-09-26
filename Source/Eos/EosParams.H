@@ -122,9 +122,9 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
 
 #ifdef PELE_USE_SPRAY
-    parm_in->m_h_parm.idx_Cp_mix = get_var_index("CP", h_manf_data_in);
+    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in);
 #else
-    parm_in->m_h_parm.idx_Cp_mix = get_var_index("CP", h_manf_data_in, false);
+    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, false);
 #endif
 
     // Molecular weights and indices of chemical species if requested
