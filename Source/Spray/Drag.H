@@ -59,7 +59,7 @@ struct calcVaporState
     const amrex::Real& C_eps,
     const amrex::Real& mw_part,
     const amrex::Real* Y_l,
-    const amrex::Real* h_part,
+    const amrex::Real* h_gas,
     const amrex::Real* cp_n,
     const amrex::Real* cBoilT,
     amrex::Real* Y_skin,
@@ -77,11 +77,13 @@ struct calcVaporState
       const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
       amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
 
-      // Compute latent heat
-      amrex::Real part_latent =
-        h_part[fspec] + fdat.liqprops.latentRef_minus_gasRefH_i[spf] -
-        fdat.liqprops.cp_i(T_part, spf) * (T_part - fdat.liqprops.ref_T);
-      L_fuel[spf] = part_latent;
+    // Compute latent heat
+    amrex::Real part_latent = fdat.liqprops.latent_i(T_part, h_gas[fspec], spf);
+    // TODO: for Manifold model part_latent should be latent_correlation_i
+    // amrex::Real part_latent =
+    //   liqprops.latent_correlation_i(liqprops.boilT_i(spf), spf);
+
+    L_fuel[spf] = part_latent;
 
       amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);
 
@@ -159,7 +161,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
     const amrex::Real& C_eps,
     const amrex::Real& mw_part,
     const amrex::Real* Y_l,
-    const amrex::Real* /*h_part*/,
+    const amrex::Real* /*h_gas*/,
     const amrex::Real* /*cp_n*/,
     const amrex::Real* cBoilT,
     amrex::Real* Y_skin,
@@ -282,7 +284,7 @@ calculateSpraySource(
     get_lambda = false;
   }
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> h_part;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> h_gas;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cp_n;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
@@ -332,10 +334,10 @@ calculateSpraySource(
     }
     // Calculate the C_p at the skin temperature for each species
     eos.T2Cpi(T_skin, cp_n.data());
-    eos.T2Hi(T_part, h_part.data());
+    eos.T2Hi(T_part, h_gas.data());
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_skin[n] = 0.;
-      h_part[n] *= SprayUnits::eng_conv;
+      h_gas[n] *= SprayUnits::eng_conv;
       cp_n[n] *= SprayUnits::eng_conv;
     }
     amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
@@ -345,7 +347,7 @@ calculateSpraySource(
 
     if (fdat.mass_trans) {
       calcVaporState<pele::physics::PhysicsType::eos_type>()(
-        fdat, gpv, rule, T_part, C_eps, mw_part, Y_part.data(), h_part.data(),
+        fdat, gpv, rule, T_part, C_eps, mw_part, Y_part.data(), h_gas.data(),
         cp_n.data(), cBoilT, Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M,
         sumXVap, cp_skin, mw_skin);
     } else {
@@ -558,8 +560,11 @@ calculateSpraySource(
     amrex::Real midot =
       (newY * pmass - oldY * startmass) / (fdat.dtmod * flow_dt);
     gpv.fluid_Y_dot[spf] = num_ppp * midot;
-    // gpv.fluid_eng_src += num_ppp * midot * h_part[fdspec];
+#ifdef USE_MANIFOLD_EOS
     gpv.fluid_eng_src = 0.0;
+#else
+    gpv.fluid_eng_src += num_ppp * midot * h_gas[fdspec];
+#endif
     p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
   }
   AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
