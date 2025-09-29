@@ -443,12 +443,17 @@ calculateSpraySource(
           sumYSkin += Y_skin[fspec];
         }
 
+#ifndef USE_MANIFOLD_EOS
         amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_fuel_skin;
         Y_fuel_skin.fill(0.0);
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           Y_fuel_skin[fdat.indx[spf]] = Y_skin[fdat.indx[spf]] / sumYSkin;
         }
         eos.TY2Cp(T_skin, Y_fuel_skin.data(), cp_fuel);
+#else
+        // Manifold EOS: for now, just taking mixture Cp rather than Fuel Cp
+        eos.TY2Cp(T_skin, Y_skin.data(), cp_fuel);
+#endif
         cp_fuel *= SprayUnits::eng_conv;
 
         amrex::Real Sc_skin = mu_skin / rhoDtotal;
