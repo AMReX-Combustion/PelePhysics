@@ -1,10 +1,10 @@
 !****************************************************************************
 !
-! An 83-species non-reacting mechanism for jet fuels based on GCxGC data.
+! A 93-species non-reacting mechanism for jet fuels based on GCxGC data.
 ! The mechanism corresponds to the POSF fuels available in FuelLib:
 ! https://github.com/nrel/fuellib.
 !
-! Thermo and transport properties from the RMG (Reaction Mechanism Generator) 
+! Thermo and transport properties from the Reaction Mechanism Generator (RMG) 
 ! software: https://rmg.mit.edu/molecule_search
 ! 
 !****************************************************************************

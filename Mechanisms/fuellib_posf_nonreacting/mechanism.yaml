@@ -1,15 +1,12 @@
 description: |-
   ****************************************************************************
 
-   A 67-species non-reacting mechanism for testing evaporation models.
+   A 93-species non-reacting mechanism for jet fuels based on GCxGC data.
+   The mechanism corresponds to the POSF fuels available in FuelLib:
+   https://github.com/nrel/fuellib.
 
-   based on:
-
-   1. Work performed under the auspices of the U.S. Department of Energy by 
-      Lawrence Livermore National Laboratory under contract DE-AC52-07NA27344.
-
-   2. RMG (Reaction Mechanism Generator) software
-      https://rmg.mit.edu/molecule_search
+   Thermo and transport properties from the Reaction Mechanism Generator (RMG) 
+   software: https://rmg.mit.edu/molecule_search
 
   ****************************************************************************
 
@@ -115,11 +112,11 @@ description: |-
    HEPTYLDECALIN-2    2-heptyldecalin
 
    tricycloparaffins:
-   TRICYCLO-C10       SMILES C1CC2C(C1)C1CCCC21
-   TRICYCLO-C11       SMILES C1CC2CC3CCCC3C2C1
-   TRICYCLO-C12       SMILES C1CC2CC3CCCC3CC2C1
-   TRICYCLO-C13       SMILES C1CCC2C(C1)CC1CCCCC12
-   TRICYCLO-C14       SMILES C1CCC2CC3CCCCC3CC2C1
+   TRICYCLO-C10       SMILES: C1CC2C(C1)C1CCCC21
+   TRICYCLO-C11       SMILES: C1CC2CC3CCCC3C2C1
+   TRICYCLO-C12       SMILES: C1CC2CC3CCCC3CC2C1
+   TRICYCLO-C13       SMILES: C1CCC2C(C1)CC1CCCCC12
+   TRICYCLO-C14       SMILES: C1CCC2CC3CCCCC3CC2C1
 
    alkenes:
    DECENE-1           1-decene
@@ -130,7 +127,7 @@ description: |-
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
 cantera-version: 3.1.0
-date: Mon, 06 Oct 2025 17:16:42 -0600
+date: Tue, 07 Oct 2025 08:28:17 -0600
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
