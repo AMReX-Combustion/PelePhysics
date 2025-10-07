@@ -1,0 +1,27 @@
+# -----------------------------------------------------------------------------
+# Liquid fuel properties for GCM in Pele
+# Fuel: posf11498
+# Number of compounds: 1
+# Generated: 2025-10-06 23:03:25
+# FuelLib remote URL: https://github.com/NREL/FuelLib.git
+# Git commit: 6407adfbd454a12b3c58ac8087c745b3b378a2d8
+# Units: MKS
+# -----------------------------------------------------------------------------
+
+particles.fuel_species = POSF11498
+particles.Y_0 = 1.0
+particles.dep_fuel_species = POSF11498
+
+# Properties for POSF11498 in MKS
+particles.POSF11498_family = 0 # saturated hydrocarbons
+particles.POSF11498_molar_weight = 0.178057 # kg/mol
+particles.POSF11498_crit_temp = 659.377390 # K
+particles.POSF11498_crit_press = 1724073.536384 # Pa
+particles.POSF11498_crit_vol = 0.000735 # m^3/mol
+particles.POSF11498_boil_temp = 489.579528 # K
+particles.POSF11498_acentric_factor = 0.563939 # -
+particles.POSF11498_molar_vol = 0.000239 # m^3/mol
+particles.POSF11498_cp_a = 1624.134428 # J/kg/K
+particles.POSF11498_cp_b = 3167.831374 # J/kg/K
+particles.POSF11498_cp_c = -1088.979827 # J/kg/K
+particles.POSF11498_latent = 349104.996313 # J/kg

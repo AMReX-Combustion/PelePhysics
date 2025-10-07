@@ -1,0 +1,195 @@
+# -----------------------------------------------------------------------------
+# Liquid fuel properties for GCM in Pele
+# Fuel: posf11498
+# Number of compounds: 13
+# Generated: 2025-10-06 22:15:57
+# FuelLib remote URL: https://github.com/NREL/FuelLib.git
+# Git commit: 049ae2ad0ca26a6b73d28b9509a6a57b4e6a4bdf
+# Units: MKS
+# -----------------------------------------------------------------------------
+
+particles.fuel_species = C7H16-2 C8H18-2 C9H20-2 C10H22-2 C11H24-2 C12H26-2 C13H28-2 C14H30-2 C16H34-2 C20H42-2 C24H50-2 DODECENE-1 HEXADECENE-1
+particles.Y_0 = 0.00020008003201280514 0.006102440976390557 0.0017006802721088437 0.0022008803521408565 0.005202080832332934 0.7831132452981193 0.012304921968787515 0.005302120848339337 0.16256502601040418 0.016906762705082033 0.0012004801920768309 0.0008003201280512205 0.0024009603841536617
+particles.dep_fuel_species = C7H16-2 C8H18-2 C9H20-2 C10H22-2 C11H24-2 C12H26-2 C13H28-2 C14H30-2 C16H34-2 C20H42-2 C24H50-2 DODECENE-1 HEXADECENE-1
+
+# Properties for C7H16-2 in MKS
+particles.C7H16-2_family = 0 # saturated hydrocarbons
+particles.C7H16-2_molar_weight = 0.100000 # kg/mol
+particles.C7H16-2_crit_temp = 533.414696 # K
+particles.C7H16-2_crit_press = 2807608.841387 # Pa
+particles.C7H16-2_crit_vol = 0.000424 # m^3/mol
+particles.C7H16-2_boil_temp = 363.532943 # K
+particles.C7H16-2_acentric_factor = 0.321645 # -
+particles.C7H16-2_molar_vol = 0.000148 # m^3/mol
+particles.C7H16-2_cp_a = 1629.817000 # J/kg/K
+particles.C7H16-2_cp_b = 3128.352000 # J/kg/K
+particles.C7H16-2_cp_c = -1064.522000 # J/kg/K
+particles.C7H16-2_latent = 361900.000000 # J/kg
+
+# Properties for C8H18-2 in MKS
+particles.C8H18-2_family = 0 # saturated hydrocarbons
+particles.C8H18-2_molar_weight = 0.114000 # kg/mol
+particles.C8H18-2_crit_temp = 563.960096 # K
+particles.C8H18-2_crit_press = 2537429.701816 # Pa
+particles.C8H18-2_crit_vol = 0.000479 # m^3/mol
+particles.C8H18-2_boil_temp = 393.112191 # K
+particles.C8H18-2_acentric_factor = 0.365295 # -
+particles.C8H18-2_molar_vol = 0.000164 # m^3/mol
+particles.C8H18-2_cp_a = 1628.213158 # J/kg/K
+particles.C8H18-2_cp_b = 3139.723684 # J/kg/K
+particles.C8H18-2_cp_c = -1071.539474 # J/kg/K
+particles.C8H18-2_latent = 358245.614035 # J/kg
+
+# Properties for C9H20-2 in MKS
+particles.C9H20-2_family = 0 # saturated hydrocarbons
+particles.C9H20-2_molar_weight = 0.128000 # kg/mol
+particles.C9H20-2_crit_temp = 590.090009 # K
+particles.C9H20-2_crit_press = 2306269.735503 # Pa
+particles.C9H20-2_crit_vol = 0.000535 # m^3/mol
+particles.C9H20-2_boil_temp = 418.946444 # K
+particles.C9H20-2_acentric_factor = 0.409041 # -
+particles.C9H20-2_molar_vol = 0.000181 # m^3/mol
+particles.C9H20-2_cp_a = 1626.960156 # J/kg/K
+particles.C9H20-2_cp_b = 3148.607812 # J/kg/K
+particles.C9H20-2_cp_c = -1077.021875 # J/kg/K
+particles.C9H20-2_latent = 355390.625000 # J/kg
+
+# Properties for C10H22-2 in MKS
+particles.C10H22-2_family = 0 # saturated hydrocarbons
+particles.C10H22-2_molar_weight = 0.142000 # kg/mol
+particles.C10H22-2_crit_temp = 612.921246 # K
+particles.C10H22-2_crit_press = 2106961.769975 # Pa
+particles.C10H22-2_crit_vol = 0.000591 # m^3/mol
+particles.C10H22-2_boil_temp = 441.878312 # K
+particles.C10H22-2_acentric_factor = 0.452742 # -
+particles.C10H22-2_molar_vol = 0.000197 # m^3/mol
+particles.C10H22-2_cp_a = 1625.954225 # J/kg/K
+particles.C10H22-2_cp_b = 3155.740141 # J/kg/K
+particles.C10H22-2_cp_c = -1081.423239 # J/kg/K
+particles.C10H22-2_latent = 353098.591549 # J/kg
+
+# Properties for C11H24-2 in MKS
+particles.C11H24-2_family = 0 # saturated hydrocarbons
+particles.C11H24-2_molar_weight = 0.156000 # kg/mol
+particles.C11H24-2_crit_temp = 633.194080 # K
+particles.C11H24-2_crit_press = 1933911.744394 # Pa
+particles.C11H24-2_crit_vol = 0.000647 # m^3/mol
+particles.C11H24-2_boil_temp = 462.494571 # K
+particles.C11H24-2_acentric_factor = 0.496289 # -
+particles.C11H24-2_molar_vol = 0.000214 # m^3/mol
+particles.C11H24-2_cp_a = 1625.128846 # J/kg/K
+particles.C11H24-2_cp_b = 3161.592308 # J/kg/K
+particles.C11H24-2_cp_c = -1085.034615 # J/kg/K
+particles.C11H24-2_latent = 351217.948718 # J/kg
+
+# Properties for C12H26-2 in MKS
+particles.C12H26-2_family = 0 # saturated hydrocarbons
+particles.C12H26-2_molar_weight = 0.170000 # kg/mol
+particles.C12H26-2_crit_temp = 651.424545 # K
+particles.C12H26-2_crit_press = 1782701.855285 # Pa
+particles.C12H26-2_crit_vol = 0.000703 # m^3/mol
+particles.C12H26-2_boil_temp = 481.220278 # K
+particles.C12H26-2_acentric_factor = 0.539602 # -
+particles.C12H26-2_molar_vol = 0.000230 # m^3/mol
+particles.C12H26-2_cp_a = 1624.439412 # J/kg/K
+particles.C12H26-2_cp_b = 3166.480588 # J/kg/K
+particles.C12H26-2_cp_c = -1088.051176 # J/kg/K
+particles.C12H26-2_latent = 349647.058824 # J/kg
+
+# Properties for C13H28-2 in MKS
+particles.C13H28-2_family = 0 # saturated hydrocarbons
+particles.C13H28-2_molar_weight = 0.184000 # kg/mol
+particles.C13H28-2_crit_temp = 667.986751 # K
+particles.C13H28-2_crit_press = 1649805.776114 # Pa
+particles.C13H28-2_crit_vol = 0.000758 # m^3/mol
+particles.C13H28-2_boil_temp = 498.373228 # K
+particles.C13H28-2_acentric_factor = 0.582618 # -
+particles.C13H28-2_molar_vol = 0.000246 # m^3/mol
+particles.C13H28-2_cp_a = 1623.854891 # J/kg/K
+particles.C13H28-2_cp_b = 3170.625000 # J/kg/K
+particles.C13H28-2_cp_c = -1090.608696 # J/kg/K
+particles.C13H28-2_latent = 348315.217391 # J/kg
+
+# Properties for C14H30-2 in MKS
+particles.C14H30-2_family = 0 # saturated hydrocarbons
+particles.C14H30-2_molar_weight = 0.198000 # kg/mol
+particles.C14H30-2_crit_temp = 683.160587 # K
+particles.C14H30-2_crit_press = 1532381.185997 # Pa
+particles.C14H30-2_crit_vol = 0.000814 # m^3/mol
+particles.C14H30-2_boil_temp = 514.197261 # K
+particles.C14H30-2_acentric_factor = 0.625291 # -
+particles.C14H30-2_molar_vol = 0.000263 # m^3/mol
+particles.C14H30-2_cp_a = 1623.353030 # J/kg/K
+particles.C14H30-2_cp_b = 3174.183333 # J/kg/K
+particles.C14H30-2_cp_c = -1092.804545 # J/kg/K
+particles.C14H30-2_latent = 347171.717172 # J/kg
+
+# Properties for C16H34-2 in MKS
+particles.C16H34-2_family = 0 # saturated hydrocarbons
+particles.C16H34-2_molar_weight = 0.226000 # kg/mol
+particles.C16H34-2_crit_temp = 710.156316 # K
+particles.C16H34-2_crit_press = 1335116.333436 # Pa
+particles.C16H34-2_crit_vol = 0.000926 # m^3/mol
+particles.C16H34-2_boil_temp = 542.584838 # K
+particles.C16H34-2_acentric_factor = 0.709479 # -
+particles.C16H34-2_molar_vol = 0.000296 # m^3/mol
+particles.C16H34-2_cp_a = 1622.535841 # J/kg/K
+particles.C16H34-2_cp_b = 3179.977434 # J/kg/K
+particles.C16H34-2_cp_c = -1096.380088 # J/kg/K
+particles.C16H34-2_latent = 345309.734513 # J/kg
+
+# Properties for C20H42-2 in MKS
+particles.C20H42-2_family = 0 # saturated hydrocarbons
+particles.C20H42-2_molar_weight = 0.282000 # kg/mol
+particles.C20H42-2_crit_temp = 754.435295 # K
+particles.C20H42-2_crit_press = 1048087.291698 # Pa
+particles.C20H42-2_crit_vol = 0.001149 # m^3/mol
+particles.C20H42-2_boil_temp = 589.715293 # K
+particles.C20H42-2_acentric_factor = 0.872725 # -
+particles.C20H42-2_molar_vol = 0.000361 # m^3/mol
+particles.C20H42-2_cp_a = 1621.388298 # J/kg/K
+particles.C20H42-2_cp_b = 3188.113830 # J/kg/K
+particles.C20H42-2_cp_c = -1101.401064 # J/kg/K
+particles.C20H42-2_latent = 342695.035461 # J/kg
+
+# Properties for C24H50-2 in MKS
+particles.C24H50-2_family = 0 # saturated hydrocarbons
+particles.C24H50-2_molar_weight = 0.338000 # kg/mol
+particles.C24H50-2_crit_temp = 789.988135 # K
+particles.C24H50-2_crit_press = 853086.580927 # Pa
+particles.C24H50-2_crit_vol = 0.001372 # m^3/mol
+particles.C24H50-2_boil_temp = 627.987400 # K
+particles.C24H50-2_acentric_factor = 1.028833 # -
+particles.C24H50-2_molar_vol = 0.000427 # m^3/mol
+particles.C24H50-2_cp_a = 1620.621006 # J/kg/K
+particles.C24H50-2_cp_b = 3193.554142 # J/kg/K
+particles.C24H50-2_cp_c = -1104.758284 # J/kg/K
+particles.C24H50-2_latent = 340946.745562 # J/kg
+
+# Properties for DODECENE-1 in MKS
+particles.DODECENE-1_family = 3 # olefins
+particles.DODECENE-1_molar_weight = 0.168000 # kg/mol
+particles.DODECENE-1_crit_temp = 659.443114 # K
+particles.DODECENE-1_crit_press = 1865662.342751 # Pa
+particles.DODECENE-1_crit_vol = 0.000689 # m^3/mol
+particles.DODECENE-1_boil_temp = 489.559051 # K
+particles.DODECENE-1_acentric_factor = 0.544475 # -
+particles.DODECENE-1_molar_vol = 0.000223 # m^3/mol
+particles.DODECENE-1_cp_a = 1597.019643 # J/kg/K
+particles.DODECENE-1_cp_b = 3004.857143 # J/kg/K
+particles.DODECENE-1_cp_c = -1030.022024 # J/kg/K
+particles.DODECENE-1_latent = 354220.238095 # J/kg
+
+# Properties for HEXADECENE-1 in MKS
+particles.HEXADECENE-1_family = 3 # olefins
+particles.HEXADECENE-1_molar_weight = 0.224000 # kg/mol
+particles.HEXADECENE-1_crit_temp = 715.989572 # K
+particles.HEXADECENE-1_crit_press = 1386367.148233 # Pa
+particles.HEXADECENE-1_crit_vol = 0.000913 # m^3/mol
+particles.HEXADECENE-1_boil_temp = 548.793103 # K
+particles.HEXADECENE-1_acentric_factor = 0.714183 # -
+particles.HEXADECENE-1_molar_vol = 0.000289 # m^3/mol
+particles.HEXADECENE-1_cp_a = 1601.954018 # J/kg/K
+particles.HEXADECENE-1_cp_b = 3058.880357 # J/kg/K
+particles.HEXADECENE-1_cp_c = -1052.932589 # J/kg/K
+particles.HEXADECENE-1_latent = 348700.892857 # J/kg
