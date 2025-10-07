@@ -106,10 +106,13 @@ struct SprayData
     const amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
     const amrex::Real PATM =
       pele::physics::Constants::PATM * SprayUnits::pres_conv;
+
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const amrex::Real mw_li = liqprops.mw_i(spf);
+
+      // Use correlation to avoid calling eos.T2Hi for each boilT_i(spf)
       const amrex::Real Hboil_ref =
-        liqprops.latent_i(liqprops.boilT_i(spf), spf);
+        liqprops.latent_correlation_i(liqprops.boilT_i(spf), spf);
 
       // Estimate the boiling temperature at the gas phase pressure using
       // Clasius-Clapeyron relation
