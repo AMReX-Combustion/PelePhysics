@@ -1,0 +1,2 @@
+# FuelLib POSF Non-Reacting Mechanism
+This mechanism is designed to be used with the POSF fuels available in [FuelLib](https://github.com/nrel/fuellib). It provides thermo and transport data for the specific reference compounds selected for each GCxGC bin.
