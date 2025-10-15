@@ -250,7 +250,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
     eos.Y2WBAR(Y_skin, mw_skin);
     mw_skin *= SprayUnits::mass_conv;
 
-    //Cp is already in kJ/kg-K so do not use any conversion unit
+    // Cp is already in kJ/kg-K so do not use any conversion unit
     eos.TY2Cp(T_skin, Y_skin, cp_skin);
 
     B_M = (sumYVap - sumYgipc) / amrex::max(C_eps, (1. - sumYVap));
