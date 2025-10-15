@@ -61,13 +61,8 @@ struct MPLiqProps : public BaseLiqProps
   amrex::Real
   psat_i(const amrex::Real T, int spf, const amrex::Real part_latent) const
   {
-	  amrex::Print()<<"\nSreejith using PeleMP";
-	  amrex::Print()<<"\nPsat: "<<psat_coef[4 * spf + 0]<<" "<<psat_coef[4 * spf + 1]<<" "<<psat_coef[4 * spf + 2]<<" "<<psat_coef[4 * spf + 3];
-	  amrex::Print()<<"\nIf condition: "<<(psat_coef[4 * spf + 3] == 0.0);
-
     amrex::Real pres_sat_i = 0.;
     if (psat_coef[4 * spf + 3] == 0.) {
-      amrex::Print()<<"\t Clasius-Clapeyron relation";
       // Using the Clasius-Clapeyron relation
       const amrex::Real RU = pele::physics::Constants::RU * SprayUnits::ru_conv;
       const amrex::Real PATM =
@@ -77,14 +72,12 @@ struct MPLiqProps : public BaseLiqProps
         PATM *
         std::exp(part_latent * mw_i(spf) / RU * (1. / boilT_ref - 1. / T));
     } else {
-       amrex::Print()<<"\t Antoine relation";
       // Using the Antoine equation
       const amrex::Real a = psat_coef[4 * spf];
       const amrex::Real b = psat_coef[4 * spf + 1];
       const amrex::Real c = psat_coef[4 * spf + 2];
       const amrex::Real d = psat_coef[4 * spf + 3];
       pres_sat_i = d * std::pow(10., a - b / (T + c));
-      amrex::Print()<<"\n Press_sat inside func = "<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<T<<" "<<pres_sat_i;
     }
     return pres_sat_i;
   }

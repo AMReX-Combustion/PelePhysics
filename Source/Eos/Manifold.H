@@ -88,8 +88,6 @@ struct Manifold
   {
     if (eosparm->idx_Wbar >= 0) {
       manfunc.get_func()->get_value(eosparm->idx_Wbar, Y, WBAR);
-      amrex::Print()<<"\nInside manifold Y2Bar "<<WBAR;
-      WBAR*=1000.0;
     } else {
       amrex::Error("Wbar not in table");
     }

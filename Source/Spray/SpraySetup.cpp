@@ -212,7 +212,6 @@ SprayParticleContainer::spraySetup(
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
     for (int ns = 0; ns < NUM_SPECIES; ++ns) {
       std::string gas_spec = spec_names[ns];
-      amrex::Print()<<"\n Species names Sreejith = "<<gas_spec;
       if (gas_spec == m_sprayFuelNames[i]) {
         m_sprayData->indx[i] = ns;
       }

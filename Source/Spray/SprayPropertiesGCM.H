@@ -136,7 +136,6 @@ struct GCMLiqProps : public BaseLiqProps
   amrex::Real
   psat_i(const amrex::Real T, int spf, const amrex::Real /*part_latent*/) const
   {
-	  amrex::Print()<<"\nSreejith.Using GCM";
     // Lee-Kesler correlation
     const amrex::Real Tr = T / critT_i(spf);
     const amrex::Real f0 = 5.92714 - (6.09648 / Tr) - 1.28862 * std::log(Tr) +
