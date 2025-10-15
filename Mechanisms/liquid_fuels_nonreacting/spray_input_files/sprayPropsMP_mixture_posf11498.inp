@@ -1,0 +1,22 @@
+# -----------------------------------------------------------------------------
+# Liquid fuel properties for MP in Pele
+# Fuel: posf11498
+# Number of compounds: 1
+# Generated: 2025-10-06 23:05:22
+# FuelLib remote URL: https://github.com/NREL/FuelLib.git
+# Git commit: 6407adfbd454a12b3c58ac8087c745b3b378a2d8
+# Units: MKS
+# -----------------------------------------------------------------------------
+
+particles.fuel_species = POSF11498
+particles.Y_0 = 1.0
+particles.dep_fuel_species = POSF11498
+particles.fuel_ref_temp = 298.15 # K
+
+# Properties for POSF11498 in MKS
+particles.POSF11498_crit_temp = 659.377390 # K
+particles.POSF11498_boil_temp = 489.579528 # K
+particles.POSF11498_latent = 349104.996313 # J/kg
+particles.POSF11498_cp = 1624.134428 # J/kg/K
+particles.POSF11498_rho = 743.636736 # kg/m^3
+particles.POSF11498_psat = 10.036648435180116 2373.68340282933 -11.490525663560039 1 # Pa

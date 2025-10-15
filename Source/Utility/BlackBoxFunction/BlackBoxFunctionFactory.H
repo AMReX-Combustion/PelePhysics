@@ -95,7 +95,7 @@ struct BlackBoxFunctionFactory<BlackBoxFunction>
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxFunction* get_func() { return func; }
+  BlackBoxFunction* get_func() const { return func; }
 
 private:
   BlackBoxFunction* func;

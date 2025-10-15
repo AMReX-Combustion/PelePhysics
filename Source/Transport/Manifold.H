@@ -26,7 +26,7 @@ struct ManifoldTransport
     amrex::Real* /*chi_mix*/,
     amrex::Real& mu,
     amrex::Real& /*xi*/,
-    amrex::Real& /*lam*/,
+    amrex::Real& lam,
     TransParm<EosType, transport_type> const* tparm)
   {
     BlackBoxFunctionFactory<eos::ManifoldFunctionType> manfunc(
@@ -37,9 +37,14 @@ struct ManifoldTransport
     }
 
     if (wtr_get_lam) {
-      // could be added to table if desired
-      amrex::Abort(
-        "Use of thermal conductivity is not supported for ManifoldTransport");
+      // Under the Lewis number=1 assumption, lambda=rho*Cp*D
+      amrex::Real cp = 0.0;
+      amrex::Real rhoD = 0.0;
+      if (tparm->idx_cp > 0) {
+        manfunc.get_func()->get_value(tparm->idx_cp, Yloc, cp);
+      }
+      manfunc.get_func()->get_value(tparm->idx_rhoD, Yloc, rhoD);
+      lam = cp * rhoD;
     }
 
     if (wtr_get_xi) {

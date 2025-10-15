@@ -33,7 +33,7 @@ struct Manifold
 
   static std::string identifier() { return "Manifold"; }
 
-  // ReallArrayLike can be anything with an [] operator that returns
+  // RealArrayLike can be anything with an [] operator that returns
   // amrex::Real&
   template <typename RealArrayLike>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void
@@ -42,7 +42,7 @@ struct Manifold
     R = RY[first + NUM_SPECIES - 1];
   }
 
-  // ReallArrayLike can be anything with an [] operator that returns
+  // RealArrayLike can be anything with an [] operator that returns
   // amrex::Real&
   template <typename RealArrayLike1, typename RealArrayLike2>
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static void RY2RRinvY(
@@ -60,11 +60,17 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void molecular_weight(amrex::Real* /*mw[]*/)
+  void molecular_weight(amrex::Real* mw)
   {
-    amrex::Error(
-      "molecular_weight for species does not have significance for "
-      "Manifold EOS");
+    if (eosparm->has_species_mw) {
+      for (int n = 0; n < eosparm->num_chemspecies; n++) {
+        mw[n] = eosparm->chemSpecies_Mwt[n];
+      }
+    } else {
+      amrex::Error(
+        "molecular_weight for species does not have significance "
+        "for Manifold EOS");
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -85,6 +91,29 @@ struct Manifold
     } else {
       amrex::Error("Wbar not in table");
     }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void Y2GenericManifoldData(
+    const amrex::Real* Y, // manifold variables (z,c etc)
+    int* table_idx,       // Indices of the table columns
+    amrex::Real* out_vars,
+    int num_of_indices // len of table_idx
+  )
+  {
+    manfunc.get_func()->get_values(num_of_indices, table_idx, Y, out_vars);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void Y2ChemSpecies(
+    const amrex::Real* Y, // manifold variables (z,c etc)
+    const int spec_index,
+    amrex::Real& chem_spec)
+  {
+    manfunc.get_func()->get_value(
+      eosparm->idx_chemspecies[spec_index], Y, chem_spec);
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -156,33 +185,33 @@ struct Manifold
   AMREX_FORCE_INLINE
   static void T2Cpi(const amrex::Real /*T*/, amrex::Real* /*Cpi[NUM_SPECIES]*/)
   {
-    // TODO: FIXME (T2Cpi need to be implemented for manifold model)
     amrex::Abort("\nT2Cpi is not yet implemented for Maniold model");
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  TY2Cp(const amrex::Real /*T*/, const amrex::Real* /*Y[]*/, amrex::Real& Cp)
+  void TY2Cp(
+    const amrex::Real /*T*/, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
   {
-    // TODO: FIXME (need to remove enthalpy calculations from
-    // PeleLM)
-    Cp = 100.0;
-    // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    if (eosparm->idx_Cp >= 0) {
+      manfunc.get_func()->get_value(eosparm->idx_Cp, Y, Cp);
+    } else {
+      // TODO: FIXME (need to remove enthalpy calculations from
+      // PeleLM)
+      Cp = 1.234e56;
+      // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RTY2Cp(
+  void RTY2Cp(
     const amrex::Real /*R*/,
-    const amrex::Real /*T*/,
-    const amrex::Real* /*Y[]*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
     amrex::Real& Cp)
   {
-    // TODO: FIXME (need to remove enthalpy calculations from
-    // PeleLM)
-    Cp = 100.0;
-    // amrex::Error("TY2Cp is not yet implemented for Manifold EOS");
+    TY2Cp(T, Y, Cp);
   }
 
   AMREX_GPU_HOST_DEVICE

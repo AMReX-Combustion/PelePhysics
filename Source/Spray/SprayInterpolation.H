@@ -96,19 +96,6 @@ check_bounds(
   return false;
 }
 
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void InterpolateGasPhase(
-  GasPhaseVals& gpv,
-  const amrex::Box& state_box,
-  amrex::Array4<const amrex::Real> const& rhoarr,
-  amrex::Array4<const amrex::Real> const& rhoYarr,
-  amrex::Array4<const amrex::Real> const& Tarr,
-  amrex::Array4<const amrex::Real> const& momarr,
-  amrex::Array4<const amrex::Real> const& engarr,
-  const amrex::IntVect* indx_array,
-  const amrex::Real* weights,
-  const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-    eosparm = nullptr);
-
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 InterpolateGasPhase(
   GasPhaseVals& gpv,
@@ -121,7 +108,7 @@ InterpolateGasPhase(
   const amrex::IntVect* indx_array,
   const amrex::Real* weights,
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-    eosparm)
+    eosparm = nullptr)
 {
   auto eos = pele::physics::PhysicsType::eos(eosparm);
 #ifdef PELELM_USE_SPRAY
@@ -165,6 +152,20 @@ InterpolateGasPhase(
       gpv.T_fluid += cw * T_i;
     }
   }
+
+  // In the case of  manifold model simulations, the objective is to get the
+  // mass fractions of all the liquid fuel species, at the spray location, read
+  // from the manifold table. We already have the interpolated value of manifold
+  // variables at the spray particle location stored in 'mass_frac'. I just need
+  // to call GenericReadManifoldData
+#ifdef USE_MANIFOLD_EOS
+  for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
+    amrex::Real tempval;
+    eos.Y2ChemSpecies(
+      mass_frac.data(), SprayParticleContainer::d_sprayData->indx[n], tempval);
+    gpv.Yspec_fluid[n] = tempval;
+  }
+#endif
 
   // Fill in some other data with EOS calls
   eos.Y2WBAR(gpv.Y_fluid.data(), gpv.mw_mix);

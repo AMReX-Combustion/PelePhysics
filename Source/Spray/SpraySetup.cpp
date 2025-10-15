@@ -203,6 +203,7 @@ SprayParticleContainer::spraySetup(
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
     eosparms_d)
 {
+#ifndef USE_MANIFOLD_EOS
 #if NUM_SPECIES > 1
   Vector<std::string> spec_names;
   pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
@@ -237,9 +238,10 @@ SprayParticleContainer::spraySetup(
   m_sprayData->indx[0] = 0;
   m_sprayData->dep_indx[0] = 0;
 #endif
-  Vector<Real> fuelEnth(NUM_SPECIES);
+
   auto eos = pele::physics::PhysicsType::eos(eosparms_h);
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
+  Vector<Real> fuelEnth(NUM_SPECIES);
   eos.molecular_weight(mw.data());
   m_sprayData->liqprops.init_mw(mw, m_sprayData->indx.data());
   eos.T2Hi(m_sprayData->liqprops.ref_T, fuelEnth.data());
@@ -248,6 +250,72 @@ SprayParticleContainer::spraySetup(
     m_sprayData->liqprops.latentRef_minus_gasRefH_i[ns] =
       m_sprayData->liqprops.latent[ns] - fuelEnth[fspec] * SprayUnits::eng_conv;
   }
+
+#else // USE_MANIFOLD_EOS is defined
+  // Verify EOS can give molecular weights
+  if (!eosparms_h->has_species_mw) {
+    amrex::Error(
+      "SpraySetup: Manifold EOS must contains spec molecular weights for "
+      "Spray");
+  }
+
+  Vector<std::string> chemspec_names, manivar_names;
+  // Manifold: For now, we require that each liquid/spray species
+  // is cacuable from the Manifold model. We also require that
+  // each species contributes to exactly one manifold variable with weight 1
+  // which is specified through the "DepNames"
+  std::set<std::string> unique_dep_names(
+    m_sprayDepNames, m_sprayDepNames + SPRAY_FUEL_NUM);
+  if (unique_dep_names.size() != SPRAY_FUEL_NUM) {
+    amrex::Abort(
+      "Each liquid spray species must uniquely contribute to one manifold "
+      "parameter, as specified through dep_fuel_species");
+  }
+
+  pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(
+    chemspec_names, eosparms_h);
+  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(
+    manivar_names, eosparms_h);
+
+  for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
+    amrex::Print() << "\n SpraySpec = " << m_sprayFuelNames[i] << " "
+                   << " dep species = " << m_sprayDepNames[i];
+    for (int ns = 0; ns < chemspec_names.size(); ++ns) {
+      amrex::Print() << "\n ChemSpec from manifold = " << chemspec_names[ns];
+      std::string gas_spec = chemspec_names[ns];
+      if (gas_spec == m_sprayFuelNames[i]) {
+        m_sprayData->indx[i] = ns;
+      }
+    }
+    if (m_sprayData->indx[i] < 0) {
+      Abort(
+        "Fuel " + m_sprayFuelNames[i] +
+        " not found in species available in the manifold");
+    }
+    for (int ns = 0; ns < manivar_names.size(); ++ns) {
+      std::string gas_spec = manivar_names[ns];
+      amrex::Print() << "\n Manivar = " << manivar_names[ns];
+      if (gas_spec == m_sprayDepNames[i]) {
+        m_sprayData->dep_indx[i] = ns;
+      }
+    }
+    if (m_sprayData->dep_indx[i] < 0) {
+      Abort(
+        "dep_fuel_species " + m_sprayDepNames[i] +
+        " not found as a manifold parameter");
+    }
+  }
+
+  // Initialize MW for spray model
+  amrex::Vector<amrex::Real> mw(chemspec_names.size());
+  auto eos = pele::physics::PhysicsType::eos(eosparms_h);
+  eos.molecular_weight(mw.data());
+  m_sprayData->liqprops.init_mw(mw.data(), m_sprayData->indx.data());
+
+  // TODO: Handle latent heat for Manifold EOS
+#endif
+
+  // Stuff for both detailed chem and manifold
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     m_sprayData->body_force[dir] = body_force[dir];
   }

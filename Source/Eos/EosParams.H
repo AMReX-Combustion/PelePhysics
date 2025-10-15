@@ -46,9 +46,14 @@ struct EosParm<Manifold>
   int idx_Wbar{0};
   int idx_T{0};
   int idx_Wdot[MANIFOLD_DIM];
+  int idx_Cp{-1};
   int is_variance_of[MANIFOLD_DIM];
   int verbose{1};
   bool has_mani_src{true};
+  bool has_species_mw{false};
+  amrex::Real* chemSpecies_Mwt;
+  int* idx_chemspecies;
+  int num_chemspecies;
 };
 #endif
 
@@ -87,6 +92,12 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   static void host_initialize(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
   {
     amrex::ParmParse pp("manifold");
+    std::string metadata_filename;
+    pp.query("metadata_filename", metadata_filename);
+    if (!metadata_filename.empty()) {
+      pp.addfile(metadata_filename);
+    }
+
     std::string manifold_model;
     pp.get("model", manifold_model);
     parm_in->m_host_only_parm.manfunc_par =
@@ -109,6 +120,50 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.get("nominal_pressure_cgs", parm_in->m_h_parm.Pnom_cgs);
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
+
+#ifdef PELE_USE_SPRAY
+    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in);
+#else
+    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, false);
+#endif
+
+    // Molecular weights and indices of chemical species if requested
+    pp.query("has_species_mw", parm_in->m_h_parm.has_species_mw);
+    if (parm_in->m_h_parm.has_species_mw) {
+      const auto* mani_data = parm_in->m_h_parm.manf_data;
+      // First find the total number of chemical species in the table
+      amrex::Vector<int> spec_idx_vect;
+      for (int n = 0; n < mani_data->Nvar; n++) {
+        std::string nametmp = std::string(
+          &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+        if (nametmp.substr(0, 2) == "Y-") {
+          spec_idx_vect.emplace_back(n);
+        }
+      }
+      const int num_of_chemspecies = static_cast<int>(spec_idx_vect.size());
+      parm_in->m_h_parm.num_chemspecies = num_of_chemspecies;
+
+      // Dynamically allocate memory for chemSpecies_Mwt;
+      constexpr std::streamsize real_size = sizeof(amrex::Real);
+      parm_in->m_h_parm.chemSpecies_Mwt = static_cast<amrex::Real*>(
+        amrex::The_Pinned_Arena()->alloc(num_of_chemspecies * real_size));
+      constexpr std::streamsize int_size = sizeof(int);
+      parm_in->m_h_parm.idx_chemspecies = static_cast<int*>(
+        amrex::The_Pinned_Arena()->alloc(num_of_chemspecies * int_size));
+
+      // Loop through table to find species names. Search these species names in
+      // the metadata file and read molecular weights from the metadata file
+      for (int i = 0; i < num_of_chemspecies; i++) {
+        const int n = spec_idx_vect[i];
+        parm_in->m_h_parm.idx_chemspecies[i] = n;
+        std::string nametmp = std::string(
+          &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
+        std::string speciesname_search =
+          amrex::trim(nametmp.substr(2U, std::string::npos)) + "_mw";
+        pp.get(
+          speciesname_search.c_str(), parm_in->m_h_parm.chemSpecies_Mwt[i]);
+      }
+    }
 
     // Setup density lookups
     std::string density_lookup_type_string{"linear"};
@@ -226,6 +281,10 @@ struct InitParm<eos::EosParm<eos::Manifold>>
   {
     parm_in->m_host_only_parm.manfunc_par->deallocate();
     parm_in->m_host_only_parm.manfunc_par = nullptr;
+    if (parm_in->m_h_parm.has_species_mw) {
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.chemSpecies_Mwt);
+      amrex::The_Pinned_Arena()->free(parm_in->m_h_parm.idx_chemspecies);
+    }
   }
 };
 #endif

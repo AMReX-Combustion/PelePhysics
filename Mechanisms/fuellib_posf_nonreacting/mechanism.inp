@@ -1,0 +1,180 @@
+!****************************************************************************
+!
+! A 93-species non-reacting mechanism for jet fuels based on GCxGC data.
+! The mechanism corresponds to the POSF fuels available in FuelLib:
+! https://github.com/nrel/fuellib.
+!
+! Thermo and transport properties from the Reaction Mechanism Generator (RMG) 
+! software: https://rmg.mit.edu/molecule_search
+! 
+!****************************************************************************
+!
+! Summary of species:
+!
+! Air:
+! O2                 oxygen
+! N2                 nitrogen
+! H2O                water
+! CO2                carbon dioxide
+!
+! Benzenes:
+! C6H5CH3            toluene
+! C6H5C2H5           ethylbenzene
+! C6H5C3H7           propylbenzene
+! C6H5C4H9           butylbenzene
+! C6H5C5H11          pentylbenzene
+! C6H5C6H13          hexylbenzene
+! C6H5C7H15          heptylbenzene
+! C6H5C8H17          octylbenzene
+! C6H5C9H19          nonylbenzene
+! C6H5C10H21         decylbenzene
+! 
+! Diaromatics:
+! NAPH               naphthalene
+! METHYLNAPH-1       1-methylnaphthalene
+! ETHYLNAPH-1        1-ethylnaphthalene
+! PROPYLNAPH-1       1-propylnaphthalene
+! BUTYLNAPH-1        1-butylnaphthalene
+! 
+! Cycloaromatics:
+! INDANE             indane
+! TETRA              tetralin
+! METHYLTETRA-2      2-methyltetralin
+! ETHYLTETRA-2       2-ethyltetralin
+! PROPYLTETRA-2      2-propyltetralin
+! BUTYLTETRA-2       2-butyltetralin
+! PENTYLTETRA-2      2-pentyltetralin
+!
+! iso-paraffins:
+! C7H16-2            2-methylhexane
+! C8H18-2            2-methylheptane
+! C9H20-2            2-methyloctane
+! C10H22-2           2-methylnonane
+! C11H24-2           2-methyldecane
+! C12H26-2           2-methylundecane
+! C13H28-2           2-methyldodecane
+! C14H30-2           2-methyltridecane
+! C15H32-2           2-methyltetradecane
+! C16H34-2           2-methylpentadecane
+! C17H36-2           2-methylhexadecane
+! C18H38-2           2-methylheptadecane
+! C19H40-2           2-methyloctadecane
+! C20H42-2           2-methylnonadecane
+! C21H44-2           2-methylicosane
+! C22H46-2           2-methylhenicosane
+! C23H48-2           2-methyldocosane
+! C24H50-2           2-methyltricosane
+!
+! n-paraffins:
+! NC8H18             n-octane
+! NC9H20             n-nonane
+! NC10H22            n-decane
+! NC11H24            n-nonane
+! NC12H26            n-dodecane
+! NC13H28            n-tridecane
+! NC14H30            n-tetradecane
+! NC15H32            n-pentadecane
+! NC16H34            n-hexadecane
+! NC17H36            n-heptadecane
+! NC18H38            n-octadecane
+! NC19H40            n-nonadecane
+! NC20H42            n-icosane
+! NC21H44            n-henicosane
+! NC22H46            n-docosane
+! NC23H48            n-tricosane
+!
+! monocycloparaffins:
+! C6H11CH3           methylcyclohexane
+! C6H11C2H5          ethylcyclohexane
+! C6H11C3H7          propylcyclohexane
+! C6H11C4H9          butylcyclohexane
+! C6H11C5H11         pentylcyclohexane
+! C6H11C6H13         hexylcyclohexane
+! C6H11C7H15         heptylcyclohexane
+! C6H11C8H17         octylcyclohexane
+! C6H11C9H19         nonylcyclohexane
+! C6H11C10H21        decylcyclohexane
+! C6H11C11H23        undecylcyclohexane
+! C6H11C12H25        dodecylcyclohexane
+! C6H11C13H27        tridecylcyclohexane
+!
+! dicycloparaffins:
+! OHPEN              octahydropentalene
+! HYDRIND            hydrindane
+! DECALIN            decalin
+! METHYLDECALIN-2    2-methyldecalin
+! ETHYLDECALIN-2     2-ethyldecalin
+! PROPYLDECALIN-2    2-propyldecalin
+! BUTYLDECALIN-2     2-butyldecalin
+! PENTYLDECALIN-2    2-pentyldecalin
+! HEXYLDECALIN-2     2-hexyldecalin
+! HEPTYLDECALIN-2    2-heptyldecalin
+!
+! tricycloparaffins:
+! TRICYCLO-C10       SMILES: C1CC2C(C1)C1CCCC21
+! TRICYCLO-C11       SMILES: C1CC2CC3CCCC3C2C1
+! TRICYCLO-C12       SMILES: C1CC2CC3CCCC3CC2C1
+! TRICYCLO-C13       SMILES: C1CCC2C(C1)CC1CCCCC12
+! TRICYCLO-C14       SMILES: C1CCC2CC3CCCCC3CC2C1
+!
+! alkenes:
+! DECENE-1           1-decene
+! DODECENE-1         1-dodecene
+! TETRADECENE-1      1-tetradecene
+! HEXADECENE-1       1-hexadecene
+
+ELEMENTS
+O  H  C  N  AR  HE
+END
+
+SPECIES
+!SPECIES_AIR____________________________________________________________________
+O2              N2              H2O             CO2
+
+!SPECIES_BENZENES_______________________________________________________________
+C6H5CH3         C6H5C2H5        C6H5C3H7        C6H5C4H9
+C6H5C5H11       C6H5C6H13       C6H5C7H15       C6H5C8H17
+C6H5C9H19       C6H5C10H21
+
+!SPECIES_DIAROMATICS____________________________________________________________
+NAPH            METHYLNAPH-1    ETHYLNAPH-1     PROPYLNAPH-1
+BUTYLNAPH-1
+
+!SPECIES_CYCLOAROMATICS_________________________________________________________
+INDANE          TETRA           METHYLTETRA-2   ETHYLTETRA-2
+PROPYLTETRA-2   BUTYLTETRA-2    PENTYLTETRA-2
+
+!SPECIES_ISO-PARAFFINS_________________________________________________________
+C7H16-2         C8H18-2         C9H20-2         C10H22-2        C11H24-2
+C12H26-2        C13H28-2        C14H30-2        C15H32-2
+C16H34-2        C17H36-2        C18H38-2        C19H40-2
+C20H42-2        C21H44-2        C22H46-2        C23H48-2
+C24H50-2
+
+!SPECIES_N-PARAFFINS___________________________________________________________
+NC7H16          NC8H18          NC9H20          NC10H22         NC11H24
+NC12H26         NC13H28         NC14H30         NC15H32
+NC16H34         NC17H36         NC18H38         NC19H40
+NC20H42         NC21H44         NC22H46         NC23H48
+
+!SPECIES_MONOCYCLOPARAFFINS____________________________________________________
+C6H11CH3        C6H11C2H5       C6H11C3H7       C6H11C4H9
+C6H11C5H11      C6H11C6H13      C6H11C7H15      C6H11C8H17
+C6H11C9H19      C6H11C10H21     C6H11C11H23     C6H11C12H25
+C6H11C13H27
+
+!SPECIES_DICYCLOPARAFFINS______________________________________________________
+OHPEN           HYDRIND         DECALIN         METHYLDECALIN-2
+ETHYLDECALIN-2  PROPYLDECALIN-2 BUTYLDECALIN-2  PENTYLDECALIN-2
+HEXYLDECALIN-2  HEPTYLDECALIN-2
+
+!SPECIES_TRICYCLOPARAFFINS_____________________________________________________
+TRICYCLO-C10    TRICYCLO-C11    TRICYCLO-C12    TRICYCLO-C13
+TRICYCLO-C14
+
+!SPECIES_ALKENES_______________________________________________________________
+DECENE-1        DODECENE-1      TETRADECENE-1   HEXADECENE-1
+END
+
+REACTIONS
+END

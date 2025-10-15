@@ -46,8 +46,9 @@ template <typename EOSType>
 struct TransParm<EOSType, ManifoldTransport>
 {
   const BlackBoxFunctionData* manf_data;
-  int idx_rhoD{0};
-  int idx_mu{0};
+  int idx_rhoD{-1};
+  int idx_mu{-1};
+  int idx_cp{-1};
 };
 
 template <typename EOSType>
@@ -214,6 +215,10 @@ struct InitParm<transport::TransParm<EOSType, transport::ManifoldTransport>>
       "DIFF", &parm_in->m_host_only_parm.manfunc_par->host_parm());
     tparm->idx_mu = get_var_index(
       "VISC", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+#ifdef PELE_USE_SPRAY
+    tparm->idx_cp =
+      get_var_index("CP", &parm_in->m_host_only_parm.manfunc_par->host_parm());
+#endif
   }
 
   static void host_deallocate(
