@@ -464,6 +464,7 @@ struct Fuego
       summ += Y[i] * imw(i);
     }
     WBAR = 1.0 / summ;
+    //amrex::Print()<<"\nInside Fuego Y2Bar "<<WBAR;
   }
 
   AMREX_GPU_HOST_DEVICE

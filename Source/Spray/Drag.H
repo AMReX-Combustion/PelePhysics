@@ -180,12 +180,19 @@ struct calcVaporState<pele::physics::eos::Manifold>
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const int fdspec = fdat.dep_indx[spf];
       const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+      amrex::Print()<<"\nInside calcVaporState the molecular wt = "<<mw_li;
+      amrex::Print()<<"\nInside calcVaporState the liquid mass frac = "<<Y_l[spf];
       amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
+      amrex::Print()<<"\nInside calcVaporState Tpart and cBoilT = "<<T_part<<" "<<cBoilT[spf];
 
       // Compute latent heat using correlation
       amrex::Real part_latent =
         fdat.liqprops.latent_correlation_i(fdat.liqprops.boilT_i(spf), spf);
-      L_fuel[spf] = part_latent;
+      //L_fuel[spf] = part_latent;
+      //Debugging. Remove the following line Sreejith
+      L_fuel[spf] = 383107.1896;
+      part_latent = 383107.1896;
+      amrex::Print()<<"\nInside calcVaporState L_fuel = "<<L_fuel[spf];
 
       // psat - any approach should work because we populated part_latent
       amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);
@@ -197,12 +204,14 @@ struct calcVaporState<pele::physics::eos::Manifold>
         amrex::Real Xl = Y_l[spf] * mw_part / mw_li; // X_{d,n} in documentation
         amrex::Real Xv =
           Xl * pres_sat / gpv.p_fluid; // X_{v,n} in documentation
+        amrex::Print()<<"\nInside calcVaporState Xl = "<<Xl<<" "<<pres_sat<<" "<<gpv.p_fluid;
         mbar_vap += Xv * mw_li;
         sumXVap += Xv;
         X_vapor[spf] = Xv;
       } else {
         X_vapor[spf] = 0.;
       }
+      amrex::Print()<<"\nInside calcVaporState the Vapour mole frac = "<<X_vapor[spf];
     }
 
     // Y_{g,i}^{pc}  is already stored in  gpv.Yspec_fluid
@@ -213,9 +222,11 @@ struct calcVaporState<pele::physics::eos::Manifold>
     amrex::Real sumYripc = 0.0;
     amrex::Real sumYgipc = 0.0;
     amrex::Real totalmwx = mbar_vap + (1. - sumXVap) * gpv.mw_mix;
+    amrex::Print()<<"\n Calculating totalmwx = "<<mbar_vap<<" "<<sumXVap<<" "<<gpv.mw_mix;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       if (X_vapor[spf] > 0.) {
         const amrex::Real mw_li = fdat.liqprops.mw_i(spf);
+        amrex::Print()<<"\nInside calcvap mw_li= "<<mw_li<<" "<<totalmwx;
         Yfv[spf] = X_vapor[spf] * mw_li / totalmwx;
         sumYVap += Yfv[spf]; //\sigma Y_{v,k}^{pc} in the document
         Y_ri_pc[spf] = Yfv[spf] + rule * (gpv.Yspec_fluid[spf] - Yfv[spf]);
@@ -252,9 +263,11 @@ struct calcVaporState<pele::physics::eos::Manifold>
 
     // T_skin is just a dummy here
     eos.TY2Cp(T_skin, Y_skin, cp_skin);
-    cp_skin *= SprayUnits::eng_conv;
+    //cp_skin *= SprayUnits::eng_conv;
+    //amrex::Print()<<"\n Conversion unit = "<<SprayUnits::eng_conv;
 
     B_M = (sumYVap - sumYgipc) / amrex::max(C_eps, (1. - sumYVap));
+    amrex::Print()<<"\nInside calvap the values used to calculate B_M = "<<sumYVap<<" "<<sumYgipc<<" "<<C_eps<<" "<<sumYVap<<" "<<B_M;
     B_M = amrex::min(20., B_M);
   }
 };
@@ -308,6 +321,7 @@ calculateSpraySource(
     vel_part = amrex::RealVect::TheZeroVector();
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
+  amrex::Print()<<"\nTpart = "<<T_part;
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
 
   // Storing Y_{d,n}
@@ -342,10 +356,33 @@ calculateSpraySource(
     amrex::Real sumXVap = 0.; // Sum of Y_L Psat_f / mw_f
 
     if (fdat.mass_trans) {
+
+    	amrex::Print()<<"\nPrinting outside CalcVapour "<<T_part;
+
       calcVaporState<pele::physics::PhysicsType::eos_type>()(
         fdat, gpv, rule, T_part, C_eps, mw_part, Y_part.data(), T_skin, cBoilT,
         Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M, sumXVap, cp_skin,
         mw_skin);
+      amrex::Print()<<"\nIn calc vap state the values are \n T_skin = "<<T_skin;
+      amrex::Print()<<"\nIn calc vap state the values are \n Y_skin = ";
+      for(int sree=0;sree<Y_skin.size();sree++)
+      {
+    	  amrex::Print()<<Y_skin[sree]<<"\t";
+      }
+      amrex::Print()<<"\n values are \n X_vapor = ";
+      for(int sree=0;sree<X_vapor.size();sree++)
+      {
+    	  amrex::Print()<<X_vapor[sree]<<"\t";
+      }
+      amrex::Print()<<"\n values are \n L_fuel = ";
+      for(int sree=0;sree<L_fuel.size();sree++)
+      {
+    	  amrex::Print()<<L_fuel[sree]<<"\t";
+      }
+      amrex::Print()<<"\n values of  B_M = "<<B_M;
+      amrex::Print()<<"\n values of  sumXVap = "<<sumXVap;
+      amrex::Print()<<"\n values of  cp_skin = "<<cp_skin;
+      amrex::Print()<<"\n values of  mw_skin = "<<mw_skin;
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
@@ -481,6 +518,7 @@ calculateSpraySource(
 
       amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * Nu_num;
       gpv.fluid_eng_src += num_ppp * conv_src;
+
       part_temp_src = (sumL + conv_src) * inv_pmass / cp_part;
       if (isub == 1 && delT > C_eps) {
         // Limit dt so change in mass does not exceed 10%
@@ -534,6 +572,7 @@ calculateSpraySource(
 #endif
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
+        amrex::Print()<<"\n Mass source terms = "<<dia_part;
       } else {
         pmass = 0.;
         p.id() = -1;
@@ -551,6 +590,8 @@ calculateSpraySource(
   // some species disappear completely
   amrex::Real mdot_total = (pmass - startmass) / (fdat.dtmod * flow_dt);
   gpv.fluid_mass_src = num_ppp * mdot_total;
+  amrex::Print()<<"\n Gas mass source terms = "<<gpv.fluid_mass_src;
+
 #ifndef PELELM_USE_SPRAY
   amrex::Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += num_ppp * part_ke * mdot_total;
@@ -575,8 +616,15 @@ calculateSpraySource(
 #else
     gpv.fluid_eng_src += num_ppp * midot * h_gas[fdspec] * SprayUnits::eng_conv;
 #endif
+
     p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
   }
+  amrex::Print()<<"\n Fluid_mass_src source terms = "<<gpv.fluid_mass_src;
+  amrex::Print()<<"\n Fluid_mom_src source terms = "<<gpv.fluid_mom_src;
+  amrex::Print()<<"\n Fluid_eng_src source terms = "<<gpv.fluid_eng_src;
+  amrex::Print()<<"\n Fluid_Y_dot source terms = "<<gpv.fluid_Y_dot[0];
+
+
   AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = vel_part[0];
                , p.rdata(SprayComps::pstateVel + 1) = vel_part[1];
                , p.rdata(SprayComps::pstateVel + 2) = vel_part[2];);
