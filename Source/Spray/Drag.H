@@ -185,14 +185,15 @@ struct calcVaporState<pele::physics::eos::Manifold>
       amrex::Real T_part = amrex::min(T_in, 0.99 * cBoilT[spf]);
       amrex::Print()<<"\nInside calcVaporState Tpart and cBoilT = "<<T_part<<" "<<cBoilT[spf];
 
+
       // Compute latent heat using correlation
       amrex::Real part_latent =
         fdat.liqprops.latent_correlation_i(fdat.liqprops.boilT_i(spf), spf);
       //L_fuel[spf] = part_latent;
       //Debugging. Remove the following line Sreejith
-      L_fuel[spf] = 383107.1896;
-      part_latent = 383107.1896;
+      L_fuel[spf] = part_latent;
       amrex::Print()<<"\nInside calcVaporState L_fuel = "<<L_fuel[spf];
+
 
       // psat - any approach should work because we populated part_latent
       amrex::Real pres_sat = fdat.liqprops.psat_i(T_part, spf, part_latent);
@@ -205,13 +206,16 @@ struct calcVaporState<pele::physics::eos::Manifold>
         amrex::Real Xv =
           Xl * pres_sat / gpv.p_fluid; // X_{v,n} in documentation
         amrex::Print()<<"\nInside calcVaporState Xl = "<<Xl<<" "<<pres_sat<<" "<<gpv.p_fluid;
+
         mbar_vap += Xv * mw_li;
         sumXVap += Xv;
         X_vapor[spf] = Xv;
       } else {
         X_vapor[spf] = 0.;
       }
+
       amrex::Print()<<"\nInside calcVaporState the Vapour mole frac = "<<X_vapor[spf];
+
     }
 
     // Y_{g,i}^{pc}  is already stored in  gpv.Yspec_fluid
@@ -356,9 +360,7 @@ calculateSpraySource(
     amrex::Real sumXVap = 0.; // Sum of Y_L Psat_f / mw_f
 
     if (fdat.mass_trans) {
-
     	amrex::Print()<<"\nPrinting outside CalcVapour "<<T_part;
-
       calcVaporState<pele::physics::PhysicsType::eos_type>()(
         fdat, gpv, rule, T_part, C_eps, mw_part, Y_part.data(), T_skin, cBoilT,
         Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M, sumXVap, cp_skin,
@@ -383,6 +385,7 @@ calculateSpraySource(
       amrex::Print()<<"\n values of  sumXVap = "<<sumXVap;
       amrex::Print()<<"\n values of  cp_skin = "<<cp_skin;
       amrex::Print()<<"\n values of  mw_skin = "<<mw_skin;
+
     } else {
       for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
@@ -616,7 +619,6 @@ calculateSpraySource(
 #else
     gpv.fluid_eng_src += num_ppp * midot * h_gas[fdspec] * SprayUnits::eng_conv;
 #endif
-
     p.rdata(SprayComps::pstateY + spf) = Y_part[spf];
   }
   amrex::Print()<<"\n Fluid_mass_src source terms = "<<gpv.fluid_mass_src;
