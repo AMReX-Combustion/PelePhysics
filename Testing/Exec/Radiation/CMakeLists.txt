@@ -20,6 +20,7 @@ target_include_directories(PeleRad PUBLIC ${RADIATION_INCLUDE})
 target_link_libraries(PeleRad PUBLIC AMReX::amrex)
 
 file(COPY kpDB DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+
 if(PELE_ENABLE_MPI)
   set(MPI_COMMANDS "${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}")
 endif()
