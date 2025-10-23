@@ -42,7 +42,6 @@ struct ManifoldTransport
       amrex::Real rhoD = 0.0;
       if (tparm->idx_cp > 0) {
         manfunc.get_func()->get_value(tparm->idx_cp, Yloc, cp);
-
       }
       manfunc.get_func()->get_value(tparm->idx_rhoD, Yloc, rhoD);
       lam = cp * rhoD;
