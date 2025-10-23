@@ -37,11 +37,10 @@ public:
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
-  SprayParticleContainer(amrex::AmrCore* amr, amrex::BCRec* _phys_bc)
-    : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
-      phys_bc(_phys_bc)
+  SprayParticleContainer(amrex::AmrCore* amr, const amrex::BCRec& phys_bc)
+    : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr)
   {
-    init_bcs();
+    init_bcs(phys_bc);
   }
 
   static void SprayCleanUp()
@@ -385,9 +384,8 @@ public:
 
 private:
   /// \brief This defines reflect_lo and reflect_hi from phys_bc
-  void init_bcs();
+  void init_bcs(const amrex::BCRec& phys_bc);
 
-  amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
   amrex::Vector<std::unique_ptr<SprayJet>> m_sprayJets;
