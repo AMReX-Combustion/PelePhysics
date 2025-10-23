@@ -125,7 +125,10 @@ updateBreakupKHRT(
         // Percent of shed mass relative to total mass
         amrex::Real rel_shed_drop = shed_mass / (num_dens * rad_part3);
         // Percent of shed mass relative to injected droplet mass
-        amrex::Real rel_shed_jet = 8. * shed_mass / avg_inject_mass;
+        amrex::Real rel_shed_jet =
+          8. * shed_mass /
+          std::max(
+            avg_inject_mass, std::numeric_limits<amrex::Real>::epsilon());
         // Too much mass has been shed, must split droplet up and delete droplet
         if (rel_shed_drop > mthresh_drop) {
           create_child_drops = true;
