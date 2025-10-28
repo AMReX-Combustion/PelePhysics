@@ -295,7 +295,7 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor;
 
-  Y_skin.fill(0.0)
+  Y_skin.fill(0.0);
   Ddiag.fill(0.0);
   mi_dot.fill(0.0);
   L_fuel.fill(0.0);
