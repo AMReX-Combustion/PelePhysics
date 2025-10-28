@@ -288,11 +288,11 @@ calculateSpraySource(
     get_Ddiag = false;
     get_lambda = false;
   }
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin{{0.0}};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag{{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel{{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot{{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part; // Liquid mass fractions
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part{{0.0}}; // Liquid mass fractions
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor{{0.0}};
   const amrex::Real num_ppp = p.rdata(SprayComps::pstateNumDens);
   amrex::RealVect vel_part(AMREX_D_DECL(
