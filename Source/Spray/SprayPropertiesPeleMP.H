@@ -235,13 +235,13 @@ struct InitLiqProps<MPLiqProps>
   {
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const std::string var_read = fuel_names[spf] + "_" + varname;
-      const int numvals = ppp.countval(var_read.c_str());
+      const int numvals = ppp.countval(var_read);
       if (numvals == 4) {
         std::vector<amrex::Real> inp_coef(4, 0.);
         if (is_required) {
-          ppp.getarr(var_read.c_str(), inp_coef);
+          ppp.getarr(var_read, inp_coef);
         } else {
-          ppp.queryarr(var_read.c_str(), inp_coef);
+          ppp.queryarr(var_read, inp_coef);
         }
         for (int i = 0; i < 4; ++i) {
           coef[4 * spf + i] = inp_coef[i];
@@ -252,9 +252,9 @@ struct InitLiqProps<MPLiqProps>
           coef[4 * spf + i] = 0.;
         }
         if (is_required) {
-          ppp.get(var_read.c_str(), inp_coef);
+          ppp.get(var_read, inp_coef);
         } else {
-          ppp.query(var_read.c_str(), inp_coef);
+          ppp.query(var_read, inp_coef);
         }
         coef[4 * spf] = inp_coef;
       }
@@ -269,7 +269,7 @@ struct InitLiqProps<MPLiqProps>
     bool wrong_data = false;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       const std::string var_read = fuel_names[spf] + "_mu";
-      if (!pp.contains(var_read.c_str())) {
+      if (!pp.contains(var_read)) {
         wrong_data = true;
       }
     }

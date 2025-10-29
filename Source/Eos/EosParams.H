@@ -160,8 +160,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
           &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
         std::string speciesname_search =
           amrex::trim(nametmp.substr(2U, std::string::npos)) + "_mw";
-        pp.get(
-          speciesname_search.c_str(), parm_in->m_h_parm.chemSpecies_Mwt[i]);
+        pp.get(speciesname_search, parm_in->m_h_parm.chemSpecies_Mwt[i]);
       }
     }
 
@@ -221,7 +220,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
             ? "SRC_" + amrex::trim(dimname).substr(2U, std::string::npos)
             : "SRC_" + amrex::trim(dimname);
         parm_in->m_h_parm.idx_Wdot[idim] =
-          get_var_index(dim_src.c_str(), h_manf_data_in, false);
+          get_var_index(dim_src, h_manf_data_in, false);
         if ((parm_in->m_h_parm.idx_Wdot[idim] < 0) && verbose > 0) {
           amrex::Print() << "Manifold EOS: Warning: No source term found for "
                             "manifold parameter "
