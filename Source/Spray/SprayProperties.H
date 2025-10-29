@@ -47,7 +47,7 @@ getInpVal(
 {
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const std::string var_read = fuel_names[spf] + "_" + varname;
-    ppp.get(var_read.c_str(), val[spf]);
+    ppp.get(var_read, val[spf]);
   }
 }
 
