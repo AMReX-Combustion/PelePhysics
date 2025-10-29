@@ -47,6 +47,7 @@ struct EosParm<Manifold>
   int idx_T{0};
   int idx_Wdot[MANIFOLD_DIM];
   int idx_Cp{-1};
+  int idx_Cp_fuel{-1};
   int is_variance_of[MANIFOLD_DIM];
   int verbose{1};
   bool has_mani_src{true};
@@ -121,11 +122,12 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     pp.query("has_mani_src", parm_in->m_h_parm.has_mani_src);
     pp.get("compute_temperature", parm_in->m_h_parm.compute_temperature);
 
+    bool required = false;
 #ifdef PELE_USE_SPRAY
-    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in);
-#else
-    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, false);
+    required = true;
 #endif
+    parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, required);
+    parm_in->m_h_parm.idx_Cp_fuel = get_var_index("CP_fuel", h_manf_data_in, required);
 
     // Molecular weights and indices of chemical species if requested
     pp.query("has_species_mw", parm_in->m_h_parm.has_species_mw);
