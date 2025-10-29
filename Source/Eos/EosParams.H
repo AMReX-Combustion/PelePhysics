@@ -127,7 +127,8 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     required = true;
 #endif
     parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, required);
-    parm_in->m_h_parm.idx_Cp_fuel = get_var_index("CP_fuel", h_manf_data_in, required);
+    parm_in->m_h_parm.idx_Cp_fuel =
+      get_var_index("CP_fuel", h_manf_data_in, required);
 
     // Molecular weights and indices of chemical species if requested
     pp.query("has_species_mw", parm_in->m_h_parm.has_species_mw);
