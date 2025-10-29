@@ -97,9 +97,9 @@ struct Manifold
   AMREX_FORCE_INLINE
   void Y2GenericManifoldData(
     const amrex::Real* Y, // manifold variables (z,c etc)
-    int* table_idx,       // Indices of the table columns
+    const int* table_idx,       // Indices of the table columns
     amrex::Real* out_vars,
-    int num_of_indices // len of table_idx
+    const int num_of_indices // len of table_idx
   )
   {
     manfunc.get_func()->get_values(num_of_indices, table_idx, Y, out_vars);
