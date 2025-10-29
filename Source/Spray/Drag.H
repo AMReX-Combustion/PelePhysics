@@ -383,6 +383,25 @@ calculateSpraySource(
 
     mu_skin *= SprayUnits::mu_conv;
     lambda_skin *= SprayUnits::lambda_conv;
+#ifdef USE_MANIFOLD_EOS
+    // Hack: manifold model may inaccurately predict temperature in skin layer
+    // to improve predictions, adjust computed transport coefficients to the
+    // skin layer temperature using a simple teperature scaling based on
+    // Sutherland's law. Rho also needs to be modified (uses ideal gas law)
+    amrex::Real T_skin_predicted = 300.0;
+    eos.HY2T(0.0, Y_skin.data(), T_skin_predicted);
+    const amrex::Real temp_ratio = T_skin / T_skin_predicted;
+    const amrex::Real sutherland_temp = 110.4;
+    const amrex::Real sutherland_ratio = std::sqrt(temp_ratio) * temp_ratio *
+                                         (T_skin_predicted + sutherland_temp) /
+                                         (T_skin + sutherland_temp);
+    mu_skin *= sutherland_ratio;
+    lambda_skin *= sutherland_ratio;
+    for (int spf = 0; spf < NUM_SPECIES; ++spf) {
+      Ddiag[spf] *= sutherland_ratio; // / mw_skin * gpv.mw[spf];
+    }
+    rho_skin /= temp_ratio;
+#endif
     amrex::RealVect diff_vel = gpv.vel_fluid - vel_part;
     amrex::Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
@@ -459,7 +478,11 @@ calculateSpraySource(
         eos.TY2Cp(T_skin, Y_fuel_skin.data(), cp_fuel);
 #else
         // Manifold EOS: for now, just taking mixture Cp rather than Fuel Cp
-        eos.TY2Cp(T_skin, Y_skin.data(), cp_fuel);
+        eos.Y2GenericManifoldData(
+          Y_skin.data(), &(fdat.eosparm->idx_Cp_fuel), &cp_fuel, 1);
+        // TODO: account for variation between table temperature and skin
+        // temperature
+        //  cp_fuel = 1e7 + (cp_fuel - 1e7) * T_skin / T_skin_predicted;
 #endif
         cp_fuel *= SprayUnits::eng_conv;
 
@@ -472,7 +495,6 @@ calculateSpraySource(
         amrex::Real ratio = cp_fuel * Sh_num * rhoDtotal / lambda_skin;
 
         Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
-
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           // Species index
           const int fspec = fdat.indx[spf];
