@@ -223,94 +223,95 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-  amrex::ParmParse pp;
-  PeleRad::AMRParam amrpp(pp);
-  PeleRad::MLMGParam mlmgpp(pp);
-
-  bool const write = false;
-  int const nlevels = amrpp.max_level_ + 1;
-  int const ref_ratio = amrpp.ref_ratio_;
-  int const composite_solve = mlmgpp.composite_solve_;
-
-  amrex::Vector<amrex::Geometry> geom;
-  amrex::Vector<amrex::BoxArray> grids;
-  amrex::Vector<amrex::DistributionMapping> dmap;
-
-  amrex::Vector<amrex::MultiFab> solution;
-  amrex::Vector<amrex::MultiFab> rhs;
-  amrex::Vector<amrex::MultiFab> exact_solution;
-
-  amrex::Vector<amrex::MultiFab> acoef;
-  amrex::Vector<amrex::MultiFab> bcoef;
-  amrex::Vector<amrex::MultiFab> robin_a;
-  amrex::Vector<amrex::MultiFab> robin_b;
-  amrex::Vector<amrex::MultiFab> robin_f;
-
-  //    std::cout << "initialize data ... \n";
-  initMeshandData(
-    amrpp, geom, grids, dmap, solution, rhs, exact_solution, acoef, bcoef,
-    robin_a, robin_b, robin_f);
-  //    std::cout << "construct the PDE ... \n";
-  if (composite_solve) {
-
-    std::cout << "composite solve ... \n";
-    PeleRad::POneMulti rte(
-      mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
-      robin_f);
-    rte.solve();
-  } else {
-    std::cout << "level by level solve ... \n";
-    PeleRad::POneMultiLevbyLev rte(
-      mlmgpp, ref_ratio, geom, grids, dmap, solution, rhs, acoef, bcoef,
-      robin_a, robin_b, robin_f);
-    rte.solve();
-  }
-
-  amrex::Real eps = 0.0;
   amrex::Real eps_max = 0.0;
-  for (int ilev = 0; ilev < nlevels; ++ilev) {
-    auto dx = geom[ilev].CellSize();
-    amrex::Real dvol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
-    eps = check_norm(solution[ilev], exact_solution[ilev]);
-    eps *= dvol;
-    std::cout << "Level=" << ilev << ", normalized L1 norm:" << eps
-              << std::endl;
-    if (eps > eps_max)
-      eps_max = eps;
-  }
+  {
+    amrex::ParmParse pp;
+    PeleRad::AMRParam amrpp(pp);
+    PeleRad::MLMGParam mlmgpp(pp);
 
-  // plot results
-  if (write) {
-    amrex::Vector<amrex::MultiFab> plotmf(nlevels);
+    bool const write = false;
+    int const nlevels = amrpp.max_level_ + 1;
+    int const ref_ratio = amrpp.ref_ratio_;
+    int const composite_solve = mlmgpp.composite_solve_;
 
-    for (int ilev = 0; ilev < nlevels; ++ilev) {
-      // std::cout << "write the results ... \n";
-      plotmf[ilev].define(grids[ilev], dmap[ilev], 4, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 0, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], rhs[ilev], 0, 1, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], exact_solution[ilev], 0, 2, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 3, 1, 0);
-      amrex::MultiFab::Subtract(plotmf[ilev], plotmf[ilev], 2, 3, 1, 0);
+    amrex::Vector<amrex::Geometry> geom;
+    amrex::Vector<amrex::BoxArray> grids;
+    amrex::Vector<amrex::DistributionMapping> dmap;
 
-      // For amrvis
-      /*
-      amrex::writeFabs(solution[ilev],
-      "solution_lev"+std::to_string(ilev)); amrex::writeFabs(bcoef[ilev],
-      "bcoef_lev"+std::to_string(ilev)); amrex::writeFabs(robin_a[ilev],
-      "robin_a_lev"+std::to_string(ilev)); amrex::writeFabs(robin_b[ilev],
-      "robin_b_lev"+std::to_string(ilev)); amrex::writeFabs(robin_f[ilev],
-      "robin_f_lev"+std::to_string(ilev));
-      */
+    amrex::Vector<amrex::MultiFab> solution;
+    amrex::Vector<amrex::MultiFab> rhs;
+    amrex::Vector<amrex::MultiFab> exact_solution;
+
+    amrex::Vector<amrex::MultiFab> acoef;
+    amrex::Vector<amrex::MultiFab> bcoef;
+    amrex::Vector<amrex::MultiFab> robin_a;
+    amrex::Vector<amrex::MultiFab> robin_b;
+    amrex::Vector<amrex::MultiFab> robin_f;
+
+    //    std::cout << "initialize data ... \n";
+    initMeshandData(
+      amrpp, geom, grids, dmap, solution, rhs, exact_solution, acoef, bcoef,
+      robin_a, robin_b, robin_f);
+    //    std::cout << "construct the PDE ... \n";
+    if (composite_solve) {
+
+      std::cout << "composite solve ... \n";
+      PeleRad::POneMulti rte(
+        mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a,
+        robin_b, robin_f);
+      rte.solve();
+    } else {
+      std::cout << "level by level solve ... \n";
+      PeleRad::POneMultiLevbyLev rte(
+        mlmgpp, ref_ratio, geom, grids, dmap, solution, rhs, acoef, bcoef,
+        robin_a, robin_b, robin_f);
+      rte.solve();
     }
 
-    auto const plot_file_name = amrpp.plot_file_name_;
-    amrex::WriteMultiLevelPlotfile(
-      plot_file_name, nlevels, amrex::GetVecOfConstPtrs(plotmf),
-      {"phi", "rhs", "exact", "error"}, geom, 0.0,
-      amrex::Vector<int>(nlevels, 0),
-      amrex::Vector<amrex::IntVect>(nlevels, amrex::IntVect{ref_ratio}));
-  }
+    amrex::Real eps = 0.0;
+    for (int ilev = 0; ilev < nlevels; ++ilev) {
+      auto dx = geom[ilev].CellSize();
+      amrex::Real dvol = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+      eps = check_norm(solution[ilev], exact_solution[ilev]);
+      eps *= dvol;
+      std::cout << "Level=" << ilev << ", normalized L1 norm:" << eps
+                << std::endl;
+      if (eps > eps_max)
+        eps_max = eps;
+    }
 
+    // plot results
+    if (write) {
+      amrex::Vector<amrex::MultiFab> plotmf(nlevels);
+
+      for (int ilev = 0; ilev < nlevels; ++ilev) {
+        // std::cout << "write the results ... \n";
+        plotmf[ilev].define(grids[ilev], dmap[ilev], 4, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 0, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], rhs[ilev], 0, 1, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], exact_solution[ilev], 0, 2, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 3, 1, 0);
+        amrex::MultiFab::Subtract(plotmf[ilev], plotmf[ilev], 2, 3, 1, 0);
+
+        // For amrvis
+        /*
+        amrex::writeFabs(solution[ilev],
+        "solution_lev"+std::to_string(ilev)); amrex::writeFabs(bcoef[ilev],
+        "bcoef_lev"+std::to_string(ilev)); amrex::writeFabs(robin_a[ilev],
+        "robin_a_lev"+std::to_string(ilev)); amrex::writeFabs(robin_b[ilev],
+        "robin_b_lev"+std::to_string(ilev)); amrex::writeFabs(robin_f[ilev],
+        "robin_f_lev"+std::to_string(ilev));
+        */
+      }
+
+      auto const plot_file_name = amrpp.plot_file_name_;
+      amrex::WriteMultiLevelPlotfile(
+        plot_file_name, nlevels, amrex::GetVecOfConstPtrs(plotmf),
+        {"phi", "rhs", "exact", "error"}, geom, 0.0,
+        amrex::Vector<int>(nlevels, 0),
+        amrex::Vector<amrex::IntVect>(nlevels, amrex::IntVect{ref_ratio}));
+    }
+  }
   amrex::Finalize();
 
   if (eps_max < 1e-2) {
