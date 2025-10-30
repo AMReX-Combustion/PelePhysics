@@ -185,69 +185,71 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-  amrex::ParmParse pp;
-  PeleRad::AMRParam amrpp(pp);
-  PeleRad::MLMGParam mlmgpp(pp);
+  amrex::Real eps = 0.0;
+  {
+    amrex::ParmParse pp;
+    PeleRad::AMRParam amrpp(pp);
+    PeleRad::MLMGParam mlmgpp(pp);
 
-  bool const write = false;
-  int const n_cell = amrpp.n_cell_;
+    bool const write = false;
+    int const n_cell = amrpp.n_cell_;
 
-  amrex::Geometry geom;
-  amrex::BoxArray grids;
-  amrex::DistributionMapping dmap;
+    amrex::Geometry geom;
+    amrex::BoxArray grids;
+    amrex::DistributionMapping dmap;
 
-  amrex::MultiFab solution;
-  amrex::MultiFab rhs;
-  amrex::MultiFab exact_solution;
+    amrex::MultiFab solution;
+    amrex::MultiFab rhs;
+    amrex::MultiFab exact_solution;
 
-  amrex::MultiFab acoef;
-  amrex::MultiFab bcoef;
-  amrex::MultiFab robin_a;
-  amrex::MultiFab robin_b;
-  amrex::MultiFab robin_f;
+    amrex::MultiFab acoef;
+    amrex::MultiFab bcoef;
+    amrex::MultiFab robin_a;
+    amrex::MultiFab robin_b;
+    amrex::MultiFab robin_f;
 
-  // std::cout << "initialize data ... \n";
-  initMeshandData(
-    amrpp, geom, grids, dmap, solution, rhs, exact_solution, acoef, bcoef,
-    robin_a, robin_b, robin_f);
+    // std::cout << "initialize data ... \n";
+    initMeshandData(
+      amrpp, geom, grids, dmap, solution, rhs, exact_solution, acoef, bcoef,
+      robin_a, robin_b, robin_f);
 
-  // std::cout << "construct the PDE ... \n";
-  PeleRad::POneSingle rte(
-    mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
-    robin_f);
+    // std::cout << "construct the PDE ... \n";
+    PeleRad::POneSingle rte(
+      mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
+      robin_f);
 
-  // std::cout << "solve the PDE ... \n";
-  rte.solve();
+    // std::cout << "solve the PDE ... \n";
+    rte.solve();
 
-  auto eps = check_norm(solution, exact_solution);
-  eps /= static_cast<amrex::Real>(n_cell * n_cell * n_cell);
-  std::cout << "n_cell=" << n_cell << ", normalized L1 norm:" << eps
-            << std::endl;
+    eps = check_norm(solution, exact_solution);
+    eps /= static_cast<amrex::Real>(n_cell * n_cell * n_cell);
+    std::cout << "n_cell=" << n_cell << ", normalized L1 norm:" << eps
+              << std::endl;
 
-  // plot results
-  if (write) {
-    std::cout << "write the results ... \n";
-    amrex::MultiFab plotmf(grids, dmap, 4, 0);
-    amrex::MultiFab::Copy(plotmf, solution, 0, 0, 1, 0);
-    amrex::MultiFab::Copy(plotmf, rhs, 0, 1, 1, 0);
-    amrex::MultiFab::Copy(plotmf, exact_solution, 0, 2, 1, 0);
-    amrex::MultiFab::Copy(plotmf, solution, 0, 3, 1, 0);
-    amrex::MultiFab::Subtract(plotmf, plotmf, 2, 3, 1, 0);
+    // plot results
+    if (write) {
+      std::cout << "write the results ... \n";
+      amrex::MultiFab plotmf(grids, dmap, 4, 0);
+      amrex::MultiFab::Copy(plotmf, solution, 0, 0, 1, 0);
+      amrex::MultiFab::Copy(plotmf, rhs, 0, 1, 1, 0);
+      amrex::MultiFab::Copy(plotmf, exact_solution, 0, 2, 1, 0);
+      amrex::MultiFab::Copy(plotmf, solution, 0, 3, 1, 0);
+      amrex::MultiFab::Subtract(plotmf, plotmf, 2, 3, 1, 0);
 
-    auto const plot_file_name = amrpp.plot_file_name_;
-    amrex::WriteSingleLevelPlotfile(
-      plot_file_name, plotmf, {"phi", "rhs", "exact", "error"}, geom, 0.0, 0);
+      auto const plot_file_name = amrpp.plot_file_name_;
+      amrex::WriteSingleLevelPlotfile(
+        plot_file_name, plotmf, {"phi", "rhs", "exact", "error"}, geom, 0.0, 0);
 
-    // for amrvis
-    /*
-    amrex::writeFabs(solution, "solution");
-    amrex::writeFabs(bcoef, "bcoef");
-    amrex::writeFabs(robin_a, "robin_a");
-    amrex::writeFabs(robin_b, "robin_b");
-    amrex::writeFabs(robin_f, "robin_f");
-    */
+      // for amrvis
+      /*
+      amrex::writeFabs(solution, "solution");
+      amrex::writeFabs(bcoef, "bcoef");
+      amrex::writeFabs(robin_a, "robin_a");
+      amrex::writeFabs(robin_b, "robin_b");
+      amrex::writeFabs(robin_f, "robin_f");
+      */
+    }
   }
-
   amrex::Finalize();
   if (eps < 1e-3) {
     return (0);

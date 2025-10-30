@@ -271,94 +271,97 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-  amrex::ParmParse pp;
-  PeleRad::AMRParam amrpp(pp);
-  PeleRad::MLMGParam mlmgpp(pp);
+  {
+    amrex::ParmParse pp;
+    PeleRad::AMRParam amrpp(pp);
+    PeleRad::MLMGParam mlmgpp(pp);
 
-  bool const write = false;
+    bool const write = false;
 
-  amrex::Geometry geom;
-  amrex::BoxArray grids;
-  amrex::DistributionMapping dmap;
+    amrex::Geometry geom;
+    amrex::BoxArray grids;
+    amrex::DistributionMapping dmap;
 
-  amrex::MultiFab solution;
-  amrex::MultiFab rhs;
-  amrex::MultiFab rad_src;
+    amrex::MultiFab solution;
+    amrex::MultiFab rhs;
+    amrex::MultiFab rad_src;
 
-  amrex::MultiFab acoef;
-  amrex::MultiFab bcoef;
-  amrex::MultiFab robin_a;
-  amrex::MultiFab robin_b;
-  amrex::MultiFab robin_f;
+    amrex::MultiFab acoef;
+    amrex::MultiFab bcoef;
+    amrex::MultiFab robin_a;
+    amrex::MultiFab robin_b;
+    amrex::MultiFab robin_f;
 
-  amrex::MultiFab y_co2;
-  amrex::MultiFab y_h2o;
-  amrex::MultiFab y_co;
-  amrex::MultiFab soot_fv_rad;
-  amrex::MultiFab temperature;
-  amrex::MultiFab pressure;
-  amrex::MultiFab absc;
+    amrex::MultiFab y_co2;
+    amrex::MultiFab y_h2o;
+    amrex::MultiFab y_co;
+    amrex::MultiFab soot_fv_rad;
+    amrex::MultiFab temperature;
+    amrex::MultiFab pressure;
+    amrex::MultiFab absc;
 
-  // std::cout << "initialize data ... \n";
-  initMeshandData(
-    amrpp, geom, grids, dmap, solution, rhs, rad_src, acoef, bcoef, robin_a,
-    robin_b, robin_f, y_co2, y_h2o, y_co, soot_fv_rad, temperature, pressure,
-    absc);
+    // std::cout << "initialize data ... \n";
+    initMeshandData(
+      amrpp, geom, grids, dmap, solution, rhs, rad_src, acoef, bcoef, robin_a,
+      robin_b, robin_f, y_co2, y_h2o, y_co, soot_fv_rad, temperature, pressure,
+      absc);
 
-  // std::cout << "construct the PDE ... \n";
+    // std::cout << "construct the PDE ... \n";
 
-  PeleRad::POneSingle rte(
-    mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
-    robin_f);
-  // std::cout << "solve the PDE ... \n";
-  rte.solve();
+    PeleRad::POneSingle rte(
+      mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
+      robin_f);
+    // std::cout << "solve the PDE ... \n";
+    rte.solve();
 
-  // calculate radiative heat source
-  for (amrex::MFIter mfi(rad_src); mfi.isValid(); ++mfi) {
-    amrex::Box const& bx = mfi.validbox();
+    // calculate radiative heat source
+    for (amrex::MFIter mfi(rad_src); mfi.isValid(); ++mfi) {
+      amrex::Box const& bx = mfi.validbox();
 
-    auto const& rhsfab = rhs.array(mfi);
-    auto const& solfab = solution.array(mfi);
-    auto const& acfab = acoef.array(mfi);
+      auto const& rhsfab = rhs.array(mfi);
+      auto const& solfab = solution.array(mfi);
+      auto const& acfab = acoef.array(mfi);
 
-    auto radfab = rad_src.array(mfi);
+      auto radfab = rad_src.array(mfi);
 
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-      radfab(i, j, k) = acfab(i, j, k) * solfab(i, j, k) - rhsfab(i, j, k);
-    });
-  }
+      amrex::ParallelFor(
+        bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+          radfab(i, j, k) = acfab(i, j, k) * solfab(i, j, k) - rhsfab(i, j, k);
+        });
+    }
 
-  // plot results
-  if (write) {
-    // std::cout << "write the results ... \n";
-    amrex::MultiFab plotmf(grids, dmap, 10, 0);
-    amrex::MultiFab::Copy(plotmf, solution, 0, 0, 1, 0);
-    amrex::MultiFab::Copy(plotmf, rhs, 0, 1, 1, 0);
-    amrex::MultiFab::Copy(plotmf, acoef, 0, 2, 1, 0);
-    amrex::MultiFab::Copy(plotmf, bcoef, 0, 3, 1, 0);
-    amrex::MultiFab::Copy(plotmf, rad_src, 0, 4, 1, 0);
+    // plot results
+    if (write) {
+      // std::cout << "write the results ... \n";
+      amrex::MultiFab plotmf(grids, dmap, 10, 0);
+      amrex::MultiFab::Copy(plotmf, solution, 0, 0, 1, 0);
+      amrex::MultiFab::Copy(plotmf, rhs, 0, 1, 1, 0);
+      amrex::MultiFab::Copy(plotmf, acoef, 0, 2, 1, 0);
+      amrex::MultiFab::Copy(plotmf, bcoef, 0, 3, 1, 0);
+      amrex::MultiFab::Copy(plotmf, rad_src, 0, 4, 1, 0);
 
-    amrex::MultiFab::Copy(plotmf, y_co2, 0, 5, 1, 0);
-    amrex::MultiFab::Copy(plotmf, y_h2o, 0, 6, 1, 0);
-    amrex::MultiFab::Copy(plotmf, y_co, 0, 7, 1, 0);
-    amrex::MultiFab::Copy(plotmf, soot_fv_rad, 0, 8, 1, 0);
-    amrex::MultiFab::Copy(plotmf, temperature, 0, 9, 1, 0);
+      amrex::MultiFab::Copy(plotmf, y_co2, 0, 5, 1, 0);
+      amrex::MultiFab::Copy(plotmf, y_h2o, 0, 6, 1, 0);
+      amrex::MultiFab::Copy(plotmf, y_co, 0, 7, 1, 0);
+      amrex::MultiFab::Copy(plotmf, soot_fv_rad, 0, 8, 1, 0);
+      amrex::MultiFab::Copy(plotmf, temperature, 0, 9, 1, 0);
 
-    auto const plot_file_name = amrpp.plot_file_name_;
-    amrex::WriteSingleLevelPlotfile(
-      plot_file_name, plotmf,
-      {"G", "Emis", "kappa", "bcoef", "RadSrc", "Y_co2", "Y_h2o", "Y_co",
-       "Soot_fv", "Temperature"},
-      geom, 0.0, 0);
+      auto const plot_file_name = amrpp.plot_file_name_;
+      amrex::WriteSingleLevelPlotfile(
+        plot_file_name, plotmf,
+        {"G", "Emis", "kappa", "bcoef", "RadSrc", "Y_co2", "Y_h2o", "Y_co",
+         "Soot_fv", "Temperature"},
+        geom, 0.0, 0);
 
-    // for amrvis
-    /*
-    amrex::writeFabs(solution, "solution");
-    amrex::writeFabs(bcoef, "bcoef");
-    amrex::writeFabs(robin_a, "robin_a");
-    amrex::writeFabs(robin_b, "robin_b");
-    amrex::writeFabs(robin_f, "robin_f");
-    */
+      // for amrvis
+      /*
+      amrex::writeFabs(solution, "solution");
+      amrex::writeFabs(bcoef, "bcoef");
+      amrex::writeFabs(robin_a, "robin_a");
+      amrex::writeFabs(robin_b, "robin_b");
+      amrex::writeFabs(robin_f, "robin_f");
+      */
+    }
   }
   amrex::Finalize();
   return (0);

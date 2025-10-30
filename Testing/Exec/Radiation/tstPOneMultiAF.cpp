@@ -315,81 +315,83 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-  amrex::ParmParse pp;
-  PeleRad::AMRParam amrpp(pp);
-  PeleRad::MLMGParam mlmgpp(pp);
+  {
+    amrex::ParmParse pp;
+    PeleRad::AMRParam amrpp(pp);
+    PeleRad::MLMGParam mlmgpp(pp);
 
-  bool const write = false;
-  int const nlevels = amrpp.max_level_ + 1;
-  int const ref_ratio = amrpp.ref_ratio_;
-  int const composite_solve = mlmgpp.composite_solve_;
+    bool const write = false;
+    int const nlevels = amrpp.max_level_ + 1;
+    int const ref_ratio = amrpp.ref_ratio_;
+    int const composite_solve = mlmgpp.composite_solve_;
 
-  amrex::Vector<amrex::Geometry> geom;
-  amrex::Vector<amrex::BoxArray> grids;
-  amrex::Vector<amrex::DistributionMapping> dmap;
+    amrex::Vector<amrex::Geometry> geom;
+    amrex::Vector<amrex::BoxArray> grids;
+    amrex::Vector<amrex::DistributionMapping> dmap;
 
-  amrex::Vector<amrex::MultiFab> solution;
-  amrex::Vector<amrex::MultiFab> rhs;
+    amrex::Vector<amrex::MultiFab> solution;
+    amrex::Vector<amrex::MultiFab> rhs;
 
-  amrex::Vector<amrex::MultiFab> acoef;
-  amrex::Vector<amrex::MultiFab> bcoef;
-  amrex::Vector<amrex::MultiFab> robin_a;
-  amrex::Vector<amrex::MultiFab> robin_b;
-  amrex::Vector<amrex::MultiFab> robin_f;
+    amrex::Vector<amrex::MultiFab> acoef;
+    amrex::Vector<amrex::MultiFab> bcoef;
+    amrex::Vector<amrex::MultiFab> robin_a;
+    amrex::Vector<amrex::MultiFab> robin_b;
+    amrex::Vector<amrex::MultiFab> robin_f;
 
-  amrex::Vector<amrex::MultiFab> y_co2;
-  amrex::Vector<amrex::MultiFab> y_h2o;
-  amrex::Vector<amrex::MultiFab> y_co;
-  amrex::Vector<amrex::MultiFab> soot_fv_rad;
-  amrex::Vector<amrex::MultiFab> temperature;
-  amrex::Vector<amrex::MultiFab> pressure;
-  amrex::Vector<amrex::MultiFab> absc;
+    amrex::Vector<amrex::MultiFab> y_co2;
+    amrex::Vector<amrex::MultiFab> y_h2o;
+    amrex::Vector<amrex::MultiFab> y_co;
+    amrex::Vector<amrex::MultiFab> soot_fv_rad;
+    amrex::Vector<amrex::MultiFab> temperature;
+    amrex::Vector<amrex::MultiFab> pressure;
+    amrex::Vector<amrex::MultiFab> absc;
 
-  std::cout << "initialize data ... \n";
-  initMeshandData(
-    amrpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
-    robin_f, y_co2, y_h2o, y_co, soot_fv_rad, temperature, pressure, absc);
+    std::cout << "initialize data ... \n";
+    initMeshandData(
+      amrpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
+      robin_f, y_co2, y_h2o, y_co, soot_fv_rad, temperature, pressure, absc);
 
-  std::cout << "construct the PDE ... \n";
+    std::cout << "construct the PDE ... \n";
 
-  if (composite_solve) {
-    PeleRad::POneMulti rte(
-      mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a, robin_b,
-      robin_f);
-    rte.solve();
-  } else {
-    PeleRad::POneMultiLevbyLev rte(
-      mlmgpp, ref_ratio, geom, grids, dmap, solution, rhs, acoef, bcoef,
-      robin_a, robin_b, robin_f);
-    rte.solve();
-  }
-
-  // plot results
-  if (write) {
-    amrex::Vector<amrex::MultiFab> plotmf(nlevels);
-
-    for (int ilev = 0; ilev < nlevels; ++ilev) {
-      std::cout << "write the results ... \n";
-      plotmf[ilev].define(grids[ilev], dmap[ilev], 9, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 0, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], rhs[ilev], 0, 1, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], acoef[ilev], 0, 2, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], bcoef[ilev], 0, 3, 1, 0);
-
-      amrex::MultiFab::Copy(plotmf[ilev], y_co2[ilev], 0, 4, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], y_h2o[ilev], 0, 5, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], y_co[ilev], 0, 6, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], soot_fv_rad[ilev], 0, 7, 1, 0);
-      amrex::MultiFab::Copy(plotmf[ilev], temperature[ilev], 0, 8, 1, 0);
+    if (composite_solve) {
+      PeleRad::POneMulti rte(
+        mlmgpp, geom, grids, dmap, solution, rhs, acoef, bcoef, robin_a,
+        robin_b, robin_f);
+      rte.solve();
+    } else {
+      PeleRad::POneMultiLevbyLev rte(
+        mlmgpp, ref_ratio, geom, grids, dmap, solution, rhs, acoef, bcoef,
+        robin_a, robin_b, robin_f);
+      rte.solve();
     }
 
-    auto const plot_file_name = amrpp.plot_file_name_;
-    amrex::WriteMultiLevelPlotfile(
-      plot_file_name, nlevels, amrex::GetVecOfConstPtrs(plotmf),
-      {"solution", "rhs", "acoef", "bcoef", "Y_co2", "Y_h2o", "Y_co",
-       "Soot_fv_rad", "Temperature"},
-      geom, 0.0, amrex::Vector<int>(nlevels, 0),
-      amrex::Vector<amrex::IntVect>(nlevels, amrex::IntVect{ref_ratio}));
+    // plot results
+    if (write) {
+      amrex::Vector<amrex::MultiFab> plotmf(nlevels);
+
+      for (int ilev = 0; ilev < nlevels; ++ilev) {
+        std::cout << "write the results ... \n";
+        plotmf[ilev].define(grids[ilev], dmap[ilev], 9, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 0, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], rhs[ilev], 0, 1, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], acoef[ilev], 0, 2, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], bcoef[ilev], 0, 3, 1, 0);
+
+        amrex::MultiFab::Copy(plotmf[ilev], y_co2[ilev], 0, 4, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], y_h2o[ilev], 0, 5, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], y_co[ilev], 0, 6, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], soot_fv_rad[ilev], 0, 7, 1, 0);
+        amrex::MultiFab::Copy(plotmf[ilev], temperature[ilev], 0, 8, 1, 0);
+      }
+
+      auto const plot_file_name = amrpp.plot_file_name_;
+      amrex::WriteMultiLevelPlotfile(
+        plot_file_name, nlevels, amrex::GetVecOfConstPtrs(plotmf),
+        {"solution", "rhs", "acoef", "bcoef", "Y_co2", "Y_h2o", "Y_co",
+         "Soot_fv_rad", "Temperature"},
+        geom, 0.0, amrex::Vector<int>(nlevels, 0),
+        amrex::Vector<amrex::IntVect>(nlevels, amrex::IntVect{ref_ratio}));
+    }
   }
   amrex::Finalize();
   return (0);
