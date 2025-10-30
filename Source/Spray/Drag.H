@@ -398,7 +398,7 @@ calculateSpraySource(
     mu_skin *= sutherland_ratio;
     lambda_skin *= sutherland_ratio;
     for (int spf = 0; spf < NUM_SPECIES; ++spf) {
-      Ddiag[spf] *= sutherland_ratio; // / mw_skin * gpv.mw[spf];
+      Ddiag[spf] *= sutherland_ratio;
     }
     rho_skin /= temp_ratio;
 #endif
