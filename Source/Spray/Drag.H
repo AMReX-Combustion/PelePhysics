@@ -477,7 +477,6 @@ calculateSpraySource(
         }
         eos.TY2Cp(T_skin, Y_fuel_skin.data(), cp_fuel);
 #else
-        // Manifold EOS: for now, just taking mixture Cp rather than Fuel Cp
         eos.Y2GenericManifoldData(
           Y_skin.data(), &(fdat.eosparm->idx_Cp_fuel), &cp_fuel, 1);
         // TODO: account for variation between table temperature and skin
