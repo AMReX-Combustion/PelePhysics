@@ -386,7 +386,7 @@ calculateSpraySource(
 #ifdef USE_MANIFOLD_EOS
     // Hack: manifold model may inaccurately predict temperature in skin layer
     // to improve predictions, adjust computed transport coefficients to the
-    // skin layer temperature using a simple teperature scaling based on
+    // skin layer temperature using a simple temperature scaling based on
     // Sutherland's law. Rho also needs to be modified (uses ideal gas law)
     amrex::Real T_skin_predicted = 300.0;
     eos.HY2T(0.0, Y_skin.data(), T_skin_predicted);
