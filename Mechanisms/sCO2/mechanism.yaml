@@ -27,6 +27,28 @@ phases:
   kinetics: gas
   transport: mixture-averaged
   state: {T: 300.0, P: 1 atm}
+- name: Peng-Robinson
+  thermo: Peng-Robinson
+  elements: [C, H, N, O]
+  species: [H, O2, O, H2O, OH, H2O2, HO2, CO, CO2, CH4, CH3, CH3O2H, CH3O2,
+    CH3O, CH2O, HCO]
+  kinetics: gas
+  reactions: all
+  transport: mixture-averaged
+  state:
+    T: 300.0
+    P: 1.01325e+05
+- name: Redlich-Kwong
+  thermo: Redlich-Kwong
+  elements: [C, H, N, O]
+  species: [H, O2, O, H2O, OH, H2O2, HO2, CO, CO2, CH4, CH3, CH3O2H, CH3O2,
+    CH3O, CH2O, HCO]
+  kinetics: gas
+  reactions: all
+  transport: mixture-averaged
+  state:
+    T: 300.0
+    P: 1.01325e+05
 
 species:
 - name: H
@@ -42,6 +64,10 @@ species:
     geometry: atom
     well-depth: 145.0
     diameter: 2.05
+  critical-parameters:
+    critical-temperature: 190.82
+    critical-pressure: 30988295.17
+    acentric-factor: 0
 - name: O2
   composition: {O: 2}
   thermo:
@@ -60,6 +86,10 @@ species:
     diameter: 3.458
     polarizability: 1.6
     rotational-relaxation: 3.8
+  critical-parameters:
+    critical-temperature: 154.581
+    critical-pressure: 5043046.6
+    acentric-factor: 0.0222
 - name: O
   composition: {O: 1}
   thermo:
@@ -76,6 +106,10 @@ species:
     geometry: atom
     well-depth: 80.0
     diameter: 2.75
+  critical-parameters:
+    critical-temperature: 105.28
+    critical-pressure: 7082444.345
+    acentric-factor: 0
 - name: H2O
   composition: {H: 2, O: 1}
   thermo:
@@ -94,6 +128,10 @@ species:
     diameter: 2.605
     dipole: 1.844
     rotational-relaxation: 4.0
+  critical-parameters:
+    critical-temperature: 647.096
+    critical-pressure: 22064000
+    acentric-factor: 0.3443
 - name: OH
   composition: {O: 1, H: 1}
   thermo:
@@ -110,6 +148,10 @@ species:
     geometry: linear
     well-depth: 80.0
     diameter: 2.75
+  critical-parameters:
+    critical-temperature: 105.28
+    critical-pressure: 7082444.345
+    acentric-factor: 0
 - name: H2O2
   composition: {H: 2, O: 2}
   thermo:
@@ -127,6 +169,10 @@ species:
     well-depth: 107.4
     diameter: 3.458
     rotational-relaxation: 3.8
+  critical-parameters:
+    critical-temperature: 141.3384
+    critical-pressure: 4782121.207
+    acentric-factor: 0
 - name: HO2
   composition: {H: 1, O: 2}
   thermo:
@@ -144,6 +190,10 @@ species:
     well-depth: 107.4
     diameter: 3.458
     rotational-relaxation: 1.0
+  critical-parameters:
+    critical-temperature: 141.3384
+    critical-pressure: 4782121.207
+    acentric-factor: 0
 - name: CO
   composition: {C: 1, O: 1}
   thermo:
@@ -162,6 +212,10 @@ species:
     diameter: 3.65
     polarizability: 1.95
     rotational-relaxation: 1.8
+  critical-parameters:
+    critical-temperature: 132.85
+    critical-pressure: 3493931.394
+    acentric-factor: 0.045
 - name: CO2
   composition: {C: 1, O: 2}
   thermo:
@@ -180,6 +234,10 @@ species:
     diameter: 3.763
     polarizability: 2.65
     rotational-relaxation: 2.1
+  critical-parameters:
+    critical-temperature: 304.12
+    critical-pressure: 7374000
+    acentric-factor: 0.225
 - name: CH4
   composition: {C: 1, H: 4}
   thermo:
@@ -198,6 +256,10 @@ species:
     diameter: 3.746
     polarizability: 2.6
     rotational-relaxation: 13.0
+  critical-parameters:
+    critical-temperature: 190.56
+    critical-pressure: 4599000
+    acentric-factor: 0.011
 - name: CH3
   composition: {C: 1, H: 3}
   thermo:
@@ -214,6 +276,10 @@ species:
     geometry: linear
     well-depth: 144.0
     diameter: 3.8
+  critical-parameters:
+    critical-temperature: 189.504
+    critical-pressure: 4831733.444
+    acentric-factor: 0
 - name: CH3O2H
   composition: {C: 1, H: 4, O: 2}
   thermo:
@@ -231,6 +297,10 @@ species:
     well-depth: 481.8
     diameter: 3.626
     rotational-relaxation: 1.0
+  critical-parameters:
+    critical-temperature: 634.0488
+    critical-pressure: 18606927.32
+    acentric-factor: 0
 - name: CH3O2
   composition: {H: 3, C: 1, O: 2}
   thermo:
@@ -247,6 +317,10 @@ species:
     well-depth: 481.8
     diameter: 3.626
     rotational-relaxation: 1.0
+  critical-parameters:
+    critical-temperature: 634.0488
+    critical-pressure: 18606927.32
+    acentric-factor: 0
 - name: CH3O
   composition: {C: 1, H: 3, O: 1}
   thermo:
@@ -265,6 +339,10 @@ species:
     diameter: 3.69
     dipole: 1.7
     rotational-relaxation: 2.0
+  critical-parameters:
+    critical-temperature: 548.772
+    critical-pressure: 15280874.94
+    acentric-factor: 0
 - name: CH2O
   composition: {H: 2, C: 1, O: 1}
   thermo:
@@ -282,6 +360,10 @@ species:
     well-depth: 498.0
     diameter: 3.59
     rotational-relaxation: 2.0
+  critical-parameters:
+    critical-temperature: 655.368
+    critical-pressure: 19816970.46
+    acentric-factor: 0
 - name: HCO
   composition: {C: 1, H: 1, O: 1}
   thermo:
@@ -298,6 +380,10 @@ species:
     geometry: nonlinear
     well-depth: 498.0
     diameter: 3.59
+  critical-parameters:
+    critical-temperature: 655.368
+    critical-pressure: 19816970.46
+    acentric-factor: 0
 
 reactions:
 - equation: O + O + M <=> O2 + M  # Reaction 1
