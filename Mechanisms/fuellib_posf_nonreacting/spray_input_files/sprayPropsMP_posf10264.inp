@@ -2,549 +2,616 @@
 # Liquid fuel properties for MP in Pele
 # Fuel: posf10264
 # Number of compounds: 67
-# Generated: 2025-10-06 23:06:14
+# Generated: 2025-12-15 21:22:18
 # FuelLib remote URL: https://github.com/NREL/FuelLib.git
-# Git commit: 6407adfbd454a12b3c58ac8087c745b3b378a2d8
+# Git commit: 0d18d88bd32795d06b5086bd764e077611b48e5c
 # Units: MKS
 # -----------------------------------------------------------------------------
 
-particles.fuel_species = Toluene C2-Benzene C3-Benzene C4-Benzene C5-Benzene C6-Benzene C7-Benzene C8-Benzene C9-Benzene Diaromatic-C10 Diaromatic-C11 Diaromatic-C12 Diaromatic-C13 Cycloaromatic-C09 Cycloaromatic-C10 Cycloaromatic-C11 Cycloaromatic-C12 Cycloaromatic-C13 Cycloaromatic-C14 C07-Isoparaffin C08-Isoparaffin C09-Isoparaffin C10-Isoparaffin C11-Isoparaffin C12-Isoparaffin C13-Isoparaffin C14-Isoparaffin C15-Isoparaffin C16-Isoparaffin C17-Isoparaffin C18-Isoparaffin C19-Isoparaffin C20-Isoparaffin n-C07 n-C08 n-C09 n-C10 n-C11 n-C12 n-C13 n-C14 n-C15 n-C16 n-C17 n-C18 C07-Monocycloparaffin C08-Monocycloparaffin C09-Monocycloparaffin C10-Monocycloparaffin C11-Monocycloparaffin C12-Monocycloparaffin C13-Monocycloparaffin C14-Monocycloparaffin C15-Monocycloparaffin C16-Monocycloparaffin C17-Monocycloparaffin C08-Dicycloparaffin C09-Dicycloparaffin C10-Dicycloparaffin C11-Dicycloparaffin C12-Dicycloparaffin C13-Dicycloparaffin C14-Dicycloparaffin C15-Dicycloparaffin C10-Tricycloparaffin C11-Tricycloparaffin C12-Tricycloparaffin
-particles.Y_0 = 0.002510544286001205 0.02008435428800964 0.04217714400482025 0.022795742116890942 0.011548503715605542 0.0056236192006427 0.002410122514561157 0.0012050612572805785 0.000502108857200241 0.001004217714400482 0.0032134966860815424 0.004016870857601928 0.0018075918859208676 0.0002008435428800964 0.0018075918859208676 0.003615183771841735 0.0037156055432817836 0.0016067483430407712 0.0004016870857601928 0.002309700743121109 0.009540068286804579 0.02892147017473388 0.08565977103836112 0.09218718618196425 0.06075517172122916 0.04428600120506126 0.04237798754770034 0.023197429202651134 0.007330789315123518 0.0018075918859208676 0.0002008435428800964 0.0 0.0 0.002008435428800964 0.011448081944165495 0.0306286402892147 0.06798553926491263 0.0531231170917855 0.04157461337617995 0.030026109660574417 0.020787306688089976 0.008837115886724242 0.002410122514561157 0.0006025306286402892 0.0 0.004920666800562362 0.009841333601124724 0.028720626631853784 0.038461538461538464 0.029323157260494073 0.019983932516569592 0.020686884916649932 0.01164892548704559 0.005924884514962844 0.0012050612572805785 0.0002008435428800964 0.0003012653143201446 0.002410122514561157 0.0026109660574412533 0.00723036754368347 0.006627836915043182 0.005422775657762603 0.004217714400482024 0.0007029524000803375 0.0002008435428800964 0.000502108857200241 0.0006025306286402892
-particles.dep_fuel_species = Toluene C2-Benzene C3-Benzene C4-Benzene C5-Benzene C6-Benzene C7-Benzene C8-Benzene C9-Benzene Diaromatic-C10 Diaromatic-C11 Diaromatic-C12 Diaromatic-C13 Cycloaromatic-C09 Cycloaromatic-C10 Cycloaromatic-C11 Cycloaromatic-C12 Cycloaromatic-C13 Cycloaromatic-C14 C07-Isoparaffin C08-Isoparaffin C09-Isoparaffin C10-Isoparaffin C11-Isoparaffin C12-Isoparaffin C13-Isoparaffin C14-Isoparaffin C15-Isoparaffin C16-Isoparaffin C17-Isoparaffin C18-Isoparaffin C19-Isoparaffin C20-Isoparaffin n-C07 n-C08 n-C09 n-C10 n-C11 n-C12 n-C13 n-C14 n-C15 n-C16 n-C17 n-C18 C07-Monocycloparaffin C08-Monocycloparaffin C09-Monocycloparaffin C10-Monocycloparaffin C11-Monocycloparaffin C12-Monocycloparaffin C13-Monocycloparaffin C14-Monocycloparaffin C15-Monocycloparaffin C16-Monocycloparaffin C17-Monocycloparaffin C08-Dicycloparaffin C09-Dicycloparaffin C10-Dicycloparaffin C11-Dicycloparaffin C12-Dicycloparaffin C13-Dicycloparaffin C14-Dicycloparaffin C15-Dicycloparaffin C10-Tricycloparaffin C11-Tricycloparaffin C12-Tricycloparaffin
+particles.fuel_species = C6H5CH3 C6H5C2H5 C6H5C3H7 C6H5C4H9 C6H5C5H11 C6H5C6H13 C6H5C7H15 C6H5C8H17 C6H5C9H19 NAPH METHYLNAPH-1 ETHYLNAPH-1 PROPYLNAPH-1 INDANE TETRA METHYLTETRA-2 ETHYLTETRA-2 PROPYLTETRA-2 BUTYLTETRA-2 C7H16-2 C8H18-2 C9H20-2 C10H22-2 C11H24-2 C12H26-2 C13H28-2 C14H30-2 C15H32-2 C16H34-2 C17H36-2 C18H38-2 C19H40-2 C20H42-2 NC7H16 NC8H18 NC9H20 NC10H22 NC11H24 NC12H26 NC13H28 NC14H30 NC15H32 NC16H34 NC17H36 NC18H38 C6H11CH3 C6H11C2H5 C6H11C3H7 C6H11C4H9 C6H11C5H11 C6H11C6H13 C6H11C7H15 C6H11C8H17 C6H11C9H19 C6H11C10H21 C6H11C11H23 OHPEN HYDRIND DECALIN METHYLDECALIN-2 ETHYLDECALIN-2 PROPYLDECALIN-2 BUTYLDECALIN-2 PENTYLDECALIN-2 TRICYCLO-C10 TRICYCLO-C11 TRICYCLO-C12
+particles.Y_0 = 0.002501000400160064 0.01980792316926771 0.04171668667466987 0.0233093237294918 0.011904761904761906 0.00660264105642257 0.002501000400160064 0.0012004801920768309 0.0006002400960384154 0.0010004001600640256 0.003301320528211285 0.004101640656262505 0.0022008803521408565 0.00020008003201280514 0.001900760304121649 0.003701480592236895 0.003801520608243298 0.0034013605442176874 0.001900760304121649 0.0021008403361344537 0.008803521408563426 0.025910364145658265 0.0815326130452181 0.08383353341336536 0.05412164865946379 0.046318527410964386 0.03961584633853542 0.02280912364945978 0.007503001200480193 0.0020008003201280513 0.0003001200480192077 0.0 0.0 0.0024009603841536617 0.011104441776710687 0.029711884753901564 0.06462585034013606 0.05222088835534214 0.039915966386554626 0.029711884753901564 0.019707883153261305 0.008303321328531413 0.0023009203681472593 0.0006002400960384154 0.0 0.005102040816326531 0.01010404161664666 0.030612244897959186 0.04471788715486195 0.03551420568227291 0.02450980392156863 0.022509003601440578 0.011904761904761906 0.007703081232492998 0.0011004401760704283 0.00020008003201280514 0.0003001200480192077 0.0035014005602240898 0.004701880752300921 0.0071028411364545815 0.007703081232492998 0.005202080832332934 0.004501800720288116 0.0008003201280512205 0.0 0.0011004401760704283 0.0
+particles.dep_fuel_species = C6H5CH3 C6H5C2H5 C6H5C3H7 C6H5C4H9 C6H5C5H11 C6H5C6H13 C6H5C7H15 C6H5C8H17 C6H5C9H19 NAPH METHYLNAPH-1 ETHYLNAPH-1 PROPYLNAPH-1 INDANE TETRA METHYLTETRA-2 ETHYLTETRA-2 PROPYLTETRA-2 BUTYLTETRA-2 C7H16-2 C8H18-2 C9H20-2 C10H22-2 C11H24-2 C12H26-2 C13H28-2 C14H30-2 C15H32-2 C16H34-2 C17H36-2 C18H38-2 C19H40-2 C20H42-2 NC7H16 NC8H18 NC9H20 NC10H22 NC11H24 NC12H26 NC13H28 NC14H30 NC15H32 NC16H34 NC17H36 NC18H38 C6H11CH3 C6H11C2H5 C6H11C3H7 C6H11C4H9 C6H11C5H11 C6H11C6H13 C6H11C7H15 C6H11C8H17 C6H11C9H19 C6H11C10H21 C6H11C11H23 OHPEN HYDRIND DECALIN METHYLDECALIN-2 ETHYLDECALIN-2 PROPYLDECALIN-2 BUTYLDECALIN-2 PENTYLDECALIN-2 TRICYCLO-C10 TRICYCLO-C11 TRICYCLO-C12
 particles.fuel_ref_temp = 298.15 # K
 
-# Properties for Toluene in MKS
-particles.Toluene_crit_temp = 596.171640 # K
-particles.Toluene_boil_temp = 386.115949 # K
-particles.Toluene_latent = 403206.521739 # J/kg
-particles.Toluene_cp = 1141.043478 # J/kg/K
-particles.Toluene_rho = 859.605766 # kg/m^3
-particles.Toluene_psat = 8.867414797943418 1295.309548016491 -24.54765972307813 1.0 # Pa
-
-# Properties for C2-Benzene in MKS
-particles.C2-Benzene_crit_temp = 620.055714 # K
-particles.C2-Benzene_boil_temp = 411.373550 # K
-particles.C2-Benzene_latent = 392641.509434 # J/kg
-particles.C2-Benzene_cp = 1226.933019 # J/kg/K
-particles.C2-Benzene_rho = 858.806429 # kg/m^3
-particles.C2-Benzene_psat = 8.833853044974946 1361.2222411221308 -26.78922433534985 1.0 # Pa
-
-# Properties for C3-Benzene in MKS
-particles.C3-Benzene_crit_temp = 639.586252 # K
-particles.C3-Benzene_boil_temp = 435.122699 # K
-particles.C3-Benzene_latent = 385583.333333 # J/kg
-particles.C3-Benzene_cp = 1272.412500 # J/kg/K
-particles.C3-Benzene_rho = 858.193630 # kg/m^3
-particles.C3-Benzene_psat = 8.856672500972484 1435.869901215902 -31.509470191878084 1.0 # Pa
-
-# Properties for C4-Benzene in MKS
-particles.C4-Benzene_crit_temp = 657.214339 # K
-particles.C4-Benzene_boil_temp = 456.397006 # K
-particles.C4-Benzene_latent = 380000.000000 # J/kg
-particles.C4-Benzene_cp = 1308.388806 # J/kg/K
-particles.C4-Benzene_rho = 857.709449 # kg/m^3
-particles.C4-Benzene_psat = 8.892292913382393 1513.6851536392599 -36.09386484846566 1.0 # Pa
-
-# Properties for C5-Benzene in MKS
-particles.C5-Benzene_crit_temp = 673.277929 # K
-particles.C5-Benzene_boil_temp = 475.663935 # K
-particles.C5-Benzene_latent = 375472.972973 # J/kg
-particles.C5-Benzene_cp = 1337.558784 # J/kg/K
-particles.C5-Benzene_rho = 857.317218 # kg/m^3
-particles.C5-Benzene_psat = 8.938431483769003 1594.6874792116544 -40.397303204884246 1.0 # Pa
-
-# Properties for C6-Benzene in MKS
-particles.C6-Benzene_crit_temp = 688.032226 # K
-particles.C6-Benzene_boil_temp = 493.269856 # K
-particles.C6-Benzene_latent = 371728.395062 # J/kg
-particles.C6-Benzene_cp = 1361.687037 # J/kg/K
-particles.C6-Benzene_rho = 856.992996 # kg/m^3
-particles.C6-Benzene_psat = 8.99323367710153 1678.6952696285027 -44.35843865026799 1.0 # Pa
-
-# Properties for C7-Benzene in MKS
-particles.C7-Benzene_crit_temp = 701.674670 # K
-particles.C7-Benzene_boil_temp = 509.478570 # K
-particles.C7-Benzene_latent = 368579.545455 # J/kg
-particles.C7-Benzene_cp = 1381.976705 # J/kg/K
-particles.C7-Benzene_rho = 856.720488 # kg/m^3
-particles.C7-Benzene_psat = 9.05518179547457 1765.430840248344 -47.96402752099727 1.0 # Pa
-
-# Properties for C8-Benzene in MKS
-particles.C8-Benzene_crit_temp = 714.361157 # K
-particles.C8-Benzene_boil_temp = 524.495629 # K
-particles.C8-Benzene_latent = 365894.736842 # J/kg
-particles.C8-Benzene_cp = 1399.276316 # J/kg/K
-particles.C8-Benzene_rho = 856.488221 # kg/m^3
-particles.C8-Benzene_psat = 9.123030112205504 1854.5830885319267 -51.226449604337546 1.0 # Pa
-
-# Properties for C9-Benzene in MKS
-particles.C9-Benzene_crit_temp = 726.216929 # K
-particles.C9-Benzene_boil_temp = 538.484317 # K
-particles.C9-Benzene_latent = 363578.431373 # J/kg
-particles.C9-Benzene_cp = 1414.201471 # J/kg/K
-particles.C9-Benzene_rho = 856.287880 # kg/m^3
-particles.C9-Benzene_psat = 9.195754666995615 1945.8424531914875 -54.17033117868964 1.0 # Pa
-
-# Properties for Diaromatic-C10 in MKS
-particles.Diaromatic-C10_crit_temp = 739.020400 # K
-particles.Diaromatic-C10_boil_temp = 484.158973 # K
-particles.Diaromatic-C10_latent = 505601.562500 # J/kg
-particles.Diaromatic-C10_cp = 1032.139844 # J/kg/K
-particles.Diaromatic-C10_rho = 1011.667371 # kg/m^3
-particles.Diaromatic-C10_psat = 9.278701310977603 1855.8755478566388 -40.397917156586765 1.0 # Pa
-
-# Properties for Diaromatic-C11 in MKS
-particles.Diaromatic-C11_crit_temp = 752.241983 # K
-particles.Diaromatic-C11_boil_temp = 503.085772 # K
-particles.Diaromatic-C11_latent = 495739.436620 # J/kg
-particles.Diaromatic-C11_cp = 1116.840845 # J/kg/K
-particles.Diaromatic-C11_rho = 998.416312 # kg/m^3
-particles.Diaromatic-C11_psat = 9.307878577438355 1938.5355286684392 -43.472707340522504 1.0 # Pa
-
-# Properties for Diaromatic-C12 in MKS
-particles.Diaromatic-C12_crit_temp = 762.718644 # K
-particles.Diaromatic-C12_boil_temp = 517.717239 # K
-particles.Diaromatic-C12_latent = 480256.410256 # J/kg
-particles.Diaromatic-C12_cp = 1177.373718 # J/kg/K
-particles.Diaromatic-C12_rho = 983.440798 # kg/m^3
-particles.Diaromatic-C12_psat = 9.297078824569725 1993.131479598409 -45.13430398807337 1.0 # Pa
-
-# Properties for Diaromatic-C13 in MKS
-particles.Diaromatic-C13_crit_temp = 771.865279 # K
-particles.Diaromatic-C13_boil_temp = 532.161406 # K
-particles.Diaromatic-C13_latent = 468058.823529 # J/kg
-particles.Diaromatic-C13_cp = 1213.558235 # J/kg/K
-particles.Diaromatic-C13_rho = 971.271274 # kg/m^3
-particles.Diaromatic-C13_psat = 9.362823490739432 2081.648712974526 -48.351923667163774 1.0 # Pa
-
-# Properties for Cycloaromatic-C09 in MKS
-particles.Cycloaromatic-C09_crit_temp = 763.410992 # K
-particles.Cycloaromatic-C09_boil_temp = 507.465332 # K
-particles.Cycloaromatic-C09_latent = 512514.084507 # J/kg
-particles.Cycloaromatic-C09_cp = 1049.057042 # J/kg/K
-particles.Cycloaromatic-C09_rho = 1086.843287 # kg/m^3
-particles.Cycloaromatic-C09_psat = 9.28430377829924 1938.411200161879 -41.28337421430433 1.0 # Pa
-
-# Properties for Cycloaromatic-C10 in MKS
-particles.Cycloaromatic-C10_crit_temp = 682.996283 # K
-particles.Cycloaromatic-C10_boil_temp = 463.381227 # K
-particles.Cycloaromatic-C10_latent = 393833.333333 # J/kg
-particles.Cycloaromatic-C10_cp = 1156.681061 # J/kg/K
-particles.Cycloaromatic-C10_rho = 965.221892 # kg/m^3
-particles.Cycloaromatic-C10_psat = 8.75499452526593 1488.5226655098886 -23.335659036013116 1.0 # Pa
-
-# Properties for Cycloaromatic-C11 in MKS
-particles.Cycloaromatic-C11_crit_temp = 692.025658 # K
-particles.Cycloaromatic-C11_boil_temp = 475.107095 # K
-particles.Cycloaromatic-C11_latent = 371390.410959 # J/kg
-particles.Cycloaromatic-C11_cp = 1192.395205 # J/kg/K
-particles.Cycloaromatic-C11_rho = 950.782041 # kg/m^3
-particles.Cycloaromatic-C11_psat = 8.74034047612098 1523.7968966072613 -25.648610599434722 1.0 # Pa
-
-# Properties for Cycloaromatic-C12 in MKS
-particles.Cycloaromatic-C12_crit_temp = 705.381312 # K
-particles.Cycloaromatic-C12_boil_temp = 492.759038 # K
-particles.Cycloaromatic-C12_latent = 367956.250000 # J/kg
-particles.Cycloaromatic-C12_cp = 1229.526875 # J/kg/K
-particles.Cycloaromatic-C12_rho = 941.401920 # kg/m^3
-particles.Cycloaromatic-C12_psat = 8.767683743706547 1588.347859105198 -30.17007984619613 1.0 # Pa
-
-# Properties for Cycloaromatic-C13 in MKS
-particles.Cycloaromatic-C13_crit_temp = 717.819441 # K
-particles.Cycloaromatic-C13_boil_temp = 509.006748 # K
-particles.Cycloaromatic-C13_latent = 365074.712644 # J/kg
-particles.Cycloaromatic-C13_cp = 1260.683333 # J/kg/K
-particles.Cycloaromatic-C13_rho = 933.672837 # kg/m^3
-particles.Cycloaromatic-C13_psat = 8.808308613686938 1658.5365159961434 -34.672731400139476 1.0 # Pa
-
-# Properties for Cycloaromatic-C14 in MKS
-particles.Cycloaromatic-C14_crit_temp = 729.458048 # K
-particles.Cycloaromatic-C14_boil_temp = 524.057271 # K
-particles.Cycloaromatic-C14_latent = 362622.340426 # J/kg
-particles.Cycloaromatic-C14_cp = 1287.199468 # J/kg/K
-particles.Cycloaromatic-C14_rho = 927.194125 # kg/m^3
-particles.Cycloaromatic-C14_psat = 8.859595165094676 1733.6892045937934 -38.958728657516254 1.0 # Pa
-
-# Properties for C07-Isoparaffin in MKS
-particles.C07-Isoparaffin_crit_temp = 533.414696 # K
-particles.C07-Isoparaffin_boil_temp = 363.532943 # K
-particles.C07-Isoparaffin_latent = 361900.000000 # J/kg
-particles.C07-Isoparaffin_cp = 1629.817000 # J/kg/K
-particles.C07-Isoparaffin_rho = 675.362832 # kg/m^3
-particles.C07-Isoparaffin_psat = 9.1180883170495 1291.8450357178997 -49.6135995926029 1.0 # Pa
-
-# Properties for C08-Isoparaffin in MKS
-particles.C08-Isoparaffin_crit_temp = 563.960096 # K
-particles.C08-Isoparaffin_boil_temp = 393.112191 # K
-particles.C08-Isoparaffin_latent = 358245.614035 # J/kg
-particles.C08-Isoparaffin_cp = 1628.213158 # J/kg/K
-particles.C08-Isoparaffin_rho = 693.140044 # kg/m^3
-particles.C08-Isoparaffin_psat = 9.185586752319916 1415.53593735458 -53.245267910275366 1.0 # Pa
-
-# Properties for C09-Isoparaffin in MKS
-particles.C09-Isoparaffin_crit_temp = 590.090009 # K
-particles.C09-Isoparaffin_boil_temp = 418.946444 # K
-particles.C09-Isoparaffin_latent = 355390.625000 # J/kg
-particles.C09-Isoparaffin_cp = 1626.960156 # J/kg/K
-particles.C09-Isoparaffin_rho = 707.691800 # kg/m^3
-particles.C09-Isoparaffin_psat = 9.257546233149856 1534.3522146626706 -56.385406501700764 1.0 # Pa
-
-# Properties for C10-Isoparaffin in MKS
-particles.C10-Isoparaffin_crit_temp = 612.921246 # K
-particles.C10-Isoparaffin_boil_temp = 441.878312 # K
-particles.C10-Isoparaffin_latent = 353098.591549 # J/kg
-particles.C10-Isoparaffin_cp = 1625.954225 # J/kg/K
-particles.C10-Isoparaffin_rho = 719.823073 # kg/m^3
-particles.C10-Isoparaffin_psat = 9.333185843823346 1649.9505012691286 -59.13443585483272 1.0 # Pa
-
-# Properties for C11-Isoparaffin in MKS
-particles.C11-Isoparaffin_crit_temp = 633.194080 # K
-particles.C11-Isoparaffin_boil_temp = 462.494571 # K
-particles.C11-Isoparaffin_latent = 351217.948718 # J/kg
-particles.C11-Isoparaffin_cp = 1625.128846 # J/kg/K
-particles.C11-Isoparaffin_rho = 730.091472 # kg/m^3
-particles.C11-Isoparaffin_psat = 9.411897771225332 1763.3487308229412 -61.56217929903933 1.0 # Pa
-
-# Properties for C12-Isoparaffin in MKS
-particles.C12-Isoparaffin_crit_temp = 651.424545 # K
-particles.C12-Isoparaffin_boil_temp = 481.220278 # K
-particles.C12-Isoparaffin_latent = 349647.058824 # J/kg
-particles.C12-Isoparaffin_cp = 1624.439412 # J/kg/K
-particles.C12-Isoparaffin_rho = 738.895516 # kg/m^3
-particles.C12-Isoparaffin_psat = 9.49318172599863 1875.1906321630452 -63.72079855626062 1.0 # Pa
-
-# Properties for C13-Isoparaffin in MKS
-particles.C13-Isoparaffin_crit_temp = 667.986751 # K
-particles.C13-Isoparaffin_boil_temp = 498.373228 # K
-particles.C13-Isoparaffin_latent = 348315.217391 # J/kg
-particles.C13-Isoparaffin_cp = 1623.854891 # J/kg/K
-particles.C13-Isoparaffin_rho = 746.527606 # kg/m^3
-particles.C13-Isoparaffin_psat = 9.576617288014267 1985.8919553558605 -65.65099490785965 1.0 # Pa
-
-# Properties for C14-Isoparaffin in MKS
-particles.C14-Isoparaffin_crit_temp = 683.160587 # K
-particles.C14-Isoparaffin_boil_temp = 514.197261 # K
-particles.C14-Isoparaffin_latent = 347171.717172 # J/kg
-particles.C14-Isoparaffin_cp = 1623.353030 # J/kg/K
-particles.C14-Isoparaffin_rho = 753.207146 # kg/m^3
-particles.C14-Isoparaffin_psat = 9.661848242611738 2095.725218583816 -67.3854087924738 1.0 # Pa
-
-# Properties for C15-Isoparaffin in MKS
-particles.C15-Isoparaffin_crit_temp = 697.160925 # K
-particles.C15-Isoparaffin_boil_temp = 528.883570 # K
-particles.C15-Isoparaffin_latent = 346179.245283 # J/kg
-particles.C15-Isoparaffin_cp = 1622.917453 # J/kg/K
-particles.C15-Isoparaffin_rho = 759.101986 # kg/m^3
-particles.C15-Isoparaffin_psat = 9.748571000219659 2204.8703679289492 -68.95072360001127 1.0 # Pa
-
-# Properties for C16-Isoparaffin in MKS
-particles.C16-Isoparaffin_crit_temp = 710.156316 # K
-particles.C16-Isoparaffin_boil_temp = 542.584838 # K
-particles.C16-Isoparaffin_latent = 345309.734513 # J/kg
-particles.C16-Isoparaffin_cp = 1622.535841 # J/kg/K
-particles.C16-Isoparaffin_rho = 764.342728 # kg/m^3
-particles.C16-Isoparaffin_psat = 9.83652617093365 2313.446562968561 -70.36903841084926 1.0 # Pa
-
-# Properties for C17-Isoparaffin in MKS
-particles.C17-Isoparaffin_crit_temp = 722.281419 # K
-particles.C17-Isoparaffin_boil_temp = 555.424938 # K
-particles.C17-Isoparaffin_latent = 344541.666667 # J/kg
-particles.C17-Isoparaffin_cp = 1622.198750 # J/kg/K
-particles.C17-Isoparaffin_rho = 769.032511 # kg/m^3
-particles.C17-Isoparaffin_psat = 9.925491470971297 2421.5323373085243 -71.6588455257844 1.0 # Pa
-
-# Properties for C18-Isoparaffin in MKS
-particles.C18-Isoparaffin_crit_temp = 733.645518 # K
-particles.C18-Isoparaffin_boil_temp = 567.505752 # K
-particles.C18-Isoparaffin_latent = 343858.267717 # J/kg
-particles.C18-Isoparaffin_cp = 1621.898819 # J/kg/K
-particles.C18-Isoparaffin_rho = 773.253873 # kg/m^3
-particles.C18-Isoparaffin_psat = 10.015276005906989 2529.1788341015613 -72.83574428870625 1.0 # Pa
-
-# Properties for C19-Isoparaffin in MKS
-particles.C19-Isoparaffin_crit_temp = 744.338523 # K
-particles.C19-Isoparaffin_boil_temp = 578.912088 # K
-particles.C19-Isoparaffin_latent = 343246.268657 # J/kg
-particles.C19-Isoparaffin_cp = 1621.630224 # J/kg/K
-particles.C19-Isoparaffin_rho = 777.073651 # kg/m^3
-particles.C19-Isoparaffin_psat = 10.105715449492376 2636.4185722153325 -73.91298520441974 1.0 # Pa
-
-# Properties for C20-Isoparaffin in MKS
-particles.C20-Isoparaffin_crit_temp = 754.435295 # K
-particles.C20-Isoparaffin_boil_temp = 589.715293 # K
-particles.C20-Isoparaffin_latent = 342695.035461 # J/kg
-particles.C20-Isoparaffin_cp = 1621.388298 # J/kg/K
-particles.C20-Isoparaffin_rho = 780.546539 # kg/m^3
-particles.C20-Isoparaffin_psat = 10.196668168845498 2743.271457500482 -74.90188690398796 1.0 # Pa
-
-# Properties for n-C07 in MKS
-particles.n-C07_crit_temp = 549.855981 # K
-particles.n-C07_boil_temp = 379.073212 # K
-particles.n-C07_latent = 383110.000000 # J/kg
-particles.n-C07_cp = 1636.255000 # J/kg/K
-particles.n-C07_rho = 683.355277 # kg/m^3
-particles.n-C07_psat = 9.164494003553495 1351.7047382583683 -51.09464332705347 1.0 # Pa
-
-# Properties for n-C08 in MKS
-particles.n-C08_crit_temp = 577.945711 # K
-particles.n-C08_boil_temp = 406.625972 # K
-particles.n-C08_latent = 376850.877193 # J/kg
-particles.n-C08_cp = 1633.860526 # J/kg/K
-particles.n-C08_rho = 700.514599 # kg/m^3
-particles.n-C08_psat = 9.232289146328807 1471.9209069706303 -54.49978930425182 1.0 # Pa
-
-# Properties for n-C09 in MKS
-particles.n-C09_crit_temp = 602.258427 # K
-particles.n-C09_boil_temp = 430.901418 # K
-particles.n-C09_latent = 371960.937500 # J/kg
-particles.n-C09_cp = 1631.989844 # J/kg/K
-particles.n-C09_rho = 714.530898 # kg/m^3
-particles.n-C09_psat = 9.304402268762152 1588.3153876157573 -57.46670675915365 1.0 # Pa
-
-# Properties for n-C10 in MKS
-particles.n-C10_crit_temp = 623.690516 # K
-particles.n-C10_boil_temp = 452.596977 # K
-particles.n-C10_latent = 368035.211268 # J/kg
-particles.n-C10_cp = 1630.488028 # J/kg/K
-particles.n-C10_rho = 726.195341 # kg/m^3
-particles.n-C10_psat = 9.380101480953762 1702.1569482843086 -60.077478697798085 1.0 # Pa
-
-# Properties for n-C11 in MKS
-particles.n-C11_crit_temp = 642.852843 # K
-particles.n-C11_boil_temp = 472.208708 # K
-particles.n-C11_latent = 364814.102564 # J/kg
-particles.n-C11_cp = 1629.255769 # J/kg/K
-particles.n-C11_rho = 736.054078 # kg/m^3
-particles.n-C11_psat = 9.45879869447624 1814.2347196348012 -62.39189891982573 1.0 # Pa
-
-# Properties for n-C12 in MKS
-particles.n-C12_crit_temp = 660.180459 # K
-particles.n-C12_boil_temp = 490.102065 # K
-particles.n-C12_latent = 362123.529412 # J/kg
-particles.n-C12_cp = 1628.226471 # J/kg/K
-particles.n-C12_rho = 744.496288 # kg/m^3
-particles.n-C12_psat = 9.540005882351249 1925.051510400997 -64.45594330559408 1.0 # Pa
-
-# Properties for n-C13 in MKS
-particles.n-C13_crit_temp = 675.994200 # K
-particles.n-C13_boil_temp = 506.554063 # K
-particles.n-C13_latent = 359842.391304 # J/kg
-particles.n-C13_cp = 1627.353804 # J/kg/K
-particles.n-C13_rho = 751.806802 # kg/m^3
-particles.n-C13_psat = 9.623312110713409 2034.9328346134694 -66.30617715671609 1.0 # Pa
-
-# Properties for n-C14 in MKS
-particles.n-C14_crit_temp = 690.537469 # K
-particles.n-C14_boil_temp = 521.779703 # K
-particles.n-C14_latent = 357883.838384 # J/kg
-particles.n-C14_cp = 1626.604545 # J/kg/K
-particles.n-C14_rho = 758.198880 # kg/m^3
-particles.n-C14_psat = 9.708369333942494 2144.0916698187507 -67.9723005515485 1.0 # Pa
-
-# Properties for n-C15 in MKS
-particles.n-C15_crit_temp = 703.999313 # K
-particles.n-C15_boil_temp = 535.949199 # K
-particles.n-C15_latent = 356183.962264 # J/kg
-particles.n-C15_cp = 1625.954245 # J/kg/K
-particles.n-C15_rho = 763.835364 # kg/m^3
-particles.n-C15_psat = 9.79488116183687 2252.667669658813 -69.47881421553733 1.0 # Pa
-
-# Properties for n-C16 in MKS
-particles.n-C16_crit_temp = 716.529486 # K
-particles.n-C16_boil_temp = 549.199616 # K
-particles.n-C16_latent = 354694.690265 # J/kg
-particles.n-C16_cp = 1625.384513 # J/kg/K
-particles.n-C16_rho = 768.842745 # kg/m^3
-particles.n-C16_psat = 9.882594406315267 2360.7520614705713 -70.84615117603478 1.0 # Pa
-
-# Properties for n-C17 in MKS
-particles.n-C17_crit_temp = 728.248643 # K
-particles.n-C17_boil_temp = 561.642954 # K
-particles.n-C17_latent = 353379.166667 # J/kg
-particles.n-C17_cp = 1624.881250 # J/kg/K
-particles.n-C17_rho = 773.320773 # kg/m^3
-particles.n-C17_psat = 9.971292315870635 2468.403780090781 -72.09149413492877 1.0 # Pa
-
-# Properties for n-C18 in MKS
-particles.n-C18_crit_temp = 739.255417 # K
-particles.n-C18_boil_temp = 573.371913 # K
-particles.n-C18_latent = 352208.661417 # J/kg
-particles.n-C18_cp = 1624.433465 # J/kg/K
-particles.n-C18_rho = 777.349168 # kg/m^3
-particles.n-C18_psat = 10.060788715545735 2575.659916305893 -73.22940156000068 1.0 # Pa
-
-# Properties for C07-Monocycloparaffin in MKS
-particles.C07-Monocycloparaffin_crit_temp = 614.879412 # K
-particles.C07-Monocycloparaffin_boil_temp = 388.740241 # K
-particles.C07-Monocycloparaffin_latent = 358163.265306 # J/kg
-particles.C07-Monocycloparaffin_cp = 1371.075510 # J/kg/K
-particles.C07-Monocycloparaffin_rho = 805.274646 # kg/m^3
-particles.C07-Monocycloparaffin_psat = 9.121889946873065 1459.2087356712998 -37.66048257089418 1.0 # Pa
-
-# Properties for C08-Monocycloparaffin in MKS
-particles.C08-Monocycloparaffin_crit_temp = 634.945897 # K
-particles.C08-Monocycloparaffin_boil_temp = 415.098592 # K
-particles.C08-Monocycloparaffin_latent = 354910.714286 # J/kg
-particles.C08-Monocycloparaffin_cp = 1401.785714 # J/kg/K
-particles.C08-Monocycloparaffin_rho = 811.011521 # kg/m^3
-particles.C08-Monocycloparaffin_psat = 9.163342053056503 1549.8085222355062 -41.950101860174485 1.0 # Pa
-
-# Properties for C09-Monocycloparaffin in MKS
-particles.C09-Monocycloparaffin_crit_temp = 653.009357 # K
-particles.C09-Monocycloparaffin_boil_temp = 438.442351 # K
-particles.C09-Monocycloparaffin_latent = 352380.952381 # J/kg
-particles.C09-Monocycloparaffin_cp = 1425.671429 # J/kg/K
-particles.C09-Monocycloparaffin_rho = 815.530334 # kg/m^3
-particles.C09-Monocycloparaffin_psat = 9.21353714430904 1641.7479389655284 -45.83244807513026 1.0 # Pa
-
-# Properties for C10-Monocycloparaffin in MKS
-particles.C10-Monocycloparaffin_crit_temp = 669.433629 # K
-particles.C10-Monocycloparaffin_boil_temp = 459.390845 # K
-particles.C10-Monocycloparaffin_latent = 350357.142857 # J/kg
-particles.C10-Monocycloparaffin_cp = 1444.780000 # J/kg/K
-particles.C10-Monocycloparaffin_rho = 819.181766 # kg/m^3
-particles.C10-Monocycloparaffin_psat = 9.270915489879018 1735.080942959554 -49.331163280483054 1.0 # Pa
-
-# Properties for C11-Monocycloparaffin in MKS
-particles.C11-Monocycloparaffin_crit_temp = 684.491618 # K
-particles.C11-Monocycloparaffin_boil_temp = 478.390200 # K
-particles.C11-Monocycloparaffin_latent = 348701.298701 # J/kg
-particles.C11-Monocycloparaffin_cp = 1460.414286 # J/kg/K
-particles.C11-Monocycloparaffin_rho = 822.193668 # kg/m^3
-particles.C11-Monocycloparaffin_psat = 9.334232644702283 1829.7563323244444 -52.47846150019315 1.0 # Pa
-
-# Properties for C12-Monocycloparaffin in MKS
-particles.C12-Monocycloparaffin_crit_temp = 698.393285 # K
-particles.C12-Monocycloparaffin_boil_temp = 495.772454 # K
-particles.C12-Monocycloparaffin_latent = 347321.428571 # J/kg
-particles.C12-Monocycloparaffin_cp = 1473.442857 # J/kg/K
-particles.C12-Monocycloparaffin_rho = 824.720512 # kg/m^3
-particles.C12-Monocycloparaffin_psat = 9.4024801024575 1925.6682954859236 -55.30927691479437 1.0 # Pa
-
-# Properties for C13-Monocycloparaffin in MKS
-particles.C13-Monocycloparaffin_crit_temp = 711.303625 # K
-particles.C13-Monocycloparaffin_boil_temp = 511.791418 # K
-particles.C13-Monocycloparaffin_latent = 346153.846154 # J/kg
-particles.C13-Monocycloparaffin_cp = 1484.467033 # J/kg/K
-particles.C13-Monocycloparaffin_rho = 826.870727 # kg/m^3
-particles.C13-Monocycloparaffin_psat = 9.474831760669188 2022.6861853707398 -57.857957246728375 1.0 # Pa
-
-# Properties for C14-Monocycloparaffin in MKS
-particles.C14-Monocycloparaffin_crit_temp = 723.354658 # K
-particles.C14-Monocycloparaffin_boil_temp = 526.645474 # K
-particles.C14-Monocycloparaffin_latent = 345153.061224 # J/kg
-particles.C14-Monocycloparaffin_cp = 1493.916327 # J/kg/K
-particles.C14-Monocycloparaffin_rho = 828.722664 # kg/m^3
-particles.C14-Monocycloparaffin_psat = 9.55060601795537 2120.6720889357257 -60.15654595224073 1.0 # Pa
-
-# Properties for C15-Monocycloparaffin in MKS
-particles.C15-Monocycloparaffin_crit_temp = 734.653672 # K
-particles.C15-Monocycloparaffin_boil_temp = 540.492621 # K
-particles.C15-Monocycloparaffin_latent = 344285.714286 # J/kg
-particles.C15-Monocycloparaffin_cp = 1502.105714 # J/kg/K
-particles.C15-Monocycloparaffin_rho = 830.334351 # kg/m^3
-particles.C15-Monocycloparaffin_psat = 9.629236523281074 2219.490199252258 -62.234076966533095 1.0 # Pa
-
-# Properties for C16-Monocycloparaffin in MKS
-particles.C16-Monocycloparaffin_crit_temp = 745.289034 # K
-particles.C16-Monocycloparaffin_boil_temp = 553.460747 # K
-particles.C16-Monocycloparaffin_latent = 343526.785714 # J/kg
-particles.C16-Monocycloparaffin_cp = 1509.271429 # J/kg/K
-particles.C16-Monocycloparaffin_rho = 831.749682 # kg/m^3
-particles.C16-Monocycloparaffin_psat = 9.710250024249135 2319.0119297128454 -64.11639128431786 1.0 # Pa
-
-# Properties for C17-Monocycloparaffin in MKS
-particles.C17-Monocycloparaffin_crit_temp = 755.334399 # K
-particles.C17-Monocycloparaffin_boil_temp = 565.654823 # K
-particles.C17-Monocycloparaffin_latent = 342857.142857 # J/kg
-particles.C17-Monocycloparaffin_cp = 1515.594118 # J/kg/K
-particles.C17-Monocycloparaffin_rho = 833.002469 # kg/m^3
-particles.C17-Monocycloparaffin_psat = 9.793249584038177 2419.1187006898385 -65.82622071067459 1.0 # Pa
-
-# Properties for C08-Dicycloparaffin in MKS
-particles.C08-Dicycloparaffin_crit_temp = 601.349213 # K
-particles.C08-Dicycloparaffin_boil_temp = 401.292792 # K
-particles.C08-Dicycloparaffin_latent = 355772.727273 # J/kg
-particles.C08-Dicycloparaffin_cp = 1109.746364 # J/kg/K
-particles.C08-Dicycloparaffin_rho = 852.780933 # kg/m^3
-particles.C08-Dicycloparaffin_psat = 9.22375412399919 1469.4956331965743 -45.13366552726593 1.0 # Pa
-
-# Properties for C09-Dicycloparaffin in MKS
-particles.C09-Dicycloparaffin_crit_temp = 631.547132 # K
-particles.C09-Dicycloparaffin_boil_temp = 426.269015 # K
-particles.C09-Dicycloparaffin_latent = 350387.096774 # J/kg
-particles.C09-Dicycloparaffin_cp = 1182.616935 # J/kg/K
-particles.C09-Dicycloparaffin_rho = 861.768007 # kg/m^3
-particles.C09-Dicycloparaffin_psat = 9.1635383073785 1548.729776708957 -44.54692541831698 1.0 # Pa
-
-# Properties for C10-Dicycloparaffin in MKS
-particles.C10-Dicycloparaffin_crit_temp = 657.422503 # K
-particles.C10-Dicycloparaffin_boil_temp = 448.522462 # K
-particles.C10-Dicycloparaffin_latent = 346094.202899 # J/kg
-particles.C10-Dicycloparaffin_cp = 1240.702174 # J/kg/K
-particles.C10-Dicycloparaffin_rho = 869.067668 # kg/m^3
-particles.C10-Dicycloparaffin_psat = 9.10037849692014 1613.0876270027638 -43.86003705000198 1.0 # Pa
-
-# Properties for C11-Dicycloparaffin in MKS
-particles.C11-Dicycloparaffin_crit_temp = 667.782673 # K
-particles.C11-Dicycloparaffin_boil_temp = 461.105972 # K
-particles.C11-Dicycloparaffin_latent = 328934.210526 # J/kg
-particles.C11-Dicycloparaffin_cp = 1267.267763 # J/kg/K
-particles.C11-Dicycloparaffin_rho = 865.639992 # kg/m^3
-particles.C11-Dicycloparaffin_psat = 9.11045587140273 1665.7431837741262 -45.88565210346635 1.0 # Pa
-
-# Properties for C12-Dicycloparaffin in MKS
-particles.C12-Dicycloparaffin_crit_temp = 691.593694 # K
-particles.C12-Dicycloparaffin_boil_temp = 480.948545 # K
-particles.C12-Dicycloparaffin_latent = 328518.072289 # J/kg
-particles.C12-Dicycloparaffin_cp = 1321.867470 # J/kg/K
-particles.C12-Dicycloparaffin_rho = 869.458835 # kg/m^3
-particles.C12-Dicycloparaffin_psat = 9.125511895004799 1752.9626854325481 -46.7912219938245 1.0 # Pa
-
-# Properties for C13-Dicycloparaffin in MKS
-particles.C13-Dicycloparaffin_crit_temp = 704.980087 # K
-particles.C13-Dicycloparaffin_boil_temp = 498.123385 # K
-particles.C13-Dicycloparaffin_latent = 328800.000000 # J/kg
-particles.C13-Dicycloparaffin_cp = 1344.803333 # J/kg/K
-particles.C13-Dicycloparaffin_rho = 868.202530 # kg/m^3
-particles.C13-Dicycloparaffin_psat = 9.191005902252234 1843.124593590584 -50.112978443525854 1.0 # Pa
-
-# Properties for C14-Dicycloparaffin in MKS
-particles.C14-Dicycloparaffin_crit_temp = 717.444871 # K
-particles.C14-Dicycloparaffin_boil_temp = 513.966045 # K
-particles.C14-Dicycloparaffin_latent = 329041.237113 # J/kg
-particles.C14-Dicycloparaffin_cp = 1364.428866 # J/kg/K
-particles.C14-Dicycloparaffin_rho = 867.130376 # kg/m^3
-particles.C14-Dicycloparaffin_psat = 9.261502616736912 1935.1925239175357 -53.114763883045434 1.0 # Pa
-
-# Properties for C15-Dicycloparaffin in MKS
-particles.C15-Dicycloparaffin_crit_temp = 729.106812 # K
-particles.C15-Dicycloparaffin_boil_temp = 528.668395 # K
-particles.C15-Dicycloparaffin_latent = 329250.000000 # J/kg
-particles.C15-Dicycloparaffin_cp = 1381.412500 # J/kg/K
-particles.C15-Dicycloparaffin_rho = 866.204635 # kg/m^3
-particles.C15-Dicycloparaffin_psat = 9.336149106159272 2028.919745893422 -55.82515464381229 1.0 # Pa
-
-# Properties for C10-Tricycloparaffin in MKS
-particles.C10-Tricycloparaffin_crit_temp = 640.994792 # K
-particles.C10-Tricycloparaffin_boil_temp = 441.819518 # K
-particles.C10-Tricycloparaffin_latent = 328507.352941 # J/kg
-particles.C10-Tricycloparaffin_cp = 1052.195588 # J/kg/K
-particles.C10-Tricycloparaffin_rho = 949.788086 # kg/m^3
-particles.C10-Tricycloparaffin_psat = 9.282288681307861 1607.7716868000682 -47.81755838500074 1.0 # Pa
-
-# Properties for C11-Tricycloparaffin in MKS
-particles.C11-Tricycloparaffin_crit_temp = 661.426863 # K
-particles.C11-Tricycloparaffin_boil_temp = 458.915461 # K
-particles.C11-Tricycloparaffin_latent = 325060.000000 # J/kg
-particles.C11-Tricycloparaffin_cp = 1044.367333 # J/kg/K
-particles.C11-Tricycloparaffin_rho = 927.520794 # kg/m^3
-particles.C11-Tricycloparaffin_psat = 9.314514246071942 1700.6920694614716 -49.66015092881853 1.0 # Pa
-
-# Properties for C12-Tricycloparaffin in MKS
-particles.C12-Tricycloparaffin_crit_temp = 683.597729 # K
-particles.C12-Tricycloparaffin_boil_temp = 478.031945 # K
-particles.C12-Tricycloparaffin_latent = 323609.756098 # J/kg
-particles.C12-Tricycloparaffin_cp = 1105.045732 # J/kg/K
-particles.C12-Tricycloparaffin_rho = 928.535803 # kg/m^3
-particles.C12-Tricycloparaffin_psat = 9.250638794902235 1757.6430892551248 -48.97150951710556 1.0 # Pa
+# Properties for C6H5CH3 in MKS
+particles.C6H5CH3_molar_weight = 0.092000 # kg/mol
+particles.C6H5CH3_crit_temp = 596.171640 # K
+particles.C6H5CH3_boil_temp = 386.115949 # K
+particles.C6H5CH3_latent = 403206.521739 # J/kg
+particles.C6H5CH3_cp = 1141.043478 # J/kg/K
+particles.C6H5CH3_rho = 859.605766 # kg/m^3
+particles.C6H5CH3_psat = 8.867414797943418 1295.309548016491 -24.54765972307813 1.0 # Pa
+
+# Properties for C6H5C2H5 in MKS
+particles.C6H5C2H5_molar_weight = 0.106000 # kg/mol
+particles.C6H5C2H5_crit_temp = 620.055714 # K
+particles.C6H5C2H5_boil_temp = 411.373550 # K
+particles.C6H5C2H5_latent = 392641.509434 # J/kg
+particles.C6H5C2H5_cp = 1226.933019 # J/kg/K
+particles.C6H5C2H5_rho = 858.806429 # kg/m^3
+particles.C6H5C2H5_psat = 8.833853044974946 1361.2222411221308 -26.78922433534985 1.0 # Pa
+
+# Properties for C6H5C3H7 in MKS
+particles.C6H5C3H7_molar_weight = 0.120000 # kg/mol
+particles.C6H5C3H7_crit_temp = 639.586252 # K
+particles.C6H5C3H7_boil_temp = 435.122699 # K
+particles.C6H5C3H7_latent = 385583.333333 # J/kg
+particles.C6H5C3H7_cp = 1272.412500 # J/kg/K
+particles.C6H5C3H7_rho = 858.193630 # kg/m^3
+particles.C6H5C3H7_psat = 8.856672500972484 1435.869901215902 -31.509470191878084 1.0 # Pa
+
+# Properties for C6H5C4H9 in MKS
+particles.C6H5C4H9_molar_weight = 0.134000 # kg/mol
+particles.C6H5C4H9_crit_temp = 657.214339 # K
+particles.C6H5C4H9_boil_temp = 456.397006 # K
+particles.C6H5C4H9_latent = 380000.000000 # J/kg
+particles.C6H5C4H9_cp = 1308.388806 # J/kg/K
+particles.C6H5C4H9_rho = 857.709449 # kg/m^3
+particles.C6H5C4H9_psat = 8.892292913382393 1513.6851536392599 -36.09386484846566 1.0 # Pa
+
+# Properties for C6H5C5H11 in MKS
+particles.C6H5C5H11_molar_weight = 0.148000 # kg/mol
+particles.C6H5C5H11_crit_temp = 673.277929 # K
+particles.C6H5C5H11_boil_temp = 475.663935 # K
+particles.C6H5C5H11_latent = 375472.972973 # J/kg
+particles.C6H5C5H11_cp = 1337.558784 # J/kg/K
+particles.C6H5C5H11_rho = 857.317218 # kg/m^3
+particles.C6H5C5H11_psat = 8.938431483769003 1594.6874792116544 -40.397303204884246 1.0 # Pa
+
+# Properties for C6H5C6H13 in MKS
+particles.C6H5C6H13_molar_weight = 0.162000 # kg/mol
+particles.C6H5C6H13_crit_temp = 688.032226 # K
+particles.C6H5C6H13_boil_temp = 493.269856 # K
+particles.C6H5C6H13_latent = 371728.395062 # J/kg
+particles.C6H5C6H13_cp = 1361.687037 # J/kg/K
+particles.C6H5C6H13_rho = 856.992996 # kg/m^3
+particles.C6H5C6H13_psat = 8.99323367710153 1678.6952696285027 -44.35843865026799 1.0 # Pa
+
+# Properties for C6H5C7H15 in MKS
+particles.C6H5C7H15_molar_weight = 0.176000 # kg/mol
+particles.C6H5C7H15_crit_temp = 701.674670 # K
+particles.C6H5C7H15_boil_temp = 509.478570 # K
+particles.C6H5C7H15_latent = 368579.545455 # J/kg
+particles.C6H5C7H15_cp = 1381.976705 # J/kg/K
+particles.C6H5C7H15_rho = 856.720488 # kg/m^3
+particles.C6H5C7H15_psat = 9.05518179547457 1765.430840248344 -47.96402752099727 1.0 # Pa
+
+# Properties for C6H5C8H17 in MKS
+particles.C6H5C8H17_molar_weight = 0.190000 # kg/mol
+particles.C6H5C8H17_crit_temp = 714.361157 # K
+particles.C6H5C8H17_boil_temp = 524.495629 # K
+particles.C6H5C8H17_latent = 365894.736842 # J/kg
+particles.C6H5C8H17_cp = 1399.276316 # J/kg/K
+particles.C6H5C8H17_rho = 856.488221 # kg/m^3
+particles.C6H5C8H17_psat = 9.123030112205504 1854.5830885319267 -51.226449604337546 1.0 # Pa
+
+# Properties for C6H5C9H19 in MKS
+particles.C6H5C9H19_molar_weight = 0.204000 # kg/mol
+particles.C6H5C9H19_crit_temp = 726.216929 # K
+particles.C6H5C9H19_boil_temp = 538.484317 # K
+particles.C6H5C9H19_latent = 363578.431373 # J/kg
+particles.C6H5C9H19_cp = 1414.201471 # J/kg/K
+particles.C6H5C9H19_rho = 856.287880 # kg/m^3
+particles.C6H5C9H19_psat = 9.195754666995615 1945.8424531914875 -54.17033117868964 1.0 # Pa
+
+# Properties for NAPH in MKS
+particles.NAPH_molar_weight = 0.128000 # kg/mol
+particles.NAPH_crit_temp = 739.020400 # K
+particles.NAPH_boil_temp = 484.158973 # K
+particles.NAPH_latent = 505601.562500 # J/kg
+particles.NAPH_cp = 1032.139844 # J/kg/K
+particles.NAPH_rho = 1011.667371 # kg/m^3
+particles.NAPH_psat = 9.278701310977603 1855.8755478566388 -40.397917156586765 1.0 # Pa
+
+# Properties for METHYLNAPH-1 in MKS
+particles.METHYLNAPH-1_molar_weight = 0.142000 # kg/mol
+particles.METHYLNAPH-1_crit_temp = 752.241983 # K
+particles.METHYLNAPH-1_boil_temp = 503.085772 # K
+particles.METHYLNAPH-1_latent = 495739.436620 # J/kg
+particles.METHYLNAPH-1_cp = 1116.840845 # J/kg/K
+particles.METHYLNAPH-1_rho = 998.416312 # kg/m^3
+particles.METHYLNAPH-1_psat = 9.307878577438355 1938.5355286684392 -43.472707340522504 1.0 # Pa
+
+# Properties for ETHYLNAPH-1 in MKS
+particles.ETHYLNAPH-1_molar_weight = 0.156000 # kg/mol
+particles.ETHYLNAPH-1_crit_temp = 762.718644 # K
+particles.ETHYLNAPH-1_boil_temp = 517.717239 # K
+particles.ETHYLNAPH-1_latent = 480256.410256 # J/kg
+particles.ETHYLNAPH-1_cp = 1177.373718 # J/kg/K
+particles.ETHYLNAPH-1_rho = 983.440798 # kg/m^3
+particles.ETHYLNAPH-1_psat = 9.297078824569725 1993.131479598409 -45.13430398807337 1.0 # Pa
+
+# Properties for PROPYLNAPH-1 in MKS
+particles.PROPYLNAPH-1_molar_weight = 0.170000 # kg/mol
+particles.PROPYLNAPH-1_crit_temp = 771.865279 # K
+particles.PROPYLNAPH-1_boil_temp = 532.161406 # K
+particles.PROPYLNAPH-1_latent = 468058.823529 # J/kg
+particles.PROPYLNAPH-1_cp = 1213.558235 # J/kg/K
+particles.PROPYLNAPH-1_rho = 971.271274 # kg/m^3
+particles.PROPYLNAPH-1_psat = 9.362823490739432 2081.648712974526 -48.351923667163774 1.0 # Pa
+
+# Properties for INDANE in MKS
+particles.INDANE_molar_weight = 0.142000 # kg/mol
+particles.INDANE_crit_temp = 763.410992 # K
+particles.INDANE_boil_temp = 507.465332 # K
+particles.INDANE_latent = 512514.084507 # J/kg
+particles.INDANE_cp = 1049.057042 # J/kg/K
+particles.INDANE_rho = 1086.843287 # kg/m^3
+particles.INDANE_psat = 9.28430377829924 1938.411200161879 -41.28337421430433 1.0 # Pa
+
+# Properties for TETRA in MKS
+particles.TETRA_molar_weight = 0.132000 # kg/mol
+particles.TETRA_crit_temp = 682.996283 # K
+particles.TETRA_boil_temp = 463.381227 # K
+particles.TETRA_latent = 393833.333333 # J/kg
+particles.TETRA_cp = 1156.681061 # J/kg/K
+particles.TETRA_rho = 965.221892 # kg/m^3
+particles.TETRA_psat = 8.75499452526593 1488.5226655098886 -23.335659036013116 1.0 # Pa
+
+# Properties for METHYLTETRA-2 in MKS
+particles.METHYLTETRA-2_molar_weight = 0.146000 # kg/mol
+particles.METHYLTETRA-2_crit_temp = 692.025658 # K
+particles.METHYLTETRA-2_boil_temp = 475.107095 # K
+particles.METHYLTETRA-2_latent = 371390.410959 # J/kg
+particles.METHYLTETRA-2_cp = 1192.395205 # J/kg/K
+particles.METHYLTETRA-2_rho = 950.782041 # kg/m^3
+particles.METHYLTETRA-2_psat = 8.74034047612098 1523.7968966072613 -25.648610599434722 1.0 # Pa
+
+# Properties for ETHYLTETRA-2 in MKS
+particles.ETHYLTETRA-2_molar_weight = 0.160000 # kg/mol
+particles.ETHYLTETRA-2_crit_temp = 705.381312 # K
+particles.ETHYLTETRA-2_boil_temp = 492.759038 # K
+particles.ETHYLTETRA-2_latent = 367956.250000 # J/kg
+particles.ETHYLTETRA-2_cp = 1229.526875 # J/kg/K
+particles.ETHYLTETRA-2_rho = 941.401920 # kg/m^3
+particles.ETHYLTETRA-2_psat = 8.767683743706547 1588.347859105198 -30.17007984619613 1.0 # Pa
+
+# Properties for PROPYLTETRA-2 in MKS
+particles.PROPYLTETRA-2_molar_weight = 0.174000 # kg/mol
+particles.PROPYLTETRA-2_crit_temp = 717.819441 # K
+particles.PROPYLTETRA-2_boil_temp = 509.006748 # K
+particles.PROPYLTETRA-2_latent = 365074.712644 # J/kg
+particles.PROPYLTETRA-2_cp = 1260.683333 # J/kg/K
+particles.PROPYLTETRA-2_rho = 933.672837 # kg/m^3
+particles.PROPYLTETRA-2_psat = 8.808308613686938 1658.5365159961434 -34.672731400139476 1.0 # Pa
+
+# Properties for BUTYLTETRA-2 in MKS
+particles.BUTYLTETRA-2_molar_weight = 0.188000 # kg/mol
+particles.BUTYLTETRA-2_crit_temp = 729.458048 # K
+particles.BUTYLTETRA-2_boil_temp = 524.057271 # K
+particles.BUTYLTETRA-2_latent = 362622.340426 # J/kg
+particles.BUTYLTETRA-2_cp = 1287.199468 # J/kg/K
+particles.BUTYLTETRA-2_rho = 927.194125 # kg/m^3
+particles.BUTYLTETRA-2_psat = 8.859595165094676 1733.6892045937934 -38.958728657516254 1.0 # Pa
+
+# Properties for C7H16-2 in MKS
+particles.C7H16-2_molar_weight = 0.100000 # kg/mol
+particles.C7H16-2_crit_temp = 533.414696 # K
+particles.C7H16-2_boil_temp = 363.532943 # K
+particles.C7H16-2_latent = 361900.000000 # J/kg
+particles.C7H16-2_cp = 1629.817000 # J/kg/K
+particles.C7H16-2_rho = 675.362832 # kg/m^3
+particles.C7H16-2_psat = 9.1180883170495 1291.8450357178997 -49.6135995926029 1.0 # Pa
+
+# Properties for C8H18-2 in MKS
+particles.C8H18-2_molar_weight = 0.114000 # kg/mol
+particles.C8H18-2_crit_temp = 563.960096 # K
+particles.C8H18-2_boil_temp = 393.112191 # K
+particles.C8H18-2_latent = 358245.614035 # J/kg
+particles.C8H18-2_cp = 1628.213158 # J/kg/K
+particles.C8H18-2_rho = 693.140044 # kg/m^3
+particles.C8H18-2_psat = 9.185586752319916 1415.53593735458 -53.245267910275366 1.0 # Pa
+
+# Properties for C9H20-2 in MKS
+particles.C9H20-2_molar_weight = 0.128000 # kg/mol
+particles.C9H20-2_crit_temp = 590.090009 # K
+particles.C9H20-2_boil_temp = 418.946444 # K
+particles.C9H20-2_latent = 355390.625000 # J/kg
+particles.C9H20-2_cp = 1626.960156 # J/kg/K
+particles.C9H20-2_rho = 707.691800 # kg/m^3
+particles.C9H20-2_psat = 9.257546233149856 1534.3522146626706 -56.385406501700764 1.0 # Pa
+
+# Properties for C10H22-2 in MKS
+particles.C10H22-2_molar_weight = 0.142000 # kg/mol
+particles.C10H22-2_crit_temp = 612.921246 # K
+particles.C10H22-2_boil_temp = 441.878312 # K
+particles.C10H22-2_latent = 353098.591549 # J/kg
+particles.C10H22-2_cp = 1625.954225 # J/kg/K
+particles.C10H22-2_rho = 719.823073 # kg/m^3
+particles.C10H22-2_psat = 9.333185843823346 1649.9505012691286 -59.13443585483272 1.0 # Pa
+
+# Properties for C11H24-2 in MKS
+particles.C11H24-2_molar_weight = 0.156000 # kg/mol
+particles.C11H24-2_crit_temp = 633.194080 # K
+particles.C11H24-2_boil_temp = 462.494571 # K
+particles.C11H24-2_latent = 351217.948718 # J/kg
+particles.C11H24-2_cp = 1625.128846 # J/kg/K
+particles.C11H24-2_rho = 730.091472 # kg/m^3
+particles.C11H24-2_psat = 9.411897771225332 1763.3487308229412 -61.56217929903933 1.0 # Pa
+
+# Properties for C12H26-2 in MKS
+particles.C12H26-2_molar_weight = 0.170000 # kg/mol
+particles.C12H26-2_crit_temp = 651.424545 # K
+particles.C12H26-2_boil_temp = 481.220278 # K
+particles.C12H26-2_latent = 349647.058824 # J/kg
+particles.C12H26-2_cp = 1624.439412 # J/kg/K
+particles.C12H26-2_rho = 738.895516 # kg/m^3
+particles.C12H26-2_psat = 9.49318172599863 1875.1906321630452 -63.72079855626062 1.0 # Pa
+
+# Properties for C13H28-2 in MKS
+particles.C13H28-2_molar_weight = 0.184000 # kg/mol
+particles.C13H28-2_crit_temp = 667.986751 # K
+particles.C13H28-2_boil_temp = 498.373228 # K
+particles.C13H28-2_latent = 348315.217391 # J/kg
+particles.C13H28-2_cp = 1623.854891 # J/kg/K
+particles.C13H28-2_rho = 746.527606 # kg/m^3
+particles.C13H28-2_psat = 9.576617288014267 1985.8919553558605 -65.65099490785965 1.0 # Pa
+
+# Properties for C14H30-2 in MKS
+particles.C14H30-2_molar_weight = 0.198000 # kg/mol
+particles.C14H30-2_crit_temp = 683.160587 # K
+particles.C14H30-2_boil_temp = 514.197261 # K
+particles.C14H30-2_latent = 347171.717172 # J/kg
+particles.C14H30-2_cp = 1623.353030 # J/kg/K
+particles.C14H30-2_rho = 753.207146 # kg/m^3
+particles.C14H30-2_psat = 9.661848242611738 2095.725218583816 -67.3854087924738 1.0 # Pa
+
+# Properties for C15H32-2 in MKS
+particles.C15H32-2_molar_weight = 0.212000 # kg/mol
+particles.C15H32-2_crit_temp = 697.160925 # K
+particles.C15H32-2_boil_temp = 528.883570 # K
+particles.C15H32-2_latent = 346179.245283 # J/kg
+particles.C15H32-2_cp = 1622.917453 # J/kg/K
+particles.C15H32-2_rho = 759.101986 # kg/m^3
+particles.C15H32-2_psat = 9.748571000219659 2204.8703679289492 -68.95072360001127 1.0 # Pa
+
+# Properties for C16H34-2 in MKS
+particles.C16H34-2_molar_weight = 0.226000 # kg/mol
+particles.C16H34-2_crit_temp = 710.156316 # K
+particles.C16H34-2_boil_temp = 542.584838 # K
+particles.C16H34-2_latent = 345309.734513 # J/kg
+particles.C16H34-2_cp = 1622.535841 # J/kg/K
+particles.C16H34-2_rho = 764.342728 # kg/m^3
+particles.C16H34-2_psat = 9.83652617093365 2313.446562968561 -70.36903841084926 1.0 # Pa
+
+# Properties for C17H36-2 in MKS
+particles.C17H36-2_molar_weight = 0.240000 # kg/mol
+particles.C17H36-2_crit_temp = 722.281419 # K
+particles.C17H36-2_boil_temp = 555.424938 # K
+particles.C17H36-2_latent = 344541.666667 # J/kg
+particles.C17H36-2_cp = 1622.198750 # J/kg/K
+particles.C17H36-2_rho = 769.032511 # kg/m^3
+particles.C17H36-2_psat = 9.925491470971297 2421.5323373085243 -71.6588455257844 1.0 # Pa
+
+# Properties for C18H38-2 in MKS
+particles.C18H38-2_molar_weight = 0.254000 # kg/mol
+particles.C18H38-2_crit_temp = 733.645518 # K
+particles.C18H38-2_boil_temp = 567.505752 # K
+particles.C18H38-2_latent = 343858.267717 # J/kg
+particles.C18H38-2_cp = 1621.898819 # J/kg/K
+particles.C18H38-2_rho = 773.253873 # kg/m^3
+particles.C18H38-2_psat = 10.015276005906989 2529.1788341015613 -72.83574428870625 1.0 # Pa
+
+# Properties for C19H40-2 in MKS
+particles.C19H40-2_molar_weight = 0.268000 # kg/mol
+particles.C19H40-2_crit_temp = 744.338523 # K
+particles.C19H40-2_boil_temp = 578.912088 # K
+particles.C19H40-2_latent = 343246.268657 # J/kg
+particles.C19H40-2_cp = 1621.630224 # J/kg/K
+particles.C19H40-2_rho = 777.073651 # kg/m^3
+particles.C19H40-2_psat = 10.105715449492376 2636.4185722153325 -73.91298520441974 1.0 # Pa
+
+# Properties for C20H42-2 in MKS
+particles.C20H42-2_molar_weight = 0.282000 # kg/mol
+particles.C20H42-2_crit_temp = 754.435295 # K
+particles.C20H42-2_boil_temp = 589.715293 # K
+particles.C20H42-2_latent = 342695.035461 # J/kg
+particles.C20H42-2_cp = 1621.388298 # J/kg/K
+particles.C20H42-2_rho = 780.546539 # kg/m^3
+particles.C20H42-2_psat = 10.196668168845498 2743.271457500482 -74.90188690398796 1.0 # Pa
+
+# Properties for NC7H16 in MKS
+particles.NC7H16_molar_weight = 0.100000 # kg/mol
+particles.NC7H16_crit_temp = 549.855981 # K
+particles.NC7H16_boil_temp = 379.073212 # K
+particles.NC7H16_latent = 383110.000000 # J/kg
+particles.NC7H16_cp = 1636.255000 # J/kg/K
+particles.NC7H16_rho = 683.355277 # kg/m^3
+particles.NC7H16_psat = 9.164494003553495 1351.7047382583683 -51.09464332705347 1.0 # Pa
+
+# Properties for NC8H18 in MKS
+particles.NC8H18_molar_weight = 0.114000 # kg/mol
+particles.NC8H18_crit_temp = 577.945711 # K
+particles.NC8H18_boil_temp = 406.625972 # K
+particles.NC8H18_latent = 376850.877193 # J/kg
+particles.NC8H18_cp = 1633.860526 # J/kg/K
+particles.NC8H18_rho = 700.514599 # kg/m^3
+particles.NC8H18_psat = 9.232289146328807 1471.9209069706303 -54.49978930425182 1.0 # Pa
+
+# Properties for NC9H20 in MKS
+particles.NC9H20_molar_weight = 0.128000 # kg/mol
+particles.NC9H20_crit_temp = 602.258427 # K
+particles.NC9H20_boil_temp = 430.901418 # K
+particles.NC9H20_latent = 371960.937500 # J/kg
+particles.NC9H20_cp = 1631.989844 # J/kg/K
+particles.NC9H20_rho = 714.530898 # kg/m^3
+particles.NC9H20_psat = 9.304402268762152 1588.3153876157573 -57.46670675915365 1.0 # Pa
+
+# Properties for NC10H22 in MKS
+particles.NC10H22_molar_weight = 0.142000 # kg/mol
+particles.NC10H22_crit_temp = 623.690516 # K
+particles.NC10H22_boil_temp = 452.596977 # K
+particles.NC10H22_latent = 368035.211268 # J/kg
+particles.NC10H22_cp = 1630.488028 # J/kg/K
+particles.NC10H22_rho = 726.195341 # kg/m^3
+particles.NC10H22_psat = 9.380101480953762 1702.1569482843086 -60.077478697798085 1.0 # Pa
+
+# Properties for NC11H24 in MKS
+particles.NC11H24_molar_weight = 0.156000 # kg/mol
+particles.NC11H24_crit_temp = 642.852843 # K
+particles.NC11H24_boil_temp = 472.208708 # K
+particles.NC11H24_latent = 364814.102564 # J/kg
+particles.NC11H24_cp = 1629.255769 # J/kg/K
+particles.NC11H24_rho = 736.054078 # kg/m^3
+particles.NC11H24_psat = 9.45879869447624 1814.2347196348012 -62.39189891982573 1.0 # Pa
+
+# Properties for NC12H26 in MKS
+particles.NC12H26_molar_weight = 0.170000 # kg/mol
+particles.NC12H26_crit_temp = 660.180459 # K
+particles.NC12H26_boil_temp = 490.102065 # K
+particles.NC12H26_latent = 362123.529412 # J/kg
+particles.NC12H26_cp = 1628.226471 # J/kg/K
+particles.NC12H26_rho = 744.496288 # kg/m^3
+particles.NC12H26_psat = 9.540005882351249 1925.051510400997 -64.45594330559408 1.0 # Pa
+
+# Properties for NC13H28 in MKS
+particles.NC13H28_molar_weight = 0.184000 # kg/mol
+particles.NC13H28_crit_temp = 675.994200 # K
+particles.NC13H28_boil_temp = 506.554063 # K
+particles.NC13H28_latent = 359842.391304 # J/kg
+particles.NC13H28_cp = 1627.353804 # J/kg/K
+particles.NC13H28_rho = 751.806802 # kg/m^3
+particles.NC13H28_psat = 9.623312110713409 2034.9328346134694 -66.30617715671609 1.0 # Pa
+
+# Properties for NC14H30 in MKS
+particles.NC14H30_molar_weight = 0.198000 # kg/mol
+particles.NC14H30_crit_temp = 690.537469 # K
+particles.NC14H30_boil_temp = 521.779703 # K
+particles.NC14H30_latent = 357883.838384 # J/kg
+particles.NC14H30_cp = 1626.604545 # J/kg/K
+particles.NC14H30_rho = 758.198880 # kg/m^3
+particles.NC14H30_psat = 9.708369333942494 2144.0916698187507 -67.9723005515485 1.0 # Pa
+
+# Properties for NC15H32 in MKS
+particles.NC15H32_molar_weight = 0.212000 # kg/mol
+particles.NC15H32_crit_temp = 703.999313 # K
+particles.NC15H32_boil_temp = 535.949199 # K
+particles.NC15H32_latent = 356183.962264 # J/kg
+particles.NC15H32_cp = 1625.954245 # J/kg/K
+particles.NC15H32_rho = 763.835364 # kg/m^3
+particles.NC15H32_psat = 9.79488116183687 2252.667669658813 -69.47881421553733 1.0 # Pa
+
+# Properties for NC16H34 in MKS
+particles.NC16H34_molar_weight = 0.226000 # kg/mol
+particles.NC16H34_crit_temp = 716.529486 # K
+particles.NC16H34_boil_temp = 549.199616 # K
+particles.NC16H34_latent = 354694.690265 # J/kg
+particles.NC16H34_cp = 1625.384513 # J/kg/K
+particles.NC16H34_rho = 768.842745 # kg/m^3
+particles.NC16H34_psat = 9.882594406315267 2360.7520614705713 -70.84615117603478 1.0 # Pa
+
+# Properties for NC17H36 in MKS
+particles.NC17H36_molar_weight = 0.240000 # kg/mol
+particles.NC17H36_crit_temp = 728.248643 # K
+particles.NC17H36_boil_temp = 561.642954 # K
+particles.NC17H36_latent = 353379.166667 # J/kg
+particles.NC17H36_cp = 1624.881250 # J/kg/K
+particles.NC17H36_rho = 773.320773 # kg/m^3
+particles.NC17H36_psat = 9.971292315870635 2468.403780090781 -72.09149413492877 1.0 # Pa
+
+# Properties for NC18H38 in MKS
+particles.NC18H38_molar_weight = 0.254000 # kg/mol
+particles.NC18H38_crit_temp = 739.255417 # K
+particles.NC18H38_boil_temp = 573.371913 # K
+particles.NC18H38_latent = 352208.661417 # J/kg
+particles.NC18H38_cp = 1624.433465 # J/kg/K
+particles.NC18H38_rho = 777.349168 # kg/m^3
+particles.NC18H38_psat = 10.060788715545735 2575.659916305893 -73.22940156000068 1.0 # Pa
+
+# Properties for C6H11CH3 in MKS
+particles.C6H11CH3_molar_weight = 0.098000 # kg/mol
+particles.C6H11CH3_crit_temp = 575.777870 # K
+particles.C6H11CH3_boil_temp = 376.162075 # K
+particles.C6H11CH3_latent = 367969.387755 # J/kg
+particles.C6H11CH3_cp = 1361.931633 # J/kg/K
+particles.C6H11CH3_rho = 765.858825 # kg/m^3
+particles.C6H11CH3_psat = 9.08024821234189 1364.424844997168 -41.478133934642614 1.0 # Pa
+
+# Properties for C6H11C2H5 in MKS
+particles.C6H11C2H5_molar_weight = 0.112000 # kg/mol
+particles.C6H11C2H5_crit_temp = 600.364319 # K
+particles.C6H11C2H5_boil_temp = 404.084314 # K
+particles.C6H11C2H5_latent = 363491.071429 # J/kg
+particles.C6H11C2H5_cp = 1393.784821 # J/kg/K
+particles.C6H11C2H5_rho = 775.826447 # kg/m^3
+particles.C6H11C2H5_psat = 9.129217875808989 1466.0014932784609 -45.63244163990033 1.0 # Pa
+
+# Properties for C6H11C3H7 in MKS
+particles.C6H11C3H7_molar_weight = 0.126000 # kg/mol
+particles.C6H11C3H7_crit_temp = 622.008762 # K
+particles.C6H11C3H7_boil_temp = 428.646013 # K
+particles.C6H11C3H7_latent = 360007.936508 # J/kg
+particles.C6H11C3H7_cp = 1418.559524 # J/kg/K
+particles.C6H11C3H7_rho = 783.759856 # kg/m^3
+particles.C6H11C3H7_psat = 9.185868774651421 1566.859165990964 -49.332269335228844 1.0 # Pa
+
+# Properties for C6H11C4H9 in MKS
+particles.C6H11C4H9_molar_weight = 0.140000 # kg/mol
+particles.C6H11C4H9_crit_temp = 641.340628 # K
+particles.C6H11C4H9_boil_temp = 450.569874 # K
+particles.C6H11C4H9_latent = 357221.428571 # J/kg
+particles.C6H11C4H9_cp = 1438.379286 # J/kg/K
+particles.C6H11C4H9_rho = 790.224110 # kg/m^3
+particles.C6H11C4H9_psat = 9.248811987984759 1667.5794780515641 -52.62991372678565 1.0 # Pa
+
+# Properties for C6H11C5H11 in MKS
+particles.C6H11C5H11_molar_weight = 0.154000 # kg/mol
+particles.C6H11C5H11_crit_temp = 658.806730 # K
+particles.C6H11C5H11_boil_temp = 470.367936 # K
+particles.C6H11C5H11_latent = 354941.558442 # J/kg
+particles.C6H11C5H11_cp = 1454.595455 # J/kg/K
+particles.C6H11C5H11_rho = 795.592716 # kg/m^3
+particles.C6H11C5H11_psat = 9.31694579715876 1768.4671918957295 -55.57376049107723 1.0 # Pa
+
+# Properties for C6H11C6H13 in MKS
+particles.C6H11C6H13_molar_weight = 0.168000 # kg/mol
+particles.C6H11C6H13_crit_temp = 674.735721 # K
+particles.C6H11C6H13_boil_temp = 488.416251 # K
+particles.C6H11C6H13_latent = 353041.666667 # J/kg
+particles.C6H11C6H13_cp = 1468.108929 # J/kg/K
+particles.C6H11C6H13_rho = 800.122458 # kg/m^3
+particles.C6H11C6H13_psat = 9.389379963489363 1869.6677909651444 -58.207548891327576 1.0 # Pa
+
+# Properties for C6H11C7H15 in MKS
+particles.C6H11C7H15_molar_weight = 0.182000 # kg/mol
+particles.C6H11C7H15_crit_temp = 689.376399 # K
+particles.C6H11C7H15_boil_temp = 504.999145 # K
+particles.C6H11C7H15_latent = 351434.065934 # J/kg
+particles.C6H11C7H15_cp = 1479.543407 # J/kg/K
+particles.C6H11C7H15_rho = 803.995691 # kg/m^3
+particles.C6H11C7H15_psat = 9.46538631735761 1971.2344537438466 -60.57009319966218 1.0 # Pa
+
+# Properties for C6H11C8H17 in MKS
+particles.C6H11C8H17_molar_weight = 0.196000 # kg/mol
+particles.C6H11C8H17_crit_temp = 702.921655 # K
+particles.C6H11C8H17_boil_temp = 520.336817 # K
+particles.C6H11C8H17_latent = 350056.122449 # J/kg
+particles.C6H11C8H17_cp = 1489.344388 # J/kg/K
+particles.C6H11C8H17_rho = 807.345483 # kg/m^3
+particles.C6H11C8H17_psat = 9.544363873628495 2073.167170983056 -62.695399835205905 1.0 # Pa
+
+# Properties for C6H11C9H19 in MKS
+particles.C6H11C9H19_molar_weight = 0.210000 # kg/mol
+particles.C6H11C9H19_crit_temp = 715.524059 # K
+particles.C6H11C9H19_boil_temp = 534.603287 # K
+particles.C6H11C9H19_latent = 348861.904762 # J/kg
+particles.C6H11C9H19_cp = 1497.838571 # J/kg/K
+particles.C6H11C9H19_rho = 810.271217 # kg/m^3
+particles.C6H11C9H19_psat = 9.625813336048065 2175.436204301916 -64.61300702983304 1.0 # Pa
+
+# Properties for C6H11C10H21 in MKS
+particles.C6H11C10H21_molar_weight = 0.224000 # kg/mol
+particles.C6H11C10H21_crit_temp = 727.306372 # K
+particles.C6H11C10H21_boil_temp = 547.938463 # K
+particles.C6H11C10H21_latent = 347816.964286 # J/kg
+particles.C6H11C10H21_cp = 1505.270982 # J/kg/K
+particles.C6H11C10H21_rho = 812.848613 # kg/m^3
+particles.C6H11C10H21_psat = 9.70931706776604 2277.9958445932375 -66.34846386862944 1.0 # Pa
+
+# Properties for C6H11C11H23 in MKS
+particles.C6H11C11H23_molar_weight = 0.238000 # kg/mol
+particles.C6H11C11H23_crit_temp = 738.368837 # K
+particles.C6H11C11H23_boil_temp = 560.456519 # K
+particles.C6H11C11H23_latent = 346894.957983 # J/kg
+particles.C6H11C11H23_cp = 1511.828992 # J/kg/K
+particles.C6H11C11H23_rho = 815.136377 # kg/m^3
+particles.C6H11C11H23_psat = 9.794524215297926 2380.793102638632 -67.92380195461318 1.0 # Pa
+
+# Properties for OHPEN in MKS
+particles.OHPEN_molar_weight = 0.110000 # kg/mol
+particles.OHPEN_crit_temp = 601.349213 # K
+particles.OHPEN_boil_temp = 401.292792 # K
+particles.OHPEN_latent = 355772.727273 # J/kg
+particles.OHPEN_cp = 1109.746364 # J/kg/K
+particles.OHPEN_rho = 852.780933 # kg/m^3
+particles.OHPEN_psat = 9.22375412399919 1469.4956331965743 -45.13366552726593 1.0 # Pa
+
+# Properties for HYDRIND in MKS
+particles.HYDRIND_molar_weight = 0.124000 # kg/mol
+particles.HYDRIND_crit_temp = 631.547132 # K
+particles.HYDRIND_boil_temp = 426.269015 # K
+particles.HYDRIND_latent = 350387.096774 # J/kg
+particles.HYDRIND_cp = 1182.616935 # J/kg/K
+particles.HYDRIND_rho = 861.768007 # kg/m^3
+particles.HYDRIND_psat = 9.1635383073785 1548.729776708957 -44.54692541831698 1.0 # Pa
+
+# Properties for DECALIN in MKS
+particles.DECALIN_molar_weight = 0.138000 # kg/mol
+particles.DECALIN_crit_temp = 657.422503 # K
+particles.DECALIN_boil_temp = 448.522462 # K
+particles.DECALIN_latent = 346094.202899 # J/kg
+particles.DECALIN_cp = 1240.702174 # J/kg/K
+particles.DECALIN_rho = 869.067668 # kg/m^3
+particles.DECALIN_psat = 9.10037849692014 1613.0876270027638 -43.86003705000198 1.0 # Pa
+
+# Properties for METHYLDECALIN-2 in MKS
+particles.METHYLDECALIN-2_molar_weight = 0.152000 # kg/mol
+particles.METHYLDECALIN-2_crit_temp = 667.782673 # K
+particles.METHYLDECALIN-2_boil_temp = 461.105972 # K
+particles.METHYLDECALIN-2_latent = 328934.210526 # J/kg
+particles.METHYLDECALIN-2_cp = 1267.267763 # J/kg/K
+particles.METHYLDECALIN-2_rho = 865.639992 # kg/m^3
+particles.METHYLDECALIN-2_psat = 9.11045587140273 1665.7431837741262 -45.88565210346635 1.0 # Pa
+
+# Properties for ETHYLDECALIN-2 in MKS
+particles.ETHYLDECALIN-2_molar_weight = 0.166000 # kg/mol
+particles.ETHYLDECALIN-2_crit_temp = 682.972918 # K
+particles.ETHYLDECALIN-2_boil_temp = 479.953640 # K
+particles.ETHYLDECALIN-2_latent = 329204.819277 # J/kg
+particles.ETHYLDECALIN-2_cp = 1296.742771 # J/kg/K
+particles.ETHYLDECALIN-2_rho = 864.609710 # kg/m^3
+particles.ETHYLDECALIN-2_psat = 9.172314950254146 1756.9341303329309 -49.35021835639559 1.0 # Pa
+
+# Properties for PROPYLDECALIN-2 in MKS
+particles.PROPYLDECALIN-2_molar_weight = 0.180000 # kg/mol
+particles.PROPYLDECALIN-2_crit_temp = 696.987221 # K
+particles.PROPYLDECALIN-2_boil_temp = 497.208857 # K
+particles.PROPYLDECALIN-2_latent = 329433.333333 # J/kg
+particles.PROPYLDECALIN-2_cp = 1321.632778 # J/kg/K
+particles.PROPYLDECALIN-2_rho = 863.741537 # kg/m^3
+particles.PROPYLDECALIN-2_psat = 9.23970390712396 1849.8200119028986 -52.476279978861584 1.0 # Pa
+
+# Properties for BUTYLDECALIN-2 in MKS
+particles.BUTYLDECALIN-2_molar_weight = 0.194000 # kg/mol
+particles.BUTYLDECALIN-2_crit_temp = 709.994644 # K
+particles.BUTYLDECALIN-2_boil_temp = 513.119878 # K
+particles.BUTYLDECALIN-2_latent = 329628.865979 # J/kg
+particles.BUTYLDECALIN-2_cp = 1342.930412 # J/kg/K
+particles.BUTYLDECALIN-2_rho = 862.999990 # kg/m^3
+particles.BUTYLDECALIN-2_psat = 9.311684358504637 1944.2233278610465 -55.29391579408064 1.0 # Pa
+
+# Properties for PENTYLDECALIN-2 in MKS
+particles.PENTYLDECALIN-2_molar_weight = 0.208000 # kg/mol
+particles.PENTYLDECALIN-2_crit_temp = 722.130219 # K
+particles.PENTYLDECALIN-2_boil_temp = 527.881080 # K
+particles.PENTYLDECALIN-2_latent = 329798.076923 # J/kg
+particles.PENTYLDECALIN-2_cp = 1361.361058 # J/kg/K
+particles.PENTYLDECALIN-2_rho = 862.359234 # kg/m^3
+particles.PENTYLDECALIN-2_psat = 9.387480927335261 2039.9585430542434 -57.8345022307476 1.0 # Pa
+
+# Properties for TRICYCLO-C10 in MKS
+particles.TRICYCLO-C10_molar_weight = 0.136000 # kg/mol
+particles.TRICYCLO-C10_crit_temp = 640.994792 # K
+particles.TRICYCLO-C10_boil_temp = 441.819518 # K
+particles.TRICYCLO-C10_latent = 328507.352941 # J/kg
+particles.TRICYCLO-C10_cp = 1052.195588 # J/kg/K
+particles.TRICYCLO-C10_rho = 949.788086 # kg/m^3
+particles.TRICYCLO-C10_psat = 9.282288681307861 1607.7716868000682 -47.81755838500074 1.0 # Pa
+
+# Properties for TRICYCLO-C11 in MKS
+particles.TRICYCLO-C11_molar_weight = 0.150000 # kg/mol
+particles.TRICYCLO-C11_crit_temp = 661.426863 # K
+particles.TRICYCLO-C11_boil_temp = 458.915461 # K
+particles.TRICYCLO-C11_latent = 325060.000000 # J/kg
+particles.TRICYCLO-C11_cp = 1044.367333 # J/kg/K
+particles.TRICYCLO-C11_rho = 927.520794 # kg/m^3
+particles.TRICYCLO-C11_psat = 9.314514246071942 1700.6920694614716 -49.66015092881853 1.0 # Pa
+
+# Properties for TRICYCLO-C12 in MKS
+particles.TRICYCLO-C12_molar_weight = 0.164000 # kg/mol
+particles.TRICYCLO-C12_crit_temp = 683.597729 # K
+particles.TRICYCLO-C12_boil_temp = 478.031945 # K
+particles.TRICYCLO-C12_latent = 323609.756098 # J/kg
+particles.TRICYCLO-C12_cp = 1105.045732 # J/kg/K
+particles.TRICYCLO-C12_rho = 928.535803 # kg/m^3
+particles.TRICYCLO-C12_psat = 9.250638794902235 1757.6430892551248 -48.97150951710556 1.0 # Pa
