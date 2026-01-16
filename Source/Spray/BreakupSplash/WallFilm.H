@@ -67,7 +67,7 @@ calculateFilmSource(
   const amrex::Real lambda_film =
     fdat.liqprops.lambda_mix(Y_film, T_film, cBoilT);
   const amrex::Real mw_film = fdat.liqprops.mw_mix(Y_film);
-  T_film = amrex::min(0.999 * Tcrit, T_film);
+  T_film = amrex::min<amrex::Real>(0.999 * Tcrit, T_film);
   amrex::Real film_height = p.rdata(SprayComps::pstateFilmHght);
   amrex::Real film_dia = p.rdata(SprayComps::pstateDia);
   amrex::Real rad2 = std::pow(0.5 * film_dia, 2);
@@ -76,7 +76,7 @@ calculateFilmSource(
   amrex::Real film_mass = rho_film * film_height * film_area;
   amrex::Real start_mass = film_mass;
   // Model the fuel vapor using the one-third rule
-  amrex::Real delT = amrex::max(gpv.T_fluid - T_film, 0.);
+  amrex::Real delT = amrex::max<amrex::Real>(gpv.T_fluid - T_film, 0.);
   amrex::Real T_skin = T_film + rule * delT;
 
   // Calculate the C_p at the skin temperature for each species
@@ -137,7 +137,8 @@ calculateFilmSource(
       if (X_vapor[spf] > 0.) {
         // Normalize mass diffusivity by fuel vapor molar fraction
         amrex::Real cur_rhoD = X_vapor[spf] * Ddiag[fspec] / sumXVap;
-        mi_dot[spf] = -amrex::max(h_mass * std::pow(cur_rhoD, 2. / 3.), 0.);
+        mi_dot[spf] =
+          -amrex::max<amrex::Real>(h_mass * std::pow(cur_rhoD, 2. / 3.), 0.);
         m_dot += mi_dot[spf];
         sumL += mi_dot[spf] * L_fuel[spf];
       }
@@ -154,8 +155,8 @@ calculateFilmSource(
       if (SPRAY_FUEL_NUM > 1) {
         // rho_film = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          Y_film[spf] = amrex::min(
-            1., amrex::max(
+          Y_film[spf] = amrex::min<amrex::Real>(
+            1., amrex::max<amrex::Real>(
                   (Y_film[spf] * film_mass + mi_dot[spf] * dt) / new_mass, 0.));
           if (Y_film[spf] < 1.E-12) {
             Y_film[spf] = 0.;

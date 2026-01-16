@@ -122,7 +122,7 @@ public:
       betafab(i, j, k) = 1.0 / 0.001;
 
       if (bx.contains(i, j, k)) {
-        double ka = std::max(0.001, kappa(i, j, k));
+        amrex::Real ka = amrex::max<amrex::Real>(0.001, kappa(i, j, k));
         betafab(i, j, k) = 1.0 / ka;
         // rhsfab(i, j, k)
         //    = 4.0 * ka * 5.67e-8 * std::pow(T(i, j, k), 4.0); //si

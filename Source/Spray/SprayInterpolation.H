@@ -27,15 +27,21 @@ InterpolateFaceVelocity(
       face_len[1] - static_cast<amrex::Real>(indx[1]),
       face_len[2] - static_cast<amrex::Real>(indx[2])));
     const int iin[2] = {
-      amrex::max(indx[0] - 1, dom_lo[0]), amrex::min(indx[0], dom_hi[0])};
-    const amrex::Real ssx[2] = {1. - delL[0], delL[0]};
+      amrex::max<int>(indx[0] - 1, dom_lo[0]),
+      amrex::min<int>(indx[0], dom_hi[0])};
+    const amrex::Real ssx[2] = {
+      static_cast<amrex::Real>(1.0) - delL[0], delL[0]};
     const int jjn[2] = {
-      amrex::max(indx[1] - 1, dom_lo[1]), amrex::min(indx[1], dom_hi[1])};
-    const amrex::Real ssy[2] = {1. - delL[1], delL[1]};
+      amrex::max<int>(indx[1] - 1, dom_lo[1]),
+      amrex::min<int>(indx[1], dom_hi[1])};
+    const amrex::Real ssy[2] = {
+      static_cast<amrex::Real>(1.0) - delL[1], delL[1]};
 #if AMREX_SPACEDIM == 3
     const int kkn[2] = {
-      amrex::max(indx[2] - 1, dom_lo[2]), amrex::min(indx[2], dom_hi[2])};
-    const amrex::Real ssz[2] = {1. - delL[2], delL[2]};
+      amrex::max<int>(indx[2] - 1, dom_lo[2]),
+      amrex::min<int>(indx[2], dom_hi[2])};
+    const amrex::Real ssz[2] = {
+      static_cast<amrex::Real>(1.0) - delL[2], delL[2]};
 #endif
     int ke = (AMREX_SPACEDIM == 3) ? 2 : 1;
     for (int kk = 0; kk < ke; ++kk) {
@@ -411,7 +417,7 @@ get_interp_mapping(
 #endif
 
     lc += 1;
-    err = amrex::max(
+    err = amrex::max<amrex::Real>(
       amrex::Math::abs(xi - new_xi), amrex::Math::abs(eta - new_eta),
       amrex::Math::abs(zeta - new_zeta));
 

@@ -495,8 +495,8 @@ private:
       utilities::locate(&tf_data->grids[start], dimLen, interpdata[dim], idx);
 #endif
 
-      idx = std::min(
-        std::max(idx, 0),
+      idx = amrex::min<int>(
+        amrex::max<int>(idx, 0),
         dimLen - 2); // don't let idx be negative or out of bounds
       indices[dim] = idx;
       idx += start;
@@ -504,8 +504,8 @@ private:
         1.0 / (tf_data->grids[idx + 1] - tf_data->grids[idx]);
       dxinv[dim] = dx_inv;
       amrex::Real alpha = (tf_data->grids[idx + 1] - interpdata[dim]) * dx_inv;
-      alphas[dim] =
-        std::min(std::max(alpha, amrex::Real(0.0)), amrex::Real(1.0));
+      alphas[dim] = amrex::min<amrex::Real>(
+        amrex::max<amrex::Real>(alpha, amrex::Real(0.0)), amrex::Real(1.0));
       start += dimLen;
     }
   }

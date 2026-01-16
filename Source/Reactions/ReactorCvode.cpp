@@ -961,7 +961,7 @@ ReactorCvode::allocUserData(
   udata->verbose = verbose;
 #ifdef AMREX_USE_GPU
   udata->nbThreads = CVODE_NB_THREADS;
-  udata->nbBlocks = std::max(1, a_ncells / udata->nbThreads);
+  udata->nbBlocks = amrex::max<int>(1, a_ncells / udata->nbThreads);
   udata->stream = stream;
 #endif
 

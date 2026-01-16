@@ -185,7 +185,7 @@ splash_criteria(
         }
       }
       // Do not allow mass to exceed one for now, should be fixed
-      ms = amrex::min(ms, 1.);
+      ms = amrex::min<amrex::Real>(ms, 1.);
     } else {
       crit = splash_type::spread;
       // All mass becomes part of the wall film
@@ -241,8 +241,8 @@ droplet_splashing(
   const amrex::Real Re_L = std::abs(U0norm) * dia_part * rho_part / mu_part;
   const amrex::Real Kv = std::sqrt(We * std::sqrt(Re_L));
   // Inclination of on-coming particle to surface in radians
-  amrex::Real alpha =
-    amrex::max(M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
+  amrex::Real alpha = amrex::max<amrex::Real>(
+    M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
 #ifdef PELELM_USE_SPRAY
   const amrex::Real p_bar = p_gas * 1.E-5;
 #else

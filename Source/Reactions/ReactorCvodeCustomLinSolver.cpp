@@ -60,7 +60,7 @@ SUNLinSol_dense_custom(
   content->nsubsys = SUNMatrix_cuSparse_NumBlocks(A);
   content->subsys_size = SUNMatrix_cuSparse_BlockRows(A);
   content->subsys_nnz = SUNMatrix_cuSparse_BlockNNZ(A);
-  content->nbBlocks = std::max(1, content->nsubsys / 32);
+  content->nbBlocks = amrex::max<int>(1, content->nsubsys / 32);
   content->nbThreads = 32;
   content->stream = stream;
 

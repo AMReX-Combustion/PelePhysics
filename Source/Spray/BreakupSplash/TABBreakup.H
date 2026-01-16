@@ -82,7 +82,7 @@ updateBreakupTAB(
   amrex::Real tb_estconst =
     std::sqrt(3. * rho_part / gpv.rho_fluid) / diff_vel.vectorLength();
   amrex::Real tb_est = 0.1 * rad_part * tb_estconst;
-  amrex::Real subdt = amrex::min(dt, tb_est);
+  amrex::Real subdt = amrex::min<amrex::Real>(dt, tb_est);
   amrex::Real curt = 0.;
   while (curt < dt) {
     amrex::Real We = We_div_r * rad_part;
@@ -129,7 +129,8 @@ updateBreakupTAB(
         if (We >= Wet) {
           Kbr = k2 * omega * std::sqrt(We);
         }
-        amrex::Real etheta = amrex::max(-1., amrex::min(1., 1. - 1. / Wer));
+        amrex::Real etheta = amrex::max<amrex::Real>(
+          -1., amrex::min<amrex::Real>(1., 1. - 1. / Wer));
         amrex::Real etb = std::acos(etheta) / omega;
         amrex::Real rchild = rad_part * std::exp(-Kbr * etb);
         num_dens *= std::pow(rad_part / rchild, 3);
@@ -152,7 +153,7 @@ updateBreakupTAB(
         yn = 0.;
         ydotn = 0.;
         tb_est = rad_part * tbconst;
-        subdt = amrex::min(dt, 0.1 * tb_est);
+        subdt = amrex::min<amrex::Real>(dt, 0.1 * tb_est);
         denom = rho_part * rad_part * rad_part;
         td = 2. * denom / (C_d * mu_part);
         omega2 = C_k * sigma_part / (denom * rad_part) - 1. / (td * td);

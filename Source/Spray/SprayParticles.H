@@ -133,7 +133,7 @@ public:
     const int depos_width = 0)
   {
     if (level - 1 < finest_level) {
-      return amrex::max(
+      return amrex::max<int>(
         1, depos_width + static_cast<int>(std::round(
                            cfl * static_cast<amrex::Real>(amr_ncycle))));
     }
@@ -165,7 +165,7 @@ public:
       const int ghost_part_cells =
         getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
       int ghost_part_state = interp_width + ghost_part_cells;
-      ghost_state = amrex::max(ghost_part_state, ghost_state);
+      ghost_state = amrex::max<int>(ghost_part_state, ghost_state);
     }
     return ghost_state;
   }
@@ -191,7 +191,7 @@ public:
       // If ghost particles are present, we need to accommodate those
       const int ghost_part_cells =
         getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
-      ghost_source = amrex::max(ghost_part_cells, ghost_source);
+      ghost_source = amrex::max<int>(ghost_part_cells, ghost_source);
     }
     return ghost_source;
   }
@@ -259,7 +259,7 @@ public:
   {
     BL_PROFILE("ParticleContainer::transferSource()");
     AMREX_ALWAYS_ASSERT(level >= 0);
-    const int nghost = amrex::min(actSource.nGrow(), source_ghosts);
+    const int nghost = amrex::min<int>(actSource.nGrow(), source_ghosts);
 #ifdef PELELM_USE_SPRAY
     const int ncomp = tmpSource.nComp();
     if (level > 0) {

@@ -28,8 +28,10 @@ section_area(
   const amrex::Real r)
 {
   const amrex::Real sec = (h < r) ? std::sqrt(r * r - h * h) : 0;
-  const amrex::Real arg1 = amrex::max(-sec, amrex::min(sec, x1));
-  const amrex::Real arg2 = amrex::max(-sec, amrex::min(sec, x0));
+  const amrex::Real arg1 =
+    amrex::max<amrex::Real>(-sec, amrex::min<amrex::Real>(sec, x1));
+  const amrex::Real arg2 =
+    amrex::max<amrex::Real>(-sec, amrex::min<amrex::Real>(sec, x0));
   const amrex::Real term1 =
     0.5 * (std::sqrt(1.0 - arg1 * arg1 / (r * r)) * arg1 * r +
            r * r * std::asin(arg1 / r) - 2.0 * h * arg1);
@@ -71,8 +73,10 @@ rectangle_circle_intersection_area(
 
   // Compute the area
   const amrex::Real sign = copysign(1.0, y0new) * copysign(1.0, y1new);
-  const amrex::Real y0mod = amrex::min(std::abs(y0new), std::abs(y1new));
-  const amrex::Real y1mod = amrex::max(std::abs(y0new), std::abs(y1new));
+  const amrex::Real y0mod =
+    amrex::min<amrex::Real>(std::abs(y0new), std::abs(y1new));
+  const amrex::Real y1mod =
+    amrex::max<amrex::Real>(std::abs(y0new), std::abs(y1new));
   const amrex::Real area0 = section_area(x0new, x1new, 0.0, r);
   const amrex::Real area1 = area0 - section_area(x0new, x1new, y0mod, r);
   const amrex::Real area2 = area0 - section_area(x0new, x1new, y1mod, r);

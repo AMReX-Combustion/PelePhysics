@@ -81,7 +81,7 @@ TurbForcing::init(amrex::GeometryData const& geomdata)
     TurbForcingParm::m_fts_max *
     (TurbForcingParm::m_fvr / TurbForcingParm::m_flr) * (Lx / m_tfp.m_urms);
 
-  m_tfp.m_Lmin = std::min(Lx, std::min(Ly, Lz));
+  m_tfp.m_Lmin = amrex::min<amrex::Real>(Lx, amrex::min<amrex::Real>(Ly, Lz));
   m_tfp.m_kappaMax =
     static_cast<amrex::Real>(m_tfp.m_nmodes) / m_tfp.m_Lmin + 1.0e-8;
   m_tfp.m_nxmodes =

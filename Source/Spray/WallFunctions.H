@@ -128,17 +128,18 @@ check_wall(
       normal = {
         AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
       bcentv = {AMREX_D_DECL(
-        ijkc[0] + 0.5 + bcent(ijkc, 0), ijkc[1] + 0.5 + bcent(ijkc, 1),
-        ijkc[2] + 0.5 + bcent(ijkc, 2))};
+        static_cast<amrex::Real>(ijkc[0] + 0.5 + bcent(ijkc, 0)),
+        static_cast<amrex::Real>(ijkc[1] + 0.5 + bcent(ijkc, 1)),
+        static_cast<amrex::Real>(ijkc[2] + 0.5 + bcent(ijkc, 2)))};
     } else if (flags(ijkc).isCovered()) {
       wall_check = true;
       if (flags(ijkc_prev).isSingleValued()) {
         normal = {AMREX_D_DECL(
           -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2))};
         bcentv = {AMREX_D_DECL(
-          ijkc_prev[0] + 0.5 + bcent(ijkc_prev, 0),
-          ijkc_prev[1] + 0.5 + bcent(ijkc_prev, 1),
-          ijkc_prev[2] + 0.5 + bcent(ijkc_prev, 2))};
+          static_cast<amrex::Real>(ijkc_prev[0] + 0.5 + bcent(ijkc_prev, 0)),
+          static_cast<amrex::Real>(ijkc_prev[1] + 0.5 + bcent(ijkc_prev, 1)),
+          static_cast<amrex::Real>(ijkc_prev[2] + 0.5 + bcent(ijkc_prev, 2)))};
       } else {
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           if (ijkc[dir] != ijkc_prev[dir]) {

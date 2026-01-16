@@ -60,7 +60,8 @@ LogNormal::init(const amrex::Real& mean, const amrex::Real& std)
   m_mean = mean;
   m_log_mean = 2. * std::log(mean) - 0.5 * std::log(std * std + mean * mean);
   m_log_std = std::sqrt(
-    amrex::max(-2. * std::log(mean) + std::log(std * std + mean * mean), 0.));
+    amrex::max<amrex::Real>(
+      -2. * std::log(mean) + std::log(std * std + mean * mean), 0.));
 }
 void
 LogNormal::init(const std::string& a_prefix)

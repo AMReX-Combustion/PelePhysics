@@ -286,7 +286,7 @@ struct SootData
     const amrex::Real tolS = sc.smallWeight * nuclSurf;
     // Check for globally small moments
     if (moments[0] < sc.smallWeight || moments[1] < tolV || moments[2] < tolS) {
-      moments[1] = amrex::max(moments[1], tolV);
+      moments[1] = amrex::max<amrex::Real>(moments[1], tolV);
       moments[0] = moments[1] / nuclVol;
       moments[2] = nuclSurf * moments[0];
       weightDelta = moments[0];
@@ -299,9 +299,12 @@ struct SootData
     }
 #if NUM_SOOT_MOMENTS == 6
     // Check for (co)variance of second mode
-    moments[3] = amrex::max(moments[3], moments[1] * moments[1] / moments[0]);
-    moments[4] = amrex::max(moments[4], moments[1] * moments[2] / moments[0]);
-    moments[5] = amrex::max(moments[5], moments[2] * moments[2] / moments[0]);
+    moments[3] =
+      amrex::max<amrex::Real>(moments[3], moments[1] * moments[1] / moments[0]);
+    moments[4] =
+      amrex::max<amrex::Real>(moments[4], moments[1] * moments[2] / moments[0]);
+    moments[5] =
+      amrex::max<amrex::Real>(moments[5], moments[2] * moments[2] / moments[0]);
 #endif
     if (weightDelta < sc.smallWeight) {
       for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
@@ -311,7 +314,7 @@ struct SootData
       }
       weightDelta = sc.smallWeight;
     }
-    weightDelta = amrex::min(weightDelta, moments[0]);
+    weightDelta = amrex::min<amrex::Real>(weightDelta, moments[0]);
     moments[NUM_SOOT_MOMENTS] = weightDelta;
   }
 
@@ -459,8 +462,10 @@ struct SootData
     const amrex::Real M20 = moments[3] - momFact[3] * moments[6];
     const amrex::Real M11 = moments[4] - momFact[4] * moments[6];
     const amrex::Real M02 = moments[5] - momFact[5] * moments[6];
-    amrex::Real minMom = amrex::min(M00, amrex::min(M10, M01));
-    minMom = amrex::min(minMom, amrex::min(M20, amrex::min(M11, M02)));
+    amrex::Real minMom =
+      amrex::min<amrex::Real>(M00, amrex::min<amrex::Real>(M10, M01));
+    minMom = amrex::min<amrex::Real>(
+      minMom, amrex::min<amrex::Real>(M20, amrex::min<amrex::Real>(M11, M02)));
     // If moments are effectively zero, only use one mode
     if (minMom < 1.E-25) {
       const amrex::Real c1 = std::pow(moments[0], -1.5);
@@ -545,8 +550,10 @@ struct SootData
   {
     const amrex::Real weightDelta = momFV[NUM_SOOT_MOMENTS];
     const amrex::Real factor = weightDelta * std::pow(nuclVol, a + 2. / 3. * b);
-    const amrex::Real VF[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
-    const amrex::Real SF[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
+    const amrex::Real VF[3] = {
+      static_cast<amrex::Real>(2.0) * sc.SootAv + x, sc.SootAv + x, x};
+    const amrex::Real SF[3] = {
+      static_cast<amrex::Real>(2.0) * sc.SootAs + y, sc.SootAs + y, y};
     const amrex::Real FML_1 = fracMomLarge(VF[0] - 0.5, SF[0], momFV);
     const amrex::Real FML_2 = fracMomLarge(VF[1] - 0.5, SF[1], momFV);
     const amrex::Real FML_3 = fracMomLarge(VF[2] - 0.5, SF[2], momFV);

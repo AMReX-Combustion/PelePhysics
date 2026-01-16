@@ -125,7 +125,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       // Swirl type: we can't load more planes than are available
       if (tp[n].isswirltype) {
         tp[n].nplane = AMREX_D_PICK(
-          tp[n].nplane, tp[n].nplane, std::min(tp[n].nplane, npts[2]));
+          tp[n].nplane, tp[n].nplane, amrex::min<int>(tp[n].nplane, npts[2]));
       }
 
       amrex::Box sbx(
@@ -311,7 +311,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
          ++a_tp.izlo) {
     } // Stop when first plane later than time=z
     a_tp.izlo -= 2; // read one extra earlier tplane to prevent rereading
-    a_tp.izlo = std::max(a_tp.izlo, 0);
+    a_tp.izlo = amrex::max<int>(a_tp.izlo, 0);
     a_tp.izhi = a_tp.izlo + a_tp.nplane - 1;
     a_tp.szlo = a_tp.planeTimes[a_tp.izlo];
     a_tp.szhi = a_tp.planeTimes[a_tp.izhi - 1]; // need one plane forward in

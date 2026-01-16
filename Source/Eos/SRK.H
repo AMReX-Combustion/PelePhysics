@@ -253,8 +253,8 @@ struct SRK
         -2.0 * sqrtQ * std::cos((theta + 2.0 * M_PI) * third) - alpha * third;
       const amrex::Real Z3 =
         -2.0 * sqrtQ * std::cos((theta + 4.0 * M_PI) * third) - alpha * third;
-      Z = std::max(Z1, Z2);
-      Z = std::max(Z, Z3);
+      Z = amrex::max<amrex::Real>(Z1, Z2);
+      Z = amrex::max<amrex::Real>(Z, Z3);
     } else {
       Z = -std::copysign(1.0, R) *
             (std::pow((std::sqrt(R * R - Q * Q * Q) + std::abs(R)), third) +

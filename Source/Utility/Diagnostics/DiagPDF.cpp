@@ -16,8 +16,8 @@ DiagPDF::init(const std::string& a_prefix, std::string_view a_diagName)
   if (pp.countval("range") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("range", range, 0, 2);
-    m_lowBnd = std::min(range[0], range[1]);
-    m_highBnd = std::max(range[0], range[1]);
+    m_lowBnd = amrex::min<amrex::Real>(range[0], range[1]);
+    m_highBnd = amrex::max<amrex::Real>(range[0], range[1]);
     m_useFieldMinMax = false;
   }
 }
@@ -162,7 +162,7 @@ DiagPDF::MFVecMin(
   // TODO: skip fine-covered in search
   amrex::Real mmin{AMREX_REAL_MAX};
   for (const auto* st : a_state) {
-    mmin = std::min(mmin, st->min(comp, 0, true));
+    mmin = amrex::min<amrex::Real>(mmin, st->min(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMin(mmin);
@@ -176,7 +176,7 @@ DiagPDF::MFVecMax(
   // TODO: skip fine-covered in search
   amrex::Real mmax{AMREX_REAL_LOWEST};
   for (const auto* st : a_state) {
-    mmax = std::max(mmax, st->max(comp, 0, true));
+    mmax = amrex::max<amrex::Real>(mmax, st->max(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMax(mmax);
@@ -208,8 +208,10 @@ DiagPDF::writePDFToFile(
 
     amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
 
-    widths[0] = std::max(width, static_cast<int>(m_fieldName.length()) + 1);
-    widths[1] = std::max(width, static_cast<int>(m_fieldName.length()) + 5);
+    widths[0] =
+      amrex::max<int>(width, static_cast<int>(m_fieldName.length()) + 1);
+    widths[1] =
+      amrex::max<int>(width, static_cast<int>(m_fieldName.length()) + 5);
     pdfFile << std::setw(widths[0]) << m_fieldName << " "
             << std::setw(widths[1]) << m_fieldName + "_PDF" << "\n";
 

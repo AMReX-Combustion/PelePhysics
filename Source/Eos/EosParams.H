@@ -250,7 +250,7 @@ struct InitParm<eos::EosParm<eos::Manifold>>
         std::string(
           &h_manf_data_in->dimnames[idim * h_manf_data_in->len_str],
           h_manf_data_in->len_str));
-      size_t suffix_start = std::max(dimname.length() - 3, size_t(0));
+      size_t suffix_start = amrex::max<size_t>(dimname.length() - 3, size_t(0));
       if (dimname.substr(suffix_start) == "VAR") {
         const std::string variance_of = dimname.substr(0, suffix_start);
         int jdim;

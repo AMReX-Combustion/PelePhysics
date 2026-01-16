@@ -115,7 +115,7 @@ SprayParticleContainer::estTimestep(int level) const
           n, reduce_data, [=] AMREX_GPU_DEVICE(const int i) -> ReduceTuple {
             const ParticleType& p = pstruct[i];
             if (p.id() > 0) {
-              const Real max_mag_vdx = amrex::max(AMREX_D_DECL(
+              const Real max_mag_vdx = amrex::max<amrex::Real>(AMREX_D_DECL(
                 std::abs(p.rdata(SprayComps::pstateVel)) * dxi[0],
                 std::abs(p.rdata(SprayComps::pstateVel + 1)) * dxi[1],
                 std::abs(p.rdata(SprayComps::pstateVel + 2)) * dxi[2]));
@@ -127,14 +127,14 @@ SprayParticleContainer::estTimestep(int level) const
       }
       ReduceTuple hv = reduce_data.value();
       Real ldt_cpu = amrex::get<0>(hv);
-      dt = amrex::min(dt, ldt_cpu);
+      dt = amrex::min<amrex::Real>(dt, ldt_cpu);
     }
   }
   // Check if the velocity of particles being injected is greater than existing
   // particle velocities
   for (const auto& sj : m_sprayJets) {
     if (sj->max_jet_vel() > 0.) {
-      dt = amrex::min(dt, cfl * dx[0] / sj->max_jet_vel());
+      dt = amrex::min<amrex::Real>(dt, cfl * dx[0] / sj->max_jet_vel());
     }
   }
   ParallelDescriptor::ReduceRealMin(dt);

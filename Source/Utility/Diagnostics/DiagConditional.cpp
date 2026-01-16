@@ -25,8 +25,8 @@ DiagConditional::init(const std::string& a_prefix, std::string_view a_diagName)
   if (pp.countval("range") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("range", range, 0, 2);
-    m_lowBnd = std::min(range[0], range[1]);
-    m_highBnd = std::max(range[0], range[1]);
+    m_lowBnd = amrex::min<amrex::Real>(range[0], range[1]);
+    m_highBnd = amrex::max<amrex::Real>(range[0], range[1]);
     m_usecFieldMinMax = false;
   }
   int nProcessFields = -1;
@@ -284,7 +284,7 @@ DiagConditional::MFVecMin(
   // TODO: skip fine-covered in search
   amrex::Real mmin{AMREX_REAL_MAX};
   for (const auto* st : a_state) {
-    mmin = std::min(mmin, st->min(comp, 0, true));
+    mmin = amrex::min<amrex::Real>(mmin, st->min(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMin(mmin);
@@ -298,7 +298,7 @@ DiagConditional::MFVecMax(
   // TODO: skip fine-covered in search
   amrex::Real mmax{AMREX_REAL_LOWEST};
   for (const auto* st : a_state) {
-    mmax = std::max(mmax, st->max(comp, 0, true));
+    mmax = amrex::max<amrex::Real>(mmax, st->max(comp, 0, true));
   }
 
   amrex::ParallelDescriptor::ReduceRealMax(mmax);
@@ -333,17 +333,18 @@ DiagConditional::writeAverageDataToFile(
 
     condFile << std::left << std::setw(widths[0]) << "BinCenter"
              << " ";
-    widths[1] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
+    widths[1] =
+      amrex::max<int>(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[1]) << m_cFieldName << " ";
     condFile << std::left << std::setw(widths[2]) << "Volume"
              << " ";
     for (int f{0}; f < nProcessFields; ++f) {
       widths[3 + 2 * f] =
-        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
+        amrex::max<int>(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[3 + 2 * f])
                << m_fieldNames[f] + "_Avg" << " ";
       widths[4 + 2 * f] =
-        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 7);
+        amrex::max<int>(width, static_cast<int>(m_fieldNames[f].length()) + 7);
       condFile << std::left << std::setw(widths[4 + 2 * f])
                << m_fieldNames[f] + "_StdDev" << " ";
     }
@@ -402,11 +403,12 @@ DiagConditional::writeIntegralDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
+    widths[0] =
+      amrex::max<int>(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
       widths[1 + f] =
-        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
+        amrex::max<int>(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Int" << " ";
     }
@@ -452,11 +454,12 @@ DiagConditional::writeSumDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
-    widths[0] = std::max(width, static_cast<int>(m_cFieldName.length()) + 1);
+    widths[0] =
+      amrex::max<int>(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
     for (int f{0}; f < nProcessFields; ++f) {
       widths[1 + f] =
-        std::max(width, static_cast<int>(m_fieldNames[f].length()) + 5);
+        amrex::max<int>(width, static_cast<int>(m_fieldNames[f].length()) + 5);
       condFile << std::left << std::setw(widths[1 + f])
                << m_fieldNames[f] + "_Sum" << " ";
     }

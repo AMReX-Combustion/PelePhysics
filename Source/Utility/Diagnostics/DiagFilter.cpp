@@ -23,8 +23,8 @@ DiagFilter::init(const std::string& a_prefix)
   } else if (pp.countval("value_inrange") != 0) {
     amrex::Vector<amrex::Real> range{0.0};
     pp.getarr("value_inrange", range, 0, 2);
-    m_fdata.m_low_val = std::min(range[0], range[1]);
-    m_fdata.m_high_val = std::max(range[0], range[1]);
+    m_fdata.m_low_val = amrex::min<amrex::Real>(range[0], range[1]);
+    m_fdata.m_high_val = amrex::max<amrex::Real>(range[0], range[1]);
     definedRange = 1;
   }
   if (definedRange == 0) {

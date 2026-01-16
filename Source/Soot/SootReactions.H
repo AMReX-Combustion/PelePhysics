@@ -38,7 +38,7 @@ struct SootReaction
     // The effective rate of dimerization
     // This should coincide with the last reaction in the reaction lists
     const int fr = NUM_SOOT_REACT - 1;
-    return amrex::max(
+    return amrex::max<amrex::Real>(
       0., A_f[fr] * std::pow(T, n_f[fr]) * std::exp(-ER_f[fr] / T) * xi_PAH *
             xi_PAH);
   }

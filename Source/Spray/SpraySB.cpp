@@ -72,8 +72,8 @@ SprayParticleContainer::CreateSBDroplets(
         Real ms = phi2;
         Real del_film = phi3;
         Real U0norm = normal.dotProduct(vel0);
-        Real alpha =
-          amrex::max(M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
+        Real alpha = amrex::max<amrex::Real>(
+          M_PI / 6., std::asin(amrex::Math::abs(U0norm) / U0mag));
         // Real alpha_d = alpha * 180. / M_PI;
         Real U0tan = std::sqrt(U0mag * U0mag - U0norm * U0norm);
         Real uBeta_0, uBeta_half, uBeta_pi, uPsi_coeff, usNorm;
@@ -131,7 +131,7 @@ SprayParticleContainer::CreateSBDroplets(
         // N_s - number density of newly created parcels There is no one way to
         // do this
         Real N_s = std::pow(num_dens0, m_breakupPPPFact);
-        int N_d = amrex::max(1, static_cast<int>(num_dens0 / N_s));
+        int N_d = amrex::max<int>(1, static_cast<int>(num_dens0 / N_s));
         N_s = num_dens0 / static_cast<Real>(N_d);
         // Real new_mass = M_PI / 6. * rho_part * std::pow(dmean, 3);
 #if AMREX_SPACEDIM == 3

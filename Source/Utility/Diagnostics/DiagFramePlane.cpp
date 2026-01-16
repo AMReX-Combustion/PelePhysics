@@ -59,8 +59,8 @@ DiagFramePlane::init(const std::string& a_prefix, std::string_view a_diagName)
   for (int f{0}; f < nOutFields; ++f) {
     pp.get("field_names", m_fieldNames[f], f);
   }
-  m_nfiles_plane =
-    std::max(1, std::min(amrex::ParallelDescriptor::NProcs(), 256));
+  m_nfiles_plane = amrex::max<int>(
+    1, amrex::min<int>(amrex::ParallelDescriptor::NProcs(), 256));
   pp.query("n_files", m_nfiles_plane);
   // Plane normal
   pp.get("normal", m_normal);
@@ -688,7 +688,7 @@ DiagFramePlane::Write2DMFHeader(
     MFHdrFile << hdr.m_min.size() << "," << hdr.m_min[0].size() << '\n';
     MFHdrFile.precision(16);
     for (auto& hdr_i : hdr.m_min) {
-      for (double j : hdr_i) {
+      for (amrex::Real j : hdr_i) {
         MFHdrFile << j << ",";
       }
       MFHdrFile << "\n";
@@ -698,7 +698,7 @@ DiagFramePlane::Write2DMFHeader(
 
     MFHdrFile << hdr.m_max.size() << "," << hdr.m_max[0].size() << '\n';
     for (auto& hdr_i : hdr.m_max) {
-      for (double j : hdr_i) {
+      for (amrex::Real j : hdr_i) {
         MFHdrFile << j << ",";
       }
       MFHdrFile << "\n";

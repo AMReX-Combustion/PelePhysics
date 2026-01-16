@@ -169,7 +169,7 @@ public:
       betafab(i, j, k) = 1.0;
 
       if (bx.contains(i, j, k)) {
-        double ka = std::max(0.01, kappa(i, j, k) * 100);
+        amrex::Real ka = amrex::max<amrex::Real>(0.01, kappa(i, j, k) * 100);
         betafab(i, j, k) = 1.0 / ka;
 
         rhsfab(i, j, k) = 4.0 * ka * 5.67e-8 * std::pow(T(i, j, k),
@@ -203,11 +203,13 @@ public:
 
         if (i > dhi.x) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(dhi.x, jj, kk) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(dhi.x, jj, kk) * 100);
         }
         if (i < dlo.x) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(dlo.x, jj, kk) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(dlo.x, jj, kk) * 100);
         }
       } else if (i >= dlo.x && i <= dhi.x && k >= dlo.z && k <= dhi.z) {
         int ii, kk;
@@ -229,11 +231,13 @@ public:
 
         if (j > dhi.y) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(ii, dhi.y, kk) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(ii, dhi.y, kk) * 100);
         }
         if (j < dlo.y) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(ii, dlo.y, kk) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(ii, dlo.y, kk) * 100);
         }
       } else if (i >= dlo.x && i <= dhi.x && j >= dlo.y && j <= dhi.y) {
         int ii, jj;
@@ -255,11 +259,13 @@ public:
 
         if (k > dhi.z) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(ii, jj, dhi.z) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(ii, jj, dhi.z) * 100);
         }
         if (k < dlo.z) {
           robin_cell = true;
-          betafab(i, j, k) = 1.0 / std::max(1.0, kappa(ii, jj, dlo.z) * 100);
+          betafab(i, j, k) =
+            1.0 / amrex::max<amrex::Real>(1.0, kappa(ii, jj, dlo.z) * 100);
         }
       }
 
