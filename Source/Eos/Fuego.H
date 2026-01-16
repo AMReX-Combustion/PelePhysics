@@ -258,7 +258,8 @@ struct Fuego
 #else
   AMREX_FORCE_INLINE
 #endif
-  AMREX_GPU_HOST_DEVICE static void RTY2JAC(
+  AMREX_GPU_HOST_DEVICE static void
+  RTY2JAC(
     const amrex::Real R,
     const amrex::Real T,
     const amrex::Real Y[NUM_SPECIES],
