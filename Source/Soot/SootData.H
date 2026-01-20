@@ -1,8 +1,11 @@
 #ifndef SOOTDATA_H
 #define SOOTDATA_H
 
+#include "AMReX_REAL.H"
 #include "Constants_Soot.H"
 #include "SootReactions.H"
+
+using namespace amrex::literals;
 
 struct SootData
 {
@@ -550,10 +553,8 @@ struct SootData
   {
     const amrex::Real weightDelta = momFV[NUM_SOOT_MOMENTS];
     const amrex::Real factor = weightDelta * std::pow(nuclVol, a + 2. / 3. * b);
-    const amrex::Real VF[3] = {
-      static_cast<amrex::Real>(2.0) * sc.SootAv + x, sc.SootAv + x, x};
-    const amrex::Real SF[3] = {
-      static_cast<amrex::Real>(2.0) * sc.SootAs + y, sc.SootAs + y, y};
+    const amrex::Real VF[3] = {2.0_rt * sc.SootAv + x, sc.SootAv + x, x};
+    const amrex::Real SF[3] = {2.0_rt * sc.SootAs + y, sc.SootAs + y, y};
     const amrex::Real FML_1 = fracMomLarge(VF[0] - 0.5, SF[0], momFV);
     const amrex::Real FML_2 = fracMomLarge(VF[1] - 0.5, SF[1], momFV);
     const amrex::Real FML_3 = fracMomLarge(VF[2] - 0.5, SF[2], momFV);
