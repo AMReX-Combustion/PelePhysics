@@ -306,13 +306,14 @@ SootModel::computeSootSourceTerm(
         const int peleIndx = qSpecIndx + sp;
         // State provided by PeleLM is the concentration, rhoY
 #ifdef PELELM_USE_SOOT
-        rho_YF[sp] = amrex::max(0., Qstate(i, j, k, peleIndx) * sc.rho_conv);
+        rho_YF[sp] =
+          amrex::max<amrex::Real>(0.0, Qstate(i, j, k, peleIndx) * sc.rho_conv);
 #else
-        rho_YF[sp] = amrex::max(0., rho * Qstate(i, j, k, peleIndx));
+        rho_YF[sp] = amrex::max<amrex::Real>(0.0, rho * Qstate(i, j, k, peleIndx));
 #endif
       }
       // Compute the average molar mass (g/mol)
-      Real molarMass = 0.;
+      Real molarMass = 0.0;
       for (int sp = 0; sp < NUM_SPECIES; ++sp) {
         molarMass += rho_YF[sp] / mw_fluidF[sp];
       }
@@ -322,14 +323,14 @@ SootModel::computeSootSourceTerm(
         const int peleIndx = qSootIndx + mom;
         moments[mom] = Qstate(i, j, k, peleIndx);
         mom0[mom] = moments[mom];
-        mom_src[mom] = 0.;
+        mom_src[mom] = 0.0;
       }
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
         const int spcc = sd->refIndx[sp];
         mw_fluid[sp] = mw_fluidF[spcc];
         xi_n[sp] = rho_YF[spcc] / mw_fluid[sp];
         // Reset the reaction source term
-        omega_src[sp] = 0.;
+        omega_src[sp] = 0.0;
       }
       // Convert moments from CGS to mol of C
       sd->convertToMol(momentsPtr);
@@ -349,18 +350,18 @@ SootModel::computeSootSourceTerm(
       Real mindt = dt / Real(nsubMAX);
       Real sootdt = dt / Real(nsub);
       int isub = 1;
-      Real tstart = 0.;
+      Real tstart = 0.0;
       // Subcycling
       while (tstart < dt && isub < nsubMAX + 1) {
         sd->computeSrcTerms(
           T, mu, rho, molarMass, convT, betaNucl, colConst, xi_n.data(),
           omega_src.data(), momentsPtr, mom_srcPtr, mom_fvPtr, sr);
         // Estimate subcycling time step size
-        Real rate = 1.;
+        Real rate = 1.0;
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
           rate = amrex::max(rate, 1.05 * -sootdt * mom_src[mom] / moments[mom]);
         }
-        if (rate > 1.) {
+        if (rate > 1.0) {
           sootdt = amrex::max(sootdt / rate, mindt);
         }
         if (tstart + sootdt > dt) {
@@ -375,7 +376,7 @@ SootModel::computeSootSourceTerm(
         // Update moments within subcycle
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
           moments[mom] += sootdt * mom_src[mom];
-          mom_src[mom] = 0.; // Reset moment source
+          mom_src[mom] = 0.0; // Reset moment source
         }
         sd->clipMoments(momentsPtr);
         tstart += sootdt;
@@ -402,9 +403,9 @@ SootModel::computeSootSourceTerm(
         const int peleIndx = sootIndx + mom;
         soot_state(i, j, k, peleIndx) += (moments[mom] - mom0[mom]) / dt;
       }
-      Real rho_src = 0.;
-      Real eng_src = 0.;
-      Real p_src = 0.;
+      Real rho_src = 0.0;
+      Real eng_src = 0.0;
+      Real p_src = 0.0;
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
         // Convert from local gas species index to global gas species index
         const int spcc = sd->refIndx[sp];
@@ -493,14 +494,14 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
 #endif
         mw_fluid[sp] = mw_fluidF[spcc];
         xi_n[sp] = rho_Y[sp] / mw_fluid[sp];
-        omega_src[sp] = 0.;
+        omega_src[sp] = 0.0;
       }
       sd->convertToMol(momentsPtr);
       sd->computeFracMomVect(momentsPtr, mom_fvPtr);
-      Real surf = sc.S0 * sd->fracMom(0., 1., mom_fvPtr);
-      Real k_sg = 0.;
-      Real k_ox = 0.;
-      Real k_o2 = 0.;
+      Real surf = sc.S0 * sd->fracMom(0.0, 1.0, mom_fvPtr);
+      Real k_sg = 0.0;
+      Real k_ox = 0.0;
+      Real k_o2 = 0.0;
       // Compute the species reaction source terms into omega_src
       sr->chemicalSrc(
         T, surf, xi_n.data(), momentsPtr, k_sg, k_ox, k_o2, omega_src.data());
@@ -510,7 +511,7 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
           Real omegai = omega_src[sp] * mw_fluid[sp] + 1.E-16;
           Real rate = -rho_Y[sp] / omegai;
           // Check if source terms cause mass to drop to 0 or less
-          if (rate > 0. && rate < mindt) {
+          if (rate > 0.0 && rate < mindt) {
             mindt = rate;
           }
         }
