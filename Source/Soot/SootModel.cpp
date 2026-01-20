@@ -359,10 +359,11 @@ SootModel::computeSootSourceTerm(
         // Estimate subcycling time step size
         Real rate = 1.0;
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-          rate = amrex::max(rate, 1.05 * -sootdt * mom_src[mom] / moments[mom]);
+          rate = amrex::max<amrex::Real>(
+            rate, 1.05 * -sootdt * mom_src[mom] / moments[mom]);
         }
         if (rate > 1.0) {
-          sootdt = amrex::max(sootdt / rate, mindt);
+          sootdt = amrex::max<amrex::Real>(sootdt / rate, mindt);
         }
         if (tstart + sootdt > dt) {
           sootdt = dt - tstart;
@@ -520,6 +521,6 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
     });
   ReduceTuple hv = reduce_data.value();
   Real ldt_cpu = amrex::get<0>(hv);
-  soot_dt = amrex::min(soot_dt, ldt_cpu);
+  soot_dt = amrex::min<amrex::Real>(soot_dt, ldt_cpu);
   return soot_dt;
 }
