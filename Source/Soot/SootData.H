@@ -585,10 +585,10 @@ struct SootData
     const amrex::Real b,
     const amrex::Real momFV[]) const
   {
-    const amrex::Real VF_xy[3] = {2. * sc.SootAv + x, sc.SootAv + x, x};
-    const amrex::Real SF_xy[3] = {2. * sc.SootAs + y, sc.SootAs + y, y};
-    const amrex::Real VF_ab[3] = {a, sc.SootAv + a, 2. * sc.SootAv + a};
-    const amrex::Real SF_ab[3] = {b, sc.SootAs + b, 2. * sc.SootAs + b};
+    const amrex::Real VF_xy[3] = {2.0_rt * sc.SootAv + x, sc.SootAv + x, x};
+    const amrex::Real SF_xy[3] = {2.0_rt * sc.SootAs + y, sc.SootAs + y, y};
+    const amrex::Real VF_ab[3] = {a, sc.SootAv + a, 2.0_rt * sc.SootAv + a};
+    const amrex::Real SF_ab[3] = {b, sc.SootAs + b, 2.0_rt * sc.SootAs + b};
     const amrex::Real xy_M[3] = {
       fracMomLarge(VF_xy[0] - 0.5, SF_xy[0], momFV),
       fracMomLarge(VF_xy[1] - 0.5, SF_xy[1], momFV),
