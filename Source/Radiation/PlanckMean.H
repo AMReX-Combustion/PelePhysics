@@ -5,6 +5,9 @@
 
 #include <AMReX.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_REAL.H>
+
+using namespace amrex::literals;
 
 namespace PeleRad {
 
@@ -29,7 +32,7 @@ private:
     int idx = 0;
     for (amrex::Real T_temp, kp_temp; datastream >> T_temp >> kp_temp;) {
       if (!amrex::almostEqual(
-            T_temp, 300.0 + 20.0 * static_cast<amrex::Real>(idx))) {
+            T_temp, 300.0_rt + 20.0_rt * static_cast<amrex::Real>(idx))) {
         amrex::Abort(
           "PeleRad: Invalid temperatures in data file: " + file_path);
       }
