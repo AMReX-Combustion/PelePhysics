@@ -138,7 +138,7 @@ main(int argc, char* argv[])
       amrex::Vector<double> typ_vals(NUM_SPECIES + 1);
       amrex::Print() << "ode.typ_vals= ";
       for (int i = 0; i < NUM_SPECIES + 1; ++i) {
-        amrex::Print() << std::max(1.e-10, mf[0].max(i)) << " ";
+        amrex::Print() << amrex::max<amrex::Real>(1.e-10, mf[0].max(i)) << " ";
       }
       amrex::Print() << std::endl;
     }

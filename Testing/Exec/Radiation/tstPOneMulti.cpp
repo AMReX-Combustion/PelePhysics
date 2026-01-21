@@ -32,9 +32,12 @@ actual_init_coefs(
 
   beta(i, j, k) = 1.0;
 
-  x = amrex::min(amrex::max(x, prob_lo[0]), prob_hi[0]);
-  y = amrex::min(amrex::max(y, prob_lo[1]), prob_hi[1]);
-  z = amrex::min(amrex::max(z, prob_lo[2]), prob_hi[2]);
+  x =
+    amrex::min<amrex::Real>(amrex::max<amrex::Real>(x, prob_lo[0]), prob_hi[0]);
+  y =
+    amrex::min<amrex::Real>(amrex::max<amrex::Real>(y, prob_lo[1]), prob_hi[1]);
+  z =
+    amrex::min<amrex::Real>(amrex::max<amrex::Real>(z, prob_lo[2]), prob_hi[2]);
 
   amrex::Real sincossin =
     std::sin(npioverL * x) * std::cos(npioverL * y) * std::sin(npioverL * z);

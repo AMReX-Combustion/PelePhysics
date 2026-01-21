@@ -425,7 +425,7 @@ main(int argc, char* argv[])
                  "tolerances of the ode solver.\n";
             ppode.getarr("typ_vals", typ_vals, 0, NUM_SPECIES + 1);
             for (int i = 0; i < NUM_SPECIES; ++i) {
-              typ_vals[i] = std::max(typ_vals[i], 1.e-10);
+              typ_vals[i] = amrex::max<amrex::Real>(typ_vals[i], 1.e-10);
             }
           } else {
             amrex::Print()
@@ -456,10 +456,11 @@ main(int argc, char* argv[])
                 }
               */
               for (int i = 0; i < NUM_SPECIES; ++i) {
-                typ_vals[i] = std::max(typ_vals[i], mf[lev].max(i));
+                typ_vals[i] =
+                  amrex::max<amrex::Real>(typ_vals[i], mf[lev].max(i));
               }
-              typ_vals[NUM_SPECIES] =
-                std::max(typ_vals[NUM_SPECIES], mf[lev].max(NUM_SPECIES));
+              typ_vals[NUM_SPECIES] = amrex::max<amrex::Real>(
+                typ_vals[NUM_SPECIES], mf[lev].max(NUM_SPECIES));
             }
           }
           reactor->set_typ_vals_ode(typ_vals);
@@ -691,7 +692,7 @@ main(int argc, char* argv[])
       amrex::Vector<double> typ_vals(NUM_SPECIES + 1);
       amrex::Print() << "ode.typ_vals= ";
       for (int i = 0; i < NUM_SPECIES + 1; ++i) {
-        amrex::Print() << std::max(1.e-10, mf[0].max(i)) << " ";
+        amrex::Print() << amrex::max<amrex::Real>(1.e-10, mf[0].max(i)) << " ";
       }
       amrex::Print() << std::endl;
     }

@@ -83,7 +83,7 @@ actual_init_coefs(
 {
   beta(i, j, k) = 1.0;
   if (vbx.contains(i, j, k)) {
-    amrex::Real ka = std::max(0.01, absc(i, j, k) * 100);
+    amrex::Real ka = amrex::max<amrex::Real>(0.01, absc(i, j, k) * 100);
     beta(i, j, k) = 1.0 / ka;
     rhs(i, j, k) = 4.0 * ka * 5.67e-8 * std::pow(T(i, j, k), 4.0); // SI
     alpha(i, j, k) = ka;
