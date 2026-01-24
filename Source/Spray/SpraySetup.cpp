@@ -32,8 +32,11 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     << std::endl;
 #endif
   m_sprayData = new SprayData{};
-  d_sprayData =
-    static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
+  //d_sprayData =
+  //  static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
+  d_sprayData = static_cast<SprayData*>(
+      amrex::The_Device_Arena()->alloc(sizeof(SprayData)));
+
   ParmParse pp("particles");
   // Control the verbosity of the Particle class
   pp.query("v", particle_verbose);
