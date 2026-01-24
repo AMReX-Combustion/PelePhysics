@@ -46,7 +46,7 @@ public:
   static void SprayCleanUp()
   {
     delete m_sprayData;
-    amrex::The_Arena()->free(d_sprayData);
+    amrex::The_Device_Arena()->free(d_sprayData);
   }
 
   /// \brief Generalized injection routine for a single SprayJet
