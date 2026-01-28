@@ -115,7 +115,7 @@ InterpolateGasPhase(
   const amrex::Real* weights,
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
     eosparm = nullptr,
-    const SprayData* spray= nullptr)
+  const SprayData* spray = nullptr)
 {
   auto eos = pele::physics::PhysicsType::eos(eosparm);
 #ifdef PELELM_USE_SPRAY
@@ -168,8 +168,7 @@ InterpolateGasPhase(
 #ifdef USE_MANIFOLD_EOS
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;
-    eos.Y2ChemSpecies(
-      mass_frac.data(), spray->indx[n], tempval);
+    eos.Y2ChemSpecies(mass_frac.data(), spray->indx[n], tempval);
     gpv.Yspec_fluid[n] = tempval;
   }
 #endif
