@@ -55,7 +55,7 @@ jobs:
       - name: Run
         working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
         run: |
-          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64 
+          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.drm19.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64 
 
   PeleC-PMF:
     name: PeleC GNU MPI Run [PMF]
