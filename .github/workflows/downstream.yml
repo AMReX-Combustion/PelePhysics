@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    
+
     steps:
       - name: Checkout PelePhysics
         uses: actions/checkout@v4
@@ -41,11 +41,11 @@ jobs:
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
-      
+
       - name: System Dependencies
         working-directory: PeleLMeX
         run: .github/workflows/dependencies/dependencies_gcc10.sh
-      
+
       - name: Build
         working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
         run: |
@@ -55,14 +55,14 @@ jobs:
       - name: Run
         working-directory: PeleLMeX/Exec/RegTests/FlameSheet/
         run: |
-          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64 
+          mpirun -n 2 ./PeleLMeX2d.gnu.MPI.drm19.ex input.2d-regt amr.max_step=2 amr.plot_int=-1 amr.check_int=-1 amrex.abort_on_unused_inputs=1 amr.n_cell=32 64
 
   PeleC-PMF:
     name: PeleC GNU MPI Run [PMF]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    
+
     steps:
       - name: Checkout PelePhysics
         uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
-      
+
       - name: System Dependencies
         working-directory: PeleC
         run: |
@@ -99,7 +99,7 @@ jobs:
               build-essential    \
               libopenmpi-dev     \
               openmpi-bin
-      
+
       - name: Build
         working-directory: PeleC/Exec/RegTests/PMF/
         run: |
@@ -204,7 +204,7 @@ jobs:
         working-directory: ${{ github.workspace }}/build-clang-tidy-lmex
         run: cat clang-tidy-full-report.txt
 
-      - name: Short report 
+      - name: Short report
         working-directory: ${{ github.workspace }}/build-clang-tidy-lmex
         run: |
           echo "::add-matcher::${{ github.workspace }}/PeleLMeX/.github/problem-matchers/gcc.json"
@@ -306,7 +306,7 @@ jobs:
         working-directory: ${{ github.workspace }}/build-clang-tidy-c
         run: cat clang-tidy-full-report.txt
 
-      - name: Short report 
+      - name: Short report
         working-directory: ${{ github.workspace }}/build-clang-tidy-c
         run: |
           echo "::add-matcher::${{ github.workspace }}/PeleC/.github/problem-matchers/gcc.json"
