@@ -165,6 +165,10 @@ InterpolateGasPhase(
   // from the manifold table. We already have the interpolated value of manifold
   // variables at the spray particle location stored in 'mass_frac'. I just need
   // to call GenericReadManifoldData
+#ifndef USE_MANIFOLD_EOS
+  amrex::ignore_unused(spray);
+#endif
+
 #ifdef USE_MANIFOLD_EOS
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;
