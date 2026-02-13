@@ -188,9 +188,9 @@ def production_rate(
             else:
                 dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.third_body is not None
-            if reaction.rate.type == "pressure-dependent-Arrhenius":
+            if reaction.reaction_type == "pressure-dependent-Arrhenius":
                 plog = True
-            elif reaction.rate.type == "three-body-pressure-dependent-Arrhenius":
+            elif reaction.reaction_type == "three-body-pressure-dependent-Arrhenius":
                 if not third_body:
                     raise ValueError(
                         f"Inconsistent reaction type in reaction {orig_idx}."
@@ -581,9 +581,9 @@ def production_rate(
                 dim = cu.phase_space_units(reaction.reactants)
 
             third_body = reaction.third_body is not None
-            if reaction.rate.type == "pressure-dependent-Arrhenius":
+            if reaction.reaction_type == "pressure-dependent-Arrhenius":
                 plog = True
-            elif reaction.rate.type == "three-body-pressure-dependent-Arrhenius":
+            elif reaction.reaction_type == "three-body-pressure-dependent-Arrhenius":
                 if not third_body:
                     raise ValueError(
                         f"Inconsistent reaction type in reaction {orig_idx}."
