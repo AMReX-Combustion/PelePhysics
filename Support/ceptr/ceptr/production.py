@@ -188,7 +188,16 @@ def production_rate(
             else:
                 dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.third_body is not None
-            plog = reaction.rate.type == "pressure-dependent-Arrhenius"
+            if reaction.reaction_type == "pressure-dependent-Arrhenius":
+                plog = True
+            elif reaction.reaction_type == "three-body-pressure-dependent-Arrhenius":
+                if not third_body:
+                    raise ValueError(
+                        f"Inconsistent reaction type in reaction {orig_idx}."
+                    )
+                plog = True
+            else:
+                plog = False
             falloff = reaction.rate.type == "falloff"
             is_troe = reaction.rate.sub_type == "Troe"
             is_sri = reaction.rate.sub_type == "Sri"
@@ -210,9 +219,18 @@ def production_rate(
                 ae = (
                     reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
                 ).to(aeuc)
-            elif plog:
+            elif not third_body and not falloff and plog:
                 # Case 4 PLOG
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+                plog_pef, plog_beta, plog_ae = cu.evaluate_plog(
+                    reaction.rate.rates, mechanism.P
+                )
+                pef = (plog_pef * ctuc).to_base_units()
+                beta = plog_beta
+                ae = (plog_ae * cc.ureg.joule / cc.ureg.kmol).to(aeuc)
+            elif third_body and not falloff and plog:
+                # Case 5 third body PLOG
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 plog_pef, plog_beta, plog_ae = cu.evaluate_plog(
                     reaction.rate.rates, mechanism.P
                 )
@@ -563,7 +581,16 @@ def production_rate(
                 dim = cu.phase_space_units(reaction.reactants)
 
             third_body = reaction.third_body is not None
-            plog = reaction.rate.type == "pressure-dependent-Arrhenius"
+            if reaction.reaction_type == "pressure-dependent-Arrhenius":
+                plog = True
+            elif reaction.reaction_type == "three-body-pressure-dependent-Arrhenius":
+                if not third_body:
+                    raise ValueError(
+                        f"Inconsistent reaction type in reaction {orig_idx}."
+                    )
+                plog = True
+            else:
+                plog = False
             falloff = reaction.rate.type == "falloff"
             is_troe = reaction.rate.sub_type == "Troe"
             is_sri = reaction.rate.sub_type == "Sri"
@@ -588,6 +615,15 @@ def production_rate(
             elif not third_body and not falloff and plog:
                 # Case 4 PLOG
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+                plog_pef, plog_beta, plog_ae = cu.evaluate_plog(
+                    reaction.rate.rates, mechanism.P
+                )
+                pef = (plog_pef * ctuc).to_base_units()
+                beta = plog_beta
+                ae = (plog_ae * cc.ureg.joule / cc.ureg.kmol).to(aeuc)
+            elif third_body and not falloff and plog:
+                # Case 5 third body PLOG
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 plog_pef, plog_beta, plog_ae = cu.evaluate_plog(
                     reaction.rate.rates, mechanism.P
                 )

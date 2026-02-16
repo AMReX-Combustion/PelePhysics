@@ -38,6 +38,7 @@ sCO2/mechanism.yaml
 H2-CO-CO2-3spec/mechanism.yaml
 CO2-H2O-N2-Ar-4spec/mechanism.yaml
 POLIMI2020/mechanism.yaml --plog=101325.0
+C3MechLite/mechanism.yaml --plog=101325.0
 posf10325/mechanism.yaml
 liquid_fuels_nonreacting/mechanism.yaml
 fuellib_posf_nonreacting/mechanism.yaml

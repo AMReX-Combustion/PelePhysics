@@ -10,6 +10,7 @@
 import argparse
 import csv
 import os
+import re
 
 import numpy as np
 import yaml
@@ -122,7 +123,7 @@ if not (os.path.exists(pp_path)):
     raise RuntimeError("Invalid path to PelePhysics: " + args.pp_home)
 
 mech_paths = [
-    name.strip()
+    re.sub(r'\s--plog=\S+', '', name).strip()
     for name in open(os.path.join(pp_path, "list_mech")).readlines()
     if not name.startswith("#")
 ]
