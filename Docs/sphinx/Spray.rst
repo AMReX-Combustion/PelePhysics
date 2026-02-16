@@ -3,7 +3,7 @@
 .. _Spray:
 
 =======
- Spray
+Spray
 =======
 
 Spray Equations

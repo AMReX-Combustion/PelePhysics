@@ -86,6 +86,11 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
 #ifdef USE_MANIFOLD_EOS
     pp.getarr("dep_manifold_species", dep_manifold_names);
 #endif
+    if (dep_manifold_names.size() != SPRAY_FUEL_NUM) {
+      amrex::Abort(
+        "With Manifold EOS and Spray, must specify SPRAY_FUEL_NUM "
+        "values for particles.dep_manifold_species");
+    }
 
     // Read input parameters for liquid properties
     init_liq_props(&(m_sprayData->liqprops), fuel_names);
