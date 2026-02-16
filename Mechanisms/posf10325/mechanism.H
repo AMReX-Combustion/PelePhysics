@@ -75,11 +75,7 @@
 #define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
-//  GPU based. Defined in mechanism.cpp
-void atomicWeight(amrex::Real* awt);
-//  MISC
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
+//  GPU based. Defined in mechanism.cpp MISC
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void GET_RMAP(int* _rmap);
@@ -115,6 +111,206 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   kk = 41;
   ii = 202;
   nfit = -1; // Why do you need this anyway ?
+}
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* awt)
+{
+  awt[0] = 15.999000; // O
+  awt[1] = 1.008000;  // H
+  awt[2] = 12.011000; // C
+  awt[3] = 14.007000; // N
+  awt[4] = 39.950000; // Ar
+  awt[5] = 4.002602;  // He
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* awt)
+{
+  atomicWeight(awt);
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* ncf)
+{
+  int kd = 6;
+  // Zero ncf
+  for (int id = 0; id < kd * 41; ++id) {
+    ncf[id] = 0;
+  }
+
+  // POSF10325
+  ncf[0 * kd + 2] = 11; // C
+  ncf[0 * kd + 1] = 22; // H
+
+  // C2H4
+  ncf[1 * kd + 2] = 2; // C
+  ncf[1 * kd + 1] = 4; // H
+
+  // CH4
+  ncf[2 * kd + 2] = 1; // C
+  ncf[2 * kd + 1] = 4; // H
+
+  // C3H6
+  ncf[3 * kd + 2] = 3; // C
+  ncf[3 * kd + 1] = 6; // H
+
+  // iC4H8
+  ncf[4 * kd + 2] = 4; // C
+  ncf[4 * kd + 1] = 8; // H
+
+  // C4H81
+  ncf[5 * kd + 2] = 4; // C
+  ncf[5 * kd + 1] = 8; // H
+
+  // H2
+  ncf[6 * kd + 1] = 2; // H
+
+  // C2H6
+  ncf[7 * kd + 2] = 2; // C
+  ncf[7 * kd + 1] = 6; // H
+
+  // CO
+  ncf[8 * kd + 2] = 1; // C
+  ncf[8 * kd + 0] = 1; // O
+
+  // C6H6
+  ncf[9 * kd + 2] = 6; // C
+  ncf[9 * kd + 1] = 6; // H
+
+  // C2H2
+  ncf[10 * kd + 2] = 2; // C
+  ncf[10 * kd + 1] = 2; // H
+
+  // C6H5CH3
+  ncf[11 * kd + 2] = 7; // C
+  ncf[11 * kd + 1] = 8; // H
+
+  // CH3
+  ncf[12 * kd + 2] = 1; // C
+  ncf[12 * kd + 1] = 3; // H
+
+  // O2
+  ncf[13 * kd + 0] = 2; // O
+
+  // O
+  ncf[14 * kd + 0] = 1; // O
+
+  // OH
+  ncf[15 * kd + 1] = 1; // H
+  ncf[15 * kd + 0] = 1; // O
+
+  // HO2
+  ncf[16 * kd + 1] = 1; // H
+  ncf[16 * kd + 0] = 2; // O
+
+  // H2O
+  ncf[17 * kd + 1] = 2; // H
+  ncf[17 * kd + 0] = 1; // O
+
+  // H2O2
+  ncf[18 * kd + 1] = 2; // H
+  ncf[18 * kd + 0] = 2; // O
+
+  // H
+  ncf[19 * kd + 1] = 1; // H
+
+  // CH2
+  ncf[20 * kd + 2] = 1; // C
+  ncf[20 * kd + 1] = 2; // H
+
+  // CH2*
+  ncf[21 * kd + 2] = 1; // C
+  ncf[21 * kd + 1] = 2; // H
+
+  // HCO
+  ncf[22 * kd + 2] = 1; // C
+  ncf[22 * kd + 1] = 1; // H
+  ncf[22 * kd + 0] = 1; // O
+
+  // CH2O
+  ncf[23 * kd + 2] = 1; // C
+  ncf[23 * kd + 1] = 2; // H
+  ncf[23 * kd + 0] = 1; // O
+
+  // CH3O
+  ncf[24 * kd + 2] = 1; // C
+  ncf[24 * kd + 1] = 3; // H
+  ncf[24 * kd + 0] = 1; // O
+
+  // CO2
+  ncf[25 * kd + 2] = 1; // C
+  ncf[25 * kd + 0] = 2; // O
+
+  // C2H3
+  ncf[26 * kd + 2] = 2; // C
+  ncf[26 * kd + 1] = 3; // H
+
+  // C2H5
+  ncf[27 * kd + 2] = 2; // C
+  ncf[27 * kd + 1] = 5; // H
+
+  // HCCO
+  ncf[28 * kd + 2] = 2; // C
+  ncf[28 * kd + 1] = 1; // H
+  ncf[28 * kd + 0] = 1; // O
+
+  // CH2CO
+  ncf[29 * kd + 2] = 2; // C
+  ncf[29 * kd + 1] = 2; // H
+  ncf[29 * kd + 0] = 1; // O
+
+  // CH2CHO
+  ncf[30 * kd + 2] = 2; // C
+  ncf[30 * kd + 1] = 3; // H
+  ncf[30 * kd + 0] = 1; // O
+
+  // C3H3
+  ncf[31 * kd + 2] = 3; // C
+  ncf[31 * kd + 1] = 3; // H
+
+  // aC3H5
+  ncf[32 * kd + 2] = 3; // C
+  ncf[32 * kd + 1] = 5; // H
+
+  // C5H4O
+  ncf[33 * kd + 2] = 5; // C
+  ncf[33 * kd + 1] = 4; // H
+  ncf[33 * kd + 0] = 1; // O
+
+  // C5H5
+  ncf[34 * kd + 2] = 5; // C
+  ncf[34 * kd + 1] = 5; // H
+
+  // C6H5
+  ncf[35 * kd + 2] = 6; // C
+  ncf[35 * kd + 1] = 5; // H
+
+  // C6H5CH2
+  ncf[36 * kd + 2] = 7; // C
+  ncf[36 * kd + 1] = 7; // H
+
+  // C6H5O
+  ncf[37 * kd + 2] = 6; // C
+  ncf[37 * kd + 1] = 5; // H
+  ncf[37 * kd + 0] = 1; // O
+
+  // C6H5CO
+  ncf[38 * kd + 2] = 7; // C
+  ncf[38 * kd + 1] = 5; // H
+  ncf[38 * kd + 0] = 1; // O
+
+  // C6H5CHO
+  ncf[39 * kd + 2] = 7; // C
+  ncf[39 * kd + 1] = 6; // H
+  ncf[39 * kd + 0] = 1; // O
+
+  // N2
+  ncf[40 * kd + 3] = 2; // N
 }
 
 //  inverse molecular weights
@@ -36153,7 +36349,7 @@ egtransetCOFLAM(amrex::Real* COFLAM)
   COFLAM[148] = -3.36316309E+01;
   COFLAM[149] = 1.41867239E+01;
   COFLAM[150] = -1.60184772E+00;
-  COFLAM[151] = 6.37331095E-02;
+  COFLAM[151] = 6.37331096E-02;
   COFLAM[152] = -2.51773024E+01;
   COFLAM[153] = 1.03193854E+01;
   COFLAM[154] = -1.02806485E+00;

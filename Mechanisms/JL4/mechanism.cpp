@@ -81,60 +81,6 @@ progressRateFR(
   comp_qfqr(q_f, q_r, sc, sc_qss, T, invT, logT);
 }
 
-// save atomic weights into array
-void
-atomicWeight(amrex::Real* awt)
-{
-  awt[0] = 12.011000; // C
-  awt[1] = 15.999000; // O
-  awt[2] = 1.008000;  // H
-  awt[3] = 14.007000; // N
-}
-
-// get atomic weight for all elements
-void
-CKAWT(amrex::Real* awt)
-{
-  atomicWeight(awt);
-}
-
-// Returns the elemental composition
-// of the speciesi (mdim is num of elements)
-void
-CKNCF(int* ncf)
-{
-  int kd = 4;
-  // Zero ncf
-  for (int id = 0; id < kd * 7; ++id) {
-    ncf[id] = 0;
-  }
-
-  // CH4
-  ncf[0 * kd + 0] = 1; // C
-  ncf[0 * kd + 2] = 4; // H
-
-  // O2
-  ncf[1 * kd + 1] = 2; // O
-
-  // H2O
-  ncf[2 * kd + 2] = 2; // H
-  ncf[2 * kd + 1] = 1; // O
-
-  // N2
-  ncf[3 * kd + 3] = 2; // N
-
-  // CO
-  ncf[4 * kd + 0] = 1; // C
-  ncf[4 * kd + 1] = 1; // O
-
-  // CO2
-  ncf[5 * kd + 0] = 1; // C
-  ncf[5 * kd + 1] = 2; // O
-
-  // H2
-  ncf[6 * kd + 2] = 2; // H
-}
-
 // Returns the vector of strings of element names
 void
 CKSYME_STR(amrex::Vector<std::string>& ename)

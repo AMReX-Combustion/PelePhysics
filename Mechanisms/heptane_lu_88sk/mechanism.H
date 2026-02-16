@@ -120,11 +120,7 @@
 #define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
-//  GPU based. Defined in mechanism.cpp
-void atomicWeight(amrex::Real* awt);
-//  MISC
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
+//  GPU based. Defined in mechanism.cpp MISC
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void GET_RMAP(int* _rmap);
@@ -160,6 +156,432 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   kk = 88;
   ii = 729;
   nfit = -1; // Why do you need this anyway ?
+}
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* awt)
+{
+  awt[0] = 1.008000;  // H
+  awt[1] = 12.011000; // C
+  awt[2] = 15.999000; // O
+  awt[3] = 14.007000; // N
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* awt)
+{
+  atomicWeight(awt);
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* ncf)
+{
+  int kd = 4;
+  // Zero ncf
+  for (int id = 0; id < kd * 88; ++id) {
+    ncf[id] = 0;
+  }
+
+  // h
+  ncf[0 * kd + 0] = 1; // H
+
+  // h2
+  ncf[1 * kd + 0] = 2; // H
+
+  // o
+  ncf[2 * kd + 2] = 1; // O
+
+  // o2
+  ncf[3 * kd + 2] = 2; // O
+
+  // oh
+  ncf[4 * kd + 0] = 1; // H
+  ncf[4 * kd + 2] = 1; // O
+
+  // h2o
+  ncf[5 * kd + 0] = 2; // H
+  ncf[5 * kd + 2] = 1; // O
+
+  // co
+  ncf[6 * kd + 1] = 1; // C
+  ncf[6 * kd + 2] = 1; // O
+
+  // hco
+  ncf[7 * kd + 1] = 1; // C
+  ncf[7 * kd + 0] = 1; // H
+  ncf[7 * kd + 2] = 1; // O
+
+  // co2
+  ncf[8 * kd + 1] = 1; // C
+  ncf[8 * kd + 2] = 2; // O
+
+  // ch3
+  ncf[9 * kd + 1] = 1; // C
+  ncf[9 * kd + 0] = 3; // H
+
+  // ch4
+  ncf[10 * kd + 1] = 1; // C
+  ncf[10 * kd + 0] = 4; // H
+
+  // ho2
+  ncf[11 * kd + 0] = 1; // H
+  ncf[11 * kd + 2] = 2; // O
+
+  // h2o2
+  ncf[12 * kd + 0] = 2; // H
+  ncf[12 * kd + 2] = 2; // O
+
+  // ch2o
+  ncf[13 * kd + 1] = 1; // C
+  ncf[13 * kd + 0] = 2; // H
+  ncf[13 * kd + 2] = 1; // O
+
+  // ch3o
+  ncf[14 * kd + 1] = 1; // C
+  ncf[14 * kd + 0] = 3; // H
+  ncf[14 * kd + 2] = 1; // O
+
+  // c2h6
+  ncf[15 * kd + 1] = 2; // C
+  ncf[15 * kd + 0] = 6; // H
+
+  // c2h4
+  ncf[16 * kd + 1] = 2; // C
+  ncf[16 * kd + 0] = 4; // H
+
+  // c2h5
+  ncf[17 * kd + 1] = 2; // C
+  ncf[17 * kd + 0] = 5; // H
+
+  // c2h2
+  ncf[18 * kd + 1] = 2; // C
+  ncf[18 * kd + 0] = 2; // H
+
+  // c2h3
+  ncf[19 * kd + 1] = 2; // C
+  ncf[19 * kd + 0] = 3; // H
+
+  // ch2co
+  ncf[20 * kd + 1] = 2; // C
+  ncf[20 * kd + 0] = 2; // H
+  ncf[20 * kd + 2] = 1; // O
+
+  // hcco
+  ncf[21 * kd + 1] = 2; // C
+  ncf[21 * kd + 0] = 1; // H
+  ncf[21 * kd + 2] = 1; // O
+
+  // ch3co
+  ncf[22 * kd + 1] = 2; // C
+  ncf[22 * kd + 0] = 3; // H
+  ncf[22 * kd + 2] = 1; // O
+
+  // ch2cho
+  ncf[23 * kd + 1] = 2; // C
+  ncf[23 * kd + 0] = 3; // H
+  ncf[23 * kd + 2] = 1; // O
+
+  // ch3cho
+  ncf[24 * kd + 1] = 2; // C
+  ncf[24 * kd + 0] = 4; // H
+  ncf[24 * kd + 2] = 1; // O
+
+  // c3h4-a
+  ncf[25 * kd + 1] = 3; // C
+  ncf[25 * kd + 0] = 4; // H
+
+  // c3h6
+  ncf[26 * kd + 1] = 3; // C
+  ncf[26 * kd + 0] = 6; // H
+
+  // c4h6
+  ncf[27 * kd + 1] = 4; // C
+  ncf[27 * kd + 0] = 6; // H
+
+  // nc3h7
+  ncf[28 * kd + 1] = 3; // C
+  ncf[28 * kd + 0] = 7; // H
+
+  // c4h7
+  ncf[29 * kd + 1] = 4; // C
+  ncf[29 * kd + 0] = 7; // H
+
+  // c4h8-1
+  ncf[30 * kd + 1] = 4; // C
+  ncf[30 * kd + 0] = 8; // H
+
+  // pc4h9
+  ncf[31 * kd + 1] = 4; // C
+  ncf[31 * kd + 0] = 9; // H
+
+  // ch3coch2
+  ncf[32 * kd + 1] = 3; // C
+  ncf[32 * kd + 0] = 5; // H
+  ncf[32 * kd + 2] = 1; // O
+
+  // c2h5cho
+  ncf[33 * kd + 1] = 3; // C
+  ncf[33 * kd + 0] = 6; // H
+  ncf[33 * kd + 2] = 1; // O
+
+  // c2h5co
+  ncf[34 * kd + 1] = 3; // C
+  ncf[34 * kd + 0] = 5; // H
+  ncf[34 * kd + 2] = 1; // O
+
+  // c5h9
+  ncf[35 * kd + 1] = 5; // C
+  ncf[35 * kd + 0] = 9; // H
+
+  // c5h10-1
+  ncf[36 * kd + 1] = 5;  // C
+  ncf[36 * kd + 0] = 10; // H
+
+  // c2h5o
+  ncf[37 * kd + 1] = 2; // C
+  ncf[37 * kd + 0] = 5; // H
+  ncf[37 * kd + 2] = 1; // O
+
+  // ch3o2
+  ncf[38 * kd + 1] = 1; // C
+  ncf[38 * kd + 0] = 3; // H
+  ncf[38 * kd + 2] = 2; // O
+
+  // ch3o2h
+  ncf[39 * kd + 1] = 1; // C
+  ncf[39 * kd + 0] = 4; // H
+  ncf[39 * kd + 2] = 2; // O
+
+  // c2h3co
+  ncf[40 * kd + 1] = 3; // C
+  ncf[40 * kd + 0] = 3; // H
+  ncf[40 * kd + 2] = 1; // O
+
+  // c2h3cho
+  ncf[41 * kd + 1] = 3; // C
+  ncf[41 * kd + 0] = 4; // H
+  ncf[41 * kd + 2] = 1; // O
+
+  // c3h5o
+  ncf[42 * kd + 1] = 3; // C
+  ncf[42 * kd + 0] = 5; // H
+  ncf[42 * kd + 2] = 1; // O
+
+  // c4h7o
+  ncf[43 * kd + 1] = 4; // C
+  ncf[43 * kd + 0] = 7; // H
+  ncf[43 * kd + 2] = 1; // O
+
+  // c4h8ooh1-3o2
+  ncf[44 * kd + 1] = 4; // C
+  ncf[44 * kd + 0] = 9; // H
+  ncf[44 * kd + 2] = 4; // O
+
+  // c4h8ooh1-3
+  ncf[45 * kd + 1] = 4; // C
+  ncf[45 * kd + 0] = 9; // H
+  ncf[45 * kd + 2] = 2; // O
+
+  // pc4h9o2
+  ncf[46 * kd + 1] = 4; // C
+  ncf[46 * kd + 0] = 9; // H
+  ncf[46 * kd + 2] = 2; // O
+
+  // c3h5-a
+  ncf[47 * kd + 1] = 3; // C
+  ncf[47 * kd + 0] = 5; // H
+
+  // c3h3
+  ncf[48 * kd + 1] = 3; // C
+  ncf[48 * kd + 0] = 3; // H
+
+  // c3h2
+  ncf[49 * kd + 1] = 3; // C
+  ncf[49 * kd + 0] = 2; // H
+
+  // ch2(s)
+  ncf[50 * kd + 1] = 1; // C
+  ncf[50 * kd + 0] = 2; // H
+
+  // nc4ket13
+  ncf[51 * kd + 1] = 4; // C
+  ncf[51 * kd + 0] = 8; // H
+  ncf[51 * kd + 2] = 3; // O
+
+  // nc3h7cho
+  ncf[52 * kd + 1] = 4; // C
+  ncf[52 * kd + 0] = 8; // H
+  ncf[52 * kd + 2] = 1; // O
+
+  // nc3h7co
+  ncf[53 * kd + 1] = 4; // C
+  ncf[53 * kd + 0] = 7; // H
+  ncf[53 * kd + 2] = 1; // O
+
+  // c2h5coch2
+  ncf[54 * kd + 1] = 4; // C
+  ncf[54 * kd + 0] = 7; // H
+  ncf[54 * kd + 2] = 1; // O
+
+  // nc3h7coch2
+  ncf[55 * kd + 1] = 5; // C
+  ncf[55 * kd + 0] = 9; // H
+  ncf[55 * kd + 2] = 1; // O
+
+  // nc4h9cho
+  ncf[56 * kd + 1] = 5;  // C
+  ncf[56 * kd + 0] = 10; // H
+  ncf[56 * kd + 2] = 1;  // O
+
+  // nc4h9co
+  ncf[57 * kd + 1] = 5; // C
+  ncf[57 * kd + 0] = 9; // H
+  ncf[57 * kd + 2] = 1; // O
+
+  // nc7h16
+  ncf[58 * kd + 1] = 7;  // C
+  ncf[58 * kd + 0] = 16; // H
+
+  // c7h15-1
+  ncf[59 * kd + 1] = 7;  // C
+  ncf[59 * kd + 0] = 15; // H
+
+  // c7h15-2
+  ncf[60 * kd + 1] = 7;  // C
+  ncf[60 * kd + 0] = 15; // H
+
+  // c7h15-3
+  ncf[61 * kd + 1] = 7;  // C
+  ncf[61 * kd + 0] = 15; // H
+
+  // c7h15-4
+  ncf[62 * kd + 1] = 7;  // C
+  ncf[62 * kd + 0] = 15; // H
+
+  // c7h14-2
+  ncf[63 * kd + 1] = 7;  // C
+  ncf[63 * kd + 0] = 14; // H
+
+  // c7h14-3
+  ncf[64 * kd + 1] = 7;  // C
+  ncf[64 * kd + 0] = 14; // H
+
+  // c7h15o2-1
+  ncf[65 * kd + 1] = 7;  // C
+  ncf[65 * kd + 0] = 15; // H
+  ncf[65 * kd + 2] = 2;  // O
+
+  // c7h15o2-2
+  ncf[66 * kd + 1] = 7;  // C
+  ncf[66 * kd + 0] = 15; // H
+  ncf[66 * kd + 2] = 2;  // O
+
+  // c7h15o2-3
+  ncf[67 * kd + 1] = 7;  // C
+  ncf[67 * kd + 0] = 15; // H
+  ncf[67 * kd + 2] = 2;  // O
+
+  // c7h15o2-4
+  ncf[68 * kd + 1] = 7;  // C
+  ncf[68 * kd + 0] = 15; // H
+  ncf[68 * kd + 2] = 2;  // O
+
+  // c7h14ooh1-3
+  ncf[69 * kd + 1] = 7;  // C
+  ncf[69 * kd + 0] = 15; // H
+  ncf[69 * kd + 2] = 2;  // O
+
+  // c7h14ooh2-3
+  ncf[70 * kd + 1] = 7;  // C
+  ncf[70 * kd + 0] = 15; // H
+  ncf[70 * kd + 2] = 2;  // O
+
+  // c7h14ooh2-4
+  ncf[71 * kd + 1] = 7;  // C
+  ncf[71 * kd + 0] = 15; // H
+  ncf[71 * kd + 2] = 2;  // O
+
+  // c7h14ooh3-2
+  ncf[72 * kd + 1] = 7;  // C
+  ncf[72 * kd + 0] = 15; // H
+  ncf[72 * kd + 2] = 2;  // O
+
+  // c7h14ooh3-4
+  ncf[73 * kd + 1] = 7;  // C
+  ncf[73 * kd + 0] = 15; // H
+  ncf[73 * kd + 2] = 2;  // O
+
+  // c7h14ooh3-5
+  ncf[74 * kd + 1] = 7;  // C
+  ncf[74 * kd + 0] = 15; // H
+  ncf[74 * kd + 2] = 2;  // O
+
+  // c7h14ooh4-2
+  ncf[75 * kd + 1] = 7;  // C
+  ncf[75 * kd + 0] = 15; // H
+  ncf[75 * kd + 2] = 2;  // O
+
+  // c7h14ooh4-3
+  ncf[76 * kd + 1] = 7;  // C
+  ncf[76 * kd + 0] = 15; // H
+  ncf[76 * kd + 2] = 2;  // O
+
+  // c7h14ooh1-3o2
+  ncf[77 * kd + 1] = 7;  // C
+  ncf[77 * kd + 0] = 15; // H
+  ncf[77 * kd + 2] = 4;  // O
+
+  // c7h14ooh2-4o2
+  ncf[78 * kd + 1] = 7;  // C
+  ncf[78 * kd + 0] = 15; // H
+  ncf[78 * kd + 2] = 4;  // O
+
+  // c7h14ooh3-5o2
+  ncf[79 * kd + 1] = 7;  // C
+  ncf[79 * kd + 0] = 15; // H
+  ncf[79 * kd + 2] = 4;  // O
+
+  // c7h14ooh4-2o2
+  ncf[80 * kd + 1] = 7;  // C
+  ncf[80 * kd + 0] = 15; // H
+  ncf[80 * kd + 2] = 4;  // O
+
+  // c7h14o1-3
+  ncf[81 * kd + 1] = 7;  // C
+  ncf[81 * kd + 0] = 14; // H
+  ncf[81 * kd + 2] = 1;  // O
+
+  // c7h14o2-4
+  ncf[82 * kd + 1] = 7;  // C
+  ncf[82 * kd + 0] = 14; // H
+  ncf[82 * kd + 2] = 1;  // O
+
+  // nc7ket13
+  ncf[83 * kd + 1] = 7;  // C
+  ncf[83 * kd + 0] = 14; // H
+  ncf[83 * kd + 2] = 3;  // O
+
+  // nc7ket24
+  ncf[84 * kd + 1] = 7;  // C
+  ncf[84 * kd + 0] = 14; // H
+  ncf[84 * kd + 2] = 3;  // O
+
+  // nc7ket35
+  ncf[85 * kd + 1] = 7;  // C
+  ncf[85 * kd + 0] = 14; // H
+  ncf[85 * kd + 2] = 3;  // O
+
+  // nc7ket42
+  ncf[86 * kd + 1] = 7;  // C
+  ncf[86 * kd + 0] = 14; // H
+  ncf[86 * kd + 2] = 3;  // O
+
+  // n2
+  ncf[87 * kd + 3] = 2; // N
 }
 
 //  inverse molecular weights
@@ -82009,7 +82431,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[681] = 5.41585806E+00;
   COFD[682] = -4.73359323E-01;
   COFD[683] = 1.99310239E-02;
-  COFD[684] = -1.79310921E+01;
+  COFD[684] = -1.79310920E+01;
   COFD[685] = 4.98037650E+00;
   COFD[686] = -4.26676911E-01;
   COFD[687] = 1.83007231E-02;
@@ -85050,7 +85472,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[3722] = -4.14322433E-01;
   COFD[3723] = 1.59763256E-02;
   COFD[3724] = -2.25933772E+01;
-  COFD[3725] = 5.42562556E+00;
+  COFD[3725] = 5.42562555E+00;
   COFD[3726] = -4.48132861E-01;
   COFD[3727] = 1.77847329E-02;
   COFD[3728] = -2.23366684E+01;

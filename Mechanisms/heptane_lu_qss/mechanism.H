@@ -87,11 +87,7 @@
 #define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
-//  GPU based. Defined in mechanism.cpp
-void atomicWeight(amrex::Real* awt);
-//  MISC
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
+//  GPU based. Defined in mechanism.cpp MISC
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void GET_RMAP(int* _rmap);
@@ -127,6 +123,276 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   kk = 55;
   ii = 724;
   nfit = -1; // Why do you need this anyway ?
+}
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* awt)
+{
+  awt[0] = 1.008000;  // H
+  awt[1] = 15.999000; // O
+  awt[2] = 12.011000; // C
+  awt[3] = 14.007000; // N
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* awt)
+{
+  atomicWeight(awt);
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* ncf)
+{
+  int kd = 4;
+  // Zero ncf
+  for (int id = 0; id < kd * 55; ++id) {
+    ncf[id] = 0;
+  }
+
+  // h
+  ncf[0 * kd + 0] = 1; // H
+
+  // h2
+  ncf[1 * kd + 0] = 2; // H
+
+  // o
+  ncf[2 * kd + 1] = 1; // O
+
+  // o2
+  ncf[3 * kd + 1] = 2; // O
+
+  // oh
+  ncf[4 * kd + 0] = 1; // H
+  ncf[4 * kd + 1] = 1; // O
+
+  // h2o
+  ncf[5 * kd + 0] = 2; // H
+  ncf[5 * kd + 1] = 1; // O
+
+  // co
+  ncf[6 * kd + 2] = 1; // C
+  ncf[6 * kd + 1] = 1; // O
+
+  // co2
+  ncf[7 * kd + 2] = 1; // C
+  ncf[7 * kd + 1] = 2; // O
+
+  // ch3
+  ncf[8 * kd + 2] = 1; // C
+  ncf[8 * kd + 0] = 3; // H
+
+  // ch4
+  ncf[9 * kd + 2] = 1; // C
+  ncf[9 * kd + 0] = 4; // H
+
+  // ho2
+  ncf[10 * kd + 0] = 1; // H
+  ncf[10 * kd + 1] = 2; // O
+
+  // h2o2
+  ncf[11 * kd + 0] = 2; // H
+  ncf[11 * kd + 1] = 2; // O
+
+  // ch2o
+  ncf[12 * kd + 2] = 1; // C
+  ncf[12 * kd + 0] = 2; // H
+  ncf[12 * kd + 1] = 1; // O
+
+  // c2h6
+  ncf[13 * kd + 2] = 2; // C
+  ncf[13 * kd + 0] = 6; // H
+
+  // c2h4
+  ncf[14 * kd + 2] = 2; // C
+  ncf[14 * kd + 0] = 4; // H
+
+  // c2h5
+  ncf[15 * kd + 2] = 2; // C
+  ncf[15 * kd + 0] = 5; // H
+
+  // c2h2
+  ncf[16 * kd + 2] = 2; // C
+  ncf[16 * kd + 0] = 2; // H
+
+  // c2h3
+  ncf[17 * kd + 2] = 2; // C
+  ncf[17 * kd + 0] = 3; // H
+
+  // ch2co
+  ncf[18 * kd + 2] = 2; // C
+  ncf[18 * kd + 0] = 2; // H
+  ncf[18 * kd + 1] = 1; // O
+
+  // hcco
+  ncf[19 * kd + 2] = 2; // C
+  ncf[19 * kd + 0] = 1; // H
+  ncf[19 * kd + 1] = 1; // O
+
+  // ch3cho
+  ncf[20 * kd + 2] = 2; // C
+  ncf[20 * kd + 0] = 4; // H
+  ncf[20 * kd + 1] = 1; // O
+
+  // c3h4-a
+  ncf[21 * kd + 2] = 3; // C
+  ncf[21 * kd + 0] = 4; // H
+
+  // c3h6
+  ncf[22 * kd + 2] = 3; // C
+  ncf[22 * kd + 0] = 6; // H
+
+  // c4h6
+  ncf[23 * kd + 2] = 4; // C
+  ncf[23 * kd + 0] = 6; // H
+
+  // nc3h7
+  ncf[24 * kd + 2] = 3; // C
+  ncf[24 * kd + 0] = 7; // H
+
+  // c4h7
+  ncf[25 * kd + 2] = 4; // C
+  ncf[25 * kd + 0] = 7; // H
+
+  // c4h8-1
+  ncf[26 * kd + 2] = 4; // C
+  ncf[26 * kd + 0] = 8; // H
+
+  // ch3coch2
+  ncf[27 * kd + 2] = 3; // C
+  ncf[27 * kd + 0] = 5; // H
+  ncf[27 * kd + 1] = 1; // O
+
+  // c2h5cho
+  ncf[28 * kd + 2] = 3; // C
+  ncf[28 * kd + 0] = 6; // H
+  ncf[28 * kd + 1] = 1; // O
+
+  // c5h9
+  ncf[29 * kd + 2] = 5; // C
+  ncf[29 * kd + 0] = 9; // H
+
+  // c5h10-1
+  ncf[30 * kd + 2] = 5;  // C
+  ncf[30 * kd + 0] = 10; // H
+
+  // ch3o2
+  ncf[31 * kd + 2] = 1; // C
+  ncf[31 * kd + 0] = 3; // H
+  ncf[31 * kd + 1] = 2; // O
+
+  // ch3o2h
+  ncf[32 * kd + 2] = 1; // C
+  ncf[32 * kd + 0] = 4; // H
+  ncf[32 * kd + 1] = 2; // O
+
+  // c2h3co
+  ncf[33 * kd + 2] = 3; // C
+  ncf[33 * kd + 0] = 3; // H
+  ncf[33 * kd + 1] = 1; // O
+
+  // c2h3cho
+  ncf[34 * kd + 2] = 3; // C
+  ncf[34 * kd + 0] = 4; // H
+  ncf[34 * kd + 1] = 1; // O
+
+  // c4h8ooh1-3o2
+  ncf[35 * kd + 2] = 4; // C
+  ncf[35 * kd + 0] = 9; // H
+  ncf[35 * kd + 1] = 4; // O
+
+  // pc4h9o2
+  ncf[36 * kd + 2] = 4; // C
+  ncf[36 * kd + 0] = 9; // H
+  ncf[36 * kd + 1] = 2; // O
+
+  // c3h5-a
+  ncf[37 * kd + 2] = 3; // C
+  ncf[37 * kd + 0] = 5; // H
+
+  // c3h3
+  ncf[38 * kd + 2] = 3; // C
+  ncf[38 * kd + 0] = 3; // H
+
+  // nc4ket13
+  ncf[39 * kd + 2] = 4; // C
+  ncf[39 * kd + 0] = 8; // H
+  ncf[39 * kd + 1] = 3; // O
+
+  // nc3h7cho
+  ncf[40 * kd + 2] = 4; // C
+  ncf[40 * kd + 0] = 8; // H
+  ncf[40 * kd + 1] = 1; // O
+
+  // c2h5coch2
+  ncf[41 * kd + 2] = 4; // C
+  ncf[41 * kd + 0] = 7; // H
+  ncf[41 * kd + 1] = 1; // O
+
+  // nc3h7coch2
+  ncf[42 * kd + 2] = 5; // C
+  ncf[42 * kd + 0] = 9; // H
+  ncf[42 * kd + 1] = 1; // O
+
+  // nc4h9cho
+  ncf[43 * kd + 2] = 5;  // C
+  ncf[43 * kd + 0] = 10; // H
+  ncf[43 * kd + 1] = 1;  // O
+
+  // nc4h9co
+  ncf[44 * kd + 2] = 5; // C
+  ncf[44 * kd + 0] = 9; // H
+  ncf[44 * kd + 1] = 1; // O
+
+  // nc7h16
+  ncf[45 * kd + 2] = 7;  // C
+  ncf[45 * kd + 0] = 16; // H
+
+  // c7h15o2-1
+  ncf[46 * kd + 2] = 7;  // C
+  ncf[46 * kd + 0] = 15; // H
+  ncf[46 * kd + 1] = 2;  // O
+
+  // c7h15o2-2
+  ncf[47 * kd + 2] = 7;  // C
+  ncf[47 * kd + 0] = 15; // H
+  ncf[47 * kd + 1] = 2;  // O
+
+  // c7h15o2-3
+  ncf[48 * kd + 2] = 7;  // C
+  ncf[48 * kd + 0] = 15; // H
+  ncf[48 * kd + 1] = 2;  // O
+
+  // c7h15o2-4
+  ncf[49 * kd + 2] = 7;  // C
+  ncf[49 * kd + 0] = 15; // H
+  ncf[49 * kd + 1] = 2;  // O
+
+  // c7h14ooh4-3
+  ncf[50 * kd + 2] = 7;  // C
+  ncf[50 * kd + 0] = 15; // H
+  ncf[50 * kd + 1] = 2;  // O
+
+  // c7h14ooh1-3o2
+  ncf[51 * kd + 2] = 7;  // C
+  ncf[51 * kd + 0] = 15; // H
+  ncf[51 * kd + 1] = 4;  // O
+
+  // c7h14o1-3
+  ncf[52 * kd + 2] = 7;  // C
+  ncf[52 * kd + 0] = 14; // H
+  ncf[52 * kd + 1] = 1;  // O
+
+  // c7h14o2-4
+  ncf[53 * kd + 2] = 7;  // C
+  ncf[53 * kd + 0] = 14; // H
+  ncf[53 * kd + 1] = 1;  // O
+
+  // n2
+  ncf[54 * kd + 3] = 2; // N
 }
 
 //  inverse molecular weights
@@ -39216,10 +39482,11 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
     1.02867715078631e+16 * x185 * exp(-1321.446964403191 * invT - 5.45 * logT);
   amrex::Real x2169 =
     -0.29097730287517898 * x2166 + 0.43429448190325198 * log(x2168) - 0.4;
-  amrex::Real x2173 = ((x2169) * (x2169)) /
-                        ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
-                         (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75)) +
-                      1.0;
+  amrex::Real x2173 =
+    1.7777777777777777 * ((x2169) * (x2169)) /
+      ((-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1) *
+       (-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1)) +
+    1.0;
   const amrex::Real x2176 =
     exp(M_LN10 * (0.43429448190325198 * x2166 / x2173)) / (x2168 + 1.0);
   const amrex::Real x2182 =
@@ -39366,13 +39633,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   const amrex::Real x2359 =
     refC * sc[15] * exp(-g_RT[0] - g_RT[14] + g_RT[15] + x2163);
   const amrex::Real x2362 =
-    x2169 * x2333 /
-    ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
-     (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75));
-  x2169 = ((x2169) * (x2169)) * x2333 /
-          ((-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
-           (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75) *
-           (-0.55155399201712996 * x2166 - 0.14 * x2169 + 0.75));
+    1.7777777777777777 * x2169 * x2333 /
+    ((-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1) *
+     (-0.73540532268950665 * x2166 - 0.18666666666666668 * x2169 + 1));
+  x2169 = 2.3703703703703702 * ((x2169) * (x2169)) * x2333 /
+          ((-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1) *
+           (-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1) *
+           (-0.73540532269 * x2166 - 0.18666666666666668 * x2169 + 1));
   const amrex::Real x2366 =
     1.112e+22 * x185 * x2166 * x2176 * x2356 / ((x2173) * (x2173));
   const amrex::Real x2368 =
@@ -39769,11 +40036,11 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   const amrex::Real x3985 = exp(-0.5 * logT);
   const amrex::Real x3987 = ((sc[2]) * (sc[2])) * x3985;
   const amrex::Real x3990 =
-    (1.0 /
-     ((75000000.0 * x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
-       1.0) *
-      (75000000.0 * x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
-       1.0)));
+    1.7777777777777778e-16 /
+    ((x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
+      1.3333333333333334e-8) *
+     (x196 * exp(-909.31251510912796 * invT - 2.788 * logT) +
+      1.3333333333333334e-8));
   const amrex::Real x3992 = -g_RT[2] - g_RT[6] + g_RT[7];
   const amrex::Real x3995 =
     refC * sc[7] * x196 * exp(-3018.29356149671 * invT - 5.576 * logT + x3992);
