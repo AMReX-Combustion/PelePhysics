@@ -726,6 +726,27 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void Y2Z(const amrex::Real Y[NUM_SPECIES], amrex::Real Z[NUM_ELEMENTS])
+  {
+    amrex::Real atm_wt[NUM_ELEMENTS];
+    atomicWeight(atm_wt);
+    amrex::Real inv_mw[NUM_SPECIES];
+    get_imw(inv_mw);
+    int ecomp[NUM_SPECIES * NUM_ELEMENTS];
+    CKNCF(ecomp);
+
+    for (int k = 0; k < NUM_ELEMENTS; k++) {
+      Z[k] = 0.0;
+    }
+    for (int i = 0; i < NUM_SPECIES; i++) {
+      for (int k = 0; k < NUM_ELEMENTS; k++) {
+        Z[k] += ecomp[i * NUM_ELEMENTS + k] * atm_wt[k] * inv_mw[i] * Y[i];
+      }
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void X2Y(const amrex::Real X[NUM_SPECIES], amrex::Real Y[NUM_SPECIES])
   {
     CKXTY(X, Y);

@@ -299,6 +299,13 @@ struct Manifold
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void Y2Z(const amrex::Real* /*Y[]*/, amrex::Real* /*Z[]*/)
+  {
+    amrex::Error("Y2Z is not supported for Manifold EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void RTY2WDOT(
     const amrex::Real /*R*/,
     const amrex::Real /*T*/,

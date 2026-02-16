@@ -280,9 +280,6 @@ class Converter:
             cp.progress_rate_fr(
                 cpp, self.mechanism, self.species_info, self.reaction_info
             )
-            self.atomic_weight(cpp)
-            cck.ckawt(cpp, self.mechanism)
-            cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
             cck.cksyms_str(cpp, self.mechanism, self.species_info)
             csp.sparsity(cpp, self.species_info)
@@ -302,6 +299,9 @@ class Converter:
             self.mechanism_cpp_declarations(hdr)
             # Basic info
             cck.ckindx(hdr, self.mechanism, self.species_info)
+            self.atomic_weight(hdr)
+            cck.ckawt(hdr, self.mechanism)
+            cck.ckncf(hdr, self.mechanism, self.species_info)
             self.molecular_weights(hdr)
             cck.ckrp(hdr, self.mechanism, self.species_info)
             cth.thermo(hdr, self.mechanism, self.species_info, self.syms)
@@ -563,7 +563,10 @@ class Converter:
         """Write the atomic weight."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))
-        cw.writer(fstream, "void atomicWeight(amrex::Real *  awt)")
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void atomicWeight(amrex::Real *  awt)",
+        )
         cw.writer(fstream, "{")
         for elem in self.mechanism.element_names:
             idx = self.mechanism.element_index(elem)
@@ -670,10 +673,7 @@ class Converter:
                 " if we are CPU or GPU based. Defined in mechanism.cpp "
             ),
         )
-        cw.writer(fstream, "void atomicWeight(amrex::Real *  awt);")
         cw.writer(fstream, cw.comment(" MISC "))
-        cw.writer(fstream, "void CKAWT(amrex::Real *  awt);")
-        cw.writer(fstream, "void CKNCF(int * ncf);")
         cw.writer(fstream, "void CKSYME_STR(amrex::Vector<std::string>& ename);")
         cw.writer(fstream, "void CKSYMS_STR(amrex::Vector<std::string>& kname);")
         cw.writer(fstream, "void GET_RMAP(int * _rmap);")
