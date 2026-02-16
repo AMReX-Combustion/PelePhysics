@@ -270,8 +270,10 @@ struct calcVaporState<pele::physics::eos::Manifold>
     amrex::Real theta = (1.0 - sumYripc) / (1.0 - sumYgipc);
 
     // Now calculate \zi_{r,j}
-    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYgi{0.0}; // W_ij Y_{g,i}^{pc}
-    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYri{0.0}; // W_ij Y_{r,i}^{pc}
+    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYgi{
+      0.0}; // W_ij Y_{g,i}^{pc}
+    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYri{
+      0.0}; // W_ij Y_{r,i}^{pc}
 
     // Alternative way of doing above without using W_ij assuming W_ij is some
     // row exchanged form of the identity matrix
