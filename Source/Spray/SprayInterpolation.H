@@ -160,10 +160,9 @@ InterpolateGasPhase(
   }
 
   // In the case of  manifold model simulations, the objective is to get the
-  // mass fractions of all the liquid fuel species, at the spray location, read
+  // mass fractions of all the phase-change gas species, at the spray location, read
   // from the manifold table. We already have the interpolated value of manifold
-  // variables at the spray particle location stored in 'mass_frac'. I just need
-  // to call GenericReadManifoldData
+  // variables at the spray particle location stored in 'mass_frac'.
 #ifdef USE_MANIFOLD_EOS
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;

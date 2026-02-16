@@ -203,7 +203,6 @@ struct calcVaporState<pele::physics::eos::Manifold>
 
     // Estimate X_{v,n} from the liquid state
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      const int fmspec = fdat.dep_manifold_indx[spf];
       const int fdspec = fdat.dep_indx[spf];
 
       // Compute latent heat using correlation
@@ -217,7 +216,7 @@ struct calcVaporState<pele::physics::eos::Manifold>
 
       // Mole fraction in gas phase
       const amrex::Real X_gi =
-        gpv.Yspec_fluid[fdspec] * gpv.mw_mix / gpv.mw[fmspec];
+        gpv.Yspec_fluid[fdspec] * gpv.mw_mix / gpv.mw[fdspec];
 
       // Estimate X_gn by distributing X_gi across all the liquid species
       const amrex::Real sumXdn_SLi =
@@ -271,9 +270,8 @@ struct calcVaporState<pele::physics::eos::Manifold>
     amrex::Real theta = (1.0 - sumYripc) / (1.0 - sumYgipc);
 
     // Now calculate \zi_{r,j}
-    amrex::GpuArray<amrex::Real, NUM_SPECIES> zi_rj{0.0};
-    amrex::GpuArray<amrex::Real, NUM_SPECIES> WYgi{0.0}; // W_ij Y_{g,i}^{pc}
-    amrex::GpuArray<amrex::Real, NUM_SPECIES> WYri{0.0}; // W_ij Y_{r,i}^{pc}
+    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYgi{0.0}; // W_ij Y_{g,i}^{pc}
+    amrex::GpuArray<amrex::Real, NUM_SPECIES - 1> WYri{0.0}; // W_ij Y_{r,i}^{pc}
 
     // Alternative way of doing above without using W_ij assuming W_ij is some
     // row exchanged form of the identity matrix
@@ -286,9 +284,9 @@ struct calcVaporState<pele::physics::eos::Manifold>
       }
     }
 
-    for (int n = 0; n < NUM_SPECIES; n++) {
-      zi_rj[n] = WYri[n] + theta * (gpv.Y_fluid[n] - WYgi[n]);
-      Y_skin[n] = zi_rj[n];
+    for (int n = 0; n < NUM_SPECIES - 1; n++) {
+      const amrex::Real zi_rj = WYri[n] + theta * (gpv.Y_fluid[n] - WYgi[n]);
+      Y_skin[n] = zi_rj;
     }
 
     eos.Y2WBAR(Y_skin, mw_skin);

@@ -168,9 +168,7 @@ speciesNames<Manifold>(
   }
   spn[MANIFOLD_DIM] = "XRHO";
 }
-#endif
 
-#ifndef AMREX_USE_SYCL
 template <>
 inline void
 varNames<Manifold>(
@@ -190,9 +188,7 @@ varNames<Manifold>(
     allvarnames[n] = amrex::trim(nametmp);
   }
 }
-#endif
 
-#ifndef AMREX_USE_SYCL
 template <>
 inline void
 chemSpeciesNames<Manifold>(
@@ -204,12 +200,11 @@ chemSpeciesNames<Manifold>(
       "species names");
   }
   const auto* mani_data = eparm->manf_data;
-  for (int n = 0; n < mani_data->Nvar; n++) {
+  for (int n = 0; n < eparm->num_chemspecies; n++) {
+    int idx = eparm->idx_chemspecies[n];
     std::string nametmp = std::string(
-      &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
-    if (nametmp.substr(0, 2) == "Y-") {
-      chemspn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
-    }
+      &(mani_data->varnames)[idx * mani_data->len_str], mani_data->len_str);
+    chemspn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
   }
 }
 #endif

@@ -295,6 +295,12 @@ SprayParticleContainer::spraySetup(
       "SpraySetup: Manifold EOS must contains spec molecular weights for "
       "Spray");
   }
+  // Verify EOS will not give too many species for us to store
+  if (eosparms_h->num_chemspecies > NUM_CHEM_SPECIES) {
+    amrex::Error(
+      "SpraySetup: Manifold EOS table must not contain more than "
+      "NUM_CHEM_SPECIES = SPRAY_FUEL_NUM chemical species");
+  }
 
   Vector<std::string> chemspec_names, manivar_names;
   pele::physics::eos::chemSpeciesNames<pele::physics::PhysicsType::eos_type>(

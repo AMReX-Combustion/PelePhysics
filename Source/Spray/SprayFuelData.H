@@ -6,6 +6,25 @@
 #include "SprayPropertiesGCM.H"
 #include <AMReX_RealVect.H>
 
+// Things get tricky for Spray + Manifold because for Manifold EOS, the
+// "species" are actually the manifold parameters, but we need the actual
+// species for vapor/liquid calculations in the spray module. For manifold, this
+// is set up so we only need to lookup gas phase species that correspond to
+// lqiuid phase species, rather than all possible gas phase species. We also set
+// up macros to define 0 length arrays if variables are unneeded when not using
+// Manifold EOS.
+#ifdef USE_MANIFOLD_EOS
+#define NUM_CHEM_SPECIES SPRAY_FUEL_NUM
+#define NUM_CHEM_SPECIES_MANI_ONLY NUM_CHEM_SPECIES
+#define NUM_SPECIES_MANI_ONLY NUM_SPECIES
+#define SPRAY_FUEL_NUM_MANI_ONLY SPRAY_FUEL_NUM
+#else
+#define NUM_CHEM_SPECIES NUM_SPECIES
+#define NUM_CHEM_SPECIES_MANI_ONLY 0
+#define NUM_SPECIES_MANI_ONLY 0
+#define SPRAY_FUEL_NUM_MANI_ONLY 0
+#endif
+
 // Spray flags and indices
 struct SprayComps
 {
@@ -48,15 +67,15 @@ struct GasPhaseVals
   amrex::Real T_fluid;
   amrex::Real rho_fluid;
   amrex::Real p_fluid;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_fluid;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_fluid{0.0};
   // for manifold Y_fluid is manifold parameters, Yspec_fluid is chemical
   // species - Yspec_fluid is unused for detailed chem
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yspec_fluid;
+  amrex::GpuArray<amrex::Real, NUM_CHEM_SPECIES_MANI_ONLY> Yspec_fluid{0.0};
   amrex::Real mw_mix;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> mw;
+  amrex::GpuArray<amrex::Real, NUM_CHEM_SPECIES> mw{0.0};
   amrex::RealVect fluid_mom_src;
   amrex::Real fluid_mass_src;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> fluid_Y_dot;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> fluid_Y_dot{0.0};
   amrex::Real fluid_eng_src;
 
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void reset()
@@ -94,19 +113,15 @@ struct SprayData
   amrex::RealVect body_force = amrex::RealVect::TheZeroVector();
   amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_indx{};
   amrex::GpuArray<int, SPRAY_FUEL_NUM> L_col{};
-#ifndef USE_MANIFOLD_EOS
-  amrex::GpuArray<int, NUM_SPECIES + 1> L_row{};
-  amrex::GpuArray<int, 0> dep_manifold_indx{};
-  amrex::GpuArray<int, 0> pc_manifold_indx{};
-#else
-  amrex::GpuArray<int, SPRAY_FUEL_NUM + 1> L_row{};
-  amrex::GpuArray<int, SPRAY_FUEL_NUM> dep_manifold_indx{};
-  amrex::GpuArray<int, NUM_SPECIES - 1> pc_manifold_indx{};
-#endif
+  amrex::GpuArray<int, NUM_CHEM_SPECIES + 1> L_row{};
   int N_pc = 0;
   // We will only use the first N_pc entries, but don't know that number a
   // priori so allocate NUM_SPECIES which is always >= N_pc
-  amrex::GpuArray<int, NUM_SPECIES> pc_indx;
+  amrex::GpuArray<int, NUM_CHEM_SPECIES> pc_indx;
+
+  // Arrays only used for Manifold EOS
+  amrex::GpuArray<int, SPRAY_FUEL_NUM_MANI_ONLY> dep_manifold_indx{};
+  amrex::GpuArray<int, NUM_CHEM_SPECIES_MANI_ONLY> pc_manifold_indx{};
 
   // Instance of the liquid properties for the specified model
   pele::physics::SprayProps::LiqPropType liqprops;

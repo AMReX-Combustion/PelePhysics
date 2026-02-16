@@ -125,6 +125,15 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     bool required = false;
 #ifdef PELE_USE_SPRAY
     required = true;
+    amrex::Vector<std::string> spray_species;
+    {
+      amrex::ParmParse ppp("particles");
+      if (ppp.contains("dep_fuel_species")) {
+        ppp.getarr("dep_fuel_species", spray_species);
+      } else {
+        ppp.getarr("fuel_species", spray_species);
+      }
+    }
 #endif
     parm_in->m_h_parm.idx_Cp = get_var_index("CP", h_manf_data_in, required);
     parm_in->m_h_parm.idx_Cp_fuel =
@@ -140,7 +149,19 @@ struct InitParm<eos::EosParm<eos::Manifold>>
         std::string nametmp = std::string(
           &(mani_data->varnames)[n * mani_data->len_str], mani_data->len_str);
         if (nametmp.substr(0, 2) == "Y-") {
+          // A bit of a hack - if doing spray we only take the species involved
+          // in spray phase change
+#ifdef PELE_USE_SPRAY
+          std::string find_spec =
+            amrex::trim(nametmp.substr(2U, std::string::npos));
+          if (
+            std::find(spray_species.begin(), spray_species.end(), find_spec) !=
+            spray_species.end()) {
+            spec_idx_vect.emplace_back(n);
+          }
+#else
           spec_idx_vect.emplace_back(n);
+#endif
         }
       }
       const int num_of_chemspecies = static_cast<int>(spec_idx_vect.size());
