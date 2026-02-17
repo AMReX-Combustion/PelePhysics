@@ -173,8 +173,14 @@ calculateFilmSource(
           }
           sumY += Y_film[spf];
         }
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          Y_film[spf] /= sumY;
+        if (sumY > 0.) {
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            Y_film[spf] /= sumY;
+          }
+        } else {
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            Y_film[spf] = 0.;
+          }
         }
       } else {
         oldY_film[0] = p.rdata(SprayComps::pstateY);
