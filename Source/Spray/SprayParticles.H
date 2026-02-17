@@ -358,7 +358,11 @@ public:
   /// \brief Return fuel species index
   static int getFuelIndx(const int pc)
   {
+#ifdef USE_MANIFOLD_EOS
     return m_sprayData->pc_manifold_indx[pc];
+#else
+    return m_sprayData->pc_indx[pc];
+#endif
   }
 
   /// \brief Return spray indices
