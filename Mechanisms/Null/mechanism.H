@@ -39,20 +39,20 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
 
 // save atomic weights into array
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-atomicWeight(amrex::Real* awt)
+atomicWeight(amrex::Real* /*awt*/)
 {
 }
 
 // get atomic weight for all elements
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKAWT(amrex::Real* awt)
+CKAWT(amrex::Real* /*awt*/)
 {
 }
 
 // Returns the elemental composition
 // of the speciesi (mdim is num of elements)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-CKNCF(int* ncf)
+CKNCF(int* /*ncf*/)
 {
 }
 
