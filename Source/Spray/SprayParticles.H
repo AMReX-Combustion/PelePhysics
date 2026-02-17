@@ -356,7 +356,10 @@ public:
   static SprayData* getSprayData() { return m_sprayData; }
 
   /// \brief Return fuel species index
-  static int getFuelIndx(const int pc) { return m_sprayData->pc_indx[pc]; }
+  static int getFuelIndx(const int pc)
+  {
+    return m_sprayData->pc_manifold_indx[pc];
+  }
 
   /// \brief Return spray indices
   static SprayComps getSprayComps() { return m_sprayIndx; }
