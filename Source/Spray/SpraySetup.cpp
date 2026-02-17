@@ -314,13 +314,17 @@ SprayParticleContainer::spraySetup(
     manivar_names, eosparms_h);
 
   for (int i = 0; i < SPRAY_FUEL_NUM; ++i) {
-    amrex::Print() << "\nSpray species " << m_sprayFuelNames[i]
-                   << " deposits to: \n";
+    if (m_sprayData->verbose > 0) {
+      amrex::Print() << "\nSpray species " << m_sprayFuelNames[i]
+                     << " deposits to: \n";
+    }
     for (int ns = 0; ns < chemspec_names.size(); ++ns) {
       std::string gas_spec = chemspec_names[ns];
       if (gas_spec == m_sprayDepNames[i]) {
-        amrex::Print() << "   Chemical species from manifold "
-                       << chemspec_names[ns] << "\n";
+        if (m_sprayData->verbose > 0) {
+          amrex::Print() << "   Chemical species from manifold "
+                         << chemspec_names[ns] << "\n";
+        }
         m_sprayData->dep_indx[i] = ns;
       }
     }
@@ -332,7 +336,9 @@ SprayParticleContainer::spraySetup(
     for (int ns = 0; ns < manivar_names.size(); ++ns) {
       std::string manifold_var = manivar_names[ns];
       if (manifold_var == m_sprayManifoldDepNames[i]) {
-        amrex::Print() << "   Manifold var " << manivar_names[ns] << "\n";
+        if (m_sprayData->verbose > 0) {
+          amrex::Print() << "   Manifold var " << manivar_names[ns] << "\n";
+        }
         m_sprayData->dep_manifold_indx[i] = ns;
       }
     }

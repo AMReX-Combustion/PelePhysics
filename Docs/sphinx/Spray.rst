@@ -48,7 +48,7 @@ Typically, the liquid state contains a subset of the species present in the gas 
    {\rm Liquid\ species}&: \mathcal{S}_L = \{0, 1, \dots, N_L - 1\}, \\
    {\rm Gas\ species}&: \mathcal{S}_g = \{0, 1, 2, \dots , N_g - 1\}, \\
    {\rm Gas\ species\ w/\ phase\ change} &: \mathcal{S}_{pc} = \{i \in \mathcal{S}_g \; | \; N_{L,i} > 0 \}, \\
-   {\rm Liquid\ interacting\ w/\ gas\ species\ } i \in \mathcal{S}_g&: \mathcal{S}_{L,i} = \{n \in \mathcal{S_L} \; | \; \mathbf{L}_{i,n} \neq 0 \}. \\
+   {\rm Liquid\ interacting\ w/\ gas\ species\ } i \in \mathcal{S}_g&: \mathcal{S}_{L,i} = \{n \in \mathcal{S}_L \; | \; \mathbf{L}_{i,n} \neq 0 \}. \\
 
 The :math:`i{\rm th}` row of :math:`\mathbf{L}` contains :math:`N_{L,i}` ones corresponding to the liquid species that contribute to gas-phase species :math:`i` and zeros elsewhere. For example, if we have :math:`N_L = 4` liquid species and :math:`N_g = 3` gas species, where liquid species 0, 1, and 3 contribute to gas-phase species 0, liquid species 2 contributes to gas-phase species 1, and no liquid species contribute to gas-phase species 2, then
 
