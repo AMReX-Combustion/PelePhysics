@@ -114,7 +114,8 @@ InterpolateGasPhase(
   const amrex::IntVect* indx_array,
   const amrex::Real* weights,
   const pele::physics::eos::EosParm<pele::physics::PhysicsType::eos_type>*
-    eosparm = nullptr)
+    eosparm = nullptr,
+  const SprayData* spray = nullptr)
 {
   auto eos = pele::physics::PhysicsType::eos(eosparm);
 #ifdef PELELM_USE_SPRAY
@@ -164,11 +165,14 @@ InterpolateGasPhase(
   // from the manifold table. We already have the interpolated value of manifold
   // variables at the spray particle location stored in 'mass_frac'. I just need
   // to call GenericReadManifoldData
+#ifndef USE_MANIFOLD_EOS
+  amrex::ignore_unused(spray);
+#endif
+
 #ifdef USE_MANIFOLD_EOS
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;
-    eos.Y2ChemSpecies(
-      mass_frac.data(), SprayParticleContainer::d_sprayData->indx[n], tempval);
+    eos.Y2ChemSpecies(mass_frac.data(), spray->indx[n], tempval);
     gpv.Yspec_fluid[n] = tempval;
   }
 #endif
