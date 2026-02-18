@@ -112,6 +112,18 @@ it is most effective to create a fork of this repository and share a branch of t
 
 New contributions to *PelePhysics* are welcome ! Contributing Guidelines are provided in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Versioning
+
+PelePhysics now uses uses a type of semantic versioning to help users navigate different versions of the code,
+which are labeled with [GitHub tags](https://github.com/AMReX-Combustion/PelePhysics/releases/). These tagged versions are not exhaustive, but they adhere to
+the following convention. Given a version number MAJOR.MINOR.PATCH:
+1. MAJOR version for changes to key aspects of the solver affecting input/source files for all cases, when a key model is changed to significantly affect results of simulations, when a major new capability is added
+2. MINOR version for when a significant feature is added (in a backward compatible manner), accumulation of smaller features, or changes to input file compatibility for less central aspects of the solver (e.g., post-processing) or aspects not affecting all cases
+3. PATCH version for backward compatible bug fixes and minor features
+
+PelePhysics previously used YY.MM formatting for versions. These should be interpreted as version 0 subversions,
+e.g. v25.04 is equivalent to v0.25.04.
+
 ## CEPTR
 
 This `PelePhysics` repository contains the CEPTR source code generation tool in order to support the inclusion of chemical models specified in the Cantera yaml format. CETPR derives from FUEGO, which was originally created by Michael Aivazis at CalTech, and donated to CCSE in 2001.  Originally, FUEGO was part of a larger Python-based set of workflow tools Michael developed for managing and publishing simulation-based studies.  FUEGO itself was developed as a drop-in replacement for the CHEMKIN library, and provided "hand-coded" replacement routines for evaluation of EOS thermodynamic functions that are considerably more efficient than their CHEMKIN counterparts.  Since 2001, CCSE has continued to modify FUEGO independently for its own use so that the current version here bears little resemblance to Michael's original code, or its intentions. CEPTR has adapted FUEGO code to use the Cantera yaml format and is now the preferred way of generating mechanism files. If using CEPTR, please cite the above `Hassanaly2024` journal article.
