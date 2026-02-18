@@ -1422,13 +1422,6 @@ ReactorCvode::react(
         CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
-        // cppcheck-suppress knownConditionTrueFalse
-        if ((udata->verbose > 1) && (omp_thread == 0)) {
-          amrex::Print() << "Additional verbose info --\n";
-          print_final_stats(cvode_mem, LS != nullptr);
-          amrex::Print() << "\n -------------------------------------\n";
-        }
-
         amrex::Real actual_dt = CvodeActual_time_final - time_start;
 
         // Get estimate of how hard the integration process was
@@ -1454,6 +1447,13 @@ ReactorCvode::react(
         FC_in(i, j, k, 0) = 0.0;
       }
     });
+
+  // cppcheck-suppress knownConditionTrueFalse
+  if ((udata->verbose > 1) && (omp_thread == 0)) {
+    amrex::Print() << "Additional verbose info --\n";
+    print_final_stats(cvode_mem, LS != nullptr);
+    amrex::Print() << "\n -------------------------------------\n";
+  }
 
 #ifdef MOD_REACTOR
   dt_react =
