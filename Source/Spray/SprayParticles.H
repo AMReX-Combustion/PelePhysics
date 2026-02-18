@@ -315,9 +315,9 @@ public:
         }
         act_array(i, j, k, SPI.rhoIndx) += tmp_array(i, j, k, SPI.rhoSrcIndx);
         act_array(i, j, k, SPI.engIndx) += tmp_array(i, j, k, SPI.engSrcIndx);
-        for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
-          const int ecomp = SPI.specIndx + fdat->dep_indx[sp];
-          act_array(i, j, k, ecomp) += tmp_array(i, j, k, SPI.specSrcIndx + sp);
+        for (int pc = 0; pc < fdat->N_pc; ++pc) {
+          const int ecomp = SPI.specIndx + fdat->pc_indx[pc];
+          act_array(i, j, k, ecomp) += tmp_array(i, j, k, SPI.specSrcIndx + pc);
         }
       });
   }
@@ -356,7 +356,14 @@ public:
   static SprayData* getSprayData() { return m_sprayData; }
 
   /// \brief Return fuel species index
-  static int getFuelIndx(const int spf) { return m_sprayData->dep_indx[spf]; }
+  static int getFuelIndx(const int pc)
+  {
+#ifdef USE_MANIFOLD_EOS
+    return m_sprayData->pc_manifold_indx[pc];
+#else
+    return m_sprayData->pc_indx[pc];
+#endif
+  }
 
   /// \brief Return spray indices
   static SprayComps getSprayComps() { return m_sprayIndx; }
@@ -365,6 +372,9 @@ public:
 
   static std::string m_sprayFuelNames[SPRAY_FUEL_NUM];
   static std::string m_sprayDepNames[SPRAY_FUEL_NUM];
+#ifdef USE_MANIFOLD_EOS
+  static std::string m_sprayManifoldDepNames[SPRAY_FUEL_NUM];
+#endif
   static amrex::Vector<std::string> m_sprayDeriveVars;
   static amrex::Real m_maxNumPPP;
   // Factor for balancing number of child parcels formed versus child parcel

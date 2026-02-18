@@ -50,13 +50,13 @@ calculateFilmSource(
   bool get_chi = false;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_skin;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> h_film;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> cp_n;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film = {
-    {0.0}}; // Liquid mass fractions
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vapor = {{0.0}};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> cp_i;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> rhoD_ri;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_n{};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mn_dot = {};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_film{};    // Liquid mass fracs
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> oldY_film{}; // Prev. mass fracs
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> X_vn{};
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = p.rdata(SprayComps::pstateY + spf);
   }
@@ -80,12 +80,12 @@ calculateFilmSource(
   amrex::Real T_skin = T_film + rule * delT;
 
   // Calculate the C_p at the skin temperature for each species
-  eos.T2Cpi(T_skin, cp_n.data());
+  eos.T2Cpi(T_skin, cp_i.data());
   eos.T2Hi(T_film, h_film.data());
   for (int n = 0; n < NUM_SPECIES; ++n) {
     Y_skin[n] = 0.;
     h_film[n] *= SprayUnits::eng_conv;
-    cp_n[n] *= SprayUnits::eng_conv;
+    cp_i[n] *= SprayUnits::eng_conv;
   }
   amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
   amrex::Real mw_skin = 0.; // Average molar mass of skin phase
@@ -93,8 +93,7 @@ calculateFilmSource(
   amrex::Real sumXVap = 0.; // Sum of X_v
   calcVaporState<pele::physics::PhysicsType::eos_type>()(
     fdat, gpv, rule, T_film, C_eps, mw_film, Y_film.data(), T_skin, cBoilT,
-    Y_skin.data(), X_vapor.data(), L_fuel.data(), B_M, sumXVap, cp_skin,
-    mw_skin);
+    Y_skin.data(), X_vn.data(), L_n.data(), B_M, sumXVap, cp_skin, mw_skin);
   amrex::Real lambda_skin = 0.;
   amrex::Real mu_skin = 0.;
   amrex::Real xi_skin = 0.;
@@ -105,11 +104,21 @@ calculateFilmSource(
   auto trans = pele::physics::PhysicsType::transport();
   trans.transport(
     get_xi, get_mu, get_lambda, get_Ddiag, get_chi, T_skin, rho_cgs,
-    Y_skin.data(), Ddiag.data(), nullptr, mu_skin, xi_skin, lambda_skin,
+    Y_skin.data(), rhoD_ri.data(), nullptr, mu_skin, xi_skin, lambda_skin,
     trans_parm);
   lambda_skin *= SprayUnits::lambda_conv;
   // If gas phase is not saturated
   if (sumXVap > 0.) {
+    // Convert mass diffusion coefficient from mixture average to binary for
+    // fuel only, not concerned with other species
+    for (int pc = 0; pc < fdat.N_pc; ++pc) {
+      const int pcspec = fdat.pc_indx[pc];
+      rhoD_ri[pcspec] *= mw_skin / gpv.mw[pcspec] * SprayUnits::rhod_conv;
+      amrex::Real X_vi =
+        fdat.binary_csr_rowdotprod(pcspec, fdat.L_row, fdat.L_col, X_vn.data());
+      amrex::Real X_norm = X_vi / sumXVap;
+      rhoD_ri[pcspec] *= X_norm;
+    }
     // Estimate convective heat transfer using O'Rourke and Amsden 1996 assuming
     // y+ < y+c
     // TODO: This is very rudimentary and should be improved to account for gas
@@ -128,19 +137,19 @@ calculateFilmSource(
     amrex::Real m_dot = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       // Species index
-      const int fspec = fdat.indx[spf];
-      // Gas species index, might be the same
-      // const int fdspec = fdat.dep_indx[spf];
-      // Convert mass diffusion coefficient from mixture average
-      // to binary for fuel only, not concerned with other species
-      Ddiag[fspec] *= mw_skin / gpv.mw[fspec] * SprayUnits::rhod_conv;
-      if (X_vapor[spf] > 0.) {
-        // Normalize mass diffusivity by fuel vapor molar fraction
-        amrex::Real cur_rhoD = X_vapor[spf] * Ddiag[fspec] / sumXVap;
-        mi_dot[spf] =
-          -amrex::max<amrex::Real>(h_mass * std::pow(cur_rhoD, 2. / 3.), 0.);
-        m_dot += mi_dot[spf];
-        sumL += mi_dot[spf] * L_fuel[spf];
+      const int fdspec = fdat.dep_indx[spf];
+      if (X_vn[spf] > 0.) {
+        amrex::Real X_vi =
+          fdat.binary_csr_rowdotprod(fdspec, fdat.L_row, fdat.L_col, X_vn);
+        amrex::Real Xnorm = 1.;
+        if (X_vi > X_vn[spf]) {
+          // Multiple species deposit to fdspec, scale rhoD_{r,n} accordingly
+          Xnorm = X_vn[spf] / X_vi;
+        }
+        mn_dot[spf] = -amrex::max<amrex::Real>(
+          h_mass * std::pow(Xnorm * rhoD_ri[fdspec], 2. / 3.), 0.);
+        m_dot += mn_dot[spf];
+        sumL += mn_dot[spf] * L_n[spf];
       }
     }
     amrex::Real part_temp_src =
@@ -153,40 +162,57 @@ calculateFilmSource(
     film_height = new_mass / (rho_film * film_area);
     if (film_height > min_height) {
       if (SPRAY_FUEL_NUM > 1) {
-        // rho_film = 0.;
+        amrex::Real sumY = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           Y_film[spf] = amrex::min<amrex::Real>(
             1., amrex::max<amrex::Real>(
-                  (Y_film[spf] * film_mass + mi_dot[spf] * dt) / new_mass, 0.));
+                  (Y_film[spf] * film_mass + mn_dot[spf] * dt) / new_mass, 0.));
+          oldY_film[spf] = p.rdata(SprayComps::pstateY + spf);
           if (Y_film[spf] < 1.E-12) {
             Y_film[spf] = 0.;
           }
-          // rho_film += Y_film[spf] / fdat.liqprops.rho_i(T_film, spf);
+          sumY += Y_film[spf];
         }
-        // rho_film = 1. / rho_film;
-      } // else {
-        //  rho_film = fdat.liqprops.rho_i(T_film, 0);
-      //}
+        if (sumY > 0.) {
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            Y_film[spf] /= sumY;
+          }
+        } else {
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            Y_film[spf] = 0.;
+          }
+        }
+      } else {
+        oldY_film[0] = p.rdata(SprayComps::pstateY);
+      }
     } else {
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        oldY_film[spf] = p.rdata(SprayComps::pstateY + spf);
+      }
       film_height = 0.;
       new_mass = 0.;
       p.id() = -1;
     }
     film_mass = new_mass;
   }
+
   p.rdata(SprayComps::pstateT) = T_film;
   amrex::Real mdot_total = (film_mass - start_mass) / dt;
   gpv.fluid_mass_src = mdot_total;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int fdspec = fdat.dep_indx[spf];
-    amrex::Real oldY = p.rdata(SprayComps::pstateY + spf);
-    amrex::Real newY = Y_film[spf];
-    amrex::Real midot = (newY * film_mass - oldY * start_mass) / dt;
-    gpv.fluid_Y_dot[spf] = midot;
-    p.rdata(SprayComps::pstateY + spf) = newY;
-    gpv.fluid_eng_src += midot * h_film[fdspec];
+  for (int pc = 0; pc < fdat.N_pc; ++pc) {
+    const int pcspec = fdat.pc_indx[pc];
+    amrex::Real oldY_film_pc =
+      fdat.binary_csr_rowdotprod(pcspec, fdat.L_row, fdat.L_col, oldY_film);
+    amrex::Real newY =
+      fdat.binary_csr_rowdotprod(pcspec, fdat.L_row, fdat.L_col, Y_film);
+    amrex::Real midot = (newY * film_mass - oldY_film_pc * start_mass) / dt;
+    gpv.fluid_Y_dot[pcspec] = midot;
+    gpv.fluid_eng_src += midot * h_film[pcspec];
   }
   p.rdata(SprayComps::pstateDia) = film_dia;
   p.rdata(SprayComps::pstateFilmHght) = film_height;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    p.rdata(SprayComps::pstateY + spf) = Y_film[spf];
+  }
 }
 #endif

@@ -2,9 +2,9 @@
 
 .. _Spray:
 
-*****
+=======
 Spray
-*****
+=======
 
 Spray Equations
 ===============
@@ -22,13 +22,13 @@ Firstly, spray modeling relies on the following assumptions:
 
 * The radiation, Soret, and Dufour effects are neglected
 
-Secondly, accurate spray modeling depends on accurate thermophysical and transport properties for both the gas and liquid phases.  
-Gas-phase properties are obtained directly from the mechanism files in `PelePhysics`, while liquid-phase properties are derived from user-provided inputs for each liquid fuel species.  
+Secondly, accurate spray modeling depends on accurate thermophysical and transport properties for both the gas and liquid phases.
+Gas-phase properties are obtained directly from the mechanism files in `PelePhysics`, while liquid-phase properties are derived from user-provided inputs for each liquid fuel species.
 Currently, two approaches are available for estimating liquid fuel properties:
 
 * The original PeleMP [#owen]_ method, which utilizes a combination of constant values and temperature-based fits.
 
-* A group contribution method (GCM) based on the work of Constantinou & Gani [#gani94]_ [#gani95]_ and Govindaraju & Ihme [#govindaraju]_, previously implemented and validated in `FuelLib <https://github.com/nrel/fuellib>`_. 
+* A group contribution method (GCM) based on the work of Constantinou & Gani [#gani94]_ [#gani95]_ and Govindaraju & Ihme [#govindaraju]_, previously implemented and validated in `FuelLib <https://github.com/nrel/fuellib>`_.
 
 Further details on the required inputs, as well as the formulations of both component-level and mixture-level liquid-phase properties, are provided in the :ref:`Liquid Spray Properties <SprayLiquidProperties>` section.
 
@@ -41,7 +41,38 @@ The subscript notation for this section is: :math:`d` relates to the liquid drop
    Y_{r,n} &= Y_{v,n} + A (Y_{g,n} - Y_{v,n})
 
 where :math:`A = 1/3` according the the one-third rule.
-Additional nomenclature: :math:`M_n` is the molar mass of species :math:`n`, :math:`\overline{M}` is the average molar mass of a mixture, :math:`\mathcal{R}` is the universal gas constant, :math:`N_L` is the number of liquid species, and :math:`N_s` is the number of gas phase species. :math:`Y_n` and :math:`\chi_n` are the mass and molar fractions of species :math:`n`, respectively.
+
+Typically, the liquid state contains a subset of the species present in the gas phase. However, we also consider generalized capability where the representation of the composition in the liquid phase can be more detailed than in the gas phase. This would occur, for example, when using a gas phase chemical mechanism for a single component surrogate, but using a multi-component representation of the liquid to capture the effects of multi-component vaporization on the volatilization of droplets. In this case, multiple liquid species are modeled with a single gas-phase species, which requires additional assumption and approximation; note that it is still assumed that each liquid species relates to only a single gas-phase species. :math:`N_L` is the number of liquid species, and :math:`N_g` is total number of gas-phase species, and the :math:`N_g \times N_L` mapping from liquid-phase species to gas-phase species is denoted :math:`\mathbf{L}`. The :math:`i{\rm th}` row of :math:`\mathbf{L}` contains :math:`N_{L,i}` ones corresponding to the liquid species that contribute to gas-phase species :math:`i` and zeros elsewhere. There are :math:`N_{pc}` gas species for which :math:`N_{L,i} > 0`, indicating that they participate in phase change. For convenience, we define the following sets of indices:
+
+.. math::
+   {\rm Liquid\ species}&: \mathcal{S}_L = \{0, 1, \dots, N_L - 1\}, \\
+   {\rm Gas\ species}&: \mathcal{S}_g = \{0, 1, 2, \dots , N_g - 1\}, \\
+   {\rm Gas\ species\ w/\ phase\ change} &: \mathcal{S}_{pc} = \{i \in \mathcal{S}_g \; | \; N_{L,i} > 0 \}, \\
+   {\rm Liquid\ interacting\ w/\ gas\ species\ } i \in \mathcal{S}_g&: \mathcal{S}_{L,i} = \{n \in \mathcal{S}_L \; | \; \mathbf{L}_{i,n} \neq 0 \}. \\
+
+The :math:`i{\rm th}` row of :math:`\mathbf{L}` contains :math:`N_{L,i}` ones corresponding to the liquid species that contribute to gas-phase species :math:`i` and zeros elsewhere. For example, if we have :math:`N_L = 4` liquid species and :math:`N_g = 3` gas species, where liquid species 0, 1, and 3 contribute to gas-phase species 0, liquid species 2 contributes to gas-phase species 1, and no liquid species contribute to gas-phase species 2, then
+
+.. math::
+   \mathbf{L} = \begin{bmatrix}
+   1 & 1 & 0 & 1 \\
+   0 & 0 & 1 & 0 \\
+   0 & 0 & 0 & 0
+   \end{bmatrix},
+
+with :math:`N_{L,0} = 3,`  :math:`N_{L,1} = 1,` :math:`N_{L,2} = 0,` and the :math:`N_{pc} = 2` gas-phase species that participate in phase change.
+The corresponding sets are:
+
+.. math::
+   \mathcal{S}_{L} &= \{0, 1, 2, 3\}, \\
+   \mathcal{S}_g &= \{0, 1, 2\}, \\
+   \mathcal{S}_{pc} &= \{0, 1\}, \\
+   \mathcal{S}_{L,0} &= \{0, 1, 3\}, \\
+   \mathcal{S}_{L,1} &= \{2\}, \\
+   \mathcal{S}_{L,2} &= \emptyset.
+
+In the PelePhysics implementation, these sets are accessed through matrix operations using the mapping matrix :math:`\mathbf{L}`, which is stored in compressed sparse row (CSR) format.
+
+Additional nomenclature: :math:`M_n` is the molar mass of species :math:`n`, :math:`\overline{M}` is the average molar mass of a mixture, and :math:`\mathcal{R}` is the universal gas constant.  :math:`Y_{g,i}` and :math:`X_{g,i}` are the mass and molar fractions of gas-phase species :math:`i`, and :math:`Y_{d,n}` and :math:`X_{d,n}` are the mass and molar fractions of liquid-phase droplet species :math:`n`, respectively.
 The user is required to provide a reference temperature for the liquid properties, :math:`T^*`, the critical temperature for each liquid species, :math:`T_{c,n}`, the boiling temperature for each liquid species at atmospheric pressure, :math:`T^*_{b,n}`, the latent heat and liquid specific heat at the reference temperature, :math:`h_{L,n}(T^*)` and :math:`c_{p,L,n}(T^*)`, respectively.
 Note: this reference temperature is a constant value for all species and is not related to the reference state denoted by the subscript :math:`r`.
 
@@ -50,19 +81,19 @@ The equations of motion, mass, momentum, and energy for the Lagrangian spray dro
 .. math::
    \frac{d \mathbf{X}_d}{d t} &= \mathbf{u}_d,
 
-   \frac{d m_d}{d t} &= \sum^{N_L}_{n=0} \dot{m}_n,
+   \frac{d m_d}{d t} &= \sum_{n \in \mathcal{S}_L} \dot{m}_n,
 
-   m_d \frac{d Y_{d,n}}{d t} &= \dot{m}_n - Y_{d,n} \frac{d m_d}{d t},
+   m_d \frac{d Y_{d,n}}{d t} &= \dot{m}_n - Y_{d,n} \frac{d m_d}{d t} \quad \forall\; n \in \mathcal{S}_L,
 
    m_d \frac{d \mathbf{u}_d}{d t} &= \mathbf{F}_d + m_d \mathbf{g},
 
-   m_d c_{p,L} \frac{d T_d}{d t} &= \sum^{N_L}_{n=0} \dot{m}_n h_{L,n}(T_d) + \mathcal{Q}_d.
+   m_d c_{p,L} \frac{d T_d}{d t} &= \sum_{n \in \mathcal{S}_L} \dot{m}_n h_{L,n}(T_d) + \mathcal{Q}_d.
 
 where :math:`\mathbf{X}_d` is the spatial vector, :math:`\mathbf{u}_d` is the velocity vector, :math:`T_d` is the droplet temperature, :math:`m_d` is the mass of the droplet, :math:`\mathbf{g}` is an external body force (like gravity), :math:`\dot{m}` is evaporated mass, :math:`\mathcal{Q}_d` is the heat transfer between the droplet and the surrounding gas, and :math:`\mathbf{F}_d` is the momentum source term.
 The density of the liquid mixture, :math:`\rho_d`, depends on the liquid mass fractions of the dropet, :math:`Y_{d,n}`,
 
 .. math::
-   \rho_d = \left( \sum^{N_L}_{n=0} \frac{Y_{d,n}}{\rho_{L,n}} \right)^{-1}
+   \rho_d = \left( \sum_{n \in \mathcal{S}_L} \frac{Y_{d,n}}{\rho_{L,n}} \right)^{-1}
 
 The droplets are assumed to be spherical with diameter :math:`d_d`. Therefore, the mass is computed as
 
@@ -72,7 +103,7 @@ The droplets are assumed to be spherical with diameter :math:`d_d`. Therefore, t
 The procedure is as follows for updating the spray droplet:
 
 #. Interpolate the gas phase state to the droplet location using a trilinear interpolation scheme.
-#. Compute the boiling temperature for species :math:`n` at the current gas phase pressure using the Clasius-Clapeyron relation
+#. Compute the boiling temperature for liquid species :math:`n` at the current gas phase pressure using the Clasius-Clapeyron relation
 
    .. math::
       T_{b,n} = \left(\log\left(\frac{p_{\rm{atm}}}{p_g}\right) \frac{\mathcal{R}}{M_n h_{L,n}(T^*_{b,n})} + \frac{1}{T^*_{b,n}}\right)
@@ -80,48 +111,62 @@ The procedure is as follows for updating the spray droplet:
    The boiling temperature of the droplet is computed as
 
    .. math::
-      T_{d,b} = \sum^{N_L}_{n=0} Y_{d,n} T_{b,n}
+      T_{d,b} = \sum_{n\in \mathcal{S}_L} Y_{d,n} T_{b,n}
 
    Since we only have the latent heat at the reference condition temperature, we estimate the enthalpy at the boiling condition using Watson's law
 
    .. math::
       h_{L,n}(T^*_{b,n}) = h_{L,n}(T^*) \left(\frac{T_{c,n} - T^*}{T_{c,n} - T^*_{b,n}} \right)^{-0.38}
 
-#. Compute the latent heat of the droplet using
+#. Compute the latent heat for liquid species :math:`n` in the droplet using
 
    .. math::
-      h_{L,n}(T_d) = h_{g,n}(T_d) - h_{g,n}(T^*) + h_{L,n}(T^*) - c_{p,L,n}(T^*) (T_d - T^*) \,.
+      h_{L,n}(T_d) = h_{g,i}(T_d) - h_{g,i}(T^*) + h_{L,n}(T^*) - c_{p,L,n}(T^*) (T_d - T^*) \,.
 
+   where :math:`i` is the gas-phase species dependent on liquid species :math:`n` (usually the same, except when multiple liquid species are modeled using the same gas species).
 
-   and the saturation pressure, :math:`p_{{\rm{sat}}, n}`, using one of the methods described in the :ref:`Liquid Spray Properties <SprayLiquidProperties>` section.
+#. Compute the saturation pressure, :math:`p_{{\rm{sat}}, n}`, using one of the methods described in the :ref:`Liquid Spray Properties <SprayLiquidProperties>` section.
 
-#. Estimate the mass fractions in the vapor state using Raoult's law
-
-   .. math::
-      Y_{v,n} &= \frac{\chi_{v,n} M_n}{\overline{M}_v + \overline{M}_g (1 - \chi_{v,{\rm{sum}}})} \; \forall n \in N_L
-
-      \chi_{v,{\rm{sum}}} &= \sum^{N_L}_{n=0} \chi_{v,n}
-
-      \chi_{v,n} &= \frac{\chi_{d,n} p_{{\rm{sat}},n}}{p_g}
-
-      \chi_{d,n} &= \frac{Y_{d,n}}{M_n}\left(\sum^{N_L}_{k=0} \frac{Y_{d,k}}{M_k}\right)^{-1}
-
-      \overline{M}_v &= \sum^{N_L}_{n=0} \chi_{v,n} M_n
-
-   If :math:`\chi_{g,n} p_g > p_{{\rm{sat}},n}`, then :math:`\chi_{v,n} = Y_{v,n} = 0` for that particular species in the equations above, since that means the gas phase is saturated. The mass fractions in the reference state for the fuel are computed using the one-third rule and the remaining reference mass fractions are normalized gas phase mass fractions to ensure they sum to 1
+#. Estimate the composition of the vapor state using Raoult's law. First, convert from liquid state mass fractions to mole fractions for all :math:`N_L` liquid species and apply Raoult's law to obtain the vapor mole fractions:
 
    .. math::
-      Y_{r,n} = \left\{\begin{array}{c l}
-      \displaystyle Y_{v,n} + A (Y_{g,n} - Y_{v,n}) & {\text{If $Y_{v,n} > 0$}}, \\
-      \displaystyle\frac{1 - \sum^{N_L}_{k=0} Y_{v,k}}{1 - \sum^{N_L}_{k=0} Y_{g,k}} Y_{g,n} & {\text{Otherwise}}.
-      \end{array}\right. \; \forall n \in N_s.
+      X_{d,n} &= \frac{Y_{d,n}}{M_n}\left(\sum_{k \in \mathcal{S}_L} \frac{Y_{d,k}}{M_k}\right)^{-1} \quad \forall\; n \in \mathcal{S}_L,
+
+      X_{v,n} &= \frac{X_{d,n} p_{{\rm{sat}},n}}{p_g} \quad \forall\; n \in \mathcal{S}_L.
+
+   Then, collapse these mole fractions onto the species available in the gas phase, if needed:
+
+   .. math::
+      X_{v,i} = \sum_{n \in \mathcal{S}_{L}} \mathbf{L}_{i,n}X_{v,n} = \sum_{n \in \mathcal{S}_{L,i}} X_{v,n} \quad \forall\; i \in \mathcal{S}_{pc},
+
+   and compute the mass fractions in the vapor state:
+
+   .. math::
+      \overline{M}_v &= \sum_{i \in \mathcal{S}_{pc}} X_{v,i} M_i
+
+      X_{v,{\rm{sum}}} &= \sum_{i \in \mathcal{S}_{pc}} X_{v,i}
+
+      Y_{v,i} &= \frac{X_{v,i} M_i}{\overline{M}_v + \overline{M}_g (1 - X_{v,{\rm{sum}}})} \quad \forall\; i \in \mathcal{S}_{pc}.
+
+   If :math:`X_{g,n} p_g > p_{{\rm{sat}},n}`, then :math:`X_{v,n} = Y_{v,n} = 0` for that particular species in the equations above, since that means the gas phase is saturated. For cases with gas species that depend on multiple liquid species, we don't have access to the mole fraction of each liquid species in the gas phase (:math:`X_{g,n}`). Therefore, we estimate it by distributing the gas species mole fraction across all the liquid species on which depends in proportion to the liquid composition:
+
+   .. math::
+      X_{g,n} = \frac{X_{d,n}}{\sum_{k \in \mathcal{S}_{L,i}} X_{d,k}} X_{g,i} \quad \forall\; n \in \mathcal{S}_{L,i}, \; i \in \mathcal{S}_{pc} .
+
+   The mass fractions in the reference state for the fuel are computed using the one-third rule and the remaining reference mass fractions are normalized gas phase mass fractions to ensure they sum to 1
+
+   .. math::
+      Y_{r,i} = \left\{\begin{array}{c l}
+      \displaystyle Y_{v,i} + A (Y_{g,i} - Y_{v,i}) & {\text{if $i \in \mathcal{S}_{pc}$ and $Y_{v,i} > 0$}}, \\
+      \displaystyle\frac{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{r,k}}{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{g,k}} Y_{g,i} & {\text{otherwise}},
+      \end{array}\right. \quad \forall\; i \in \mathcal{S}_g.
 
 #. The average molar mass, specific heat, and density of the reference state in the gas film are computed as
 
    .. math::
-      \overline{M}_r &= \left(\sum^{N_s}_{n=0} \frac{Y_{r,n}}{M_n}\right)^{-1},
+      \overline{M}_r &= \left(\sum_{i \in \mathcal{S}_g} \frac{Y_{r,i}}{M_i}\right)^{-1},
 
-      c_{p,r} &= \sum^{N_s}_{n=0} Y_{s,n} c_{p,g,n}(T_r),
+      c_{p,r} &= \sum_{i \in \mathcal{S}_g} Y_{r,i} c_{p,g,i}(T_r),
 
       \rho_r &= \frac{\overline{M}_r p_g}{\mathcal{R} T_r}.
 
@@ -130,17 +175,22 @@ The procedure is as follows for updating the spray droplet:
 #. It is important to note that `PelePhysics` provides mixture averaged mass diffusion coefficient :math:`\overline{(\rho D)}_{r,n}`, which is converted into the binary mass diffusion coefficient using
 
    .. math::
-      (\rho D)_{r,n} = \overline{(\rho D)}_{r,n} \overline{M}_r / M_n.
+      (\rho D)_{r,i} = \overline{(\rho D)}_{r,i} \overline{M}_r / M_i \quad \forall\; i \in \mathcal{S}_{pc}.
 
    Mass diffusion coefficient is then normalized by the total fuel vapor molar fraction
 
    .. math::
-      (\rho D)^*_{r,n} = \frac{\chi_{v,n} (\rho D)_{r,n}}{\chi_{v,{\rm{sum}}}} \; \forall n \in N_L
+      (\rho D)^*_{r,i} = \frac{X_{v,i} (\rho D)_{r,i}}{X_{v,{\rm{sum}}}} \; \forall\; i \in \mathcal{S}_{pc},
 
-   and the total is
+   which can be consistently distributed across liquid species in the many-to-one case:
 
    .. math::
-      (\rho D)_r = \sum_{n=0}^{N_L} (\rho D)_{r,n}^*
+      (\rho D)^*_{r,n} = \frac{X_{v,n}}{X_{v,i}} (\rho D)^*_{r,i}  \quad \forall n \in \mathcal{S}_{L,i} \quad \forall\; i \in \mathcal{S}_{pc}
+
+   (further investigation needed to determine if molecular weight scaling is also needed here). The total is
+
+   .. math::
+      (\rho D)_r = \sum_{i \in \mathcal{S}_{pc}} (\rho D)_{r,i}^*.
 
 #. The momentum source is a function of the drag force
 
@@ -183,19 +233,19 @@ The procedure is as follows for updating the spray droplet:
    * The Spalding numbers for mass transfer, :math:`B_M`, and heat transfer, :math:`B_T`, are computed using
 
      .. math::
-        B_M &= \displaystyle\frac{\sum^{N_L}_{n=0} Y_{v,n} - \sum^{N_L}_{n=0} Y_{g,n}}{1 - \sum^{N_L}_{n=0} Y_{v,n}}
+        B_M &= \displaystyle\frac{\sum_{i \in \mathcal{S}_{pc} | Y_{v,i} > 0 } Y_{v,i} - \sum_{i \in \mathcal{S}_{pc} | Y_{v,i} > 0 } Y_{g,i}}{1 - \sum_{i \in \mathcal{S}_{pc}| Y_{v,i} > 0}  Y_{v,i}}
 
         B_T &= \left(1 + B_M\right)^{\phi} - 1
 
      where
 
      .. math::
-        \phi = \frac{c_{p,r} (\rho D)_r {\rm{Sh}}^*}{\lambda_r {\rm{Nu}}^*}
+        \phi = \frac{c_{p,r}^f (\rho D)_r {\rm{Sh}}^*}{\lambda_r {\rm{Nu}}^*}
 
-     Note the dependence of :math:`{\rm{Nu}}^*` on :math:`B_T` means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become
+     and :math:`c_{p,r}^f` is the heat capacity of the fuel at the reference/skin state temperature. Note the dependence of :math:`{\rm{Nu}}^*` on :math:`B_T` means an iterative scheme is required to solve for both. The droplet vaporization rate and heat transfer become
 
      .. math::
-        \dot{m}_n &= -\pi (\rho D)_{r,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall n \in N_L
+        \dot{m}_n &= -\pi (\rho D)_{r,n}^* d_d {\rm{Sh}}^* \log(1 + B_M). \; \forall\; n \in \mathcal{S}_L,
 
         \mathcal{Q}_d &= \pi \lambda_r d_d (T_g - T_d) {\rm{Nu}}^* \frac{\log(1 + B_T)}{B_T}
 
@@ -209,13 +259,13 @@ The procedure is as follows for updating the spray droplet:
 #. To alleviate conservation issues at AMR interfaces, each parcel only contributes to the gas phase source term of the cell containing it. The gas phase source terms for a single parcel to the cell are
 
     .. math::
-       S_{\rho} &= \mathcal{C} \sum^{N_L}_{n=0} \dot{m}_n,
+       S_{\rho} &= \mathcal{C} \sum_{n \in \mathcal{S}_L} \dot{m}_n,
 
-       S_{\rho Y_n} &= \mathcal{C} \dot{m}_n,
+       S_{\rho Y_i} &= \mathcal{C} \sum_{n \in \mathcal{S}_{L,i}} \dot{m}_n \quad \forall\; i \in \mathcal{S}_{pc},
 
        \mathbf{S}_{\rho \mathbf{u}} &= \mathcal{C} \mathbf{F}_d,
 
-       S_{\rho h} &= \mathcal{C}\left(\mathcal{Q}_d + \sum_{n=0}^{N_L} \dot{m}_n h_{g,n}(T_d)\right),
+       S_{\rho h} &= \mathcal{C}\left(\mathcal{Q}_d + \sum_{n \in \mathcal{S}_L} \dot{m}_n h_{g,n}(T_d)\right),
 
        S_{\rho E} &= S_{\rho h} + \frac{1}{2}\left\|\mathbf{u}_d\right\| S_{\rho} + \mathcal{C} \mathbf{F}_d \cdot \mathbf{u}_d
 
@@ -231,19 +281,133 @@ The procedure is as follows for updating the spray droplet:
 
    **Dimensional Assumptions in the Spray Model**
 
-   The spray model assumes spherically symmetric droplets and is inherently three-dimensional. 
-   For two-dimensional simulations, the domain is treated as one cell wide in the :math:`z`-direction, 
+   The spray model assumes spherically symmetric droplets and is inherently three-dimensional.
+   For two-dimensional simulations, the domain is treated as one cell wide in the :math:`z`-direction,
    with :math:`L_z = \Delta x`, so the volume in the gas-phase source terms is:
 
    .. math::
 
       V_{\rm{cell}} = \Delta x \, \Delta y \, \Delta x
 
-   For nominally single droplet cases, this effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`, 
-   exaggerating Stefan flow in the :math:`x`- and :math:`y`-directions and omitting flow in :math:`z`. While this has minimal impact on 
+   For nominally single droplet cases, this effectively places an infinite array of droplets spaced :math:`\Delta x` apart in :math:`z`,
+   exaggerating Stefan flow in the :math:`x`- and :math:`y`-directions and omitting flow in :math:`z`. While this has minimal impact on
    droplet diameter or temperature, it can distort the surrounding gas-phase flow, especially for low :math:`\text{Re}_d`.
 
    For such cases, fully three-dimensional simulations are recommended.
+
+
+Spray Equations with Manifold Models
+====================================
+
+The Spray implementation for Manifold-based combustion models (i.e., in the gas phase reduced-dimensional manifold parameters are transported rather than species) is meant to follow that of the implementation and assumptions described above for simulations using finite rate gas phase chemistry mechanisms. However, a major additional assumption introduced for the first pass at this implementation is to substantially neglect evolution of the energy equation. Instead, it is assumed that the enthalpy deficit in the gas phase due to enthalpy of vaporization is accounted for in the boundary conditions used to generate the reduced-order manifold that defines gas phase properties. For the manifold model implementation, the liquid phase remains represented by the same set of liquid species as in the finite rate chemistry implementation, and the liquid phase equations of motion, mass, momentum, and energy remain unchanged from those listed above. However, because the gas phase now involved transport of manifold parameters rather than species, the implementation must be adjusted to properly estimate the gas phase composition near the droplets for the purpose of computing phase quilibria and phase change rates. The source terms must also be appropriately transformed from species source terms to manifold parameter source terms for coupling to the gas phase.
+
+The manifold parameters are denoted as :math:`\xi_k` and are defined as linear combinations of species  :math:`\xi_k = W_{ki} Y_i`. Gas phase properties may be obtained as functions of the Manifold, :math:`\phi = \mathcal{F}(\xi_k)` where :math:`\phi = (\bar{M}, Y_i, T, ...)`. Similarly to detailed chemistry, we allow that multiple liquid phase species may contribute to a single species that can be extracted from the manifold.
+
+The modified procedure for Manifold-based gas phase chemistry is as follows for updating the spray droplet:
+
+#. Unchanged from Step 1 above.
+
+#. Unchanged from Step 2 above.
+
+#. The Manifold model does not provide information about species enthalpies. However, the enthalpy of vaporization term is not directly required in the present implementation, so this step to compute :math:`h_{L,n}(T_d)` is omitted.
+
+#. Only Antoine-based computation of :math:`p_{\text{sat}}` can be used for the gas phase, as the Clausius-Clapeyron relationship requires :math:`h_{L,n}(T_d)`, which was not computed in the previous step.
+
+#. Estimate the vapor state using Raoult's law. Note that the vapor state must be estimated in terms of Manifold parameters, rather than species. First, vapor-liquid equilibrium calculations are used to compute values in terms of species in the same manner as for detailed chemistry, but these are then converted to values in terms of Manifold parameters.
+
+   .. math::
+      X_{d,n} &= \frac{Y_{d,n}}{M_n}\left(\sum_{k \in \mathcal{S}_L} \frac{Y_{d,k}}{M_k}\right)^{-1} \quad \forall\; n \in \mathcal{S}_L.
+
+      X_{v,n} &= \frac{X_{d,n} p_{{\rm{sat}},n}}{p_g} \quad \forall\; n \in \mathcal{S}_L.
+
+   Then, collapse these mole fractions onto the species available in the gas phase, if needed:
+
+   .. math::
+      X_{v,i} = \sum_{n \in \mathcal{S}_{L,i}} X_{v,n} \quad \forall\; i \in \mathcal{S}_{pc},
+
+   and compute the mass fractions in the vapor state:
+
+   .. math::
+      \overline{M}_v &= \sum_{i \in \mathcal{S}_{pc}} X_{v,i} M_i
+
+      X_{v,{\rm{sum}}} &= \sum_{i \in \mathcal{S}_{pc}} X_{v,i}
+
+      Y_{v,i} &= \frac{X_{v,i} M_i}{\overline{M}_v + \overline{M}_g (1 - X_{v,{\rm{sum}}})} \quad \forall\; i \in \mathcal{S}_{pc},
+
+   noting that :math:`\overline{M}_g`, the mean molecular weight in the gas phase, must be available as one of the :math:`\phi` that can be evaluated from the manifold, and that molecular weights
+   for the gas phase species in :math:`\mathcal{S}_{pc}` must also be specified as part of the manifold model. With these vapor phase composition, we could compute the reference state compositions in the
+   same manner as for detailed chemistry, but in order to evaluate properties at the reference state, we require the composition to be projected onto the manifold. To do this, we start from the
+   detailed species representation of the reference state:
+
+   .. math::
+      Y_{r,i} = \left\{\begin{array}{c l}
+      \displaystyle Y_{v,i} + A (Y_{g,i} - Y_{v,i}) & {\text{if $i \in \mathcal{S}_{pc}$ and $Y_{v,i} > 0$}}, \\
+      \displaystyle\frac{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{r,k}}{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{g,k}} Y_{g,i} & {\text{otherwise}},
+      \end{array}\right. \quad \forall\; i \in \mathcal{S}_g.
+
+   and note that :math:`\xi_i = W_{ij} Y_j`. We note that :math:`Y_{g,i} \: \forall\; i \in \mathcal{S}_g` can be evaluated from the manifold, but to reduce the number of variables that must be
+   stored/evaluated in the manifold model, we can make some simplifications so we only have to evaluate :math:`Y_{g,i} \: \forall\; i \in \mathcal{S}_{pc}`. We define
+
+   .. math::
+      Y^{pc}_{g,i} = \left\{\begin{array}{c l}
+      \displaystyle Y_{g,i} & {\text{if $i \in \mathcal{S}_{pc}$ and $Y_{v,i} > 0$}}, \\
+      \displaystyle 0.0 & {\text{otherwise}},
+      \end{array}\right. \quad \forall\; i \in \mathcal{S}_g.
+
+   and its complement :math:`Y^{nc}_{g,i}` such that :math:`Y^{pc}_{g,i} + Y^{nc}_{g,i} = Y_{g,i}`, as well as similar definitions for :math:`Y^{nc}_{r,i}, Y^{pc}_{r,i},
+   Y^{nc}_{v,i}, \text{and } Y^{pc}_{v,i}`. With these definitions,
+
+   .. math::
+      Y^{pc}_{r,i} &=  Y^{pc}_{v,i} + A (Y^{pc}_{g,i} - Y^{pc}_{v,i}), \\
+      Y^{nc}_{r,i} &= \theta Y^{nc}_{g,i}, \\
+      \text{where } \theta &= \frac{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{r,k}}{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y_{g,k}}
+                            = \frac{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y^{pc}_{r,k}}{1 - \sum_{k \in \mathcal{S}_{pc} | Y_{v,k} > 0 } Y^{pc}_{g,k}}
+
+
+   Therefore, in order to compute :math:`\xi_{r,k} = W_{ki} Y_{r,i}` from the available data :math:`(\xi_{g,k}, Y^{pc}_{g,i}(\xi_{g,k}), \text{and } Y^{pc}_{v,i} )`, we note
+
+   .. math::
+      \xi_{r,k} &= W_{ki} (Y^{pc}_{r,i} + Y^{nc}_{r,i}) = W_{ki} Y^{pc}_{r,i} + W_{ki} \theta Y^{nc}_{g,i}, \text{and} \\
+      \xi_{g,k} &= W_{ki} (Y^{pc}_{g,i} + Y^{nc}_{g,i}) \therefore W_{ki} Y^{nc}_{g,i} = \xi_{g,j} - W_{ki} Y^{pc}_{g,i}.
+
+   We can therefore compute :math:`\xi_{r,k}` from only available data using:
+
+   .. math::
+      \xi_{r,k} =  W_{ki} Y^{pc}_{r,i} + \theta (\xi_{g,k} - W_{ki} Y^{pc}_{g,i} ).
+
+   The present implementation specializes to the case (common in combustion modeling) where the manifold parameters :math:`\xi_k` are either progress variable like :math:`(W_{ki}=0 \; \forall\; i \in \mathcal{S}_{pc})`
+   or mixture fraction like (:math:`W_{ki}=1` for one :math:`i \in \mathcal{S}_{pc}` and :math:`0` for all others).
+
+#. Proceeds as in the ideal gas implementation, but :math:`\bar{M}_r` and :math:`\rho_r` are computed as functions of the manifold :math:`\phi(\xi_k))`. However, we note that the computed reference temperature
+   :math:`T_r^* = \phi(\xi_{k,r})` may deviate significantly from the nominal reference temperature :math:`T_r = T_d + A (T_g - T_d)`. To correct for this, the density obtained from the table is rescaled
+   using an ideal gas law assumption:
+
+   .. math::
+
+      \rho_r = \rho_r^* \frac{T_r^*}{T_r}
+
+   where :math:`\rho_r^*` is the value obtained from the manifold model. Heat capacities :math:`c_{P,r}` and :math:`c^f_{P,r}` are obtained from the manifold model without correction due to the relatively week dependence on temperature for heat capacity.
+
+#. Again, :math:`\mu_r`, :math:`\lambda_r`, and :math:`\rho D_{r,n}`  are computed as functions of the manifold. Due to the temperature discrepancy noted in the previous step, a rescaling based on Sutherland's law is performed for all the transport coefficients, shown here for :math:`\mu_r`:
+
+   .. math::
+
+      \mu_r = \mu_r^* \left(\frac{T_r}{T_r^*}\right)^{3/2} \frac{T_r^* + S}{T_r + S}
+
+   where :math:`{}^*` indicates a quantity obtained from the manifold model :math:`\phi(\xi_k)`.
+
+
+#. Diffusion coefficient modification proceeds as in the detailed chemistry case.
+
+#. Momentum source term computation proceeds as in the detailed chemistry case.
+
+#. Mass source term proceeds as in the detailed chemistry case. Energy source term is ignored.
+
+#. Gas phase source terms follow the detailed chemistry implementation, except that the energy/enthalpy equations are ignored and
+
+   .. math::
+      S_{\rho \xi_k} = W_{ki} S_{\rho Y_i} = W_{ki} \mathcal{C} \sum_{n \in \mathcal{S}_{L,i}} \dot{m}_n \quad \forall\; i \in \mathcal{S}_{pc},
+
 
 
 Spray Flags and Inputs
@@ -257,40 +421,43 @@ Spray Flags and Inputs
 
   * The liquid fuel species names are specified using ``particles.fuel_species = NC7H16 NC10H22``. The number of fuel species listed must match ``SPRAY_FUEL_NUM``.
 
-  * Although this is not required or typical, if the evaporated mass should contribute to a different gas phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3``. All species specified must be present in the chemistry transport and thermodynamic data.
+  * Although this is not required or typical, if the evaporated mass should contribute to a different gas-phase species than what is modeled in the liquid phase, use ``particles.dep_fuel_species``. For example, if we wanted the evaporated mass from both liquid species to contribute to a different species called ``SP3``, we would put ``particles.dep_fuel_species = SP3 SP3``. All species specified must be present in the chemistry transport and thermodynamic data.
 
 * The following table lists other inputs related to ``particles.``
 
 .. table::
 
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |Input                  |Description                    |Required     |Default Value      |
-   +=======================+===============================+=============+===================+
-   |``fuel_species``       |Names of liquid species        |Yes          |None               |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``dep_fuel_species``   |Name of gas phase species to   |Yes          |Inputs to          |
-   |                       |contribute                     |             |``fuel_species``   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``mom_transfer``       |Couple momentum with gas phase |No           |``1``              |
-   |                       |                               |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``mass_transfer``      |Evaporate mass and exchange    |No           |``1``              |
-   |                       |heat with gas phase            |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``fixed_parts``        |Fix particles in space         |No           |``0``              |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``parcel_size``        |:math:`N_{d}`; Number of       |No           |``1.``             |
-   |                       |droplets per parcel            |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``write_ascii_files``  |Output ascii files of spray    |No           |``0``              |
-   |                       |data                           |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``cfl``                |Particle CFL number for        |No           |``0.5``            |
-   |                       |limiting time step             |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
-   |``init_file``          |Ascii file name to initialize  |No           |Empty              |
-   |                       |droplets                       |             |                   |
-   +-----------------------+-------------------------------+-------------+-------------------+
+   +------------------------+-------------------------------+-------------+-------------------+
+   |Input                   |Description                    |Required     |Default Value      |
+   +========================+===============================+=============+===================+
+   |``fuel_species``        |Names of liquid species        |Yes          |None               |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``dep_fuel_species``    |Name of gas-phase species to   |No           |Inputs to          |
+   |                        |contribute                     |             |``fuel_species``   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``dep_manifold_species``|Name of manifold parameter to  |Yes          |None               |
+   |                        |contribute (Manifold EOS only) |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``mom_transfer``        |Couple momentum with gas phase |No           |``1``              |
+   |                        |                               |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``mass_transfer``       |Evaporate mass and exchange    |No           |``1``              |
+   |                        |heat with gas phase            |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``fixed_parts``         |Fix particles in space         |No           |``0``              |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``parcel_size``         |:math:`N_{d}`; Number of       |No           |``1.``             |
+   |                        |droplets per parcel            |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``write_ascii_files``   |Output ascii files of spray    |No           |``0``              |
+   |                        |data                           |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``cfl``                 |Particle CFL number for        |No           |``0.5``            |
+   |                        |limiting time step             |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
+   |``init_file``           |Ascii file name to initialize  |No           |Empty              |
+   |                        |droplets                       |             |                   |
+   +------------------------+-------------------------------+-------------+-------------------+
 
 
 .. _SprayLiquidProperties:
@@ -298,35 +465,35 @@ Spray Flags and Inputs
 Liquid Spray Properties
 -----------------------
 
-The required inputs and corresponding correlations for the original *PeleMP* [#owen]_ 
-and the *FuelLib-based GCM* are outlined in the subsections below. Please note the following details:  
+The required inputs and corresponding correlations for the original *PeleMP* [#owen]_
+and the *FuelLib-based GCM* are outlined in the subsections below. Please note the following details:
 
-**Units:**  
+**Units:**
 
-* `PeleLM` and `PeleLMeX` use MKS units, while `PeleC` uses CGS units. The Spray inputs follow the same convention.  
+* `PeleLM` and `PeleLMeX` use MKS units, while `PeleC` uses CGS units. The Spray inputs follow the same convention.
 
-* For example, when running a spray simulation coupled with `PeleC`, the values for ``particles.fuel_cp`` must be provided in erg/g.  
+* For example, when running a spray simulation coupled with `PeleC`, the values for ``particles.fuel_cp`` must be provided in erg/g.
 
-**Input flags:**  
+**Input flags:**
 
-* A number of ``particles.`` flags are required in the input file to define liquid fuel properties.  
+* A number of ``particles.`` flags are required in the input file to define liquid fuel properties.
 
-* For demonstration purposes, two liquid species will be used: ``NC7H16`` and ``NC10H22``.  
+* For demonstration purposes, two liquid species will be used: ``NC7H16`` and ``NC10H22``.
 
-* Many values must be specified on a per-species basis. In this example, one would need to specify:  
-   
-   - ``particles.NC7H16_crit_temp = 540`` critical temperature of 540 K for ``NC7H16``  
-   
+* Many values must be specified on a per-species basis. In this example, one would need to specify:
+
+   - ``particles.NC7H16_crit_temp = 540`` critical temperature of 540 K for ``NC7H16``
+
    - ``particles.NC10H22_crit_temp = 617`` critical temperatures of 617 K for ``NC10H22``.
 
-**Additional method-specific inputs:**  
-   
-   * The following tables list other required inputs related to ``particles.``,  where ``SP`` refers to a given fuel species name.  
+**Additional method-specific inputs:**
+
+   * The following tables list other required inputs related to ``particles.``,  where ``SP`` refers to a given fuel species name.
 
 The source code for the liquid spray properties can be found in ``SprayProperties.H``.
 
 PeleMP Implementation
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 .. table::
 
@@ -368,7 +535,7 @@ PeleMP Implementation
 
   .. math::
      p_{\rm{sat},n}(T) = d_n 10^{a_n - b_n / (T + c_n)}.
-  
+
   * If no fit is provided, the saturation pressure is estimated using the Clasius-Clapeyron relation
 
       .. math::
@@ -391,15 +558,15 @@ PeleMP Implementation
 
 
 FuelLib-Based GCM
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 Currently the *GCM* approach of estimating liquid fuel properties is only available in PeleLMeX and requires:
 
 * Setting the compile-time flag ``SPRAY_GCM=TRUE`` in the case's ``GNUmakefile``
 
 * Generating a liquid-fuel-specific GCM input file from FuelLib, and copying the input file into the case directory.
-   
-   - The process for generating this input file is provided in FuelLib's tutorial: `Exporting GCM Properties for Pele <https://nrel.github.io/FuelLib/tutorials.html#exporting-gcm-properties-for-pele>`_.
+
+   - The process for generating this input file is provided in FuelLib's tutorial: `Exporting Properties for Pele <https://nrel.github.io/FuelLib/tutorials-export4pele.html>`_.
 
    - An example of using the GCM in Pele is provided in ``PeleLMeX/Exec/RegTests/SingleDropEvap``.
 
@@ -542,10 +709,10 @@ Care must be taken to ensure the amount of mass injected during a time step matc
 
 4. If injection occurs, the amount of mass injected, :math:`m_{\rm{actual}}`, is summed and compared with the desired mass flow rate. If :math:`m_{\rm{actual}} / t_{\rm{inj}} - \dot{m}_{\rm{inj}} > 0.05 \dot{m}_{\rm{inj}}`, then :math:`N_{P,\min}` is increased by one to reduce the likelihood of over-injecting in the future. A balance is necessary: the higher the minimum number of parcels, the less likely to over-inject mass but the number of time steps between injections can potentially grow as well.
 
-Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the fluid domain. To use this feature, initialize a spray jet (named ``jet_dpm``, say) by using the statement `spray.jetnames=jet_dpm` in the input file as previously mentioned. In order to use the ANSYS Fluent DPM capability, set the boolean input variable ``spray.jet_dpm.read_from_dpm_file`` to true and specify the DPM file name by ``spray.jet_dpm.dpm_filename=<filename>``. 
-The DPM data in the file will correspond to a specified time-gap, but it can be made to repeat periodically by specifying ``spray.jet_dpm.is_dpm_periodic=true``. Otherwise, spray particle injection will cease after the final DPM time is reached. The spray injection can be set to start from a specific DPM time stamp by specifying 
-``spray.jet_dpm.initial_injection_dpm_time=<DPM time stamp>``. Similarly, the spray injection can also be set to start from a specific flow time by setting ``spray.jet_dpm.initial_injection_flow_time`` to the appropriate value. If the coordinate system used in the ANSYS Fluent DPM file is different from that in Pele, 
-one can use ``spray.jet_dpm.trans_matrix`` and ``spray.jet_dpm.translation`` to specify the direction cosine matrix (3X3 matrix) and the translation vector (<dx,dy,dz>) to align both the coordinate systems. 
+Spray data derived from ANSYS Fluent DPM solution files can also be used to inject spray particles into the fluid domain. To use this feature, initialize a spray jet (named ``jet_dpm``, say) by using the statement `spray.jetnames=jet_dpm` in the input file as previously mentioned. In order to use the ANSYS Fluent DPM capability, set the boolean input variable ``spray.jet_dpm.read_from_dpm_file`` to true and specify the DPM file name by ``spray.jet_dpm.dpm_filename=<filename>``.
+The DPM data in the file will correspond to a specified time-gap, but it can be made to repeat periodically by specifying ``spray.jet_dpm.is_dpm_periodic=true``. Otherwise, spray particle injection will cease after the final DPM time is reached. The spray injection can be set to start from a specific DPM time stamp by specifying
+``spray.jet_dpm.initial_injection_dpm_time=<DPM time stamp>``. Similarly, the spray injection can also be set to start from a specific flow time by setting ``spray.jet_dpm.initial_injection_flow_time`` to the appropriate value. If the coordinate system used in the ANSYS Fluent DPM file is different from that in Pele,
+one can use ``spray.jet_dpm.trans_matrix`` and ``spray.jet_dpm.translation`` to specify the direction cosine matrix (3X3 matrix) and the translation vector (<dx,dy,dz>) to align both the coordinate systems.
 
 
   The DPM file has a specific format and a typical file is shown below:
@@ -562,15 +729,25 @@ Spray Validation
 Single Droplet Tests
 --------------------
 
-Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be compiled with ``SPRAY_GCM=TRUE`` or ``FALSE``. To run a test case with the *PeleMP* or *GCM* liquid properties, simply open ``Validate.py`` and set the variables for ``case_name``, ``LiqPropsType``, and the method for calculating :math:`p_{\rm sat}` for the PeleMP model. For example ::
+Single droplet tests are performed in 2D with PeleLMeX and compared with experimental results published in literature. These tests are setup in ``PeleLMeX/Exec/RegTests/SingleDropEvap`` and can be run with the ``Validate.py`` script. To run a test case with the *PeleMP* or *GCM* liquid properties, simply run ``Validate.py`` with the desired variables for ``case_name``, ``LiqPropsType``, and the method for calculating :math:`p_{\rm sat}` for the PeleMP model. Using the build flag ``-b`` ensures the correct executable is built for each case. For example: ::
 
-   case_name = "WongLin"
-   LiqPropsType = "gcm"
+   # Build a new executable and run WongLin with GCM
+   python Validate.py -b -c WongLin
 
-   # Psat model for PeleMP: "Antoine" or "Clasius-Clapeyron"
-   PeleMP_PsatModel = "Antoine"
+   # Build a new executable and run WongLin with PeleMP and Clasius-Clapeyron psat
+   python Validate.py -b -c WongLin -l mp -p CC
 
-then run ``python Validate.py``.
+   # Build a new executable and run RungeJP8 many-to-one with GCM and Manifold EOS
+   python Validate.py -b -c RungeJP8 -m --cmlm_path <local-path-to-cmlm>
+
+   # Build a new executable and run RungeJP8 one-to-one with HyChem mechanism with GCM
+   python Validate.py -b -c RungeJP8-H
+
+Comparison plots can be generated after the simulations have completed by running: ::
+
+   # Generate comparison plots for all RungeJP8 cases
+   python CompareResults.py -c RungeJP8
+
 The following table details the parameters of each test:
 
 .. table::
@@ -619,15 +796,15 @@ The following table details the parameters of each test:
 
 .. figure:: /Visualization/runge_jp8_res_2025.png
    :align: center
-   :figwidth: 45%
+   :figwidth: 80%
 
-   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from with Runge et al. [#runge]_ Note that all three cases represent a multicomponent fuel with a single liquid-phase and single gas-phase species.  
+   Droplet evaporation of POSF10264 (JP8) compared to experimental measurements from Runge et al. [#runge]_ This demonstrates three different approaches: (i) A detailed non-reacting mechanism with 67 species in the liquid and gas phases, (ii) a single liquid species and corresponding single Hychem gas species, where the thermophysical properties of the liquid species are estimated using FuelLib's mixture properties, and (iii) a many-to-one mapping where 67 liquid species evaporate to a single Hychem gas species with and without the Manifold EOS. The many-to-one cases for PeleGCM and PeleMP with Antoine fit are indistinguishable on this plot.
 
 .. [#owen] "PeleMP: The Multiphysics Solver for the Combustion Pele Adaptive Mesh Refinement Code Suite," L. D. Owen, W. Ge, M. Rieth, M. Arienti, L. Esclapez, B. S. Soriano, M. E. Mueller, M. Day, R. Sankaran, and J. H. Chen, J. Fluids Eng., vol. 146, no. 4, pp. 1-18 (2024), doi: `10.1115/1.4064494 <https://doi.org/10.1115/1.4064494>`_.
 
-.. [#gani94] "New group contribution method for estimating properties of pure compounds", L. Constantinou, and R. Gani, AIChE J., Vol. 40, No. 10, pp.1697-1710 (1994), doi: `10.1002/aic.690401011 <https://doi.org/10.1002/aic.690401011>`_. 
+.. [#gani94] "New group contribution method for estimating properties of pure compounds", L. Constantinou, and R. Gani, AIChE J., Vol. 40, No. 10, pp.1697-1710 (1994), doi: `10.1002/aic.690401011 <https://doi.org/10.1002/aic.690401011>`_.
 
-.. [#gani95] "Estimation of the acentric factor and the liquid molar volume at 298 K using a new group contribution method", L. Constantinou, and R. Gani, Fluid Phase Equilibria, Vol. 103, No. 1, pp.11-22 (1995), doi: `10.1016/0378-3812(94)02593-P. <https://doi.org/10.1016/0378-3812(94)02593-P.>`_. 
+.. [#gani95] "Estimation of the acentric factor and the liquid molar volume at 298 K using a new group contribution method", L. Constantinou, and R. Gani, Fluid Phase Equilibria, Vol. 103, No. 1, pp.11-22 (1995), doi: `10.1016/0378-3812(94)02593-P. <https://doi.org/10.1016/0378-3812(94)02593-P.>`_.
 
 .. [#govindaraju] "Group contribution method for multicomponent evaporation with application to transportation fuels", Int. J. of Heat and Mass Transfer, Vol. 102, pp.833–845 (2016), doi: `10.1016/j.ijheatmasstransfer.2016.06.079 <https://doi.org/10.1016/j.ijheatmasstransfer.2016.06.079>`_.
 
@@ -639,9 +816,8 @@ The following table details the parameters of each test:
 
 .. [#nomura] "Experimental study on high-pressure droplet evaporation using microgravity conditions", H. Nomura and Y. Ujiie and H. J. Rath and J. Sato and M. Kono, Symposium (International) on Combustion, vol. 26, no. 1, pp. 1267–1273 (1996), doi: `10.1016/S0082-0784(96)80344-4 <https://doi.org/10.1016/S0082-0784(96)80344-4>`_.
 
-.. [#wonglin] "Internal temperature distributions of droplets vaporizing in high-temperature convective flows", S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.  
+.. [#wonglin] "Internal temperature distributions of droplets vaporizing in high-temperature convective flows", S.-C. Wong and A.-C. Lin, J. Fluid Mech., vol. 237, pp. 671–687 (1992), doi: `10.1017/S0022112092003574 <https://doi.org/10.1017/S0022112092003574>`_.
 
 .. [#daif] "Comparison of multicomponent fuel droplet vaporization experiments in forced convection with the Sirignano model", A. Daı̈f and M. Bouaziz and X. Chesneau and A. Ali Chérif, Exp. Therm. Fluid Sci., vol. 18, no. 4, pp. 282-290, Issn 0894-1777 (1998), doi: `10.1016/S0894-1777(98)10035-3 <https://doi.org/10.1016/S0894-1777(98)10035-3>`_.
 
 .. [#runge] "Low-temperature vaporization of JP-4 and JP-8 fuel droplets", T. Runge and M. Teske and C. E. Polymeropoulos, At. Sprays, vol. 8, pp. 25-44 (1998), doi: `10.1615/AtomizSpr.v8.i1.20 <https://doi.org/10.1615/AtomizSpr.v8.i1.20>`_.
-

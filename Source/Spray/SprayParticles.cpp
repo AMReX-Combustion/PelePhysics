@@ -335,7 +335,7 @@ SprayParticleContainer::updateParticles(
           GpuArray<Real, SPRAY_FUEL_NUM>
             cBoilT; // Boiling temperature at current pressure
           eos.molecular_weight(gpv.mw.data());
-          for (int n = 0; n < NUM_SPECIES; ++n) {
+          for (int n = 0; n < NUM_CHEM_SPECIES; ++n) {
             gpv.mw[n] *= SprayUnits::mass_conv;
           }
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
@@ -437,9 +437,11 @@ SprayParticleContainer::updateParticles(
             if (fdat->mass_trans) {
               Gpu::Atomic::Add(
                 &rhoSrcarr(cur_indx), cur_coef * gpv.fluid_mass_src);
-              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+              for (int pc = 0; pc < fdat->N_pc; ++pc) {
+                const int pcspec = fdat->pc_indx[pc];
                 Gpu::Atomic::Add(
-                  &rhoYSrcarr(cur_indx, spf), cur_coef * gpv.fluid_Y_dot[spf]);
+                  &rhoYSrcarr(cur_indx, pc),
+                  cur_coef * gpv.fluid_Y_dot[pcspec]);
               }
             }
             Gpu::Atomic::Add(
