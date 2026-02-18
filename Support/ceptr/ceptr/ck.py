@@ -9,7 +9,12 @@ def ckawt(fstream, mechanism):
     """Write ckawt."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get atomic weight for all elements"))
-    cw.writer(fstream, "void CKAWT" + cc.sym + "( amrex::Real *  awt)")
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKAWT"
+        + cc.sym
+        + "( amrex::Real *  awt)",
+    )
     cw.writer(fstream, "{")
     cw.writer(fstream, "atomicWeight(awt);")
     cw.writer(fstream, "}")
@@ -23,7 +28,10 @@ def ckncf(fstream, mechanism, species_info):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns the elemental composition "))
     cw.writer(fstream, cw.comment("of the speciesi (mdim is num of elements)"))
-    cw.writer(fstream, "void CKNCF" + cc.sym + "(int * ncf)")
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKNCF" + cc.sym + "(int * ncf)",
+    )
     cw.writer(fstream, "{")
     cw.writer(fstream, f"int kd = {n_elements}; ")
     cw.writer(fstream, cw.comment("Zero ncf"))

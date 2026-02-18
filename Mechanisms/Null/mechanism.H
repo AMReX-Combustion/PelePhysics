@@ -20,8 +20,6 @@
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
  * GPU based. Defined in mechanism.cpp  */
 /* MISC  */
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 /* SPARSE INFORMATION  */
@@ -38,6 +36,25 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
   int* rowVals, int* colPtrs, int* indx, const int* consP);
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* colVals, int* rowPtr, const int* consP, int base);
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* /*awt*/)
+{
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* /*awt*/)
+{
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* /*ncf*/)
+{
+}
 
 //  inverse molecular weights
 #ifdef AMREX_USE_GPU

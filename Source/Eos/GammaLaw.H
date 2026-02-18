@@ -311,6 +311,13 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void Y2Z(const amrex::Real* /*Y[]*/, amrex::Real* /*Z[]*/)
+  {
+    amrex::Error("Y2Z is not supported for GammaLaw EOS");
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void X2Y(const amrex::Real X[NUM_SPECIES], amrex::Real Y[NUM_SPECIES])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {

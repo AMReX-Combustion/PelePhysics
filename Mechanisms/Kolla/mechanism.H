@@ -44,11 +44,7 @@
 #define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
-//  GPU based. Defined in mechanism.cpp
-void atomicWeight(amrex::Real* awt);
-//  MISC
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
+//  GPU based. Defined in mechanism.cpp MISC
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void GET_RMAP(int* _rmap);
@@ -84,6 +80,79 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   kk = 12;
   ii = 29;
   nfit = -1; // Why do you need this anyway ?
+}
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* awt)
+{
+  awt[0] = 12.011000; // C
+  awt[1] = 1.008000;  // H
+  awt[2] = 15.999000; // O
+  awt[3] = 14.007000; // N
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* awt)
+{
+  atomicWeight(awt);
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* ncf)
+{
+  int kd = 4;
+  // Zero ncf
+  for (int id = 0; id < kd * 12; ++id) {
+    ncf[id] = 0;
+  }
+
+  // H2
+  ncf[0 * kd + 1] = 2; // H
+
+  // O2
+  ncf[1 * kd + 2] = 2; // O
+
+  // O
+  ncf[2 * kd + 2] = 1; // O
+
+  // OH
+  ncf[3 * kd + 1] = 1; // H
+  ncf[3 * kd + 2] = 1; // O
+
+  // H2O
+  ncf[4 * kd + 1] = 2; // H
+  ncf[4 * kd + 2] = 1; // O
+
+  // H
+  ncf[5 * kd + 1] = 1; // H
+
+  // HO2
+  ncf[6 * kd + 1] = 1; // H
+  ncf[6 * kd + 2] = 2; // O
+
+  // H2O2
+  ncf[7 * kd + 1] = 2; // H
+  ncf[7 * kd + 2] = 2; // O
+
+  // CO
+  ncf[8 * kd + 0] = 1; // C
+  ncf[8 * kd + 2] = 1; // O
+
+  // CO2
+  ncf[9 * kd + 0] = 1; // C
+  ncf[9 * kd + 2] = 2; // O
+
+  // HCO
+  ncf[10 * kd + 0] = 1; // C
+  ncf[10 * kd + 1] = 1; // H
+  ncf[10 * kd + 2] = 1; // O
+
+  // N2
+  ncf[11 * kd + 3] = 2; // N
 }
 
 //  inverse molecular weights

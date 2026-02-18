@@ -66,11 +66,7 @@
 #define NUM_FIT 4
 
 //  ALWAYS on CPU stuff -- can have different def depending on if we are CPU or
-//  GPU based. Defined in mechanism.cpp
-void atomicWeight(amrex::Real* awt);
-//  MISC
-void CKAWT(amrex::Real* awt);
-void CKNCF(int* ncf);
+//  GPU based. Defined in mechanism.cpp MISC
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void GET_RMAP(int* _rmap);
@@ -106,6 +102,176 @@ CKINDX(int& mm, int& kk, int& ii, int& nfit)
   kk = 34;
   ii = 167;
   nfit = -1; // Why do you need this anyway ?
+}
+
+// save atomic weights into array
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+atomicWeight(amrex::Real* awt)
+{
+  awt[0] = 14.007000; // N
+  awt[1] = 15.999000; // O
+  awt[2] = 1.008000;  // H
+  awt[3] = 12.011000; // C
+}
+
+// get atomic weight for all elements
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKAWT(amrex::Real* awt)
+{
+  atomicWeight(awt);
+}
+
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKNCF(int* ncf)
+{
+  int kd = 4;
+  // Zero ncf
+  for (int id = 0; id < kd * 34; ++id) {
+    ncf[id] = 0;
+  }
+
+  // N2
+  ncf[0 * kd + 0] = 2; // N
+
+  // O
+  ncf[1 * kd + 1] = 1; // O
+
+  // H
+  ncf[2 * kd + 2] = 1; // H
+
+  // OH
+  ncf[3 * kd + 2] = 1; // H
+  ncf[3 * kd + 1] = 1; // O
+
+  // H2
+  ncf[4 * kd + 2] = 2; // H
+
+  // O2
+  ncf[5 * kd + 1] = 2; // O
+
+  // H2O
+  ncf[6 * kd + 2] = 2; // H
+  ncf[6 * kd + 1] = 1; // O
+
+  // H2O2
+  ncf[7 * kd + 2] = 2; // H
+  ncf[7 * kd + 1] = 2; // O
+
+  // HO2
+  ncf[8 * kd + 2] = 1; // H
+  ncf[8 * kd + 1] = 2; // O
+
+  // CH2GSG
+  ncf[9 * kd + 3] = 1; // C
+  ncf[9 * kd + 2] = 2; // H
+
+  // CH2O
+  ncf[10 * kd + 3] = 1; // C
+  ncf[10 * kd + 2] = 2; // H
+  ncf[10 * kd + 1] = 1; // O
+
+  // CH3
+  ncf[11 * kd + 3] = 1; // C
+  ncf[11 * kd + 2] = 3; // H
+
+  // CO
+  ncf[12 * kd + 3] = 1; // C
+  ncf[12 * kd + 1] = 1; // O
+
+  // CH3O
+  ncf[13 * kd + 3] = 1; // C
+  ncf[13 * kd + 2] = 3; // H
+  ncf[13 * kd + 1] = 1; // O
+
+  // C2H5
+  ncf[14 * kd + 3] = 2; // C
+  ncf[14 * kd + 2] = 5; // H
+
+  // CH4
+  ncf[15 * kd + 3] = 1; // C
+  ncf[15 * kd + 2] = 4; // H
+
+  // C2H4
+  ncf[16 * kd + 3] = 2; // C
+  ncf[16 * kd + 2] = 4; // H
+
+  // C2H6
+  ncf[17 * kd + 3] = 2; // C
+  ncf[17 * kd + 2] = 6; // H
+
+  // CO2
+  ncf[18 * kd + 3] = 1; // C
+  ncf[18 * kd + 1] = 2; // O
+
+  // HCO
+  ncf[19 * kd + 3] = 1; // C
+  ncf[19 * kd + 2] = 1; // H
+  ncf[19 * kd + 1] = 1; // O
+
+  // CH3O2
+  ncf[20 * kd + 3] = 1; // C
+  ncf[20 * kd + 2] = 3; // H
+  ncf[20 * kd + 1] = 2; // O
+
+  // CH3O2H
+  ncf[21 * kd + 3] = 1; // C
+  ncf[21 * kd + 2] = 4; // H
+  ncf[21 * kd + 1] = 2; // O
+
+  // C2H2
+  ncf[22 * kd + 3] = 2; // C
+  ncf[22 * kd + 2] = 2; // H
+
+  // HCCO
+  ncf[23 * kd + 3] = 2; // C
+  ncf[23 * kd + 2] = 1; // H
+  ncf[23 * kd + 1] = 1; // O
+
+  // C2H3
+  ncf[24 * kd + 3] = 2; // C
+  ncf[24 * kd + 2] = 3; // H
+
+  // CH2CHO
+  ncf[25 * kd + 3] = 2; // C
+  ncf[25 * kd + 2] = 3; // H
+  ncf[25 * kd + 1] = 1; // O
+
+  // C3H5XA
+  ncf[26 * kd + 3] = 3; // C
+  ncf[26 * kd + 2] = 5; // H
+
+  // C3H6
+  ncf[27 * kd + 3] = 3; // C
+  ncf[27 * kd + 2] = 6; // H
+
+  // C3H5O
+  ncf[28 * kd + 3] = 3; // C
+  ncf[28 * kd + 2] = 5; // H
+  ncf[28 * kd + 1] = 1; // O
+
+  // IXC3H7
+  ncf[29 * kd + 3] = 3; // C
+  ncf[29 * kd + 2] = 7; // H
+
+  // NXC3H7
+  ncf[30 * kd + 3] = 3; // C
+  ncf[30 * kd + 2] = 7; // H
+
+  // C3H8
+  ncf[31 * kd + 3] = 3; // C
+  ncf[31 * kd + 2] = 8; // H
+
+  // IXC3H7O2
+  ncf[32 * kd + 3] = 3; // C
+  ncf[32 * kd + 2] = 7; // H
+  ncf[32 * kd + 1] = 2; // O
+
+  // NXC3H7O2
+  ncf[33 * kd + 3] = 3; // C
+  ncf[33 * kd + 2] = 7; // H
+  ncf[33 * kd + 1] = 2; // O
 }
 
 //  inverse molecular weights
@@ -23786,7 +23952,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[1017] = 4.24084025E+00;
   COFD[1018] = -3.37428619E-01;
   COFD[1019] = 1.47032793E-02;
-  COFD[1020] = -1.79310921E+01;
+  COFD[1020] = -1.79310920E+01;
   COFD[1021] = 4.98037650E+00;
   COFD[1022] = -4.26676911E-01;
   COFD[1023] = 1.83007231E-02;
@@ -24619,7 +24785,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[1850] = -4.81921515E-01;
   COFD[1851] = 1.97721229E-02;
   COFD[1852] = -2.25933772E+01;
-  COFD[1853] = 5.42562556E+00;
+  COFD[1853] = 5.42562555E+00;
   COFD[1854] = -4.48132861E-01;
   COFD[1855] = 1.77847329E-02;
   COFD[1856] = -2.26149331E+01;
@@ -24739,7 +24905,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[1970] = -4.81921515E-01;
   COFD[1971] = 1.97721229E-02;
   COFD[1972] = -2.25933772E+01;
-  COFD[1973] = 5.42562556E+00;
+  COFD[1973] = 5.42562555E+00;
   COFD[1974] = -4.48132861E-01;
   COFD[1975] = 1.77847329E-02;
   COFD[1976] = -2.26149331E+01;
@@ -24863,7 +25029,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[2094] = -4.81921515E-01;
   COFD[2095] = 1.97721229E-02;
   COFD[2096] = -2.25999325E+01;
-  COFD[2097] = 5.42562556E+00;
+  COFD[2097] = 5.42562555E+00;
   COFD[2098] = -4.48132861E-01;
   COFD[2099] = 1.77847329E-02;
   COFD[2100] = -2.26206807E+01;
@@ -24970,7 +25136,7 @@ egtransetCOFD(amrex::Real* COFD)
   COFD[2201] = 5.44889462E+00;
   COFD[2202] = -4.52325002E-01;
   COFD[2203] = 1.80132629E-02;
-  COFD[2204] = -2.18644449E+01;
+  COFD[2204] = -2.18644448E+01;
   COFD[2205] = 5.53438558E+00;
   COFD[2206] = -4.85873757E-01;
   COFD[2207] = 2.03606278E-02;
