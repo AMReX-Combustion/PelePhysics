@@ -38,6 +38,7 @@ jobs:
           cd Submodules/PelePhysics
           git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
           git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+          git submodule update --recursive
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
@@ -83,6 +84,7 @@ jobs:
           cd Submodules/PelePhysics
           git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
           git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+          git submodule update --recursive
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
@@ -136,6 +138,7 @@ jobs:
           cd Submodules/PelePhysics
           git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
           git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+          git submodule update --recursive
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
@@ -237,6 +240,7 @@ jobs:
           cd Submodules/PelePhysics
           git fetch "$GITHUB_WORKSPACE/pelephysics-pr"
           git checkout $(git -C "$GITHUB_WORKSPACE/pelephysics-pr" rev-parse HEAD)
+          git submodule update --recursive
 
           echo "PelePhysics Submodule now points to:"
           git rev-parse --short HEAD
