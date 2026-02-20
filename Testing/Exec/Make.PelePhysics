@@ -186,6 +186,8 @@ ifeq ($(USE_CUDA),TRUE)
    CXXFLAGS+=-Xptxas --disable-optimizer-constants
 endif
 
+CXXSTD = c++20
+
 clean::
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 
