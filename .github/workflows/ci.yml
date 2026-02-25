@@ -76,7 +76,7 @@ jobs:
         run: poetry run pytest
       - name: Convert regular mechanisms
         run: |
-          if [ "${{matrix.python_version}}" == '3.11' ]; then
+          if [ "${{matrix.python-version}}" == '3.11' ]; then
             poetry run convert -l ${{github.workspace}}/Mechanisms/list_mech
             # Fail if there are diffs to the committed mechanisms
             git diff --exit-code
@@ -92,7 +92,7 @@ jobs:
           fi
       - name: Convert QSS mechanisms
         run: |
-          if [ "${{matrix.python_version}}" == '3.11' ]; then
+          if [ "${{matrix.python-version}}" == '3.11' ]; then
             poetry run qssa -lq ${{github.workspace}}/Mechanisms/list_qss_mech
             poetry run convert -lq ${{github.workspace}}/Mechanisms/list_qss_mech
             # Fail if there are diffs to the committed mechanisms
