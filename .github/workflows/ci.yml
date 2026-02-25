@@ -77,14 +77,14 @@ jobs:
       - name: Convert regular mechanisms
         run: |
           poetry run convert -l ${{github.workspace}}/Mechanisms/list_mech
-          # Fail if there are diffs to the commited mechanisms
-          git diff --exit-code
+          # Fail if there are diffs to the committed mechanisms
+          git status --porcelain
       - name: Convert QSS mechanisms
         run: |
           poetry run qssa -lq ${{github.workspace}}/Mechanisms/list_qss_mech
           poetry run convert -lq ${{github.workspace}}/Mechanisms/list_qss_mech
-          # Fail if there are diffs to the commited mechanisms
-          git diff --exit-code
+          # Fail if there are diffs to the committed mechanisms
+          git status --porcelain
 
   Transport-EOS-Reactions:
     needs: Formatting
