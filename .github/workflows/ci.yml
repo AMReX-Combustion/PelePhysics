@@ -74,10 +74,17 @@ jobs:
         run: poetry run flake8 .
       - name: Run tests
         run: poetry run pytest
-      - name: Convert air mechanism
-        run: poetry run convert -f ${{github.workspace}}/Mechanisms/air/mechanism.yaml
-      - name: Convert LiDryer mechanism
-        run: poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
+      - name: Convert regular mechanisms
+        run: |
+          poetry run convert -l ${{github.workspace}}/Mechanisms/list_mech
+          # Fail if there are diffs to the commited mechanisms
+          git diff --exit-code
+      - name: Convert QSS mechanisms
+        run: |
+          poetry run qssa -lq ${{github.workspace}}/Mechanisms/list_qss_mech
+          poetry run convert -lq ${{github.workspace}}/Mechanisms/list_qss_mech
+          # Fail if there are diffs to the commited mechanisms
+          git diff --exit-code
 
   Transport-EOS-Reactions:
     needs: Formatting
