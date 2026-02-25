@@ -498,7 +498,7 @@ def dcvpdtemp(fstream, species_info, models):
     generate_thermo_routine(fstream, species_info, "dcvpRdT", models, 0)
 
 
-def param2str(param, sfx="", fmt="+15.8e"):
+def param2str(param, sfx="", fmt="+20.15e"):
     """Convert a parameter to a string."""
     return f"{param:{fmt}} {sfx}" if param != 0.0 else ""
 
@@ -572,13 +572,13 @@ def dcpdtemp_nasa7(fstream, parameters):
 def gibbs_nasa7(fstream, parameters, syms=None):
     """Write NASA7 polynomial for Gibbs."""
     expression = (
-        param2str(parameters[5], "* invT", "+20.15e")
-        + param2str(parameters[0] - parameters[6], "", "+20.15e")
-        + param2str(-parameters[0], "* logT", "+20.15e")
-        + param2str((-parameters[1] / 2), "* T", "+20.15e")
-        + param2str((-parameters[2] / 6), "* T2", "+20.15e")
-        + param2str((-parameters[3] / 12), "* T3", "+20.15e")
-        + param2str((-parameters[4] / 20), "* T4", "+20.15e")
+        param2str(parameters[5], "* invT")
+        + param2str(parameters[0] - parameters[6], "")
+        + param2str(-parameters[0], "* logT")
+        + param2str((-parameters[1] / 2), "* T")
+        + param2str((-parameters[2] / 6), "* T2")
+        + param2str((-parameters[3] / 12), "* T3")
+        + param2str((-parameters[4] / 20), "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -695,13 +695,13 @@ def entropy_nasa7(fstream, parameters, syms=None):
 def cv_nasa9(fstream, parameters):
     """Write NASA9 polynomial for cv."""
     expression = (
-        param2str(parameters[0], "* invT2", fmt="+20.15e")
-        + param2str(parameters[1], "* invT", fmt="+20.15e")
-        + param2str(parameters[2] - 1.0, fmt="+20.15e")
-        + param2str(parameters[3], "* T", fmt="+20.15e")
-        + param2str(parameters[4], " * T2", fmt="+20.15e")
-        + param2str(parameters[5], "* T3", fmt="+20.15e")
-        + param2str(parameters[6], "* T4", fmt="+20.15e")
+        param2str(parameters[0], "* invT2")
+        + param2str(parameters[1], "* invT")
+        + param2str(parameters[2] - 1.0)
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4], " * T2")
+        + param2str(parameters[5], "* T3")
+        + param2str(parameters[6], "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -732,13 +732,13 @@ def eval_cv_species_nasa9(model, temp):
 def cp_nasa9(fstream, parameters):
     """Write NASA9 polynomial for cp."""
     expression = (
-        param2str(parameters[0], "* invT2", fmt="+20.15e")
-        + param2str(parameters[1], "* invT", fmt="+20.15e")
-        + param2str(parameters[2], fmt="+20.15e")
-        + param2str(parameters[3], "* T", fmt="+20.15e")
-        + param2str(parameters[4], " * T2", fmt="+20.15e")
-        + param2str(parameters[5], "* T3", fmt="+20.15e")
-        + param2str(parameters[6], "* T4", fmt="+20.15e")
+        param2str(parameters[0], "* invT2")
+        + param2str(parameters[1], "* invT")
+        + param2str(parameters[2])
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4], " * T2")
+        + param2str(parameters[5], "* T3")
+        + param2str(parameters[6], "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -746,12 +746,12 @@ def cp_nasa9(fstream, parameters):
 def dcpdtemp_nasa9(fstream, parameters):
     """Write NASA9 polynomial for dcpdtemp."""
     expression = (
-        param2str(-parameters[0] * 2.0, "* invT3", fmt="+20.15e")
-        + param2str(-parameters[1], "* invT2", fmt="+20.15e")
-        + param2str(parameters[3], fmt="+20.15e")
-        + param2str(parameters[4] * 2.0, "* T", fmt="+20.15e")
-        + param2str(parameters[5] * 3.0, "* T2", fmt="+20.15e")
-        + param2str(parameters[6] * 4.0, "* T3", fmt="+20.15e")
+        param2str(-parameters[0] * 2.0, "* invT3")
+        + param2str(-parameters[1], "* invT2")
+        + param2str(parameters[3])
+        + param2str(parameters[4] * 2.0, "* T")
+        + param2str(parameters[5] * 3.0, "* T2")
+        + param2str(parameters[6] * 4.0, "* T3")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -759,15 +759,15 @@ def dcpdtemp_nasa9(fstream, parameters):
 def gibbs_nasa9(fstream, parameters, syms=None):
     """Write NASA9 polynomial for Gibbs."""
     expression = (
-        param2str(-parameters[0] / 2, "* invT2", "+20.15e", fmt="+20.15e")
-        + param2str(parameters[7] + parameters[1], "* invT", "+20.15e", fmt="+20.15e")
-        + param2str(parameters[1], "* logT * invT", "+20.15e", fmt="+20.15e")
-        + param2str(-parameters[2], "* logT", "+20.15e", fmt="+20.15e")
-        + param2str(parameters[2] - parameters[8], "", "+20.15e", fmt="+20.15e")
-        + param2str((-parameters[3] / 2), "* T", "+20.15e", fmt="+20.15e")
-        + param2str((-parameters[4] / 6), "* T2", "+20.15e", fmt="+20.15e")
-        + param2str((-parameters[5] / 12), "* T3", "+20.15e", fmt="+20.15e")
-        + param2str((-parameters[6] / 20), "* T4", "+20.15e", fmt="+20.15e")
+        param2str(-parameters[0] / 2, "* invT2")
+        + param2str(parameters[7] + parameters[1], "* invT")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(-parameters[2], "* logT")
+        + param2str(parameters[2] - parameters[8], "")
+        + param2str((-parameters[3] / 2), "* T")
+        + param2str((-parameters[4] / 6), "* T2")
+        + param2str((-parameters[5] / 12), "* T3")
+        + param2str((-parameters[6] / 20), "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -789,15 +789,15 @@ def gibbs_nasa9(fstream, parameters, syms=None):
 def helmholtz_nasa9(fstream, parameters, syms=None):
     """Write NASA9 polynomial for Helmholtz."""
     expression = (
-        param2str(-parameters[0] / 2, "* invT2", fmt="+20.15e")
-        + param2str(parameters[7] + parameters[1], "* invT", fmt="+20.15e")
-        + param2str(parameters[1], "* logT * invT", fmt="+20.15e")
-        + param2str(-parameters[2], "* logT", fmt="+20.15e")
-        + param2str(parameters[2] - parameters[8] - 1.0, "", fmt="+20.15e")
-        + param2str((-parameters[3] / 2), "* T", fmt="+20.15e")
-        + param2str((-parameters[4] / 6), "* T2", fmt="+20.15e")
-        + param2str((-parameters[5] / 12), "* T3", fmt="+20.15e")
-        + param2str((-parameters[6] / 20), "* T4", fmt="+20.15e")
+        param2str(-parameters[0] / 2, "* invT2")
+        + param2str(parameters[7] + parameters[1], "* invT")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(-parameters[2], "* logT")
+        + param2str(parameters[2] - parameters[8] - 1.0, "")
+        + param2str((-parameters[3] / 2), "* T")
+        + param2str((-parameters[4] / 6), "* T2")
+        + param2str((-parameters[5] / 12), "* T3")
+        + param2str((-parameters[6] / 20), "* T4")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -820,14 +820,14 @@ def helmholtz_nasa9(fstream, parameters, syms=None):
 def internal_energy_nasa9(fstream, parameters, syms=None):
     """Write NASA9 polynomial for internal energy."""
     expression = (
-        param2str(-parameters[0], "* invT2", fmt="+20.15e")
-        + param2str(parameters[1], "* logT * invT", fmt="+20.15e")
-        + param2str(parameters[2] - 1.0, fmt="+20.15e")
-        + param2str(parameters[3] / 2, "* T", fmt="+20.15e")
-        + param2str(parameters[4] / 3, "* T2", fmt="+20.15e")
-        + param2str(parameters[5] / 4, "* T3", fmt="+20.15e")
-        + param2str(parameters[6] / 5, "* T4", fmt="+20.15e")
-        + param2str(parameters[7], "* invT", fmt="+20.15e")
+        param2str(-parameters[0], "* invT2")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(parameters[2] - 1.0)
+        + param2str(parameters[3] / 2, "* T")
+        + param2str(parameters[4] / 3, "* T2")
+        + param2str(parameters[5] / 4, "* T3")
+        + param2str(parameters[6] / 5, "* T4")
+        + param2str(parameters[7], "* invT")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -848,14 +848,14 @@ def internal_energy_nasa9(fstream, parameters, syms=None):
 def enthalpy_nasa9(fstream, parameters, syms=None):
     """Write NASA9 polynomial for enthalpy."""
     expression = (
-        param2str(-parameters[0], "* invT2", fmt="+20.15e")
-        + param2str(parameters[1], "* logT * invT", fmt="+20.15e")
-        + param2str(parameters[2], fmt="+20.15e")
-        + param2str(parameters[3] / 2, "* T", fmt="+20.15e")
-        + param2str(parameters[4] / 3, "* T2", fmt="+20.15e")
-        + param2str(parameters[5] / 4, "* T3", fmt="+20.15e")
-        + param2str(parameters[6] / 5, "* T4", fmt="+20.15e")
-        + param2str(parameters[7], "* invT", fmt="+20.15e")
+        param2str(-parameters[0], "* invT2")
+        + param2str(parameters[1], "* logT * invT")
+        + param2str(parameters[2])
+        + param2str(parameters[3] / 2, "* T")
+        + param2str(parameters[4] / 3, "* T2")
+        + param2str(parameters[5] / 4, "* T3")
+        + param2str(parameters[6] / 5, "* T4")
+        + param2str(parameters[7], "* invT")
     )
     cw.writer(fstream, expression if expression else "0.0")
 
@@ -875,14 +875,14 @@ def enthalpy_nasa9(fstream, parameters, syms=None):
 def entropy_nasa9(fstream, parameters, syms=None):
     """Write NASA9 polynomial for entropy."""
     expression = (
-        param2str(-parameters[0] / 2, "* invT2", fmt="+20.15e")
-        + param2str(-parameters[1], "* invT", fmt="+20.15e")
-        + param2str(parameters[2], "* logT", fmt="+20.15e")
-        + param2str(parameters[3], "* T", fmt="+20.15e")
-        + param2str(parameters[4] / 2, "* T2", fmt="+20.15e")
-        + param2str(parameters[5] / 3, "* T3", fmt="+20.15e")
-        + param2str(parameters[6] / 4, "* T4", fmt="+20.15e")
-        + param2str(parameters[8], fmt="+20.15e")
+        param2str(-parameters[0] / 2, "* invT2")
+        + param2str(-parameters[1], "* invT")
+        + param2str(parameters[2], "* logT")
+        + param2str(parameters[3], "* T")
+        + param2str(parameters[4] / 2, "* T2")
+        + param2str(parameters[5] / 3, "* T3")
+        + param2str(parameters[6] / 4, "* T4")
+        + param2str(parameters[8])
     )
     cw.writer(fstream, expression if expression else "0.0")
 
