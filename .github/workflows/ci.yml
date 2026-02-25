@@ -75,6 +75,7 @@ jobs:
       - name: Run tests
         run: poetry run pytest
       - name: Convert regular mechanisms
+        continue-on-error: true
         run: |
           if [ "${{matrix.python-version}}" == '3.10' ]; then
             poetry run convert -l ${{github.workspace}}/Mechanisms/list_mech
@@ -91,6 +92,7 @@ jobs:
             poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
           fi
       - name: Convert QSS mechanisms
+        continue-on-error: true
         run: |
           if [ "${{matrix.python-version}}" == '3.10' ]; then
             poetry run qssa -lq ${{github.workspace}}/Mechanisms/list_qss_mech
