@@ -42,17 +42,16 @@ actual_init_coefs_eb(
       amrex::Real y = dx[1] * (j + 0.5) - 0.5;
 #if (AMREX_SPACEDIM == 3)
       amrex::Real z = dx[2] * k;
+#else
+      amrex::Real z = 0.0;
 #endif
 
       // rotation
       amrex::Real xp = x * cospioverfour + y * sinpioverfour;
       amrex::Real yp = -x * sinpioverfour + y * cospioverfour;
 
-      amrex::Real sincossin = std::sin(npioverL * xp) * std::cos(npioverL * yp)
-#if (AMREX_SPACEDIM == 3)
-                              * std::sin(npioverL * z)
-#endif
-        ;
+      amrex::Real sincossin = std::sin(npioverL * xp) *
+                              std::cos(npioverL * yp) * std::sin(npioverL * z);
 
       rhs(i, j, k) = (1.0 + npioverL * npioverL) * bx(i, j, k) * sincossin;
       acoef(i, j, k) = 1.0;
