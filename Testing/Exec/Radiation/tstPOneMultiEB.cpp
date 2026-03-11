@@ -2,12 +2,11 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
-#include <POneMultiEB.H>
-
 #include <AMReX_EB2.H>
 #include <AMReX_EB2_IF.H>
 #include <AMReX_EBCellFlag.H>
 #include <AMReX_EBFabFactory.H>
+#include <POneMultiEB.H>
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 actual_init_coefs_eb(
@@ -41,13 +40,18 @@ actual_init_coefs_eb(
     } else {
       amrex::Real x = dx[0] * (i + 0.5) - 0.5;
       amrex::Real y = dx[1] * (j + 0.5) - 0.5;
+#if (AMREX_SPACEDIM == 3)
       amrex::Real z = dx[2] * k;
+#endif
 
       amrex::Real xp = x * cospioverfour + y * sinpioverfour;
       amrex::Real yp = -x * sinpioverfour + y * cospioverfour;
 
-      amrex::Real sincossin = std::sin(npioverL * xp) *
-                              std::cos(npioverL * yp) * std::sin(npioverL * z);
+      amrex::Real sincossin = std::sin(npioverL * xp) * std::cos(npioverL * yp)
+#if (AMREX_SPACEDIM == 3)
+                              * std::sin(npioverL * z)
+#endif
+        ;
 
       rhs(i, j, k) = (1.0 + npioverL * npioverL) * bx(i, j, k) * sincossin;
       acoef(i, j, k) = 1.0;
@@ -76,7 +80,6 @@ initProbABecLaplacian(
     for (amrex::MFIter mfi(rhs[ilev]); mfi.isValid(); ++mfi) {
       amrex::Box const& bx = mfi.validbox();
       amrex::Box const& nbx = amrex::surroundingNodes(bx);
-      //        amrex::Box const& gbx = amrex::grow(bx, 1);
       amrex::Array4<amrex::Real> const& phi_arr = solution[ilev].array(mfi);
       amrex::Array4<amrex::Real> const& phi_ex_arr =
         exact_solution[ilev].array(mfi);
@@ -90,14 +93,9 @@ initProbABecLaplacian(
       } else if (fabtyp == amrex::FabType::regular) {
         std::cout << " amrex::FabType::regular == fabtyp \n";
       } else {
-        //            std::cout << " amrex::FabType  else \n";
         amrex::Array4<amrex::Real> const& acoef_arr = acoef[ilev].array(mfi);
         amrex::Array4<amrex::EBCellFlag const> const& flag_arr =
           flags.const_array(mfi);
-        // amrex::Array4<amrex::Real const> const& cent_arr
-        //     = cent.const_array(mfi);
-        // amrex::Array4<amrex::Real const> const& bcent_arr
-        //     = bcent.const_array(mfi);
 
         amrex::ParallelFor(
           nbx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -285,7 +283,6 @@ main(int argc, char* argv[])
         eps_max = eps;
     }
 
-    // plot results
     if (write) {
       amrex::Vector<amrex::MultiFab> plotmf(nlevels);
       std::cout << "write the results ... \n";
@@ -305,15 +302,6 @@ main(int argc, char* argv[])
         {"phi", "exact", "rhs", "acoef", "bcoef", "vfrac"}, geom, 0.0,
         amrex::Vector<int>(nlevels, 0),
         amrex::Vector<amrex::IntVect>(nlevels, amrex::IntVect{ref_ratio}));
-
-      // for amrvis
-      /*
-      amrex::writeFabs(solution, "solution");
-      amrex::writeFabs(bcoef, "bcoef");
-      amrex::writeFabs(robin_a, "robin_a");
-      amrex::writeFabs(robin_b, "robin_b");
-      amrex::writeFabs(robin_f, "robin_f");
-      */
     }
   }
   amrex::Finalize();
