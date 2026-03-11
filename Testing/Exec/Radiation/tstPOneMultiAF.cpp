@@ -1,6 +1,5 @@
 #include <PlanckMean.H>
 #include <SpectralModels.H>
-
 #include <AMReX.H>
 #include <AMReX_PlotFileUtil.H>
 #include <POneMulti.H>
@@ -21,17 +20,21 @@ initGasField(
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& plo,
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& phi)
 {
-  amrex::Real coef = 100;
+  amrex::Real coef = 100.0;
   amrex::Real xc = (phi[0] + plo[0]) * 0.5;
   amrex::Real yc = (phi[1] + plo[1]) * 0.5;
 
   amrex::Real x = plo[0] + (i + 0.5) * dx[0];
   amrex::Real y = plo[1] + (j + 0.5) * dx[1];
+#if (AMREX_SPACEDIM == 3)
   amrex::Real z = plo[2] + (k + 0.5) * dx[2];
+  z /= coef;
+#else
+  amrex::Real z = 0.0;
+#endif
 
   amrex::Real r = std::sqrt((x - xc) * (x - xc) + (y - yc) * (y - yc));
 
-  z /= coef;
   r /= coef;
 
   amrex::Real expr = std::exp(

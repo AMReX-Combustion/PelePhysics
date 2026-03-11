@@ -28,7 +28,11 @@ actual_init_coefs(
 
   amrex::Real x = prob_lo[0] + dx[0] * (i + 0.5);
   amrex::Real y = prob_lo[1] + dx[1] * (j + 0.5);
+#if (AMREX_SPACEDIM == 3)
   amrex::Real z = prob_lo[2] + dx[2] * (k + 0.5);
+#else
+  amrex::Real z = 0.0;
+#endif
 
   beta(i, j, k) = 1.0;
 
@@ -36,8 +40,10 @@ actual_init_coefs(
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(x, prob_lo[0]), prob_hi[0]);
   y =
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(y, prob_lo[1]), prob_hi[1]);
+#if (AMREX_SPACEDIM == 3)
   z =
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(z, prob_lo[2]), prob_hi[2]);
+#endif
 
   amrex::Real sincossin =
     std::sin(npioverL * x) * std::cos(npioverL * y) * std::sin(npioverL * z);
@@ -148,8 +154,6 @@ initMeshandData(
   int const n_cell = amrpp.n_cell_;
   int const max_grid_size = amrpp.max_grid_size_;
 
-  // initialize mesh
-  // std::cout << "initialize the mesh" << std::endl;
   geom.resize(nlevels);
   grids.resize(nlevels);
   dmap.resize(nlevels);
@@ -175,9 +179,6 @@ initMeshandData(
     grids[ilev].maxSize(max_grid_size);
     domain.refine(ref_ratio);
   }
-
-  // initialize variables
-  // std::cout << "initialize the data" << std::endl;
 
   solution.resize(nlevels);
   rhs.resize(nlevels);
@@ -251,11 +252,9 @@ main(int argc, char* argv[])
     amrex::Vector<amrex::MultiFab> robin_b;
     amrex::Vector<amrex::MultiFab> robin_f;
 
-    //    std::cout << "initialize data ... \n";
     initMeshandData(
       amrpp, geom, grids, dmap, solution, rhs, exact_solution, acoef, bcoef,
       robin_a, robin_b, robin_f);
-    //    std::cout << "construct the PDE ... \n";
     if (composite_solve) {
 
       std::cout << "composite solve ... \n";
@@ -288,23 +287,12 @@ main(int argc, char* argv[])
       amrex::Vector<amrex::MultiFab> plotmf(nlevels);
 
       for (int ilev = 0; ilev < nlevels; ++ilev) {
-        // std::cout << "write the results ... \n";
         plotmf[ilev].define(grids[ilev], dmap[ilev], 4, 0);
         amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 0, 1, 0);
         amrex::MultiFab::Copy(plotmf[ilev], rhs[ilev], 0, 1, 1, 0);
         amrex::MultiFab::Copy(plotmf[ilev], exact_solution[ilev], 0, 2, 1, 0);
         amrex::MultiFab::Copy(plotmf[ilev], solution[ilev], 0, 3, 1, 0);
         amrex::MultiFab::Subtract(plotmf[ilev], plotmf[ilev], 2, 3, 1, 0);
-
-        // For amrvis
-        /*
-        amrex::writeFabs(solution[ilev],
-        "solution_lev"+std::to_string(ilev)); amrex::writeFabs(bcoef[ilev],
-        "bcoef_lev"+std::to_string(ilev)); amrex::writeFabs(robin_a[ilev],
-        "robin_a_lev"+std::to_string(ilev)); amrex::writeFabs(robin_b[ilev],
-        "robin_b_lev"+std::to_string(ilev)); amrex::writeFabs(robin_f[ilev],
-        "robin_f_lev"+std::to_string(ilev));
-        */
       }
 
       auto const plot_file_name = amrpp.plot_file_name_;

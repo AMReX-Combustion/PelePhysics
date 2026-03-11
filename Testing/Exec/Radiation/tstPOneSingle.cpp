@@ -28,7 +28,11 @@ actual_init_coefs(
 
   amrex::Real x = prob_lo[0] + dx[0] * (i + 0.5);
   amrex::Real y = prob_lo[1] + dx[1] * (j + 0.5);
+#if (AMREX_SPACEDIM == 3)
   amrex::Real z = prob_lo[2] + dx[2] * (k + 0.5);
+#else
+  amrex::Real z = 0.0;
+#endif
 
   beta(i, j, k) = 1.0;
 
@@ -36,8 +40,10 @@ actual_init_coefs(
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(x, prob_lo[0]), prob_hi[0]);
   y =
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(y, prob_lo[1]), prob_hi[1]);
+#if (AMREX_SPACEDIM == 3)
   z =
     amrex::min<amrex::Real>(amrex::max<amrex::Real>(z, prob_lo[2]), prob_hi[2]);
+#endif
 
   amrex::Real sincossin =
     std::sin(npioverL * x) * std::cos(npioverL * y) * std::sin(npioverL * z);
@@ -242,15 +248,6 @@ main(int argc, char* argv[])
       auto const plot_file_name = amrpp.plot_file_name_;
       amrex::WriteSingleLevelPlotfile(
         plot_file_name, plotmf, {"phi", "rhs", "exact", "error"}, geom, 0.0, 0);
-
-      // for amrvis
-      /*
-      amrex::writeFabs(solution, "solution");
-      amrex::writeFabs(bcoef, "bcoef");
-      amrex::writeFabs(robin_a, "robin_a");
-      amrex::writeFabs(robin_b, "robin_b");
-      amrex::writeFabs(robin_f, "robin_f");
-      */
     }
   }
   amrex::Finalize();

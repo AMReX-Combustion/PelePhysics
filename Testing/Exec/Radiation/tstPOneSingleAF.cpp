@@ -1,9 +1,9 @@
 #include <AMReX.H>
 #include <PlanckMean.H>
 #include <SpectralModels.H>
-
 #include <AMReX_PlotFileUtil.H>
 #include <POneSingle.H>
+
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 initGasField(
   int i,
@@ -19,17 +19,21 @@ initGasField(
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& plo,
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& phi)
 {
-  amrex::Real coef = 100;
+  amrex::Real coef = 100.0;
   amrex::Real xc = (phi[0] + plo[0]) * 0.5;
   amrex::Real yc = (phi[1] + plo[1]) * 0.5;
 
   amrex::Real x = plo[0] + (i + 0.5) * dx[0];
   amrex::Real y = plo[1] + (j + 0.5) * dx[1];
+#if (AMREX_SPACEDIM == 3)
   amrex::Real z = plo[2] + (k + 0.5) * dx[2];
+  z /= coef;
+#else
+  amrex::Real z = 0.0;
+#endif
 
   amrex::Real r = std::sqrt((x - xc) * (x - xc) + (y - yc) * (y - yc));
 
-  z /= coef;
   r /= coef;
 
   amrex::Real expr = std::exp(
@@ -174,7 +178,6 @@ initProbABecLaplacian(
     });
 
     // if soot exists
-    // cudaDeviceSynchronize();
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
       getRadPropSoot(i, j, k, fv, T, kappa, kpsoot);
     });
@@ -189,8 +192,6 @@ initProbABecLaplacian(
     amrex::ParallelFor(gbx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
       actual_init_coefs(i, j, k, rhsfab, acfab, bcfab, dlo, dhi, bx, kappa, T);
     });
-
-    // cudaDeviceSynchronize();
 
     amrex::ParallelFor(gbx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
       actual_init_bc_coefs(
@@ -352,15 +353,6 @@ main(int argc, char* argv[])
         {"G", "Emis", "kappa", "bcoef", "RadSrc", "Y_co2", "Y_h2o", "Y_co",
          "Soot_fv", "Temperature"},
         geom, 0.0, 0);
-
-      // for amrvis
-      /*
-      amrex::writeFabs(solution, "solution");
-      amrex::writeFabs(bcoef, "bcoef");
-      amrex::writeFabs(robin_a, "robin_a");
-      amrex::writeFabs(robin_b, "robin_b");
-      amrex::writeFabs(robin_f, "robin_f");
-      */
     }
   }
   amrex::Finalize();
