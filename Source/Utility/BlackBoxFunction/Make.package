@@ -1,6 +1,4 @@
-ifneq ($(USE_SYCL),TRUE)
-  CEXE_sources += BlackBoxFunction.cpp
-endif
+CEXE_sources += BlackBoxFunction.cpp
 
 VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/BlackBoxFunction
 INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Source/Utility/BlackBoxFunction

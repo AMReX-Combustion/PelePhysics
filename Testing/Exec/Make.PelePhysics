@@ -61,13 +61,23 @@ endif
 ifeq ($(Eos_Model),$(filter $(Eos_Model),Manifold))
    DEFINES += -DUSE_MANIFOLD_EOS
    DEFINES += -DMANIFOLD_DIM=$(Manifold_Dim)
-   ifeq ($(Manifold_Type),Table)
+   ifeq ($(USE_SYCL),TRUE)
+      # SYCL: Only support Table-only option for now due to virtual function limitations
+      ifneq ($(Manifold_Type),Table)
+         $(warning Compiling with SYCL + Manifold will enforce Manifold_Type = Table)
+      endif
       DEFINES += -DMANIFOLD_EOS_TYPE=1
    else
-      ifeq ($(Manifold_Type),Network)
-         DEFINES += -DMANIFOLD_EOS_TYPE=2
+      # CPU, CUDA, HIP: Can hard code to table or network for performance
+      # default allows either at run time through polymorphism but is less performant
+      ifeq ($(Manifold_Type),Table)
+         DEFINES += -DMANIFOLD_EOS_TYPE=1
       else
-         DEFINES += -DMANIFOLD_EOS_TYPE=0
+         ifeq ($(Manifold_Type),Network)
+            DEFINES += -DMANIFOLD_EOS_TYPE=2
+         else
+            DEFINES += -DMANIFOLD_EOS_TYPE=0
+         endif
       endif
    endif
 endif

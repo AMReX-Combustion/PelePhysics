@@ -15,8 +15,6 @@
 #include "Constant.H"
 #include "Simple.H"
 #include "Sutherland.H"
-#ifndef AMREX_USE_SYCL
 #include "Manifold.H"
-#endif
 
 #endif
