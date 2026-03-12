@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout PelePhysics
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pelephysics-pr
           fetch-depth: 0
@@ -66,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout PelePhysics
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pelephysics-pr
           fetch-depth: 0
@@ -120,7 +120,7 @@ jobs:
 
     steps:
       - name: Checkout PelePhysics
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pelephysics-pr
           fetch-depth: 0
@@ -163,7 +163,7 @@ jobs:
           mkdir -p ~/.cache/ctcache
 
       - name: Set Up Ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache
           key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
@@ -222,7 +222,7 @@ jobs:
 
     steps:
       - name: Checkout PelePhysics
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pelephysics-pr
           fetch-depth: 0
@@ -265,7 +265,7 @@ jobs:
           mkdir -p ~/.cache/ctcache
 
       - name: Set Up Ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache
           key: ccache-${{github.workflow}}-${{github.job}}-git-${{github.sha}}
