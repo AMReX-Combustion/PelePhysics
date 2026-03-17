@@ -15,8 +15,7 @@ namespace pele::physics::eos {
 #endif
 
 // Compile time choice for Table vs. Network vs. Runtime Selectable
-// Note right now Manifold EOS not supported for SYCL at all
-// Runtime selection is  significant performnce hit
+// Runtime selection is a significant performance hit
 #if MANIFOLD_EOS_TYPE == 1
 using ManifoldFunctionType = TabulatedFunction<MANIFOLD_DIM>;
 #elif MANIFOLD_EOS_TYPE == 0
