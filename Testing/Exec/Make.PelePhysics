@@ -14,10 +14,6 @@ USE_SUNDIALS = TRUE
 VERBOSE = TRUE
 CXXSTD = c++20
 
-# EXTERN_CORE is simply a list of the directories we use in Eos, Reactions, Transport and Util
-# this list will be searched for runtime parameters
-EXTERN_CORE ?=
-
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 ifeq ($(USE_AMREX_LIB), TRUE)
   CEXE_sources :=
@@ -34,7 +30,6 @@ endif
 
 # PelePhysics
 PP_SRC_HOME = $(PELE_PHYSICS_HOME)/Source
-EXTERN_CORE       += $(PP_SRC_HOME)
 INCLUDE_LOCATIONS += $(PP_SRC_HOME)
 VPATH_LOCATIONS   += $(PP_SRC_HOME)
 Bpack             += $(PP_SRC_HOME)/Make.package
@@ -162,8 +157,6 @@ include $(Bpack)
 
 INCLUDE_LOCATIONS += $(Blocs)
 VPATH_LOCATIONS   += $(Blocs)
-
-EXTERN_PARAMETERS := $(shell $(AMREX_HOME)/Tools/F_scripts/findparams.py $(EXTERN_CORE))
 
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
