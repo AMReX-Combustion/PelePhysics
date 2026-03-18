@@ -427,8 +427,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
-  get_all_values(const amrex::Real interpdata[], amrex::Real out[]) final
+  void get_all_values(const amrex::Real interpdata[], amrex::Real out[]) final
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -448,8 +447,8 @@ public:
   // finite difference
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_derivs(
-    int ivar, const amrex::Real derivloc[], amrex::Real derivs[]) final
+  void
+  get_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[]) final
   {
     // Get alphas and indices
     int indices[maxdim];

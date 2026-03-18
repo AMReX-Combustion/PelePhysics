@@ -261,8 +261,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_value(
-    const int ivar, const amrex::Real indata[], amrex::Real& out) final
+  void
+  get_value(const int ivar, const amrex::Real indata[], amrex::Real& out) final
   {
     out = nnmodel(indata)[ivar];
   }
