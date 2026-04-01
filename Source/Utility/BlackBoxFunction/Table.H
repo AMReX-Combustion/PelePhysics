@@ -364,7 +364,7 @@ differentiate<0>(
 // slight performance benefit possible use template to specify dimensionality
 // default (0) allows arbitrary dimensionality
 template <unsigned int TableDim = 0>
-class TabulatedFunction : public BlackBoxFunction
+class TabulatedFunction final : public BlackBoxFunction
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -385,7 +385,7 @@ public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void get_value(
-    const int ivar, const amrex::Real interpdata[], amrex::Real& out) override
+    const int ivar, const amrex::Real interpdata[], amrex::Real& out) final
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -406,7 +406,7 @@ public:
     const int nvar,
     const int ivar[],
     const amrex::Real interpdata[],
-    amrex::Real out[]) override
+    amrex::Real out[]) final
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -427,8 +427,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
-  get_all_values(const amrex::Real interpdata[], amrex::Real out[]) override
+  void get_all_values(const amrex::Real interpdata[], amrex::Real out[]) final
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -448,8 +447,8 @@ public:
   // finite difference
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_derivs(
-    int ivar, const amrex::Real derivloc[], amrex::Real derivs[]) override
+  void
+  get_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[]) final
   {
     // Get alphas and indices
     int indices[maxdim];
@@ -465,7 +464,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxModel model() override { return BlackBoxModel::TABLE; }
+  BlackBoxModel model() final { return BlackBoxModel::TABLE; }
 
 private:
   const TabulatedFunctionData* tf_data;

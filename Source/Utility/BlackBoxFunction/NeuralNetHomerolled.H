@@ -245,7 +245,7 @@ struct InitParm<NeuralNetFunctionData, BlackBoxFunctionData>
   }
 };
 
-class NeuralNetFunction : public BlackBoxFunction
+class NeuralNetFunction final : public BlackBoxFunction
 {
 public:
   AMREX_GPU_HOST_DEVICE
@@ -261,8 +261,8 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_value(
-    const int ivar, const amrex::Real indata[], amrex::Real& out) override
+  void
+  get_value(const int ivar, const amrex::Real indata[], amrex::Real& out) final
   {
     out = nnmodel(indata)[ivar];
   }
@@ -273,7 +273,7 @@ public:
     const int nvar,
     const int ivar[],
     const amrex::Real indata[],
-    amrex::Real out[]) override
+    amrex::Real out[]) final
   {
     const amrex::Real* outdata = nnmodel(indata);
     for (int i = 0; i < nvar; i++) {
@@ -283,7 +283,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void get_all_values(const amrex::Real indata[], amrex::Real out[]) override
+  void get_all_values(const amrex::Real indata[], amrex::Real out[]) final
   {
     const amrex::Real* outdata = nnmodel(indata);
     for (int i = 0; i < nnf_data->Nvar; i++) {
@@ -294,7 +294,7 @@ public:
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void get_derivs(
-    const int ivar, const amrex::Real indata[], amrex::Real derivs[]) override
+    const int ivar, const amrex::Real indata[], amrex::Real derivs[]) final
   {
     // Use first-order finite difference approach for now
     constexpr amrex::Real eps = 1e-5;
@@ -317,7 +317,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  BlackBoxModel model() override { return BlackBoxModel::NEURAL_NET; }
+  BlackBoxModel model() final { return BlackBoxModel::NEURAL_NET; }
 
 private:
   // Variables

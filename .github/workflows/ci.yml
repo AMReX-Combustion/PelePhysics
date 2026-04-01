@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Check formatting
         uses: DoozyX/clang-format-lint-action@v0.20
         with:
@@ -30,11 +30,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: false
       - name: Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Dependencies
@@ -56,12 +56,12 @@ jobs:
       run:
         working-directory: ${{github.workspace}}/Support/ceptr
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
+        uses: abatilo/actions-poetry@v4.0.0
         with:
           poetry-version: ${{matrix.poetry-version}}
       - name: Install Dependencies using Poetry
@@ -109,16 +109,16 @@ jobs:
             amrex_build_flags: '--with-sycl=yes'
             dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{matrix.python-version}}
       - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
+        uses: abatilo/actions-poetry@v4.0.0
         with:
           poetry-version: ${{matrix.poetry-version}}
       - name: Clone PelePhysics
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: PelePhysics-${{matrix.comp}}
           submodules: recursive
@@ -147,7 +147,7 @@ jobs:
           tar xvf ccache-4.8-linux-x86_64.tar.xz
           sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
       - name: Set Up Ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ccache
           key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.comp}}-git-${{github.sha}}

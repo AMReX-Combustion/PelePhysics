@@ -34,7 +34,6 @@ struct EosParm<GammaLaw>
 #define MANIFOLD_DIM 1
 #endif
 
-#ifndef AMREX_USE_SYCL
 template <>
 struct EosParm<Manifold>
 {
@@ -56,7 +55,6 @@ struct EosParm<Manifold>
   int* idx_chemspecies;
   int num_chemspecies;
 };
-#endif
 
 } // namespace eos
 
@@ -80,7 +78,6 @@ struct InitParm<eos::EosParm<eos::GammaLaw>>
   }
 };
 
-#ifndef AMREX_USE_SYCL
 template <>
 struct HostOnlyParm<eos::EosParm<eos::Manifold>>
 {
@@ -298,6 +295,9 @@ struct InitParm<eos::EosParm<eos::Manifold>>
         parm_in->m_h_parm.is_variance_of[idim] = -1;
       }
     }
+    if (verbose > 0) {
+      amrex::Print() << "Completed initialization of Manifold EOS\n";
+    }
   }
 
   static void host_deallocate(PeleParams<eos::EosParm<eos::Manifold>>* parm_in)
@@ -310,7 +310,6 @@ struct InitParm<eos::EosParm<eos::Manifold>>
     }
   }
 };
-#endif
 
 } // namespace pele::physics
 #endif

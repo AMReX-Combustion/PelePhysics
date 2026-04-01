@@ -14,10 +14,6 @@ USE_SUNDIALS = TRUE
 VERBOSE = TRUE
 CXXSTD = c++20
 
-# EXTERN_CORE is simply a list of the directories we use in Eos, Reactions, Transport and Util
-# this list will be searched for runtime parameters
-EXTERN_CORE ?=
-
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 ifeq ($(USE_AMREX_LIB), TRUE)
   CEXE_sources :=
@@ -34,7 +30,6 @@ endif
 
 # PelePhysics
 PP_SRC_HOME = $(PELE_PHYSICS_HOME)/Source
-EXTERN_CORE       += $(PP_SRC_HOME)
 INCLUDE_LOCATIONS += $(PP_SRC_HOME)
 VPATH_LOCATIONS   += $(PP_SRC_HOME)
 Bpack             += $(PP_SRC_HOME)/Make.package
@@ -61,13 +56,23 @@ endif
 ifeq ($(Eos_Model),$(filter $(Eos_Model),Manifold))
    DEFINES += -DUSE_MANIFOLD_EOS
    DEFINES += -DMANIFOLD_DIM=$(Manifold_Dim)
-   ifeq ($(Manifold_Type),Table)
+   ifeq ($(USE_SYCL),TRUE)
+      # SYCL: Only support Table-only option for now due to virtual function limitations
+      ifneq ($(Manifold_Type),Table)
+         $(warning Compiling with SYCL + Manifold will enforce Manifold_Type = Table)
+      endif
       DEFINES += -DMANIFOLD_EOS_TYPE=1
    else
-      ifeq ($(Manifold_Type),Network)
-         DEFINES += -DMANIFOLD_EOS_TYPE=2
+      # CPU, CUDA, HIP: Can hard code to table or network for performance
+      # default allows either at run time through polymorphism but is less performant
+      ifeq ($(Manifold_Type),Table)
+         DEFINES += -DMANIFOLD_EOS_TYPE=1
       else
-         DEFINES += -DMANIFOLD_EOS_TYPE=0
+         ifeq ($(Manifold_Type),Network)
+            DEFINES += -DMANIFOLD_EOS_TYPE=2
+         else
+            DEFINES += -DMANIFOLD_EOS_TYPE=0
+         endif
       endif
    endif
 endif
@@ -152,8 +157,6 @@ include $(Bpack)
 
 INCLUDE_LOCATIONS += $(Blocs)
 VPATH_LOCATIONS   += $(Blocs)
-
-EXTERN_PARAMETERS := $(shell $(AMREX_HOME)/Tools/F_scripts/findparams.py $(EXTERN_CORE))
 
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp

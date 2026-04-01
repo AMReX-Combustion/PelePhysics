@@ -13,9 +13,7 @@
 #include "GammaLaw.H"
 #include "Fuego.H"
 #include "SRK.H"
-#ifndef AMREX_USE_SYCL
 #include "Manifold.H"
-#endif
 
 namespace pele::physics {
 #ifdef USE_GAMMALAW_EOS
@@ -24,7 +22,7 @@ using EosType = eos::GammaLaw;
 using EosType = eos::Fuego;
 #elif USE_SRK_EOS
 using EosType = eos::SRK;
-#elif USE_MANIFOLD_EOS && !defined(AMREX_USE_SYCL)
+#elif USE_MANIFOLD_EOS
 using EosType = eos::Manifold;
 #else
 static_assert(false, "Invalid EOS specified");
@@ -148,7 +146,6 @@ chemSpeciesNames(
   CKSYMS_STR(chemspn);
 }
 
-#ifndef AMREX_USE_SYCL
 template <>
 inline void
 speciesNames<Manifold>(
@@ -207,7 +204,6 @@ chemSpeciesNames<Manifold>(
     chemspn.push_back(amrex::trim(nametmp.substr(2U, std::string::npos)));
   }
 }
-#endif
 
 } // namespace eos
 } // namespace pele::physics
