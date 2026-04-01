@@ -45,6 +45,7 @@ struct TurbParm
            // nonperiodic directions
   bool tile_periodic = false; // if true, turbulence is patched over entire face
                               // with a periodic tiled pattern
+  bool time_periodic = true; // if true, turbulence data is looped in time
   TurbInterpType interp_type =
     TurbInterpType::quadratic; // linear required for non-periodic directions
 

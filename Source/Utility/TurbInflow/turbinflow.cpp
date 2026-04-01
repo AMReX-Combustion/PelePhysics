@@ -47,6 +47,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       pp.query("verbose", tp[n].verbose);
       pp.query("extrap_nonperiodic", tp[n].extrap_nonperiodic);
       pp.query("tile_periodic", tp[n].tile_periodic);
+      pp.query("time_periodic", tp[n].time_periodic);
       pp.query("interp_type", tp[n].interp_type);
       if (tp[n].verbose > 0) {
         amrex::Print() << "Initializing turbInflow " << tp_list[n]
@@ -298,6 +299,19 @@ void
 TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
   if (a_tp.isswirltype) {
+    // If time_periodic is enabled, wrap the time value to be within bounds
+    if (a_tp.time_periodic) {
+      const amrex::Real t_start = a_tp.planeTimes[0];
+      const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 1];
+      const amrex::Real period = t_end - t_start;
+      if (period > 0.0) {
+        // Wrap z to be within [t_start, t_end)
+        amrex::Real z_wrapped = z - t_start;
+        z_wrapped = z_wrapped - std::floor(z_wrapped / period) * period;
+        z = z_wrapped + t_start;
+      }
+    }
+    
     if (z < a_tp.planeTimes[0] || z >= a_tp.planeTimes[a_tp.kmax - 2]) {
       amrex::Error(
         "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
@@ -351,6 +365,19 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
+  // If time_periodic is enabled and isswirltype, wrap the time value
+  if (a_tp.isswirltype && a_tp.time_periodic && a_tp.kmax > 0) {
+    const amrex::Real t_start = a_tp.planeTimes[0];
+    const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 1];
+    const amrex::Real period = t_end - t_start;
+    if (period > 0.0) {
+      // Wrap z to be within [t_start, t_end)
+      amrex::Real z_wrapped = z - t_start;
+      z_wrapped = z_wrapped - std::floor(z_wrapped / period) * period;
+      z = z_wrapped + t_start;
+    }
+  }
+  
   const amrex::Real tplanes_lo = a_tp.szlo;
   const amrex::Real tplanes_hi = a_tp.szhi;
 
