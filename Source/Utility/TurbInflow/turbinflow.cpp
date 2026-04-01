@@ -90,7 +90,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         >> tp[n].periodicity[2]); // Will use zperiodicity to single whether
                                   // using periodic or time per plane mode
 
-      tp[n].isswirltype = AMREX_D_PICK(, false, tp[n].periodicity[2] == 0);
+      tp[n].istimeplanes = AMREX_D_PICK(, false, tp[n].periodicity[2] == 0);
       if (tp[n].periodicity[0] == 0 || tp[n].periodicity[1] == 0) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
           tp[n].interp_type == TurbInterpType::linear,
@@ -124,7 +124,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         , tp[n].pboxlo[2] = 0.0;)
 
       // Swirl type: we can't load more planes than are available
-      if (tp[n].isswirltype) {
+      if (tp[n].istimeplanes) {
         tp[n].nplane = AMREX_D_PICK(
           tp[n].nplane, tp[n].nplane, amrex::min<int>(tp[n].nplane, npts[2]));
       }
@@ -144,7 +144,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         is >> off;
       }
 
-      if (tp[n].isswirltype) {
+      if (tp[n].istimeplanes) {
         tp[n].planeTimes.resize(tp[n].kmax);
         for (int i = 0; i < tp[n].kmax; i++) {
           is >> tp[n].planeTimes[i]; // Time for each plane
@@ -211,7 +211,7 @@ TurbInflow::add_turb(
       // Get the turbulence
       amrex::Real z =
         (time + tpn.time_shift) *
-        (tpn.isswirltype ? 1 : tpn.turb_conv_vel * tpn.turb_scale_loc);
+        (tpn.istimeplanes ? 1 : tpn.turb_conv_vel * tpn.turb_scale_loc);
       fill_turb_plane(tpn, x, y, z, v);
     }
   }
@@ -298,7 +298,7 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 void
 TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
-  if (a_tp.isswirltype) {
+  if (a_tp.istimeplanes) {
     // If time_periodic is enabled, wrap the time value to be within bounds
     if (a_tp.time_periodic) {
       const amrex::Real t_start = a_tp.planeTimes[0];
@@ -339,7 +339,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
                 a_tp.dx[2]; // need one plane forward in time for interpolating
   }
   if (a_tp.verbose > 1) {
-    std::string varname = a_tp.isswirltype ? "t" : "z";
+    std::string varname = a_tp.istimeplanes ? "t" : "z";
     amrex::Print() << "read_turb_planes filling " << a_tp.izlo << " to "
                    << a_tp.izhi << std::endl
                    << " --> now have interp data for range [" << a_tp.szlo
@@ -349,7 +349,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 
   for (int iplane = 0; iplane < a_tp.nplane; ++iplane) {
     int k = a_tp.izlo + iplane;
-    if (!a_tp.isswirltype) {
+    if (!a_tp.istimeplanes) {
       k = (a_tp.npboxcells[2] + k) %
           a_tp.npboxcells[2]; // "wrap" planes if data is periodic
     }
@@ -365,8 +365,8 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  // If time_periodic is enabled and isswirltype, wrap the time value
-  if (a_tp.isswirltype && a_tp.time_periodic && a_tp.kmax > 0) {
+  // If time_periodic is enabled and istimeplanes, wrap the time value
+  if (a_tp.istimeplanes && a_tp.time_periodic && a_tp.kmax > 0) {
     const amrex::Real t_start = a_tp.planeTimes[0];
     const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 2];
     const amrex::Real period = t_end - t_start;
@@ -383,7 +383,7 @@ TurbInflow::fill_turb_plane(
 
   if ((z < tplanes_lo) || (z >= tplanes_hi)) {
     if (a_tp.verbose > 1) {
-      std::string varname = a_tp.isswirltype ? "t" : "z";
+      std::string varname = a_tp.istimeplanes ? "t" : "z";
       amrex::Print() << "Reading new data because " << varname << " = " << z
                      << " is outside the range [" << tplanes_lo << ", "
                      << tplanes_hi << ")" << std::endl;
@@ -419,7 +419,7 @@ TurbInflow::fill_turb_plane(
   const bool lininterp = a_tp.interp_type == TurbInterpType::linear;
   amrex::Real cz[3];
   int k0 = -1;
-  if (a_tp.isswirltype) {
+  if (a_tp.istimeplanes) {
     AMREX_ALWAYS_ASSERT(
       z >= a_tp.planeTimes[a_tp.izlo] && z <= a_tp.planeTimes[a_tp.izhi]);
     for (k0 = 1; k0 < a_tp.nplane - 2 && a_tp.planeTimes[a_tp.izlo + k0] <= z;
