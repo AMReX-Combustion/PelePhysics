@@ -88,10 +88,11 @@ provided below. ::
   turbinflow.low.turb_conv_vel  = 5.                      # Velocity to move through the 3rd dimension to simulate time evolution
   turbinflow.low.turb_nplane    = 32                      # Number of planes to read and store at a time
   turbinflow.low.time_offset    = 0.0                     # Offset in time for reading through the 3rd dimension
-  turbinflow.low.verbose        = 0                       # verbosity level
+  turbinflow.low.verbose        = 0                       # Verbosity level
   turbinflow.low.extrap_nonperiodic = 0                   # Allow interpolation near edges of inflow patch where stencil may touch ghost cells
-  turbinflow.low.tile_periodic  = 0                       # cover the entire inflow face by periodically repeating/tiling the inflow patch
-  turbinflow.interp_type        = quadratic               # either quadratic (default) or linear (required if there are nonperiodic directions)
+  turbinflow.low.tile_periodic  = 0                       # Cover the entire inflow face by periodically repeating/tiling the inflow patch
+  turbinflow.low.interp_type    = quadratic               # Either quadratic (default) or linear (required if there are nonperiodic directions)
+  turbinflow.low.time_periodic  = false                   # Specify if the turbinflow data should be repeated in time (default is false)
 
   turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
   turbinflow.high.dir            = 1
