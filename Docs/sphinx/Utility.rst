@@ -92,7 +92,7 @@ provided below. ::
   turbinflow.low.extrap_nonperiodic = 0                   # Allow interpolation near edges of inflow patch where stencil may touch ghost cells
   turbinflow.low.tile_periodic  = 0                       # Cover the entire inflow face by periodically repeating/tiling the inflow patch
   turbinflow.low.interp_type    = quadratic               # Either quadratic (default) or linear (required if there are nonperiodic directions)
-  turbinflow.low.time_periodic  = false                   # Specify if the turbinflow data should be repeated in time (default is false)
+  turbinflow.low.time_periodic  = 0                       # Specify if the turbinflow data should be repeated in time, only valid for time varying turbinflow of type "istimeplanes"
 
   turbinflow.high.turb_file      = TurbFileHIT/TurbTEST   # All same as above, but for second injection patch
   turbinflow.high.dir            = 1
