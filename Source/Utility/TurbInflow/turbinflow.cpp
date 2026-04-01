@@ -302,7 +302,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
     // If time_periodic is enabled, wrap the time value to be within bounds
     if (a_tp.time_periodic) {
       const amrex::Real t_start = a_tp.planeTimes[0];
-      const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 1];
+      const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 2];
       const amrex::Real period = t_end - t_start;
       if (period > 0.0) {
         // Wrap z to be within [t_start, t_end)
@@ -368,7 +368,7 @@ TurbInflow::fill_turb_plane(
   // If time_periodic is enabled and isswirltype, wrap the time value
   if (a_tp.isswirltype && a_tp.time_periodic && a_tp.kmax > 0) {
     const amrex::Real t_start = a_tp.planeTimes[0];
-    const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 1];
+    const amrex::Real t_end = a_tp.planeTimes[a_tp.kmax - 2];
     const amrex::Real period = t_end - t_start;
     if (period > 0.0) {
       // Wrap z to be within [t_start, t_end)
