@@ -38,7 +38,7 @@ struct TurbParm
 
   amrex::IntVect periodicity{AMREX_D_DECL(1, 1, 1)};
   bool istimeplanes = false; // false indicates turb data is periodic normal to
-                            // flow dir, true requires time array in turb data
+                             // flow dir, true requires time array in turb data
 
   bool extrap_nonperiodic =
     false; // if true, allow interpolation where stencil touches ghost cells for
