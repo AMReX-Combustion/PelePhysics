@@ -311,7 +311,7 @@ TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
         z = z_wrapped + t_start;
       }
     }
-    
+
     if (z < a_tp.planeTimes[0] || z >= a_tp.planeTimes[a_tp.kmax - 2]) {
       amrex::Error(
         "TurbInflow::read_turb_planes(): Requested time (" + std::to_string(z) +
@@ -377,7 +377,7 @@ TurbInflow::fill_turb_plane(
       z = z_wrapped + t_start;
     }
   }
-  
+
   const amrex::Real tplanes_lo = a_tp.szlo;
   const amrex::Real tplanes_hi = a_tp.szhi;
 
