@@ -219,7 +219,8 @@ SprayParticleContainer::updateParticles(
     }
   }
   // Spray model in 2D assumes narrow domain in z-direction (Lz = dx)
-  const Real vol = AMREX_D_PICK(dx[0]*dx[0]*dx[0], dx[0]*dx[1]*dx[0], dx[0]*dx[1]*dx[2]);
+  const Real vol = AMREX_D_PICK(
+    dx[0] * dx[0] * dx[0], dx[0] * dx[1] * dx[0], dx[0] * dx[1] * dx[2]);
   const Real inv_vol = 1. / vol;
   // If particle subcycling is being done, determine the number of subcycles
   // Note: this is different than the AMR subcycling
