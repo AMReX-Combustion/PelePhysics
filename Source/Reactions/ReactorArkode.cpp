@@ -276,7 +276,7 @@ ReactorArkode::react(
   BL_PROFILE("Pele::ReactorArkode::react()");
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
-  std::cout << "Reacting (flattened)\n";
+  // std::cout << "Reacting (flattened)\n";
 
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;

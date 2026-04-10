@@ -79,7 +79,7 @@ public:
     long int* FCunt,
     amrex::Real dt) = 0;
 
-  void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
+  virtual void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
   // Manifold EOS needs an eosparm - right now that is only propagated through
   // the RK64 reactor

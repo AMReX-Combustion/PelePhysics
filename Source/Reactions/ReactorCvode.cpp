@@ -1507,7 +1507,7 @@ ReactorCvode::react(
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
 
-  std::cout << "Reacting (flattened)\n";
+  // std::cout << "Reacting (flattened)\n";
 
   // CPU and GPU version are very different such that most the file
   // is split between a GPU region and a CPU region
