@@ -373,7 +373,6 @@ calculateSpraySource(
   amrex::RealVect part_vel_src;
   while (isub <= nsub) {
     const amrex::Real cp_part = fdat.liqprops.cp_mix(Y_part, T_part, cBoilT);
-    const amrex::Real Tboil = fdat.liqprops.boilT_mix(Y_part, cBoilT);
     // Average molar mass of liquid droplet
     const amrex::Real mw_part = fdat.liqprops.mw_mix(Y_part);
     // Model the fuel vapor using the one-third rule
