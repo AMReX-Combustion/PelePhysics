@@ -382,7 +382,7 @@ SprayParticleContainer::updateParticles(
             gpv.reset();
             InterpolateGasPhase(
               gpv, state_box, rhoarr, rhoYarr, Tarr, momarr, engarr,
-              indx_array.data(), weights.data(), fdat->eosparm);
+              indx_array.data(), weights.data(), fdat->eosparm, fdat);
             // Solve for avg mw and pressure at droplet location
             fdat->calcBoilT(gpv, cBoilT.data());
             if (is_film) {
