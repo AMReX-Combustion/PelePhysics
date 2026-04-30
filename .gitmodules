@@ -6,3 +6,5 @@
 	path = Submodules/amrex
 	url = https://github.com/AMReX-Codes/amrex.git
 	shallow = true
+[submodule "Submodules.amrex"]
+	url = git@github.com:drummerdoc/amrex.git
