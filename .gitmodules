@@ -4,5 +4,5 @@
 	shallow = true
 [submodule "Submodules/amrex"]
 	path = Submodules/amrex
-	url = https://github.com/drummerdoc/amrex.git
+	url = https://github.com/AMReX-Combustion/amrex.git
 	shallow = true
