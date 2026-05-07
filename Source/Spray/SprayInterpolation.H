@@ -121,6 +121,11 @@ InterpolateGasPhase(
 #ifdef PELELM_USE_SPRAY
   amrex::ignore_unused(engarr);
 #endif
+
+#ifndef USE_MANIFOLD_EOS
+  amrex::ignore_unused(sprayData);
+#endif
+
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
   for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
     amrex::Real cw = weights[aindx];
