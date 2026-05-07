@@ -172,11 +172,7 @@ InterpolateGasPhase(
 #ifdef USE_MANIFOLD_EOS
   for (int n = 0; n < SPRAY_FUEL_NUM; n++) {
     amrex::Real tempval;
-<<<<<<< HEAD
     eos.Y2ChemSpecies(mass_frac.data(), sprayData->dep_indx[n], tempval);
-    == == ==
-      = eos.Y2ChemSpecies(mass_frac.data(), sprayData->dep_indx[n], tempval);
->>>>>>> development
     gpv.Yspec_fluid[n] = tempval;
   }
 #endif
