@@ -591,15 +591,8 @@ calculateSpraySource(
     if (fdat.mass_trans) {
       amrex::Real newT = T_part + part_dt * part_temp_src;
       amrex::Real new_mass = pmass + m_dot * part_dt;
-
-      // Find maximum boiling temperature across all components
-      amrex::Real max_boil_temp = cBoilT[0];
-      for (int spf = 1; spf < SPRAY_FUEL_NUM; ++spf) {
-        max_boil_temp = amrex::max<amrex::Real>(max_boil_temp, cBoilT[spf]);
-      }
-
-      // If droplet is still reasonable size and temperature
-      if (new_mass > min_mass && newT < max_boil_temp) {
+      // If droplet is still reasonable size
+      if (new_mass > min_mass) {
         T_part = newT;
 #if SPRAY_FUEL_NUM > 1
         amrex::Real sumY = 0.;
