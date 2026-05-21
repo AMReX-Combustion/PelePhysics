@@ -36,6 +36,7 @@ qssa = "ceptr.qssa:main"
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+exclude = ["build"]
 
 [tool.ruff.format]
 quote-style = "double"
