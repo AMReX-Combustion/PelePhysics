@@ -63,8 +63,6 @@ def test_polimi2020():
     mechanism = ct.Solution(fname)
     interface = None
     chemistry = "homogeneous"
-    conv = converter.Converter(
-        mechanism, interface, chemistry, plog_pressure=101325.0
-    )
+    conv = converter.Converter(mechanism, interface, chemistry, plog_pressure=101325.0)
     conv.writer()
     conv.formatter()
