@@ -1820,53 +1820,61 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "symengine"
-version = "0.9.2"
+version = "0.14.1"
 description = "Python library providing wrappers to SymEngine"
 optional = false
-python-versions = ">=3.7,<4"
+python-versions = "<4,>=3.9"
 groups = ["main"]
 markers = "sys_platform == \"win32\" or sys_platform == \"emscripten\" or sys_platform != \"win32\" and sys_platform != \"emscripten\""
 files = [
-    {file = "symengine-0.9.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:c57b542a88d88bf716f2ac15b928d37587030d5347d45aa3af18c741c07e04e2"},
-    {file = "symengine-0.9.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:201a6c33a2c391d4b9350e9f171e05ca54011599bb9fa9cd188548f0a26d2f31"},
-    {file = "symengine-0.9.2-cp310-cp310-manylinux2010_x86_64.whl", hash = "sha256:dee0df899abeb78c08fff6471f4d979dad7d3d235e00303c7a641da7b92b025b"},
-    {file = "symengine-0.9.2-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:dfb3c764a52f2ade33c90c64baa14175103b6527773f2e23c961906159515725"},
-    {file = "symengine-0.9.2-cp310-cp310-manylinux2014_ppc64le.whl", hash = "sha256:2ca84ce89c27788e9675fad31c8fa05317acd7ec7e034b562f3d3a6e72bf8004"},
-    {file = "symengine-0.9.2-cp310-cp310-win_amd64.whl", hash = "sha256:eaf3604c469af16c1aa9d8f4287295e616840d7d14eeaab13228dd11c5e5fe75"},
-    {file = "symengine-0.9.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:78c116c6220baf3c0fa93858e965db44661455e5f8d34558fef649b7c7be5e57"},
-    {file = "symengine-0.9.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:467621288f51f0315f5fc079e6919fad501faa99a5ed65c1f46197dc1be7fa47"},
-    {file = "symengine-0.9.2-cp311-cp311-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:1d6d92b02d2e72137d63520c4a2326ff4e1c1c24724160bd31e7f7370ad94185"},
-    {file = "symengine-0.9.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:061e045b9fef170b1f11a6f1c9aa387ec44d60480988a0af91ed26c96fb9427b"},
-    {file = "symengine-0.9.2-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:438b04f7089993caef00839a1e926f8b32cee77d7fb1f0e0d7cc69c351d16c08"},
-    {file = "symengine-0.9.2-cp311-cp311-win_amd64.whl", hash = "sha256:376f74c0885b2f041fc08c00b63aae1c6732804da7a591d658a82ba1b70f2167"},
-    {file = "symengine-0.9.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:4bd4e32bd3208477e5da0fa1c0a23f1f54c32bfc9d4fa25c433af03dfbb92342"},
-    {file = "symengine-0.9.2-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:dd2b06fcb133bbbb41428a94c6c07f8f151a02c18deb26382b7e878a808971ba"},
-    {file = "symengine-0.9.2-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:aa6e193701d244e49a141782cd87248c00d78cff398cd395d46db632bec41cf4"},
-    {file = "symengine-0.9.2-cp37-cp37m-manylinux2014_ppc64le.whl", hash = "sha256:eb4be488f1a8d9a04c813af342ab5c8cb69a7d0898df6619f67a4eafad722d2a"},
-    {file = "symengine-0.9.2-cp37-cp37m-win_amd64.whl", hash = "sha256:e70728b93653c1787267e300d05ee696e067bc324d58ac0858d744c71a14e648"},
-    {file = "symengine-0.9.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:f6907a6b306d0b485d210557f99f1c2fbcba83aba88da5ec9b84a0a3f34165f8"},
-    {file = "symengine-0.9.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:05608329bfb776de1390bb7981c074f866157792a7b4e2af60073b790e051520"},
-    {file = "symengine-0.9.2-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:51d590cb488e7ff05e96896baa555f41feee0eec1cafb43756b46b966fb2eb57"},
-    {file = "symengine-0.9.2-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:690f84811812ae5502c0852cad3a60dae9a9b45874f71caafe90b0bd3e6f887c"},
-    {file = "symengine-0.9.2-cp38-cp38-manylinux2014_ppc64le.whl", hash = "sha256:a54aa2151b09ef4460d9142446d5404adb4c01ef8107d4060a7dc8673ca93cc4"},
-    {file = "symengine-0.9.2-cp38-cp38-win_amd64.whl", hash = "sha256:b97d6005c528a1935ad15c661f262e525f12dfb707ea30d2af32397ba534387b"},
-    {file = "symengine-0.9.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:fdea89508505882e2c7a802836810b552e7b79e73ff5daf5f8f4dda95b79be83"},
-    {file = "symengine-0.9.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:ee122c716be397cf455f01e90a731636d9f6389179b207737e99b91d5e0baa8a"},
-    {file = "symengine-0.9.2-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:f709947e17c97e6ad18d6f4a2703b0360092d7193636f9a220a75b09ea262581"},
-    {file = "symengine-0.9.2-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:0a46099e3c1ed27dbeac28f1318b2da030170a001f3672d34a39dc2966d4a180"},
-    {file = "symengine-0.9.2-cp39-cp39-manylinux2014_ppc64le.whl", hash = "sha256:614ac3807944c7ae3158f2a1600a31a3f6195b4b6805113f49352f52d2535082"},
-    {file = "symengine-0.9.2-cp39-cp39-win_amd64.whl", hash = "sha256:add5dd16568a82fbf7c8ad8f68776040ece19a8f02380121a65c6610b5849ec1"},
-    {file = "symengine-0.9.2-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:516ce80e73de94e1952cdf8ecbb75c581c6512b61f05979b92d3ad09867663ed"},
-    {file = "symengine-0.9.2-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:0698bc5a95784f791feae5c6afbf49c4ccc2ce64531e4db505a2c0d1276fd015"},
-    {file = "symengine-0.9.2-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:1bd97d07fb5b82965c60713407cc7f8145d62406185df812beb31150a3c29fd0"},
-    {file = "symengine-0.9.2-pp38-pypy38_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:5040bf8d1fc34d958a83299dcc8a529e5f66fda416fe8f405466e10b0cd8e553"},
-    {file = "symengine-0.9.2-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7670f0c305a404c70a757c1aa0d7a81dbd5693bd6a04345e470a7584f166d684"},
-    {file = "symengine-0.9.2-pp38-pypy38_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:0bdf6102e01e1f81eca818d1ff538b100fa9462f30aa050ca4bb3246cb4874aa"},
-    {file = "symengine-0.9.2-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:1c2157602dc8b2ff6bfe6e9fdba7d527e674ebbeb73de1eb4fe197b3ddf226bb"},
-    {file = "symengine-0.9.2-pp39-pypy39_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:6eeeb5adf713be620c80c9fc2c215fac51c971e2bd57982da60c6f791af63f96"},
-    {file = "symengine-0.9.2-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:89ccaeba9637c16e7a6b6443dfba36de99e6020ff5a4ca76c1a1710d43d04db7"},
-    {file = "symengine-0.9.2-pp39-pypy39_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:db8117e21bf73e0db144e060354cdbfb6b893e9125cf8fd43565e1546c186840"},
-    {file = "symengine-0.9.2.tar.gz", hash = "sha256:0f7e45f5bba3fa844f7de7aa8d6640faaacb1075df76d8e4996e82b0ec6a4f62"},
+    {file = "symengine-0.14.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0f977360c9993dae163951386ea5b865d8310f323cf11234e62b6535f330d3ac"},
+    {file = "symengine-0.14.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:524249b3224617f91e4e0b81c4134fa496024ddf67b383163586d74683f064a3"},
+    {file = "symengine-0.14.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5f2fb2b9ba7038cba436783a5c1bddc40ba84c7812a4b9c50571fd47ff265038"},
+    {file = "symengine-0.14.1-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a010412317d93e37fbee3f4bc04886408653e863997993424e7b9e4d8c85c150"},
+    {file = "symengine-0.14.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dbb14724ab6a6844d04adbd48d7aadcadfe4974193e87eedac93963a6e88bf53"},
+    {file = "symengine-0.14.1-cp310-cp310-win_amd64.whl", hash = "sha256:4635fa8855fcadae8c60f27f498388699b7ee88c6be7c3e23564eb0907f6b397"},
+    {file = "symengine-0.14.1-cp311-abi3-macosx_10_13_x86_64.whl", hash = "sha256:182d7ca746622764e50af4f926eb9733bd4d1fddb9526faa67bc6ca88b333e23"},
+    {file = "symengine-0.14.1-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:6fbe25be42ba2040f09d464c06a7812f8e8d04c8087abbad914be561deac2141"},
+    {file = "symengine-0.14.1-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:78ac61effb97f63eca70bb4ececb2cb329b09f1d587cfab51768bd3c04543010"},
+    {file = "symengine-0.14.1-cp311-abi3-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:5ee52a0aaacafc032dbe5ca57c0b3d87a228e9ef6e88676a4ecc0111fb647b9e"},
+    {file = "symengine-0.14.1-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:577dd78b33f29e7713443588c576013ede4757cb8aedc36bcc405cf85844d7f9"},
+    {file = "symengine-0.14.1-cp311-abi3-win_amd64.whl", hash = "sha256:c1142fd44cc952025185521c1f8a756af8625955f41ad7b947df2b81a14ce7f3"},
+    {file = "symengine-0.14.1-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:43a394acef2355bbcbed089c8f83a7dbdac28f4f979e094b549f571fc411dea6"},
+    {file = "symengine-0.14.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e7eb37cd5a9eb0c1c5e35c515139fd1221d937b269aef3569b92c7bb4e251be4"},
+    {file = "symengine-0.14.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7657663cfb0d87d66848f7cacda0b2447e127584bc9ec65120e75ce68b21b809"},
+    {file = "symengine-0.14.1-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:94535da1085a4927364fbb4a8705f7f504897ac53da2cc6d6a8edc897e49c4da"},
+    {file = "symengine-0.14.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a32a29b9462446c9e7f3bf464c7faa847ac2a2d75f0f3fd2f7c0606f9b9384cb"},
+    {file = "symengine-0.14.1-cp311-cp311-win_amd64.whl", hash = "sha256:f639a488886a066c4d8f19f2a4fd2213de2ea428153d8e1bf425c14f8bc74d57"},
+    {file = "symengine-0.14.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:4c657fba40960dc143d90b20fe49ae769d5c82b323b9dd459f5e3dea4796df8f"},
+    {file = "symengine-0.14.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:9789c62a8ade18f368241525e910dae745fdde1f3b8bb782e5ac8bbfad505e92"},
+    {file = "symengine-0.14.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bcab68fe738a50df3a1b2415f75395c588aab237cb636818332e6cda7ddcf5fb"},
+    {file = "symengine-0.14.1-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:f58a88571a5f7ceca499d7f7834c00d129a55d4c2104a463ba8e3ec24c252e89"},
+    {file = "symengine-0.14.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2a55b8f78541d57a28beda6971bed0a7ddbd585148bb030221f7ca3a0c8e2517"},
+    {file = "symengine-0.14.1-cp312-cp312-win_amd64.whl", hash = "sha256:5091ce86728022d2c7e0e864ab23070494c1f24fb430ab3437d46806e854651e"},
+    {file = "symengine-0.14.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:9859c0c926475dfed666707afba04639a6d46ab48bc463faf50c79b6513de861"},
+    {file = "symengine-0.14.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:431545ef66b20efa24e5de9d754ffb184ad9ed29743740c0e9d815c1a1ec37a8"},
+    {file = "symengine-0.14.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e69fe8be6e1d1f5209abeb7a8308a074d981b9f1f166086f23f6eed20d861e7f"},
+    {file = "symengine-0.14.1-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8b51617f42213ceb49786b474195d17e7d62e492d0592caa4b404f0e1b1acf58"},
+    {file = "symengine-0.14.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e91af61b854e82ae5382e5f91e66d83ac007c0b19b3946f747bc4fc6ca25d66"},
+    {file = "symengine-0.14.1-cp313-cp313-win_amd64.whl", hash = "sha256:d232d03ceb008d6eb24cb3e1f423af44d3d78cfe09aed801d9fc68ef7b41b611"},
+    {file = "symengine-0.14.1-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:1324f94852cf2541be29de31899d00bdcab547fea9e9534bcc548062c3f33038"},
+    {file = "symengine-0.14.1-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:e4b61cb16a559f2e098d52285b27fac4e6ee15194368cef5b78727f71a490bb5"},
+    {file = "symengine-0.14.1-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:58f8e1756c9f8cdb7f6cdf189b3752f20cb464f82bf1c7a3873156b12c567896"},
+    {file = "symengine-0.14.1-cp313-cp313t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a96f1adfed8cfad62a4f58fe2f32b42718e0938afef0bffeb8131d862ca71a9b"},
+    {file = "symengine-0.14.1-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5c4f500fdd09cbd3cde34a027a964e47b4fc7bfcd5ec8b9a4e654a37036d364b"},
+    {file = "symengine-0.14.1-cp314-cp314t-macosx_10_13_x86_64.whl", hash = "sha256:4b85100df4b0e1f6bd2f036539f55961f1e95e77d73fa7beefddbf43359dfda0"},
+    {file = "symengine-0.14.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:7a5938a252c3516f77654689a3e858becc20effce8d34832d1d293ce23ca0d27"},
+    {file = "symengine-0.14.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:744b01250d15ecdfad63fa7d590a251598794bd977d35d0fab6cb18e8742a493"},
+    {file = "symengine-0.14.1-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:9fd6465d3a797d44e5e4d3b540c4416f18ddccb77768267f0f1e783c44d97bbc"},
+    {file = "symengine-0.14.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:9d1fe80abee5ad6f53bd64c38e25737bb526eff6d24d8428df0f92283e592799"},
+    {file = "symengine-0.14.1-cp314-cp314t-win_amd64.whl", hash = "sha256:faf659b9436dcc5ade7f6085d17d42181c18d78ddcaf91de16cd9a412fc77357"},
+    {file = "symengine-0.14.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:c0e2107c26e97cec2598334330db3868fb143acca160b8249ada04128dbaf417"},
+    {file = "symengine-0.14.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:abf1547d3db9f36b2b2ca3e2226099799a53b086840fc17cef9a7b29b4752356"},
+    {file = "symengine-0.14.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dba7b57b45d96a3de7ef112713665634bad03bd38598bf414b35e88860706ef1"},
+    {file = "symengine-0.14.1-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a52fc6788b6991ffd5c47afdcebfa8d16b7ded79af24d19240ed11c78bbf9358"},
+    {file = "symengine-0.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2ecfc30baa73bc0d5198aadc575dd7360abcc42270c13fb313e46c8099e1fa76"},
+    {file = "symengine-0.14.1-cp39-cp39-win_amd64.whl", hash = "sha256:3121996f6ee7fdfffce9c5b415b64c681c62c49ba60a2b1dee9130acddf5b925"},
+    {file = "symengine-0.14.1.tar.gz", hash = "sha256:4e9e4b4ec56371c2151803ae0403dab07dd1c74ce88e9abca433bebeb6e2f0f0"},
 ]
 
 [[package]]
@@ -2018,4 +2026,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "38bae5df7712c2dbe83086626a1dfddce480439a5c2a984bf4774dd1fe7ec3fe"
+content-hash = "a0e499d97832ccfa6fc30a97976c2b7932264d11d19aef2db6496926e146edc0"
