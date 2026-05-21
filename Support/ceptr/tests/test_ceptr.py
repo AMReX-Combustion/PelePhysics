@@ -4,8 +4,8 @@ import pathlib
 
 import cantera as ct
 
-import ceptr.converter as converter
 from ceptr import __version__
+import ceptr.converter as converter
 
 
 def mechanism_path(mname):
