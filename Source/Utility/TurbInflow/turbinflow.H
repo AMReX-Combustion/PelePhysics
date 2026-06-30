@@ -55,6 +55,11 @@ struct TurbParm
   amrex::Real turb_conv_vel =
     1.; // Mean inlet velocity, used to move through data planes
 
+  amrex::Real convected_distance =
+    -1.; // If >= 0, used directly as the through-plane sampling position
+         // (physical convected distance, e.g. the time integral of the inlet
+         // velocity), bypassing turb_conv_vel * time. Negative => disabled.
+
   amrex::Vector<amrex::Real> planeTimes;
 
   amrex::Vector<long> offset;
@@ -80,6 +85,17 @@ public:
     const amrex::Orientation::Side& side);
 
   bool is_initialized() const { return turbinflow_initialized; }
+
+  // Override the through-plane sampling position with a supplied physical
+  // convected distance (e.g. the time-integrated inlet velocity). Applies to
+  // all loaded turb planes. Pass a negative value to revert to the default
+  // turb_conv_vel * time behavior.
+  void set_convected_distance(amrex::Real dist)
+  {
+    for (auto& t : tp) {
+      t.convected_distance = dist;
+    }
+  }
 
   static void read_turb_planes(TurbParm& a_tp, amrex::Real z);
 
