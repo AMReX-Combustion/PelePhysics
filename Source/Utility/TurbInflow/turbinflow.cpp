@@ -209,9 +209,16 @@ TurbInflow::add_turb(
       }
 
       // Get the turbulence
-      amrex::Real z =
-        (time + tpn.time_shift) *
-        (tpn.istimeplanes ? 1 : tpn.turb_conv_vel * tpn.turb_scale_loc);
+      amrex::Real z;
+      if (tpn.istimeplanes) {
+        z = time + tpn.time_shift;
+      } else if (tpn.convected_distance >= 0.0) {
+        // Through-plane position supplied as a physical convected distance
+        // (e.g. the time-integrated inlet velocity); turb_conv_vel is bypassed.
+        z = tpn.convected_distance * tpn.turb_scale_loc;
+      } else {
+        z = (time + tpn.time_shift) * tpn.turb_conv_vel * tpn.turb_scale_loc;
+      }
       fill_turb_plane(tpn, x, y, z, v);
     }
   }
