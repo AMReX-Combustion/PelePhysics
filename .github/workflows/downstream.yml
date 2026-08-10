@@ -8,20 +8,12 @@ on:
        - '**.rst'
        - 'Docs/**'
        - 'Utility/**/*.py'
-       - 'Support/MechanismPAH/**'
-       - 'Support/liquidProp/**'
-       - 'Support/TurbInflowGenerator/**'
-       - 'Mechanisms/**/*.py'
    pull_request:
      branches: [development]
      paths-ignore:
        - '**.rst'
        - 'Docs/**'
        - 'Utility/**/*.py'
-       - 'Support/MechanismPAH/**'
-       - 'Support/liquidProp/**'
-       - 'Support/TurbInflowGenerator/**'
-       - 'Mechanisms/**/*.py'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
