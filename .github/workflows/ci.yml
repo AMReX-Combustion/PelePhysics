@@ -4,8 +4,24 @@ on:
    workflow_dispatch:
    push:
      branches: [development]
+     paths-ignore:
+       - '**.rst'
+       - 'Docs/**'
+       - 'Utility/**/*.py'
+       - 'Support/MechanismPAH/**'
+       - 'Support/liquidProp/**'
+       - 'Support/TurbInflowGenerator/**'
+       - 'Mechanisms/**/*.py'
    pull_request:
      branches: [development]
+     paths-ignore:
+       - '**.rst'
+       - 'Docs/**'
+       - 'Utility/**/*.py'
+       - 'Support/MechanismPAH/**'
+       - 'Support/liquidProp/**'
+       - 'Support/TurbInflowGenerator/**'
+       - 'Mechanisms/**/*.py'
 
 concurrency:
   group: ${{github.ref}}-${{github.head_ref}}-ci
