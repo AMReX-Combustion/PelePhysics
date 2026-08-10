@@ -36,7 +36,22 @@ The script ``cantera_pmf_generator.py`` solves a 1D unstrained premixed flame us
 
   poetry -C ../../../Support/ceptr/ run python cantera_pmf_generator.py -m dodecane_lu -f NC12H26 -d 0.01 -o ./
 
-This example computes a dodecane/air flame using the ``dodecane_lu`` mechanism on a 0.01 m domain, and saves the resulting file to the present directory. You may choose any mechanism included with PelePhysics, as the Cantera ``.yaml`` format is included for all mechanisms. If you choose a reduced mechanism with QSS species, the 1D solution will be obtained using the skeletal version of the mechanism without QSS species being remove, as Cantera does not support QSS by default. In this case, the script will also save a data file with QSS species removed (ending in ``-qssa-removed.dat``) that is suitable for use with the QSS mechanisms in Pele. A range of additional conditions may be specified at the command line. To see the full set of options, use the help feature: ::
+This example computes a dodecane/air flame using the ``dodecane_lu`` mechanism on a 0.01 m domain, and saves the resulting file to the present directory. It is also possible to pass all arguments via an input file, for example ``pmf_input.txt``: ::
+
+  -m
+  dodecane_lu 
+  -f
+  NC12H26
+  -d
+  0.01
+  -o
+  ./  
+
+Then running the script with: ::
+  
+  poetry -C ../../../Support/ceptr/ run python cantera_pmf_generator.py @pmf_input.txt
+
+You may choose any mechanism included with PelePhysics, as the Cantera ``.yaml`` format is included for all mechanisms. If you choose a reduced mechanism with QSS species, the 1D solution will be obtained using the skeletal version of the mechanism without QSS species being remove, as Cantera does not support QSS by default. In this case, the script will also save a data file with QSS species removed (ending in ``-qssa-removed.dat``) that is suitable for use with the QSS mechanisms in Pele. A range of additional conditions may be specified at the command line. To see the full set of options, use the help feature: ::
 
   poetry -C ../../../Support/ceptr/ run python cantera_pmf_generator.py --help
 
