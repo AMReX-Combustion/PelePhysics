@@ -7,13 +7,13 @@ on:
      paths-ignore:
        - '**.rst'
        - 'Docs/**'
-       - 'Utility/**/*.py'
+       - 'Source/Utility/**/*.py'
    pull_request:
      branches: [development]
      paths-ignore:
        - '**.rst'
        - 'Docs/**'
-       - 'Utility/**/*.py'
+       - 'Source/Utility/**/*.py'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
