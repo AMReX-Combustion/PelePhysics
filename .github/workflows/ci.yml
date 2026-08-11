@@ -28,6 +28,10 @@ jobs:
               - '**'
               - '!Docs/**'
               - '!Source/Utility/**/*.py'
+              - '!README.md'
+              - '!CONTRIBUTING.md'
+              - '!.codespell*'
+              - '!.gitignore'
 
   Formatting:
     needs: Detect-Changes
