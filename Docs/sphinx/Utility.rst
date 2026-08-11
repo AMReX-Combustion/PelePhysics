@@ -6,8 +6,6 @@
 Utility
 *******
 
-Test detection
-
 In addition to routines for evaluating chemical reactions, transport properties, and equation of state functions, PelePhysics includes other shared utilities that are utilized by both PeleC and PeleLM(eX). These utilities include support for:
 
 * Premixed Flame (``PMF``) initialization from precomputed 1D flame profiles
