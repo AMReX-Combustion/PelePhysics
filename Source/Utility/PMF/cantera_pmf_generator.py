@@ -16,6 +16,8 @@ import numpy as np
 import yaml
 from cantera import Solution, FreeFlame
 
+# Test detection
+
 #################################################################
 # Parse arguments
 #################################################################
