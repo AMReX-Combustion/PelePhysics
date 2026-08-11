@@ -16,6 +16,9 @@ import numpy as np
 import yaml
 from cantera import Solution, FreeFlame
 
+# Test changes
+zz = 1 
+
 #################################################################
 # Parse arguments
 #################################################################
