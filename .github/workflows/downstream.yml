@@ -26,6 +26,7 @@ jobs:
           filters: |
             src:
               - '**'
+              - '!**/*.rst'
               - '!Docs/**'
               - '!Source/Utility/**/*.py'
               - '!README.md'
@@ -35,7 +36,7 @@ jobs:
 
   PeleLMeX-FlameSheet:
     needs: Detect-Changes
-    if: needs.Detect-Changes.outputs.has-source-changes == 'true'
+if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     name: PeleLMeX GNU MPI Run [FlameSheet]
     runs-on: ubuntu-latest
     env:
