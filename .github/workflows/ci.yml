@@ -36,7 +36,7 @@ jobs:
 
   Formatting:
     needs: Detect-Changes
-if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: Clone
@@ -71,7 +71,7 @@ if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
 
   CEPTR:
     needs: Detect-Changes
-    if: needs.Detect-Changes.outputs.has-source-changes == 'true'
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -107,7 +107,7 @@ if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
 
   Transport-EOS-Reactions:
     needs: Detect-Changes
-    if: needs.Detect-Changes.outputs.has-source-changes == 'true'
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
