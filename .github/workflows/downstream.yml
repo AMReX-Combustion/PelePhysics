@@ -4,8 +4,16 @@ on:
    workflow_dispatch:
    push:
      branches: [development]
+     paths-ignore:
+       - '**.rst'
+       - 'Docs/**'
+       - 'Source/Utility/**/*.py'
    pull_request:
      branches: [development]
+     paths-ignore:
+       - '**.rst'
+       - 'Docs/**'
+       - 'Source/Utility/**/*.py'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
