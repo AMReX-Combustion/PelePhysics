@@ -53,7 +53,7 @@ jobs:
       - name: Clone PeleLMeX
         run: |
           git clone --recursive --shallow-submodules --single-branch \
-            https://github.com/AMReX-Combustion/PeleLMeX.git
+            https://github.com/Pele-Suite/PeleLMeX.git
 
       - name: Point PeleLMeX/Submodules/PelePhysics to this PR
         working-directory: PeleLMeX
@@ -101,7 +101,7 @@ jobs:
       - name: Clone PeleC
         run: |
           git clone --recursive --shallow-submodules --single-branch \
-            https://github.com/AMReX-Combustion/PeleC.git
+            https://github.com/Pele-Suite/PeleC.git
 
       - name: Point PeleC/Submodules/PelePhysics to this PR
         working-directory: PeleC
@@ -154,7 +154,7 @@ jobs:
       - name: Clone PeleLMeX
         run: |
           git clone --recursive --shallow-submodules --single-branch \
-            https://github.com/AMReX-Combustion/PeleLMeX.git
+            https://github.com/Pele-Suite/PeleLMeX.git
 
       - name: Point PeleLMeX/Submodules/PelePhysics to this PR
         working-directory: PeleLMeX
@@ -256,7 +256,7 @@ jobs:
       - name: Clone PeleC
         run: |
           git clone --recursive --shallow-submodules --single-branch \
-            https://github.com/AMReX-Combustion/PeleC
+            https://github.com/Pele-Suite/PeleC
 
       - name: Point PeleC/Submodules/PelePhysics to this PR
         working-directory: PeleC
