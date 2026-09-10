@@ -129,9 +129,10 @@ public:
    *
    * \p x_phys and \p y_phys are the physical cell-centre coordinates along
    * the transverse directions \c tdir1 and \c tdir2 given by
-   * transverseDirs(dir, ...), indexed from \c bx.smallEnd(tdir1) and
-   * \c bx.smallEnd(tdir2) respectively, and must span the corresponding
-   * extents of \p bx.  They are in case units; the per-TurbParm
+   * transverseDirs(dir, ...). They must have lengths bx.length(tdir1) and
+   * bx.length(tdir2), with x_phys[0] corresponding to index
+   * bx.smallEnd(tdir1) (and similarly for y_phys/tdir2), and must span the
+   * corresponding extents of \p bx.  They are in case units; the per-TurbParm
    * \c turb_scale_loc is applied internally, exactly as for the
    * Geometry-based overload.
    *

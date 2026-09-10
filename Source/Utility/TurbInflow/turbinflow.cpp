@@ -124,6 +124,10 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         , tp[n].pboxlo[2] = 0.0;)
 
       if (tp[n].verbose > 0) {
+        if (tp[n].turb_scale_loc == 0.0) {
+          amrex::Abort(
+            "TurbInflow::init(): turb_scale_loc must be non-zero for " + tp_list[n]);
+        }
         // The file is uniformly spaced by construction (the HDR carries only
         // npts and probsize).  Report the equivalent spacing in case units so
         // that it can be compared against the target grid's spacing on the
@@ -184,7 +188,7 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
             tp[n].map_q[idim] >> tp[n].map_xi_lo[idim] >> tp[n].map_xi_hi[idim];
         }
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-          is.good() || is.eof(),
+          is.good(),
           "TurbInflow::init(): malformed MESHMAP_V1 trailer in " + turb_header);
         tp[n].has_map = true;
         if (tp[n].verbose > 0) {
@@ -218,12 +222,15 @@ bool
 TurbInflow::file_has_map(
   const int dir, const amrex::Orientation::Side& side) const
 {
+  bool found = false;
+  bool any_has_map = false;
   for (const auto& tpn : tp) {
     if (tpn.dir == dir && tpn.side == side) {
-      return tpn.has_map;
+      found = true;
+      any_has_map = any_has_map || tpn.has_map;
     }
   }
-  return false;
+  return found ? any_has_map : false;
 }
 
 bool
