@@ -126,7 +126,8 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       if (tp[n].verbose > 0) {
         if (tp[n].turb_scale_loc == 0.0) {
           amrex::Abort(
-            "TurbInflow::init(): turb_scale_loc must be non-zero for " + tp_list[n]);
+            "TurbInflow::init(): turb_scale_loc must be non-zero for " +
+            tp_list[n]);
         }
         // The file is uniformly spaced by construction (the HDR carries only
         // npts and probsize).  Report the equivalent spacing in case units so
