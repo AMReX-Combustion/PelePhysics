@@ -12,7 +12,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  Detect-Changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-source-changes: ${{ steps.changes.outputs.src }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            src:
+              - '**'
+              - '!**/*.rst'
+              - '!Docs/**'
+              - '!Source/Utility/**/*.py'
+              - '!README.md'
+              - '!CONTRIBUTING.md'
+              - '!.codespell*'
+              - '!.gitignore'
+
   Formatting:
+    needs: Detect-Changes
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: Clone
@@ -26,7 +50,7 @@ jobs:
           clangFormatVersion: 20
 
   Codespell:
-    needs: Formatting
+    needs: Detect-Changes
     runs-on: ubuntu-24.04
     steps:
       - name: Clone
@@ -46,6 +70,8 @@ jobs:
         run: codespell
 
   CEPTR:
+    needs: Detect-Changes
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -80,7 +106,8 @@ jobs:
         run: poetry run convert -f ${{github.workspace}}/Mechanisms/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
-    needs: Formatting
+    needs: Detect-Changes
+    if: needs['Detect-Changes'].outputs['has-source-changes'] == 'true'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
