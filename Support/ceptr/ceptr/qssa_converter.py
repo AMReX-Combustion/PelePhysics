@@ -1439,15 +1439,10 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
-        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, const"
-        " amrex::Real * sc,"
-        + "const amrex::Real T, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
+        + "( const amrex::Real T, const amrex::Real invT, const amrex::Real logT, amrex::Real * qf, amrex::Real * qr, const amrex::Real * sc, "
+        + "amrex::Real * g_RT, amrex::Real * g_RT_qss)",
     )
     cw.writer(fstream, "{")
-
-    cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
-    cw.writer(fstream, "const amrex::Real logT = log(T);")
-    cw.writer(fstream)
 
     if mechanism.n_reactions == 0:
         cw.writer(fstream)
@@ -1465,7 +1460,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
         # coeff1 = cc.Patm_pa
         # coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
         # syms.refC_smp = coeff1 / coeff2 * syms.invT_smp
-        cw.writer(fstream, "const amrex::Real refCinv = 1. / refC;")
+        cw.writer(fstream, "const amrex::Real refCinv = 1. / refC;") # TODO: eliminate refC
         # syms.refCinv_smp = 1.0 / syms.refC_smp
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
@@ -1476,6 +1471,17 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(fstream, "}")
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
     # nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
+
+    cw.writer(fstream, "amrex::Real k_f;")
+    cw.writer(fstream, "amrex::Real Corr;")
+    cw.writer(fstream, "amrex::Real redP;")
+    cw.writer(fstream, "amrex::Real F;")
+    cw.writer(fstream, "amrex::Real logPred;")
+    cw.writer(fstream, "amrex::Real logFcent;")
+    cw.writer(fstream, "amrex::Real troe_c;")
+    cw.writer(fstream, "amrex::Real troe_n;")
+    cw.writer(fstream, "amrex::Real troe;")
+    cw.writer(fstream, "amrex::Real F_troe;")
 
     for i in range(nclassd_qssa):
         cw.writer(fstream)
@@ -1549,11 +1555,108 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
             beta = syms.convert_number_to_int(beta)
             low_beta = syms.convert_number_to_int(low_beta)
 
-        cw.writer(fstream, "{")
+        #cw.writer(fstream, "{")
         cw.writer(
             fstream,
             cw.comment(f"reaction {orig_idx}: {reaction.equation}"),
         )
+
+        #### TODO : Tidy
+
+        if bool(reaction.orders):
+            dim = cu.phase_space_units(reaction.orders)
+        else:
+            dim = cu.phase_space_units(reaction.reactants)
+        third_body = reaction.third_body is not None
+        falloff = reaction.rate.type == "falloff"
+        is_troe = reaction.rate.sub_type == "Troe"
+        is_sri = reaction.rate.sub_type == "Sri"
+        is_lindemann = reaction.rate.sub_type == "Lindemann"
+        aeuc = cu.activation_energy_units()
+        if not third_body and not falloff:
+            # Case 3 !PD, !TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
+            beta = reaction.rate.temperature_exponent
+            ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(
+                aeuc
+            )
+        elif not falloff:
+            # Case 2 !PD, TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
+            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
+            beta = reaction.rate.temperature_exponent
+            ae = (reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol).to(
+                aeuc
+            )
+        else:
+            # Case 2 !PD, TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+            pef = (
+                reaction.rate.high_rate.pre_exponential_factor * ctuc
+            ).to_base_units()
+            beta = reaction.rate.high_rate.temperature_exponent
+            ae = (
+                reaction.rate.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            ).to(aeuc)
+
+            # low_pef = (
+            # reaction.rate.low_rate.pre_exponential_factor * ctuc
+            # ).to_base_units()
+            # low_beta = reaction.rate.low_rate.temperature_exponent
+            # low_ae = (
+            # reaction.rate.low_rate.activation_energy
+            # * cc.ureg.joule
+            # / cc.ureg.kmol
+            # ).to(aeuc)
+            if is_troe:
+                pass
+                # troe = reaction.rate.falloff_coeffs
+                # ntroe = len(troe)
+            elif is_sri:
+                pass
+                # sri = reaction.rate.falloff_coeffs
+                # nsri = len(sri)
+            elif is_lindemann:
+                pass
+            else:
+                raise ValueError(
+                    f"Unrecognized reaction rate type {reaction.rate.type},"
+                    f" {reaction.rate.sub_type} for reaction: {reaction.equation}"
+                )
+
+        cw.writer(fstream, f"k_f = {pef.m:.15g}")
+        syms.kf_qss_smp_tmp[i] = pef.m
+
+        if (beta == 0) and (ae == 0):
+            cw.writer(fstream, "           ;")
+        else:
+            if ae == 0:
+                cw.writer(fstream, f"           * exp(({beta:.15g}) * logT);")
+                syms.kf_qss_smp_tmp[i] *= sme.exp(beta * syms.logT_smp)
+            elif beta == 0:
+                cw.writer(
+                    fstream,
+                    "           *"
+                    f" exp(-({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) *"
+                    " invT);",
+                )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp_tmp[i] *= sme.exp(-coeff * syms.invT_smp)
+
+            else:
+                cw.writer(
+                    fstream,
+                    f"           * exp(({beta:.15g}) * logT -"
+                    f" ({(1.0 / cc.Rc / cc.ureg.kelvin * ae).m:.15g}) * invT);",
+                )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp_tmp[i] *= sme.exp(
+                    beta * syms.logT_smp - coeff * syms.invT_smp
+                )
+
+        #### End TODO : Tidy
+
         if bool(reaction.orders):
             forward_sc, forward_sc_smp = qssa_return_coeff(
                 mechanism, species_info, reaction, reaction.orders, syms
@@ -1583,14 +1686,14 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"),
+                    cw.comment(f"qf[{idx}] = k_f * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    f"qf[{idx}] = k_f[{idx}] * ({forward_sc});",
+                    f"qf[{idx}] = k_f * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
@@ -1603,42 +1706,42 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(f"qf[{idx}] = k_f[{idx}] * ({forward_sc});"),
+                    cw.comment(f"qf[{idx}] = k_f * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    f"qf[{idx}] = k_f[{idx}] * ({forward_sc});",
+                    f"qf[{idx}] = k_f * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
 
         elif not falloff:
             alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction, syms)
-            cw.writer(fstream, f"const amrex::Real Corr = {alpha};")
+            cw.writer(fstream, f"Corr = {alpha};")
             corr_smp = alpha_smp
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    cw.comment(f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"),
+                    cw.comment(f"qf[{idx}] = Corr * k_f * ({forward_sc});"),
                 )
                 cw.writer(fstream, f"qf[{idx}] = 0.0;")
                 syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
-                    f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});",
+                    f"qf[{idx}] = Corr * k_f * ({forward_sc});",
                 )
                 syms.qf_qss_smp[idx] = corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
         else:
             alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction, syms)
-            cw.writer(fstream, f"amrex::Real Corr = {alpha};")
+            cw.writer(fstream, f"Corr = {alpha};")
             corr_smp = alpha_smp
             cw.writer(
                 fstream,
-                f"const amrex::Real redP = Corr / k_f[{idx}] *"
+                f"redP = Corr / k_f *"
                 f" {10 ** (-dim * 6) * low_pef.m * 10 ** 3 ** dim:.15g} ",
             )
             coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
@@ -1652,11 +1755,11 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
             redp_smp *= sme.exp(low_beta * syms.logT_smp - coeff * syms.invT_smp)
             if is_troe:
-                cw.writer(fstream, "const amrex::Real F = redP / (1.0 + redP);")
+                cw.writer(fstream, "F = redP / (1.0 + redP);")
                 f_smp = redp_smp / (1.0 + redp_smp)
-                cw.writer(fstream, "const amrex::Real logPred = log10(redP);")
+                cw.writer(fstream, "logPred = log10(redP);")
                 log_pred_smp = sme.log(redp_smp, 10)
-                cw.writer(fstream, "const amrex::Real logFcent = log10(")
+                cw.writer(fstream, "logFcent = log10(")
                 int_smp = 0
                 if abs(troe[1]) > 1.0e-100:
                     if 1.0 - troe[0] != 0:
@@ -1704,17 +1807,17 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
 
                 cw.writer(
                     fstream,
-                    "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
+                    "troe_c = -0.4 - 0.67 * logFcent;",
                 )
                 troe_c_smp = -0.4 - 0.67 * log_fcent_smp
                 cw.writer(
                     fstream,
-                    "const amrex::Real troe_n = 0.75 - 1.27 * logFcent;",
+                    "troe_n = 0.75 - 1.27 * logFcent;",
                 )
                 troe_n_smp = 0.75 - 1.27 * log_fcent_smp
                 cw.writer(
                     fstream,
-                    "const amrex::Real troe = (troe_c + logPred)"
+                    "troe = (troe_c + logPred)"
                     + " / (troe_n - 0.14 * (troe_c + logPred));",
                 )
                 troe_smp = (troe_c_smp + log_pred_smp) / (
@@ -1722,7 +1825,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 )
                 cw.writer(
                     fstream,
-                    "const amrex::Real F_troe = exp(M_LN10 * logFcent /"
+                    "F_troe = exp(M_LN10 * logFcent /"
                     " (1.0 + troe * troe));",
                 )
                 f_troe_smp = 10 ** (log_fcent_smp / (1.0 + troe_smp * troe_smp))
@@ -1732,14 +1835,14 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
                         fstream,
-                        cw.comment(f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});"),
+                        cw.comment(f"qf[{idx}]  = Corr * k_f * ({forward_sc});"),
                     )
                     cw.writer(fstream, f"qf[{idx}]  = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
-                        f"qf[{idx}]  = Corr * k_f[{idx}] * ({forward_sc});",
+                        f"qf[{idx}]  = Corr * k_f * ({forward_sc});",
                     )
                     syms.qf_qss_smp[idx] = (
                         corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
@@ -1751,14 +1854,14 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
                         fstream,
-                        cw.comment(f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});"),
+                        cw.comment(f"qf[{idx}] = Corr * k_f * ({forward_sc});"),
                     )
                     cw.writer(fstream, f"qf[{idx}] = 0.0;")
                     syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
-                        f"qf[{idx}] = Corr * k_f[{idx}] * ({forward_sc});",
+                        f"qf[{idx}] = Corr * k_f * ({forward_sc});",
                     )
                     syms.qf_qss_smp[idx] = (
                         corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
@@ -1774,7 +1877,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                        f"qr[{idx}] = k_f * exp(-({kc_exp_arg})) *"
                         f" ({kc_conv_inv}) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
@@ -1792,7 +1895,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = Corr * k_f[{idx}] *"
+                        f"qr[{idx}] = Corr * k_f *"
                         f" exp(-({kc_exp_arg})) * ({kc_conv_inv}) *"
                         f" ({reverse_sc});",
                     )
@@ -1813,7 +1916,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = k_f[{idx}] * exp(-({kc_exp_arg})) *"
+                        f"qr[{idx}] = k_f * exp(-({kc_exp_arg})) *"
                         f" ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
@@ -1828,7 +1931,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                 else:
                     cw.writer(
                         fstream,
-                        f"qr[{idx}] = Corr * k_f[{idx}] *"
+                        f"qr[{idx}] = Corr * k_f *"
                         f" exp(-({kc_exp_arg})) * ({reverse_sc});",
                     )
                 syms.qr_qss_smp[idx] = (
@@ -1838,7 +1941,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
                     * reverse_sc_smp
                 )
 
-        cw.writer(fstream, "}")
+        #cw.writer(fstream, "}")
 
     cw.writer(fstream)
     cw.writer(fstream, "return;")
