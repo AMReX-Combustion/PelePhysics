@@ -18,6 +18,12 @@
 // land independently.
 #define PELEPHYSICS_TURBINFLOW_HAS_COORD_ADDTURB 1
 
+// Feature macro: the HDR reader understands the optional MESHMAP_V1 trailer
+// that tags a turbulence file as uniform in a precursor's computational (Xi)
+// coordinate rather than in physical position.  Files without the trailer
+// are, by declaration, uniform in physical position.
+#define PELEPHYSICS_TURBINFLOW_HAS_MESHMAP_HDR 1
+
 namespace pele::physics::turbinflow {
 
 AMREX_ENUM(TurbInterpType, linear, quadratic);
@@ -76,6 +82,20 @@ struct TurbParm
 
   amrex::Vector<long> offset;
   int kmax; // Number of plane in Turbfile
+
+  // Optional coordinate-mapping descriptor of the turbulence file, read
+  // from the MESHMAP_V1 trailer of HDR (see the file-format notes in
+  // turbinflow.cpp).  When present, the file's transverse grid is uniform
+  // in the *computational* (Xi) coordinate of the precursor that produced
+  // it, and a physical position must be inverted through this map before
+  // being turned into a file index.  Absent trailer => has_map == false and
+  // the file is uniform in physical position.
+  bool has_map = false;
+  amrex::GpuArray<int, 2> map_kind = {{0, 0}};
+  amrex::GpuArray<amrex::Real, 2> map_p = {{0.0, 0.0}};
+  amrex::GpuArray<int, 2> map_q = {{-1, -1}};
+  amrex::GpuArray<amrex::Real, 2> map_xi_lo = {{0.0, 0.0}};
+  amrex::GpuArray<amrex::Real, 2> map_xi_hi = {{0.0, 0.0}};
 };
 
 struct TurbInflow
@@ -157,6 +177,15 @@ public:
     const amrex::Orientation::Side& side,
     amrex::Real& dx_tdir1,
     amrex::Real& dx_tdir2) const;
+
+  /**
+   * \brief Whether the turbulence file feeding the (\p dir, \p side) face
+   *        carries a MESHMAP_V1 trailer, i.e. is uniform in a precursor's
+   *        computational coordinate rather than in physical position.
+   *
+   * Returns false when no turb file acts on that face.
+   */
+  bool file_has_map(const int dir, const amrex::Orientation::Side& side) const;
 
   bool is_initialized() const { return turbinflow_initialized; }
 

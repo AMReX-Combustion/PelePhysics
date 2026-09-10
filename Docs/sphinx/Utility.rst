@@ -154,12 +154,27 @@ inflow plane data and interpolation approaches for periodic and nonperiodic tang
 Non-uniform and mapped grids
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The inflow data itself is **always uniformly spaced**: the ``HDR`` carries only
-``npts`` and ``probsize`` per direction, and the coordinate-to-index conversion
-in the interpolator is a single affine expression. Turbulence *generated on* a
-stretched or otherwise non-uniform mesh therefore cannot yet be represented in
-the file format, and neither the ``periodic_plt`` nor the ``diag_frame_plane``
-generation mode accounts for a coordinate mapping in the precursor simulation.
+The inflow data is always uniformly spaced *in some coordinate*: the ``HDR``
+carries only ``npts`` and ``probsize`` per direction, and the coordinate-to-index
+conversion in the interpolator is a single affine expression. Which coordinate
+that is depends on how the file was made. Synthetic (``turb_box``) data and data
+extracted from a uniform-mesh precursor are uniform in physical position. Data
+extracted with ``diag_frame_planes`` or ``periodic_plt`` from a precursor that
+ran with a coordinate mapping (for example PeleLMeX's ``geometry.mesh_mapping``)
+is uniform in that run's *computational* (:math:`\xi`) coordinate, because the
+plane files and plotfiles carry the computational geometry with physical
+velocity values.
+
+The ``HDR`` may end with an optional ``MESHMAP_V1`` trailer, placed after the
+plane times so that older readers never see it, describing the precursor's map
+along the two transverse directions (one line each: ``kind p q xi_lo xi_hi``,
+with the same meaning as PeleLMeX's ``MeshMapEvaluator`` payload). A file
+*without* the trailer is, by declaration, uniform in physical position. The
+reader (feature macro ``PELEPHYSICS_TURBINFLOW_HAS_MESHMAP_HDR``) parses the
+trailer and exposes it through ``TurbInflow::file_has_map()``; sampling a file
+that carries one is not yet supported and ``TurbInflow::init()`` aborts rather
+than inject a mis-sampled field. The generators do not yet write the trailer, so
+a file built from a mesh-mapped precursor must not be injected until they do.
 
 A run *consuming* the data may, however, be on a non-uniform grid. The
 turbulence file is indexed by physical position, so a solver whose AMReX grid is

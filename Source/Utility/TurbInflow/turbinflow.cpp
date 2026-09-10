@@ -161,10 +161,71 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
           is >> tp[n].planeTimes[i]; // Time for each plane
         }
       }
+
+      // Optional trailer.  Everything a legacy reader consumes ends with the
+      // plane times, so anything appended after them is invisible to older
+      // code and a file without it is, by declaration, uniform in physical
+      // position.  Format (one line per transverse direction, in the file's
+      // own transverse order):
+      //
+      //   MESHMAP_V1
+      //   <kind> <p> <q> <xi_lo> <xi_hi>
+      //   <kind> <p> <q> <xi_lo> <xi_hi>
+      //
+      // kind/p/q follow PeleLMeX's MeshMapEvaluator (0 identity, 1 constant,
+      // 2 exp stretch, 3 tanh stretch); xi_lo/xi_hi are the precursor's
+      // computational-domain bounds along that axis, which the inverse map
+      // needs.  A trailer marks the file as uniform in the precursor's Xi
+      // coordinate rather than in physical position.
+      std::string token;
+      if ((is >> token) && token == "MESHMAP_V1") {
+        for (int idim = 0; idim < 2; ++idim) {
+          is >> tp[n].map_kind[idim] >> tp[n].map_p[idim] >>
+            tp[n].map_q[idim] >> tp[n].map_xi_lo[idim] >>
+            tp[n].map_xi_hi[idim];
+        }
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+          is.good() || is.eof(),
+          "TurbInflow::init(): malformed MESHMAP_V1 trailer in " +
+            turb_header);
+        tp[n].has_map = true;
+        if (tp[n].verbose > 0) {
+          amrex::Print() << "   " << tp_list[n]
+                         << " carries a MESHMAP_V1 trailer: file is uniform "
+                            "in the precursor's Xi coordinate (kinds "
+                         << tp[n].map_kind[0] << ", " << tp[n].map_kind[1]
+                         << ")\n";
+        }
+        // The sampling path below converts case positions to file indices
+        // with a single affine expression, i.e. it assumes the file is
+        // uniform in physical position.  Until it can invert the file's map
+        // (next step of the stretched-mesh work), refuse rather than inject
+        // a silently mis-sampled field.
+        amrex::Abort(
+          "TurbInflow::init(): turbulence file " + tp[n].m_turb_file +
+          " was generated on a mesh-mapped precursor (MESHMAP_V1 trailer). "
+          "Sampling such a file is not yet supported by this TurbInflow.");
+      } else if (!token.empty() && !is.eof()) {
+        amrex::Print() << "TurbInflow: WARNING ignoring unrecognised trailing "
+                          "content in "
+                       << turb_header << " starting at '" << token << "'\n";
+      }
       is.close();
     }
     turbinflow_initialized = true;
   }
+}
+
+bool
+TurbInflow::file_has_map(
+  const int dir, const amrex::Orientation::Side& side) const
+{
+  for (const auto& tpn : tp) {
+    if (tpn.dir == dir && tpn.side == side) {
+      return tpn.has_map;
+    }
+  }
+  return false;
 }
 
 bool
