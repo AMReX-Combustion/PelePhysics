@@ -151,6 +151,42 @@ inflow plane data and interpolation approaches for periodic and nonperiodic tang
 .. note:: The TurbInflow capability was not designed with embedded boundaries in mind. It can be applied for simulations using EB, but care should
           be take. Inflows should not be generated from simulations where EBs intersect the inflow plane.
 
+Non-uniform and mapped grids
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The inflow data itself is **always uniformly spaced**: the ``HDR`` carries only
+``npts`` and ``probsize`` per direction, and the coordinate-to-index conversion
+in the interpolator is a single affine expression. Turbulence *generated on* a
+stretched or otherwise non-uniform mesh therefore cannot yet be represented in
+the file format, and neither the ``periodic_plt`` nor the ``diag_frame_plane``
+generation mode accounts for a coordinate mapping in the precursor simulation.
+
+A run *consuming* the data may, however, be on a non-uniform grid. The
+turbulence file is indexed by physical position, so a solver whose AMReX grid is
+a uniform computational grid carrying a coordinate mapping (for example
+PeleLMeX's ``geometry.mesh_mapping``) must not use the ``amrex::Geometry``
+overload of ``TurbInflow::add_turb()``, which would sample the file at
+computational rather than physical coordinates. Such solvers pass the physical
+cell-centre positions of the injection face explicitly, using the overload
+taking ``x_phys`` / ``y_phys`` vectors; the ordering of the two transverse
+directions is given by ``TurbInflow::transverseDirs()``. The presence of that
+overload is advertised by the ``PELEPHYSICS_TURBINFLOW_HAS_COORD_ADDTURB``
+macro.
+
+Whichever entry point is used, the physically meaningful constraint is the ratio
+of the target grid's local spacing on the injection face to the file's spacing.
+``TurbInflow::file_transverse_dx()`` reports the latter in case units (it is also
+printed at ``verbose > 0``) so that a solver can check the ratio: substantially
+above one and the file cannot fill the scales the grid resolves; substantially
+below one and the injected field is aliased onto the grid.
+
+.. note:: Diagnostics that slice the precursor solution -- notably
+          ``DiagFramePlane`` -- locate the requested ``center`` using the AMReX
+          geometry, which for a mapped run is the uniform computational grid.
+          Under a coordinate mapping ``center`` is therefore a *computational*
+          coordinate, not a physical one, and the written plane files carry no
+          mapping metadata.
+
 .. figure:: ./Visualization/TurbInflowData.png
 
 .. _sec_turbforce:

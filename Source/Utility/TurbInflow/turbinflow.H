@@ -6,6 +6,18 @@
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
 
+// Feature macro: this PelePhysics provides the TurbInflow::add_turb()
+// overload that takes the physical positions of the inflow-face cell
+// centres explicitly, rather than deriving them from an amrex::Geometry.
+//
+// A solver whose AMReX grid is a uniform computational (Xi) grid carrying a
+// coordinate mapping -- e.g. PeleLMeX's geometry.mesh_mapping -- cannot use
+// the Geometry-based overload: the turbulence file is indexed by PHYSICAL
+// position, while ProbLo + (i+0.5)*CellSize is the Xi position.  Consumers
+// #ifdef on this macro so that the PelePhysics and solver-side changes can
+// land independently.
+#define PELEPHYSICS_TURBINFLOW_HAS_COORD_ADDTURB 1
+
 namespace pele::physics::turbinflow {
 
 AMREX_ENUM(TurbInterpType, linear, quadratic);
@@ -75,6 +87,9 @@ public:
 
   void init(amrex::Geometry const& geom);
 
+  //! Uniform-grid entry point: the physical position of a cell centre is
+  //! ProbLo + (i+0.5)*CellSize.  Builds those coordinates and forwards to
+  //! the overload below, which holds the single implementation.
   void add_turb(
     amrex::Box const& bx,
     amrex::FArrayBox& data,
@@ -83,6 +98,65 @@ public:
     const amrex::Real time,
     const int dir,
     const amrex::Orientation::Side& side);
+
+  /**
+   * \brief Add turbulence to \p bx using caller-supplied physical
+   *        coordinates for the two transverse directions.
+   *
+   * For a solver on a non-uniform or mapped grid this is the correct entry
+   * point: the turbulence file is sampled by physical position, which the
+   * caller (who owns the mapping) is the only one able to compute.
+   *
+   * \p x_phys and \p y_phys are the physical cell-centre coordinates along
+   * the transverse directions \c tdir1 and \c tdir2 given by
+   * transverseDirs(dir, ...), indexed from \c bx.smallEnd(tdir1) and
+   * \c bx.smallEnd(tdir2) respectively, and must span the corresponding
+   * extents of \p bx.  They are in case units; the per-TurbParm
+   * \c turb_scale_loc is applied internally, exactly as for the
+   * Geometry-based overload.
+   *
+   * \p domain is the (Xi-space) problem domain Box, used only to locate the
+   * ghost plane being filled.
+   */
+  void add_turb(
+    amrex::Box const& bx,
+    amrex::FArrayBox& data,
+    const int dcomp,
+    amrex::Box const& domain,
+    const amrex::Vector<amrex::Real>& x_phys,
+    const amrex::Vector<amrex::Real>& y_phys,
+    const amrex::Real time,
+    const int dir,
+    const amrex::Orientation::Side& side);
+
+  /**
+   * \brief The two transverse directions associated with injection
+   *        direction \p dir, in the order the turbulence data uses them.
+   *
+   * Exposed so that callers building coordinate vectors for the overload
+   * above cannot disagree with the internal convention.
+   */
+  static AMREX_FORCE_INLINE void
+  transverseDirs(const int dir, int& tdir1, int& tdir2) noexcept
+  {
+    tdir1 = (dir != 0) ? 0 : 1;
+    tdir2 = (dir != 0) ? ((dir == 2) ? 1 : 2) : 2;
+  }
+
+  /**
+   * \brief Transverse cell spacings of the turbulence file feeding the
+   *        (\p dir, \p side) face, expressed in case units.
+   *
+   * Returns false when no turb file acts on that face.  Intended for
+   * resolution-consistency diagnostics: the ratio of the target grid's
+   * local spacing to this value is what decides whether the injected
+   * field can fill the grid's resolved scales.
+   */
+  bool file_transverse_dx(
+    const int dir,
+    const amrex::Orientation::Side& side,
+    amrex::Real& dx_tdir1,
+    amrex::Real& dx_tdir2) const;
 
   bool is_initialized() const { return turbinflow_initialized; }
 

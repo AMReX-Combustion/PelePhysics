@@ -123,6 +123,17 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
         , tp[n].pboxlo[1] = turb_center[1] - 0.5 * tp[n].pboxsize[1];
         , tp[n].pboxlo[2] = 0.0;)
 
+      if (tp[n].verbose > 0) {
+        // The file is uniformly spaced by construction (the HDR carries only
+        // npts and probsize).  Report the equivalent spacing in case units so
+        // that it can be compared against the target grid's spacing on the
+        // injection face -- see PeleLMeX's turbInflow resolution check.
+        amrex::Print() << "   transverse spacing of " << tp_list[n]
+                       << " in case units: "
+                       << tp[n].dx[0] / tp[n].turb_scale_loc << " x "
+                       << tp[n].dx[1] / tp[n].turb_scale_loc << "\n";
+      }
+
       // Swirl type: we can't load more planes than are available
       if (tp[n].istimeplanes) {
         tp[n].nplane = AMREX_D_PICK(
@@ -156,6 +167,26 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
   }
 }
 
+bool
+TurbInflow::file_transverse_dx(
+  const int dir,
+  const amrex::Orientation::Side& side,
+  amrex::Real& dx_tdir1,
+  amrex::Real& dx_tdir2) const
+{
+  for (const auto& tpn : tp) {
+    if (tpn.dir == dir && tpn.side == side) {
+      // tp.dx lives in turb-file units; queried coordinates are multiplied
+      // by turb_scale_loc before the lookup, so the equivalent spacing in
+      // case units is dx / turb_scale_loc.
+      dx_tdir1 = tpn.dx[0] / tpn.turb_scale_loc;
+      dx_tdir2 = tpn.dx[1] / tpn.turb_scale_loc;
+      return true;
+    }
+  }
+  return false;
+}
+
 void
 TurbInflow::add_turb(
   amrex::Box const& bx,
@@ -168,18 +199,61 @@ TurbInflow::add_turb(
 {
   AMREX_ALWAYS_ASSERT(turbinflow_initialized);
 
+  // Uniform grid: cell-centre positions are affine in the index.  Build
+  // them and defer to the coordinate-based overload so that there is only
+  // one copy of the interpolation logic.
+  int tdir1 = 0;
+  int tdir2 = 0;
+  transverseDirs(dir, tdir1, tdir2);
+
+  amrex::Vector<amrex::Real> x(bx.length(tdir1));
+  amrex::Vector<amrex::Real> y(bx.length(tdir2));
+  for (int i = 0; i < static_cast<int>(x.size()); ++i) {
+    const int idx = bx.smallEnd(tdir1) + i;
+    x[i] = geom.ProbLo()[tdir1] +
+           (static_cast<amrex::Real>(idx) + 0.5) * geom.CellSize(tdir1);
+  }
+  for (int j = 0; j < static_cast<int>(y.size()); ++j) {
+    const int idx = bx.smallEnd(tdir2) + j;
+    y[j] = geom.ProbLo()[tdir2] +
+           (static_cast<amrex::Real>(idx) + 0.5) * geom.CellSize(tdir2);
+  }
+
+  add_turb(bx, data, dcomp, geom.Domain(), x, y, time, dir, side);
+}
+
+void
+TurbInflow::add_turb(
+  amrex::Box const& bx,
+  amrex::FArrayBox& data,
+  const int dcomp,
+  amrex::Box const& domain,
+  const amrex::Vector<amrex::Real>& x_phys,
+  const amrex::Vector<amrex::Real>& y_phys,
+  const amrex::Real time,
+  const int dir,
+  const amrex::Orientation::Side& side)
+{
+  AMREX_ALWAYS_ASSERT(turbinflow_initialized);
+
   // Box on which we will access data
   amrex::Box bvalsBox = bx;
   int planeLoc =
-    (side == amrex::Orientation::low ? geom.Domain().smallEnd()[dir] - 1
-                                     : geom.Domain().bigEnd()[dir] + 1);
+    (side == amrex::Orientation::low ? domain.smallEnd()[dir] - 1
+                                     : domain.bigEnd()[dir] + 1);
   bvalsBox.setSmall(dir, planeLoc);
   bvalsBox.setBig(dir, planeLoc);
 
   // Define box that we will fill with turb: need to be z-normal
   // Get transverse directions
-  int tdir1 = (dir != 0) ? 0 : 1;
-  int tdir2 = (dir != 0) ? ((dir == 2) ? 1 : 2) : 2;
+  int tdir1 = 0;
+  int tdir2 = 0;
+  transverseDirs(dir, tdir1, tdir2);
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    static_cast<int>(x_phys.size()) == bvalsBox.length(tdir1) &&
+      static_cast<int>(y_phys.size()) == bvalsBox.length(tdir2),
+    "TurbInflow::add_turb(): supplied coordinate vectors must span the "
+    "transverse extents of bx");
   int tr1Lo = bvalsBox.smallEnd()[tdir1];
   int tr1Hi = bvalsBox.bigEnd()[tdir1];
   int tr2Lo = bvalsBox.smallEnd()[tdir2];
@@ -195,17 +269,15 @@ TurbInflow::add_turb(
 
     if (tpn.dir == dir && tpn.side == side) {
 
-      // 0 and 1 are the two transverse directions
+      // 0 and 1 are the two transverse directions.  turb_scale_loc is a
+      // per-TurbParm quantity, so the scaling is applied here rather than
+      // once by the caller.
       amrex::Vector<amrex::Real> x(turbBox.size()[0]), y(turbBox.size()[1]);
-      for (int i = turbBox.smallEnd()[0]; i <= turbBox.bigEnd()[0]; ++i) {
-        x[i - turbBox.smallEnd()[0]] =
-          (geom.ProbLo()[tdir1] + (i + 0.5) * geom.CellSize(tdir1)) *
-          tpn.turb_scale_loc;
+      for (int i = 0; i < static_cast<int>(x.size()); ++i) {
+        x[i] = x_phys[i] * tpn.turb_scale_loc;
       }
-      for (int j = turbBox.smallEnd()[1]; j <= turbBox.bigEnd()[1]; ++j) {
-        y[j - turbBox.smallEnd()[1]] =
-          (geom.ProbLo()[tdir2] + (j + 0.5) * geom.CellSize(tdir2)) *
-          tpn.turb_scale_loc;
+      for (int j = 0; j < static_cast<int>(y.size()); ++j) {
+        y[j] = y_phys[j] * tpn.turb_scale_loc;
       }
 
       // Get the turbulence
