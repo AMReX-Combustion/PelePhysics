@@ -181,13 +181,11 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       if ((is >> token) && token == "MESHMAP_V1") {
         for (int idim = 0; idim < 2; ++idim) {
           is >> tp[n].map_kind[idim] >> tp[n].map_p[idim] >>
-            tp[n].map_q[idim] >> tp[n].map_xi_lo[idim] >>
-            tp[n].map_xi_hi[idim];
+            tp[n].map_q[idim] >> tp[n].map_xi_lo[idim] >> tp[n].map_xi_hi[idim];
         }
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
           is.good() || is.eof(),
-          "TurbInflow::init(): malformed MESHMAP_V1 trailer in " +
-            turb_header);
+          "TurbInflow::init(): malformed MESHMAP_V1 trailer in " + turb_header);
         tp[n].has_map = true;
         if (tp[n].verbose > 0) {
           amrex::Print() << "   " << tp_list[n]
