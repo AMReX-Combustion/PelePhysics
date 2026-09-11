@@ -583,7 +583,7 @@ struct MeshMapEvaluator
   }
 
   /// Clamp a normalized coordinate into [0,1].  Public on purpose: device
-  /// code may need it and GPU builds have tripped over private statics.
+  /// code may need it and GPU builds have tripped over private statics. # codespell:ignore=statics
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE static amrex::Real
   clamp01(amrex::Real v) noexcept
   {

@@ -406,11 +406,33 @@ TurbInflow::file_transverse_dx_range(
   amrex::Real dx_min[2],
   amrex::Real dx_max[2]) const
 {
-  for (const auto& tpn : tp) {
-    if (tpn.dir == dir && tpn.side == side) {
-      transverse_dx_range(tpn, dx_min, dx_max);
-      return true;
-    }
+  auto it =
+    std::find_if(tp.begin(), tp.end(), [dir, side](const TurbParm& tpn) {
+      return tpn.dir == dir && tpn.side == side;
+    });
+
+  if (it != tp.end()) {
+    transverse_dx_range(*it, dx_min, dx_max);
+    return true;
+  }
+  return false;
+}
+
+bool
+TurbInflow::file_transverse_dx_range(
+  const int dir,
+  const amrex::Orientation::Side& side,
+  amrex::Real dx_min[2],
+  amrex::Real dx_max[2]) const
+{
+  auto it =
+    std::find_if(tp.begin(), tp.end(), [dir, side](const TurbParm& tpn) {
+      return tpn.dir == dir && tpn.side == side;
+    });
+
+  if (it != tp.end()) {
+    transverse_dx_range(*it, dx_min, dx_max);
+    return true;
   }
   return false;
 }
