@@ -282,6 +282,10 @@ public:
     const int dcomp);
 
 private:
+  //! The TurbParm acting on the (\p dir, \p side) face, or nullptr.
+  const TurbParm*
+  find_turbparm(const int dir, const amrex::Orientation::Side& side) const;
+
   amrex::Vector<TurbParm> tp;
   bool turbinflow_initialized = false;
 };

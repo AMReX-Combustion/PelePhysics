@@ -1,5 +1,7 @@
 #include <turbinflow.H>
 
+#include <algorithm>
+
 namespace pele::physics::turbinflow {
 void
 TurbInflow::init(amrex::Geometry const& /*geom*/)
@@ -370,33 +372,43 @@ TurbInflow::file_transverse_dx(
   amrex::Real& dx_tdir1,
   amrex::Real& dx_tdir2) const
 {
-  for (const auto& tpn : tp) {
-    if (tpn.dir == dir && tpn.side == side) {
-      if (!tpn.has_map) {
-        dx_tdir1 = tpn.dx[0] / tpn.turb_scale_loc;
-        dx_tdir2 = tpn.dx[1] / tpn.turb_scale_loc;
-      } else {
-        // Mean physical spacing: the file's physical transverse extent over
-        // its interior cell count.
-        amrex::Real mean[2];
-        for (int idim = 0; idim < 2; ++idim) {
-          const amrex::Real xlo = tpn.map.x_phys_from_xi(
-            idim, tpn.map_xi_lo[idim], tpn.map_xi_lo[idim],
-            tpn.map_xi_hi[idim]);
-          const amrex::Real xhi = tpn.map.x_phys_from_xi(
-            idim, tpn.map_xi_hi[idim], tpn.map_xi_lo[idim],
-            tpn.map_xi_hi[idim]);
-          mean[idim] = (xhi - xlo) /
-                       static_cast<amrex::Real>(tpn.npboxcells[idim]) /
-                       tpn.turb_scale_loc;
-        }
-        dx_tdir1 = mean[0];
-        dx_tdir2 = mean[1];
-      }
-      return true;
-    }
+  const TurbParm* tpn = find_turbparm(dir, side);
+  if (tpn == nullptr) {
+    return false;
   }
-  return false;
+  if (!tpn->has_map) {
+    // tp.dx lives in turb-file units; queried coordinates are multiplied
+    // by turb_scale_loc before the lookup, so the equivalent spacing in
+    // case units is dx / turb_scale_loc.
+    dx_tdir1 = tpn->dx[0] / tpn->turb_scale_loc;
+    dx_tdir2 = tpn->dx[1] / tpn->turb_scale_loc;
+    return true;
+  }
+  // Mean physical spacing: the file's physical transverse extent over its
+  // interior cell count.
+  amrex::Real mean[2];
+  for (int idim = 0; idim < 2; ++idim) {
+    const amrex::Real xlo = tpn->map.x_phys_from_xi(
+      idim, tpn->map_xi_lo[idim], tpn->map_xi_lo[idim], tpn->map_xi_hi[idim]);
+    const amrex::Real xhi = tpn->map.x_phys_from_xi(
+      idim, tpn->map_xi_hi[idim], tpn->map_xi_lo[idim], tpn->map_xi_hi[idim]);
+    mean[idim] = (xhi - xlo) / static_cast<amrex::Real>(tpn->npboxcells[idim]) /
+                 tpn->turb_scale_loc;
+  }
+  dx_tdir1 = mean[0];
+  dx_tdir2 = mean[1];
+  return true;
+}
+
+const TurbParm*
+TurbInflow::find_turbparm(
+  const int dir, const amrex::Orientation::Side& side) const
+{
+  auto it =
+    std::find_if(tp.begin(), tp.end(), [dir, side](const TurbParm& tpn) {
+      return tpn.dir == dir && tpn.side == side;
+    });
+  return (it != tp.end()) ? &(*it) : nullptr;
 }
 
 bool
@@ -406,35 +418,12 @@ TurbInflow::file_transverse_dx_range(
   amrex::Real dx_min[2],
   amrex::Real dx_max[2]) const
 {
-  auto it =
-    std::find_if(tp.begin(), tp.end(), [dir, side](const TurbParm& tpn) {
-      return tpn.dir == dir && tpn.side == side;
-    });
-
-  if (it != tp.end()) {
-    transverse_dx_range(*it, dx_min, dx_max);
-    return true;
+  const TurbParm* tpn = find_turbparm(dir, side);
+  if (tpn == nullptr) {
+    return false;
   }
-  return false;
-}
-
-bool
-TurbInflow::file_transverse_dx_range(
-  const int dir,
-  const amrex::Orientation::Side& side,
-  amrex::Real dx_min[2],
-  amrex::Real dx_max[2]) const
-{
-  auto it =
-    std::find_if(tp.begin(), tp.end(), [dir, side](const TurbParm& tpn) {
-      return tpn.dir == dir && tpn.side == side;
-    });
-
-  if (it != tp.end()) {
-    transverse_dx_range(*it, dx_min, dx_max);
-    return true;
-  }
-  return false;
+  transverse_dx_range(*tpn, dx_min, dx_max);
+  return true;
 }
 
 int
@@ -445,20 +434,19 @@ TurbInflow::file_map(
   amrex::Real xi_lo[2],
   amrex::Real xi_hi[2]) const
 {
-  for (const auto& tpn : tp) {
-    if (tpn.dir == dir && tpn.side == side) {
-      if (!tpn.has_map) {
-        return 0;
-      }
-      map = tpn.map;
-      xi_lo[0] = tpn.map_xi_lo[0];
-      xi_lo[1] = tpn.map_xi_lo[1];
-      xi_hi[0] = tpn.map_xi_hi[0];
-      xi_hi[1] = tpn.map_xi_hi[1];
-      return 1;
-    }
+  const TurbParm* tpn = find_turbparm(dir, side);
+  if (tpn == nullptr) {
+    return -1;
   }
-  return -1;
+  if (!tpn->has_map) {
+    return 0;
+  }
+  map = tpn->map;
+  xi_lo[0] = tpn->map_xi_lo[0];
+  xi_lo[1] = tpn->map_xi_lo[1];
+  xi_hi[0] = tpn->map_xi_hi[0];
+  xi_hi[1] = tpn->map_xi_hi[1];
+  return 1;
 }
 
 void
