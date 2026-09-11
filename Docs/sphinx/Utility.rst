@@ -165,42 +165,75 @@ is uniform in that run's *computational* (:math:`\xi`) coordinate, because the
 plane files and plotfiles carry the computational geometry with physical
 velocity values.
 
-The ``HDR`` may end with an optional ``MESHMAP_V1`` trailer, placed after the
-plane times so that older readers never see it, describing the precursor's map
-along the two transverse directions (one line each: ``kind p q xi_lo xi_hi``,
-with the same meaning as PeleLMeX's ``MeshMapEvaluator`` payload). A file
-*without* the trailer is, by declaration, uniform in physical position. The
-reader (feature macro ``PELEPHYSICS_TURBINFLOW_HAS_MESHMAP_HDR``) parses the
-trailer and exposes it through ``TurbInflow::file_has_map()``; sampling a file
-that carries one is not yet supported and ``TurbInflow::init()`` aborts rather
-than inject a mis-sampled field. The generators do not yet write the trailer, so
-a file built from a mesh-mapped precursor must not be injected until they do.
+Such a file is tagged by an optional ``MESHMAP_V2`` trailer at the end of the
+``HDR``, placed after everything a legacy reader consumes (the plane times, or
+the plane offsets when there are no times) so that older readers never see it.
+It has one line per transverse direction, in the file's own transverse order::
 
-A run *consuming* the data may, however, be on a non-uniform grid. The
-turbulence file is indexed by physical position, so a solver whose AMReX grid is
-a uniform computational grid carrying a coordinate mapping (for example
-PeleLMeX's ``geometry.mesh_mapping``) must not use the ``amrex::Geometry``
-overload of ``TurbInflow::add_turb()``, which would sample the file at
-computational rather than physical coordinates. Such solvers pass the physical
-cell-centre positions of the injection face explicitly, using the overload
-taking ``x_phys`` / ``y_phys`` vectors; the ordering of the two transverse
-directions is given by ``TurbInflow::transverseDirs()``. The presence of that
-overload is advertised by the ``PELEPHYSICS_TURBINFLOW_HAS_COORD_ADDTURB``
+  MESHMAP_V2
+  <kind> <p> <p2> <p3> <q> <xi_lo> <xi_hi>
+  <kind> <p> <p2> <p3> <q> <xi_lo> <xi_hi>
+
+``kind``/``p``/``p2``/``p3``/``q`` are the per-axis payload of
+``pele::physics::MeshMapEvaluator`` (``Source/Utility/MeshMap``, the same
+descriptor PeleLMeX uses for its mapping: 0 identity, 1 constant, 2 exponential
+stretch, 3 tanh stretch, 4 interior stretch), and ``xi_lo``/``xi_hi`` are the
+precursor's computational-domain bounds along that axis. The generators write
+the trailer when their input carries the precursor's ``geometry.mesh_mapping``
+block (copy those lines verbatim; see ``Support/TurbInflowGenerator/README.md``),
+and write nothing otherwise. A file *without* the trailer is, by declaration,
+uniform in physical position. (An earlier ``MESHMAP_V1`` form, ``kind p q xi_lo
+xi_hi``, is still read.)
+
+``TurbInflow`` handles both kinds of file with one rule: the physical position
+of each target cell is converted to the file's own coordinate, and the
+interpolation then proceeds unchanged. For a physically-uniform file the
+conversion is the identity; for a mapped file it is the inverse of the file's
+map, so the interpolation happens in the precursor's :math:`\xi`. This is the
+standard mapped-grid argument -- for a smooth map the interpolant's error is
+the same order in :math:`\Delta\xi` as it would be in :math:`\Delta x` -- and it
+covers every combination of uniform or mapped file and uniform or mapped target.
+When the target's map and computational grid coincide with the file's, the
+conversion lands on file cell centres and the file is reproduced exactly (the
+same-grid guarantee above, now also for mapped meshes). With ``tile_periodic``
+the position is wrapped into the file's physical period before the inverse.
+
+For a mapped file ``turb_center`` is optional: by default the file is placed
+where the precursor had it. If given, it is in the file's :math:`\xi` units,
+must lie within ``[xi_lo, xi_hi]``, and the equivalent physical position is
+printed. The availability of this sampling support is advertised by the
+``PELEPHYSICS_TURBINFLOW_SAMPLES_MESHMAP`` macro (the trailer reader alone by
+``PELEPHYSICS_TURBINFLOW_HAS_MESHMAP_HDR``); ``TurbInflow::file_has_map()``
+and ``file_map()`` expose the file's descriptor so a solver can report whether
+its own map matches.
+
+A run *consuming* the data may itself be on a non-uniform grid. The turbulence
+file is indexed by physical position, so a solver whose AMReX grid is a uniform
+computational grid carrying a coordinate mapping must not use the
+``amrex::Geometry`` overload of ``TurbInflow::add_turb()``, which would sample
+the file at computational rather than physical coordinates. Such solvers pass
+the physical cell-centre positions of the injection face explicitly, using the
+overload taking ``x_phys`` / ``y_phys`` vectors; the ordering of the two
+transverse directions is given by ``TurbInflow::transverseDirs()``. The presence
+of that overload is advertised by the ``PELEPHYSICS_TURBINFLOW_HAS_COORD_ADDTURB``
 macro.
 
 Whichever entry point is used, the physically meaningful constraint is the ratio
 of the target grid's local spacing on the injection face to the file's spacing.
-``TurbInflow::file_transverse_dx()`` reports the latter in case units (it is also
-printed at ``verbose > 0``) so that a solver can check the ratio: substantially
-above one and the file cannot fill the scales the grid resolves; substantially
-below one and the injected field is aliased onto the grid.
+``TurbInflow::file_transverse_dx()`` reports the latter in case units (the mean
+for a mapped file, whose physical spacing varies; ``file_transverse_dx_range()``
+gives its extremes; both are also printed at ``verbose > 0``) so that a solver
+can check the ratio: substantially above one and the file cannot fill the scales
+the grid resolves; substantially below one and the injected field is aliased
+onto the grid.
 
 .. note:: Diagnostics that slice the precursor solution -- notably
           ``DiagFramePlane`` -- locate the requested ``center`` using the AMReX
           geometry, which for a mapped run is the uniform computational grid.
           Under a coordinate mapping ``center`` is therefore a *computational*
           coordinate, not a physical one, and the written plane files carry no
-          mapping metadata.
+          mapping metadata; the mapping enters only through the generator's
+          input, as described above.
 
 .. figure:: ./Visualization/TurbInflowData.png
 

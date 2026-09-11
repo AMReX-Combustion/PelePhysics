@@ -28,6 +28,12 @@
 // without the trailer are, by declaration, uniform in physical position.
 #define PELEPHYSICS_TURBINFLOW_HAS_MESHMAP_HDR 1
 
+// Feature macro: add_turb() samples a file carrying a MESHMAP trailer by
+// inverting the file's map (interpolation in the precursor's Xi), and the
+// file_map() / file_transverse_dx_range() accessors exist.  Consumers that
+// previously refused, or warned about, mapped files can #ifdef on this.
+#define PELEPHYSICS_TURBINFLOW_SAMPLES_MESHMAP 1
+
 namespace pele::physics::turbinflow {
 
 AMREX_ENUM(TurbInterpType, linear, quadratic);
