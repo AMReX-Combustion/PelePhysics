@@ -6798,6 +6798,12 @@ comp_qfqr(
   // compute the Gibbs free energy
   amrex::Real g_RT[34];
   gibbs(g_RT, T);
+  // exp(-g/RT) and its inverse per species, for the Kc products
+  amrex::Real ge[34], inv_ge[34];
+  for (int i = 0; i < 34; ++i) {
+    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
+    inv_ge[i] = 1.0 / ge[i];
+  }
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 * invT;
@@ -6812,29 +6818,29 @@ comp_qfqr(
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
   qf[9] *= Corr * k_f;
-  qr[9] *= Corr * k_f * exp(-(g_RT[1] + g_RT[2] - g_RT[3])) * (refC);
+  qr[9] *= Corr * k_f * inv_ge[3] * ge[1] * ge[2] * (refC);
   // reaction 1:  H2 + O => H + OH
   k_f = 0.0508 * exp((2.67) * logT - (3166.2744864099) * invT);
   qf[16] *= k_f;
-  qr[16] *= k_f * exp(-(g_RT[1] - g_RT[2] - g_RT[3] + g_RT[4]));
+  qr[16] *= k_f * inv_ge[2] * ge[1] * inv_ge[3] * ge[4];
   // reaction 2:  H + OH => H2 + O
   k_f = 0.02231 * exp((2.67) * logT - (2111.97015338246) * invT);
   qf[17] *= k_f;
-  qr[17] *= k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[3] - g_RT[4]));
+  qr[17] *= k_f * inv_ge[1] * ge[2] * inv_ge[4] * ge[3];
   // reaction 3:  2 O + M => O2 + M
   k_f = 6170 * exp((-0.5) * logT);
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
   qf[10] *= Corr * k_f;
-  qr[10] *= Corr * k_f * exp(-(2.000000 * g_RT[1] - g_RT[5])) * (refC);
+  qr[10] *= Corr * k_f * inv_ge[5] * ge[1] * ge[1] * (refC);
   // reaction 4:  H2 + OH => H + H2O
   k_f = 216 * exp((1.51) * logT - (1726.01806721021) * invT);
   qf[18] *= k_f;
-  qr[18] *= k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[4] - g_RT[6]));
+  qr[18] *= k_f * inv_ge[2] * ge[3] * inv_ge[6] * ge[4];
   // reaction 5:  H + H2O => H2 + OH
   k_f = 935.2 * exp((1.51) * logT - (9349.8008758183) * invT);
   qf[19] *= k_f;
-  qr[19] *= k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]));
+  qr[19] *= k_f * inv_ge[3] * ge[2] * inv_ge[4] * ge[6];
   // reaction 6:  2 OH (+M) <=> H2O2 (+M)
   k_f = 123600000 * exp((-0.37) * logT);
   Corr =
@@ -6850,29 +6856,29 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[0] *= Corr * k_f;
-  qr[0] *= Corr * k_f * exp(-(2.000000 * g_RT[3] - g_RT[7])) * (refC);
+  qr[0] *= Corr * k_f * inv_ge[7] * ge[3] * ge[3] * (refC);
   // reaction 7:  H + OH + M => H2O + M
   k_f = 22500000000 * exp((-2) * logT);
   Corr =
     mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
   qf[11] *= Corr * k_f;
-  qr[11] *= Corr * k_f * exp(-(g_RT[2] + g_RT[3] - g_RT[6])) * (refC);
+  qr[11] *= Corr * k_f * inv_ge[6] * ge[2] * ge[3] * (refC);
   // reaction 8:  H2O + O => 2 OH
   k_f = 2.97 * exp((2.02) * logT - (6743.15364344982) * invT);
   qf[20] *= k_f;
-  qr[20] *= k_f * exp(-(g_RT[1] - 2.000000 * g_RT[3] + g_RT[6]));
+  qr[20] *= k_f * inv_ge[3] * ge[1] * inv_ge[3] * ge[6];
   // reaction 9:  2 OH => H2O + O
   k_f = 0.3013 * exp((2.02) * logT - (-1937.33384168159) * invT);
   qf[21] *= k_f;
-  qr[21] *= k_f * exp(-(-g_RT[1] + 2.000000 * g_RT[3] - g_RT[6]));
+  qr[21] *= k_f * inv_ge[1] * ge[3] * inv_ge[6] * ge[3];
   // reaction 10:  H + O2 => O + OH
   k_f = 197000000 * exp(-(8323.15836291014) * invT);
   qf[22] *= k_f;
-  qr[22] *= k_f * exp(-(-g_RT[1] + g_RT[2] - g_RT[3] + g_RT[5]));
+  qr[22] *= k_f * inv_ge[1] * ge[2] * inv_ge[3] * ge[5];
   // reaction 11:  O + OH => H + O2
   k_f = 15550000 * exp(-(213.841922133716) * invT);
   qf[23] *= k_f;
-  qr[23] *= k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[5]));
+  qr[23] *= k_f * inv_ge[2] * ge[1] * inv_ge[5] * ge[3];
   // reaction 12:  H + O2 (+M) <=> HO2 (+M)
   k_f = 1475000 * exp((0.6) * logT);
   Corr =
@@ -6887,137 +6893,137 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[1] *= Corr * k_f;
-  qr[1] *= Corr * k_f * exp(-(g_RT[2] + g_RT[5] - g_RT[8])) * (refC);
+  qr[1] *= Corr * k_f * inv_ge[8] * ge[2] * ge[5] * (refC);
   // reaction 13:  H + HO2 => 2 OH
   k_f = 70800000 * exp(-(150.939838908126) * invT);
   qf[24] *= k_f;
-  qr[24] *= k_f * exp(-(g_RT[2] - 2.000000 * g_RT[3] + g_RT[8]));
+  qr[24] *= k_f * inv_ge[3] * ge[2] * inv_ge[3] * ge[8];
   // reaction 14:  2 HO2 => H2O2 + O2
   k_f = 420000000 * exp(-(6028.49539900728) * invT);
   qf[25] *= k_f;
-  qr[25] *= k_f * exp(-(-g_RT[5] - g_RT[7] + 2.000000 * g_RT[8]));
+  qr[25] *= k_f * inv_ge[5] * ge[8] * inv_ge[7] * ge[8];
   // reaction 15:  H + HO2 => H2 + O2
   k_f = 16600000 * exp(-(412.652762459844) * invT);
   qf[26] *= k_f;
-  qr[26] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[5] + g_RT[8]));
+  qr[26] *= k_f * inv_ge[4] * ge[2] * inv_ge[5] * ge[8];
   // reaction 16:  HO2 + OH => H2O + O2
   k_f = 28900000 * exp(-(-251.60833290236) * invT);
   qf[27] *= k_f;
-  qr[27] *= k_f * exp(-(g_RT[3] - g_RT[5] - g_RT[6] + g_RT[8]));
+  qr[27] *= k_f * inv_ge[5] * ge[3] * inv_ge[6] * ge[8];
   // reaction 17:  H2O + O2 => HO2 + OH
   k_f = 6888000000 * exp((-0.33) * logT - (36302.0804641524) * invT);
   qf[28] *= k_f;
-  qr[28] *= k_f * exp(-(-g_RT[3] + g_RT[5] + g_RT[6] - g_RT[8]));
+  qr[28] *= k_f * inv_ge[3] * ge[5] * inv_ge[8] * ge[6];
   // reaction 18:  2 HO2 => H2O2 + O2
   k_f = 130000 * exp(-(-819.770141595837) * invT);
   qf[29] *= k_f;
-  qr[29] *= k_f * exp(-(-g_RT[5] - g_RT[7] + 2.000000 * g_RT[8]));
+  qr[29] *= k_f * inv_ge[5] * ge[8] * inv_ge[7] * ge[8];
   // reaction 19:  HO2 + O => O2 + OH
   k_f = 32500000;
   qf[30] *= k_f;
-  qr[30] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[5] + g_RT[8]));
+  qr[30] *= k_f * inv_ge[3] * ge[1] * inv_ge[5] * ge[8];
   // reaction 20:  O2 + OH => HO2 + O
   k_f = 785700000 * exp((-0.33) * logT - (27873.2013119234) * invT);
   qf[31] *= k_f;
-  qr[31] *= k_f * exp(-(-g_RT[1] + g_RT[3] + g_RT[5] - g_RT[8]));
+  qr[31] *= k_f * inv_ge[1] * ge[3] * inv_ge[8] * ge[5];
   // reaction 21:  H2O2 + OH => H2O + HO2
   k_f = 1000000;
   qf[32] *= k_f;
-  qr[32] *= k_f * exp(-(g_RT[3] - g_RT[6] + g_RT[7] - g_RT[8]));
+  qr[32] *= k_f * inv_ge[6] * ge[3] * inv_ge[8] * ge[7];
   // reaction 22:  H + H2O2 => H2O + OH
   k_f = 24100000 * exp(-(1997.7148094115) * invT);
   qf[33] *= k_f;
-  qr[33] *= k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[6] + g_RT[7]));
+  qr[33] *= k_f * inv_ge[3] * ge[2] * inv_ge[6] * ge[7];
   // reaction 23:  H2O2 + OH => H2O + HO2
   k_f = 580000000 * exp(-(4810.74629292646) * invT);
   qf[34] *= k_f;
-  qr[34] *= k_f * exp(-(g_RT[3] - g_RT[6] + g_RT[7] - g_RT[8]));
+  qr[34] *= k_f * inv_ge[6] * ge[3] * inv_ge[8] * ge[7];
   // reaction 24:  H2O + HO2 => H2O2 + OH
   k_f = 97710000 * exp((0.33) * logT - (20641.9878886429) * invT);
   qf[35] *= k_f;
-  qr[35] *= k_f * exp(-(-g_RT[3] + g_RT[6] - g_RT[7] + g_RT[8]));
+  qr[35] *= k_f * inv_ge[3] * ge[6] * inv_ge[7] * ge[8];
   // reaction 25:  H2O2 + O => HO2 + OH
   k_f = 9.55 * exp((2) * logT - (1997.7148094115) * invT);
   qf[36] *= k_f;
-  qr[36] *= k_f * exp(-(g_RT[1] - g_RT[3] + g_RT[7] - g_RT[8]));
+  qr[36] *= k_f * inv_ge[3] * ge[1] * inv_ge[8] * ge[7];
   // reaction 26:  H + H2O2 => H2 + HO2
   k_f = 48200000 * exp(-(4000.59765398081) * invT);
   qf[37] *= k_f;
-  qr[37] *= k_f * exp(-(g_RT[2] - g_RT[4] + g_RT[7] - g_RT[8]));
+  qr[37] *= k_f * inv_ge[4] * ge[2] * inv_ge[8] * ge[7];
   // reaction 27:  H2 + HO2 => H + H2O2
   k_f = 1875000 * exp((0.33) * logT - (12208.0564410891) * invT);
   qf[38] *= k_f;
-  qr[38] *= k_f * exp(-(-g_RT[2] + g_RT[4] - g_RT[7] + g_RT[8]));
+  qr[38] *= k_f * inv_ge[2] * ge[4] * inv_ge[7] * ge[8];
   // reaction 28:  CH2GSG + OH => CH2O + H
   k_f = 30000000;
   qf[39] *= k_f;
-  qr[39] *= k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[10]));
+  qr[39] *= k_f * inv_ge[2] * ge[3] * inv_ge[10] * ge[9];
   // reaction 29:  CH2GSG + H2 => CH3 + H
   k_f = 70000000;
   qf[40] *= k_f;
-  qr[40] *= k_f * exp(-(-g_RT[2] + g_RT[4] + g_RT[9] - g_RT[11]));
+  qr[40] *= k_f * inv_ge[2] * ge[4] * inv_ge[11] * ge[9];
   // reaction 30:  CH3 + H => CH2GSG + H2
   k_f = 248200000000 * exp((-0.89) * logT - (8116.89488376345) * invT);
   qf[41] *= k_f;
-  qr[41] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[11]));
+  qr[41] *= k_f * inv_ge[4] * ge[2] * inv_ge[9] * ge[11];
   // reaction 31:  CH2GSG + O2 => CO + H + OH
   k_f = 70000000;
   qf[42] *= k_f;
   qr[42] *=
-    k_f * exp(-(-g_RT[2] - g_RT[3] + g_RT[5] + g_RT[9] - g_RT[12])) * (refCinv);
+    k_f * inv_ge[2] * ge[5] * inv_ge[3] * ge[9] * inv_ge[12] * (refCinv);
   // reaction 32:  CH2GSG + O => CO + 2 H
   k_f = 30000000;
   qf[43] *= k_f;
   qr[43] *=
-    k_f * exp(-(g_RT[1] - 2.000000 * g_RT[2] + g_RT[9] - g_RT[12])) * (refCinv);
+    k_f * inv_ge[2] * ge[1] * inv_ge[2] * ge[9] * inv_ge[12] * (refCinv);
   // reaction 33:  CH3 + HO2 => CH3O + OH
   k_f = 11000000;
   qf[44] *= k_f;
-  qr[44] *= k_f * exp(-(-g_RT[3] + g_RT[8] + g_RT[11] - g_RT[13]));
+  qr[44] *= k_f * inv_ge[3] * ge[8] * inv_ge[13] * ge[11];
   // reaction 34:  CH3 + O2 => CH2O + OH
   k_f = 747000 * exp(-(7170.83748771726) * invT);
   qf[45] *= k_f;
-  qr[45] *= k_f * exp(-(-g_RT[3] + g_RT[5] - g_RT[10] + g_RT[11]));
+  qr[45] *= k_f * inv_ge[3] * ge[5] * inv_ge[10] * ge[11];
   // reaction 35:  CH3 + O2 => CH3O + O
   k_f = 1995000000000 * exp((-1.57) * logT - (14699.0040976558) * invT);
   qf[46] *= k_f;
-  qr[46] *= k_f * exp(-(-g_RT[1] + g_RT[5] + g_RT[11] - g_RT[13]));
+  qr[46] *= k_f * inv_ge[1] * ge[5] * inv_ge[13] * ge[11];
   // reaction 36:  CH3O + O => CH3 + O2
   k_f = 3585000000000 * exp((-1.59) * logT - (-820.736317594182) * invT);
   qf[47] *= k_f;
-  qr[47] *= k_f * exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[13]));
+  qr[47] *= k_f * inv_ge[5] * ge[1] * inv_ge[11] * ge[13];
   // reaction 37:  2 CH3 <=> C2H5 + H
   k_f = 6840000 * exp((0.1) * logT - (5334.04633586345) * invT);
   qf[48] *= k_f;
-  qr[48] *= k_f * exp(-(-g_RT[2] + 2.000000 * g_RT[11] - g_RT[14]));
+  qr[48] *= k_f * inv_ge[2] * ge[11] * inv_ge[14] * ge[11];
   // reaction 38:  CH3 + HO2 => CH4 + O2
   k_f = 3600000;
   qf[49] *= k_f;
-  qr[49] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[11] - g_RT[15]));
+  qr[49] *= k_f * inv_ge[5] * ge[8] * inv_ge[15] * ge[11];
   // reaction 39:  CH3 + O => CH2O + H
   k_f = 80000000;
   qf[50] *= k_f;
-  qr[50] *= k_f * exp(-(g_RT[1] - g_RT[2] - g_RT[10] + g_RT[11]));
+  qr[50] *= k_f * inv_ge[2] * ge[1] * inv_ge[10] * ge[11];
   // reaction 40:  CH3 + OH => CH2O + H2
   k_f = 22500000 * exp(-(2163.806502127) * invT);
   qf[51] *= k_f;
-  qr[51] *= k_f * exp(-(g_RT[3] - g_RT[4] - g_RT[10] + g_RT[11]));
+  qr[51] *= k_f * inv_ge[4] * ge[3] * inv_ge[10] * ge[11];
   // reaction 41:  CH3 + OH => CH2GSG + H2O
   k_f = 26500000 * exp(-(1100.00647061583) * invT);
   qf[52] *= k_f;
-  qr[52] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[9] + g_RT[11]));
+  qr[52] *= k_f * inv_ge[6] * ge[3] * inv_ge[9] * ge[11];
   // reaction 42:  CH2GSG + H2O => CH3 + OH
   k_f = 32360 * exp((0.89) * logT - (609.415510956148) * invT);
   qf[53] *= k_f;
-  qr[53] *= k_f * exp(-(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[11]));
+  qr[53] *= k_f * inv_ge[3] * ge[6] * inv_ge[11] * ge[9];
   // reaction 43:  CH3 + H2O2 => CH4 + HO2
   k_f = 336500 * exp((-0.33) * logT - (1259.00280834349) * invT);
   qf[54] *= k_f;
-  qr[54] *= k_f * exp(-(g_RT[7] - g_RT[8] + g_RT[11] - g_RT[15]));
+  qr[54] *= k_f * inv_ge[8] * ge[7] * inv_ge[15] * ge[11];
   // reaction 44:  CH2GSG + CH3 => C2H4 + H
   k_f = 20000000;
   qf[55] *= k_f;
-  qr[55] *= k_f * exp(-(-g_RT[2] + g_RT[9] + g_RT[11] - g_RT[16]));
+  qr[55] *= k_f * inv_ge[2] * ge[9] * inv_ge[16] * ge[11];
   // reaction 45:  CH3 + H (+M) => CH4 (+M)
   k_f = 2138000000 * exp((-0.4) * logT);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
@@ -7031,7 +7037,7 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[2] *= Corr * k_f;
-  qr[2] *= Corr * k_f * exp(-(g_RT[2] + g_RT[11] - g_RT[15])) * (refC);
+  qr[2] *= Corr * k_f * inv_ge[15] * ge[2] * ge[11] * (refC);
   // reaction 46:  2 CH3 (+M) <=> C2H6 (+M)
   k_f = 92140000000 * exp((-1.17) * logT - (319.925027452009) * invT);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
@@ -7048,59 +7054,59 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[3] *= Corr * k_f;
-  qr[3] *= Corr * k_f * exp(-(2.000000 * g_RT[11] - g_RT[17])) * (refC);
+  qr[3] *= Corr * k_f * inv_ge[17] * ge[11] * ge[11] * (refC);
   // reaction 47:  CH2GSG + CH4 => 2 CH3
   k_f = 40000000;
   qf[56] *= k_f;
-  qr[56] *= k_f * exp(-(g_RT[9] - 2.000000 * g_RT[11] + g_RT[15]));
+  qr[56] *= k_f * inv_ge[11] * ge[9] * inv_ge[11] * ge[15];
   // reaction 48:  2 CH3 => CH2GSG + CH4
   k_f = 5429000000 * exp((-0.89) * logT - (7875.39114151044) * invT);
   qf[57] *= k_f;
-  qr[57] *= k_f * exp(-(-g_RT[9] + 2.000000 * g_RT[11] - g_RT[15]));
+  qr[57] *= k_f * inv_ge[9] * ge[11] * inv_ge[15] * ge[11];
   // reaction 49:  CH4 + O => CH3 + OH
   k_f = 3150000 * exp((0.5) * logT - (5178.05420163064) * invT);
   qf[58] *= k_f;
-  qr[58] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[11] + g_RT[15]));
+  qr[58] *= k_f * inv_ge[3] * ge[1] * inv_ge[11] * ge[15];
   // reaction 50:  CH3 + OH => CH4 + O
   k_f = 52960 * exp((0.5) * logT - (3882.37193051665) * invT);
   qf[59] *= k_f;
-  qr[59] *= k_f * exp(-(-g_RT[1] + g_RT[3] + g_RT[11] - g_RT[15]));
+  qr[59] *= k_f * inv_ge[1] * ge[3] * inv_ge[15] * ge[11];
   // reaction 51:  CH4 + H => CH3 + H2
   k_f = 0.01727 * exp((3) * logT - (4138.42869874472) * invT);
   qf[60] *= k_f;
-  qr[60] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[15]));
+  qr[60] *= k_f * inv_ge[4] * ge[2] * inv_ge[11] * ge[15];
   // reaction 52:  CH3 + H2 => CH4 + H
   k_f = 0.000661 * exp((3) * logT - (3896.91992432507) * invT);
   qf[61] *= k_f;
-  qr[61] *= k_f * exp(-(-g_RT[2] + g_RT[4] + g_RT[11] - g_RT[15]));
+  qr[61] *= k_f * inv_ge[2] * ge[4] * inv_ge[15] * ge[11];
   // reaction 53:  CH4 + OH => CH3 + H2O
   k_f = 0.193 * exp((2.4) * logT - (1059.83468418464) * invT);
   qf[62] *= k_f;
-  qr[62] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[15]));
+  qr[62] *= k_f * inv_ge[6] * ge[3] * inv_ge[11] * ge[15];
   // reaction 54:  CH3 + H2O => CH4 + OH
   k_f = 0.03199 * exp((2.4) * logT - (8444.03100603644) * invT);
   qf[63] *= k_f;
-  qr[63] *= k_f * exp(-(-g_RT[3] + g_RT[6] + g_RT[11] - g_RT[15]));
+  qr[63] *= k_f * inv_ge[3] * ge[6] * inv_ge[15] * ge[11];
   // reaction 55:  CO + HO2 => CO2 + OH
   k_f = 30100000 * exp(-(11573.9833135086) * invT);
   qf[64] *= k_f;
-  qr[64] *= k_f * exp(-(-g_RT[3] + g_RT[8] + g_RT[12] - g_RT[18]));
+  qr[64] *= k_f * inv_ge[3] * ge[8] * inv_ge[18] * ge[12];
   // reaction 56:  CO + O2 => CO2 + O
   k_f = 16200000 * exp(-(24003.4601197184) * invT);
   qf[65] *= k_f;
-  qr[65] *= k_f * exp(-(-g_RT[1] + g_RT[5] + g_RT[12] - g_RT[18]));
+  qr[65] *= k_f * inv_ge[1] * ge[5] * inv_ge[18] * ge[12];
   // reaction 57:  CO2 + O => CO + O2
   k_f = 143300000 * exp(-(27133.4073950239) * invT);
   qf[66] *= k_f;
-  qr[66] *= k_f * exp(-(g_RT[1] - g_RT[5] - g_RT[12] + g_RT[18]));
+  qr[66] *= k_f * inv_ge[5] * ge[1] * inv_ge[12] * ge[18];
   // reaction 58:  CO + OH => CO2 + H
   k_f = 0.14 * exp((1.95) * logT - (-677.852977505589) * invT);
   qf[67] *= k_f;
-  qr[67] *= k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[12] - g_RT[18]));
+  qr[67] *= k_f * inv_ge[2] * ge[3] * inv_ge[18] * ge[12];
   // reaction 59:  CO2 + H => CO + OH
   k_f = 15.68 * exp((1.95) * logT - (10562.4976865744) * invT);
   qf[68] *= k_f;
-  qr[68] *= k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[12] + g_RT[18]));
+  qr[68] *= k_f * inv_ge[3] * ge[2] * inv_ge[12] * ge[18];
   // reaction 60:  CO + O (+M) => CO2 (+M)
   k_f = 18000 * exp(-(1199.70878861172) * invT);
   Corr =
@@ -7116,67 +7122,67 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[4] *= Corr * k_f;
-  qr[4] *= Corr * k_f * exp(-(g_RT[1] + g_RT[12] - g_RT[18])) * (refC);
+  qr[4] *= Corr * k_f * inv_ge[18] * ge[1] * ge[12] * (refC);
   // reaction 61:  CH3 + HCO => CH4 + CO
   k_f = 121000000;
   qf[69] *= k_f;
-  qr[69] *= k_f * exp(-(g_RT[11] - g_RT[12] - g_RT[15] + g_RT[19]));
+  qr[69] *= k_f * inv_ge[12] * ge[11] * inv_ge[15] * ge[19];
   // reaction 62:  H + HCO => CO + H2
   k_f = 73400000;
   qf[70] *= k_f;
-  qr[70] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[12] + g_RT[19]));
+  qr[70] *= k_f * inv_ge[4] * ge[2] * inv_ge[12] * ge[19];
   // reaction 63:  HCO + O2 => CO + HO2
   k_f = 7580000 * exp(-(206.263479146697) * invT);
   qf[71] *= k_f;
-  qr[71] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[12] + g_RT[19]));
+  qr[71] *= k_f * inv_ge[8] * ge[5] * inv_ge[12] * ge[19];
   // reaction 64:  HCO + O => CO + OH
   k_f = 30200000;
   qf[72] *= k_f;
-  qr[72] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[12] + g_RT[19]));
+  qr[72] *= k_f * inv_ge[3] * ge[1] * inv_ge[12] * ge[19];
   // reaction 65:  HCO + O => CO2 + H
   k_f = 30000000;
   qf[73] *= k_f;
-  qr[73] *= k_f * exp(-(g_RT[1] - g_RT[2] - g_RT[18] + g_RT[19]));
+  qr[73] *= k_f * inv_ge[2] * ge[1] * inv_ge[18] * ge[19];
   // reaction 66:  HCO + M => CO + H + M
   k_f = 186000000000 * exp((-1) * logT - (8554.68331868023) * invT);
   Corr =
     mixture + (1.5) * sc[4] + (5) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
   qf[12] *= Corr * k_f;
-  qr[12] *= Corr * k_f * exp(-(-g_RT[2] - g_RT[12] + g_RT[19])) * (refCinv);
+  qr[12] *= Corr * k_f * inv_ge[2] * ge[19] * inv_ge[12] * (refCinv);
   // reaction 67:  CO + H + M => HCO + M
   k_f = 64.67 * exp(-(-222.381508952422) * invT);
   Corr =
     mixture + (1.5) * sc[4] + (5) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
   qf[13] *= Corr * k_f;
-  qr[13] *= Corr * k_f * exp(-(g_RT[2] + g_RT[12] - g_RT[19])) * (refC);
+  qr[13] *= Corr * k_f * inv_ge[19] * ge[2] * ge[12] * (refC);
   // reaction 68:  HCO + OH => CO + H2O
   k_f = 102000000;
   qf[74] *= k_f;
-  qr[74] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[12] + g_RT[19]));
+  qr[74] *= k_f * inv_ge[6] * ge[3] * inv_ge[12] * ge[19];
   // reaction 69:  CH2O + H => H2 + HCO
   k_f = 933.4 * exp((1.5) * logT - (1497.62311910143) * invT);
   qf[75] *= k_f;
-  qr[75] *= k_f * exp(-(g_RT[2] - g_RT[4] + g_RT[10] - g_RT[19]));
+  qr[75] *= k_f * inv_ge[4] * ge[2] * inv_ge[19] * ge[10];
   // reaction 70:  CH2O + O2 => HCO + HO2
   k_f = 20500000 * exp(-(19600.3142939271) * invT);
   qf[76] *= k_f;
-  qr[76] *= k_f * exp(-(g_RT[5] - g_RT[8] + g_RT[10] - g_RT[19]));
+  qr[76] *= k_f * inv_ge[8] * ge[5] * inv_ge[19] * ge[10];
   // reaction 71:  CH2O + OH => H2O + HCO
   k_f = 3430 * exp((1.18) * logT - (-224.907656614761) * invT);
   qf[77] *= k_f;
-  qr[77] *= k_f * exp(-(g_RT[3] - g_RT[6] + g_RT[10] - g_RT[19]));
+  qr[77] *= k_f * inv_ge[6] * ge[3] * inv_ge[19] * ge[10];
   // reaction 72:  CH2O + HO2 => H2O2 + HCO
   k_f = 5.82e-09 * exp((4.53) * logT - (3299.53129168165) * invT);
   qf[78] *= k_f;
-  qr[78] *= k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[10] - g_RT[19]));
+  qr[78] *= k_f * inv_ge[7] * ge[8] * inv_ge[19] * ge[10];
   // reaction 73:  CH2O + O => HCO + OH
   k_f = 416000 * exp((0.57) * logT - (1389.85927011935) * invT);
   qf[79] *= k_f;
-  qr[79] *= k_f * exp(-(g_RT[1] - g_RT[3] + g_RT[10] - g_RT[19]));
+  qr[79] *= k_f * inv_ge[3] * ge[1] * inv_ge[19] * ge[10];
   // reaction 74:  CH2O + CH3 => CH4 + HCO
   k_f = 3.636e-12 * exp((5.42) * logT - (502.255521973033) * invT);
   qf[80] *= k_f;
-  qr[80] *= k_f * exp(-(g_RT[10] + g_RT[11] - g_RT[15] - g_RT[19]));
+  qr[80] *= k_f * inv_ge[15] * ge[10] * inv_ge[19] * ge[11];
   // reaction 75:  CH3O (+M) => CH2O + H (+M)
   k_f = 54500000000000 * exp(-(6793.42498836372) * invT);
   Corr = mixture;
@@ -7190,74 +7196,74 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[5] *= Corr * k_f;
-  qr[5] *= Corr * k_f * exp(-(-g_RT[2] - g_RT[10] + g_RT[13])) * (refCinv);
+  qr[5] *= Corr * k_f * inv_ge[2] * ge[13] * inv_ge[10] * (refCinv);
   // reaction 76:  CH3O + O2 => CH2O + HO2
   k_f = 55000 * exp(-(1219.79719791064) * invT);
   qf[81] *= k_f;
-  qr[81] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[10] + g_RT[13]));
+  qr[81] *= k_f * inv_ge[8] * ge[5] * inv_ge[10] * ge[13];
   // reaction 77:  CH2GSG + CO2 => CH2O + CO
   k_f = 3000000;
   qf[82] *= k_f;
-  qr[82] *= k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[12] + g_RT[18]));
+  qr[82] *= k_f * inv_ge[10] * ge[9] * inv_ge[12] * ge[18];
   // reaction 78:  CH3 + CH3O2 => 2 CH3O
   k_f = 7000000 * exp(-(-503.21666580472) * invT);
   qf[83] *= k_f;
-  qr[83] *= k_f * exp(-(g_RT[11] - 2.000000 * g_RT[13] + g_RT[20]));
+  qr[83] *= k_f * inv_ge[13] * ge[11] * inv_ge[13] * ge[20];
   // reaction 79:  CH3O2 + HO2 => CH3O2H + O2
   k_f = 17500 * exp(-(-1648.08490217704) * invT);
   qf[84] *= k_f;
-  qr[84] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[20] - g_RT[21]));
+  qr[84] *= k_f * inv_ge[5] * ge[8] * inv_ge[21] * ge[20];
   // reaction 80:  2 CH3O2 => 2 CH3O + O2
   k_f = 14000000000 * exp((-1.61) * logT - (935.95280539683) * invT);
   qf[85] *= k_f;
-  qr[85] *= k_f * exp(-(-g_RT[5] - 2.000000 * g_RT[13] + 2.000000 * g_RT[20])) *
-            (refCinv);
+  qr[85] *=
+    k_f * inv_ge[5] * ge[20] * inv_ge[13] * ge[20] * inv_ge[13] * (refCinv);
   // reaction 81:  CH2O + CH3O2 => CH3O2H + HCO
   k_f = 1990000 * exp(-(5867.45096944979) * invT);
   qf[86] *= k_f;
-  qr[86] *= k_f * exp(-(g_RT[10] - g_RT[19] + g_RT[20] - g_RT[21]));
+  qr[86] *= k_f * inv_ge[19] * ge[10] * inv_ge[21] * ge[20];
   // reaction 82:  CH3O2 + M => CH3 + O2 + M
   k_f = 4.343e+21 * exp((-3.42) * logT - (15332.9564532366) * invT);
   Corr = mixture;
   qf[14] *= Corr * k_f;
-  qr[14] *= Corr * k_f * exp(-(-g_RT[5] - g_RT[11] + g_RT[20])) * (refCinv);
+  qr[14] *= Corr * k_f * inv_ge[5] * ge[20] * inv_ge[11] * (refCinv);
   // reaction 83:  CH3 + O2 + M => CH3O2 + M
   k_f = 54400000000000 * exp((-3.3) * logT);
   Corr = mixture;
   qf[15] *= Corr * k_f;
-  qr[15] *= Corr * k_f * exp(-(g_RT[5] + g_RT[11] - g_RT[20])) * (refC);
+  qr[15] *= Corr * k_f * inv_ge[20] * ge[5] * ge[11] * (refC);
   // reaction 84:  CH3O2H => CH3O + OH
   k_f = 631000000000000 * exp(-(21286.0398027063) * invT);
   qf[87] *= k_f;
-  qr[87] *= k_f * exp(-(-g_RT[3] - g_RT[13] + g_RT[21])) * (refCinv);
+  qr[87] *= k_f * inv_ge[3] * ge[21] * inv_ge[13] * (refCinv);
   // reaction 85:  CH3O + OH => CH3O2H
   k_f = 116600 * exp((0.6) * logT - (-891.211811640133) * invT);
   qf[88] *= k_f;
-  qr[88] *= k_f * exp(-(g_RT[3] + g_RT[13] - g_RT[21])) * (refC);
+  qr[88] *= k_f * inv_ge[21] * ge[3] * ge[13] * (refC);
   // reaction 86:  C2H2 + O2 => HCCO + OH
   k_f = 200 * exp((1.5) * logT - (15146.7713190555) * invT);
   qf[89] *= k_f;
-  qr[89] *= k_f * exp(-(-g_RT[3] + g_RT[5] + g_RT[22] - g_RT[23]));
+  qr[89] *= k_f * inv_ge[3] * ge[5] * inv_ge[23] * ge[22];
   // reaction 87:  C2H2 + O => H + HCCO
   k_f = 14.3 * exp((2) * logT - (956.161986695548) * invT);
   qf[90] *= k_f;
-  qr[90] *= k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[22] - g_RT[23]));
+  qr[90] *= k_f * inv_ge[2] * ge[1] * inv_ge[23] * ge[22];
   // reaction 88:  C2H3 + O2 => CH2CHO + O
   k_f = 350000000 * exp((-0.61) * logT - (2646.93979079946) * invT);
   qf[91] *= k_f;
-  qr[91] *= k_f * exp(-(-g_RT[1] + g_RT[5] + g_RT[24] - g_RT[25]));
+  qr[91] *= k_f * inv_ge[1] * ge[5] * inv_ge[25] * ge[24];
   // reaction 89:  C2H3 + H => C2H2 + H2
   k_f = 20000000 * exp(-(1258.0416645118) * invT);
   qf[92] *= k_f;
-  qr[92] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[22] + g_RT[24]));
+  qr[92] *= k_f * inv_ge[4] * ge[2] * inv_ge[22] * ge[24];
   // reaction 90:  C2H3 + O2 => CH2O + HCO
   k_f = 1.7e+23 * exp((-5.31) * logT - (3270.90832773068) * invT);
   qf[93] *= k_f;
-  qr[93] *= k_f * exp(-(g_RT[5] - g_RT[10] - g_RT[19] + g_RT[24]));
+  qr[93] *= k_f * inv_ge[10] * ge[5] * inv_ge[19] * ge[24];
   // reaction 91:  C2H3 + O2 => C2H2 + HO2
   k_f = 2.12e-12 * exp((6) * logT - (4772.5018263253) * invT);
   qf[94] *= k_f;
-  qr[94] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[22] + g_RT[24]));
+  qr[94] *= k_f * inv_ge[8] * ge[5] * inv_ge[22] * ge[24];
   // reaction 92:  C2H3 (+M) => C2H2 + H (+M)
   k_f = 16060000000 * exp((1.028) * logT - (20382.0815129214) * invT);
   Corr = mixture + sc[4] + (4) * sc[6] + sc[12] + (2) * sc[18];
@@ -7272,11 +7278,11 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[6] *= Corr * k_f;
-  qr[6] *= Corr * k_f * exp(-(-g_RT[2] - g_RT[22] + g_RT[24])) * (refCinv);
+  qr[6] *= Corr * k_f * inv_ge[2] * ge[24] * inv_ge[22] * (refCinv);
   // reaction 93:  C2H4 + O => CH3 + HCO
   k_f = 10.2 * exp((1.88) * logT - (90.0858475123609) * invT);
   qf[95] *= k_f;
-  qr[95] *= k_f * exp(-(g_RT[1] - g_RT[11] + g_RT[16] - g_RT[19]));
+  qr[95] *= k_f * inv_ge[11] * ge[1] * inv_ge[19] * ge[16];
   // reaction 94:  C2H4 + H (+M) <=> C2H5 (+M)
   k_f = 1081000 * exp((0.45) * logT - (916.830572096251) * invT);
   Corr = mixture;
@@ -7290,39 +7296,39 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[7] *= Corr * k_f;
-  qr[7] *= Corr * k_f * exp(-(g_RT[2] - g_RT[14] + g_RT[16])) * (refC);
+  qr[7] *= Corr * k_f * inv_ge[14] * ge[2] * ge[16] * (refC);
   // reaction 95:  C2H4 + OH => C2H3 + H2O
   k_f = 20500000 * exp(-(2994.16432237137) * invT);
   qf[96] *= k_f;
-  qr[96] *= k_f * exp(-(g_RT[3] - g_RT[6] + g_RT[16] - g_RT[24]));
+  qr[96] *= k_f * inv_ge[6] * ge[3] * inv_ge[24] * ge[16];
   // reaction 96:  C2H3 + H2O => C2H4 + OH
   k_f = 6033000000 * exp((-0.83) * logT - (10950.0147765773) * invT);
   qf[97] *= k_f;
-  qr[97] *= k_f * exp(-(-g_RT[3] + g_RT[6] - g_RT[16] + g_RT[24]));
+  qr[97] *= k_f * inv_ge[3] * ge[6] * inv_ge[16] * ge[24];
   // reaction 97:  C2H4 + H => C2H3 + H2
   k_f = 8.42e-09 * exp((4.62) * logT - (1299.77342260698) * invT);
   qf[98] *= k_f;
-  qr[98] *= k_f * exp(-(g_RT[2] - g_RT[4] + g_RT[16] - g_RT[24]));
+  qr[98] *= k_f * inv_ge[4] * ge[2] * inv_ge[24] * ge[16];
   // reaction 98:  C2H3 + H2 => C2H4 + H
   k_f = 5.723e-07 * exp((3.79) * logT - (1626.91457704663) * invT);
   qf[99] *= k_f;
-  qr[99] *= k_f * exp(-(-g_RT[2] + g_RT[4] - g_RT[16] + g_RT[24]));
+  qr[99] *= k_f * inv_ge[2] * ge[4] * inv_ge[16] * ge[24];
   // reaction 99:  C2H4 + CH3O2 => C2H3 + CH3O2H
   k_f = 2230000 * exp(-(8650.29951734979) * invT);
   qf[100] *= k_f;
-  qr[100] *= k_f * exp(-(g_RT[16] + g_RT[20] - g_RT[21] - g_RT[24]));
+  qr[100] *= k_f * inv_ge[21] * ge[16] * inv_ge[24] * ge[20];
   // reaction 100:  C2H4 + CH3 => C2H3 + CH4
   k_f = 6.62e-06 * exp((3.7) * logT - (4780.55832514484) * invT);
   qf[101] *= k_f;
-  qr[101] *= k_f * exp(-(g_RT[11] - g_RT[15] + g_RT[16] - g_RT[24]));
+  qr[101] *= k_f * inv_ge[15] * ge[11] * inv_ge[24] * ge[16];
   // reaction 101:  C2H3 + CH4 => C2H4 + CH3
   k_f = 1.44e-06 * exp((4.02) * logT - (2753.62172395006) * invT);
   qf[102] *= k_f;
-  qr[102] *= k_f * exp(-(-g_RT[11] + g_RT[15] - g_RT[16] + g_RT[24]));
+  qr[102] *= k_f * inv_ge[11] * ge[15] * inv_ge[16] * ge[24];
   // reaction 102:  C2H4 + O => CH2CHO + H
   k_f = 3.39 * exp((1.88) * logT - (90.0858475123609) * invT);
   qf[103] *= k_f;
-  qr[103] *= k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[16] - g_RT[25]));
+  qr[103] *= k_f * inv_ge[2] * ge[1] * inv_ge[25] * ge[16];
   // reaction 103:  C2H4 (+M) => C2H2 + H2 (+M)
   k_f = 18000000000000 * exp(-(38244.4666011587) * invT);
   Corr = mixture;
@@ -7336,262 +7342,262 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[8] *= Corr * k_f;
-  qr[8] *= Corr * k_f * exp(-(-g_RT[4] + g_RT[16] - g_RT[22])) * (refCinv);
+  qr[8] *= Corr * k_f * inv_ge[4] * ge[16] * inv_ge[22] * (refCinv);
   // reaction 104:  C2H5 + CH3 => C2H4 + CH4
   k_f = 19500000 * exp((-0.5) * logT);
   qf[104] *= k_f;
-  qr[104] *= k_f * exp(-(g_RT[11] + g_RT[14] - g_RT[15] - g_RT[16]));
+  qr[104] *= k_f * inv_ge[15] * ge[11] * inv_ge[16] * ge[14];
   // reaction 105:  C2H5 + O2 => C2H4 + HO2
   k_f = 1.22e+24 * exp((-5.76) * logT - (5082.43800296109) * invT);
   qf[105] *= k_f;
-  qr[105] *= k_f * exp(-(g_RT[5] - g_RT[8] + g_RT[14] - g_RT[16]));
+  qr[105] *= k_f * inv_ge[8] * ge[5] * inv_ge[16] * ge[14];
   // reaction 106:  C2H4 + HO2 => C2H5 + O2
   k_f = 1.259e+24 * exp((-5.63) * logT - (11221.706486612) * invT);
   qf[106] *= k_f;
-  qr[106] *= k_f * exp(-(-g_RT[5] + g_RT[8] - g_RT[14] + g_RT[16]));
+  qr[106] *= k_f * inv_ge[5] * ge[8] * inv_ge[14] * ge[16];
   // reaction 107:  C2H5 + HO2 => C2H6 + O2
   k_f = 267.9 * exp((0.89) * logT - (-967.222689009936) * invT);
   qf[107] *= k_f;
-  qr[107] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[14] - g_RT[17]));
+  qr[107] *= k_f * inv_ge[5] * ge[8] * inv_ge[17] * ge[14];
   // reaction 108:  C2H5 + H => C2H6
   k_f = 583100 * exp((0.599) * logT - (-1465.87014748915) * invT);
   qf[108] *= k_f;
-  qr[108] *= k_f * exp(-(g_RT[2] + g_RT[14] - g_RT[17])) * (refC);
+  qr[108] *= k_f * inv_ge[17] * ge[2] * ge[14] * (refC);
   // reaction 109:  C2H6 + H => C2H5 + H2
   k_f = 0.000554 * exp((3.5) * logT - (2600.15573737959) * invT);
   qf[109] *= k_f;
-  qr[109] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[14] + g_RT[17]));
+  qr[109] *= k_f * inv_ge[4] * ge[2] * inv_ge[14] * ge[17];
   // reaction 110:  C2H5 + H2 => C2H6 + H
   k_f = 1.355e-07 * exp((4.06) * logT - (4457.02523419901) * invT);
   qf[110] *= k_f;
-  qr[110] *= k_f * exp(-(-g_RT[2] + g_RT[4] + g_RT[14] - g_RT[17]));
+  qr[110] *= k_f * inv_ge[2] * ge[4] * inv_ge[17] * ge[14];
   // reaction 111:  C2H6 + OH => C2H5 + H2O
   k_f = 58 * exp((1.73) * logT - (583.675978500236) * invT);
   qf[111] *= k_f;
-  qr[111] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[17]));
+  qr[111] *= k_f * inv_ge[6] * ge[3] * inv_ge[14] * ge[17];
   // reaction 112:  C2H6 + CH2GSG => C2H5 + CH3
   k_f = 120000000;
   qf[112] *= k_f;
-  qr[112] *= k_f * exp(-(g_RT[9] - g_RT[11] - g_RT[14] + g_RT[17]));
+  qr[112] *= k_f * inv_ge[11] * ge[9] * inv_ge[14] * ge[17];
   // reaction 113:  C2H6 + O => C2H5 + OH
   k_f = 13 * exp((2.13) * logT - (2611.69952769315) * invT);
   qf[113] *= k_f;
-  qr[113] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[14] + g_RT[17]));
+  qr[113] *= k_f * inv_ge[3] * ge[1] * inv_ge[14] * ge[17];
   // reaction 114:  C2H6 + CH3 => C2H5 + CH4
   k_f = 1.51e-13 * exp((6) * logT - (3042.9914354544) * invT);
   qf[114] *= k_f;
-  qr[114] *= k_f * exp(-(g_RT[11] - g_RT[14] - g_RT[15] + g_RT[17]));
+  qr[114] *= k_f * inv_ge[14] * ge[11] * inv_ge[15] * ge[17];
   // reaction 115:  HCCO + O => 2 CO + H
   k_f = 80000000;
   qf[115] *= k_f;
-  qr[115] *= k_f * exp(-(g_RT[1] - g_RT[2] - 2.000000 * g_RT[12] + g_RT[23])) *
-             (refCinv);
+  qr[115] *=
+    k_f * inv_ge[2] * ge[1] * inv_ge[12] * ge[23] * inv_ge[12] * (refCinv);
   // reaction 116:  HCCO + O2 => CO2 + HCO
   k_f = 240000 * exp(-(-429.731936097256) * invT);
   qf[116] *= k_f;
-  qr[116] *= k_f * exp(-(g_RT[5] - g_RT[18] - g_RT[19] + g_RT[23]));
+  qr[116] *= k_f * inv_ge[18] * ge[5] * inv_ge[19] * ge[23];
   // reaction 117:  HCCO + OH => 2 HCO
   k_f = 10000000;
   qf[117] *= k_f;
-  qr[117] *= k_f * exp(-(g_RT[3] - 2.000000 * g_RT[19] + g_RT[23]));
+  qr[117] *= k_f * inv_ge[19] * ge[3] * inv_ge[19] * ge[23];
   // reaction 118:  H + HCCO => CH2GSG + CO
   k_f = 110000000;
   qf[118] *= k_f;
-  qr[118] *= k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[12] + g_RT[23]));
+  qr[118] *= k_f * inv_ge[9] * ge[2] * inv_ge[12] * ge[23];
   // reaction 119:  CH2GSG + CO => H + HCCO
   k_f = 2046000 * exp((0.89) * logT - (14004.555034512) * invT);
   qf[119] *= k_f;
-  qr[119] *= k_f * exp(-(-g_RT[2] + g_RT[9] + g_RT[12] - g_RT[23]));
+  qr[119] *= k_f * inv_ge[2] * ge[9] * inv_ge[23] * ge[12];
   // reaction 120:  CH2CHO + O2 => CH2O + CO + OH
   k_f = 20000000 * exp(-(2113.53515721311) * invT);
   qf[120] *= k_f;
-  qr[120] *= k_f * exp(-(-g_RT[3] + g_RT[5] - g_RT[10] - g_RT[12] + g_RT[25])) *
-             (refCinv);
+  qr[120] *=
+    k_f * inv_ge[3] * ge[5] * inv_ge[10] * ge[25] * inv_ge[12] * (refCinv);
   // reaction 121:  C3H5XA + CH2O => C3H6 + HCO
   k_f = 630 * exp((1.9) * logT - (9153.51618315451) * invT);
   qf[121] *= k_f;
-  qr[121] *= k_f * exp(-(g_RT[10] - g_RT[19] + g_RT[26] - g_RT[27]));
+  qr[121] *= k_f * inv_ge[19] * ge[10] * inv_ge[27] * ge[26];
   // reaction 122:  C3H6 + HCO => C3H5XA + CH2O
   k_f = 109.7 * exp((1.89) * logT - (7971.00734018) * invT);
   qf[122] *= k_f;
-  qr[122] *= k_f * exp(-(-g_RT[10] + g_RT[19] - g_RT[26] + g_RT[27]));
+  qr[122] *= k_f * inv_ge[10] * ge[19] * inv_ge[26] * ge[27];
   // reaction 123:  C3H5XA + HO2 => C3H5O + OH
   k_f = 7000000 * exp(-(-503.21666580472) * invT);
   qf[123] *= k_f;
-  qr[123] *= k_f * exp(-(-g_RT[3] + g_RT[8] + g_RT[26] - g_RT[28]));
+  qr[123] *= k_f * inv_ge[3] * ge[8] * inv_ge[28] * ge[26];
   // reaction 124:  C3H5XA + CH3O2 => C3H5O + CH3O
   k_f = 7000000 * exp(-(-503.21666580472) * invT);
   qf[124] *= k_f;
-  qr[124] *= k_f * exp(-(-g_RT[13] + g_RT[20] + g_RT[26] - g_RT[28]));
+  qr[124] *= k_f * inv_ge[13] * ge[20] * inv_ge[28] * ge[26];
   // reaction 125:  C3H5XA + HO2 => C3H6 + O2
   k_f = 33320 * exp((0.34) * logT - (-279.753241020818) * invT);
   qf[125] *= k_f;
-  qr[125] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[26] - g_RT[27]));
+  qr[125] *= k_f * inv_ge[5] * ge[8] * inv_ge[27] * ge[26];
   // reaction 126:  C3H5XA + O2 => CH2CHO + CH2O
   k_f = 7140000000 * exp((-1.21) * logT - (10592.6856543561) * invT);
   qf[126] *= k_f;
-  qr[126] *= k_f * exp(-(g_RT[5] - g_RT[10] - g_RT[25] + g_RT[26]));
+  qr[126] *= k_f * inv_ge[10] * ge[5] * inv_ge[25] * ge[26];
   // reaction 127:  C3H5XA + O2 => C2H2 + CH2O + OH
   k_f = 9.72e+23 * exp((-5.71) * logT - (10794.0226423445) * invT);
   qf[127] *= k_f;
-  qr[127] *= k_f * exp(-(-g_RT[3] + g_RT[5] - g_RT[10] - g_RT[22] + g_RT[26])) *
-             (refCinv);
+  qr[127] *=
+    k_f * inv_ge[3] * ge[5] * inv_ge[10] * ge[26] * inv_ge[22] * (refCinv);
   // reaction 128:  C3H5XA + H => C3H6
   k_f = 4.887e+50 * exp((-12.25) * logT - (14130.3592009631) * invT);
   qf[128] *= k_f;
-  qr[128] *= k_f * exp(-(g_RT[2] + g_RT[26] - g_RT[27])) * (refC);
+  qr[128] *= k_f * inv_ge[27] * ge[2] * ge[26] * (refC);
   // reaction 129:  C3H5XA => C2H2 + CH3
   k_f = 2.397e+48 * exp((-9.9) * logT - (41304.059154418) * invT);
   qf[129] *= k_f;
-  qr[129] *= k_f * exp(-(-g_RT[11] - g_RT[22] + g_RT[26])) * (refCinv);
+  qr[129] *= k_f * inv_ge[11] * ge[26] * inv_ge[22] * (refCinv);
   // reaction 130:  C3H6 => C2H3 + CH3
   k_f = 2.73e+62 * exp((-13.28) * logT - (61996.3183879748) * invT);
   qf[130] *= k_f;
-  qr[130] *= k_f * exp(-(-g_RT[11] - g_RT[24] + g_RT[27])) * (refCinv);
+  qr[130] *= k_f * inv_ge[11] * ge[27] * inv_ge[24] * (refCinv);
   // reaction 131:  C2H3 + CH3 => C3H6
   k_f = 4.712e+53 * exp((-13.19) * logT - (14864.9750183715) * invT);
   qf[131] *= k_f;
-  qr[131] *= k_f * exp(-(g_RT[11] + g_RT[24] - g_RT[27])) * (refC);
+  qr[131] *= k_f * inv_ge[27] * ge[11] * ge[24] * (refC);
   // reaction 132:  C3H6 + O => C2H5 + HCO
   k_f = 15.8 * exp((1.76) * logT - (-611.941658618487) * invT);
   qf[132] *= k_f;
-  qr[132] *= k_f * exp(-(g_RT[1] - g_RT[14] - g_RT[19] + g_RT[27]));
+  qr[132] *= k_f * inv_ge[14] * ge[1] * inv_ge[19] * ge[27];
   // reaction 133:  C3H6 + H => C2H4 + CH3
   k_f = 4.83e+27 * exp((-5.81) * logT - (9309.50831738731) * invT);
   qf[133] *= k_f;
-  qr[133] *= k_f * exp(-(g_RT[2] - g_RT[11] - g_RT[16] + g_RT[27]));
+  qr[133] *= k_f * inv_ge[11] * ge[2] * inv_ge[16] * ge[27];
   // reaction 134:  C2H4 + CH3 => C3H6 + H
   k_f = 2.313e+27 * exp((-5.9) * logT - (15911.7009084119) * invT);
   qf[134] *= k_f;
-  qr[134] *= k_f * exp(-(-g_RT[2] + g_RT[11] + g_RT[16] - g_RT[27]));
+  qr[134] *= k_f * inv_ge[2] * ge[11] * inv_ge[27] * ge[16];
   // reaction 135:  C3H6 + H => C3H5XA + H2
   k_f = 0.173 * exp((2.5) * logT - (1254.0712850186) * invT);
   qf[135] *= k_f;
-  qr[135] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[26] + g_RT[27]));
+  qr[135] *= k_f * inv_ge[4] * ge[2] * inv_ge[26] * ge[27];
   // reaction 136:  C3H5XA + H2 => C3H6 + H
   k_f = 0.07933 * exp((2.51) * logT - (9822.82957384139) * invT);
   qf[136] *= k_f;
-  qr[136] *= k_f * exp(-(-g_RT[2] + g_RT[4] + g_RT[26] - g_RT[27]));
+  qr[136] *= k_f * inv_ge[2] * ge[4] * inv_ge[27] * ge[26];
   // reaction 137:  C3H6 + OH => C3H5XA + H2O
   k_f = 3.12 * exp((2) * logT - (-149.978695076439) * invT);
   qf[137] *= k_f;
-  qr[137] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[26] + g_RT[27]));
+  qr[137] *= k_f * inv_ge[6] * ge[3] * inv_ge[26] * ge[27];
   // reaction 138:  C3H6 + O => C3H5XA + OH
   k_f = 524000 * exp((0.7) * logT - (2960.96711892823) * invT);
   qf[138] *= k_f;
-  qr[138] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[26] + g_RT[27]));
+  qr[138] *= k_f * inv_ge[3] * ge[1] * inv_ge[26] * ge[27];
   // reaction 139:  C3H6 + CH3 => C3H5XA + CH4
   k_f = 2.21e-06 * exp((3.5) * logT - (2855.72941760849) * invT);
   qf[139] *= k_f;
-  qr[139] *= k_f * exp(-(g_RT[11] - g_RT[15] - g_RT[26] + g_RT[27]));
+  qr[139] *= k_f * inv_ge[15] * ge[11] * inv_ge[26] * ge[27];
   // reaction 140:  IXC3H7 + O2 => C3H6 + HO2
   k_f = 450000 * exp(-(2526.18791967296) * invT);
   qf[140] *= k_f;
-  qr[140] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[27] + g_RT[29]));
+  qr[140] *= k_f * inv_ge[8] * ge[5] * inv_ge[27] * ge[29];
   // reaction 141:  IXC3H7 => C3H6 + H
   k_f = 8.569e+18 * exp((-1.57) * logT - (20299.8156523956) * invT);
   qf[141] *= k_f;
-  qr[141] *= k_f * exp(-(-g_RT[2] - g_RT[27] + g_RT[29])) * (refCinv);
+  qr[141] *= k_f * inv_ge[2] * ge[29] * inv_ge[27] * (refCinv);
   // reaction 142:  C3H6 + H => IXC3H7
   k_f = 13000000 * exp(-(785.012966488705) * invT);
   qf[142] *= k_f;
-  qr[142] *= k_f * exp(-(g_RT[2] + g_RT[27] - g_RT[29])) * (refC);
+  qr[142] *= k_f * inv_ge[29] * ge[2] * ge[27] * (refC);
   // reaction 143:  NXC3H7 => C2H4 + CH3
   k_f = 228400000000000 * exp((-0.55) * logT - (14291.4036305206) * invT);
   qf[143] *= k_f;
-  qr[143] *= k_f * exp(-(-g_RT[11] - g_RT[16] + g_RT[30])) * (refCinv);
+  qr[143] *= k_f * inv_ge[11] * ge[30] * inv_ge[16] * (refCinv);
   // reaction 144:  C2H4 + CH3 => NXC3H7
   k_f = 410000 * exp(-(3625.22821429044) * invT);
   qf[144] *= k_f;
-  qr[144] *= k_f * exp(-(g_RT[11] + g_RT[16] - g_RT[30])) * (refC);
+  qr[144] *= k_f * inv_ge[30] * ge[11] * ge[16] * (refC);
   // reaction 145:  HO2 + NXC3H7 => C3H8 + O2
   k_f = 2080000;
   qf[145] *= k_f;
-  qr[145] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[30] - g_RT[31]));
+  qr[145] *= k_f * inv_ge[5] * ge[8] * inv_ge[31] * ge[30];
   // reaction 146:  NXC3H7 + O2 => C3H6 + HO2
   k_f = 300000 * exp(-(1509.64999741416) * invT);
   qf[146] *= k_f;
-  qr[146] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[27] + g_RT[30]));
+  qr[146] *= k_f * inv_ge[8] * ge[5] * inv_ge[27] * ge[30];
   // reaction 147:  NXC3H7 => C3H6 + H
   k_f = 2.667e+15 * exp((-0.64) * logT - (18528.4527314297) * invT);
   qf[147] *= k_f;
-  qr[147] *= k_f * exp(-(-g_RT[2] - g_RT[27] + g_RT[30])) * (refCinv);
+  qr[147] *= k_f * inv_ge[2] * ge[30] * inv_ge[27] * (refCinv);
   // reaction 148:  C3H6 + H => NXC3H7
   k_f = 10000000 * exp(-(1258.0416645118) * invT);
   qf[148] *= k_f;
-  qr[148] *= k_f * exp(-(g_RT[2] + g_RT[27] - g_RT[30])) * (refC);
+  qr[148] *= k_f * inv_ge[30] * ge[2] * ge[27] * (refC);
   // reaction 149:  C3H8 + OH => H2O + NXC3H7
   k_f = 10540 * exp((0.97) * logT - (798.121760632917) * invT);
   qf[149] *= k_f;
-  qr[149] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[30] + g_RT[31]));
+  qr[149] *= k_f * inv_ge[6] * ge[3] * inv_ge[30] * ge[31];
   // reaction 150:  C3H8 + HO2 => H2O2 + NXC3H7
   k_f = 16800000 * exp(-(10280.7013858905) * invT);
   qf[150] *= k_f;
-  qr[150] *= k_f * exp(-(-g_RT[7] + g_RT[8] - g_RT[30] + g_RT[31]));
+  qr[150] *= k_f * inv_ge[7] * ge[8] * inv_ge[30] * ge[31];
   // reaction 151:  C3H8 + H <=> H2 + NXC3H7
   k_f = 3.972 * exp((2.75) * logT - (3400.07901367609) * invT);
   qf[151] *= k_f;
-  qr[151] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[30] + g_RT[31]));
+  qr[151] *= k_f * inv_ge[4] * ge[2] * inv_ge[30] * ge[31];
   // reaction 152:  C3H8 + OH => H2O + IXC3H7
   k_f = 46.7 * exp((1.61) * logT - (-17.5572294699267) * invT);
   qf[152] *= k_f;
-  qr[152] *= k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[29] + g_RT[31]));
+  qr[152] *= k_f * inv_ge[6] * ge[3] * inv_ge[29] * ge[31];
   // reaction 153:  C3H8 + CH3 => CH4 + IXC3H7
   k_f = 398000 * exp(-(4780.55832514484) * invT);
   qf[153] *= k_f;
-  qr[153] *= k_f * exp(-(g_RT[11] - g_RT[15] - g_RT[29] + g_RT[31]));
+  qr[153] *= k_f * inv_ge[15] * ge[11] * inv_ge[29] * ge[31];
   // reaction 154:  C3H8 + CH3 => CH4 + NXC3H7
   k_f = 1290000 * exp(-(5837.26300166817) * invT);
   qf[154] *= k_f;
-  qr[154] *= k_f * exp(-(g_RT[11] - g_RT[15] - g_RT[30] + g_RT[31]));
+  qr[154] *= k_f * inv_ge[15] * ge[11] * inv_ge[30] * ge[31];
   // reaction 155:  C3H8 + O => IXC3H7 + OH
   k_f = 28100000 * exp(-(2616.75182301783) * invT);
   qf[155] *= k_f;
-  qr[155] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[29] + g_RT[31]));
+  qr[155] *= k_f * inv_ge[3] * ge[1] * inv_ge[29] * ge[31];
   // reaction 156:  C3H8 + HO2 => H2O2 + IXC3H7
   k_f = 5600000 * exp(-(8906.96014557683) * invT);
   qf[156] *= k_f;
-  qr[156] *= k_f * exp(-(-g_RT[7] + g_RT[8] - g_RT[29] + g_RT[31]));
+  qr[156] *= k_f * inv_ge[7] * ge[8] * inv_ge[29] * ge[31];
   // reaction 157:  C3H8 + O => NXC3H7 + OH
   k_f = 113000000 * exp(-(3950.20050490047) * invT);
   qf[157] *= k_f;
-  qr[157] *= k_f * exp(-(g_RT[1] - g_RT[3] - g_RT[30] + g_RT[31]));
+  qr[157] *= k_f * inv_ge[3] * ge[1] * inv_ge[30] * ge[31];
   // reaction 158:  C3H8 + O2 => HO2 + IXC3H7
   k_f = 40000000 * exp(-(23902.7916257242) * invT);
   qf[158] *= k_f;
-  qr[158] *= k_f * exp(-(g_RT[5] - g_RT[8] - g_RT[29] + g_RT[31]));
+  qr[158] *= k_f * inv_ge[8] * ge[5] * inv_ge[29] * ge[31];
   // reaction 159:  HO2 + IXC3H7 => C3H8 + O2
   k_f = 2080000;
   qf[159] *= k_f;
-  qr[159] *= k_f * exp(-(-g_RT[5] + g_RT[8] + g_RT[29] - g_RT[31]));
+  qr[159] *= k_f * inv_ge[5] * ge[8] * inv_ge[31] * ge[29];
   // reaction 160:  C3H8 + H => H2 + IXC3H7
   k_f = 1.3 * exp((2.4) * logT - (2249.92197014617) * invT);
   qf[160] *= k_f;
-  qr[160] *= k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[29] + g_RT[31]));
+  qr[160] *= k_f * inv_ge[4] * ge[2] * inv_ge[29] * ge[31];
   // reaction 161:  H2 + IXC3H7 => C3H8 + H
   k_f = 0.4709 * exp((2.15) * logT - (6129.16389300151) * invT);
   qf[161] *= k_f;
-  qr[161] *= k_f * exp(-(-g_RT[2] + g_RT[4] + g_RT[29] - g_RT[31]));
+  qr[161] *= k_f * inv_ge[2] * ge[4] * inv_ge[31] * ge[29];
   // reaction 162:  C3H5O => C2H3 + CH2O
   k_f = 2028000000000 * exp((0.09) * logT - (11855.7796141925) * invT);
   qf[162] *= k_f;
-  qr[162] *= k_f * exp(-(-g_RT[10] - g_RT[24] + g_RT[28])) * (refCinv);
+  qr[162] *= k_f * inv_ge[10] * ge[28] * inv_ge[24] * (refCinv);
   // reaction 163:  IXC3H7O2 => IXC3H7 + O2
   k_f = 2.803e+17 * exp((-0.62) * logT - (18135.8833461022) * invT);
   qf[163] *= k_f;
-  qr[163] *= k_f * exp(-(-g_RT[5] - g_RT[29] + g_RT[32])) * (refCinv);
+  qr[163] *= k_f * inv_ge[5] * ge[32] * inv_ge[29] * (refCinv);
   // reaction 164:  IXC3H7 + O2 => IXC3H7O2
   k_f = 7540000;
   qf[164] *= k_f;
-  qr[164] *= k_f * exp(-(g_RT[5] + g_RT[29] - g_RT[32])) * (refC);
+  qr[164] *= k_f * inv_ge[32] * ge[5] * ge[29] * (refC);
   // reaction 165:  NXC3H7O2 => NXC3H7 + O2
   k_f = 3.364e+19 * exp((-1.32) * logT - (17995.0480978434) * invT);
   qf[165] *= k_f;
-  qr[165] *= k_f * exp(-(-g_RT[5] - g_RT[30] + g_RT[33])) * (refCinv);
+  qr[165] *= k_f * inv_ge[5] * ge[33] * inv_ge[30] * (refCinv);
   // reaction 166:  NXC3H7 + O2 => NXC3H7O2
   k_f = 4520000;
   qf[166] *= k_f;
-  qr[166] *= k_f * exp(-(g_RT[5] + g_RT[30] - g_RT[33])) * (refC);
+  qr[166] *= k_f * inv_ge[33] * ge[5] * ge[30] * (refC);
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -7617,6 +7623,12 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   // compute the Gibbs free energy
   amrex::Real g_RT[34];
   gibbs(g_RT, T);
+  // exp(-g/RT) and its inverse per species, for the Kc products
+  amrex::Real ge[34], inv_ge[34];
+  for (int i = 0; i < 34; ++i) {
+    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
+    inv_ge[i] = 1.0 / ge[i];
+  }
 
   {
     // reaction 6:  2 OH (+M) <=> H2O2 (+M)
@@ -7637,7 +7649,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[3] * sc[3]));
     const amrex::Real qr =
-      Corr * k_f * exp(-(2.000000 * g_RT[3] - g_RT[7])) * (refC) * (sc[7]);
+      Corr * k_f * inv_ge[7] * ge[3] * ge[3] * (refC) * (sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= 2.000000 * qdot;
     wdot[7] += qdot;
@@ -7662,7 +7674,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[5]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] + g_RT[5] - g_RT[8])) * (refC) * (sc[8]);
+      Corr * k_f * inv_ge[8] * ge[2] * ge[5] * (refC) * (sc[8]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[5] -= qdot;
@@ -7686,7 +7698,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[11]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] + g_RT[11] - g_RT[15])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[15] * ge[2] * ge[11] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[11] -= qdot;
@@ -7713,7 +7725,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[11] * sc[11]));
     const amrex::Real qr =
-      Corr * k_f * exp(-(2.000000 * g_RT[11] - g_RT[17])) * (refC) * (sc[17]);
+      Corr * k_f * inv_ge[17] * ge[11] * ge[11] * (refC) * (sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= 2.000000 * qdot;
     wdot[17] += qdot;
@@ -7738,7 +7750,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[12]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[12] - g_RT[18])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[18] * ge[1] * ge[12] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] -= qdot;
@@ -7763,7 +7775,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[13]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[2] - g_RT[10] + g_RT[13])) * (refCinv) * (0.0);
+      Corr * k_f * inv_ge[2] * ge[13] * inv_ge[10] * (refCinv) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[10] += qdot;
@@ -7789,7 +7801,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[24]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[2] - g_RT[22] + g_RT[24])) * (refCinv) * (0.0);
+      Corr * k_f * inv_ge[2] * ge[24] * inv_ge[22] * (refCinv) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[22] += qdot;
@@ -7815,7 +7827,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[16]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] - g_RT[14] + g_RT[16])) * (refC) * (sc[14]);
+      Corr * k_f * inv_ge[14] * ge[2] * ge[16] * (refC) * (sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -7840,7 +7852,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[16]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[4] + g_RT[16] - g_RT[22])) * (refCinv) * (0.0);
+      Corr * k_f * inv_ge[4] * ge[16] * inv_ge[22] * (refCinv) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[16] -= qdot;
@@ -7854,7 +7866,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[2]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[2] - g_RT[3])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[3] * ge[1] * ge[2] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] -= qdot;
@@ -7868,7 +7880,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
     const amrex::Real qf = Corr * k_f * ((sc[1] * sc[1]));
     const amrex::Real qr =
-      Corr * k_f * exp(-(2.000000 * g_RT[1] - g_RT[5])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[5] * ge[1] * ge[1] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= 2.000000 * qdot;
     wdot[5] += qdot;
@@ -7881,7 +7893,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + (1.5) * sc[4] + (11) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[3]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] + g_RT[3] - g_RT[6])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[6] * ge[2] * ge[3] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[3] -= qdot;
@@ -7896,7 +7908,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + (1.5) * sc[4] + (5) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
     const amrex::Real qf = Corr * k_f * (sc[19]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[2] - g_RT[12] + g_RT[19])) * (refCinv) * (0.0);
+      Corr * k_f * inv_ge[2] * ge[19] * inv_ge[12] * (refCinv) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[12] += qdot;
@@ -7910,7 +7922,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + (1.5) * sc[4] + (5) * sc[6] + (0.9) * sc[12] + (2.8) * sc[18];
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[12]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] + g_RT[12] - g_RT[19])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[19] * ge[2] * ge[12] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[12] -= qdot;
@@ -7924,7 +7936,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * (sc[20]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[5] - g_RT[11] + g_RT[20])) * (refCinv) * (0.0);
+      Corr * k_f * inv_ge[5] * ge[20] * inv_ge[11] * (refCinv) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[5] += qdot;
     wdot[11] += qdot;
@@ -7937,7 +7949,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * (sc[5] * sc[11]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[5] + g_RT[11] - g_RT[20])) * (refC) * (0.0);
+      Corr * k_f * inv_ge[20] * ge[5] * ge[11] * (refC) * (0.0);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[11] -= qdot;
@@ -8342,9 +8354,8 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       6840000 * exp((0.1) * logT - (5334.04633586345) * invT);
     const amrex::Real qf = k_f * ((sc[11] * sc[11]));
-    const amrex::Real qr = k_f *
-                           exp(-(-g_RT[2] + 2.000000 * g_RT[11] - g_RT[14])) *
-                           (sc[2] * sc[14]);
+    const amrex::Real qr =
+      k_f * inv_ge[2] * ge[11] * inv_ge[14] * ge[11] * (sc[2] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[11] -= 2.000000 * qdot;
@@ -9619,7 +9630,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.972 * exp((2.75) * logT - (3400.07901367609) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[31]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[30] + g_RT[31])) * (sc[4] * sc[30]);
+      k_f * inv_ge[4] * ge[2] * inv_ge[30] * ge[31] * (sc[4] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -10065,6 +10076,12 @@ aJacobian_precond(
   // compute the Gibbs free energy
   amrex::Real g_RT[34];
   gibbs(g_RT, T);
+  // exp(-g/RT) and its inverse per species, for the Kc products
+  amrex::Real ge[34], inv_ge[34];
+  for (int i = 0; i < 34; ++i) {
+    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
+    inv_ge[i] = 1.0 / ge[i];
+  }
 
   // compute the species enthalpy
   amrex::Real h_RT[34];
@@ -10119,7 +10136,7 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[7];
-  Kc = refCinv * exp(2.000000 * g_RT[3] - g_RT[7]);
+  Kc = refCinv * inv_ge[3] * ge[7] * inv_ge[3];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[3]) + (h_RT[7]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -10215,7 +10232,7 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[8];
-  Kc = refCinv * exp(g_RT[2] + g_RT[5] - g_RT[8]);
+  Kc = refCinv * inv_ge[2] * ge[8] * inv_ge[5];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[5]) + (h_RT[8]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -10406,7 +10423,7 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * exp(2.000000 * g_RT[11] - g_RT[17]);
+  Kc = refCinv * inv_ge[11] * ge[17] * inv_ge[11];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[11]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -10780,7 +10797,7 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[14];
-  Kc = refCinv * exp(g_RT[2] - g_RT[14] + g_RT[16]);
+  Kc = refCinv * inv_ge[2] * ge[14] * inv_ge[16];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[14]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -12371,7 +12388,7 @@ aJacobian_precond(
   dlnkfdT = 0.1 * invT + (5334.04633586345) * invT2;
   // reverse
   phi_r = sc[2] * sc[14];
-  Kc = exp(-g_RT[2] + 2.000000 * g_RT[11] - g_RT[14]);
+  Kc = inv_ge[11] * ge[2] * inv_ge[11] * ge[14];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[11]) + (h_RT[2] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -15570,7 +15587,7 @@ aJacobian_precond(
   dlnkfdT = 2.75 * invT + (3400.07901367609) * invT2;
   // reverse
   phi_r = sc[4] * sc[30];
-  Kc = exp(g_RT[2] - g_RT[4] - g_RT[30] + g_RT[31]);
+  Kc = inv_ge[2] * ge[4] * inv_ge[31] * ge[30];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[31]) + (h_RT[4] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -16152,6 +16169,12 @@ aJacobian(
   // compute the Gibbs free energy
   amrex::Real g_RT[34];
   gibbs(g_RT, T);
+  // exp(-g/RT) and its inverse per species, for the Kc products
+  amrex::Real ge[34], inv_ge[34];
+  for (int i = 0; i < 34; ++i) {
+    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
+    inv_ge[i] = 1.0 / ge[i];
+  }
 
   // compute the species enthalpy
   amrex::Real h_RT[34];
@@ -16206,7 +16229,7 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[7];
-  Kc = refCinv * exp(2.000000 * g_RT[3] - g_RT[7]);
+  Kc = refCinv * inv_ge[3] * ge[7] * inv_ge[3];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[3]) + (h_RT[7]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -16329,7 +16352,7 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[8];
-  Kc = refCinv * exp(g_RT[2] + g_RT[5] - g_RT[8]);
+  Kc = refCinv * inv_ge[2] * ge[8] * inv_ge[5];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[5]) + (h_RT[8]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -16591,7 +16614,7 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * exp(2.000000 * g_RT[11] - g_RT[17]);
+  Kc = refCinv * inv_ge[11] * ge[17] * inv_ge[11];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[11]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -17056,7 +17079,7 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[14];
-  Kc = refCinv * exp(g_RT[2] - g_RT[14] + g_RT[16]);
+  Kc = refCinv * inv_ge[2] * ge[14] * inv_ge[16];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[14]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -18839,7 +18862,7 @@ aJacobian(
   dlnkfdT = 0.1 * invT + (5334.04633586345) * invT2;
   // reverse
   phi_r = sc[2] * sc[14];
-  Kc = exp(-g_RT[2] + 2.000000 * g_RT[11] - g_RT[14]);
+  Kc = inv_ge[11] * ge[2] * inv_ge[11] * ge[14];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[11]) + (h_RT[2] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -22038,7 +22061,7 @@ aJacobian(
   dlnkfdT = 2.75 * invT + (3400.07901367609) * invT2;
   // reverse
   phi_r = sc[4] * sc[30];
-  Kc = exp(g_RT[2] - g_RT[4] - g_RT[30] + g_RT[31]);
+  Kc = inv_ge[2] * ge[4] * inv_ge[31] * ge[30];
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[31]) + (h_RT[4] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
