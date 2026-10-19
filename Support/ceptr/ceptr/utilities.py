@@ -289,11 +289,11 @@ def kc_conv(mechanism, reaction):
 def sorted_kc(mechanism, species_info, reaction):
     """Return sorted kc."""
     conv = kc_conv(mechanism, reaction)
-    exparg = sorted_kc_exp_arg(mechanism, species_info, reaction)
+    expterm = kc_exp(mechanism, species_info, reaction, 1)
     if conv:
-        return conv + " * exp(" + exparg + ")"
+        return conv + " * " + expterm
     else:
-        return "exp(" + exparg + ")"
+        return expterm
 
 
 def kc_exp(mechanism, species_info, reaction, sign):
