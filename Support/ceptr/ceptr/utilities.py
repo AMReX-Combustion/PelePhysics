@@ -5,6 +5,12 @@ from collections import Counter
 from math import exp, isclose, log
 
 import ceptr.constants as cc
+import ceptr.writer as cw
+
+# Bound on the exponent of each exp(-g/RT) factor, so that the factor and
+# its inverse stay finite in double precision. Only reached far below the
+# validity range of the NASA polynomials (roughly T < 150 K).
+GIBBS_EXP_CLAMP = 700.0
 
 
 def intersection(lst1, lst2):
@@ -288,6 +294,74 @@ def sorted_kc(mechanism, species_info, reaction):
         return conv + " * exp(" + exparg + ")"
     else:
         return "exp(" + exparg + ")"
+
+
+def kc_exp(mechanism, species_info, reaction, sign):
+    """Return exp(sign * sorted_kc_exp_arg) as C++ code.
+
+    The exponent is sum(nu_r * g_RT) over reactants minus the same over
+    products. With integer net coefficients the exponential is written as a
+    product of the per-species factors ge[i] = exp(-g_RT[i]) and
+    inv_ge[i] = 1 / ge[i] (ge_qss and inv_ge_qss for QSS species, see
+    write_gibbs_exp), so that each reaction costs multiplications instead of
+    an exp. Factors that raise and lower the magnitude are interleaved to
+    keep intermediate products small. Reactions with a non-integer net
+    coefficient keep the exp form.
+    """
+    net = {}
+    for symbol, coefficient in reaction.reactants.items():
+        net[symbol] = net.get(symbol, 0.0) + coefficient
+    for symbol, coefficient in reaction.products.items():
+        net[symbol] = net.get(symbol, 0.0) - coefficient
+    if not all(float(nu).is_integer() for nu in net.values()):
+        exparg = sorted_kc_exp_arg(mechanism, species_info, reaction)
+        if sign > 0:
+            return f"exp({exparg})"
+        return f"exp(-({exparg}))"
+
+    def ref(symbol, array):
+        if symbol in species_info.qssa_species_list:
+            i = species_info.ordered_idx_map[symbol] - species_info.n_species
+            return f"{array}_qss[{i}]"
+        return f"{array}[{species_info.ordered_idx_map[symbol]}]"
+
+    # exp(sign * nu * g) = inv_ge^(sign * nu), with inv_ge = exp(g)
+    up, down = [], []
+    for symbol in sorted(net, key=lambda s: species_info.ordered_idx_map[s]):
+        power = sign * int(net[symbol])
+        if power > 0:
+            up += [ref(symbol, "inv_ge")] * power
+        elif power < 0:
+            down += [ref(symbol, "ge")] * (-power)
+    factors = []
+    for i in range(max(len(up), len(down))):
+        factors += up[i : i + 1] + down[i : i + 1]
+    if not factors:
+        return "1.0"
+    return " * ".join(factors)
+
+
+def write_gibbs_exp(fstream, species_info, g_rt="g_RT", g_rt_qss="g_RT_qss"):
+    """Write the per-species exp(-g/RT) factors used by kc_exp."""
+    cw.writer(
+        fstream,
+        cw.comment("exp(-g/RT) and its inverse per species, for the Kc products"),
+    )
+    lim = f"{GIBBS_EXP_CLAMP:.1f}"
+    for n, src, sfx in (
+        (species_info.n_species, g_rt, ""),
+        (species_info.n_qssa_species, g_rt_qss, "_qss"),
+    ):
+        if n == 0:
+            continue
+        cw.writer(fstream, f"amrex::Real ge{sfx}[{n}], inv_ge{sfx}[{n}];")
+        cw.writer(fstream, f"for (int i = 0; i < {n}; ++i) {{")
+        cw.writer(
+            fstream,
+            f"ge{sfx}[i] = exp(std::min(std::max(-{src}[i], -{lim}), {lim}));",
+        )
+        cw.writer(fstream, f"inv_ge{sfx}[i] = 1.0 / ge{sfx}[i];")
+        cw.writer(fstream, "}")
 
 
 def sorted_kc_exp_arg(mechanism, species_info, reaction, syms=None):
