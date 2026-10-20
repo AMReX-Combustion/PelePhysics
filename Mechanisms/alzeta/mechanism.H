@@ -13574,11 +13574,17 @@ comp_qfqr(
   // compute the Gibbs free energy
   amrex::Real g_RT[72];
   gibbs(g_RT, T);
-  // exp(-g/RT) and its inverse per species, for the Kc products
-  amrex::Real ge[72], inv_ge[72];
-  for (int i = 0; i < 72; ++i) {
-    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
-    inv_ge[i] = 1.0 / ge[i];
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[72] = {}, inv_ge[72] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 72; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
   }
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
@@ -13594,49 +13600,64 @@ comp_qfqr(
   Corr = mixture + (1.4) * sc[0] + (14.4) * sc[5] + sc[13] + (0.75) * sc[14] +
          (2.6) * sc[15] + (2) * sc[26] + (-0.17) * sc[48];
   qf[32] *= Corr * k_f;
-  qr[32] *= Corr * k_f * inv_ge[3] * ge[2] * ge[2] * (refC);
+  qr[32] *= Corr * k_f *
+            (kc_fast ? (inv_ge[3] * ge[2] * ge[2])
+                     : exp(-(2.000000 * g_RT[2] - g_RT[3]))) *
+            (refC);
   // reaction 1:  H + O + M <=> OH + M
   k_f = 500000 * exp((-1) * logT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[33] *= Corr * k_f;
-  qr[33] *= Corr * k_f * inv_ge[4] * ge[1] * ge[2] * (refC);
+  qr[33] *= Corr * k_f *
+            (kc_fast ? (inv_ge[4] * ge[1] * ge[2])
+                     : exp(-(g_RT[1] + g_RT[2] - g_RT[4]))) *
+            (refC);
   // reaction 2:  H2 + O <=> H + OH
   k_f = 0.0387 * exp((2.7) * logT - (3150.13632793755) * invT);
   qf[61] *= k_f;
-  qr[61] *= k_f * inv_ge[1] * ge[0] * inv_ge[4] * ge[2];
+  qr[61] *= k_f * (kc_fast ? (ge[0] * inv_ge[4] * ge[2] * inv_ge[1])
+                           : exp(-(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4])));
   // reaction 3:  HO2 + O <=> O2 + OH
   k_f = 20000000;
   qf[62] *= k_f;
-  qr[62] *= k_f * inv_ge[3] * ge[2] * inv_ge[4] * ge[6];
+  qr[62] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[3] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6])));
   // reaction 4:  H2O2 + O <=> HO2 + OH
   k_f = 9.63 * exp((2) * logT - (2012.86666321888) * invT);
   qf[63] *= k_f;
-  qr[63] *= k_f * inv_ge[4] * ge[2] * inv_ge[6] * ge[7];
+  qr[63] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[6] * ge[7] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[6] + g_RT[7])));
   // reaction 5:  CH + O <=> CO + H
   k_f = 57000000;
   qf[64] *= k_f;
-  qr[64] *= k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[9];
+  qr[64] *= k_f * (kc_fast ? (inv_ge[14] * inv_ge[1] * ge[2] * ge[9])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14])));
   // reaction 6:  CH2 + O <=> H + HCO
   k_f = 80000000;
   qf[65] *= k_f;
-  qr[65] *= k_f * inv_ge[1] * ge[2] * inv_ge[16] * ge[10];
+  qr[65] *= k_f * (kc_fast ? (inv_ge[16] * inv_ge[1] * ge[2] * ge[10])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[10] - g_RT[16])));
   // reaction 7:  CH2(S) + O <=> CO + H2
   k_f = 15000000;
   qf[66] *= k_f;
-  qr[66] *= k_f * inv_ge[0] * ge[2] * inv_ge[14] * ge[11];
+  qr[66] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[14] * ge[2] * ge[11])
+                           : exp(-(-g_RT[0] + g_RT[2] + g_RT[11] - g_RT[14])));
   // reaction 8:  CH2(S) + O <=> H + HCO
   k_f = 15000000;
   qf[67] *= k_f;
-  qr[67] *= k_f * inv_ge[1] * ge[2] * inv_ge[16] * ge[11];
+  qr[67] *= k_f * (kc_fast ? (inv_ge[16] * inv_ge[1] * ge[2] * ge[11])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[11] - g_RT[16])));
   // reaction 9:  CH3 + O <=> CH2O + H
   k_f = 50600000;
   qf[68] *= k_f;
-  qr[68] *= k_f * inv_ge[1] * ge[2] * inv_ge[17] * ge[12];
+  qr[68] *= k_f * (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[17] * ge[2])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[12] - g_RT[17])));
   // reaction 10:  CH4 + O <=> CH3 + OH
   k_f = 1020 * exp((1.5) * logT - (4327.66332592059) * invT);
   qf[69] *= k_f;
-  qr[69] *= k_f * inv_ge[4] * ge[2] * inv_ge[12] * ge[13];
+  qr[69] *= k_f * (kc_fast ? (inv_ge[4] * ge[13] * ge[2] * inv_ge[12])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[12] + g_RT[13])));
   // reaction 11:  CO + O (+M) <=> CO2 (+M)
   k_f = 18000 * exp(-(1200.17174794426) * invT);
   Corr = mixture + sc[0] + (5) * sc[3] + (5) * sc[5] + sc[13] + (0.5) * sc[14] +
@@ -13644,162 +13665,224 @@ comp_qfqr(
   redP = Corr / k_f * 602 * exp(-(1509.64999741416) * invT);
   Corr = redP / (1. + redP);
   qf[26] *= Corr * k_f;
-  qr[26] *= Corr * k_f * inv_ge[15] * ge[2] * ge[14] * (refC);
+  qr[26] *= Corr * k_f *
+            (kc_fast ? (ge[14] * ge[2] * inv_ge[15])
+                     : exp(-(g_RT[2] + g_RT[14] - g_RT[15]))) *
+            (refC);
   // reaction 12:  HCO + O <=> CO + OH
   k_f = 30000000;
   qf[70] *= k_f;
-  qr[70] *= k_f * inv_ge[4] * ge[2] * inv_ge[14] * ge[16];
+  qr[70] *= k_f * (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[14] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[14] + g_RT[16])));
   // reaction 13:  HCO + O <=> CO2 + H
   k_f = 30000000;
   qf[71] *= k_f;
-  qr[71] *= k_f * inv_ge[1] * ge[2] * inv_ge[15] * ge[16];
+  qr[71] *= k_f * (kc_fast ? (ge[16] * inv_ge[1] * ge[2] * inv_ge[15])
+                           : exp(-(-g_RT[1] + g_RT[2] - g_RT[15] + g_RT[16])));
   // reaction 14:  CH2O + O <=> HCO + OH
   k_f = 39000000 * exp(-(1781.38699694871) * invT);
   qf[72] *= k_f;
-  qr[72] *= k_f * inv_ge[4] * ge[2] * inv_ge[16] * ge[17];
+  qr[72] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[16] * ge[17] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[16] + g_RT[17])));
   // reaction 15:  CH2OH + O <=> CH2O + OH
   k_f = 10000000;
   qf[73] *= k_f;
-  qr[73] *= k_f * inv_ge[4] * ge[2] * inv_ge[17] * ge[18];
+  qr[73] *= k_f * (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[17] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18])));
   // reaction 16:  CH3O + O <=> CH2O + OH
   k_f = 10000000;
   qf[74] *= k_f;
-  qr[74] *= k_f * inv_ge[4] * ge[2] * inv_ge[17] * ge[19];
+  qr[74] *= k_f * (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[17] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[19])));
   // reaction 17:  CH3OH + O <=> CH2OH + OH
   k_f = 0.388 * exp((2.5) * logT - (1559.97166399463) * invT);
   qf[75] *= k_f;
-  qr[75] *= k_f * inv_ge[4] * ge[2] * inv_ge[18] * ge[20];
+  qr[75] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[18] * ge[20] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[18] + g_RT[20])));
   // reaction 18:  CH3OH + O <=> CH3O + OH
   k_f = 0.13 * exp((2.5) * logT - (2516.0833290236) * invT);
   qf[76] *= k_f;
-  qr[76] *= k_f * inv_ge[4] * ge[2] * inv_ge[19] * ge[20];
+  qr[76] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[19] * ge[20] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[19] + g_RT[20])));
   // reaction 19:  C2H + O <=> CH + CO
   k_f = 50000000;
   qf[77] *= k_f;
-  qr[77] *= k_f * inv_ge[9] * ge[2] * inv_ge[14] * ge[21];
+  qr[77] *= k_f * (kc_fast ? (inv_ge[14] * ge[2] * inv_ge[9] * ge[21])
+                           : exp(-(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[21])));
   // reaction 20:  C2H2 + O <=> H + HCCO
   k_f = 13.5 * exp((2) * logT - (956.111665028967) * invT);
   qf[78] *= k_f;
-  qr[78] *= k_f * inv_ge[1] * ge[2] * inv_ge[27] * ge[22];
+  qr[78] *= k_f * (kc_fast ? (inv_ge[27] * ge[22] * inv_ge[1] * ge[2])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[22] - g_RT[27])));
   // reaction 21:  C2H2 + O <=> C2H + OH
   k_f = 46000000000000 * exp((-1.41) * logT - (14568.1224750466) * invT);
   qf[79] *= k_f;
-  qr[79] *= k_f * inv_ge[4] * ge[2] * inv_ge[21] * ge[22];
+  qr[79] *= k_f * (kc_fast ? (inv_ge[4] * ge[22] * inv_ge[21] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[21] + g_RT[22])));
   // reaction 22:  C2H2 + O <=> CH2 + CO
   k_f = 6.94 * exp((2) * logT - (956.111665028967) * invT);
   qf[80] *= k_f;
-  qr[80] *= k_f * inv_ge[10] * ge[2] * inv_ge[14] * ge[22];
+  qr[80] *= k_f * (kc_fast ? (inv_ge[14] * inv_ge[10] * ge[22] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[10] - g_RT[14] + g_RT[22])));
   // reaction 23:  C2H3 + O <=> CH2CO + H
   k_f = 30000000;
   qf[81] *= k_f;
-  qr[81] *= k_f * inv_ge[1] * ge[2] * inv_ge[28] * ge[23];
+  qr[81] *= k_f * (kc_fast ? (inv_ge[28] * inv_ge[1] * ge[2] * ge[23])
+                           : exp(-(-g_RT[1] + g_RT[2] + g_RT[23] - g_RT[28])));
   // reaction 24:  C2H4 + O <=> CH3 + HCO
   k_f = 12.5 * exp((1.83) * logT - (110.707666477038) * invT);
   qf[82] *= k_f;
-  qr[82] *= k_f * inv_ge[12] * ge[2] * inv_ge[16] * ge[24];
+  qr[82] *= k_f * (kc_fast ? (inv_ge[16] * ge[24] * inv_ge[12] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[12] - g_RT[16] + g_RT[24])));
   // reaction 25:  C2H5 + O <=> CH2O + CH3
   k_f = 22400000;
   qf[83] *= k_f;
-  qr[83] *= k_f * inv_ge[12] * ge[2] * inv_ge[17] * ge[25];
+  qr[83] *= k_f * (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[17] * ge[2])
+                           : exp(-(g_RT[2] - g_RT[12] - g_RT[17] + g_RT[25])));
   // reaction 26:  C2H6 + O <=> C2H5 + OH
   k_f = 89.8 * exp((1.92) * logT - (2863.30282842885) * invT);
   qf[84] *= k_f;
-  qr[84] *= k_f * inv_ge[4] * ge[2] * inv_ge[25] * ge[26];
+  qr[84] *= k_f * (kc_fast ? (inv_ge[4] * ge[26] * ge[2] * inv_ge[25])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[25] + g_RT[26])));
   // reaction 27:  HCCO + O <=> 2 CO + H
   k_f = 100000000;
   qf[85] *= k_f;
   qr[85] *=
-    k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[27] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[27] * inv_ge[1] * inv_ge[14] * inv_ge[14] * ge[2])
+             : exp(-(-g_RT[1] + g_RT[2] - 2.000000 * g_RT[14] + g_RT[27]))) *
+    (refCinv);
   // reaction 28:  CH2CO + O <=> HCCO + OH
   k_f = 10000000 * exp(-(4025.73332643776) * invT);
   qf[86] *= k_f;
-  qr[86] *= k_f * inv_ge[4] * ge[2] * inv_ge[27] * ge[28];
+  qr[86] *= k_f * (kc_fast ? (inv_ge[4] * ge[28] * ge[2] * inv_ge[27])
+                           : exp(-(g_RT[2] - g_RT[4] - g_RT[27] + g_RT[28])));
   // reaction 29:  CH2CO + O <=> CH2 + CO2
   k_f = 1750000 * exp(-(679.342498836372) * invT);
   qf[87] *= k_f;
-  qr[87] *= k_f * inv_ge[10] * ge[2] * inv_ge[15] * ge[28];
+  qr[87] *= k_f * (kc_fast ? (ge[28] * ge[2] * inv_ge[10] * inv_ge[15])
+                           : exp(-(g_RT[2] - g_RT[10] - g_RT[15] + g_RT[28])));
   // reaction 30:  CO + O2 <=> CO2 + O
   k_f = 2500000 * exp(-(24053.7566254656) * invT);
   qf[88] *= k_f;
-  qr[88] *= k_f * inv_ge[2] * ge[3] * inv_ge[15] * ge[14];
+  qr[88] *= k_f * (kc_fast ? (ge[3] * ge[14] * inv_ge[15] * inv_ge[2])
+                           : exp(-(-g_RT[2] + g_RT[3] + g_RT[14] - g_RT[15])));
   // reaction 31:  CH2O + O2 <=> HCO + HO2
   k_f = 100000000 * exp(-(20128.6666321888) * invT);
   qf[89] *= k_f;
-  qr[89] *= k_f * inv_ge[6] * ge[3] * inv_ge[16] * ge[17];
+  qr[89] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[16] * ge[17])
+                           : exp(-(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17])));
   // reaction 32:  H + O2 + M <=> HO2 + M
   k_f = 2800000 * exp((-0.86) * logT);
   Corr = mixture + (-1) * sc[3] + (-1) * sc[5] + (-0.25) * sc[14] +
          (0.5) * sc[15] + (0.5) * sc[26] + (-1) * sc[47] + (-1) * sc[48];
   qf[34] *= Corr * k_f;
-  qr[34] *= Corr * k_f * inv_ge[6] * ge[1] * ge[3] * (refC);
+  qr[34] *= Corr * k_f *
+            (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+            (refC);
   // reaction 33:  H + O2 + O2 <=> HO2 + O2
   k_f = 20800000 * exp((-1.24) * logT);
   qf[35] *= k_f;
-  qr[35] *= k_f * inv_ge[6] * ge[1] * ge[3] * (refC);
+  qr[35] *= k_f *
+            (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+            (refC);
   // reaction 34:  H + O2 + H2O <=> HO2 + H2O
   k_f = 11260000 * exp((-0.76) * logT);
   qf[36] *= k_f;
-  qr[36] *= k_f * inv_ge[6] * ge[1] * ge[3] * (refC);
+  qr[36] *= k_f *
+            (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+            (refC);
   // reaction 35:  H + O2 + N2 <=> HO2 + N2
   k_f = 26000000 * exp((-1.24) * logT);
   qf[37] *= k_f;
-  qr[37] *= k_f * inv_ge[6] * ge[1] * ge[3] * (refC);
+  qr[37] *= k_f *
+            (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+            (refC);
   // reaction 36:  H + O2 + AR <=> HO2 + AR
   k_f = 700000 * exp((-0.8) * logT);
   qf[38] *= k_f;
-  qr[38] *= k_f * inv_ge[6] * ge[1] * ge[3] * (refC);
+  qr[38] *= k_f *
+            (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+            (refC);
   // reaction 37:  H + O2 <=> O + OH
   k_f = 26500000000 * exp((-0.6707) * logT - (8575.31520197823) * invT);
   qf[90] *= k_f;
-  qr[90] *= k_f * inv_ge[2] * ge[1] * inv_ge[4] * ge[3];
+  qr[90] *= k_f * (kc_fast ? (inv_ge[4] * ge[3] * ge[1] * inv_ge[2])
+                           : exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4])));
   // reaction 38:  2 H + M <=> H2 + M
   k_f = 1000000 * exp((-1) * logT);
   Corr = mixture + (-1) * sc[0] + (-1) * sc[5] + sc[13] + (-1) * sc[15] +
          (2) * sc[26] + (-0.37) * sc[48];
   qf[39] *= Corr * k_f;
-  qr[39] *= Corr * k_f * inv_ge[0] * ge[1] * ge[1] * (refC);
+  qr[39] *= Corr * k_f *
+            (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                     : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+            (refC);
   // reaction 39:  2 H + H2 <=> H2 + H2
   k_f = 90000 * exp((-0.6) * logT);
   qf[40] *= k_f;
-  qr[40] *= k_f * inv_ge[0] * ge[1] * ge[1] * (refC);
+  qr[40] *= k_f *
+            (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                     : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+            (refC);
   // reaction 40:  2 H + H2O <=> H2 + H2O
   k_f = 60000000 * exp((-1.25) * logT);
   qf[41] *= k_f;
-  qr[41] *= k_f * inv_ge[0] * ge[1] * ge[1] * (refC);
+  qr[41] *= k_f *
+            (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                     : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+            (refC);
   // reaction 41:  2 H + CO2 <=> H2 + CO2
   k_f = 550000000 * exp((-2) * logT);
   qf[42] *= k_f;
-  qr[42] *= k_f * inv_ge[0] * ge[1] * ge[1] * (refC);
+  qr[42] *= k_f *
+            (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                     : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+            (refC);
   // reaction 42:  H + OH + M <=> H2O + M
   k_f = 22000000000 * exp((-2) * logT);
   Corr = mixture + (-0.27) * sc[0] + (2.65) * sc[5] + sc[13] + (2) * sc[26] +
          (-0.62) * sc[48];
   qf[43] *= Corr * k_f;
-  qr[43] *= Corr * k_f * inv_ge[5] * ge[1] * ge[4] * (refC);
+  qr[43] *= Corr * k_f *
+            (kc_fast ? (ge[4] * ge[1] * inv_ge[5])
+                     : exp(-(g_RT[1] + g_RT[4] - g_RT[5]))) *
+            (refC);
   // reaction 43:  H + HO2 <=> H2O + O
   k_f = 3970000 * exp(-(337.658382754967) * invT);
   qf[91] *= k_f;
-  qr[91] *= k_f * inv_ge[2] * ge[1] * inv_ge[5] * ge[6];
+  qr[91] *= k_f * (kc_fast ? (ge[6] * ge[1] * inv_ge[2] * inv_ge[5])
+                           : exp(-(g_RT[1] - g_RT[2] - g_RT[5] + g_RT[6])));
   // reaction 44:  H + HO2 <=> H2 + O2
   k_f = 44800000 * exp(-(537.435399079441) * invT);
   qf[92] *= k_f;
-  qr[92] *= k_f * inv_ge[0] * ge[1] * inv_ge[3] * ge[6];
+  qr[92] *= k_f * (kc_fast ? (inv_ge[0] * ge[6] * inv_ge[3] * ge[1])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6])));
   // reaction 45:  H + HO2 <=> 2 OH
   k_f = 84000000 * exp(-(319.542582785997) * invT);
   qf[93] *= k_f;
-  qr[93] *= k_f * inv_ge[4] * ge[1] * inv_ge[4] * ge[6];
+  qr[93] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[4] * ge[1])
+                           : exp(-(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6])));
   // reaction 46:  H + H2O2 <=> H2 + HO2
   k_f = 12.1 * exp((2) * logT - (2616.72666218454) * invT);
   qf[94] *= k_f;
-  qr[94] *= k_f * inv_ge[0] * ge[1] * inv_ge[6] * ge[7];
+  qr[94] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[6] * ge[7] * ge[1])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[6] + g_RT[7])));
   // reaction 47:  H + H2O2 <=> H2O + OH
   k_f = 10000000 * exp(-(1811.57999689699) * invT);
   qf[95] *= k_f;
-  qr[95] *= k_f * inv_ge[4] * ge[1] * inv_ge[5] * ge[7];
+  qr[95] *= k_f * (kc_fast ? (inv_ge[4] * ge[7] * ge[1] * inv_ge[5])
+                           : exp(-(g_RT[1] - g_RT[4] - g_RT[5] + g_RT[7])));
   // reaction 48:  CH + H <=> C + H2
   k_f = 165000000;
   qf[96] *= k_f;
-  qr[96] *= k_f * inv_ge[0] * ge[1] * inv_ge[8] * ge[9];
+  qr[96] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[8] * ge[9])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[8] + g_RT[9])));
   // reaction 49:  CH2 + H (+M) <=> CH3 (+M)
   k_f = 600000000;
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13817,11 +13900,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[0] *= Corr * k_f;
-  qr[0] *= Corr * k_f * inv_ge[12] * ge[1] * ge[10] * (refC);
+  qr[0] *= Corr * k_f *
+           (kc_fast ? (inv_ge[12] * ge[1] * ge[10])
+                    : exp(-(g_RT[1] + g_RT[10] - g_RT[12]))) *
+           (refC);
   // reaction 50:  CH2(S) + H <=> CH + H2
   k_f = 30000000;
   qf[97] *= k_f;
-  qr[97] *= k_f * inv_ge[0] * ge[1] * inv_ge[9] * ge[11];
+  qr[97] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[9] * ge[11])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[11])));
   // reaction 51:  CH3 + H (+M) <=> CH4 (+M)
   k_f = 13900000000 * exp((-0.534) * logT - (269.72413287133) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + (2) * sc[13] + (0.5) * sc[14] +
@@ -13838,11 +13925,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[1] *= Corr * k_f;
-  qr[1] *= Corr * k_f * inv_ge[13] * ge[1] * ge[12] * (refC);
+  qr[1] *= Corr * k_f *
+           (kc_fast ? (ge[12] * inv_ge[13] * ge[1])
+                    : exp(-(g_RT[1] + g_RT[12] - g_RT[13]))) *
+           (refC);
   // reaction 52:  CH4 + H <=> CH3 + H2
   k_f = 660 * exp((1.62) * logT - (5454.86865732316) * invT);
   qf[98] *= k_f;
-  qr[98] *= k_f * inv_ge[0] * ge[1] * inv_ge[12] * ge[13];
+  qr[98] *= k_f * (kc_fast ? (inv_ge[0] * ge[13] * ge[1] * inv_ge[12])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[12] + g_RT[13])));
   // reaction 53:  H + HCO (+M) <=> CH2O (+M)
   k_f = 1090000 * exp((0.48) * logT - (-130.836333109227) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13860,11 +13951,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[2] *= Corr * k_f;
-  qr[2] *= Corr * k_f * inv_ge[17] * ge[1] * ge[16] * (refC);
+  qr[2] *= Corr * k_f *
+           (kc_fast ? (ge[16] * inv_ge[17] * ge[1])
+                    : exp(-(g_RT[1] + g_RT[16] - g_RT[17]))) *
+           (refC);
   // reaction 54:  H + HCO <=> CO + H2
   k_f = 73400000;
   qf[99] *= k_f;
-  qr[99] *= k_f * inv_ge[0] * ge[1] * inv_ge[14] * ge[16];
+  qr[99] *= k_f * (kc_fast ? (inv_ge[0] * ge[16] * inv_ge[14] * ge[1])
+                           : exp(-(-g_RT[0] + g_RT[1] - g_RT[14] + g_RT[16])));
   // reaction 55:  CH2O + H (+M) <=> CH2OH (+M)
   k_f = 540000 * exp((0.454) * logT - (1811.57999689699) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13881,7 +13976,10 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[3] *= Corr * k_f;
-  qr[3] *= Corr * k_f * inv_ge[18] * ge[1] * ge[17] * (refC);
+  qr[3] *= Corr * k_f *
+           (kc_fast ? (inv_ge[18] * ge[17] * ge[1])
+                    : exp(-(g_RT[1] + g_RT[17] - g_RT[18]))) *
+           (refC);
   // reaction 56:  CH2O + H (+M) <=> CH3O (+M)
   k_f = 540000 * exp((0.454) * logT - (1308.36333109227) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13898,11 +13996,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[4] *= Corr * k_f;
-  qr[4] *= Corr * k_f * inv_ge[19] * ge[1] * ge[17] * (refC);
+  qr[4] *= Corr * k_f *
+           (kc_fast ? (inv_ge[19] * ge[17] * ge[1])
+                    : exp(-(g_RT[1] + g_RT[17] - g_RT[19]))) *
+           (refC);
   // reaction 57:  CH2O + H <=> H2 + HCO
   k_f = 57.4 * exp((1.9) * logT - (1379.82009763654) * invT);
   qf[100] *= k_f;
-  qr[100] *= k_f * inv_ge[0] * ge[1] * inv_ge[16] * ge[17];
+  qr[100] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[16] * ge[17] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[16] + g_RT[17])));
   // reaction 58:  CH2OH + H (+M) <=> CH3OH (+M)
   k_f = 1055000 * exp((0.5) * logT - (43.2766332592059) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13919,19 +14021,25 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[5] *= Corr * k_f;
-  qr[5] *= Corr * k_f * inv_ge[20] * ge[1] * ge[18] * (refC);
+  qr[5] *= Corr * k_f *
+           (kc_fast ? (ge[18] * ge[1] * inv_ge[20])
+                    : exp(-(g_RT[1] + g_RT[18] - g_RT[20]))) *
+           (refC);
   // reaction 59:  CH2OH + H <=> CH2O + H2
   k_f = 20000000;
   qf[101] *= k_f;
-  qr[101] *= k_f * inv_ge[0] * ge[1] * inv_ge[17] * ge[18];
+  qr[101] *= k_f * (kc_fast ? (inv_ge[0] * ge[18] * inv_ge[17] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18])));
   // reaction 60:  CH2OH + H <=> CH3 + OH
   k_f = 165000 * exp((0.65) * logT - (-142.91353308854) * invT);
   qf[102] *= k_f;
-  qr[102] *= k_f * inv_ge[4] * ge[1] * inv_ge[12] * ge[18];
+  qr[102] *= k_f * (kc_fast ? (inv_ge[4] * ge[18] * ge[1] * inv_ge[12])
+                            : exp(-(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[18])));
   // reaction 61:  CH2OH + H <=> CH2(S) + H2O
   k_f = 32800000 * exp((-0.09) * logT - (306.962166140879) * invT);
   qf[103] *= k_f;
-  qr[103] *= k_f * inv_ge[5] * ge[1] * inv_ge[11] * ge[18];
+  qr[103] *= k_f * (kc_fast ? (ge[18] * ge[1] * inv_ge[11] * inv_ge[5])
+                            : exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[18])));
   // reaction 62:  CH3O + H (+M) <=> CH3OH (+M)
   k_f = 2430000 * exp((0.515) * logT - (25.160833290236) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13948,31 +14056,40 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[6] *= Corr * k_f;
-  qr[6] *= Corr * k_f * inv_ge[20] * ge[1] * ge[19] * (refC);
+  qr[6] *= Corr * k_f *
+           (kc_fast ? (ge[19] * ge[1] * inv_ge[20])
+                    : exp(-(g_RT[1] + g_RT[19] - g_RT[20]))) *
+           (refC);
   // reaction 63:  CH3O + H <=> CH2OH + H
   k_f = 41.5 * exp((1.63) * logT - (968.188865008281) * invT);
   qf[104] *= k_f;
-  qr[104] *= k_f * inv_ge[18] * ge[19];
+  qr[104] *= k_f * (kc_fast ? (inv_ge[18] * ge[19])
+                            : exp(-(g_RT[1] - g_RT[1] - g_RT[18] + g_RT[19])));
   // reaction 64:  CH3O + H <=> CH2O + H2
   k_f = 20000000;
   qf[105] *= k_f;
-  qr[105] *= k_f * inv_ge[0] * ge[1] * inv_ge[17] * ge[19];
+  qr[105] *= k_f * (kc_fast ? (inv_ge[0] * ge[19] * inv_ge[17] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[19])));
   // reaction 65:  CH3O + H <=> CH3 + OH
   k_f = 1500000 * exp((0.5) * logT - (-55.3538332385192) * invT);
   qf[106] *= k_f;
-  qr[106] *= k_f * inv_ge[4] * ge[1] * inv_ge[12] * ge[19];
+  qr[106] *= k_f * (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[12] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[19])));
   // reaction 66:  CH3O + H <=> CH2(S) + H2O
   k_f = 262000000 * exp((-0.23) * logT - (538.44183241105) * invT);
   qf[107] *= k_f;
-  qr[107] *= k_f * inv_ge[5] * ge[1] * inv_ge[11] * ge[19];
+  qr[107] *= k_f * (kc_fast ? (ge[19] * ge[1] * inv_ge[11] * inv_ge[5])
+                            : exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[19])));
   // reaction 67:  CH3OH + H <=> CH2OH + H2
   k_f = 17 * exp((2.1) * logT - (2450.66516246898) * invT);
   qf[108] *= k_f;
-  qr[108] *= k_f * inv_ge[0] * ge[1] * inv_ge[18] * ge[20];
+  qr[108] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[18] * ge[20] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[18] + g_RT[20])));
   // reaction 68:  CH3OH + H <=> CH3O + H2
   k_f = 4.2 * exp((2.1) * logT - (2450.66516246898) * invT);
   qf[109] *= k_f;
-  qr[109] *= k_f * inv_ge[0] * ge[1] * inv_ge[19] * ge[20];
+  qr[109] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[19] * ge[20] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[19] + g_RT[20])));
   // reaction 69:  C2H + H (+M) <=> C2H2 (+M)
   k_f = 100000000000 * exp((-1) * logT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -13989,7 +14106,10 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[7] *= Corr * k_f;
-  qr[7] *= Corr * k_f * inv_ge[22] * ge[1] * ge[21] * (refC);
+  qr[7] *= Corr * k_f *
+           (kc_fast ? (inv_ge[22] * ge[1] * ge[21])
+                    : exp(-(g_RT[1] + g_RT[21] - g_RT[22]))) *
+           (refC);
   // reaction 70:  C2H2 + H (+M) <=> C2H3 (+M)
   k_f = 5600000 * exp(-(1207.71999793133) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14006,7 +14126,10 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[8] *= Corr * k_f;
-  qr[8] *= Corr * k_f * inv_ge[23] * ge[1] * ge[22] * (refC);
+  qr[8] *= Corr * k_f *
+           (kc_fast ? (ge[22] * inv_ge[23] * ge[1])
+                    : exp(-(g_RT[1] + g_RT[22] - g_RT[23]))) *
+           (refC);
   // reaction 71:  C2H3 + H (+M) <=> C2H4 (+M)
   k_f = 6080000 * exp((0.27) * logT - (140.900666425322) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14023,11 +14146,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[9] *= Corr * k_f;
-  qr[9] *= Corr * k_f * inv_ge[24] * ge[1] * ge[23] * (refC);
+  qr[9] *= Corr * k_f *
+           (kc_fast ? (inv_ge[24] * ge[1] * ge[23])
+                    : exp(-(g_RT[1] + g_RT[23] - g_RT[24]))) *
+           (refC);
   // reaction 72:  C2H3 + H <=> C2H2 + H2
   k_f = 30000000;
   qf[110] *= k_f;
-  qr[110] *= k_f * inv_ge[0] * ge[1] * inv_ge[22] * ge[23];
+  qr[110] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[22] * ge[1] * ge[23])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[22] + g_RT[23])));
   // reaction 73:  C2H4 + H (+M) <=> C2H5 (+M)
   k_f = 540000 * exp((0.454) * logT - (915.85433176459) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14044,11 +14171,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[10] *= Corr * k_f;
-  qr[10] *= Corr * k_f * inv_ge[25] * ge[1] * ge[24] * (refC);
+  qr[10] *= Corr * k_f *
+            (kc_fast ? (ge[24] * inv_ge[25] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[24] - g_RT[25]))) *
+            (refC);
   // reaction 74:  C2H4 + H <=> C2H3 + H2
   k_f = 1.325 * exp((2.53) * logT - (6159.37198944977) * invT);
   qf[111] *= k_f;
-  qr[111] *= k_f * inv_ge[0] * ge[1] * inv_ge[23] * ge[24];
+  qr[111] *= k_f * (kc_fast ? (inv_ge[0] * ge[24] * inv_ge[23] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[23] + g_RT[24])));
   // reaction 75:  C2H5 + H (+M) <=> C2H6 (+M)
   k_f = 521000000000 * exp((-0.99) * logT - (795.082331971457) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14065,31 +14196,40 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[11] *= Corr * k_f;
-  qr[11] *= Corr * k_f * inv_ge[26] * ge[1] * ge[25] * (refC);
+  qr[11] *= Corr * k_f *
+            (kc_fast ? (ge[25] * inv_ge[26] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[25] - g_RT[26]))) *
+            (refC);
   // reaction 76:  C2H5 + H <=> C2H4 + H2
   k_f = 2000000;
   qf[112] *= k_f;
-  qr[112] *= k_f * inv_ge[0] * ge[1] * inv_ge[24] * ge[25];
+  qr[112] *= k_f * (kc_fast ? (inv_ge[0] * ge[25] * inv_ge[24] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[24] + g_RT[25])));
   // reaction 77:  C2H6 + H <=> C2H5 + H2
   k_f = 115 * exp((1.9) * logT - (3789.22149350954) * invT);
   qf[113] *= k_f;
-  qr[113] *= k_f * inv_ge[0] * ge[1] * inv_ge[25] * ge[26];
+  qr[113] *= k_f * (kc_fast ? (inv_ge[0] * ge[26] * ge[1] * inv_ge[25])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[25] + g_RT[26])));
   // reaction 78:  H + HCCO <=> CH2(S) + CO
   k_f = 100000000;
   qf[114] *= k_f;
-  qr[114] *= k_f * inv_ge[11] * ge[1] * inv_ge[14] * ge[27];
+  qr[114] *= k_f * (kc_fast ? (ge[27] * inv_ge[11] * ge[1] * inv_ge[14])
+                            : exp(-(g_RT[1] - g_RT[11] - g_RT[14] + g_RT[27])));
   // reaction 79:  CH2CO + H <=> H2 + HCCO
   k_f = 50000000 * exp(-(4025.73332643776) * invT);
   qf[115] *= k_f;
-  qr[115] *= k_f * inv_ge[0] * ge[1] * inv_ge[27] * ge[28];
+  qr[115] *= k_f * (kc_fast ? (inv_ge[0] * ge[28] * ge[1] * inv_ge[27])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[27] + g_RT[28])));
   // reaction 80:  CH2CO + H <=> CH3 + CO
   k_f = 11300000 * exp(-(1725.02673037858) * invT);
   qf[116] *= k_f;
-  qr[116] *= k_f * inv_ge[12] * ge[1] * inv_ge[14] * ge[28];
+  qr[116] *= k_f * (kc_fast ? (ge[28] * inv_ge[14] * inv_ge[12] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[12] - g_RT[14] + g_RT[28])));
   // reaction 81:  H + HCCOH <=> CH2CO + H
   k_f = 10000000;
   qf[117] *= k_f;
-  qr[117] *= k_f * inv_ge[28] * ge[29];
+  qr[117] *= k_f * (kc_fast ? (ge[29] * inv_ge[28])
+                            : exp(-(g_RT[1] - g_RT[1] - g_RT[28] + g_RT[29])));
   // reaction 82:  CO + H2 (+M) <=> CH2O (+M)
   k_f = 43 * exp((1.5) * logT - (40056.0465980557) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14106,11 +14246,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[12] *= Corr * k_f;
-  qr[12] *= Corr * k_f * inv_ge[17] * ge[0] * ge[14] * (refC);
+  qr[12] *= Corr * k_f *
+            (kc_fast ? (ge[0] * inv_ge[17] * ge[14])
+                     : exp(-(g_RT[0] + g_RT[14] - g_RT[17]))) *
+            (refC);
   // reaction 83:  H2 + OH <=> H + H2O
   k_f = 216 * exp((1.51) * logT - (1726.03316371019) * invT);
   qf[118] *= k_f;
-  qr[118] *= k_f * inv_ge[1] * ge[0] * inv_ge[5] * ge[4];
+  qr[118] *= k_f * (kc_fast ? (ge[0] * ge[4] * inv_ge[1] * inv_ge[5])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5])));
   // reaction 84:  2 OH (+M) <=> H2O2 (+M)
   k_f = 74000000 * exp((-0.37) * logT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14127,43 +14271,55 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[13] *= Corr * k_f;
-  qr[13] *= Corr * k_f * inv_ge[7] * ge[4] * ge[4] * (refC);
+  qr[13] *= Corr * k_f *
+            (kc_fast ? (ge[4] * ge[4] * inv_ge[7])
+                     : exp(-(2.000000 * g_RT[4] - g_RT[7]))) *
+            (refC);
   // reaction 85:  2 OH <=> H2O + O
   k_f = 0.0357 * exp((2.4) * logT - (-1061.78716484796) * invT);
   qf[119] *= k_f;
-  qr[119] *= k_f * inv_ge[2] * ge[4] * inv_ge[5] * ge[4];
+  qr[119] *= k_f * (kc_fast ? (ge[4] * ge[4] * inv_ge[2] * inv_ge[5])
+                            : exp(-(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5])));
   // reaction 86:  HO2 + OH <=> H2O + O2
   k_f = 14500000 * exp(-(-251.60833290236) * invT);
   qf[120] *= k_f;
-  qr[120] *= k_f * inv_ge[3] * ge[4] * inv_ge[5] * ge[6];
+  qr[120] *= k_f * (kc_fast ? (ge[4] * inv_ge[3] * ge[6] * inv_ge[5])
+                            : exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6])));
   // reaction 87:  H2O2 + OH <=> H2O + HO2
   k_f = 2000000 * exp(-(214.873516298615) * invT);
   qf[121] *= k_f;
-  qr[121] *= k_f * inv_ge[5] * ge[4] * inv_ge[6] * ge[7];
+  qr[121] *= k_f * (kc_fast ? (ge[4] * inv_ge[6] * ge[7] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7])));
   // reaction 88:  H2O2 + OH <=> H2O + HO2
   k_f = 1700000000000 * exp(-(14799.6021413168) * invT);
   qf[122] *= k_f;
-  qr[122] *= k_f * inv_ge[5] * ge[4] * inv_ge[6] * ge[7];
+  qr[122] *= k_f * (kc_fast ? (ge[4] * inv_ge[6] * ge[7] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7])));
   // reaction 89:  C + OH <=> CO + H
   k_f = 50000000;
   qf[123] *= k_f;
-  qr[123] *= k_f * inv_ge[1] * ge[4] * inv_ge[14] * ge[8];
+  qr[123] *= k_f * (kc_fast ? (ge[4] * inv_ge[14] * inv_ge[1] * ge[8])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14])));
   // reaction 90:  CH + OH <=> H + HCO
   k_f = 30000000;
   qf[124] *= k_f;
-  qr[124] *= k_f * inv_ge[1] * ge[4] * inv_ge[16] * ge[9];
+  qr[124] *= k_f * (kc_fast ? (ge[4] * inv_ge[16] * inv_ge[1] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[9] - g_RT[16])));
   // reaction 91:  CH2 + OH <=> CH2O + H
   k_f = 20000000;
   qf[125] *= k_f;
-  qr[125] *= k_f * inv_ge[1] * ge[4] * inv_ge[17] * ge[10];
+  qr[125] *= k_f * (kc_fast ? (ge[4] * inv_ge[17] * inv_ge[1] * ge[10])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[10] - g_RT[17])));
   // reaction 92:  CH2 + OH <=> CH + H2O
   k_f = 11.3 * exp((2) * logT - (1509.64999741416) * invT);
   qf[126] *= k_f;
-  qr[126] *= k_f * inv_ge[5] * ge[4] * inv_ge[9] * ge[10];
+  qr[126] *= k_f * (kc_fast ? (ge[4] * inv_ge[5] * inv_ge[9] * ge[10])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10])));
   // reaction 93:  CH2(S) + OH <=> CH2O + H
   k_f = 30000000;
   qf[127] *= k_f;
-  qr[127] *= k_f * inv_ge[1] * ge[4] * inv_ge[17] * ge[11];
+  qr[127] *= k_f * (kc_fast ? (ge[4] * inv_ge[17] * inv_ge[1] * ge[11])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[17])));
   // reaction 94:  CH3 + OH (+M) <=> CH3OH (+M)
   k_f = 2790000000000 * exp((-1.43) * logT - (669.278165520277) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14180,147 +14336,185 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[14] *= Corr * k_f;
-  qr[14] *= Corr * k_f * inv_ge[20] * ge[4] * ge[12] * (refC);
+  qr[14] *= Corr * k_f *
+            (kc_fast ? (ge[4] * ge[12] * inv_ge[20])
+                     : exp(-(g_RT[4] + g_RT[12] - g_RT[20]))) *
+            (refC);
   // reaction 95:  CH3 + OH <=> CH2 + H2O
   k_f = 56 * exp((1.6) * logT - (2727.43432866158) * invT);
   qf[128] *= k_f;
-  qr[128] *= k_f * inv_ge[5] * ge[4] * inv_ge[10] * ge[12];
+  qr[128] *= k_f * (kc_fast ? (ge[4] * ge[12] * inv_ge[10] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[10] + g_RT[12])));
   // reaction 96:  CH3 + OH <=> CH2(S) + H2O
   k_f = 644000000000 * exp((-1.34) * logT - (713.058015445288) * invT);
   qf[129] *= k_f;
-  qr[129] *= k_f * inv_ge[5] * ge[4] * inv_ge[11] * ge[12];
+  qr[129] *= k_f * (kc_fast ? (ge[4] * ge[12] * inv_ge[11] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[12])));
   // reaction 97:  CH4 + OH <=> CH3 + H2O
   k_f = 100 * exp((1.6) * logT - (1570.03599731073) * invT);
   qf[130] *= k_f;
-  qr[130] *= k_f * inv_ge[5] * ge[4] * inv_ge[12] * ge[13];
+  qr[130] *= k_f * (kc_fast ? (ge[4] * inv_ge[12] * inv_ge[5] * ge[13])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[12] + g_RT[13])));
   // reaction 98:  CO + OH <=> CO2 + H
   k_f = 47.6 * exp((1.228) * logT - (35.2251666063304) * invT);
   qf[131] *= k_f;
-  qr[131] *= k_f * inv_ge[1] * ge[4] * inv_ge[15] * ge[14];
+  qr[131] *= k_f * (kc_fast ? (ge[4] * ge[14] * inv_ge[15] * inv_ge[1])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[14] - g_RT[15])));
   // reaction 99:  HCO + OH <=> CO + H2O
   k_f = 50000000;
   qf[132] *= k_f;
-  qr[132] *= k_f * inv_ge[5] * ge[4] * inv_ge[14] * ge[16];
+  qr[132] *= k_f * (kc_fast ? (ge[4] * ge[16] * inv_ge[14] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[14] + g_RT[16])));
   // reaction 100:  CH2O + OH <=> H2O + HCO
   k_f = 3430 * exp((1.18) * logT - (-224.93784961471) * invT);
   qf[133] *= k_f;
-  qr[133] *= k_f * inv_ge[5] * ge[4] * inv_ge[16] * ge[17];
+  qr[133] *= k_f * (kc_fast ? (ge[4] * inv_ge[16] * ge[17] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[16] + g_RT[17])));
   // reaction 101:  CH2OH + OH <=> CH2O + H2O
   k_f = 5000000;
   qf[134] *= k_f;
-  qr[134] *= k_f * inv_ge[5] * ge[4] * inv_ge[17] * ge[18];
+  qr[134] *= k_f * (kc_fast ? (ge[4] * ge[18] * inv_ge[17] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18])));
   // reaction 102:  CH3O + OH <=> CH2O + H2O
   k_f = 5000000;
   qf[135] *= k_f;
-  qr[135] *= k_f * inv_ge[5] * ge[4] * inv_ge[17] * ge[19];
+  qr[135] *= k_f * (kc_fast ? (ge[4] * ge[19] * inv_ge[17] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[19])));
   // reaction 103:  CH3OH + OH <=> CH2OH + H2O
   k_f = 1.44 * exp((2) * logT - (-422.701999275965) * invT);
   qf[136] *= k_f;
-  qr[136] *= k_f * inv_ge[5] * ge[4] * inv_ge[18] * ge[20];
+  qr[136] *= k_f * (kc_fast ? (ge[4] * inv_ge[18] * ge[20] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[18] + g_RT[20])));
   // reaction 104:  CH3OH + OH <=> CH3O + H2O
   k_f = 6.3 * exp((2) * logT - (754.82499870708) * invT);
   qf[137] *= k_f;
-  qr[137] *= k_f * inv_ge[5] * ge[4] * inv_ge[19] * ge[20];
+  qr[137] *= k_f * (kc_fast ? (ge[4] * inv_ge[19] * ge[20] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[19] + g_RT[20])));
   // reaction 105:  C2H + OH <=> H + HCCO
   k_f = 20000000;
   qf[138] *= k_f;
-  qr[138] *= k_f * inv_ge[1] * ge[4] * inv_ge[27] * ge[21];
+  qr[138] *= k_f * (kc_fast ? (ge[4] * inv_ge[27] * inv_ge[1] * ge[21])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[21] - g_RT[27])));
   // reaction 106:  C2H2 + OH <=> CH2CO + H
   k_f = 2.18e-10 * exp((4.5) * logT - (-503.21666580472) * invT);
   qf[139] *= k_f;
-  qr[139] *= k_f * inv_ge[1] * ge[4] * inv_ge[28] * ge[22];
+  qr[139] *= k_f * (kc_fast ? (ge[4] * inv_ge[28] * inv_ge[1] * ge[22])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[28])));
   // reaction 107:  C2H2 + OH <=> H + HCCOH
   k_f = 0.504 * exp((2.3) * logT - (6793.42498836372) * invT);
   qf[140] *= k_f;
-  qr[140] *= k_f * inv_ge[1] * ge[4] * inv_ge[29] * ge[22];
+  qr[140] *= k_f * (kc_fast ? (ge[4] * inv_ge[29] * ge[22] * inv_ge[1])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[29])));
   // reaction 108:  C2H2 + OH <=> C2H + H2O
   k_f = 33.7 * exp((2) * logT - (7045.03332126608) * invT);
   qf[141] *= k_f;
-  qr[141] *= k_f * inv_ge[5] * ge[4] * inv_ge[21] * ge[22];
+  qr[141] *= k_f * (kc_fast ? (ge[4] * ge[22] * inv_ge[21] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[21] + g_RT[22])));
   // reaction 109:  C2H2 + OH <=> CH3 + CO
   k_f = 4.83e-10 * exp((4) * logT - (-1006.43333160944) * invT);
   qf[142] *= k_f;
-  qr[142] *= k_f * inv_ge[12] * ge[4] * inv_ge[14] * ge[22];
+  qr[142] *= k_f * (kc_fast ? (ge[4] * inv_ge[12] * inv_ge[14] * ge[22])
+                            : exp(-(g_RT[4] - g_RT[12] - g_RT[14] + g_RT[22])));
   // reaction 110:  C2H3 + OH <=> C2H2 + H2O
   k_f = 5000000;
   qf[143] *= k_f;
-  qr[143] *= k_f * inv_ge[5] * ge[4] * inv_ge[22] * ge[23];
+  qr[143] *= k_f * (kc_fast ? (ge[4] * inv_ge[22] * ge[23] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[22] + g_RT[23])));
   // reaction 111:  C2H4 + OH <=> C2H3 + H2O
   k_f = 3.6 * exp((2) * logT - (1258.0416645118) * invT);
   qf[144] *= k_f;
-  qr[144] *= k_f * inv_ge[5] * ge[4] * inv_ge[23] * ge[24];
+  qr[144] *= k_f * (kc_fast ? (ge[4] * ge[24] * inv_ge[23] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[23] + g_RT[24])));
   // reaction 112:  C2H6 + OH <=> C2H5 + H2O
   k_f = 3.54 * exp((2.12) * logT - (437.798499250106) * invT);
   qf[145] *= k_f;
-  qr[145] *= k_f * inv_ge[5] * ge[4] * inv_ge[25] * ge[26];
+  qr[145] *= k_f * (kc_fast ? (ge[4] * inv_ge[25] * ge[26] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[25] + g_RT[26])));
   // reaction 113:  CH2CO + OH <=> H2O + HCCO
   k_f = 7500000 * exp(-(1006.43333160944) * invT);
   qf[146] *= k_f;
-  qr[146] *= k_f * inv_ge[5] * ge[4] * inv_ge[27] * ge[28];
+  qr[146] *= k_f * (kc_fast ? (ge[4] * inv_ge[27] * inv_ge[5] * ge[28])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[27] + g_RT[28])));
   // reaction 114:  2 HO2 <=> H2O2 + O2
   k_f = 130000 * exp(-(-820.243165261693) * invT);
   qf[147] *= k_f;
-  qr[147] *= k_f * inv_ge[3] * ge[6] * inv_ge[7] * ge[6];
+  qr[147] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[6] * inv_ge[7])
+                            : exp(-(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7])));
   // reaction 115:  2 HO2 <=> H2O2 + O2
   k_f = 420000000 * exp(-(6038.59998965664) * invT);
   qf[148] *= k_f;
-  qr[148] *= k_f * inv_ge[3] * ge[6] * inv_ge[7] * ge[6];
+  qr[148] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[6] * inv_ge[7])
+                            : exp(-(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7])));
   // reaction 116:  CH2 + HO2 <=> CH2O + OH
   k_f = 20000000;
   qf[149] *= k_f;
-  qr[149] *= k_f * inv_ge[4] * ge[6] * inv_ge[17] * ge[10];
+  qr[149] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[17] * ge[10])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[10] - g_RT[17])));
   // reaction 117:  CH3 + HO2 <=> CH4 + O2
   k_f = 1000000;
   qf[150] *= k_f;
-  qr[150] *= k_f * inv_ge[3] * ge[6] * inv_ge[13] * ge[12];
+  qr[150] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[12] * inv_ge[13])
+                            : exp(-(-g_RT[3] + g_RT[6] + g_RT[12] - g_RT[13])));
   // reaction 118:  CH3 + HO2 <=> CH3O + OH
   k_f = 37800000;
   qf[151] *= k_f;
-  qr[151] *= k_f * inv_ge[4] * ge[6] * inv_ge[19] * ge[12];
+  qr[151] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[19] * ge[12])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[12] - g_RT[19])));
   // reaction 119:  CO + HO2 <=> CO2 + OH
   k_f = 150000000 * exp(-(11875.9133129914) * invT);
   qf[152] *= k_f;
-  qr[152] *= k_f * inv_ge[4] * ge[6] * inv_ge[15] * ge[14];
+  qr[152] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * ge[14] * inv_ge[15])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[14] - g_RT[15])));
   // reaction 120:  CH2O + HO2 <=> H2O2 + HCO
   k_f = 5.6 * exp((2) * logT - (6038.59998965664) * invT);
   qf[153] *= k_f;
-  qr[153] *= k_f * inv_ge[7] * ge[6] * inv_ge[16] * ge[17];
+  qr[153] *= k_f * (kc_fast ? (inv_ge[16] * ge[6] * inv_ge[7] * ge[17])
+                            : exp(-(g_RT[6] - g_RT[7] - g_RT[16] + g_RT[17])));
   // reaction 121:  C + O2 <=> CO + O
   k_f = 58000000 * exp(-(289.852799503519) * invT);
   qf[154] *= k_f;
-  qr[154] *= k_f * inv_ge[2] * ge[3] * inv_ge[14] * ge[8];
+  qr[154] *= k_f * (kc_fast ? (ge[3] * inv_ge[14] * inv_ge[2] * ge[8])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[8] - g_RT[14])));
   // reaction 122:  C + CH2 <=> C2H + H
   k_f = 50000000;
   qf[155] *= k_f;
-  qr[155] *= k_f * inv_ge[1] * ge[8] * inv_ge[21] * ge[10];
+  qr[155] *= k_f * (kc_fast ? (inv_ge[1] * ge[10] * inv_ge[21] * ge[8])
+                            : exp(-(-g_RT[1] + g_RT[8] + g_RT[10] - g_RT[21])));
   // reaction 123:  C + CH3 <=> C2H2 + H
   k_f = 50000000;
   qf[156] *= k_f;
-  qr[156] *= k_f * inv_ge[1] * ge[8] * inv_ge[22] * ge[12];
+  qr[156] *= k_f * (kc_fast ? (ge[12] * inv_ge[22] * inv_ge[1] * ge[8])
+                            : exp(-(-g_RT[1] + g_RT[8] + g_RT[12] - g_RT[22])));
   // reaction 124:  CH + O2 <=> HCO + O
   k_f = 67100000;
   qf[157] *= k_f;
-  qr[157] *= k_f * inv_ge[2] * ge[3] * inv_ge[16] * ge[9];
+  qr[157] *= k_f * (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[2] * ge[9])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[16])));
   // reaction 125:  CH + H2 <=> CH2 + H
   k_f = 108000000 * exp(-(1565.00383065268) * invT);
   qf[158] *= k_f;
-  qr[158] *= k_f * inv_ge[1] * ge[0] * inv_ge[10] * ge[9];
+  qr[158] *= k_f * (kc_fast ? (ge[0] * inv_ge[1] * ge[9] * inv_ge[10])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[9] - g_RT[10])));
   // reaction 126:  CH + H2O <=> CH2O + H
   k_f = 5710000 * exp(-(-379.928582682563) * invT);
   qf[159] *= k_f;
-  qr[159] *= k_f * inv_ge[1] * ge[5] * inv_ge[17] * ge[9];
+  qr[159] *= k_f * (kc_fast ? (inv_ge[17] * inv_ge[1] * ge[5] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[5] + g_RT[9] - g_RT[17])));
   // reaction 127:  CH + CH2 <=> C2H2 + H
   k_f = 40000000;
   qf[160] *= k_f;
-  qr[160] *= k_f * inv_ge[1] * ge[9] * inv_ge[22] * ge[10];
+  qr[160] *= k_f * (kc_fast ? (inv_ge[22] * ge[10] * inv_ge[1] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[9] + g_RT[10] - g_RT[22])));
   // reaction 128:  CH + CH3 <=> C2H3 + H
   k_f = 30000000;
   qf[161] *= k_f;
-  qr[161] *= k_f * inv_ge[1] * ge[9] * inv_ge[23] * ge[12];
+  qr[161] *= k_f * (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[23] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[9] + g_RT[12] - g_RT[23])));
   // reaction 129:  CH + CH4 <=> C2H4 + H
   k_f = 60000000;
   qf[162] *= k_f;
-  qr[162] *= k_f * inv_ge[1] * ge[9] * inv_ge[24] * ge[13];
+  qr[162] *= k_f * (kc_fast ? (inv_ge[24] * ge[13] * inv_ge[1] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[9] + g_RT[13] - g_RT[24])));
   // reaction 130:  CH + CO (+M) <=> HCCO (+M)
   k_f = 50000000;
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14337,40 +14531,56 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[15] *= Corr * k_f;
-  qr[15] *= Corr * k_f * inv_ge[27] * ge[9] * ge[14] * (refC);
+  qr[15] *= Corr * k_f *
+            (kc_fast ? (inv_ge[27] * ge[14] * ge[9])
+                     : exp(-(g_RT[9] + g_RT[14] - g_RT[27]))) *
+            (refC);
   // reaction 131:  CH + CO2 <=> CO + HCO
   k_f = 190000000 * exp(-(7946.79758638813) * invT);
   qf[163] *= k_f;
-  qr[163] *= k_f * inv_ge[14] * ge[9] * inv_ge[16] * ge[15];
+  qr[163] *= k_f * (kc_fast ? (inv_ge[16] * inv_ge[14] * ge[15] * ge[9])
+                            : exp(-(g_RT[9] - g_RT[14] + g_RT[15] - g_RT[16])));
   // reaction 132:  CH + CH2O <=> CH2CO + H
   k_f = 94600000 * exp(-(-259.156582889431) * invT);
   qf[164] *= k_f;
-  qr[164] *= k_f * inv_ge[1] * ge[9] * inv_ge[28] * ge[17];
+  qr[164] *= k_f * (kc_fast ? (inv_ge[28] * ge[17] * inv_ge[1] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[9] + g_RT[17] - g_RT[28])));
   // reaction 133:  CH + HCCO <=> C2H2 + CO
   k_f = 50000000;
   qf[165] *= k_f;
-  qr[165] *= k_f * inv_ge[14] * ge[9] * inv_ge[22] * ge[27];
+  qr[165] *= k_f * (kc_fast ? (ge[27] * inv_ge[22] * inv_ge[14] * ge[9])
+                            : exp(-(g_RT[9] - g_RT[14] - g_RT[22] + g_RT[27])));
   // reaction 134:  CH2 + O2 => CO + H + OH
   k_f = 5000000 * exp(-(754.82499870708) * invT);
   qf[166] *= k_f;
   qr[166] *=
-    k_f * inv_ge[1] * ge[3] * inv_ge[4] * ge[10] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[14] * inv_ge[1] * ge[10])
+             : exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[10] - g_RT[14]))) *
+    (refCinv);
   // reaction 135:  CH2 + H2 <=> CH3 + H
   k_f = 0.5 * exp((2) * logT - (3638.25649376812) * invT);
   qf[167] *= k_f;
-  qr[167] *= k_f * inv_ge[1] * ge[0] * inv_ge[12] * ge[10];
+  qr[167] *= k_f * (kc_fast ? (ge[0] * inv_ge[12] * ge[10] * inv_ge[1])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[10] - g_RT[12])));
   // reaction 136:  2 CH2 <=> C2H2 + H2
   k_f = 1600000000 * exp(-(6010.41985637157) * invT);
   qf[168] *= k_f;
-  qr[168] *= k_f * inv_ge[0] * ge[10] * inv_ge[22] * ge[10];
+  qr[168] *=
+    k_f * (kc_fast ? (inv_ge[0] * inv_ge[22] * ge[10] * ge[10])
+                   : exp(-(-g_RT[0] + 2.000000 * g_RT[10] - g_RT[22])));
   // reaction 137:  CH2 + CH3 <=> C2H4 + H
   k_f = 40000000;
   qf[169] *= k_f;
-  qr[169] *= k_f * inv_ge[1] * ge[10] * inv_ge[24] * ge[12];
+  qr[169] *=
+    k_f * (kc_fast ? (inv_ge[24] * ge[12] * inv_ge[1] * ge[10])
+                   : exp(-(-g_RT[1] + g_RT[10] + g_RT[12] - g_RT[24])));
   // reaction 138:  CH2 + CH4 <=> 2 CH3
   k_f = 2.46 * exp((2) * logT - (4161.60182620503) * invT);
   qf[170] *= k_f;
-  qr[170] *= k_f * inv_ge[12] * ge[10] * inv_ge[12] * ge[13];
+  qr[170] *=
+    k_f * (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[10] * ge[13])
+                   : exp(-(g_RT[10] - 2.000000 * g_RT[12] + g_RT[13])));
   // reaction 139:  CH2 + CO (+M) <=> CH2CO (+M)
   k_f = 810000 * exp((0.5) * logT - (2269.50716277929) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14387,32 +14597,46 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[16] *= Corr * k_f;
-  qr[16] *= Corr * k_f * inv_ge[28] * ge[10] * ge[14] * (refC);
+  qr[16] *= Corr * k_f *
+            (kc_fast ? (inv_ge[28] * ge[14] * ge[10])
+                     : exp(-(g_RT[10] + g_RT[14] - g_RT[28]))) *
+            (refC);
   // reaction 140:  CH2 + HCCO <=> C2H3 + CO
   k_f = 30000000;
   qf[171] *= k_f;
-  qr[171] *= k_f * inv_ge[14] * ge[10] * inv_ge[23] * ge[27];
+  qr[171] *=
+    k_f * (kc_fast ? (ge[27] * inv_ge[23] * inv_ge[14] * ge[10])
+                   : exp(-(g_RT[10] - g_RT[14] - g_RT[23] + g_RT[27])));
   // reaction 141:  CH2(S) + N2 <=> CH2 + N2
   k_f = 15000000 * exp(-(301.929999482832) * invT);
   qf[172] *= k_f;
-  qr[172] *= k_f * inv_ge[10] * ge[11];
+  qr[172] *=
+    k_f * (kc_fast ? (inv_ge[10] * ge[11])
+                   : exp(-(-g_RT[10] + g_RT[11] + g_RT[47] - g_RT[47])));
   // reaction 142:  AR + CH2(S) <=> AR + CH2
   k_f = 9000000 * exp(-(301.929999482832) * invT);
   qf[173] *= k_f;
-  qr[173] *= k_f * inv_ge[10] * ge[11];
+  qr[173] *=
+    k_f * (kc_fast ? (inv_ge[10] * ge[11])
+                   : exp(-(-g_RT[10] + g_RT[11] + g_RT[48] - g_RT[48])));
   // reaction 143:  CH2(S) + O2 <=> CO + H + OH
   k_f = 28000000;
   qf[174] *= k_f;
   qr[174] *=
-    k_f * inv_ge[1] * ge[3] * inv_ge[4] * ge[11] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[14] * inv_ge[1] * ge[11])
+             : exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[11] - g_RT[14]))) *
+    (refCinv);
   // reaction 144:  CH2(S) + O2 <=> CO + H2O
   k_f = 12000000;
   qf[175] *= k_f;
-  qr[175] *= k_f * inv_ge[5] * ge[3] * inv_ge[14] * ge[11];
+  qr[175] *= k_f * (kc_fast ? (ge[3] * inv_ge[14] * inv_ge[5] * ge[11])
+                            : exp(-(g_RT[3] - g_RT[5] + g_RT[11] - g_RT[14])));
   // reaction 145:  CH2(S) + H2 <=> CH3 + H
   k_f = 70000000;
   qf[176] *= k_f;
-  qr[176] *= k_f * inv_ge[1] * ge[0] * inv_ge[12] * ge[11];
+  qr[176] *= k_f * (kc_fast ? (ge[0] * inv_ge[12] * ge[11] * inv_ge[1])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[11] - g_RT[12])));
   // reaction 146:  CH2(S) + H2O (+M) <=> CH3OH (+M)
   k_f = 482000000000 * exp((-1.16) * logT - (576.183082346404) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14429,47 +14653,66 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[17] *= Corr * k_f;
-  qr[17] *= Corr * k_f * inv_ge[20] * ge[5] * ge[11] * (refC);
+  qr[17] *= Corr * k_f *
+            (kc_fast ? (inv_ge[20] * ge[5] * ge[11])
+                     : exp(-(g_RT[5] + g_RT[11] - g_RT[20]))) *
+            (refC);
   // reaction 147:  CH2(S) + H2O <=> CH2 + H2O
   k_f = 30000000;
   qf[177] *= k_f;
-  qr[177] *= k_f * inv_ge[10] * ge[11];
+  qr[177] *= k_f * (kc_fast ? (inv_ge[10] * ge[11])
+                            : exp(-(g_RT[5] - g_RT[5] - g_RT[10] + g_RT[11])));
   // reaction 148:  CH2(S) + CH3 <=> C2H4 + H
   k_f = 12000000 * exp(-(-286.83349950869) * invT);
   qf[178] *= k_f;
-  qr[178] *= k_f * inv_ge[1] * ge[11] * inv_ge[24] * ge[12];
+  qr[178] *=
+    k_f * (kc_fast ? (inv_ge[24] * ge[12] * inv_ge[1] * ge[11])
+                   : exp(-(-g_RT[1] + g_RT[11] + g_RT[12] - g_RT[24])));
   // reaction 149:  CH2(S) + CH4 <=> 2 CH3
   k_f = 16000000 * exp(-(-286.83349950869) * invT);
   qf[179] *= k_f;
-  qr[179] *= k_f * inv_ge[12] * ge[11] * inv_ge[12] * ge[13];
+  qr[179] *=
+    k_f * (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[11] * ge[13])
+                   : exp(-(g_RT[11] - 2.000000 * g_RT[12] + g_RT[13])));
   // reaction 150:  CH2(S) + CO <=> CH2 + CO
   k_f = 9000000;
   qf[180] *= k_f;
-  qr[180] *= k_f * inv_ge[10] * ge[11];
+  qr[180] *=
+    k_f * (kc_fast ? (inv_ge[10] * ge[11])
+                   : exp(-(-g_RT[10] + g_RT[11] + g_RT[14] - g_RT[14])));
   // reaction 151:  CH2(S) + CO2 <=> CH2 + CO2
   k_f = 7000000;
   qf[181] *= k_f;
-  qr[181] *= k_f * inv_ge[10] * ge[11];
+  qr[181] *=
+    k_f * (kc_fast ? (inv_ge[10] * ge[11])
+                   : exp(-(-g_RT[10] + g_RT[11] + g_RT[15] - g_RT[15])));
   // reaction 152:  CH2(S) + CO2 <=> CH2O + CO
   k_f = 14000000;
   qf[182] *= k_f;
-  qr[182] *= k_f * inv_ge[14] * ge[11] * inv_ge[17] * ge[15];
+  qr[182] *=
+    k_f * (kc_fast ? (inv_ge[14] * ge[15] * ge[11] * inv_ge[17])
+                   : exp(-(g_RT[11] - g_RT[14] + g_RT[15] - g_RT[17])));
   // reaction 153:  C2H6 + CH2(S) <=> C2H5 + CH3
   k_f = 40000000 * exp(-(-276.769166192596) * invT);
   qf[183] *= k_f;
-  qr[183] *= k_f * inv_ge[12] * ge[11] * inv_ge[25] * ge[26];
+  qr[183] *=
+    k_f * (kc_fast ? (inv_ge[25] * inv_ge[12] * ge[11] * ge[26])
+                   : exp(-(g_RT[11] - g_RT[12] - g_RT[25] + g_RT[26])));
   // reaction 154:  CH3 + O2 <=> CH3O + O
   k_f = 35600000 * exp(-(15338.0439737279) * invT);
   qf[184] *= k_f;
-  qr[184] *= k_f * inv_ge[2] * ge[3] * inv_ge[19] * ge[12];
+  qr[184] *= k_f * (kc_fast ? (ge[3] * inv_ge[19] * ge[12] * inv_ge[2])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[12] - g_RT[19])));
   // reaction 155:  CH3 + O2 <=> CH2O + OH
   k_f = 2310000 * exp(-(10222.8465658229) * invT);
   qf[185] *= k_f;
-  qr[185] *= k_f * inv_ge[4] * ge[3] * inv_ge[17] * ge[12];
+  qr[185] *= k_f * (kc_fast ? (inv_ge[4] * ge[3] * ge[12] * inv_ge[17])
+                            : exp(-(g_RT[3] - g_RT[4] + g_RT[12] - g_RT[17])));
   // reaction 156:  CH3 + H2O2 <=> CH4 + HO2
   k_f = 0.0245 * exp((2.47) * logT - (2606.66232886845) * invT);
   qf[186] *= k_f;
-  qr[186] *= k_f * inv_ge[6] * ge[7] * inv_ge[13] * ge[12];
+  qr[186] *= k_f * (kc_fast ? (inv_ge[6] * ge[12] * ge[7] * inv_ge[13])
+                            : exp(-(-g_RT[6] + g_RT[7] + g_RT[12] - g_RT[13])));
   // reaction 157:  2 CH3 (+M) <=> C2H6 (+M)
   k_f = 67700000000 * exp((-1.18) * logT - (329.103699436287) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14486,69 +14729,98 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[18] *= Corr * k_f;
-  qr[18] *= Corr * k_f * inv_ge[26] * ge[12] * ge[12] * (refC);
+  qr[18] *= Corr * k_f *
+            (kc_fast ? (ge[12] * ge[12] * inv_ge[26])
+                     : exp(-(2.000000 * g_RT[12] - g_RT[26]))) *
+            (refC);
   // reaction 158:  2 CH3 <=> C2H5 + H
   k_f = 6840000 * exp((0.1) * logT - (5334.09665753003) * invT);
   qf[187] *= k_f;
-  qr[187] *= k_f * inv_ge[1] * ge[12] * inv_ge[25] * ge[12];
+  qr[187] *=
+    k_f * (kc_fast ? (inv_ge[25] * ge[12] * ge[12] * inv_ge[1])
+                   : exp(-(-g_RT[1] + 2.000000 * g_RT[12] - g_RT[25])));
   // reaction 159:  CH3 + HCO <=> CH4 + CO
   k_f = 26480000;
   qf[188] *= k_f;
-  qr[188] *= k_f * inv_ge[13] * ge[12] * inv_ge[14] * ge[16];
+  qr[188] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[13] * ge[12] * inv_ge[14])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[14] + g_RT[16])));
   // reaction 160:  CH2O + CH3 <=> CH4 + HCO
   k_f = 0.00332 * exp((2.81) * logT - (2948.84966161566) * invT);
   qf[189] *= k_f;
-  qr[189] *= k_f * inv_ge[13] * ge[12] * inv_ge[16] * ge[17];
+  qr[189] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[12] * ge[17] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[16] + g_RT[17])));
   // reaction 161:  CH3 + CH3OH <=> CH2OH + CH4
   k_f = 30 * exp((1.5) * logT - (5001.97365809891) * invT);
   qf[190] *= k_f;
-  qr[190] *= k_f * inv_ge[13] * ge[12] * inv_ge[18] * ge[20];
+  qr[190] *=
+    k_f * (kc_fast ? (inv_ge[18] * ge[12] * ge[20] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[18] + g_RT[20])));
   // reaction 162:  CH3 + CH3OH <=> CH3O + CH4
   k_f = 10 * exp((1.5) * logT - (5001.97365809891) * invT);
   qf[191] *= k_f;
-  qr[191] *= k_f * inv_ge[13] * ge[12] * inv_ge[19] * ge[20];
+  qr[191] *=
+    k_f * (kc_fast ? (inv_ge[19] * ge[12] * ge[20] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[19] + g_RT[20])));
   // reaction 163:  C2H4 + CH3 <=> C2H3 + CH4
   k_f = 0.227 * exp((2) * logT - (4629.59332540342) * invT);
   qf[192] *= k_f;
-  qr[192] *= k_f * inv_ge[13] * ge[12] * inv_ge[23] * ge[24];
+  qr[192] *=
+    k_f * (kc_fast ? (ge[24] * inv_ge[13] * inv_ge[23] * ge[12])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[23] + g_RT[24])));
   // reaction 164:  C2H6 + CH3 <=> C2H5 + CH4
   k_f = 6.14 * exp((1.74) * logT - (5258.61415765932) * invT);
   qf[193] *= k_f;
-  qr[193] *= k_f * inv_ge[13] * ge[12] * inv_ge[25] * ge[26];
+  qr[193] *=
+    k_f * (kc_fast ? (inv_ge[25] * ge[12] * ge[26] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[25] + g_RT[26])));
   // reaction 165:  HCO + H2O <=> CO + H + H2O
   k_f = 1500000000000 * exp((-1) * logT - (8554.68331868023) * invT);
   qf[44] *= k_f;
-  qr[44] *= k_f * inv_ge[1] * ge[16] * inv_ge[14] * (refCinv);
+  qr[44] *= k_f *
+            (kc_fast ? (ge[16] * inv_ge[14] * inv_ge[1])
+                     : exp(-(-g_RT[1] - g_RT[14] + g_RT[16]))) *
+            (refCinv);
   // reaction 166:  HCO + M <=> CO + H + M
   k_f = 187000000000 * exp((-1) * logT - (8554.68331868023) * invT);
   Corr = mixture + sc[0] + (-1) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26];
   qf[45] *= Corr * k_f;
-  qr[45] *= Corr * k_f * inv_ge[1] * ge[16] * inv_ge[14] * (refCinv);
+  qr[45] *= Corr * k_f *
+            (kc_fast ? (ge[16] * inv_ge[14] * inv_ge[1])
+                     : exp(-(-g_RT[1] - g_RT[14] + g_RT[16]))) *
+            (refCinv);
   // reaction 167:  HCO + O2 <=> CO + HO2
   k_f = 13450000 * exp(-(201.286666321888) * invT);
   qf[194] *= k_f;
-  qr[194] *= k_f * inv_ge[6] * ge[3] * inv_ge[14] * ge[16];
+  qr[194] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * ge[16] * inv_ge[14])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16])));
   // reaction 168:  CH2OH + O2 <=> CH2O + HO2
   k_f = 18000000 * exp(-(452.894999224248) * invT);
   qf[195] *= k_f;
-  qr[195] *= k_f * inv_ge[6] * ge[3] * inv_ge[17] * ge[18];
+  qr[195] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * ge[18] * inv_ge[17])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[18])));
   // reaction 169:  CH3O + O2 <=> CH2O + HO2
   k_f = 4.28e-19 * exp((7.6) * logT - (-1776.35483029066) * invT);
   qf[196] *= k_f;
-  qr[196] *= k_f * inv_ge[6] * ge[3] * inv_ge[17] * ge[19];
+  qr[196] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * ge[19] * inv_ge[17])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[19])));
   // reaction 170:  C2H + O2 <=> CO + HCO
   k_f = 10000000 * exp(-(-379.928582682563) * invT);
   qf[197] *= k_f;
-  qr[197] *= k_f * inv_ge[14] * ge[3] * inv_ge[16] * ge[21];
+  qr[197] *= k_f * (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[14] * ge[21])
+                            : exp(-(g_RT[3] - g_RT[14] - g_RT[16] + g_RT[21])));
   // reaction 171:  C2H + H2 <=> C2H2 + H
   k_f = 56800 * exp((0.9) * logT - (1002.91081494881) * invT);
   qf[198] *= k_f;
-  qr[198] *= k_f * inv_ge[1] * ge[0] * inv_ge[22] * ge[21];
+  qr[198] *= k_f * (kc_fast ? (ge[0] * inv_ge[22] * ge[21] * inv_ge[1])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[21] - g_RT[22])));
   // reaction 172:  C2H3 + O2 <=> CH2O + HCO
   k_f = 45800000000 * exp((-1.39) * logT - (510.76491579179) * invT);
   qf[199] *= k_f;
-  qr[199] *= k_f * inv_ge[16] * ge[3] * inv_ge[17] * ge[23];
+  qr[199] *= k_f * (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[17] * ge[23])
+                            : exp(-(g_RT[3] - g_RT[16] - g_RT[17] + g_RT[23])));
   // reaction 173:  C2H4 (+M) <=> C2H2 + H2 (+M)
   k_f = 8000000000000 * exp((0.44) * logT - (43664.1100918755) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14565,49 +14837,67 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[19] *= Corr * k_f;
-  qr[19] *= Corr * k_f * inv_ge[0] * ge[24] * inv_ge[22] * (refCinv);
+  qr[19] *= Corr * k_f *
+            (kc_fast ? (inv_ge[0] * ge[24] * inv_ge[22])
+                     : exp(-(-g_RT[0] - g_RT[22] + g_RT[24]))) *
+            (refCinv);
   // reaction 174:  C2H5 + O2 <=> C2H4 + HO2
   k_f = 840000 * exp(-(1949.96457999329) * invT);
   qf[200] *= k_f;
-  qr[200] *= k_f * inv_ge[6] * ge[3] * inv_ge[24] * ge[25];
+  qr[200] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * ge[25] * inv_ge[24])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[24] + g_RT[25])));
   // reaction 175:  HCCO + O2 <=> 2 CO + OH
   k_f = 3200000 * exp(-(429.747032597231) * invT);
   qf[201] *= k_f;
   qr[201] *=
-    k_f * inv_ge[4] * ge[3] * inv_ge[14] * ge[27] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[3] * ge[27] * inv_ge[14] * inv_ge[14])
+             : exp(-(g_RT[3] - g_RT[4] - 2.000000 * g_RT[14] + g_RT[27]))) *
+    (refCinv);
   // reaction 176:  2 HCCO <=> C2H2 + 2 CO
   k_f = 10000000;
   qf[202] *= k_f;
   qr[202] *=
-    k_f * inv_ge[14] * ge[27] * inv_ge[14] * ge[27] * inv_ge[22] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[27] * inv_ge[22] * inv_ge[14] * ge[27] * inv_ge[14])
+             : exp(-(-2.000000 * g_RT[14] - g_RT[22] + 2.000000 * g_RT[27]))) *
+    (refCinv);
   // reaction 177:  N + NO <=> N2 + O
   k_f = 27000000 * exp(-(178.641916360675) * invT);
   qf[203] *= k_f;
-  qr[203] *= k_f * inv_ge[2] * ge[30] * inv_ge[47] * ge[35];
+  qr[203] *=
+    k_f * (kc_fast ? (inv_ge[47] * ge[35] * inv_ge[2] * ge[30])
+                   : exp(-(-g_RT[2] + g_RT[30] + g_RT[35] - g_RT[47])));
   // reaction 178:  N + O2 <=> NO + O
   k_f = 9000 * exp((1) * logT - (3270.90832773068) * invT);
   qf[204] *= k_f;
-  qr[204] *= k_f * inv_ge[2] * ge[3] * inv_ge[35] * ge[30];
+  qr[204] *= k_f * (kc_fast ? (ge[3] * inv_ge[35] * inv_ge[2] * ge[30])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[30] - g_RT[35])));
   // reaction 179:  N + OH <=> H + NO
   k_f = 33600000 * exp(-(193.738416334817) * invT);
   qf[205] *= k_f;
-  qr[205] *= k_f * inv_ge[1] * ge[4] * inv_ge[35] * ge[30];
+  qr[205] *= k_f * (kc_fast ? (ge[4] * inv_ge[35] * inv_ge[1] * ge[30])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[30] - g_RT[35])));
   // reaction 180:  N2O + O <=> N2 + O2
   k_f = 1400000 * exp(-(5439.77215734902) * invT);
   qf[206] *= k_f;
-  qr[206] *= k_f * inv_ge[3] * ge[2] * inv_ge[47] * ge[37];
+  qr[206] *= k_f * (kc_fast ? (inv_ge[47] * ge[37] * inv_ge[3] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[3] + g_RT[37] - g_RT[47])));
   // reaction 181:  N2O + O <=> 2 NO
   k_f = 29000000 * exp(-(11649.4658133793) * invT);
   qf[207] *= k_f;
-  qr[207] *= k_f * inv_ge[35] * ge[2] * inv_ge[35] * ge[37];
+  qr[207] *= k_f * (kc_fast ? (inv_ge[35] * ge[37] * inv_ge[35] * ge[2])
+                            : exp(-(g_RT[2] - 2.000000 * g_RT[35] + g_RT[37])));
   // reaction 182:  H + N2O <=> N2 + OH
   k_f = 387000000 * exp(-(9500.73065039311) * invT);
   qf[208] *= k_f;
-  qr[208] *= k_f * inv_ge[4] * ge[1] * inv_ge[47] * ge[37];
+  qr[208] *= k_f * (kc_fast ? (inv_ge[4] * ge[37] * inv_ge[47] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[4] + g_RT[37] - g_RT[47])));
   // reaction 183:  N2O + OH <=> HO2 + N2
   k_f = 2000000 * exp(-(10597.7429818474) * invT);
   qf[209] *= k_f;
-  qr[209] *= k_f * inv_ge[6] * ge[4] * inv_ge[47] * ge[37];
+  qr[209] *= k_f * (kc_fast ? (ge[4] * inv_ge[6] * ge[37] * inv_ge[47])
+                            : exp(-(g_RT[4] - g_RT[6] + g_RT[37] - g_RT[47])));
   // reaction 184:  N2O (+M) <=> N2 + O (+M)
   k_f = 79100000000 * exp(-(28190.1976183804) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14615,222 +14905,297 @@ comp_qfqr(
   redP = Corr / k_f * 637000000 * exp(-(28502.1919511793) * invT);
   Corr = redP / (1. + redP);
   qf[27] *= Corr * k_f;
-  qr[27] *= Corr * k_f * inv_ge[2] * ge[37] * inv_ge[47] * (refCinv);
+  qr[27] *= Corr * k_f *
+            (kc_fast ? (inv_ge[47] * ge[37] * inv_ge[2])
+                     : exp(-(-g_RT[2] + g_RT[37] - g_RT[47]))) *
+            (refCinv);
   // reaction 185:  HO2 + NO <=> NO2 + OH
   k_f = 2110000 * exp(-(-241.543999586265) * invT);
   qf[210] *= k_f;
-  qr[210] *= k_f * inv_ge[4] * ge[6] * inv_ge[36] * ge[35];
+  qr[210] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[36] * ge[35])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[35] - g_RT[36])));
   // reaction 186:  NO + O + M <=> NO2 + M
   k_f = 106000000 * exp((-1.41) * logT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[46] *= Corr * k_f;
-  qr[46] *= Corr * k_f * inv_ge[36] * ge[2] * ge[35] * (refC);
+  qr[46] *= Corr * k_f *
+            (kc_fast ? (ge[35] * inv_ge[36] * ge[2])
+                     : exp(-(g_RT[2] + g_RT[35] - g_RT[36]))) *
+            (refC);
   // reaction 187:  NO2 + O <=> NO + O2
   k_f = 3900000 * exp(-(-120.771999793133) * invT);
   qf[211] *= k_f;
-  qr[211] *= k_f * inv_ge[3] * ge[2] * inv_ge[35] * ge[36];
+  qr[211] *= k_f * (kc_fast ? (inv_ge[3] * ge[36] * inv_ge[35] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[3] - g_RT[35] + g_RT[36])));
   // reaction 188:  H + NO2 <=> NO + OH
   k_f = 132000000 * exp(-(181.157999689699) * invT);
   qf[212] *= k_f;
-  qr[212] *= k_f * inv_ge[4] * ge[1] * inv_ge[35] * ge[36];
+  qr[212] *= k_f * (kc_fast ? (inv_ge[4] * ge[36] * inv_ge[35] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[4] - g_RT[35] + g_RT[36])));
   // reaction 189:  NH + O <=> H + NO
   k_f = 40000000;
   qf[213] *= k_f;
-  qr[213] *= k_f * inv_ge[1] * ge[2] * inv_ge[35] * ge[31];
+  qr[213] *= k_f * (kc_fast ? (inv_ge[35] * ge[2] * inv_ge[1] * ge[31])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[31] - g_RT[35])));
   // reaction 190:  H + NH <=> H2 + N
   k_f = 32000000 * exp(-(166.061499715557) * invT);
   qf[214] *= k_f;
-  qr[214] *= k_f * inv_ge[0] * ge[1] * inv_ge[30] * ge[31];
+  qr[214] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[30] * ge[31])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[30] + g_RT[31])));
   // reaction 191:  NH + OH <=> H + HNO
   k_f = 20000000;
   qf[215] *= k_f;
-  qr[215] *= k_f * inv_ge[1] * ge[4] * inv_ge[38] * ge[31];
+  qr[215] *= k_f * (kc_fast ? (ge[4] * inv_ge[38] * inv_ge[1] * ge[31])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[31] - g_RT[38])));
   // reaction 192:  NH + OH <=> H2O + N
   k_f = 2000 * exp((1.2) * logT);
   qf[216] *= k_f;
-  qr[216] *= k_f * inv_ge[5] * ge[4] * inv_ge[30] * ge[31];
+  qr[216] *= k_f * (kc_fast ? (ge[4] * inv_ge[5] * inv_ge[30] * ge[31])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[30] + g_RT[31])));
   // reaction 193:  NH + O2 <=> HNO + O
   k_f = 0.461 * exp((2) * logT - (3270.90832773068) * invT);
   qf[217] *= k_f;
-  qr[217] *= k_f * inv_ge[2] * ge[3] * inv_ge[38] * ge[31];
+  qr[217] *= k_f * (kc_fast ? (ge[3] * inv_ge[38] * ge[31] * inv_ge[2])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[31] - g_RT[38])));
   // reaction 194:  NH + O2 <=> NO + OH
   k_f = 1.28 * exp((1.5) * logT - (50.321666580472) * invT);
   qf[218] *= k_f;
-  qr[218] *= k_f * inv_ge[4] * ge[3] * inv_ge[35] * ge[31];
+  qr[218] *= k_f * (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[35] * ge[31])
+                            : exp(-(g_RT[3] - g_RT[4] + g_RT[31] - g_RT[35])));
   // reaction 195:  N + NH <=> H + N2
   k_f = 15000000;
   qf[219] *= k_f;
-  qr[219] *= k_f * inv_ge[1] * ge[30] * inv_ge[47] * ge[31];
+  qr[219] *=
+    k_f * (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[31] * ge[30])
+                   : exp(-(-g_RT[1] + g_RT[30] + g_RT[31] - g_RT[47])));
   // reaction 196:  H2O + NH <=> H2 + HNO
   k_f = 20000000 * exp(-(6969.55082139537) * invT);
   qf[220] *= k_f;
-  qr[220] *= k_f * inv_ge[0] * ge[5] * inv_ge[38] * ge[31];
+  qr[220] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[38] * ge[31] * ge[5])
+                            : exp(-(-g_RT[0] + g_RT[5] + g_RT[31] - g_RT[38])));
   // reaction 197:  NH + NO <=> N2 + OH
   k_f = 21600000 * exp((-0.23) * logT);
   qf[221] *= k_f;
-  qr[221] *= k_f * inv_ge[4] * ge[31] * inv_ge[47] * ge[35];
+  qr[221] *=
+    k_f * (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[47] * ge[31])
+                   : exp(-(-g_RT[4] + g_RT[31] + g_RT[35] - g_RT[47])));
   // reaction 198:  NH + NO <=> H + N2O
   k_f = 365000000 * exp((-0.45) * logT);
   qf[222] *= k_f;
-  qr[222] *= k_f * inv_ge[1] * ge[31] * inv_ge[37] * ge[35];
+  qr[222] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[37] * inv_ge[1] * ge[31])
+                   : exp(-(-g_RT[1] + g_RT[31] + g_RT[35] - g_RT[37])));
   // reaction 199:  NH2 + O <=> NH + OH
   k_f = 3000000;
   qf[223] *= k_f;
-  qr[223] *= k_f * inv_ge[4] * ge[2] * inv_ge[31] * ge[32];
+  qr[223] *= k_f * (kc_fast ? (inv_ge[4] * ge[32] * inv_ge[31] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[31] + g_RT[32])));
   // reaction 200:  NH2 + O <=> H + HNO
   k_f = 39000000;
   qf[224] *= k_f;
-  qr[224] *= k_f * inv_ge[1] * ge[2] * inv_ge[38] * ge[32];
+  qr[224] *= k_f * (kc_fast ? (inv_ge[38] * ge[32] * inv_ge[1] * ge[2])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[32] - g_RT[38])));
   // reaction 201:  H + NH2 <=> H2 + NH
   k_f = 40000000 * exp(-(1836.74083018723) * invT);
   qf[225] *= k_f;
-  qr[225] *= k_f * inv_ge[0] * ge[1] * inv_ge[31] * ge[32];
+  qr[225] *= k_f * (kc_fast ? (inv_ge[0] * ge[32] * inv_ge[31] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[31] + g_RT[32])));
   // reaction 202:  NH2 + OH <=> H2O + NH
   k_f = 90 * exp((1.5) * logT - (-231.479666270171) * invT);
   qf[226] *= k_f;
-  qr[226] *= k_f * inv_ge[5] * ge[4] * inv_ge[31] * ge[32];
+  qr[226] *= k_f * (kc_fast ? (ge[4] * ge[32] * inv_ge[31] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[31] + g_RT[32])));
   // reaction 203:  NNH <=> H + N2
   k_f = 330000000;
   qf[227] *= k_f;
-  qr[227] *= k_f * inv_ge[1] * ge[34] * inv_ge[47] * (refCinv);
+  qr[227] *= k_f *
+             (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[34])
+                      : exp(-(-g_RT[1] + g_RT[34] - g_RT[47]))) *
+             (refCinv);
   // reaction 204:  NNH + M <=> H + N2 + M
   k_f = 130000000 * exp((-0.11) * logT - (2506.0189957075) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[47] *= Corr * k_f;
-  qr[47] *= Corr * k_f * inv_ge[1] * ge[34] * inv_ge[47] * (refCinv);
+  qr[47] *= Corr * k_f *
+            (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[34])
+                     : exp(-(-g_RT[1] + g_RT[34] - g_RT[47]))) *
+            (refCinv);
   // reaction 205:  NNH + O2 <=> HO2 + N2
   k_f = 5000000;
   qf[228] *= k_f;
-  qr[228] *= k_f * inv_ge[6] * ge[3] * inv_ge[47] * ge[34];
+  qr[228] *= k_f * (kc_fast ? (inv_ge[47] * ge[3] * inv_ge[6] * ge[34])
+                            : exp(-(g_RT[3] - g_RT[6] + g_RT[34] - g_RT[47])));
   // reaction 206:  NNH + O <=> N2 + OH
   k_f = 25000000;
   qf[229] *= k_f;
-  qr[229] *= k_f * inv_ge[4] * ge[2] * inv_ge[47] * ge[34];
+  qr[229] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[47] * ge[34] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[34] - g_RT[47])));
   // reaction 207:  NNH + O <=> NH + NO
   k_f = 70000000;
   qf[230] *= k_f;
-  qr[230] *= k_f * inv_ge[31] * ge[2] * inv_ge[35] * ge[34];
+  qr[230] *= k_f * (kc_fast ? (inv_ge[35] * ge[34] * inv_ge[31] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[31] + g_RT[34] - g_RT[35])));
   // reaction 208:  H + NNH <=> H2 + N2
   k_f = 50000000;
   qf[231] *= k_f;
-  qr[231] *= k_f * inv_ge[0] * ge[1] * inv_ge[47] * ge[34];
+  qr[231] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[47] * ge[1] * ge[34])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[34] - g_RT[47])));
   // reaction 209:  NNH + OH <=> H2O + N2
   k_f = 20000000;
   qf[232] *= k_f;
-  qr[232] *= k_f * inv_ge[5] * ge[4] * inv_ge[47] * ge[34];
+  qr[232] *= k_f * (kc_fast ? (ge[4] * inv_ge[47] * ge[34] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[34] - g_RT[47])));
   // reaction 210:  CH3 + NNH <=> CH4 + N2
   k_f = 25000000;
   qf[233] *= k_f;
-  qr[233] *= k_f * inv_ge[13] * ge[12] * inv_ge[47] * ge[34];
+  qr[233] *=
+    k_f * (kc_fast ? (inv_ge[47] * ge[12] * inv_ge[13] * ge[34])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[34] - g_RT[47])));
   // reaction 211:  H + NO + M <=> HNO + M
   k_f = 44800000 * exp((-1.32) * logT - (372.380332695493) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[48] *= Corr * k_f;
-  qr[48] *= Corr * k_f * inv_ge[38] * ge[1] * ge[35] * (refC);
+  qr[48] *= Corr * k_f *
+            (kc_fast ? (ge[35] * inv_ge[38] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[35] - g_RT[38]))) *
+            (refC);
   // reaction 212:  HNO + O <=> NO + OH
   k_f = 25000000;
   qf[234] *= k_f;
-  qr[234] *= k_f * inv_ge[4] * ge[2] * inv_ge[35] * ge[38];
+  qr[234] *= k_f * (kc_fast ? (inv_ge[4] * ge[38] * inv_ge[35] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[35] + g_RT[38])));
   // reaction 213:  H + HNO <=> H2 + NO
   k_f = 900000 * exp((0.72) * logT - (332.122999431115) * invT);
   qf[235] *= k_f;
-  qr[235] *= k_f * inv_ge[0] * ge[1] * inv_ge[35] * ge[38];
+  qr[235] *= k_f * (kc_fast ? (inv_ge[0] * ge[38] * inv_ge[35] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[35] + g_RT[38])));
   // reaction 214:  HNO + OH <=> H2O + NO
   k_f = 13 * exp((1.9) * logT - (-478.055832514484) * invT);
   qf[236] *= k_f;
-  qr[236] *= k_f * inv_ge[5] * ge[4] * inv_ge[35] * ge[38];
+  qr[236] *= k_f * (kc_fast ? (ge[4] * inv_ge[35] * ge[38] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[35] + g_RT[38])));
   // reaction 215:  HNO + O2 <=> HO2 + NO
   k_f = 10000000 * exp(-(6541.81665546136) * invT);
   qf[237] *= k_f;
-  qr[237] *= k_f * inv_ge[6] * ge[3] * inv_ge[35] * ge[38];
+  qr[237] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * ge[38] * inv_ge[35])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[35] + g_RT[38])));
   // reaction 216:  CN + O <=> CO + N
   k_f = 77000000;
   qf[238] *= k_f;
-  qr[238] *= k_f * inv_ge[14] * ge[2] * inv_ge[30] * ge[39];
+  qr[238] *= k_f * (kc_fast ? (inv_ge[14] * inv_ge[30] * ge[2] * ge[39])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[30] + g_RT[39])));
   // reaction 217:  CN + OH <=> H + NCO
   k_f = 40000000;
   qf[239] *= k_f;
-  qr[239] *= k_f * inv_ge[1] * ge[4] * inv_ge[46] * ge[39];
+  qr[239] *= k_f * (kc_fast ? (ge[4] * inv_ge[46] * inv_ge[1] * ge[39])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[39] - g_RT[46])));
   // reaction 218:  CN + H2O <=> HCN + OH
   k_f = 8000000 * exp(-(3753.99632690321) * invT);
   qf[240] *= k_f;
-  qr[240] *= k_f * inv_ge[4] * ge[5] * inv_ge[40] * ge[39];
+  qr[240] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[39] * ge[5])
+                            : exp(-(-g_RT[4] + g_RT[5] + g_RT[39] - g_RT[40])));
   // reaction 219:  CN + O2 <=> NCO + O
   k_f = 6140000 * exp(-(-221.415332954077) * invT);
   qf[241] *= k_f;
-  qr[241] *= k_f * inv_ge[2] * ge[3] * inv_ge[46] * ge[39];
+  qr[241] *= k_f * (kc_fast ? (ge[3] * inv_ge[46] * ge[39] * inv_ge[2])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[39] - g_RT[46])));
   // reaction 220:  CN + H2 <=> H + HCN
   k_f = 0.295 * exp((2.45) * logT - (1127.20533140257) * invT);
   qf[242] *= k_f;
-  qr[242] *= k_f * inv_ge[1] * ge[0] * inv_ge[40] * ge[39];
+  qr[242] *= k_f * (kc_fast ? (ge[0] * inv_ge[40] * ge[39] * inv_ge[1])
+                            : exp(-(g_RT[0] - g_RT[1] + g_RT[39] - g_RT[40])));
   // reaction 221:  NCO + O <=> CO + NO
   k_f = 23500000;
   qf[243] *= k_f;
-  qr[243] *= k_f * inv_ge[14] * ge[2] * inv_ge[35] * ge[46];
+  qr[243] *= k_f * (kc_fast ? (inv_ge[35] * ge[46] * inv_ge[14] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[35] + g_RT[46])));
   // reaction 222:  H + NCO <=> CO + NH
   k_f = 54000000;
   qf[244] *= k_f;
-  qr[244] *= k_f * inv_ge[14] * ge[1] * inv_ge[31] * ge[46];
+  qr[244] *= k_f * (kc_fast ? (ge[46] * inv_ge[14] * inv_ge[31] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[14] - g_RT[31] + g_RT[46])));
   // reaction 223:  NCO + OH <=> CO + H + NO
   k_f = 2500000;
   qf[245] *= k_f;
   qr[245] *=
-    k_f * inv_ge[1] * ge[4] * inv_ge[14] * ge[46] * inv_ge[35] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[46] * inv_ge[1] * inv_ge[14])
+             : exp(-(-g_RT[1] + g_RT[4] - g_RT[14] - g_RT[35] + g_RT[46]))) *
+    (refCinv);
   // reaction 224:  N + NCO <=> CO + N2
   k_f = 20000000;
   qf[246] *= k_f;
-  qr[246] *= k_f * inv_ge[14] * ge[30] * inv_ge[47] * ge[46];
+  qr[246] *=
+    k_f * (kc_fast ? (inv_ge[47] * ge[46] * inv_ge[14] * ge[30])
+                   : exp(-(-g_RT[14] + g_RT[30] + g_RT[46] - g_RT[47])));
   // reaction 225:  NCO + O2 <=> CO2 + NO
   k_f = 2000000 * exp(-(10064.3333160944) * invT);
   qf[247] *= k_f;
-  qr[247] *= k_f * inv_ge[15] * ge[3] * inv_ge[35] * ge[46];
+  qr[247] *= k_f * (kc_fast ? (ge[3] * inv_ge[35] * ge[46] * inv_ge[15])
+                            : exp(-(g_RT[3] - g_RT[15] - g_RT[35] + g_RT[46])));
   // reaction 226:  NCO + M <=> CO + N + M
   k_f = 310000000 * exp(-(27198.8607867451) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[49] *= Corr * k_f;
-  qr[49] *= Corr * k_f * inv_ge[14] * ge[46] * inv_ge[30] * (refCinv);
+  qr[49] *= Corr * k_f *
+            (kc_fast ? (ge[46] * inv_ge[14] * inv_ge[30])
+                     : exp(-(-g_RT[14] - g_RT[30] + g_RT[46]))) *
+            (refCinv);
   // reaction 227:  NCO + NO <=> CO + N2O
   k_f = 190000000000 * exp((-1.52) * logT - (372.380332695493) * invT);
   qf[248] *= k_f;
-  qr[248] *= k_f * inv_ge[14] * ge[35] * inv_ge[37] * ge[46];
+  qr[248] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[37] * ge[46] * inv_ge[14])
+                   : exp(-(-g_RT[14] + g_RT[35] - g_RT[37] + g_RT[46])));
   // reaction 228:  NCO + NO <=> CO2 + N2
   k_f = 3800000000000 * exp((-2) * logT - (402.573332643776) * invT);
   qf[249] *= k_f;
-  qr[249] *= k_f * inv_ge[15] * ge[35] * inv_ge[47] * ge[46];
+  qr[249] *=
+    k_f * (kc_fast ? (inv_ge[47] * ge[35] * ge[46] * inv_ge[15])
+                   : exp(-(-g_RT[15] + g_RT[35] + g_RT[46] - g_RT[47])));
   // reaction 229:  HCN + M <=> CN + H + M
   k_f = 1.04e+23 * exp((-3.3) * logT - (63707.2298908775) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[50] *= Corr * k_f;
-  qr[50] *= Corr * k_f * inv_ge[1] * ge[40] * inv_ge[39] * (refCinv);
+  qr[50] *= Corr * k_f *
+            (kc_fast ? (ge[40] * inv_ge[1] * inv_ge[39])
+                     : exp(-(-g_RT[1] - g_RT[39] + g_RT[40]))) *
+            (refCinv);
   // reaction 230:  HCN + O <=> H + NCO
   k_f = 0.0203 * exp((2.64) * logT - (2506.0189957075) * invT);
   qf[250] *= k_f;
-  qr[250] *= k_f * inv_ge[1] * ge[2] * inv_ge[46] * ge[40];
+  qr[250] *= k_f * (kc_fast ? (inv_ge[46] * ge[40] * inv_ge[1] * ge[2])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[40] - g_RT[46])));
   // reaction 231:  HCN + O <=> CO + NH
   k_f = 0.00507 * exp((2.64) * logT - (2506.0189957075) * invT);
   qf[251] *= k_f;
-  qr[251] *= k_f * inv_ge[14] * ge[2] * inv_ge[31] * ge[40];
+  qr[251] *= k_f * (kc_fast ? (ge[40] * inv_ge[31] * ge[2] * inv_ge[14])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[31] + g_RT[40])));
   // reaction 232:  HCN + O <=> CN + OH
   k_f = 3910 * exp((1.58) * logT - (13385.5633104055) * invT);
   qf[252] *= k_f;
-  qr[252] *= k_f * inv_ge[4] * ge[2] * inv_ge[39] * ge[40];
+  qr[252] *= k_f * (kc_fast ? (inv_ge[4] * ge[40] * ge[2] * inv_ge[39])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[39] + g_RT[40])));
   // reaction 233:  HCN + OH <=> H + HOCN
   k_f = 1.1 * exp((2.03) * logT - (6728.0068218091) * invT);
   qf[253] *= k_f;
-  qr[253] *= k_f * inv_ge[1] * ge[4] * inv_ge[44] * ge[40];
+  qr[253] *= k_f * (kc_fast ? (ge[4] * inv_ge[44] * inv_ge[1] * ge[40])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[44])));
   // reaction 234:  HCN + OH <=> H + HNCO
   k_f = 0.0044 * exp((2.26) * logT - (3220.58666115021) * invT);
   qf[254] *= k_f;
-  qr[254] *= k_f * inv_ge[1] * ge[4] * inv_ge[45] * ge[40];
+  qr[254] *= k_f * (kc_fast ? (ge[4] * ge[40] * inv_ge[1] * inv_ge[45])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[45])));
   // reaction 235:  HCN + OH <=> CO + NH2
   k_f = 0.00016 * exp((2.56) * logT - (4528.94999224248) * invT);
   qf[255] *= k_f;
-  qr[255] *= k_f * inv_ge[14] * ge[4] * inv_ge[32] * ge[40];
+  qr[255] *= k_f * (kc_fast ? (ge[4] * ge[40] * inv_ge[32] * inv_ge[14])
+                            : exp(-(g_RT[4] - g_RT[14] - g_RT[32] + g_RT[40])));
   // reaction 236:  H + HCN (+M) <=> H2CN (+M)
   k_f = 33000000;
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14839,19 +15204,26 @@ comp_qfqr(
     Corr / k_f * 140000000000000 * exp(-3.4 * logT - (956.111665028967) * invT);
   Corr = redP / (1. + redP);
   qf[28] *= Corr * k_f;
-  qr[28] *= Corr * k_f * inv_ge[41] * ge[1] * ge[40] * (refC);
+  qr[28] *= Corr * k_f *
+            (kc_fast ? (ge[40] * inv_ge[41] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[40] - g_RT[41]))) *
+            (refC);
   // reaction 237:  H2CN + N <=> CH2 + N2
   k_f = 60000000 * exp(-(201.286666321888) * invT);
   qf[256] *= k_f;
-  qr[256] *= k_f * inv_ge[10] * ge[30] * inv_ge[47] * ge[41];
+  qr[256] *=
+    k_f * (kc_fast ? (inv_ge[47] * ge[41] * inv_ge[10] * ge[30])
+                   : exp(-(-g_RT[10] + g_RT[30] + g_RT[41] - g_RT[47])));
   // reaction 238:  C + N2 <=> CN + N
   k_f = 63000000 * exp(-(23158.0309603332) * invT);
   qf[257] *= k_f;
-  qr[257] *= k_f * inv_ge[30] * ge[8] * inv_ge[39] * ge[47];
+  qr[257] *= k_f * (kc_fast ? (ge[47] * inv_ge[39] * ge[8] * inv_ge[30])
+                            : exp(-(g_RT[8] - g_RT[30] - g_RT[39] + g_RT[47])));
   // reaction 239:  CH + N2 <=> HCN + N
   k_f = 3120 * exp((0.88) * logT - (10129.751482649) * invT);
   qf[258] *= k_f;
-  qr[258] *= k_f * inv_ge[30] * ge[9] * inv_ge[40] * ge[47];
+  qr[258] *= k_f * (kc_fast ? (ge[47] * inv_ge[40] * ge[9] * inv_ge[30])
+                            : exp(-(g_RT[9] - g_RT[30] - g_RT[40] + g_RT[47])));
   // reaction 240:  CH + N2 (+M) <=> HCNN (+M)
   k_f = 3100000 * exp((0.15) * logT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -14869,201 +15241,278 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[20] *= Corr * k_f;
-  qr[20] *= Corr * k_f * inv_ge[42] * ge[9] * ge[47] * (refC);
+  qr[20] *= Corr * k_f *
+            (kc_fast ? (ge[47] * inv_ge[42] * ge[9])
+                     : exp(-(g_RT[9] - g_RT[42] + g_RT[47]))) *
+            (refC);
   // reaction 241:  CH2 + N2 <=> HCN + NH
   k_f = 10000000 * exp(-(37238.0332695493) * invT);
   qf[259] *= k_f;
-  qr[259] *= k_f * inv_ge[31] * ge[10] * inv_ge[40] * ge[47];
+  qr[259] *=
+    k_f * (kc_fast ? (ge[47] * inv_ge[40] * ge[10] * inv_ge[31])
+                   : exp(-(g_RT[10] - g_RT[31] - g_RT[40] + g_RT[47])));
   // reaction 242:  CH2(S) + N2 <=> HCN + NH
   k_f = 100000 * exp(-(32709.0832773068) * invT);
   qf[260] *= k_f;
-  qr[260] *= k_f * inv_ge[31] * ge[11] * inv_ge[40] * ge[47];
+  qr[260] *=
+    k_f * (kc_fast ? (ge[47] * inv_ge[40] * ge[11] * inv_ge[31])
+                   : exp(-(g_RT[11] - g_RT[31] - g_RT[40] + g_RT[47])));
   // reaction 243:  C + NO <=> CN + O
   k_f = 19000000;
   qf[261] *= k_f;
-  qr[261] *= k_f * inv_ge[2] * ge[8] * inv_ge[39] * ge[35];
+  qr[261] *= k_f * (kc_fast ? (ge[35] * inv_ge[2] * ge[8] * inv_ge[39])
+                            : exp(-(-g_RT[2] + g_RT[8] + g_RT[35] - g_RT[39])));
   // reaction 244:  C + NO <=> CO + N
   k_f = 29000000;
   qf[262] *= k_f;
-  qr[262] *= k_f * inv_ge[14] * ge[8] * inv_ge[30] * ge[35];
+  qr[262] *= k_f * (kc_fast ? (ge[35] * inv_ge[14] * inv_ge[30] * ge[8])
+                            : exp(-(g_RT[8] - g_RT[14] - g_RT[30] + g_RT[35])));
   // reaction 245:  CH + NO <=> HCN + O
   k_f = 41000000;
   qf[263] *= k_f;
-  qr[263] *= k_f * inv_ge[2] * ge[9] * inv_ge[40] * ge[35];
+  qr[263] *= k_f * (kc_fast ? (ge[35] * inv_ge[40] * inv_ge[2] * ge[9])
+                            : exp(-(-g_RT[2] + g_RT[9] + g_RT[35] - g_RT[40])));
   // reaction 246:  CH + NO <=> H + NCO
   k_f = 16200000;
   qf[264] *= k_f;
-  qr[264] *= k_f * inv_ge[1] * ge[9] * inv_ge[46] * ge[35];
+  qr[264] *= k_f * (kc_fast ? (ge[35] * inv_ge[46] * inv_ge[1] * ge[9])
+                            : exp(-(-g_RT[1] + g_RT[9] + g_RT[35] - g_RT[46])));
   // reaction 247:  CH + NO <=> HCO + N
   k_f = 24600000;
   qf[265] *= k_f;
-  qr[265] *= k_f * inv_ge[16] * ge[9] * inv_ge[30] * ge[35];
+  qr[265] *= k_f * (kc_fast ? (ge[35] * inv_ge[16] * inv_ge[30] * ge[9])
+                            : exp(-(g_RT[9] - g_RT[16] - g_RT[30] + g_RT[35])));
   // reaction 248:  CH2 + NO <=> H + HNCO
   k_f = 310000000000 * exp((-1.38) * logT - (639.085165571994) * invT);
   qf[266] *= k_f;
-  qr[266] *= k_f * inv_ge[1] * ge[10] * inv_ge[45] * ge[35];
+  qr[266] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[1] * inv_ge[45] * ge[10])
+                   : exp(-(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[45])));
   // reaction 249:  CH2 + NO <=> HCN + OH
   k_f = 290000000 * exp((-0.69) * logT - (382.444666011587) * invT);
   qf[267] *= k_f;
-  qr[267] *= k_f * inv_ge[4] * ge[10] * inv_ge[40] * ge[35];
+  qr[267] *=
+    k_f * (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[40] * ge[10])
+                   : exp(-(-g_RT[4] + g_RT[10] + g_RT[35] - g_RT[40])));
   // reaction 250:  CH2 + NO <=> H + HCNO
   k_f = 38000000 * exp((-0.36) * logT - (291.865666166737) * invT);
   qf[268] *= k_f;
-  qr[268] *= k_f * inv_ge[1] * ge[10] * inv_ge[43] * ge[35];
+  qr[268] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[43] * inv_ge[1] * ge[10])
+                   : exp(-(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[43])));
   // reaction 251:  CH2(S) + NO <=> H + HNCO
   k_f = 310000000000 * exp((-1.38) * logT - (639.085165571994) * invT);
   qf[269] *= k_f;
-  qr[269] *= k_f * inv_ge[1] * ge[11] * inv_ge[45] * ge[35];
+  qr[269] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[1] * inv_ge[45] * ge[11])
+                   : exp(-(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[45])));
   // reaction 252:  CH2(S) + NO <=> HCN + OH
   k_f = 290000000 * exp((-0.69) * logT - (382.444666011587) * invT);
   qf[270] *= k_f;
-  qr[270] *= k_f * inv_ge[4] * ge[11] * inv_ge[40] * ge[35];
+  qr[270] *=
+    k_f * (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[40] * ge[11])
+                   : exp(-(-g_RT[4] + g_RT[11] + g_RT[35] - g_RT[40])));
   // reaction 253:  CH2(S) + NO <=> H + HCNO
   k_f = 38000000 * exp((-0.36) * logT - (291.865666166737) * invT);
   qf[271] *= k_f;
-  qr[271] *= k_f * inv_ge[1] * ge[11] * inv_ge[43] * ge[35];
+  qr[271] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[43] * inv_ge[1] * ge[11])
+                   : exp(-(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[43])));
   // reaction 254:  CH3 + NO <=> H2O + HCN
   k_f = 96000000 * exp(-(14492.6399751759) * invT);
   qf[272] *= k_f;
-  qr[272] *= k_f * inv_ge[5] * ge[12] * inv_ge[40] * ge[35];
+  qr[272] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[40] * ge[12] * inv_ge[5])
+                   : exp(-(-g_RT[5] + g_RT[12] + g_RT[35] - g_RT[40])));
   // reaction 255:  CH3 + NO <=> H2CN + OH
   k_f = 1000000 * exp(-(10944.9624812527) * invT);
   qf[273] *= k_f;
-  qr[273] *= k_f * inv_ge[4] * ge[12] * inv_ge[41] * ge[35];
+  qr[273] *=
+    k_f * (kc_fast ? (inv_ge[4] * ge[35] * ge[12] * inv_ge[41])
+                   : exp(-(-g_RT[4] + g_RT[12] + g_RT[35] - g_RT[41])));
   // reaction 256:  HCNN + O <=> CO + H + N2
   k_f = 22000000;
   qf[274] *= k_f;
   qr[274] *=
-    k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[42] * inv_ge[47] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[2] * inv_ge[14] * ge[42])
+             : exp(-(-g_RT[1] + g_RT[2] - g_RT[14] + g_RT[42] - g_RT[47]))) *
+    (refCinv);
   // reaction 257:  HCNN + O <=> HCN + NO
   k_f = 2000000;
   qf[275] *= k_f;
-  qr[275] *= k_f * inv_ge[35] * ge[2] * inv_ge[40] * ge[42];
+  qr[275] *= k_f * (kc_fast ? (inv_ge[35] * inv_ge[40] * ge[2] * ge[42])
+                            : exp(-(g_RT[2] - g_RT[35] - g_RT[40] + g_RT[42])));
   // reaction 258:  HCNN + O2 <=> HCO + N2 + O
   k_f = 12000000;
   qf[276] *= k_f;
   qr[276] *=
-    k_f * inv_ge[2] * ge[3] * inv_ge[16] * ge[42] * inv_ge[47] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[47] * ge[3] * inv_ge[16] * inv_ge[2] * ge[42])
+             : exp(-(-g_RT[2] + g_RT[3] - g_RT[16] + g_RT[42] - g_RT[47]))) *
+    (refCinv);
   // reaction 259:  HCNN + OH <=> H + HCO + N2
   k_f = 12000000;
   qf[277] *= k_f;
   qr[277] *=
-    k_f * inv_ge[1] * ge[4] * inv_ge[16] * ge[42] * inv_ge[47] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[4] * inv_ge[16] * inv_ge[47] * inv_ge[1] * ge[42])
+             : exp(-(-g_RT[1] + g_RT[4] - g_RT[16] + g_RT[42] - g_RT[47]))) *
+    (refCinv);
   // reaction 260:  H + HCNN <=> CH2 + N2
   k_f = 100000000;
   qf[278] *= k_f;
-  qr[278] *= k_f * inv_ge[10] * ge[1] * inv_ge[47] * ge[42];
+  qr[278] *= k_f * (kc_fast ? (inv_ge[47] * ge[1] * inv_ge[10] * ge[42])
+                            : exp(-(g_RT[1] - g_RT[10] + g_RT[42] - g_RT[47])));
   // reaction 261:  HNCO + O <=> CO2 + NH
   k_f = 98 * exp((1.41) * logT - (4277.34165934012) * invT);
   qf[279] *= k_f;
-  qr[279] *= k_f * inv_ge[15] * ge[2] * inv_ge[31] * ge[45];
+  qr[279] *= k_f * (kc_fast ? (ge[45] * ge[2] * inv_ge[31] * inv_ge[15])
+                            : exp(-(g_RT[2] - g_RT[15] - g_RT[31] + g_RT[45])));
   // reaction 262:  HNCO + O <=> CO + HNO
   k_f = 150 * exp((1.57) * logT - (22141.5332954077) * invT);
   qf[280] *= k_f;
-  qr[280] *= k_f * inv_ge[14] * ge[2] * inv_ge[38] * ge[45];
+  qr[280] *= k_f * (kc_fast ? (inv_ge[38] * inv_ge[14] * ge[45] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[38] + g_RT[45])));
   // reaction 263:  HNCO + O <=> NCO + OH
   k_f = 2.2 * exp((2.11) * logT - (5736.6699901738) * invT);
   qf[281] *= k_f;
-  qr[281] *= k_f * inv_ge[4] * ge[2] * inv_ge[46] * ge[45];
+  qr[281] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[46] * ge[2] * ge[45])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[45] - g_RT[46])));
   // reaction 264:  H + HNCO <=> CO + NH2
   k_f = 22.5 * exp((1.7) * logT - (1912.22333005793) * invT);
   qf[282] *= k_f;
-  qr[282] *= k_f * inv_ge[14] * ge[1] * inv_ge[32] * ge[45];
+  qr[282] *= k_f * (kc_fast ? (inv_ge[14] * ge[45] * inv_ge[32] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[45])));
   // reaction 265:  H + HNCO <=> H2 + NCO
   k_f = 0.105 * exp((2.5) * logT - (6692.78165520277) * invT);
   qf[283] *= k_f;
-  qr[283] *= k_f * inv_ge[0] * ge[1] * inv_ge[46] * ge[45];
+  qr[283] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[46] * ge[1] * ge[45])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[45] - g_RT[46])));
   // reaction 266:  HNCO + OH <=> H2O + NCO
   k_f = 33 * exp((1.5) * logT - (1811.57999689699) * invT);
   qf[284] *= k_f;
-  qr[284] *= k_f * inv_ge[5] * ge[4] * inv_ge[46] * ge[45];
+  qr[284] *= k_f * (kc_fast ? (ge[4] * inv_ge[46] * inv_ge[5] * ge[45])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[45] - g_RT[46])));
   // reaction 267:  HNCO + OH <=> CO2 + NH2
   k_f = 3.3 * exp((1.5) * logT - (1811.57999689699) * invT);
   qf[285] *= k_f;
-  qr[285] *= k_f * inv_ge[15] * ge[4] * inv_ge[32] * ge[45];
+  qr[285] *= k_f * (kc_fast ? (ge[4] * inv_ge[32] * inv_ge[15] * ge[45])
+                            : exp(-(g_RT[4] - g_RT[15] - g_RT[32] + g_RT[45])));
   // reaction 268:  HNCO + M <=> CO + NH + M
   k_f = 11800000000 * exp(-(42632.5159269759) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (-0.3) * sc[48];
   qf[51] *= Corr * k_f;
-  qr[51] *= Corr * k_f * inv_ge[14] * ge[45] * inv_ge[31] * (refCinv);
+  qr[51] *= Corr * k_f *
+            (kc_fast ? (inv_ge[14] * ge[45] * inv_ge[31])
+                     : exp(-(-g_RT[14] - g_RT[31] + g_RT[45]))) *
+            (refCinv);
   // reaction 269:  H + HCNO <=> H + HNCO
   k_f = 2100000000 * exp((-0.69) * logT - (1434.16749754345) * invT);
   qf[286] *= k_f;
-  qr[286] *= k_f * inv_ge[45] * ge[43];
+  qr[286] *= k_f * (kc_fast ? (ge[43] * inv_ge[45])
+                            : exp(-(g_RT[1] - g_RT[1] + g_RT[43] - g_RT[45])));
   // reaction 270:  H + HCNO <=> HCN + OH
   k_f = 270000 * exp((0.18) * logT - (1066.81933150601) * invT);
   qf[287] *= k_f;
-  qr[287] *= k_f * inv_ge[4] * ge[1] * inv_ge[40] * ge[43];
+  qr[287] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[43] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[4] - g_RT[40] + g_RT[43])));
   // reaction 271:  H + HCNO <=> CO + NH2
   k_f = 170000000 * exp((-0.75) * logT - (1454.29616417564) * invT);
   qf[288] *= k_f;
-  qr[288] *= k_f * inv_ge[14] * ge[1] * inv_ge[32] * ge[43];
+  qr[288] *= k_f * (kc_fast ? (ge[43] * inv_ge[32] * inv_ge[14] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[43])));
   // reaction 272:  H + HOCN <=> H + HNCO
   k_f = 20 * exp((2) * logT - (1006.43333160944) * invT);
   qf[289] *= k_f;
-  qr[289] *= k_f * inv_ge[45] * ge[44];
+  qr[289] *= k_f * (kc_fast ? (ge[44] * inv_ge[45])
+                            : exp(-(g_RT[1] - g_RT[1] + g_RT[44] - g_RT[45])));
   // reaction 273:  HCCO + NO <=> CO + HCNO
   k_f = 9000000;
   qf[290] *= k_f;
-  qr[290] *= k_f * inv_ge[14] * ge[27] * inv_ge[43] * ge[35];
+  qr[290] *=
+    k_f * (kc_fast ? (ge[35] * inv_ge[43] * ge[27] * inv_ge[14])
+                   : exp(-(-g_RT[14] + g_RT[27] + g_RT[35] - g_RT[43])));
   // reaction 274:  CH3 + N <=> H + H2CN
   k_f = 610000000 * exp((-0.31) * logT - (145.932833083369) * invT);
   qf[291] *= k_f;
-  qr[291] *= k_f * inv_ge[1] * ge[12] * inv_ge[41] * ge[30];
+  qr[291] *=
+    k_f * (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[41] * ge[30])
+                   : exp(-(-g_RT[1] + g_RT[12] + g_RT[30] - g_RT[41])));
   // reaction 275:  CH3 + N <=> H2 + HCN
   k_f = 3700000 * exp((0.15) * logT - (-45.2894999224248) * invT);
   qf[292] *= k_f;
-  qr[292] *= k_f * inv_ge[0] * ge[12] * inv_ge[40] * ge[30];
+  qr[292] *=
+    k_f * (kc_fast ? (inv_ge[0] * inv_ge[40] * ge[12] * ge[30])
+                   : exp(-(-g_RT[0] + g_RT[12] + g_RT[30] - g_RT[40])));
   // reaction 276:  H + NH3 <=> H2 + NH2
   k_f = 0.54 * exp((2.4) * logT - (4989.3932414538) * invT);
   qf[293] *= k_f;
-  qr[293] *= k_f * inv_ge[0] * ge[1] * inv_ge[32] * ge[33];
+  qr[293] *= k_f * (kc_fast ? (inv_ge[0] * ge[33] * ge[1] * inv_ge[32])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[32] + g_RT[33])));
   // reaction 277:  NH3 + OH <=> H2O + NH2
   k_f = 50 * exp((1.6) * logT - (480.571915843507) * invT);
   qf[294] *= k_f;
-  qr[294] *= k_f * inv_ge[5] * ge[4] * inv_ge[32] * ge[33];
+  qr[294] *= k_f * (kc_fast ? (ge[4] * ge[33] * inv_ge[5] * inv_ge[32])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[32] + g_RT[33])));
   // reaction 278:  NH3 + O <=> NH2 + OH
   k_f = 9.4 * exp((1.94) * logT - (3250.77966109849) * invT);
   qf[295] *= k_f;
-  qr[295] *= k_f * inv_ge[4] * ge[2] * inv_ge[32] * ge[33];
+  qr[295] *= k_f * (kc_fast ? (inv_ge[4] * ge[33] * ge[2] * inv_ge[32])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[32] + g_RT[33])));
   // reaction 279:  CO2 + NH <=> CO + HNO
   k_f = 10000000 * exp(-(7221.15915429773) * invT);
   qf[296] *= k_f;
-  qr[296] *= k_f * inv_ge[14] * ge[15] * inv_ge[38] * ge[31];
+  qr[296] *=
+    k_f * (kc_fast ? (inv_ge[38] * inv_ge[14] * ge[15] * ge[31])
+                   : exp(-(-g_RT[14] + g_RT[15] + g_RT[31] - g_RT[38])));
   // reaction 280:  CN + NO2 <=> NCO + NO
   k_f = 6160000000 * exp((-0.752) * logT - (173.609749702628) * invT);
   qf[297] *= k_f;
-  qr[297] *= k_f * inv_ge[35] * ge[36] * inv_ge[46] * ge[39];
+  qr[297] *=
+    k_f * (kc_fast ? (inv_ge[35] * ge[36] * inv_ge[46] * ge[39])
+                   : exp(-(-g_RT[35] + g_RT[36] + g_RT[39] - g_RT[46])));
   // reaction 281:  NCO + NO2 <=> CO2 + N2O
   k_f = 3250000 * exp(-(-354.767749392327) * invT);
   qf[298] *= k_f;
-  qr[298] *= k_f * inv_ge[15] * ge[36] * inv_ge[37] * ge[46];
+  qr[298] *=
+    k_f * (kc_fast ? (inv_ge[37] * ge[46] * ge[36] * inv_ge[15])
+                   : exp(-(-g_RT[15] + g_RT[36] - g_RT[37] + g_RT[46])));
   // reaction 282:  CO2 + N <=> CO + NO
   k_f = 3000000 * exp(-(5686.34832359333) * invT);
   qf[299] *= k_f;
-  qr[299] *= k_f * inv_ge[14] * ge[15] * inv_ge[35] * ge[30];
+  qr[299] *=
+    k_f * (kc_fast ? (inv_ge[35] * inv_ge[14] * ge[15] * ge[30])
+                   : exp(-(-g_RT[14] + g_RT[15] + g_RT[30] - g_RT[35])));
   // reaction 283:  CH3 + O => CO + H + H2
   k_f = 33700000;
   qf[300] *= k_f;
   qr[300] *=
-    k_f * inv_ge[0] * ge[2] * inv_ge[1] * ge[12] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[1] * inv_ge[14] * ge[2])
+             : exp(-(-g_RT[0] - g_RT[1] + g_RT[2] + g_RT[12] - g_RT[14]))) *
+    (refCinv);
   // reaction 284:  C2H4 + O <=> CH2CHO + H
   k_f = 6.7 * exp((1.83) * logT - (110.707666477038) * invT);
   qf[301] *= k_f;
-  qr[301] *= k_f * inv_ge[1] * ge[2] * inv_ge[51] * ge[24];
+  qr[301] *= k_f * (kc_fast ? (ge[24] * inv_ge[51] * inv_ge[1] * ge[2])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[24] - g_RT[51])));
   // reaction 285:  C2H5 + O <=> CH3CHO + H
   k_f = 109600000;
   qf[302] *= k_f;
-  qr[302] *= k_f * inv_ge[1] * ge[2] * inv_ge[52] * ge[25];
+  qr[302] *= k_f * (kc_fast ? (ge[25] * inv_ge[1] * inv_ge[52] * ge[2])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[25] - g_RT[52])));
   // reaction 286:  HO2 + OH <=> H2O + O2
   k_f = 5000000000 * exp(-(8720.74481839579) * invT);
   qf[303] *= k_f;
-  qr[303] *= k_f * inv_ge[3] * ge[4] * inv_ge[5] * ge[6];
+  qr[303] *= k_f * (kc_fast ? (ge[4] * inv_ge[3] * ge[6] * inv_ge[5])
+                            : exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6])));
   // reaction 287:  CH3 + OH => CH2O + H2
   k_f = 8000 * exp((0.5) * logT - (-883.145248487283) * invT);
   qf[304] *= k_f;
-  qr[304] *= k_f * inv_ge[0] * ge[4] * inv_ge[17] * ge[12];
+  qr[304] *= k_f * (kc_fast ? (inv_ge[0] * ge[4] * ge[12] * inv_ge[17])
+                            : exp(-(-g_RT[0] + g_RT[4] + g_RT[12] - g_RT[17])));
   // reaction 288:  CH + H2 (+M) <=> CH3 (+M)
   k_f = 1970000 * exp((0.43) * logT - (-186.190166347746) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15081,70 +15530,103 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[21] *= Corr * k_f;
-  qr[21] *= Corr * k_f * inv_ge[12] * ge[0] * ge[9] * (refC);
+  qr[21] *= Corr * k_f *
+            (kc_fast ? (ge[0] * inv_ge[12] * ge[9])
+                     : exp(-(g_RT[0] + g_RT[9] - g_RT[12]))) *
+            (refC);
   // reaction 289:  CH2 + O2 => CO2 + 2 H
   k_f = 5800000 * exp(-(754.82499870708) * invT);
   qf[305] *= k_f;
   qr[305] *=
-    k_f * inv_ge[1] * ge[3] * inv_ge[1] * ge[10] * inv_ge[15] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[3] * inv_ge[1] * ge[10] * inv_ge[1] * inv_ge[15])
+             : exp(-(-2.000000 * g_RT[1] + g_RT[3] + g_RT[10] - g_RT[15]))) *
+    (refCinv);
   // reaction 290:  CH2 + O2 <=> CH2O + O
   k_f = 2400000 * exp(-(754.82499870708) * invT);
   qf[306] *= k_f;
-  qr[306] *= k_f * inv_ge[2] * ge[3] * inv_ge[17] * ge[10];
+  qr[306] *= k_f * (kc_fast ? (ge[3] * inv_ge[17] * inv_ge[2] * ge[10])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[10] - g_RT[17])));
   // reaction 291:  2 CH2 => C2H2 + 2 H
   k_f = 200000000 * exp(-(5529.84794052807) * invT);
   qf[307] *= k_f;
   qr[307] *=
-    k_f * inv_ge[1] * ge[10] * inv_ge[1] * ge[10] * inv_ge[22] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[22] * ge[10] * inv_ge[1] * inv_ge[1] * ge[10])
+             : exp(-(-2.000000 * g_RT[1] + 2.000000 * g_RT[10] - g_RT[22]))) *
+    (refCinv);
   // reaction 292:  CH2(S) + H2O => CH2O + H2
   k_f = 68200 * exp((0.25) * logT - (-470.507582527413) * invT);
   qf[308] *= k_f;
-  qr[308] *= k_f * inv_ge[0] * ge[5] * inv_ge[17] * ge[11];
+  qr[308] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[17] * ge[5] * ge[11])
+                            : exp(-(-g_RT[0] + g_RT[5] + g_RT[11] - g_RT[17])));
   // reaction 293:  C2H3 + O2 <=> CH2CHO + O
   k_f = 303000 * exp((0.29) * logT - (5.53538332385192) * invT);
   qf[309] *= k_f;
-  qr[309] *= k_f * inv_ge[2] * ge[3] * inv_ge[51] * ge[23];
+  qr[309] *= k_f * (kc_fast ? (ge[3] * inv_ge[51] * inv_ge[2] * ge[23])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[23] - g_RT[51])));
   // reaction 294:  C2H3 + O2 <=> C2H2 + HO2
   k_f = 1.337 * exp((1.61) * logT - (-193.235199669012) * invT);
   qf[310] *= k_f;
-  qr[310] *= k_f * inv_ge[6] * ge[3] * inv_ge[22] * ge[23];
+  qr[310] *= k_f * (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[22] * ge[23])
+                            : exp(-(g_RT[3] - g_RT[6] - g_RT[22] + g_RT[23])));
   // reaction 295:  CH3CHO + O <=> CH2CHO + OH
   k_f = 2920000 * exp(-(909.815731774933) * invT);
   qf[311] *= k_f;
-  qr[311] *= k_f * inv_ge[4] * ge[2] * inv_ge[51] * ge[52];
+  qr[311] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[51] * ge[52] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[51] + g_RT[52])));
   // reaction 296:  CH3CHO + O => CH3 + CO + OH
   k_f = 2920000 * exp(-(909.815731774933) * invT);
   qf[312] *= k_f;
   qr[312] *=
-    k_f * inv_ge[4] * ge[2] * inv_ge[12] * ge[52] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[2] * ge[52] * inv_ge[14])
+             : exp(-(g_RT[2] - g_RT[4] - g_RT[12] - g_RT[14] + g_RT[52]))) *
+    (refCinv);
   // reaction 297:  CH3CHO + O2 => CH3 + CO + HO2
   k_f = 30100000 * exp(-(19700.9324662548) * invT);
   qf[313] *= k_f;
   qr[313] *=
-    k_f * inv_ge[6] * ge[3] * inv_ge[12] * ge[52] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[12] * inv_ge[14] * ge[52])
+             : exp(-(g_RT[3] - g_RT[6] - g_RT[12] - g_RT[14] + g_RT[52]))) *
+    (refCinv);
   // reaction 298:  CH3CHO + H <=> CH2CHO + H2
   k_f = 2050 * exp((1.16) * logT - (1210.23608126035) * invT);
   qf[314] *= k_f;
-  qr[314] *= k_f * inv_ge[0] * ge[1] * inv_ge[51] * ge[52];
+  qr[314] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[51] * ge[52] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[51] + g_RT[52])));
   // reaction 299:  CH3CHO + H => CH3 + CO + H2
   k_f = 2050 * exp((1.16) * logT - (1210.23608126035) * invT);
   qf[315] *= k_f;
   qr[315] *=
-    k_f * inv_ge[0] * ge[1] * inv_ge[12] * ge[52] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[0] * inv_ge[12] * ge[1] * ge[52] * inv_ge[14])
+             : exp(-(-g_RT[0] + g_RT[1] - g_RT[12] - g_RT[14] + g_RT[52]))) *
+    (refCinv);
   // reaction 300:  CH3CHO + OH => CH3 + CO + H2O
   k_f = 23430 * exp((0.73) * logT - (-560.080149040653) * invT);
   qf[316] *= k_f;
   qr[316] *=
-    k_f * inv_ge[5] * ge[4] * inv_ge[12] * ge[52] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[4] * inv_ge[12] * inv_ge[14] * ge[52] * inv_ge[5])
+             : exp(-(g_RT[4] - g_RT[5] - g_RT[12] - g_RT[14] + g_RT[52]))) *
+    (refCinv);
   // reaction 301:  CH3CHO + HO2 => CH3 + CO + H2O2
   k_f = 3010000 * exp(-(5999.85230638967) * invT);
   qf[317] *= k_f;
   qr[317] *=
-    k_f * inv_ge[7] * ge[6] * inv_ge[12] * ge[52] * inv_ge[14] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[6] * inv_ge[14] * inv_ge[12] * inv_ge[7] * ge[52])
+             : exp(-(g_RT[6] - g_RT[7] - g_RT[12] - g_RT[14] + g_RT[52]))) *
+    (refCinv);
   // reaction 302:  CH3CHO + CH3 => CH4 + CO + CH3
   k_f = 2.72 * exp((1.77) * logT - (2979.04266156394) * invT);
   qf[52] *= k_f;
-  qr[52] *= k_f * inv_ge[13] * ge[52] * inv_ge[14] * (refCinv);
+  qr[52] *= k_f *
+            (kc_fast ? (inv_ge[13] * ge[52] * inv_ge[14])
+                     : exp(-(-g_RT[13] - g_RT[14] + g_RT[52]))) *
+            (refCinv);
   // reaction 303:  CH2CO + H (+M) <=> CH2CHO (+M)
   k_f = 486500 * exp((0.422) * logT - (-883.145248487283) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15161,38 +15643,54 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[22] *= Corr * k_f;
-  qr[22] *= Corr * k_f * inv_ge[51] * ge[1] * ge[28] * (refC);
+  qr[22] *= Corr * k_f *
+            (kc_fast ? (ge[28] * inv_ge[51] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[28] - g_RT[51]))) *
+            (refC);
   // reaction 304:  CH2CHO + O => CH2 + CO2 + H
   k_f = 150000000;
   qf[318] *= k_f;
   qr[318] *=
-    k_f * inv_ge[1] * ge[2] * inv_ge[10] * ge[51] * inv_ge[15] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[51] * ge[2] * inv_ge[1] * inv_ge[10] * inv_ge[15])
+             : exp(-(-g_RT[1] + g_RT[2] - g_RT[10] - g_RT[15] + g_RT[51]))) *
+    (refCinv);
   // reaction 305:  CH2CHO + O2 => CH2O + CO + OH
   k_f = 18100;
   qf[319] *= k_f;
   qr[319] *=
-    k_f * inv_ge[4] * ge[3] * inv_ge[14] * ge[51] * inv_ge[17] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[3] * ge[51] * inv_ge[14] * inv_ge[17])
+             : exp(-(g_RT[3] - g_RT[4] - g_RT[14] - g_RT[17] + g_RT[51]))) *
+    (refCinv);
   // reaction 306:  CH2CHO + O2 => 2 HCO + OH
   k_f = 23500;
   qf[320] *= k_f;
   qr[320] *=
-    k_f * inv_ge[4] * ge[3] * inv_ge[16] * ge[51] * inv_ge[16] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[16] * ge[51] * inv_ge[16])
+             : exp(-(g_RT[3] - g_RT[4] - 2.000000 * g_RT[16] + g_RT[51]))) *
+    (refCinv);
   // reaction 307:  CH2CHO + H <=> CH3 + HCO
   k_f = 22000000;
   qf[321] *= k_f;
-  qr[321] *= k_f * inv_ge[12] * ge[1] * inv_ge[16] * ge[51];
+  qr[321] *= k_f * (kc_fast ? (inv_ge[16] * ge[51] * inv_ge[12] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[12] - g_RT[16] + g_RT[51])));
   // reaction 308:  CH2CHO + H <=> CH2CO + H2
   k_f = 11000000;
   qf[322] *= k_f;
-  qr[322] *= k_f * inv_ge[0] * ge[1] * inv_ge[28] * ge[51];
+  qr[322] *= k_f * (kc_fast ? (inv_ge[0] * ge[51] * inv_ge[28] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[28] + g_RT[51])));
   // reaction 309:  CH2CHO + OH <=> CH2CO + H2O
   k_f = 12000000;
   qf[323] *= k_f;
-  qr[323] *= k_f * inv_ge[5] * ge[4] * inv_ge[28] * ge[51];
+  qr[323] *= k_f * (kc_fast ? (ge[4] * inv_ge[28] * ge[51] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[28] + g_RT[51])));
   // reaction 310:  CH2CHO + OH <=> CH2OH + HCO
   k_f = 30100000;
   qf[324] *= k_f;
-  qr[324] *= k_f * inv_ge[16] * ge[4] * inv_ge[18] * ge[51];
+  qr[324] *= k_f * (kc_fast ? (ge[4] * inv_ge[16] * ge[51] * inv_ge[18])
+                            : exp(-(g_RT[4] - g_RT[16] - g_RT[18] + g_RT[51])));
   // reaction 311:  C2H5 + CH3 (+M) <=> C3H8 (+M)
   k_f = 9430000;
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15209,27 +15707,36 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[23] *= Corr * k_f;
-  qr[23] *= Corr * k_f * inv_ge[50] * ge[12] * ge[25] * (refC);
+  qr[23] *= Corr * k_f *
+            (kc_fast ? (ge[25] * ge[12] * inv_ge[50])
+                     : exp(-(g_RT[12] + g_RT[25] - g_RT[50]))) *
+            (refC);
   // reaction 312:  C3H8 + O <=> C3H7 + OH
   k_f = 0.193 * exp((2.68) * logT - (1869.95313013034) * invT);
   qf[325] *= k_f;
-  qr[325] *= k_f * inv_ge[4] * ge[2] * inv_ge[49] * ge[50];
+  qr[325] *= k_f * (kc_fast ? (inv_ge[4] * ge[50] * ge[2] * inv_ge[49])
+                            : exp(-(g_RT[2] - g_RT[4] - g_RT[49] + g_RT[50])));
   // reaction 313:  C3H8 + H <=> C3H7 + H2
   k_f = 1.32 * exp((2.54) * logT - (3399.73179417669) * invT);
   qf[326] *= k_f;
-  qr[326] *= k_f * inv_ge[0] * ge[1] * inv_ge[49] * ge[50];
+  qr[326] *= k_f * (kc_fast ? (inv_ge[0] * ge[50] * ge[1] * inv_ge[49])
+                            : exp(-(-g_RT[0] + g_RT[1] - g_RT[49] + g_RT[50])));
   // reaction 314:  C3H8 + OH <=> C3H7 + H2O
   k_f = 31.6 * exp((1.8) * logT - (470.004365861608) * invT);
   qf[327] *= k_f;
-  qr[327] *= k_f * inv_ge[5] * ge[4] * inv_ge[49] * ge[50];
+  qr[327] *= k_f * (kc_fast ? (ge[4] * inv_ge[49] * ge[50] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] - g_RT[49] + g_RT[50])));
   // reaction 315:  C3H7 + H2O2 <=> C3H8 + HO2
   k_f = 0.000378 * exp((2.72) * logT - (754.82499870708) * invT);
   qf[328] *= k_f;
-  qr[328] *= k_f * inv_ge[6] * ge[7] * inv_ge[50] * ge[49];
+  qr[328] *= k_f * (kc_fast ? (inv_ge[6] * ge[49] * ge[7] * inv_ge[50])
+                            : exp(-(-g_RT[6] + g_RT[7] + g_RT[49] - g_RT[50])));
   // reaction 316:  C3H8 + CH3 <=> C3H7 + CH4
   k_f = 9.03e-07 * exp((3.65) * logT - (3600.01202716696) * invT);
   qf[329] *= k_f;
-  qr[329] *= k_f * inv_ge[13] * ge[12] * inv_ge[49] * ge[50];
+  qr[329] *=
+    k_f * (kc_fast ? (ge[12] * inv_ge[49] * ge[50] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] - g_RT[49] + g_RT[50])));
   // reaction 317:  C2H4 + CH3 (+M) <=> C3H7 (+M)
   k_f = 2.55 * exp((1.6) * logT - (2868.3349950869) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15246,11 +15753,15 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[24] *= Corr * k_f;
-  qr[24] *= Corr * k_f * inv_ge[49] * ge[12] * ge[24] * (refC);
+  qr[24] *= Corr * k_f *
+            (kc_fast ? (ge[24] * inv_ge[49] * ge[12])
+                     : exp(-(g_RT[12] + g_RT[24] - g_RT[49]))) *
+            (refC);
   // reaction 318:  C3H7 + O <=> C2H5 + CH2O
   k_f = 96400000;
   qf[330] *= k_f;
-  qr[330] *= k_f * inv_ge[17] * ge[2] * inv_ge[25] * ge[49];
+  qr[330] *= k_f * (kc_fast ? (inv_ge[25] * ge[49] * inv_ge[17] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[17] - g_RT[25] + g_RT[49])));
   // reaction 319:  C3H7 + H (+M) <=> C3H8 (+M)
   k_f = 36130000;
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15267,115 +15778,151 @@ comp_qfqr(
   F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
   Corr = F * F_troe;
   qf[25] *= Corr * k_f;
-  qr[25] *= Corr * k_f * inv_ge[50] * ge[1] * ge[49] * (refC);
+  qr[25] *= Corr * k_f *
+            (kc_fast ? (ge[49] * inv_ge[50] * ge[1])
+                     : exp(-(g_RT[1] + g_RT[49] - g_RT[50]))) *
+            (refC);
   // reaction 320:  C3H7 + H <=> C2H5 + CH3
   k_f = 4.06 * exp((2.19) * logT - (447.8628325662) * invT);
   qf[331] *= k_f;
-  qr[331] *= k_f * inv_ge[12] * ge[1] * inv_ge[25] * ge[49];
+  qr[331] *= k_f * (kc_fast ? (inv_ge[25] * ge[49] * inv_ge[12] * ge[1])
+                            : exp(-(g_RT[1] - g_RT[12] - g_RT[25] + g_RT[49])));
   // reaction 321:  C3H7 + OH <=> C2H5 + CH2OH
   k_f = 24100000;
   qf[332] *= k_f;
-  qr[332] *= k_f * inv_ge[18] * ge[4] * inv_ge[25] * ge[49];
+  qr[332] *= k_f * (kc_fast ? (ge[4] * inv_ge[18] * ge[49] * inv_ge[25])
+                            : exp(-(g_RT[4] - g_RT[18] - g_RT[25] + g_RT[49])));
   // reaction 322:  C3H7 + HO2 <=> C3H8 + O2
   k_f = 25500 * exp((0.255) * logT - (-474.533315853851) * invT);
   qf[333] *= k_f;
-  qr[333] *= k_f * inv_ge[3] * ge[6] * inv_ge[50] * ge[49];
+  qr[333] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[49] * inv_ge[50])
+                            : exp(-(-g_RT[3] + g_RT[6] + g_RT[49] - g_RT[50])));
   // reaction 323:  C3H7 + HO2 => C2H5 + CH2O + OH
   k_f = 24100000;
   qf[334] *= k_f;
   qr[334] *=
-    k_f * inv_ge[4] * ge[6] * inv_ge[17] * ge[49] * inv_ge[25] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[25] * ge[49] * inv_ge[17])
+             : exp(-(-g_RT[4] + g_RT[6] - g_RT[17] - g_RT[25] + g_RT[49]))) *
+    (refCinv);
   // reaction 324:  C3H7 + CH3 <=> 2 C2H5
   k_f = 19270000 * exp((-0.32) * logT);
   qf[335] *= k_f;
-  qr[335] *= k_f * inv_ge[25] * ge[12] * inv_ge[25] * ge[49];
+  qr[335] *=
+    k_f * (kc_fast ? (inv_ge[25] * ge[12] * ge[49] * inv_ge[25])
+                   : exp(-(g_RT[12] - 2.000000 * g_RT[25] + g_RT[49])));
   // reaction 325:  CH2F + H <=> CH2(S) + HF
   k_f = 110000000;
   qf[336] *= k_f;
-  qr[336] *= k_f * inv_ge[11] * ge[1] * inv_ge[53] * ge[60];
+  qr[336] *= k_f * (kc_fast ? (ge[60] * ge[1] * inv_ge[11] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[11] - g_RT[53] + g_RT[60])));
   // reaction 326:  CH2F + H <=> CHF + H2
   k_f = 50000000;
   qf[337] *= k_f;
-  qr[337] *= k_f * inv_ge[0] * ge[1] * inv_ge[63] * ge[60];
+  qr[337] *= k_f * (kc_fast ? (inv_ge[0] * ge[60] * ge[1] * inv_ge[63])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[60] - g_RT[63])));
   // reaction 327:  CHF3 + H <=> CF3 + H2
   k_f = 7.83 * exp((2.06) * logT - (6189.56498939805) * invT);
   qf[338] *= k_f;
-  qr[338] *= k_f * inv_ge[0] * ge[1] * inv_ge[62] * ge[58];
+  qr[338] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * ge[58] * inv_ge[62])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[58] - g_RT[62])));
   // reaction 328:  CHF3 + H <=> CH2F2 + F
   k_f = 432 * exp((1.6) * logT - (31697.6177790393) * invT);
   qf[339] *= k_f;
-  qr[339] *= k_f * inv_ge[54] * ge[1] * inv_ge[57] * ge[58];
+  qr[339] *= k_f * (kc_fast ? (inv_ge[54] * ge[1] * ge[58] * inv_ge[57])
+                            : exp(-(g_RT[1] - g_RT[54] - g_RT[57] + g_RT[58])));
   // reaction 329:  CHF + H <=> CH + HF
   k_f = 65000000;
   qf[340] *= k_f;
-  qr[340] *= k_f * inv_ge[9] * ge[1] * inv_ge[53] * ge[63];
+  qr[340] *= k_f * (kc_fast ? (ge[63] * ge[1] * inv_ge[9] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[9] - g_RT[53] + g_RT[63])));
   // reaction 330:  CHF + H <=> CF + H2
   k_f = 230000000;
   qf[341] *= k_f;
-  qr[341] *= k_f * inv_ge[0] * ge[1] * inv_ge[65] * ge[63];
+  qr[341] *= k_f * (kc_fast ? (inv_ge[0] * ge[63] * inv_ge[65] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[63] - g_RT[65])));
   // reaction 331:  CH + HF <=> CF + H2
   k_f = 20000000;
   qf[342] *= k_f;
-  qr[342] *= k_f * inv_ge[0] * ge[9] * inv_ge[65] * ge[53];
+  qr[342] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[65] * ge[9] * ge[53])
+                            : exp(-(-g_RT[0] + g_RT[9] + g_RT[53] - g_RT[65])));
   // reaction 332:  CO + F + M <=> CFO + M
   k_f = 30900000 * exp((-1.4) * logT - (-245.066516246898) * invT);
   Corr = mixture + sc[0] + (17) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26];
   qf[53] *= Corr * k_f;
-  qr[53] *= Corr * k_f * inv_ge[69] * ge[14] * ge[54] * (refC);
+  qr[53] *= Corr * k_f *
+            (kc_fast ? (ge[54] * ge[14] * inv_ge[69])
+                     : exp(-(g_RT[14] + g_RT[54] - g_RT[69]))) *
+            (refC);
   // reaction 333:  CFO + H <=> CO + HF
   k_f = 25000000;
   qf[343] *= k_f;
-  qr[343] *= k_f * inv_ge[14] * ge[1] * inv_ge[53] * ge[69];
+  qr[343] *= k_f * (kc_fast ? (inv_ge[14] * ge[69] * ge[1] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[14] - g_RT[53] + g_RT[69])));
   // reaction 334:  CH2F + O <=> CHFO + H
   k_f = 57000000;
   qf[344] *= k_f;
-  qr[344] *= k_f * inv_ge[1] * ge[2] * inv_ge[68] * ge[60];
+  qr[344] *= k_f * (kc_fast ? (ge[60] * ge[2] * inv_ge[1] * inv_ge[68])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[60] - g_RT[68])));
   // reaction 335:  CHF2 + O <=> CF2O + H
   k_f = 37000000;
   qf[345] *= k_f;
-  qr[345] *= k_f * inv_ge[1] * ge[2] * inv_ge[67] * ge[61];
+  qr[345] *= k_f * (kc_fast ? (inv_ge[1] * ge[2] * ge[61] * inv_ge[67])
+                            : exp(-(-g_RT[1] + g_RT[2] + g_RT[61] - g_RT[67])));
   // reaction 336:  CF3 + O <=> CF2O + F
   k_f = 15400000;
   qf[346] *= k_f;
-  qr[346] *= k_f * inv_ge[54] * ge[2] * inv_ge[67] * ge[62];
+  qr[346] *= k_f * (kc_fast ? (inv_ge[54] * ge[2] * ge[62] * inv_ge[67])
+                            : exp(-(g_RT[2] - g_RT[54] + g_RT[62] - g_RT[67])));
   // reaction 337:  CH2F + OH <=> CH2O + HF
   k_f = 25000000;
   qf[347] *= k_f;
-  qr[347] *= k_f * inv_ge[17] * ge[4] * inv_ge[53] * ge[60];
+  qr[347] *= k_f * (kc_fast ? (ge[4] * ge[60] * inv_ge[17] * inv_ge[53])
+                            : exp(-(g_RT[4] - g_RT[17] - g_RT[53] + g_RT[60])));
   // reaction 338:  CHF2 + OH <=> CHFO + HF
   k_f = 10000000;
   qf[348] *= k_f;
-  qr[348] *= k_f * inv_ge[53] * ge[4] * inv_ge[68] * ge[61];
+  qr[348] *= k_f * (kc_fast ? (ge[4] * ge[61] * inv_ge[53] * inv_ge[68])
+                            : exp(-(g_RT[4] - g_RT[53] + g_RT[61] - g_RT[68])));
   // reaction 339:  CF3 + OH <=> CF2O + HF
   k_f = 14600000 * exp((-0.06) * logT - (-133.855633104055) * invT);
   qf[349] *= k_f;
-  qr[349] *= k_f * inv_ge[53] * ge[4] * inv_ge[67] * ge[62];
+  qr[349] *= k_f * (kc_fast ? (ge[4] * inv_ge[53] * ge[62] * inv_ge[67])
+                            : exp(-(g_RT[4] - g_RT[53] + g_RT[62] - g_RT[67])));
   // reaction 340:  HF + M <=> F + H + M
   k_f = 31200000 * exp(-(49979.4792477248) * invT);
   Corr = mixture;
   qf[54] *= Corr * k_f;
-  qr[54] *= Corr * k_f * inv_ge[1] * ge[53] * inv_ge[54] * (refCinv);
+  qr[54] *= Corr * k_f *
+            (kc_fast ? (inv_ge[54] * inv_ge[1] * ge[53])
+                     : exp(-(-g_RT[1] + g_RT[53] - g_RT[54]))) *
+            (refCinv);
   // reaction 341:  F + H2 <=> H + HF
   k_f = 2560000 * exp((0.5) * logT - (327.090832773068) * invT);
   qf[350] *= k_f;
-  qr[350] *= k_f * inv_ge[1] * ge[0] * inv_ge[53] * ge[54];
+  qr[350] *= k_f * (kc_fast ? (ge[0] * ge[54] * inv_ge[1] * inv_ge[53])
+                            : exp(-(g_RT[0] - g_RT[1] - g_RT[53] + g_RT[54])));
   // reaction 342:  F + OH <=> HF + O
   k_f = 20000000;
   qf[351] *= k_f;
-  qr[351] *= k_f * inv_ge[2] * ge[4] * inv_ge[53] * ge[54];
+  qr[351] *= k_f * (kc_fast ? (ge[54] * ge[4] * inv_ge[2] * inv_ge[53])
+                            : exp(-(-g_RT[2] + g_RT[4] - g_RT[53] + g_RT[54])));
   // reaction 343:  F + HO2 <=> HF + O2
   k_f = 2890000 * exp((0.5) * logT);
   qf[352] *= k_f;
-  qr[352] *= k_f * inv_ge[3] * ge[6] * inv_ge[53] * ge[54];
+  qr[352] *= k_f * (kc_fast ? (ge[54] * inv_ge[3] * ge[6] * inv_ge[53])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[53] + g_RT[54])));
   // reaction 344:  F + H2O <=> HF + OH
   k_f = 1300 * exp((1.5) * logT);
   qf[353] *= k_f;
-  qr[353] *= k_f * inv_ge[4] * ge[5] * inv_ge[53] * ge[54];
+  qr[353] *= k_f * (kc_fast ? (ge[54] * inv_ge[4] * ge[5] * inv_ge[53])
+                            : exp(-(-g_RT[4] + g_RT[5] - g_RT[53] + g_RT[54])));
   // reaction 345:  F + H2O2 <=> HF + HO2
   k_f = 1730000 * exp((0.5) * logT);
   qf[354] *= k_f;
-  qr[354] *= k_f * inv_ge[6] * ge[7] * inv_ge[53] * ge[54];
+  qr[354] *= k_f * (kc_fast ? (ge[54] * inv_ge[6] * ge[7] * inv_ge[53])
+                            : exp(-(-g_RT[6] + g_RT[7] - g_RT[53] + g_RT[54])));
   // reaction 346:  CH3F (+M) <=> CH2(S) + HF (+M)
   k_f = 100000000000000 * exp(-(42773.4165934012) * invT);
   Corr = mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15383,370 +15930,525 @@ comp_qfqr(
   redP = Corr / k_f * 15000000000 * exp(-(33966.6217251528) * invT);
   Corr = redP / (1. + redP);
   qf[29] *= Corr * k_f;
-  qr[29] *= Corr * k_f * inv_ge[11] * ge[56] * inv_ge[53] * (refCinv);
+  qr[29] *= Corr * k_f *
+            (kc_fast ? (ge[56] * inv_ge[53] * inv_ge[11])
+                     : exp(-(-g_RT[11] - g_RT[53] + g_RT[56]))) *
+            (refCinv);
   // reaction 347:  CHF + H2 <=> CH3F
   k_f = 225000000000 * exp((-2.85) * logT - (6541.81665546136) * invT);
   qf[355] *= k_f;
-  qr[355] *= k_f * inv_ge[56] * ge[0] * ge[63] * (refC);
+  qr[355] *= k_f *
+             (kc_fast ? (ge[0] * ge[63] * inv_ge[56])
+                      : exp(-(g_RT[0] - g_RT[56] + g_RT[63]))) *
+             (refC);
   // reaction 348:  CH2F + H <=> CH3F
   k_f = 3.03e+15 * exp((-3.38) * logT - (1741.12966368433) * invT);
   qf[356] *= k_f;
-  qr[356] *= k_f * inv_ge[56] * ge[1] * ge[60] * (refC);
+  qr[356] *= k_f *
+             (kc_fast ? (ge[60] * ge[1] * inv_ge[56])
+                      : exp(-(g_RT[1] - g_RT[56] + g_RT[60]))) *
+             (refC);
   // reaction 349:  CHF + HF + M <=> CH2F2 + M
   k_f = 304000000000000 * exp((-3.26) * logT - (2043.05966316716) * invT);
   Corr = mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + sc[53] + (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
   qf[55] *= Corr * k_f;
-  qr[55] *= Corr * k_f * inv_ge[57] * ge[53] * ge[63] * (refC);
+  qr[55] *= Corr * k_f *
+            (kc_fast ? (ge[63] * ge[53] * inv_ge[57])
+                     : exp(-(g_RT[53] - g_RT[57] + g_RT[63]))) *
+            (refC);
   // reaction 350:  CF2 + H2 <=> CH2F2
   k_f = 1.7 * exp((-0.71) * logT - (20581.561631413) * invT);
   qf[357] *= k_f;
-  qr[357] *= k_f * inv_ge[57] * ge[0] * ge[64] * (refC);
+  qr[357] *= k_f *
+             (kc_fast ? (ge[0] * ge[64] * inv_ge[57])
+                      : exp(-(g_RT[0] - g_RT[57] + g_RT[64]))) *
+             (refC);
   // reaction 351:  CHF2 + H <=> CH2F2
   k_f = 2.75 * exp((-0.32) * logT - (3869.73616003829) * invT);
   qf[358] *= k_f;
-  qr[358] *= k_f * inv_ge[57] * ge[1] * ge[61] * (refC);
+  qr[358] *= k_f *
+             (kc_fast ? (ge[1] * ge[61] * inv_ge[57])
+                      : exp(-(g_RT[1] - g_RT[57] + g_RT[61]))) *
+             (refC);
   // reaction 352:  CHF3 + M <=> CF2 + HF + M
   k_f = 3.41e+24 * exp((-4) * logT - (34747.1107738159) * invT);
   Corr = mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + sc[53] + (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
   qf[56] *= Corr * k_f;
-  qr[56] *= Corr * k_f * inv_ge[53] * ge[58] * inv_ge[64] * (refCinv);
+  qr[56] *= Corr * k_f *
+            (kc_fast ? (inv_ge[64] * ge[58] * inv_ge[53])
+                     : exp(-(-g_RT[53] + g_RT[58] - g_RT[64]))) *
+            (refCinv);
   // reaction 353:  CF4 + M <=> CF3 + F + M
   k_f = 9e+28 * exp((-4.64) * logT - (61593.7198944977) * invT);
   Corr = mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
          (2) * sc[26] + (5) * sc[56] + (5) * sc[57] + (5) * sc[58] +
          (5) * sc[59];
   qf[57] *= Corr * k_f;
-  qr[57] *= Corr * k_f * inv_ge[54] * ge[59] * inv_ge[62] * (refCinv);
+  qr[57] *= Corr * k_f *
+            (kc_fast ? (inv_ge[54] * inv_ge[62] * ge[59])
+                     : exp(-(-g_RT[54] + g_RT[59] - g_RT[62]))) *
+            (refCinv);
   // reaction 354:  CH2(S) + HF <=> CHF + H2
   k_f = 20.8 * exp((1.27) * logT - (4191.79482615331) * invT);
   qf[359] *= k_f;
-  qr[359] *= k_f * inv_ge[0] * ge[11] * inv_ge[63] * ge[53];
+  qr[359] *=
+    k_f * (kc_fast ? (inv_ge[0] * inv_ge[63] * ge[11] * ge[53])
+                   : exp(-(-g_RT[0] + g_RT[11] + g_RT[53] - g_RT[63])));
   // reaction 355:  CH3 + F <=> CH2(S) + HF
   k_f = 16200000000 * exp((-0.88) * logT - (-493.65554915443) * invT);
   qf[360] *= k_f;
-  qr[360] *= k_f * inv_ge[11] * ge[12] * inv_ge[53] * ge[54];
+  qr[360] *=
+    k_f * (kc_fast ? (ge[54] * ge[12] * inv_ge[11] * inv_ge[53])
+                   : exp(-(-g_RT[11] + g_RT[12] - g_RT[53] + g_RT[54])));
   // reaction 356:  CH3 + F <=> CH2F + H
   k_f = 1360000 * exp((-0.39) * logT - (-133.352416438251) * invT);
   qf[361] *= k_f;
-  qr[361] *= k_f * inv_ge[1] * ge[12] * inv_ge[60] * ge[54];
+  qr[361] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[60] * inv_ge[1] * ge[12])
+                   : exp(-(-g_RT[1] + g_RT[12] + g_RT[54] - g_RT[60])));
   // reaction 357:  CHF + HF <=> CF2 + H2
   k_f = 5.77 * exp((1.35) * logT - (9007.57831790448) * invT);
   qf[362] *= k_f;
-  qr[362] *= k_f * inv_ge[0] * ge[53] * inv_ge[64] * ge[63];
+  qr[362] *=
+    k_f * (kc_fast ? (inv_ge[0] * ge[63] * ge[53] * inv_ge[64])
+                   : exp(-(-g_RT[0] + g_RT[53] + g_RT[63] - g_RT[64])));
   // reaction 358:  CHF2 + H <=> CHF + HF
   k_f = 149000000 * exp((-0.11) * logT - (50.8248832462767) * invT);
   qf[363] *= k_f;
-  qr[363] *= k_f * inv_ge[53] * ge[1] * inv_ge[63] * ge[61];
+  qr[363] *= k_f * (kc_fast ? (inv_ge[63] * ge[1] * ge[61] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[61] - g_RT[63])));
   // reaction 359:  CHF2 + H <=> CF2 + H2
   k_f = 0.0055 * exp((2.42) * logT - (-211.350999637982) * invT);
   qf[364] *= k_f;
-  qr[364] *= k_f * inv_ge[0] * ge[1] * inv_ge[64] * ge[61];
+  qr[364] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * ge[61] * inv_ge[64])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[61] - g_RT[64])));
   // reaction 360:  CH2F + F <=> CHF + HF
   k_f = 50000000;
   qf[365] *= k_f;
-  qr[365] *= k_f * inv_ge[53] * ge[54] * inv_ge[63] * ge[60];
+  qr[365] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[63] * ge[60] * inv_ge[53])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[60] - g_RT[63])));
   // reaction 361:  CF3 + H <=> CF2 + HF
   k_f = 53300000;
   qf[366] *= k_f;
-  qr[366] *= k_f * inv_ge[53] * ge[1] * inv_ge[64] * ge[62];
+  qr[366] *= k_f * (kc_fast ? (ge[1] * ge[62] * inv_ge[53] * inv_ge[64])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[62] - g_RT[64])));
   // reaction 362:  CHF2 + F <=> CF2 + HF
   k_f = 30000000;
   qf[367] *= k_f;
-  qr[367] *= k_f * inv_ge[53] * ge[54] * inv_ge[64] * ge[61];
+  qr[367] *=
+    k_f * (kc_fast ? (ge[54] * ge[61] * inv_ge[64] * inv_ge[53])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[61] - g_RT[64])));
   // reaction 363:  CH3F + H <=> CH2F + H2
   k_f = 0.0027 * exp((3) * logT - (2667.04832876501) * invT);
   qf[368] *= k_f;
-  qr[368] *= k_f * inv_ge[0] * ge[1] * inv_ge[60] * ge[56];
+  qr[368] *= k_f * (kc_fast ? (inv_ge[0] * inv_ge[60] * ge[56] * ge[1])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[56] - g_RT[60])));
   // reaction 364:  CH2F2 + H <=> CHF2 + H2
   k_f = 0.00165 * exp((3) * logT - (2818.01332850643) * invT);
   qf[369] *= k_f;
-  qr[369] *= k_f * inv_ge[0] * ge[1] * inv_ge[61] * ge[57];
+  qr[369] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * ge[57] * inv_ge[61])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[57] - g_RT[61])));
   // reaction 365:  CH3F + H <=> CH3 + HF
   k_f = 275000000 * exp(-(15801.0033062682) * invT);
   qf[370] *= k_f;
-  qr[370] *= k_f * inv_ge[12] * ge[1] * inv_ge[53] * ge[56];
+  qr[370] *= k_f * (kc_fast ? (inv_ge[12] * ge[1] * ge[56] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[12] - g_RT[53] + g_RT[56])));
   // reaction 366:  CH2F2 + H <=> CH2F + HF
   k_f = 55000000 * exp(-(17159.6883039409) * invT);
   qf[371] *= k_f;
-  qr[371] *= k_f * inv_ge[53] * ge[1] * inv_ge[60] * ge[57];
+  qr[371] *= k_f * (kc_fast ? (inv_ge[60] * ge[1] * ge[57] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[57] - g_RT[60])));
   // reaction 367:  CHF3 + H <=> CHF2 + HF
   k_f = 211 * exp((1.77) * logT - (20028.0232990278) * invT);
   qf[372] *= k_f;
-  qr[372] *= k_f * inv_ge[53] * ge[1] * inv_ge[61] * ge[58];
+  qr[372] *= k_f * (kc_fast ? (ge[1] * inv_ge[61] * ge[58] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[58] - g_RT[61])));
   // reaction 368:  CF4 + H <=> CF3 + HF
   k_f = 3070 * exp((1.58) * logT - (20797.9447977091) * invT);
   qf[373] *= k_f;
-  qr[373] *= k_f * inv_ge[53] * ge[1] * inv_ge[62] * ge[59];
+  qr[373] *= k_f * (kc_fast ? (ge[1] * inv_ge[53] * ge[59] * inv_ge[62])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[59] - g_RT[62])));
   // reaction 369:  CF4 + H <=> CHF3 + F
   k_f = 915 * exp((1.45) * logT - (31999.5477785221) * invT);
   qf[374] *= k_f;
-  qr[374] *= k_f * inv_ge[54] * ge[1] * inv_ge[58] * ge[59];
+  qr[374] *= k_f * (kc_fast ? (inv_ge[54] * ge[1] * ge[59] * inv_ge[58])
+                            : exp(-(g_RT[1] - g_RT[54] - g_RT[58] + g_RT[59])));
   // reaction 370:  CH3F + O <=> CH2F + OH
   k_f = 65 * exp((1.5) * logT - (3522.51666063304) * invT);
   qf[375] *= k_f;
-  qr[375] *= k_f * inv_ge[4] * ge[2] * inv_ge[60] * ge[56];
+  qr[375] *= k_f * (kc_fast ? (inv_ge[4] * inv_ge[60] * ge[56] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[56] - g_RT[60])));
   // reaction 371:  CH2F2 + O <=> CHF2 + OH
   k_f = 22.5 * exp((1.5) * logT - (3069.62166140879) * invT);
   qf[376] *= k_f;
-  qr[376] *= k_f * inv_ge[4] * ge[2] * inv_ge[61] * ge[57];
+  qr[376] *= k_f * (kc_fast ? (inv_ge[4] * ge[2] * ge[57] * inv_ge[61])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[57] - g_RT[61])));
   // reaction 372:  CHF3 + O <=> CF3 + OH
   k_f = 307000000 * exp(-(9535.95581699944) * invT);
   qf[377] *= k_f;
-  qr[377] *= k_f * inv_ge[4] * ge[2] * inv_ge[62] * ge[58];
+  qr[377] *= k_f * (kc_fast ? (inv_ge[4] * ge[2] * ge[58] * inv_ge[62])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[58] - g_RT[62])));
   // reaction 373:  CH3F + OH <=> CH2F + H2O
   k_f = 260 * exp((1.5) * logT - (1479.45699746588) * invT);
   qf[378] *= k_f;
-  qr[378] *= k_f * inv_ge[5] * ge[4] * inv_ge[60] * ge[56];
+  qr[378] *= k_f * (kc_fast ? (ge[4] * inv_ge[60] * ge[56] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[56] - g_RT[60])));
   // reaction 374:  CH2F2 + OH <=> CHF2 + H2O
   k_f = 28 * exp((1.7) * logT - (1278.17033114399) * invT);
   qf[379] *= k_f;
-  qr[379] *= k_f * inv_ge[5] * ge[4] * inv_ge[61] * ge[57];
+  qr[379] *= k_f * (kc_fast ? (ge[4] * inv_ge[5] * ge[57] * inv_ge[61])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[57] - g_RT[61])));
   // reaction 375:  CHF3 + OH <=> CF3 + H2O
   k_f = 12.5 * exp((1.55) * logT - (1846.80516350332) * invT);
   qf[380] *= k_f;
-  qr[380] *= k_f * inv_ge[5] * ge[4] * inv_ge[62] * ge[58];
+  qr[380] *= k_f * (kc_fast ? (ge[4] * inv_ge[5] * ge[58] * inv_ge[62])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[58] - g_RT[62])));
   // reaction 376:  CH2F + H2O2 <=> CH3F + HO2
   k_f = 12000 * exp(-(-301.929999482832) * invT);
   qf[381] *= k_f;
-  qr[381] *= k_f * inv_ge[6] * ge[7] * inv_ge[56] * ge[60];
+  qr[381] *= k_f * (kc_fast ? (inv_ge[6] * ge[60] * ge[7] * inv_ge[56])
+                            : exp(-(-g_RT[6] + g_RT[7] - g_RT[56] + g_RT[60])));
   // reaction 377:  CHF2 + H2O2 <=> CH2F2 + HO2
   k_f = 12000 * exp(-(-301.929999482832) * invT);
   qf[382] *= k_f;
-  qr[382] *= k_f * inv_ge[6] * ge[7] * inv_ge[57] * ge[61];
+  qr[382] *= k_f * (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[57] * ge[61])
+                            : exp(-(-g_RT[6] + g_RT[7] - g_RT[57] + g_RT[61])));
   // reaction 378:  CF3 + H2O2 <=> CHF3 + HO2
   k_f = 12000 * exp(-(-301.929999482832) * invT);
   qf[383] *= k_f;
-  qr[383] *= k_f * inv_ge[6] * ge[7] * inv_ge[58] * ge[62];
+  qr[383] *= k_f * (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[58] * ge[62])
+                            : exp(-(-g_RT[6] + g_RT[7] - g_RT[58] + g_RT[62])));
   // reaction 379:  CH3 + CH3F <=> CH2F + CH4
   k_f = 150000 * exp(-(5736.6699901738) * invT);
   qf[384] *= k_f;
-  qr[384] *= k_f * inv_ge[13] * ge[12] * inv_ge[60] * ge[56];
+  qr[384] *=
+    k_f * (kc_fast ? (inv_ge[60] * ge[12] * ge[56] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[56] - g_RT[60])));
   // reaction 380:  CH2F2 + CH3 <=> CH4 + CHF2
   k_f = 87000 * exp(-(5132.80999120814) * invT);
   qf[385] *= k_f;
-  qr[385] *= k_f * inv_ge[13] * ge[12] * inv_ge[61] * ge[57];
+  qr[385] *=
+    k_f * (kc_fast ? (ge[12] * inv_ge[13] * ge[57] * inv_ge[61])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[57] - g_RT[61])));
   // reaction 381:  CF3 + CH4 <=> CH3 + CHF3
   k_f = 834000 * exp(-(5495.12599058754) * invT);
   qf[386] *= k_f;
-  qr[386] *= k_f * inv_ge[12] * ge[13] * inv_ge[58] * ge[62];
+  qr[386] *=
+    k_f * (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[12] + g_RT[13] - g_RT[58] + g_RT[62])));
   // reaction 382:  C2H3 + CH3F <=> C2H4 + CH2F
   k_f = 150000 * exp(-(5183.13165778861) * invT);
   qf[387] *= k_f;
-  qr[387] *= k_f * inv_ge[24] * ge[23] * inv_ge[60] * ge[56];
+  qr[387] *=
+    k_f * (kc_fast ? (inv_ge[60] * inv_ge[24] * ge[56] * ge[23])
+                   : exp(-(g_RT[23] - g_RT[24] + g_RT[56] - g_RT[60])));
   // reaction 383:  C2H3 + CH2F2 <=> C2H4 + CHF2
   k_f = 90000 * exp(-(4629.59332540342) * invT);
   qf[388] *= k_f;
-  qr[388] *= k_f * inv_ge[24] * ge[23] * inv_ge[61] * ge[57];
+  qr[388] *=
+    k_f * (kc_fast ? (inv_ge[24] * ge[23] * ge[57] * inv_ge[61])
+                   : exp(-(g_RT[23] - g_RT[24] + g_RT[57] - g_RT[61])));
   // reaction 384:  C2H4 + CF3 <=> C2H3 + CHF3
   k_f = 800000 * exp(-(6038.59998965664) * invT);
   qf[389] *= k_f;
-  qr[389] *= k_f * inv_ge[23] * ge[24] * inv_ge[58] * ge[62];
+  qr[389] *=
+    k_f * (kc_fast ? (ge[24] * inv_ge[23] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[23] + g_RT[24] - g_RT[58] + g_RT[62])));
   // reaction 385:  CF3 + CH3F <=> CH2F + CHF3
   k_f = 575000 * exp(-(5641.05882367091) * invT);
   qf[390] *= k_f;
-  qr[390] *= k_f * inv_ge[58] * ge[56] * inv_ge[60] * ge[62];
+  qr[390] *=
+    k_f * (kc_fast ? (inv_ge[60] * ge[56] * inv_ge[58] * ge[62])
+                   : exp(-(g_RT[56] - g_RT[58] - g_RT[60] + g_RT[62])));
   // reaction 386:  CH2F + CH2F2 <=> CH3F + CHF2
   k_f = 90000 * exp(-(7045.03332126608) * invT);
   qf[391] *= k_f;
-  qr[391] *= k_f * inv_ge[56] * ge[57] * inv_ge[61] * ge[60];
+  qr[391] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[56] * ge[57] * inv_ge[61])
+                   : exp(-(-g_RT[56] + g_RT[57] + g_RT[60] - g_RT[61])));
   // reaction 387:  CF3 + CH2F2 <=> CHF2 + CHF3
   k_f = 427000 * exp(-(5686.34832359333) * invT);
   qf[392] *= k_f;
-  qr[392] *= k_f * inv_ge[58] * ge[57] * inv_ge[61] * ge[62];
+  qr[392] *=
+    k_f * (kc_fast ? (inv_ge[61] * ge[57] * inv_ge[58] * ge[62])
+                   : exp(-(g_RT[57] - g_RT[58] - g_RT[61] + g_RT[62])));
   // reaction 388:  CH2F + CH3OH <=> CH3F + CH3O
   k_f = 1.44e-05 * exp((3.1) * logT - (4931.52332488625) * invT);
   qf[393] *= k_f;
-  qr[393] *= k_f * inv_ge[19] * ge[20] * inv_ge[56] * ge[60];
+  qr[393] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[19] * inv_ge[56] * ge[20])
+                   : exp(-(-g_RT[19] + g_RT[20] - g_RT[56] + g_RT[60])));
   // reaction 389:  CH3OH + CHF2 <=> CH2F2 + CH3O
   k_f = 1.44e-05 * exp((3.1) * logT - (4528.94999224248) * invT);
   qf[394] *= k_f;
-  qr[394] *= k_f * inv_ge[19] * ge[20] * inv_ge[57] * ge[61];
+  qr[394] *=
+    k_f * (kc_fast ? (inv_ge[19] * ge[20] * inv_ge[57] * ge[61])
+                   : exp(-(-g_RT[19] + g_RT[20] - g_RT[57] + g_RT[61])));
   // reaction 390:  CF3 + CH3OH <=> CH3O + CHF3
   k_f = 1.44e-05 * exp((3.1) * logT - (2767.69166192596) * invT);
   qf[395] *= k_f;
-  qr[395] *= k_f * inv_ge[19] * ge[20] * inv_ge[58] * ge[62];
+  qr[395] *=
+    k_f * (kc_fast ? (inv_ge[19] * ge[20] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[19] + g_RT[20] - g_RT[58] + g_RT[62])));
   // reaction 391:  CH2F + CH3OH <=> CH2OH + CH3F
   k_f = 3.2e-05 * exp((3.2) * logT - (5032.1666580472) * invT);
   qf[396] *= k_f;
-  qr[396] *= k_f * inv_ge[18] * ge[20] * inv_ge[56] * ge[60];
+  qr[396] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[18] * inv_ge[56] * ge[20])
+                   : exp(-(-g_RT[18] + g_RT[20] - g_RT[56] + g_RT[60])));
   // reaction 392:  CH3OH + CHF2 <=> CH2F2 + CH2OH
   k_f = 3.2e-05 * exp((3.2) * logT - (4679.91499198389) * invT);
   qf[397] *= k_f;
-  qr[397] *= k_f * inv_ge[18] * ge[20] * inv_ge[57] * ge[61];
+  qr[397] *=
+    k_f * (kc_fast ? (inv_ge[18] * ge[20] * inv_ge[57] * ge[61])
+                   : exp(-(-g_RT[18] + g_RT[20] - g_RT[57] + g_RT[61])));
   // reaction 393:  CF3 + CH3OH <=> CH2OH + CHF3
   k_f = 3.2e-05 * exp((3.2) * logT - (2868.3349950869) * invT);
   qf[398] *= k_f;
-  qr[398] *= k_f * inv_ge[18] * ge[20] * inv_ge[58] * ge[62];
+  qr[398] *=
+    k_f * (kc_fast ? (inv_ge[18] * ge[20] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[18] + g_RT[20] - g_RT[58] + g_RT[62])));
   // reaction 394:  CH2F + CH2O <=> CH3F + HCO
   k_f = 0.00554 * exp((2.81) * logT - (4176.69832617917) * invT);
   qf[399] *= k_f;
-  qr[399] *= k_f * inv_ge[16] * ge[17] * inv_ge[56] * ge[60];
+  qr[399] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[60] * inv_ge[56] * ge[17])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[56] + g_RT[60])));
   // reaction 395:  CH2O + CHF2 <=> CH2F2 + HCO
   k_f = 0.00554 * exp((2.81) * logT - (3925.08999327681) * invT);
   qf[400] *= k_f;
-  qr[400] *= k_f * inv_ge[16] * ge[17] * inv_ge[57] * ge[61];
+  qr[400] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[57] * ge[61])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[57] + g_RT[61])));
   // reaction 396:  CF3 + CH2O <=> CHF3 + HCO
   k_f = 0.00554 * exp((2.81) * logT - (2314.79666270171) * invT);
   qf[401] *= k_f;
-  qr[401] *= k_f * inv_ge[16] * ge[17] * inv_ge[58] * ge[62];
+  qr[401] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[58] + g_RT[62])));
   // reaction 397:  CH2F + HCO <=> CH3F + CO
   k_f = 90000000;
   qf[402] *= k_f;
-  qr[402] *= k_f * inv_ge[14] * ge[16] * inv_ge[56] * ge[60];
+  qr[402] *=
+    k_f * (kc_fast ? (ge[16] * ge[60] * inv_ge[14] * inv_ge[56])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[56] + g_RT[60])));
   // reaction 398:  CHF2 + HCO <=> CH2F2 + CO
   k_f = 90000000;
   qf[403] *= k_f;
-  qr[403] *= k_f * inv_ge[14] * ge[16] * inv_ge[57] * ge[61];
+  qr[403] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[14] * ge[61] * inv_ge[57])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[57] + g_RT[61])));
   // reaction 399:  CF3 + HCO <=> CHF3 + CO
   k_f = 90000000;
   qf[404] *= k_f;
-  qr[404] *= k_f * inv_ge[14] * ge[16] * inv_ge[58] * ge[62];
+  qr[404] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[14] * ge[62] * inv_ge[58])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[58] + g_RT[62])));
   // reaction 400:  CH2F + HCO <=> CH2CO + HF
   k_f = 30000000;
   qf[405] *= k_f;
-  qr[405] *= k_f * inv_ge[28] * ge[16] * inv_ge[53] * ge[60];
+  qr[405] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[28] * ge[60] * inv_ge[53])
+                   : exp(-(g_RT[16] - g_RT[28] - g_RT[53] + g_RT[60])));
   // reaction 401:  CH2F + O2 => CHFO + H + O
   k_f = 2260 * exp((1.14) * logT - (14341.6749754345) * invT);
   qf[406] *= k_f;
   qr[406] *=
-    k_f * inv_ge[1] * ge[3] * inv_ge[2] * ge[60] * inv_ge[68] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[3] * ge[60] * inv_ge[68] * inv_ge[2] * inv_ge[1])
+             : exp(-(-g_RT[1] - g_RT[2] + g_RT[3] + g_RT[60] - g_RT[68]))) *
+    (refCinv);
   // reaction 402:  CHF2 + O2 => CF2O + H + O
   k_f = 2260 * exp((1.14) * logT - (8303.07498577788) * invT);
   qf[407] *= k_f;
   qr[407] *=
-    k_f * inv_ge[1] * ge[3] * inv_ge[2] * ge[61] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[3] * inv_ge[1] * inv_ge[2] * inv_ge[67] * ge[61])
+             : exp(-(-g_RT[1] - g_RT[2] + g_RT[3] + g_RT[61] - g_RT[67]))) *
+    (refCinv);
   // reaction 403:  CF3 + O2 <=> CF3O + O
   k_f = 2260 * exp((1.14) * logT - (10819.1583148015) * invT);
   qf[408] *= k_f;
-  qr[408] *= k_f * inv_ge[2] * ge[3] * inv_ge[66] * ge[62];
+  qr[408] *= k_f * (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[66] * ge[62])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[62] - g_RT[66])));
   // reaction 404:  CH2F + HO2 => CHFO + H + OH
   k_f = 15000000;
   qf[409] *= k_f;
   qr[409] *=
-    k_f * inv_ge[1] * ge[6] * inv_ge[4] * ge[60] * inv_ge[68] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[6] * ge[60] * inv_ge[68] * inv_ge[1])
+             : exp(-(-g_RT[1] - g_RT[4] + g_RT[6] + g_RT[60] - g_RT[68]))) *
+    (refCinv);
   // reaction 405:  CHF2 + HO2 => CF2O + H + OH
   k_f = 15000000;
   qf[410] *= k_f;
   qr[410] *=
-    k_f * inv_ge[1] * ge[6] * inv_ge[4] * ge[61] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[1] * inv_ge[67] * ge[61])
+             : exp(-(-g_RT[1] - g_RT[4] + g_RT[6] + g_RT[61] - g_RT[67]))) *
+    (refCinv);
   // reaction 406:  CF3 + HO2 <=> CF3O + OH
   k_f = 10000000;
   qf[411] *= k_f;
-  qr[411] *= k_f * inv_ge[4] * ge[6] * inv_ge[66] * ge[62];
+  qr[411] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * ge[62] * inv_ge[66])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[62] - g_RT[66])));
   // reaction 407:  CH2F + HO2 <=> CH3F + O2
   k_f = 3000000;
   qf[412] *= k_f;
-  qr[412] *= k_f * inv_ge[3] * ge[6] * inv_ge[56] * ge[60];
+  qr[412] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[60] * inv_ge[56])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[56] + g_RT[60])));
   // reaction 408:  CHF2 + HO2 <=> CH2F2 + O2
   k_f = 3000000;
   qf[413] *= k_f;
-  qr[413] *= k_f * inv_ge[3] * ge[6] * inv_ge[57] * ge[61];
+  qr[413] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[61] * inv_ge[57])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[57] + g_RT[61])));
   // reaction 409:  CF3 + HO2 <=> CHF3 + O2
   k_f = 2000000;
   qf[414] *= k_f;
-  qr[414] *= k_f * inv_ge[3] * ge[6] * inv_ge[58] * ge[62];
+  qr[414] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[62] * inv_ge[58])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[58] + g_RT[62])));
   // reaction 410:  CF3O + M <=> CF2O + F + M
   k_f = 9.03e+20 * exp((-3.42) * logT - (10919.8016479624) * invT);
   Corr = mixture;
   qf[58] *= Corr * k_f;
-  qr[58] *= Corr * k_f * inv_ge[54] * ge[66] * inv_ge[67] * (refCinv);
+  qr[58] *= Corr * k_f *
+            (kc_fast ? (inv_ge[54] * inv_ge[67] * ge[66])
+                     : exp(-(-g_RT[54] + g_RT[66] - g_RT[67]))) *
+            (refCinv);
   // reaction 411:  CF3O + H <=> CF2O + HF
   k_f = 100000000;
   qf[415] *= k_f;
-  qr[415] *= k_f * inv_ge[53] * ge[1] * inv_ge[67] * ge[66];
+  qr[415] *= k_f * (kc_fast ? (ge[1] * inv_ge[53] * ge[66] * inv_ge[67])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[66] - g_RT[67])));
   // reaction 412:  CF3O + H2 => CF2O + H + HF
   k_f = 10000000 * exp(-(2516.0833290236) * invT);
   qf[416] *= k_f;
   qr[416] *=
-    k_f * inv_ge[1] * ge[0] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(g_RT[0] - g_RT[1] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 413:  CF3O + H2O => CF2O + HF + OH
   k_f = 10000000 * exp(-(2516.0833290236) * invT);
   qf[417] *= k_f;
   qr[417] *=
-    k_f * inv_ge[4] * ge[5] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[4] * ge[5] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[4] + g_RT[5] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 414:  CF3O + CH4 => CF2O + CH3 + HF
   k_f = 8000000 * exp(-(1157.39833135086) * invT);
   qf[418] *= k_f;
   qr[418] *=
-    k_f * inv_ge[12] * ge[13] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[12] * inv_ge[53] * ge[13] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[12] + g_RT[13] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 415:  C2H6 + CF3O => C2H5 + CF2O + HF
   k_f = 12000000 * exp(-(1157.39833135086) * invT);
   qf[419] *= k_f;
   qr[419] *=
-    k_f * inv_ge[25] * ge[26] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[25] * ge[26] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[25] + g_RT[26] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 416:  C2H4 + CF3O => C2H3 + CF2O + HF
   k_f = 10000000 * exp(-(2516.0833290236) * invT);
   qf[420] *= k_f;
   qr[420] *=
-    k_f * inv_ge[23] * ge[24] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[24] * inv_ge[23] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[23] + g_RT[24] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 417:  CF3O + CH2O => CF2O + HCO + HF
   k_f = 5000000 * exp(-(2516.0833290236) * invT);
   qf[421] *= k_f;
   qr[421] *=
-    k_f * inv_ge[16] * ge[17] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[16] + g_RT[17] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 418:  CF3O + HCO => CF2O + CO + HF
   k_f = 5000000 * exp(-(1006.43333160944) * invT);
   qf[422] *= k_f;
   qr[422] *=
-    k_f * inv_ge[14] * ge[16] * inv_ge[53] * ge[66] * inv_ge[67] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[16] * inv_ge[14] * inv_ge[53] * ge[66] * inv_ge[67])
+             : exp(-(-g_RT[14] + g_RT[16] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+    (refCinv);
   // reaction 419:  CHF + O2 <=> CHFO + O
   k_f = 20000000 * exp(-(8303.07498577788) * invT);
   qf[423] *= k_f;
-  qr[423] *= k_f * inv_ge[2] * ge[3] * inv_ge[68] * ge[63];
+  qr[423] *= k_f * (kc_fast ? (ge[3] * ge[63] * inv_ge[2] * inv_ge[68])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[63] - g_RT[68])));
   // reaction 420:  CF2 + O2 <=> CF2O + O
   k_f = 20000000 * exp(-(13335.2416438251) * invT);
   qf[424] *= k_f;
-  qr[424] *= k_f * inv_ge[2] * ge[3] * inv_ge[67] * ge[64];
+  qr[424] *= k_f * (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[67] * ge[64])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[64] - g_RT[67])));
   // reaction 421:  CHF + O <=> CO + HF
   k_f = 90000000;
   qf[425] *= k_f;
-  qr[425] *= k_f * inv_ge[14] * ge[2] * inv_ge[53] * ge[63];
+  qr[425] *= k_f * (kc_fast ? (ge[63] * inv_ge[14] * ge[2] * inv_ge[53])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[53] + g_RT[63])));
   // reaction 422:  CF2 + O <=> CFO + F
   k_f = 24500000;
   qf[426] *= k_f;
-  qr[426] *= k_f * inv_ge[54] * ge[2] * inv_ge[69] * ge[64];
+  qr[426] *= k_f * (kc_fast ? (inv_ge[54] * ge[2] * ge[64] * inv_ge[69])
+                            : exp(-(g_RT[2] - g_RT[54] + g_RT[64] - g_RT[69])));
   // reaction 423:  CHF + OH <=> CHFO + H
   k_f = 20000000;
   qf[427] *= k_f;
-  qr[427] *= k_f * inv_ge[1] * ge[4] * inv_ge[68] * ge[63];
+  qr[427] *= k_f * (kc_fast ? (ge[4] * ge[63] * inv_ge[1] * inv_ge[68])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[63] - g_RT[68])));
   // reaction 424:  CF2 + OH <=> CF2O + H
   k_f = 40000000;
   qf[428] *= k_f;
-  qr[428] *= k_f * inv_ge[1] * ge[4] * inv_ge[67] * ge[64];
+  qr[428] *= k_f * (kc_fast ? (ge[4] * inv_ge[1] * ge[64] * inv_ge[67])
+                            : exp(-(-g_RT[1] + g_RT[4] + g_RT[64] - g_RT[67])));
   // reaction 425:  CHF + OH <=> HCO + HF
   k_f = 4000000;
   qf[429] *= k_f;
-  qr[429] *= k_f * inv_ge[16] * ge[4] * inv_ge[53] * ge[63];
+  qr[429] *= k_f * (kc_fast ? (ge[4] * inv_ge[16] * ge[63] * inv_ge[53])
+                            : exp(-(g_RT[4] - g_RT[16] - g_RT[53] + g_RT[63])));
   // reaction 426:  CF2 + OH <=> CFO + HF
   k_f = 10000000;
   qf[430] *= k_f;
-  qr[430] *= k_f * inv_ge[53] * ge[4] * inv_ge[69] * ge[64];
+  qr[430] *= k_f * (kc_fast ? (ge[4] * inv_ge[69] * ge[64] * inv_ge[53])
+                            : exp(-(g_RT[4] - g_RT[53] + g_RT[64] - g_RT[69])));
   // reaction 427:  CHF + HO2 <=> CHFO + OH
   k_f = 10000000;
   qf[431] *= k_f;
-  qr[431] *= k_f * inv_ge[4] * ge[6] * inv_ge[68] * ge[63];
+  qr[431] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * ge[63] * inv_ge[68])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[63] - g_RT[68])));
   // reaction 428:  CF2 + HO2 <=> CF2O + OH
   k_f = 10000000 * exp(-(1761.25833031652) * invT);
   qf[432] *= k_f;
-  qr[432] *= k_f * inv_ge[4] * ge[6] * inv_ge[67] * ge[64];
+  qr[432] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * ge[64] * inv_ge[67])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[64] - g_RT[67])));
   // reaction 429:  CHF + HO2 <=> CH2F + O2
   k_f = 2000000;
   qf[433] *= k_f;
-  qr[433] *= k_f * inv_ge[3] * ge[6] * inv_ge[60] * ge[63];
+  qr[433] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[60] * ge[63])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[60] + g_RT[63])));
   // reaction 430:  CF2 + HO2 <=> CHF2 + O2
   k_f = 2000000 * exp(-(1761.25833031652) * invT);
   qf[434] *= k_f;
-  qr[434] *= k_f * inv_ge[3] * ge[6] * inv_ge[61] * ge[64];
+  qr[434] *= k_f * (kc_fast ? (inv_ge[3] * ge[6] * ge[64] * inv_ge[61])
+                            : exp(-(-g_RT[3] + g_RT[6] - g_RT[61] + g_RT[64])));
   // reaction 431:  CHF + H2O <=> CH2O + HF
   k_f = 5000000 * exp(-(3270.90832773068) * invT);
   qf[435] *= k_f;
-  qr[435] *= k_f * inv_ge[17] * ge[5] * inv_ge[53] * ge[63];
+  qr[435] *= k_f * (kc_fast ? (ge[63] * ge[5] * inv_ge[17] * inv_ge[53])
+                            : exp(-(g_RT[5] - g_RT[17] - g_RT[53] + g_RT[63])));
   // reaction 432:  CF2 + H2O <=> CHFO + HF
   k_f = 5000000 * exp(-(12580.416645118) * invT);
   qf[436] *= k_f;
-  qr[436] *= k_f * inv_ge[53] * ge[5] * inv_ge[68] * ge[64];
+  qr[436] *= k_f * (kc_fast ? (ge[64] * inv_ge[53] * ge[5] * inv_ge[68])
+                            : exp(-(g_RT[5] - g_RT[53] + g_RT[64] - g_RT[68])));
   // reaction 433:  CF2 (+M) <=> CF + F (+M)
   k_f = 530000000000000 * exp(-(59530.5315646983) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -15755,267 +16457,387 @@ comp_qfqr(
   redP = Corr / k_f * 2290000000 * exp(-(48042.0950843766) * invT);
   Corr = redP / (1. + redP);
   qf[30] *= Corr * k_f;
-  qr[30] *= Corr * k_f * inv_ge[54] * ge[64] * inv_ge[65] * (refCinv);
+  qr[30] *= Corr * k_f *
+            (kc_fast ? (inv_ge[54] * inv_ge[65] * ge[64])
+                     : exp(-(-g_RT[54] + g_RT[64] - g_RT[65]))) *
+            (refCinv);
   // reaction 434:  CF2 + H <=> CF + HF
   k_f = 39800000 * exp(-(2284.60366275343) * invT);
   qf[437] *= k_f;
-  qr[437] *= k_f * inv_ge[53] * ge[1] * inv_ge[65] * ge[64];
+  qr[437] *= k_f * (kc_fast ? (ge[1] * inv_ge[65] * ge[64] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[64] - g_RT[65])));
   // reaction 435:  CH2O + CHF <=> CH2F + HCO
   k_f = 10000000 * exp(-(7548.2499870708) * invT);
   qf[438] *= k_f;
-  qr[438] *= k_f * inv_ge[16] * ge[17] * inv_ge[60] * ge[63];
+  qr[438] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[63] * ge[17] * inv_ge[60])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[60] + g_RT[63])));
   // reaction 436:  CH2O + CHF <=> CH2CO + HF
   k_f = 10000000 * exp(-(7548.2499870708) * invT);
   qf[439] *= k_f;
-  qr[439] *= k_f * inv_ge[28] * ge[17] * inv_ge[53] * ge[63];
+  qr[439] *=
+    k_f * (kc_fast ? (inv_ge[28] * ge[17] * ge[63] * inv_ge[53])
+                   : exp(-(g_RT[17] - g_RT[28] - g_RT[53] + g_RT[63])));
   // reaction 437:  CF2 + CH2O <=> CHF2 + HCO
   k_f = 10000000 * exp(-(20631.8832979935) * invT);
   qf[440] *= k_f;
-  qr[440] *= k_f * inv_ge[16] * ge[17] * inv_ge[61] * ge[64];
+  qr[440] *=
+    k_f * (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[61] * ge[64])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[61] + g_RT[64])));
   // reaction 438:  CHF + HCO <=> CH2F + CO
   k_f = 20000000 * exp(-(7548.2499870708) * invT);
   qf[441] *= k_f;
-  qr[441] *= k_f * inv_ge[14] * ge[16] * inv_ge[60] * ge[63];
+  qr[441] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[60] * ge[63] * inv_ge[14])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[60] + g_RT[63])));
   // reaction 439:  CF2 + HCO <=> CHF2 + CO
   k_f = 20000000 * exp(-(20631.8832979935) * invT);
   qf[442] *= k_f;
-  qr[442] *= k_f * inv_ge[14] * ge[16] * inv_ge[61] * ge[64];
+  qr[442] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[14] * ge[64] * inv_ge[61])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[61] + g_RT[64])));
   // reaction 440:  CF + O2 <=> CFO + O
   k_f = 6620000 * exp(-(850.436165209976) * invT);
   qf[443] *= k_f;
-  qr[443] *= k_f * inv_ge[2] * ge[3] * inv_ge[69] * ge[65];
+  qr[443] *= k_f * (kc_fast ? (ge[3] * ge[65] * inv_ge[2] * inv_ge[69])
+                            : exp(-(-g_RT[2] + g_RT[3] + g_RT[65] - g_RT[69])));
   // reaction 441:  CF + H2O <=> CHFO + H
   k_f = 20000000 * exp(-(8554.68331868023) * invT);
   qf[444] *= k_f;
-  qr[444] *= k_f * inv_ge[1] * ge[5] * inv_ge[68] * ge[65];
+  qr[444] *= k_f * (kc_fast ? (inv_ge[1] * ge[65] * ge[5] * inv_ge[68])
+                            : exp(-(-g_RT[1] + g_RT[5] + g_RT[65] - g_RT[68])));
   // reaction 442:  CF + H <=> C + HF
   k_f = 80000000 * exp(-(583.731332333475) * invT);
   qf[445] *= k_f;
-  qr[445] *= k_f * inv_ge[8] * ge[1] * inv_ge[53] * ge[65];
+  qr[445] *= k_f * (kc_fast ? (ge[1] * ge[65] * inv_ge[8] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[8] - g_RT[53] + g_RT[65])));
   // reaction 443:  CF + O <=> CO + F
   k_f = 80000000 * exp(-(709.535498784655) * invT);
   qf[446] *= k_f;
-  qr[446] *= k_f * inv_ge[14] * ge[2] * inv_ge[54] * ge[65];
+  qr[446] *= k_f * (kc_fast ? (inv_ge[54] * inv_ge[14] * ge[65] * ge[2])
+                            : exp(-(g_RT[2] - g_RT[14] - g_RT[54] + g_RT[65])));
   // reaction 444:  CF + OH <=> CO + HF
   k_f = 80000000 * exp(-(709.535498784655) * invT);
   qf[447] *= k_f;
-  qr[447] *= k_f * inv_ge[14] * ge[4] * inv_ge[53] * ge[65];
+  qr[447] *= k_f * (kc_fast ? (ge[4] * inv_ge[14] * ge[65] * inv_ge[53])
+                            : exp(-(g_RT[4] - g_RT[14] - g_RT[53] + g_RT[65])));
   // reaction 445:  CF + HO2 => CFO + OH
   k_f = 30000000;
   qf[448] *= k_f;
-  qr[448] *= k_f * inv_ge[4] * ge[6] * inv_ge[69] * ge[65];
+  qr[448] *= k_f * (kc_fast ? (inv_ge[4] * ge[6] * ge[65] * inv_ge[69])
+                            : exp(-(-g_RT[4] + g_RT[6] + g_RT[65] - g_RT[69])));
   // reaction 446:  C2H4 + CF => C2H2 + CH2F
   k_f = 10000000;
   qf[449] *= k_f;
-  qr[449] *= k_f * inv_ge[22] * ge[24] * inv_ge[60] * ge[65];
+  qr[449] *=
+    k_f * (kc_fast ? (inv_ge[60] * ge[24] * inv_ge[22] * ge[65])
+                   : exp(-(-g_RT[22] + g_RT[24] - g_RT[60] + g_RT[65])));
   // reaction 447:  CF + CH2O => CHF + HCO
   k_f = 10000000 * exp(-(4025.73332643776) * invT);
   qf[450] *= k_f;
-  qr[450] *= k_f * inv_ge[16] * ge[17] * inv_ge[63] * ge[65];
+  qr[450] *=
+    k_f * (kc_fast ? (inv_ge[16] * inv_ge[63] * ge[65] * ge[17])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[63] + g_RT[65])));
   // reaction 448:  CF + HCO => CHF + CO
   k_f = 10000000;
   qf[451] *= k_f;
-  qr[451] *= k_f * inv_ge[14] * ge[16] * inv_ge[63] * ge[65];
+  qr[451] *=
+    k_f * (kc_fast ? (ge[16] * inv_ge[63] * inv_ge[14] * ge[65])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[63] + g_RT[65])));
   // reaction 449:  CHFO + M <=> CO + HF + M
   k_f = 2.48e+19 * exp((-3) * logT - (21638.3166296029) * invT);
   Corr = mixture;
   qf[59] *= Corr * k_f;
-  qr[59] *= Corr * k_f * inv_ge[14] * ge[68] * inv_ge[53] * (refCinv);
+  qr[59] *= Corr * k_f *
+            (kc_fast ? (inv_ge[14] * ge[68] * inv_ge[53])
+                     : exp(-(-g_RT[14] - g_RT[53] + g_RT[68]))) *
+            (refCinv);
   // reaction 450:  CFO + F <=> CF2O
   k_f = 1000000;
   qf[452] *= k_f;
-  qr[452] *= k_f * inv_ge[67] * ge[54] * ge[69] * (refC);
+  qr[452] *= k_f *
+             (kc_fast ? (ge[54] * ge[69] * inv_ge[67])
+                      : exp(-(g_RT[54] - g_RT[67] + g_RT[69]))) *
+             (refC);
   // reaction 451:  CHFO + H <=> CFO + H2
   k_f = 110 * exp((1.77) * logT - (1509.64999741416) * invT);
   qf[453] *= k_f;
-  qr[453] *= k_f * inv_ge[0] * ge[1] * inv_ge[69] * ge[68];
+  qr[453] *= k_f * (kc_fast ? (inv_ge[0] * ge[1] * ge[68] * inv_ge[69])
+                            : exp(-(-g_RT[0] + g_RT[1] + g_RT[68] - g_RT[69])));
   // reaction 452:  CF2O + H <=> CFO + HF
   k_f = 24 * exp((1.88) * logT - (18065.4783023894) * invT);
   qf[454] *= k_f;
-  qr[454] *= k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67];
+  qr[454] *= k_f * (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69])));
   // reaction 453:  CF2O + H <=> CFO + HF
   k_f = 12000 * exp((0.83) * logT - (11221.7316474452) * invT);
   qf[455] *= k_f;
-  qr[455] *= k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67];
+  qr[455] *= k_f * (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69])));
   // reaction 454:  CF2O + H <=> CFO + HF
   k_f = 550 * exp((1.42) * logT - (9510.7949837092) * invT);
   qf[456] *= k_f;
-  qr[456] *= k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67];
+  qr[456] *= k_f * (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69])));
   // reaction 455:  CF2O + H2O => CO2 + 2 HF
   k_f = 7.4e-09 * exp((3.84) * logT - (12630.7383116985) * invT);
   qf[457] *= k_f;
   qr[457] *=
-    k_f * inv_ge[15] * ge[5] * inv_ge[53] * ge[67] * inv_ge[53] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[5] * inv_ge[53] * inv_ge[53] * ge[67] * inv_ge[15])
+             : exp(-(g_RT[5] - g_RT[15] - 2.000000 * g_RT[53] + g_RT[67]))) *
+    (refCinv);
   // reaction 456:  CHFO + O <=> CFO + OH
   k_f = 9000000 * exp(-(1549.90733067854) * invT);
   qf[458] *= k_f;
-  qr[458] *= k_f * inv_ge[4] * ge[2] * inv_ge[69] * ge[68];
+  qr[458] *= k_f * (kc_fast ? (inv_ge[4] * ge[2] * ge[68] * inv_ge[69])
+                            : exp(-(g_RT[2] - g_RT[4] + g_RT[68] - g_RT[69])));
   // reaction 457:  CHFO + OH <=> CFO + H2O
   k_f = 1720 * exp((1.18) * logT - (-224.93784961471) * invT);
   qf[459] *= k_f;
-  qr[459] *= k_f * inv_ge[5] * ge[4] * inv_ge[69] * ge[68];
+  qr[459] *= k_f * (kc_fast ? (ge[4] * inv_ge[69] * ge[68] * inv_ge[5])
+                            : exp(-(g_RT[4] - g_RT[5] + g_RT[68] - g_RT[69])));
   // reaction 458:  CF2O + OH => CO2 + F + HF
   k_f = 0.0027 * exp((2.38) * logT - (10567.5499818991) * invT);
   qf[460] *= k_f;
   qr[460] *=
-    k_f * inv_ge[15] * ge[4] * inv_ge[53] * ge[67] * inv_ge[54] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[54] * ge[4] * inv_ge[53] * ge[67] * inv_ge[15])
+             : exp(-(g_RT[4] - g_RT[15] - g_RT[53] - g_RT[54] + g_RT[67]))) *
+    (refCinv);
   // reaction 459:  CFO + H2O2 <=> CHFO + HO2
   k_f = 100000 * exp(-(1962.54499663841) * invT);
   qf[461] *= k_f;
-  qr[461] *= k_f * inv_ge[6] * ge[7] * inv_ge[68] * ge[69];
+  qr[461] *= k_f * (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[68] * ge[69])
+                            : exp(-(-g_RT[6] + g_RT[7] - g_RT[68] + g_RT[69])));
   // reaction 460:  CH3 + CHFO <=> CFO + CH4
   k_f = 2000000 * exp(-(4528.94999224248) * invT);
   qf[462] *= k_f;
-  qr[462] *= k_f * inv_ge[13] * ge[12] * inv_ge[69] * ge[68];
+  qr[462] *=
+    k_f * (kc_fast ? (ge[12] * inv_ge[13] * ge[68] * inv_ge[69])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[68] - g_RT[69])));
   // reaction 461:  CH2F + CHFO <=> CFO + CH3F
   k_f = 2000000 * exp(-(4528.94999224248) * invT);
   qf[463] *= k_f;
-  qr[463] *= k_f * inv_ge[56] * ge[60] * inv_ge[69] * ge[68];
+  qr[463] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[69] * ge[68] * inv_ge[56])
+                   : exp(-(-g_RT[56] + g_RT[60] + g_RT[68] - g_RT[69])));
   // reaction 462:  CHF2 + CHFO <=> CFO + CH2F2
   k_f = 2000000 * exp(-(4528.94999224248) * invT);
   qf[464] *= k_f;
-  qr[464] *= k_f * inv_ge[57] * ge[61] * inv_ge[69] * ge[68];
+  qr[464] *=
+    k_f * (kc_fast ? (inv_ge[69] * ge[61] * inv_ge[57] * ge[68])
+                   : exp(-(-g_RT[57] + g_RT[61] + g_RT[68] - g_RT[69])));
   // reaction 463:  CF3 + CHFO <=> CFO + CHF3
   k_f = 2000000 * exp(-(4528.94999224248) * invT);
   qf[465] *= k_f;
-  qr[465] *= k_f * inv_ge[58] * ge[62] * inv_ge[69] * ge[68];
+  qr[465] *=
+    k_f * (kc_fast ? (inv_ge[69] * ge[68] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[58] + g_RT[62] + g_RT[68] - g_RT[69])));
   // reaction 464:  C2H3 + CHFO <=> C2H4 + CFO
   k_f = 2000000 * exp(-(2516.0833290236) * invT);
   qf[466] *= k_f;
-  qr[466] *= k_f * inv_ge[24] * ge[23] * inv_ge[69] * ge[68];
+  qr[466] *=
+    k_f * (kc_fast ? (inv_ge[24] * inv_ge[69] * ge[68] * ge[23])
+                   : exp(-(g_RT[23] - g_RT[24] + g_RT[68] - g_RT[69])));
   // reaction 465:  CFO + O <=> CO2 + F
   k_f = 30000000;
   qf[467] *= k_f;
-  qr[467] *= k_f * inv_ge[15] * ge[2] * inv_ge[54] * ge[69];
+  qr[467] *= k_f * (kc_fast ? (inv_ge[54] * ge[2] * ge[69] * inv_ge[15])
+                            : exp(-(g_RT[2] - g_RT[15] - g_RT[54] + g_RT[69])));
   // reaction 466:  CFO + OH <=> CO2 + HF
   k_f = 30000000;
   qf[468] *= k_f;
-  qr[468] *= k_f * inv_ge[15] * ge[4] * inv_ge[53] * ge[69];
+  qr[468] *= k_f * (kc_fast ? (ge[4] * ge[69] * inv_ge[53] * inv_ge[15])
+                            : exp(-(g_RT[4] - g_RT[15] - g_RT[53] + g_RT[69])));
   // reaction 467:  CFO + HO2 => CO2 + F + OH
   k_f = 30000000;
   qf[469] *= k_f;
   qr[469] *=
-    k_f * inv_ge[4] * ge[6] * inv_ge[15] * ge[69] * inv_ge[54] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[54] * ge[6] * inv_ge[4] * ge[69] * inv_ge[15])
+             : exp(-(-g_RT[4] + g_RT[6] - g_RT[15] - g_RT[54] + g_RT[69]))) *
+    (refCinv);
   // reaction 468:  CFO + CH3 <=> CH2CO + HF
   k_f = 27000000;
   qf[470] *= k_f;
-  qr[470] *= k_f * inv_ge[28] * ge[12] * inv_ge[53] * ge[69];
+  qr[470] *=
+    k_f * (kc_fast ? (inv_ge[28] * ge[69] * ge[12] * inv_ge[53])
+                   : exp(-(g_RT[12] - g_RT[28] - g_RT[53] + g_RT[69])));
   // reaction 469:  2 CFO <=> CF2O + CO
   k_f = 22300000 * exp(-(160.022899725901) * invT);
   qf[471] *= k_f;
-  qr[471] *= k_f * inv_ge[14] * ge[69] * inv_ge[67] * ge[69];
+  qr[471] *=
+    k_f * (kc_fast ? (inv_ge[14] * ge[69] * ge[69] * inv_ge[67])
+                   : exp(-(-g_RT[14] - g_RT[67] + 2.000000 * g_RT[69])));
   // reaction 470:  CH2F + CH3 <=> C2H4 + HF
   k_f = 18500000000000 * exp((-1.86) * logT - (941.015165054826) * invT);
   qf[472] *= k_f;
-  qr[472] *= k_f * inv_ge[24] * ge[12] * inv_ge[53] * ge[60];
+  qr[472] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[24] * ge[12] * inv_ge[53])
+                   : exp(-(g_RT[12] - g_RT[24] - g_RT[53] + g_RT[60])));
   // reaction 471:  CH2(S) + CH3F <=> C2H4 + HF
   k_f = 30000000;
   qf[473] *= k_f;
-  qr[473] *= k_f * inv_ge[24] * ge[11] * inv_ge[53] * ge[56];
+  qr[473] *=
+    k_f * (kc_fast ? (inv_ge[24] * ge[56] * inv_ge[53] * ge[11])
+                   : exp(-(g_RT[11] - g_RT[24] - g_RT[53] + g_RT[56])));
   // reaction 472:  CH4 + CHF <=> C2H4 + HF
   k_f = 40000000 * exp(-(7548.2499870708) * invT);
   qf[474] *= k_f;
-  qr[474] *= k_f * inv_ge[24] * ge[13] * inv_ge[53] * ge[63];
+  qr[474] *=
+    k_f * (kc_fast ? (inv_ge[24] * ge[63] * ge[13] * inv_ge[53])
+                   : exp(-(g_RT[13] - g_RT[24] - g_RT[53] + g_RT[63])));
   // reaction 473:  CH2F + CH3 <=> CH4 + CHF
   k_f = 30000000 * exp(-(1710.93666373605) * invT);
   qf[475] *= k_f;
-  qr[475] *= k_f * inv_ge[13] * ge[12] * inv_ge[63] * ge[60];
+  qr[475] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[13] * inv_ge[63] * ge[12])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[60] - g_RT[63])));
   // reaction 474:  2 CH2F <=> CH3F + CHF
   k_f = 30000000 * exp(-(2415.43999586265) * invT);
   qf[476] *= k_f;
-  qr[476] *= k_f * inv_ge[56] * ge[60] * inv_ge[63] * ge[60];
+  qr[476] *=
+    k_f * (kc_fast ? (ge[60] * ge[60] * inv_ge[56] * inv_ge[63])
+                   : exp(-(-g_RT[56] + 2.000000 * g_RT[60] - g_RT[63])));
   // reaction 475:  CH2F + CHF2 <=> CH2F2 + CHF
   k_f = 10000000 * exp(-(2214.15332954077) * invT);
   qf[477] *= k_f;
-  qr[477] *= k_f * inv_ge[57] * ge[60] * inv_ge[63] * ge[61];
+  qr[477] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[63] * inv_ge[57] * ge[61])
+                   : exp(-(-g_RT[57] + g_RT[60] + g_RT[61] - g_RT[63])));
   // reaction 476:  CF3 + CH2F <=> CHF + CHF3
   k_f = 30000000 * exp(-(2314.79666270171) * invT);
   qf[478] *= k_f;
-  qr[478] *= k_f * inv_ge[58] * ge[60] * inv_ge[63] * ge[62];
+  qr[478] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[63] * inv_ge[58] * ge[62])
+                   : exp(-(-g_RT[58] + g_RT[60] + g_RT[62] - g_RT[63])));
   // reaction 477:  CH3 + CHF2 <=> CF2 + CH4
   k_f = 25000000 * exp(-(402.573332643776) * invT);
   qf[479] *= k_f;
-  qr[479] *= k_f * inv_ge[13] * ge[12] * inv_ge[64] * ge[61];
+  qr[479] *=
+    k_f * (kc_fast ? (ge[12] * ge[61] * inv_ge[64] * inv_ge[13])
+                   : exp(-(g_RT[12] - g_RT[13] + g_RT[61] - g_RT[64])));
   // reaction 478:  CH2F + CHF2 <=> CF2 + CH3F
   k_f = 30000000 * exp(-(1107.07666477038) * invT);
   qf[480] *= k_f;
-  qr[480] *= k_f * inv_ge[56] * ge[60] * inv_ge[64] * ge[61];
+  qr[480] *=
+    k_f * (kc_fast ? (ge[60] * inv_ge[64] * ge[61] * inv_ge[56])
+                   : exp(-(-g_RT[56] + g_RT[60] + g_RT[61] - g_RT[64])));
   // reaction 479:  2 CHF2 <=> CF2 + CH2F2
   k_f = 30000000 * exp(-(805.146665287552) * invT);
   qf[481] *= k_f;
-  qr[481] *= k_f * inv_ge[57] * ge[61] * inv_ge[64] * ge[61];
+  qr[481] *=
+    k_f * (kc_fast ? (inv_ge[64] * ge[61] * ge[61] * inv_ge[57])
+                   : exp(-(-g_RT[57] + 2.000000 * g_RT[61] - g_RT[64])));
   // reaction 480:  CF3 + CHF2 <=> CF2 + CHF3
   k_f = 30000000 * exp(-(1006.43333160944) * invT);
   qf[482] *= k_f;
-  qr[482] *= k_f * inv_ge[58] * ge[61] * inv_ge[64] * ge[62];
+  qr[482] *=
+    k_f * (kc_fast ? (inv_ge[64] * ge[61] * ge[62] * inv_ge[58])
+                   : exp(-(-g_RT[58] + g_RT[61] + g_RT[62] - g_RT[64])));
   // reaction 481:  CH2(S) + CHF <=> C2H2 + HF
   k_f = 170200000000000 * exp((-2.12) * logT - (1197.65566461523) * invT);
   qf[483] *= k_f;
-  qr[483] *= k_f * inv_ge[22] * ge[11] * inv_ge[53] * ge[63];
+  qr[483] *=
+    k_f * (kc_fast ? (ge[63] * inv_ge[22] * inv_ge[53] * ge[11])
+                   : exp(-(g_RT[11] - g_RT[22] - g_RT[53] + g_RT[63])));
   // reaction 482:  CH2 + CH2F <=> C2H4 + F
   k_f = 40000000;
   qf[484] *= k_f;
-  qr[484] *= k_f * inv_ge[24] * ge[10] * inv_ge[54] * ge[60];
+  qr[484] *=
+    k_f * (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[60] * ge[10])
+                   : exp(-(g_RT[10] - g_RT[24] - g_RT[54] + g_RT[60])));
   // reaction 483:  CH2(S) + CH2F <=> C2H4 + F
   k_f = 2000000;
   qf[485] *= k_f;
-  qr[485] *= k_f * inv_ge[24] * ge[11] * inv_ge[54] * ge[60];
+  qr[485] *=
+    k_f * (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[60] * ge[11])
+                   : exp(-(g_RT[11] - g_RT[24] - g_RT[54] + g_RT[60])));
   // reaction 484:  F + HCCO <=> CHF + CO
   k_f = 30000000;
   qf[486] *= k_f;
-  qr[486] *= k_f * inv_ge[14] * ge[27] * inv_ge[63] * ge[54];
+  qr[486] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[63] * ge[27] * inv_ge[14])
+                   : exp(-(-g_RT[14] + g_RT[27] + g_RT[54] - g_RT[63])));
   // reaction 485:  CH4 + F <=> CH3 + HF
   k_f = 5900000 * exp((0.5) * logT - (226.447499612124) * invT);
   qf[487] *= k_f;
-  qr[487] *= k_f * inv_ge[12] * ge[13] * inv_ge[53] * ge[54];
+  qr[487] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[12] * ge[13] * inv_ge[53])
+                   : exp(-(-g_RT[12] + g_RT[13] - g_RT[53] + g_RT[54])));
   // reaction 486:  CH3F + F <=> CH2F + HF
   k_f = 135000000 * exp(-(603.859998965664) * invT);
   qf[488] *= k_f;
-  qr[488] *= k_f * inv_ge[53] * ge[54] * inv_ge[60] * ge[56];
+  qr[488] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[60] * ge[56] * inv_ge[53])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[56] - g_RT[60])));
   // reaction 487:  CH2F2 + F <=> CHF2 + HF
   k_f = 90000000 * exp(-(930.950831738731) * invT);
   qf[489] *= k_f;
-  qr[489] *= k_f * inv_ge[53] * ge[54] * inv_ge[61] * ge[57];
+  qr[489] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[61] * ge[57] * inv_ge[53])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[57] - g_RT[61])));
   // reaction 488:  CHF3 + F <=> CF3 + HF
   k_f = 45000000 * exp(-(1861.90166347746) * invT);
   qf[490] *= k_f;
-  qr[490] *= k_f * inv_ge[53] * ge[54] * inv_ge[62] * ge[58];
+  qr[490] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[53] * ge[58] * inv_ge[62])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[58] - g_RT[62])));
   // reaction 489:  CH3OH + F <=> CH3O + HF
   k_f = 2620 * exp((1.44) * logT - (-103.159416489968) * invT);
   qf[491] *= k_f;
-  qr[491] *= k_f * inv_ge[19] * ge[20] * inv_ge[53] * ge[54];
+  qr[491] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[19] * ge[20] * inv_ge[53])
+                   : exp(-(-g_RT[19] + g_RT[20] - g_RT[53] + g_RT[54])));
   // reaction 490:  CH3OH + F <=> CH2OH + HF
   k_f = 46.2 * exp((1.97) * logT - (-150.964999741416) * invT);
   qf[492] *= k_f;
-  qr[492] *= k_f * inv_ge[18] * ge[20] * inv_ge[53] * ge[54];
+  qr[492] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[18] * ge[20] * inv_ge[53])
+                   : exp(-(-g_RT[18] + g_RT[20] - g_RT[53] + g_RT[54])));
   // reaction 491:  CH2O + F <=> HCO + HF
   k_f = 60000000 * exp(-(1006.43333160944) * invT);
   qf[493] *= k_f;
-  qr[493] *= k_f * inv_ge[16] * ge[17] * inv_ge[53] * ge[54];
+  qr[493] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[16] * ge[17] * inv_ge[53])
+                   : exp(-(-g_RT[16] + g_RT[17] - g_RT[53] + g_RT[54])));
   // reaction 492:  CHFO + F <=> CFO + HF
   k_f = 26500000 * exp(-(905.789998448495) * invT);
   qf[494] *= k_f;
-  qr[494] *= k_f * inv_ge[53] * ge[54] * inv_ge[69] * ge[68];
+  qr[494] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[69] * ge[68] * inv_ge[53])
+                   : exp(-(-g_RT[53] + g_RT[54] + g_RT[68] - g_RT[69])));
   // reaction 493:  CH3O + F <=> CH2O + HF
   k_f = 30000000;
   qf[495] *= k_f;
-  qr[495] *= k_f * inv_ge[17] * ge[19] * inv_ge[53] * ge[54];
+  qr[495] *=
+    k_f * (kc_fast ? (ge[54] * ge[19] * inv_ge[17] * inv_ge[53])
+                   : exp(-(-g_RT[17] + g_RT[19] - g_RT[53] + g_RT[54])));
   // reaction 494:  F + HCO <=> CO + HF
   k_f = 10000000;
   qf[496] *= k_f;
-  qr[496] *= k_f * inv_ge[14] * ge[16] * inv_ge[53] * ge[54];
+  qr[496] *=
+    k_f * (kc_fast ? (ge[54] * ge[16] * inv_ge[14] * inv_ge[53])
+                   : exp(-(-g_RT[14] + g_RT[16] - g_RT[53] + g_RT[54])));
   // reaction 495:  C2H6 + F <=> C2H5 + HF
   k_f = 8000000 * exp(-(150.964999741416) * invT);
   qf[497] *= k_f;
-  qr[497] *= k_f * inv_ge[25] * ge[26] * inv_ge[53] * ge[54];
+  qr[497] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[25] * ge[26] * inv_ge[53])
+                   : exp(-(-g_RT[25] + g_RT[26] - g_RT[53] + g_RT[54])));
   // reaction 496:  C2H4 + F <=> C2H3 + HF
   k_f = 100000000 * exp(-(1006.43333160944) * invT);
   qf[498] *= k_f;
-  qr[498] *= k_f * inv_ge[23] * ge[24] * inv_ge[53] * ge[54];
+  qr[498] *=
+    k_f * (kc_fast ? (ge[54] * ge[24] * inv_ge[23] * inv_ge[53])
+                   : exp(-(-g_RT[23] + g_RT[24] - g_RT[53] + g_RT[54])));
   // reaction 497:  C2H3 + F <=> C2H2 + HF
   k_f = 20000000;
   qf[499] *= k_f;
-  qr[499] *= k_f * inv_ge[22] * ge[23] * inv_ge[53] * ge[54];
+  qr[499] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[22] * ge[23] * inv_ge[53])
+                   : exp(-(-g_RT[22] + g_RT[23] - g_RT[53] + g_RT[54])));
   // reaction 498:  CF3 (+M) <=> CF2 + F (+M)
   k_f = 1e+15 * exp(-(41449.9567623348) * invT);
   Corr = mixture + sc[0] + (5) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
@@ -16024,87 +16846,130 @@ comp_qfqr(
   redP = Corr / k_f * 5000000000 * exp(-(30021.9062819096) * invT);
   Corr = redP / (1. + redP);
   qf[31] *= Corr * k_f;
-  qr[31] *= Corr * k_f * inv_ge[54] * ge[62] * inv_ge[64] * (refCinv);
+  qr[31] *= Corr * k_f *
+            (kc_fast ? (inv_ge[54] * inv_ge[64] * ge[62])
+                     : exp(-(-g_RT[54] + g_RT[62] - g_RT[64]))) *
+            (refCinv);
   // reaction 499:  CF4 + CH3 <=> CF3 + CH3F
   k_f = 0.0964 * exp((2.41) * logT - (13149.0514774773) * invT);
   qf[500] *= k_f;
-  qr[500] *= k_f * inv_ge[56] * ge[12] * inv_ge[62] * ge[59];
+  qr[500] *=
+    k_f * (kc_fast ? (ge[12] * inv_ge[56] * ge[59] * inv_ge[62])
+                   : exp(-(g_RT[12] - g_RT[56] + g_RT[59] - g_RT[62])));
   // reaction 500:  CF3O + CO <=> CF3 + CO2
   k_f = 31300;
   qf[501] *= k_f;
-  qr[501] *= k_f * inv_ge[15] * ge[14] * inv_ge[62] * ge[66];
+  qr[501] *=
+    k_f * (kc_fast ? (ge[14] * inv_ge[15] * ge[66] * inv_ge[62])
+                   : exp(-(g_RT[14] - g_RT[15] - g_RT[62] + g_RT[66])));
   // reaction 501:  CF2 + CFO <=> CF3 + CO
   k_f = 540000;
   qf[502] *= k_f;
-  qr[502] *= k_f * inv_ge[14] * ge[64] * inv_ge[62] * ge[69];
+  qr[502] *=
+    k_f * (kc_fast ? (inv_ge[14] * ge[69] * ge[64] * inv_ge[62])
+                   : exp(-(-g_RT[14] - g_RT[62] + g_RT[64] + g_RT[69])));
   // reaction 502:  2 F + M <=> F2 + M
   k_f = 100;
   Corr = mixture;
   qf[60] *= Corr * k_f;
-  qr[60] *= Corr * k_f * inv_ge[55] * ge[54] * ge[54] * (refC);
+  qr[60] *= Corr * k_f *
+            (kc_fast ? (ge[54] * inv_ge[55] * ge[54])
+                     : exp(-(2.000000 * g_RT[54] - g_RT[55]))) *
+            (refC);
   // reaction 503:  F2 + H <=> F + HF
   k_f = 2900 * exp((1.4) * logT - (669.278165520277) * invT);
   qf[503] *= k_f;
-  qr[503] *= k_f * inv_ge[53] * ge[1] * inv_ge[54] * ge[55];
+  qr[503] *= k_f * (kc_fast ? (inv_ge[54] * ge[55] * ge[1] * inv_ge[53])
+                            : exp(-(g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55])));
   // reaction 504:  CF3 + F2 <=> CF4 + F
   k_f = 2650000 * exp(-(1258.0416645118) * invT);
   qf[504] *= k_f;
-  qr[504] *= k_f * inv_ge[54] * ge[55] * inv_ge[59] * ge[62];
+  qr[504] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[55] * ge[62] * inv_ge[59])
+                   : exp(-(-g_RT[54] + g_RT[55] - g_RT[59] + g_RT[62])));
   // reaction 505:  CH3 + F2 <=> CH3F + F
   k_f = 4000000 * exp(-(553.538332385192) * invT);
   qf[505] *= k_f;
-  qr[505] *= k_f * inv_ge[54] * ge[12] * inv_ge[56] * ge[55];
+  qr[505] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[12] * ge[55] * inv_ge[56])
+                   : exp(-(g_RT[12] - g_RT[54] + g_RT[55] - g_RT[56])));
   // reaction 506:  CF2 + F2 <=> CF3 + F
   k_f = 1200000 * exp(-(1509.64999741416) * invT);
   qf[506] *= k_f;
-  qr[506] *= k_f * inv_ge[54] * ge[55] * inv_ge[62] * ge[64];
+  qr[506] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[55] * ge[64] * inv_ge[62])
+                   : exp(-(-g_RT[54] + g_RT[55] - g_RT[62] + g_RT[64])));
   // reaction 507:  CFO + F2 <=> CF2O + F
   k_f = 1000000;
   qf[507] *= k_f;
-  qr[507] *= k_f * inv_ge[54] * ge[55] * inv_ge[67] * ge[69];
+  qr[507] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[55] * ge[69] * inv_ge[67])
+                   : exp(-(-g_RT[54] + g_RT[55] - g_RT[67] + g_RT[69])));
   // reaction 508:  F2 + H2 <=> F + H + HF
   k_f = 3440000 * exp(-(9958.6578162754) * invT);
   qf[508] *= k_f;
   qr[508] *=
-    k_f * inv_ge[1] * ge[0] * inv_ge[53] * ge[55] * inv_ge[54] * (refCinv);
+    k_f *
+    (kc_fast ? (ge[0] * inv_ge[54] * ge[55] * inv_ge[53] * inv_ge[1])
+             : exp(-(g_RT[0] - g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+    (refCinv);
   // reaction 509:  CO + F2 <=> CFO + F
   k_f = 470000 * exp(-(6793.42498836372) * invT);
   qf[509] *= k_f;
-  qr[509] *= k_f * inv_ge[54] * ge[14] * inv_ge[69] * ge[55];
+  qr[509] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[69] * ge[14])
+                   : exp(-(g_RT[14] - g_RT[54] + g_RT[55] - g_RT[69])));
   // reaction 510:  C + F2 <=> CF + F
   k_f = 1700000 * exp(-(754.82499870708) * invT);
   qf[510] *= k_f;
-  qr[510] *= k_f * inv_ge[54] * ge[8] * inv_ge[65] * ge[55];
+  qr[510] *= k_f * (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[65] * ge[8])
+                            : exp(-(g_RT[8] - g_RT[54] + g_RT[55] - g_RT[65])));
   // reaction 511:  CF + F2 <=> CF2 + F
   k_f = 2400000;
   qf[511] *= k_f;
-  qr[511] *= k_f * inv_ge[54] * ge[55] * inv_ge[64] * ge[65];
+  qr[511] *=
+    k_f * (kc_fast ? (inv_ge[54] * ge[55] * ge[65] * inv_ge[64])
+                   : exp(-(-g_RT[54] + g_RT[55] - g_RT[64] + g_RT[65])));
   // reaction 512:  CH4 + F2 <=> CH3 + F + HF
   k_f = 2000000 * exp(-(5651.123156987) * invT);
   qf[512] *= k_f;
   qr[512] *=
-    k_f * inv_ge[12] * ge[13] * inv_ge[53] * ge[55] * inv_ge[54] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[12] * inv_ge[53] * ge[13])
+             : exp(-(-g_RT[12] + g_RT[13] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+    (refCinv);
   // reaction 513:  F2 + OH <=> F + HF + O
   k_f = 70000000 * exp(-(4528.94999224248) * invT);
   qf[513] *= k_f;
   qr[513] *=
-    k_f * inv_ge[2] * ge[4] * inv_ge[53] * ge[55] * inv_ge[54] * (refCinv);
+    k_f *
+    (kc_fast ? (inv_ge[54] * ge[4] * ge[55] * inv_ge[53] * inv_ge[2])
+             : exp(-(-g_RT[2] + g_RT[4] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+    (refCinv);
   // reaction 514:  C3H8 + F <=> HF + nC3H7
   k_f = 35000000;
   qf[514] *= k_f;
-  qr[514] *= k_f * inv_ge[53] * ge[50] * inv_ge[71] * ge[54];
+  qr[514] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[71] * ge[50] * inv_ge[53])
+                   : exp(-(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[71])));
   // reaction 515:  C3H8 + F <=> HF + iC3H7
   k_f = 41000000;
   qf[515] *= k_f;
-  qr[515] *= k_f * inv_ge[53] * ge[50] * inv_ge[70] * ge[54];
+  qr[515] *=
+    k_f * (kc_fast ? (ge[54] * inv_ge[70] * ge[50] * inv_ge[53])
+                   : exp(-(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[70])));
   // reaction 516:  C3H8 + CF3 <=> CHF3 + nC3H7
   k_f = 540000 * exp(-(4297.47032597231) * invT);
   qf[516] *= k_f;
-  qr[516] *= k_f * inv_ge[58] * ge[50] * inv_ge[71] * ge[62];
+  qr[516] *=
+    k_f * (kc_fast ? (inv_ge[71] * ge[50] * inv_ge[58] * ge[62])
+                   : exp(-(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[71])));
   // reaction 517:  C3H8 + CF3 <=> CHF3 + iC3H7
   k_f = 180000 * exp(-(3280.97266104677) * invT);
   qf[517] *= k_f;
-  qr[517] *= k_f * inv_ge[58] * ge[50] * inv_ge[70] * ge[62];
+  qr[517] *=
+    k_f * (kc_fast ? (inv_ge[70] * ge[50] * inv_ge[58] * ge[62])
+                   : exp(-(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[70])));
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -16130,11 +16995,17 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   // compute the Gibbs free energy
   amrex::Real g_RT[72];
   gibbs(g_RT, T);
-  // exp(-g/RT) and its inverse per species, for the Kc products
-  amrex::Real ge[72], inv_ge[72];
-  for (int i = 0; i < 72; ++i) {
-    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
-    inv_ge[i] = 1.0 / ge[i];
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[72] = {}, inv_ge[72] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 72; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
   }
 
   {
@@ -16156,8 +17027,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[10]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[12] * ge[1] * ge[10] * (refC) * (sc[12]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[12] * ge[1] * ge[10])
+                                    : exp(-(g_RT[1] + g_RT[10] - g_RT[12]))) *
+                           (refC) * (sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[10] -= qdot;
@@ -16184,8 +17057,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[12]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[13] * ge[1] * ge[12] * (refC) * (sc[13]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[12] * inv_ge[13] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[12] - g_RT[13]))) *
+                           (refC) * (sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] -= qdot;
@@ -16212,8 +17087,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[16]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[17] * ge[1] * ge[16] * (refC) * (sc[17]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[16] * inv_ge[17] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[16] - g_RT[17]))) *
+                           (refC) * (sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[16] -= qdot;
@@ -16240,8 +17117,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[17]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[18] * ge[1] * ge[17] * (refC) * (sc[18]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[18] * ge[17] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[17] - g_RT[18]))) *
+                           (refC) * (sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[17] -= qdot;
@@ -16268,8 +17147,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[17]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[19] * ge[1] * ge[17] * (refC) * (sc[19]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[19] * ge[17] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[17] - g_RT[19]))) *
+                           (refC) * (sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[17] -= qdot;
@@ -16296,8 +17177,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[18]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[20] * ge[1] * ge[18] * (refC) * (sc[20]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[18] * ge[1] * inv_ge[20])
+                                    : exp(-(g_RT[1] + g_RT[18] - g_RT[20]))) *
+                           (refC) * (sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[18] -= qdot;
@@ -16324,8 +17207,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[19]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[20] * ge[1] * ge[19] * (refC) * (sc[20]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[19] * ge[1] * inv_ge[20])
+                                    : exp(-(g_RT[1] + g_RT[19] - g_RT[20]))) *
+                           (refC) * (sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[19] -= qdot;
@@ -16351,8 +17236,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[21]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[22] * ge[1] * ge[21] * (refC) * (sc[22]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[22] * ge[1] * ge[21])
+                                    : exp(-(g_RT[1] + g_RT[21] - g_RT[22]))) *
+                           (refC) * (sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[21] -= qdot;
@@ -16378,8 +17265,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[22]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[23] * ge[1] * ge[22] * (refC) * (sc[23]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[22] * inv_ge[23] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[22] - g_RT[23]))) *
+                           (refC) * (sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[22] -= qdot;
@@ -16406,8 +17295,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[23]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[24] * ge[1] * ge[23] * (refC) * (sc[24]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[24] * ge[1] * ge[23])
+                                    : exp(-(g_RT[1] + g_RT[23] - g_RT[24]))) *
+                           (refC) * (sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[23] -= qdot;
@@ -16434,8 +17325,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[24]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[25] * ge[1] * ge[24] * (refC) * (sc[25]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[24] * inv_ge[25] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[24] - g_RT[25]))) *
+                           (refC) * (sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[24] -= qdot;
@@ -16462,8 +17355,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[25]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[26] * ge[1] * ge[25] * (refC) * (sc[26]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[25] * inv_ge[26] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[25] - g_RT[26]))) *
+                           (refC) * (sc[26]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[25] -= qdot;
@@ -16489,8 +17384,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[0] * sc[14]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[17] * ge[0] * ge[14] * (refC) * (sc[17]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[0] * inv_ge[17] * ge[14])
+                                    : exp(-(g_RT[0] + g_RT[14] - g_RT[17]))) *
+                           (refC) * (sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[14] -= qdot;
@@ -16516,8 +17413,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[4] * sc[4]));
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[7] * ge[4] * ge[4] * (refC) * (sc[7]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[4] * ge[4] * inv_ge[7])
+                                    : exp(-(2.000000 * g_RT[4] - g_RT[7]))) *
+                           (refC) * (sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= 2.000000 * qdot;
     wdot[7] += qdot;
@@ -16543,8 +17442,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[4] * sc[12]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[20] * ge[4] * ge[12] * (refC) * (sc[20]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[4] * ge[12] * inv_ge[20])
+                                    : exp(-(g_RT[4] + g_RT[12] - g_RT[20]))) *
+                           (refC) * (sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[12] -= qdot;
@@ -16570,8 +17471,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[9] * sc[14]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[27] * ge[9] * ge[14] * (refC) * (sc[27]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[27] * ge[14] * ge[9])
+                                    : exp(-(g_RT[9] + g_RT[14] - g_RT[27]))) *
+                           (refC) * (sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[14] -= qdot;
@@ -16598,8 +17501,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[10] * sc[14]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[28] * ge[10] * ge[14] * (refC) * (sc[28]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[28] * ge[14] * ge[10])
+                                    : exp(-(g_RT[10] + g_RT[14] - g_RT[28]))) *
+                           (refC) * (sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[10] -= qdot;
     wdot[14] -= qdot;
@@ -16626,8 +17531,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[5] * sc[11]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[20] * ge[5] * ge[11] * (refC) * (sc[20]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[20] * ge[5] * ge[11])
+                                    : exp(-(g_RT[5] + g_RT[11] - g_RT[20]))) *
+                           (refC) * (sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[11] -= qdot;
@@ -16654,8 +17561,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[12] * sc[12]));
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[26] * ge[12] * ge[12] * (refC) * (sc[26]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[12] * ge[12] * inv_ge[26])
+                                    : exp(-(2.000000 * g_RT[12] - g_RT[26]))) *
+                           (refC) * (sc[26]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= 2.000000 * qdot;
     wdot[26] += qdot;
@@ -16681,7 +17590,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[24]);
-    const amrex::Real qr = Corr * k_f * inv_ge[0] * ge[24] * inv_ge[22] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[0] * ge[24] * inv_ge[22])
+                                    : exp(-(-g_RT[0] - g_RT[22] + g_RT[24]))) *
                            (refCinv) * (sc[0] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
@@ -16708,8 +17619,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[9] * sc[47]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[42] * ge[9] * ge[47] * (refC) * (sc[42]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[47] * inv_ge[42] * ge[9])
+                                    : exp(-(g_RT[9] - g_RT[42] + g_RT[47]))) *
+                           (refC) * (sc[42]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[42] += qdot;
@@ -16736,8 +17649,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[0] * sc[9]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[12] * ge[0] * ge[9] * (refC) * (sc[12]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[0] * inv_ge[12] * ge[9])
+                                    : exp(-(g_RT[0] + g_RT[9] - g_RT[12]))) *
+                           (refC) * (sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[9] -= qdot;
@@ -16764,8 +17679,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[28]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[51] * ge[1] * ge[28] * (refC) * (sc[51]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[28] * inv_ge[51] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[28] - g_RT[51]))) *
+                           (refC) * (sc[51]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[28] -= qdot;
@@ -16791,8 +17708,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[12] * sc[25]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[50] * ge[12] * ge[25] * (refC) * (sc[50]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[25] * ge[12] * inv_ge[50])
+                                    : exp(-(g_RT[12] + g_RT[25] - g_RT[50]))) *
+                           (refC) * (sc[50]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[25] -= qdot;
@@ -16818,8 +17737,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[12] * sc[24]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[49] * ge[12] * ge[24] * (refC) * (sc[49]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[24] * inv_ge[49] * ge[12])
+                                    : exp(-(g_RT[12] + g_RT[24] - g_RT[49]))) *
+                           (refC) * (sc[49]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[24] -= qdot;
@@ -16845,8 +17766,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real F_troe = exp(M_LN10 * logFcent / (1.0 + troe * troe));
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[49]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[50] * ge[1] * ge[49] * (refC) * (sc[50]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[49] * inv_ge[50] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[49] - g_RT[50]))) *
+                           (refC) * (sc[50]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[49] -= qdot;
@@ -16862,8 +17785,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real redP = Corr / k_f * 602 * exp(-1509.64999741416 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[14]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[15] * ge[2] * ge[14] * (refC) * (sc[15]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[14] * ge[2] * inv_ge[15])
+                                    : exp(-(g_RT[2] + g_RT[14] - g_RT[15]))) *
+                           (refC) * (sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] -= qdot;
@@ -16879,7 +17804,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       Corr / k_f * 637000000 * exp(-28502.1919511793 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[37]);
-    const amrex::Real qr = Corr * k_f * inv_ge[2] * ge[37] * inv_ge[47] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[47] * ge[37] * inv_ge[2])
+                                    : exp(-(-g_RT[2] + g_RT[37] - g_RT[47]))) *
                            (refCinv) * (sc[2] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
@@ -16896,8 +17823,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       Corr / k_f * 140000000000000 * exp(-3.4 * logT - 956.111665028967 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[40]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[41] * ge[1] * ge[40] * (refC) * (sc[41]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[40] * inv_ge[41] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[40] - g_RT[41]))) *
+                           (refC) * (sc[41]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[40] -= qdot;
@@ -16914,7 +17843,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       Corr / k_f * 15000000000 * exp(-33966.6217251528 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[56]);
-    const amrex::Real qr = Corr * k_f * inv_ge[11] * ge[56] * inv_ge[53] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[56] * inv_ge[53] * inv_ge[11])
+                                    : exp(-(-g_RT[11] - g_RT[53] + g_RT[56]))) *
                            (refCinv) * (sc[11] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[11] += qdot;
@@ -16933,7 +17864,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       Corr / k_f * 2290000000 * exp(-48042.0950843766 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[64]);
-    const amrex::Real qr = Corr * k_f * inv_ge[54] * ge[64] * inv_ge[65] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[54] * inv_ge[65] * ge[64])
+                                    : exp(-(-g_RT[54] + g_RT[64] - g_RT[65]))) *
                            (refCinv) * (sc[54] * sc[65]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
@@ -16951,7 +17884,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       Corr / k_f * 5000000000 * exp(-30021.9062819096 * invT);
     Corr = redP / (1.0 + redP);
     const amrex::Real qf = Corr * k_f * (sc[62]);
-    const amrex::Real qr = Corr * k_f * inv_ge[54] * ge[62] * inv_ge[64] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[54] * inv_ge[64] * ge[62])
+                                    : exp(-(-g_RT[54] + g_RT[62] - g_RT[64]))) *
                            (refCinv) * (sc[54] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
@@ -16966,8 +17901,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.75) * sc[14] + (2.6) * sc[15] + (2) * sc[26] +
                              (-0.17) * sc[48];
     const amrex::Real qf = Corr * k_f * ((sc[2] * sc[2]));
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[3] * ge[2] * ge[2] * (refC) * (sc[3]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[3] * ge[2] * ge[2])
+                                    : exp(-(2.000000 * g_RT[2] - g_RT[3]))) *
+                           (refC) * (sc[3]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= 2.000000 * qdot;
     wdot[3] += qdot;
@@ -16980,8 +17917,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[2]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[4] * ge[1] * ge[2] * (refC) * (sc[4]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[4] * ge[1] * ge[2])
+                                    : exp(-(g_RT[1] + g_RT[2] - g_RT[4]))) *
+                           (refC) * (sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] -= qdot;
@@ -16995,8 +17934,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (-0.25) * sc[14] + (0.5) * sc[15] +
                              (0.5) * sc[26] + (-1) * sc[47] + (-1) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[3]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[6] * ge[1] * ge[3] * (refC) * (sc[6]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+                           (refC) * (sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -17007,8 +17948,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 33:  H + O2 + O2 <=> HO2 + O2
     const amrex::Real k_f = 20800000 * exp((-1.24) * logT);
     const amrex::Real qf = k_f * (sc[1] * (sc[3] * sc[3]));
-    const amrex::Real qr =
-      k_f * inv_ge[6] * ge[1] * ge[3] * (refC) * (sc[3] * sc[6]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+                           (refC) * (sc[3] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -17019,8 +17962,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 34:  H + O2 + H2O <=> HO2 + H2O
     const amrex::Real k_f = 11260000 * exp((-0.76) * logT);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[5]);
-    const amrex::Real qr =
-      k_f * inv_ge[6] * ge[1] * ge[3] * (refC) * (sc[5] * sc[6]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+                           (refC) * (sc[5] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -17031,8 +17976,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 35:  H + O2 + N2 <=> HO2 + N2
     const amrex::Real k_f = 26000000 * exp((-1.24) * logT);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[47]);
-    const amrex::Real qr =
-      k_f * inv_ge[6] * ge[1] * ge[3] * (refC) * (sc[6] * sc[47]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+                           (refC) * (sc[6] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -17043,8 +17990,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 36:  H + O2 + AR <=> HO2 + AR
     const amrex::Real k_f = 700000 * exp((-0.8) * logT);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[48]);
-    const amrex::Real qr =
-      k_f * inv_ge[6] * ge[1] * ge[3] * (refC) * (sc[6] * sc[48]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[3] * inv_ge[6] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[3] - g_RT[6]))) *
+                           (refC) * (sc[6] * sc[48]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -17057,8 +18006,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture + (-1) * sc[0] + (-1) * sc[5] + sc[13] +
                              (-1) * sc[15] + (2) * sc[26] + (-0.37) * sc[48];
     const amrex::Real qf = Corr * k_f * ((sc[1] * sc[1]));
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[0] * ge[1] * ge[1] * (refC) * (sc[0]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                                    : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+                           (refC) * (sc[0]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -17068,8 +18019,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 39:  2 H + H2 <=> H2 + H2
     const amrex::Real k_f = 90000 * exp((-0.6) * logT);
     const amrex::Real qf = k_f * (sc[0] * (sc[1] * sc[1]));
-    const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * ge[1] * (refC) * ((sc[0] * sc[0]));
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                                    : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+                           (refC) * ((sc[0] * sc[0]));
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -17079,8 +18032,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 40:  2 H + H2O <=> H2 + H2O
     const amrex::Real k_f = 60000000 * exp((-1.25) * logT);
     const amrex::Real qf = k_f * ((sc[1] * sc[1]) * sc[5]);
-    const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * ge[1] * (refC) * (sc[0] * sc[5]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                                    : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+                           (refC) * (sc[0] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -17090,8 +18045,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 41:  2 H + CO2 <=> H2 + CO2
     const amrex::Real k_f = 550000000 * exp((-2) * logT);
     const amrex::Real qf = k_f * ((sc[1] * sc[1]) * sc[15]);
-    const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * ge[1] * (refC) * (sc[0] * sc[15]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (inv_ge[0] * ge[1] * ge[1])
+                                    : exp(-(-g_RT[0] + 2.000000 * g_RT[1]))) *
+                           (refC) * (sc[0] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -17103,8 +18060,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture + (-0.27) * sc[0] + (2.65) * sc[5] +
                              sc[13] + (2) * sc[26] + (-0.62) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[4]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[5] * ge[1] * ge[4] * (refC) * (sc[5]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[4] * ge[1] * inv_ge[5])
+                                    : exp(-(g_RT[1] + g_RT[4] - g_RT[5]))) *
+                           (refC) * (sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] -= qdot;
@@ -17116,8 +18075,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       1500000000000 * exp((-1) * logT - (8554.68331868023) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[16]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[16] * inv_ge[14] * (refCinv) *
-                           (sc[1] * sc[5] * sc[14]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[16] * inv_ge[14] * inv_ge[1])
+                                    : exp(-(-g_RT[1] - g_RT[14] + g_RT[16]))) *
+                           (refCinv) * (sc[1] * sc[5] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[14] += qdot;
@@ -17131,7 +18092,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture + sc[0] + (-1) * sc[5] + sc[13] +
                              (0.5) * sc[14] + sc[15] + (2) * sc[26];
     const amrex::Real qf = Corr * k_f * (sc[16]);
-    const amrex::Real qr = Corr * k_f * inv_ge[1] * ge[16] * inv_ge[14] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[16] * inv_ge[14] * inv_ge[1])
+                                    : exp(-(-g_RT[1] - g_RT[14] + g_RT[16]))) *
                            (refCinv) * (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -17146,8 +18109,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[35]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[36] * ge[2] * ge[35] * (refC) * (sc[36]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[35] * inv_ge[36] * ge[2])
+                                    : exp(-(g_RT[2] + g_RT[35] - g_RT[36]))) *
+                           (refC) * (sc[36]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[35] -= qdot;
@@ -17162,7 +18127,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[34]);
-    const amrex::Real qr = Corr * k_f * inv_ge[1] * ge[34] * inv_ge[47] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[34])
+                                    : exp(-(-g_RT[1] + g_RT[34] - g_RT[47]))) *
                            (refCinv) * (sc[1] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -17178,8 +18145,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[35]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[38] * ge[1] * ge[35] * (refC) * (sc[38]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[35] * inv_ge[38] * ge[1])
+                                    : exp(-(g_RT[1] + g_RT[35] - g_RT[38]))) *
+                           (refC) * (sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[35] -= qdot;
@@ -17193,7 +18162,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[46]);
-    const amrex::Real qr = Corr * k_f * inv_ge[14] * ge[46] * inv_ge[30] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[46] * inv_ge[14] * inv_ge[30])
+                                    : exp(-(-g_RT[14] - g_RT[30] + g_RT[46]))) *
                            (refCinv) * (sc[14] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
@@ -17209,7 +18180,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[40]);
-    const amrex::Real qr = Corr * k_f * inv_ge[1] * ge[40] * inv_ge[39] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[40] * inv_ge[1] * inv_ge[39])
+                                    : exp(-(-g_RT[1] - g_RT[39] + g_RT[40]))) *
                            (refCinv) * (sc[1] * sc[39]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -17224,7 +18197,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] +
                              (-0.3) * sc[48];
     const amrex::Real qf = Corr * k_f * (sc[45]);
-    const amrex::Real qr = Corr * k_f * inv_ge[14] * ge[45] * inv_ge[31] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[14] * ge[45] * inv_ge[31])
+                                    : exp(-(-g_RT[14] - g_RT[31] + g_RT[45]))) *
                            (refCinv) * (sc[14] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
@@ -17251,8 +18226,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture + sc[0] + (17) * sc[5] + sc[13] +
                              (0.5) * sc[14] + sc[15] + (2) * sc[26];
     const amrex::Real qf = Corr * k_f * (sc[14] * sc[54]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[69] * ge[14] * ge[54] * (refC) * (sc[69]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[54] * ge[14] * inv_ge[69])
+                                    : exp(-(g_RT[14] + g_RT[54] - g_RT[69]))) *
+                           (refC) * (sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[14] -= qdot;
     wdot[54] -= qdot;
@@ -17264,7 +18241,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 31200000 * exp(-(49979.4792477248) * invT);
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * (sc[53]);
-    const amrex::Real qr = Corr * k_f * inv_ge[1] * ge[53] * inv_ge[54] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[54] * inv_ge[1] * ge[53])
+                                    : exp(-(-g_RT[1] + g_RT[53] - g_RT[54]))) *
                            (refCinv) * (sc[1] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -17280,8 +18259,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] + sc[53] +
                              (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
     const amrex::Real qf = Corr * k_f * (sc[53] * sc[63]);
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[57] * ge[53] * ge[63] * (refC) * (sc[57]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[63] * ge[53] * inv_ge[57])
+                                    : exp(-(g_RT[53] - g_RT[57] + g_RT[63]))) *
+                           (refC) * (sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[53] -= qdot;
     wdot[57] += qdot;
@@ -17296,7 +18277,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[14] + sc[15] + (2) * sc[26] + sc[53] +
                              (5) * sc[56] + (5) * sc[57] + (5) * sc[58];
     const amrex::Real qf = Corr * k_f * (sc[58]);
-    const amrex::Real qr = Corr * k_f * inv_ge[53] * ge[58] * inv_ge[64] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[64] * ge[58] * inv_ge[53])
+                                    : exp(-(-g_RT[53] + g_RT[58] - g_RT[64]))) *
                            (refCinv) * (sc[53] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
@@ -17312,7 +18295,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       mixture + sc[0] + (8) * sc[5] + sc[13] + (0.5) * sc[14] + sc[15] +
       (2) * sc[26] + (5) * sc[56] + (5) * sc[57] + (5) * sc[58] + (5) * sc[59];
     const amrex::Real qf = Corr * k_f * (sc[59]);
-    const amrex::Real qr = Corr * k_f * inv_ge[54] * ge[59] * inv_ge[62] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[54] * inv_ge[62] * ge[59])
+                                    : exp(-(-g_RT[54] + g_RT[59] - g_RT[62]))) *
                            (refCinv) * (sc[54] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
@@ -17326,7 +18311,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       9.03e+20 * exp((-3.42) * logT - (10919.8016479624) * invT);
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * (sc[66]);
-    const amrex::Real qr = Corr * k_f * inv_ge[54] * ge[66] * inv_ge[67] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[54] * inv_ge[67] * ge[66])
+                                    : exp(-(-g_RT[54] + g_RT[66] - g_RT[67]))) *
                            (refCinv) * (sc[54] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
@@ -17340,7 +18327,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2.48e+19 * exp((-3) * logT - (21638.3166296029) * invT);
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * (sc[68]);
-    const amrex::Real qr = Corr * k_f * inv_ge[14] * ge[68] * inv_ge[53] *
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (inv_ge[14] * ge[68] * inv_ge[53])
+                                    : exp(-(-g_RT[14] - g_RT[53] + g_RT[68]))) *
                            (refCinv) * (sc[14] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
@@ -17353,8 +18342,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100;
     const amrex::Real Corr = mixture;
     const amrex::Real qf = Corr * k_f * ((sc[54] * sc[54]));
-    const amrex::Real qr =
-      Corr * k_f * inv_ge[55] * ge[54] * ge[54] * (refC) * (sc[55]);
+    const amrex::Real qr = Corr * k_f *
+                           (kc_fast ? (ge[54] * inv_ge[55] * ge[54])
+                                    : exp(-(2.000000 * g_RT[54] - g_RT[55]))) *
+                           (refC) * (sc[55]);
     const amrex::Real qdot = qf - qr;
     wdot[54] -= 2.000000 * qdot;
     wdot[55] += qdot;
@@ -17366,7 +18357,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0387 * exp((2.7) * logT - (3150.13632793755) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[2]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[4] * ge[2] * (sc[1] * sc[4]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[4] * ge[2] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4]))) *
+      (sc[1] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -17379,7 +18373,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[2] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[2] * inv_ge[4] * ge[6] * (sc[3] * sc[4]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[3] * ge[2])
+               : exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]))) *
+      (sc[3] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[3] += qdot;
@@ -17392,7 +18389,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9.63 * exp((2) * logT - (2012.86666321888) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[7]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[6] * ge[7] * (sc[4] * sc[6]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[6] * ge[7] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[6] + g_RT[7]))) *
+      (sc[4] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17405,7 +18405,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 57000000;
     const amrex::Real qf = k_f * (sc[2] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[9] * (sc[1] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * inv_ge[1] * ge[2] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14]))) *
+      (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17418,7 +18421,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 80000000;
     const amrex::Real qf = k_f * (sc[2] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[16] * ge[10] * (sc[1] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * inv_ge[1] * ge[2] * ge[10])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[10] - g_RT[16]))) *
+      (sc[1] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17431,7 +18437,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15000000;
     const amrex::Real qf = k_f * (sc[2] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[2] * inv_ge[14] * ge[11] * (sc[0] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[14] * ge[2] * ge[11])
+               : exp(-(-g_RT[0] + g_RT[2] + g_RT[11] - g_RT[14]))) *
+      (sc[0] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[2] -= qdot;
@@ -17444,7 +18453,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15000000;
     const amrex::Real qf = k_f * (sc[2] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[16] * ge[11] * (sc[1] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * inv_ge[1] * ge[2] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[11] - g_RT[16]))) *
+      (sc[1] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17457,7 +18469,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50600000;
     const amrex::Real qf = k_f * (sc[2] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[17] * ge[12] * (sc[1] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[17] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[12] - g_RT[17]))) *
+      (sc[1] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17471,7 +18486,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1020 * exp((1.5) * logT - (4327.66332592059) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[12] * ge[13] * (sc[4] * sc[12]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[13] * ge[2] * inv_ge[12])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[12] + g_RT[13]))) *
+      (sc[4] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17484,7 +18502,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[14] * ge[16] * (sc[4] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[14] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[14] + g_RT[16]))) *
+      (sc[4] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17497,7 +18518,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[15] * ge[16] * (sc[1] * sc[15]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[1] * ge[2] * inv_ge[15])
+               : exp(-(-g_RT[1] + g_RT[2] - g_RT[15] + g_RT[16]))) *
+      (sc[1] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17510,7 +18534,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 39000000 * exp(-(1781.38699694871) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[16] * ge[17] * (sc[4] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[16] * ge[17] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[16] + g_RT[17]))) *
+      (sc[4] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17523,7 +18550,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[2] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[17] * ge[18] * (sc[4] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[17] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]))) *
+      (sc[4] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17536,7 +18566,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[2] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[17] * ge[19] * (sc[4] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[17] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[19]))) *
+      (sc[4] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17550,7 +18583,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.388 * exp((2.5) * logT - (1559.97166399463) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[18] * ge[20] * (sc[4] * sc[18]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[18] * ge[20] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[18] + g_RT[20]))) *
+      (sc[4] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17563,7 +18599,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.13 * exp((2.5) * logT - (2516.0833290236) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[19] * ge[20] * (sc[4] * sc[19]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[19] * ge[20] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[19] + g_RT[20]))) *
+      (sc[4] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17576,7 +18615,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[2] * sc[21]);
     const amrex::Real qr =
-      k_f * inv_ge[9] * ge[2] * inv_ge[14] * ge[21] * (sc[9] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[2] * inv_ge[9] * ge[21])
+               : exp(-(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[21]))) *
+      (sc[9] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[9] += qdot;
@@ -17589,7 +18631,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 13.5 * exp((2) * logT - (956.111665028967) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[27] * ge[22] * (sc[1] * sc[27]);
+      k_f *
+      (kc_fast ? (inv_ge[27] * ge[22] * inv_ge[1] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[22] - g_RT[27]))) *
+      (sc[1] * sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17603,7 +18648,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       46000000000000 * exp((-1.41) * logT - (14568.1224750466) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[21] * ge[22] * (sc[4] * sc[21]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[22] * inv_ge[21] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[21] + g_RT[22]))) *
+      (sc[4] * sc[21]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17616,7 +18664,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 6.94 * exp((2) * logT - (956.111665028967) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[10] * ge[2] * inv_ge[14] * ge[22] * (sc[10] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * inv_ge[10] * ge[22] * ge[2])
+               : exp(-(g_RT[2] - g_RT[10] - g_RT[14] + g_RT[22]))) *
+      (sc[10] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[10] += qdot;
@@ -17629,7 +18680,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[28] * ge[23] * (sc[1] * sc[28]);
+      k_f *
+      (kc_fast ? (inv_ge[28] * inv_ge[1] * ge[2] * ge[23])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[23] - g_RT[28]))) *
+      (sc[1] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17643,7 +18697,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       12.5 * exp((1.83) * logT - (110.707666477038) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[24]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[2] * inv_ge[16] * ge[24] * (sc[12] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[24] * inv_ge[12] * ge[2])
+               : exp(-(g_RT[2] - g_RT[12] - g_RT[16] + g_RT[24]))) *
+      (sc[12] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[12] += qdot;
@@ -17656,7 +18713,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 22400000;
     const amrex::Real qf = k_f * (sc[2] * sc[25]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[2] * inv_ge[17] * ge[25] * (sc[12] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[17] * ge[2])
+               : exp(-(g_RT[2] - g_RT[12] - g_RT[17] + g_RT[25]))) *
+      (sc[12] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[12] += qdot;
@@ -17670,7 +18730,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       89.8 * exp((1.92) * logT - (2863.30282842885) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[26]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[25] * ge[26] * (sc[4] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[26] * ge[2] * inv_ge[25])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[25] + g_RT[26]))) *
+      (sc[4] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17682,8 +18745,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 27:  HCCO + O <=> 2 CO + H
     const amrex::Real k_f = 100000000;
     const amrex::Real qf = k_f * (sc[2] * sc[27]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[27] *
-                           inv_ge[14] * (refCinv) * (sc[1] * (sc[14] * sc[14]));
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[27] * inv_ge[1] * inv_ge[14] * inv_ge[14] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] - 2.000000 * g_RT[14] + g_RT[27]))) *
+      (refCinv) * (sc[1] * (sc[14] * sc[14]));
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -17696,7 +18762,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(4025.73332643776) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[28]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[27] * ge[28] * (sc[4] * sc[27]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[28] * ge[2] * inv_ge[27])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[27] + g_RT[28]))) *
+      (sc[4] * sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -17709,7 +18778,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1750000 * exp(-(679.342498836372) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[28]);
     const amrex::Real qr =
-      k_f * inv_ge[10] * ge[2] * inv_ge[15] * ge[28] * (sc[10] * sc[15]);
+      k_f *
+      (kc_fast ? (ge[28] * ge[2] * inv_ge[10] * inv_ge[15])
+               : exp(-(g_RT[2] - g_RT[10] - g_RT[15] + g_RT[28]))) *
+      (sc[10] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[10] += qdot;
@@ -17722,7 +18794,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2500000 * exp(-(24053.7566254656) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[14]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[15] * ge[14] * (sc[2] * sc[15]);
+      k_f *
+      (kc_fast ? (ge[3] * ge[14] * inv_ge[15] * inv_ge[2])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[14] - g_RT[15]))) *
+      (sc[2] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -17735,7 +18810,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000 * exp(-(20128.6666321888) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[16] * ge[17] * (sc[6] * sc[16]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[16] * ge[17])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]))) *
+      (sc[6] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -17749,7 +18827,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       26500000000 * exp((-0.6707) * logT - (8575.31520197823) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[3]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[1] * inv_ge[4] * ge[3] * (sc[2] * sc[4]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[3] * ge[1] * inv_ge[2])
+               : exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]))) *
+      (sc[2] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] += qdot;
@@ -17762,7 +18843,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3970000 * exp(-(337.658382754967) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[1] * inv_ge[5] * ge[6] * (sc[2] * sc[5]);
+      k_f *
+      (kc_fast ? (ge[6] * ge[1] * inv_ge[2] * inv_ge[5])
+               : exp(-(g_RT[1] - g_RT[2] - g_RT[5] + g_RT[6]))) *
+      (sc[2] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] += qdot;
@@ -17775,7 +18859,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 44800000 * exp(-(537.435399079441) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[3] * ge[6] * (sc[0] * sc[3]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[6] * inv_ge[3] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]))) *
+      (sc[0] * sc[3]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17788,7 +18875,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 84000000 * exp(-(319.542582785997) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[4] * ge[6] * ((sc[4] * sc[4]));
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[4] * ge[1])
+               : exp(-(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6]))) *
+      ((sc[4] * sc[4]));
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += 2.000000 * qdot;
@@ -17800,7 +18890,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12.1 * exp((2) * logT - (2616.72666218454) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[7]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[6] * ge[7] * (sc[0] * sc[6]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[6] * ge[7] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[6] + g_RT[7]))) *
+      (sc[0] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17813,7 +18906,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(1811.57999689699) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[7]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[5] * ge[7] * (sc[4] * sc[5]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[7] * ge[1] * inv_ge[5])
+               : exp(-(g_RT[1] - g_RT[4] - g_RT[5] + g_RT[7]))) *
+      (sc[4] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -17826,7 +18922,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 165000000;
     const amrex::Real qf = k_f * (sc[1] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[8] * ge[9] * (sc[0] * sc[8]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[8] * ge[9])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[8] + g_RT[9]))) *
+      (sc[0] * sc[8]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17839,7 +18938,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[1] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[9] * ge[11] * (sc[0] * sc[9]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[9] * ge[11])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[11]))) *
+      (sc[0] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17853,7 +18955,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       660 * exp((1.62) * logT - (5454.86865732316) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[12] * ge[13] * (sc[0] * sc[12]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[13] * ge[1] * inv_ge[12])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[12] + g_RT[13]))) *
+      (sc[0] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17866,7 +18971,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 73400000;
     const amrex::Real qf = k_f * (sc[1] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[14] * ge[16] * (sc[0] * sc[14]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[16] * inv_ge[14] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[14] + g_RT[16]))) *
+      (sc[0] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17880,7 +18988,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       57.4 * exp((1.9) * logT - (1379.82009763654) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[16] * ge[17] * (sc[0] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[16] * ge[17] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[16] + g_RT[17]))) *
+      (sc[0] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17893,7 +19004,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[1] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[17] * ge[18] * (sc[0] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[18] * inv_ge[17] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18]))) *
+      (sc[0] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17907,7 +19021,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       165000 * exp((0.65) * logT - (-142.91353308854) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[12] * ge[18] * (sc[4] * sc[12]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[18] * ge[1] * inv_ge[12])
+               : exp(-(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[18]))) *
+      (sc[4] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -17921,7 +19038,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       32800000 * exp((-0.09) * logT - (306.962166140879) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[1] * inv_ge[11] * ge[18] * (sc[5] * sc[11]);
+      k_f *
+      (kc_fast ? (ge[18] * ge[1] * inv_ge[11] * inv_ge[5])
+               : exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[18]))) *
+      (sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[5] += qdot;
@@ -17934,7 +19054,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       41.5 * exp((1.63) * logT - (968.188865008281) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[19]);
-    const amrex::Real qr = k_f * inv_ge[18] * ge[19] * (sc[1] * sc[18]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[18] * ge[19])
+               : exp(-(g_RT[1] - g_RT[1] - g_RT[18] + g_RT[19]))) *
+      (sc[1] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[1] += qdot;
@@ -17947,7 +19071,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[1] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[17] * ge[19] * (sc[0] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[19] * inv_ge[17] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[19]))) *
+      (sc[0] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -17961,7 +19088,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1500000 * exp((0.5) * logT - (-55.3538332385192) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[12] * ge[19] * (sc[4] * sc[12]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[12] * ge[1])
+               : exp(-(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[19]))) *
+      (sc[4] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -17975,7 +19105,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       262000000 * exp((-0.23) * logT - (538.44183241105) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[1] * inv_ge[11] * ge[19] * (sc[5] * sc[11]);
+      k_f *
+      (kc_fast ? (ge[19] * ge[1] * inv_ge[11] * inv_ge[5])
+               : exp(-(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[19]))) *
+      (sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[5] += qdot;
@@ -17988,7 +19121,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 17 * exp((2.1) * logT - (2450.66516246898) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[18] * ge[20] * (sc[0] * sc[18]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[18] * ge[20] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[18] + g_RT[20]))) *
+      (sc[0] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18001,7 +19137,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 4.2 * exp((2.1) * logT - (2450.66516246898) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[19] * ge[20] * (sc[0] * sc[19]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[19] * ge[20] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[19] + g_RT[20]))) *
+      (sc[0] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18014,7 +19153,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[1] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[22] * ge[23] * (sc[0] * sc[22]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[22] * ge[1] * ge[23])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[22] + g_RT[23]))) *
+      (sc[0] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18028,7 +19170,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.325 * exp((2.53) * logT - (6159.37198944977) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[24]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[23] * ge[24] * (sc[0] * sc[23]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[24] * inv_ge[23] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[23] + g_RT[24]))) *
+      (sc[0] * sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18041,7 +19186,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000;
     const amrex::Real qf = k_f * (sc[1] * sc[25]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[24] * ge[25] * (sc[0] * sc[24]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[25] * inv_ge[24] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[24] + g_RT[25]))) *
+      (sc[0] * sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18054,7 +19202,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 115 * exp((1.9) * logT - (3789.22149350954) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[26]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[25] * ge[26] * (sc[0] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[26] * ge[1] * inv_ge[25])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[25] + g_RT[26]))) *
+      (sc[0] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18067,7 +19218,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000;
     const amrex::Real qf = k_f * (sc[1] * sc[27]);
     const amrex::Real qr =
-      k_f * inv_ge[11] * ge[1] * inv_ge[14] * ge[27] * (sc[11] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[27] * inv_ge[11] * ge[1] * inv_ge[14])
+               : exp(-(g_RT[1] - g_RT[11] - g_RT[14] + g_RT[27]))) *
+      (sc[11] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[11] += qdot;
@@ -18080,7 +19234,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000 * exp(-(4025.73332643776) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[28]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[27] * ge[28] * (sc[0] * sc[27]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[28] * ge[1] * inv_ge[27])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[27] + g_RT[28]))) *
+      (sc[0] * sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -18093,7 +19250,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 11300000 * exp(-(1725.02673037858) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[28]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[1] * inv_ge[14] * ge[28] * (sc[12] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[28] * inv_ge[14] * inv_ge[12] * ge[1])
+               : exp(-(g_RT[1] - g_RT[12] - g_RT[14] + g_RT[28]))) *
+      (sc[12] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] += qdot;
@@ -18105,7 +19265,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 81:  H + HCCOH <=> CH2CO + H
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[1] * sc[29]);
-    const amrex::Real qr = k_f * inv_ge[28] * ge[29] * (sc[1] * sc[28]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[29] * inv_ge[28])
+               : exp(-(g_RT[1] - g_RT[1] - g_RT[28] + g_RT[29]))) *
+      (sc[1] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[1] += qdot;
@@ -18119,7 +19283,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       216 * exp((1.51) * logT - (1726.03316371019) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[4]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[5] * ge[4] * (sc[1] * sc[5]);
+      k_f *
+      (kc_fast ? (ge[0] * ge[4] * inv_ge[1] * inv_ge[5])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5]))) *
+      (sc[1] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -18133,7 +19300,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0357 * exp((2.4) * logT - (-1061.78716484796) * invT);
     const amrex::Real qf = k_f * ((sc[4] * sc[4]));
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[4] * inv_ge[5] * ge[4] * (sc[2] * sc[5]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[4] * inv_ge[2] * inv_ge[5])
+               : exp(-(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5]))) *
+      (sc[2] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[4] -= 2.000000 * qdot;
@@ -18145,7 +19315,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 14500000 * exp(-(-251.60833290236) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[4] * inv_ge[5] * ge[6] * (sc[3] * sc[5]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[3] * ge[6] * inv_ge[5])
+               : exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]))) *
+      (sc[3] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[4] -= qdot;
@@ -18158,7 +19331,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(214.873516298615) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[7]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[6] * ge[7] * (sc[5] * sc[6]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[6] * ge[7] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]))) *
+      (sc[5] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18171,7 +19347,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1700000000000 * exp(-(14799.6021413168) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[7]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[6] * ge[7] * (sc[5] * sc[6]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[6] * ge[7] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]))) *
+      (sc[5] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18184,7 +19363,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[4] * sc[8]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[14] * ge[8] * (sc[1] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[14] * inv_ge[1] * ge[8])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14]))) *
+      (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18197,7 +19379,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[4] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[16] * ge[9] * (sc[1] * sc[16]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[16] * inv_ge[1] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[9] - g_RT[16]))) *
+      (sc[1] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18210,7 +19395,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[17] * ge[10] * (sc[1] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[17] * inv_ge[1] * ge[10])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[10] - g_RT[17]))) *
+      (sc[1] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18223,7 +19411,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 11.3 * exp((2) * logT - (1509.64999741416) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[9] * ge[10] * (sc[5] * sc[9]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[5] * inv_ge[9] * ge[10])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10]))) *
+      (sc[5] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18236,7 +19427,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[4] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[17] * ge[11] * (sc[1] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[17] * inv_ge[1] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[17]))) *
+      (sc[1] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18249,7 +19443,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 56 * exp((1.6) * logT - (2727.43432866158) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[10] * ge[12] * (sc[5] * sc[10]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[12] * inv_ge[10] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[10] + g_RT[12]))) *
+      (sc[5] * sc[10]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18263,7 +19460,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       644000000000 * exp((-1.34) * logT - (713.058015445288) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[11] * ge[12] * (sc[5] * sc[11]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[12] * inv_ge[11] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[12]))) *
+      (sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18276,7 +19476,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100 * exp((1.6) * logT - (1570.03599731073) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[12] * ge[13] * (sc[5] * sc[12]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[12] * inv_ge[5] * ge[13])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[12] + g_RT[13]))) *
+      (sc[5] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18290,7 +19493,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       47.6 * exp((1.228) * logT - (35.2251666063304) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[14]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[15] * ge[14] * (sc[1] * sc[15]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[14] * inv_ge[15] * inv_ge[1])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[14] - g_RT[15]))) *
+      (sc[1] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18303,7 +19509,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[4] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[14] * ge[16] * (sc[5] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[16] * inv_ge[14] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[14] + g_RT[16]))) *
+      (sc[5] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18317,7 +19526,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3430 * exp((1.18) * logT - (-224.93784961471) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[16] * ge[17] * (sc[5] * sc[16]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[16] * ge[17] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[16] + g_RT[17]))) *
+      (sc[5] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18330,7 +19542,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000;
     const amrex::Real qf = k_f * (sc[4] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[17] * ge[18] * (sc[5] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[18] * inv_ge[17] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18]))) *
+      (sc[5] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18343,7 +19558,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000;
     const amrex::Real qf = k_f * (sc[4] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[17] * ge[19] * (sc[5] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[19] * inv_ge[17] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[19]))) *
+      (sc[5] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18356,7 +19574,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1.44 * exp((2) * logT - (-422.701999275965) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[18] * ge[20] * (sc[5] * sc[18]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[18] * ge[20] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[18] + g_RT[20]))) *
+      (sc[5] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18369,7 +19590,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 6.3 * exp((2) * logT - (754.82499870708) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[19] * ge[20] * (sc[5] * sc[19]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[19] * ge[20] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[19] + g_RT[20]))) *
+      (sc[5] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18382,7 +19606,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[21]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[27] * ge[21] * (sc[1] * sc[27]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[27] * inv_ge[1] * ge[21])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[21] - g_RT[27]))) *
+      (sc[1] * sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18396,7 +19623,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2.18e-10 * exp((4.5) * logT - (-503.21666580472) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[28] * ge[22] * (sc[1] * sc[28]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[28] * inv_ge[1] * ge[22])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[28]))) *
+      (sc[1] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18410,7 +19640,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.504 * exp((2.3) * logT - (6793.42498836372) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[29] * ge[22] * (sc[1] * sc[29]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[29] * ge[22] * inv_ge[1])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[29]))) *
+      (sc[1] * sc[29]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -18423,7 +19656,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 33.7 * exp((2) * logT - (7045.03332126608) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[21] * ge[22] * (sc[5] * sc[21]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[22] * inv_ge[21] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[21] + g_RT[22]))) *
+      (sc[5] * sc[21]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18437,7 +19673,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       4.83e-10 * exp((4) * logT - (-1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[22]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[4] * inv_ge[14] * ge[22] * (sc[12] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[12] * inv_ge[14] * ge[22])
+               : exp(-(g_RT[4] - g_RT[12] - g_RT[14] + g_RT[22]))) *
+      (sc[12] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[12] += qdot;
@@ -18450,7 +19689,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000;
     const amrex::Real qf = k_f * (sc[4] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[22] * ge[23] * (sc[5] * sc[22]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[22] * ge[23] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[22] + g_RT[23]))) *
+      (sc[5] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18463,7 +19705,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3.6 * exp((2) * logT - (1258.0416645118) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[24]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[23] * ge[24] * (sc[5] * sc[23]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[24] * inv_ge[23] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[23] + g_RT[24]))) *
+      (sc[5] * sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18477,7 +19722,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.54 * exp((2.12) * logT - (437.798499250106) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[26]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[25] * ge[26] * (sc[5] * sc[25]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[25] * ge[26] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[25] + g_RT[26]))) *
+      (sc[5] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18490,7 +19738,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 7500000 * exp(-(1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[28]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[27] * ge[28] * (sc[5] * sc[27]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[27] * inv_ge[5] * ge[28])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[27] + g_RT[28]))) *
+      (sc[5] * sc[27]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -18503,7 +19754,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 130000 * exp(-(-820.243165261693) * invT);
     const amrex::Real qf = k_f * ((sc[6] * sc[6]));
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[7] * ge[6] * (sc[3] * sc[7]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[6] * inv_ge[7])
+               : exp(-(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]))) *
+      (sc[3] * sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= 2.000000 * qdot;
@@ -18515,7 +19769,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 420000000 * exp(-(6038.59998965664) * invT);
     const amrex::Real qf = k_f * ((sc[6] * sc[6]));
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[7] * ge[6] * (sc[3] * sc[7]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[6] * inv_ge[7])
+               : exp(-(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]))) *
+      (sc[3] * sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= 2.000000 * qdot;
@@ -18527,7 +19784,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[6] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[17] * ge[10] * (sc[4] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[17] * ge[10])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[10] - g_RT[17]))) *
+      (sc[4] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -18540,7 +19800,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1000000;
     const amrex::Real qf = k_f * (sc[6] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[13] * ge[12] * (sc[3] * sc[13]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[12] * inv_ge[13])
+               : exp(-(-g_RT[3] + g_RT[6] + g_RT[12] - g_RT[13]))) *
+      (sc[3] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -18553,7 +19816,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 37800000;
     const amrex::Real qf = k_f * (sc[6] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[19] * ge[12] * (sc[4] * sc[19]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[19] * ge[12])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[12] - g_RT[19]))) *
+      (sc[4] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -18566,7 +19832,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 150000000 * exp(-(11875.9133129914) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[14]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[15] * ge[14] * (sc[4] * sc[15]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * ge[14] * inv_ge[15])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[14] - g_RT[15]))) *
+      (sc[4] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -18579,7 +19848,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5.6 * exp((2) * logT - (6038.59998965664) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[7] * ge[6] * inv_ge[16] * ge[17] * (sc[7] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[6] * inv_ge[7] * ge[17])
+               : exp(-(g_RT[6] - g_RT[7] - g_RT[16] + g_RT[17]))) *
+      (sc[7] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[6] -= qdot;
     wdot[7] += qdot;
@@ -18592,7 +19864,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 58000000 * exp(-(289.852799503519) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[8]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[14] * ge[8] * (sc[2] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[14] * inv_ge[2] * ge[8])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[8] - g_RT[14]))) *
+      (sc[2] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -18605,7 +19880,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[8] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[8] * inv_ge[21] * ge[10] * (sc[1] * sc[21]);
+      k_f *
+      (kc_fast ? (inv_ge[1] * ge[10] * inv_ge[21] * ge[8])
+               : exp(-(-g_RT[1] + g_RT[8] + g_RT[10] - g_RT[21]))) *
+      (sc[1] * sc[21]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[8] -= qdot;
@@ -18618,7 +19896,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[8] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[8] * inv_ge[22] * ge[12] * (sc[1] * sc[22]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[22] * inv_ge[1] * ge[8])
+               : exp(-(-g_RT[1] + g_RT[8] + g_RT[12] - g_RT[22]))) *
+      (sc[1] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[8] -= qdot;
@@ -18631,7 +19912,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 67100000;
     const amrex::Real qf = k_f * (sc[3] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[16] * ge[9] * (sc[2] * sc[16]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[2] * ge[9])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[16]))) *
+      (sc[2] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -18644,7 +19928,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 108000000 * exp(-(1565.00383065268) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[10] * ge[9] * (sc[1] * sc[10]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[1] * ge[9] * inv_ge[10])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[9] - g_RT[10]))) *
+      (sc[1] * sc[10]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -18657,7 +19944,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5710000 * exp(-(-379.928582682563) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[9]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[5] * inv_ge[17] * ge[9] * (sc[1] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[17] * inv_ge[1] * ge[5] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[5] + g_RT[9] - g_RT[17]))) *
+      (sc[1] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[5] -= qdot;
@@ -18670,7 +19960,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[9] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[9] * inv_ge[22] * ge[10] * (sc[1] * sc[22]);
+      k_f *
+      (kc_fast ? (inv_ge[22] * ge[10] * inv_ge[1] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[9] + g_RT[10] - g_RT[22]))) *
+      (sc[1] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= qdot;
@@ -18683,7 +19976,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[9] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[9] * inv_ge[23] * ge[12] * (sc[1] * sc[23]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[23] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[9] + g_RT[12] - g_RT[23]))) *
+      (sc[1] * sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= qdot;
@@ -18696,7 +19992,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 60000000;
     const amrex::Real qf = k_f * (sc[9] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[9] * inv_ge[24] * ge[13] * (sc[1] * sc[24]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[13] * inv_ge[1] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[9] + g_RT[13] - g_RT[24]))) *
+      (sc[1] * sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= qdot;
@@ -18709,7 +20008,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 190000000 * exp(-(7946.79758638813) * invT);
     const amrex::Real qf = k_f * (sc[9] * sc[15]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[9] * inv_ge[16] * ge[15] * (sc[14] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * inv_ge[14] * ge[15] * ge[9])
+               : exp(-(g_RT[9] - g_RT[14] + g_RT[15] - g_RT[16]))) *
+      (sc[14] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[14] += qdot;
@@ -18722,7 +20024,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 94600000 * exp(-(-259.156582889431) * invT);
     const amrex::Real qf = k_f * (sc[9] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[9] * inv_ge[28] * ge[17] * (sc[1] * sc[28]);
+      k_f *
+      (kc_fast ? (inv_ge[28] * ge[17] * inv_ge[1] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[9] + g_RT[17] - g_RT[28]))) *
+      (sc[1] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= qdot;
@@ -18735,7 +20040,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[9] * sc[27]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[9] * inv_ge[22] * ge[27] * (sc[14] * sc[22]);
+      k_f *
+      (kc_fast ? (ge[27] * inv_ge[22] * inv_ge[14] * ge[9])
+               : exp(-(g_RT[9] - g_RT[14] - g_RT[22] + g_RT[27]))) *
+      (sc[14] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[14] += qdot;
@@ -18761,7 +20069,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.5 * exp((2) * logT - (3638.25649376812) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[12] * ge[10] * (sc[1] * sc[12]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[12] * ge[10] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[10] - g_RT[12]))) *
+      (sc[1] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -18774,7 +20085,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1600000000 * exp(-(6010.41985637157) * invT);
     const amrex::Real qf = k_f * ((sc[10] * sc[10]));
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[10] * inv_ge[22] * ge[10] * (sc[0] * sc[22]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[22] * ge[10] * ge[10])
+               : exp(-(-g_RT[0] + 2.000000 * g_RT[10] - g_RT[22]))) *
+      (sc[0] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[10] -= 2.000000 * qdot;
@@ -18786,7 +20100,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[10] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[10] * inv_ge[24] * ge[12] * (sc[1] * sc[24]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[12] * inv_ge[1] * ge[10])
+               : exp(-(-g_RT[1] + g_RT[10] + g_RT[12] - g_RT[24]))) *
+      (sc[1] * sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[10] -= qdot;
@@ -18799,7 +20116,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2.46 * exp((2) * logT - (4161.60182620503) * invT);
     const amrex::Real qf = k_f * (sc[10] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[10] * inv_ge[12] * ge[13] * ((sc[12] * sc[12]));
+      k_f *
+      (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[10] * ge[13])
+               : exp(-(g_RT[10] - 2.000000 * g_RT[12] + g_RT[13]))) *
+      ((sc[12] * sc[12]));
     const amrex::Real qdot = qf - qr;
     wdot[10] -= qdot;
     wdot[12] += 2.000000 * qdot;
@@ -18811,7 +20131,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[10] * sc[27]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[10] * inv_ge[23] * ge[27] * (sc[14] * sc[23]);
+      k_f *
+      (kc_fast ? (ge[27] * inv_ge[23] * inv_ge[14] * ge[10])
+               : exp(-(g_RT[10] - g_RT[14] - g_RT[23] + g_RT[27]))) *
+      (sc[14] * sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[10] -= qdot;
     wdot[14] += qdot;
@@ -18823,7 +20146,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 141:  CH2(S) + N2 <=> CH2 + N2
     const amrex::Real k_f = 15000000 * exp(-(301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[47]);
-    const amrex::Real qr = k_f * inv_ge[10] * ge[11] * (sc[10] * sc[47]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[10] * ge[11])
+               : exp(-(-g_RT[10] + g_RT[11] + g_RT[47] - g_RT[47]))) *
+      (sc[10] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[10] += qdot;
     wdot[11] -= qdot;
@@ -18835,7 +20162,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 142:  AR + CH2(S) <=> AR + CH2
     const amrex::Real k_f = 9000000 * exp(-(301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[48]);
-    const amrex::Real qr = k_f * inv_ge[10] * ge[11] * (sc[10] * sc[48]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[10] * ge[11])
+               : exp(-(-g_RT[10] + g_RT[11] + g_RT[48] - g_RT[48]))) *
+      (sc[10] * sc[48]);
     const amrex::Real qdot = qf - qr;
     wdot[10] += qdot;
     wdot[11] -= qdot;
@@ -18847,8 +20178,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 143:  CH2(S) + O2 <=> CO + H + OH
     const amrex::Real k_f = 28000000;
     const amrex::Real qf = k_f * (sc[3] * sc[11]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[3] * inv_ge[4] * ge[11] *
-                           inv_ge[14] * (refCinv) * (sc[1] * sc[4] * sc[14]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[14] * inv_ge[1] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[11] - g_RT[14]))) *
+      (refCinv) * (sc[1] * sc[4] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[3] -= qdot;
@@ -18862,7 +20196,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000000;
     const amrex::Real qf = k_f * (sc[3] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[3] * inv_ge[14] * ge[11] * (sc[5] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[14] * inv_ge[5] * ge[11])
+               : exp(-(g_RT[3] - g_RT[5] + g_RT[11] - g_RT[14]))) *
+      (sc[5] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[5] += qdot;
@@ -18875,7 +20212,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 70000000;
     const amrex::Real qf = k_f * (sc[0] * sc[11]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[12] * ge[11] * (sc[1] * sc[12]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[12] * ge[11] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[11] - g_RT[12]))) *
+      (sc[1] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -18887,7 +20227,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 147:  CH2(S) + H2O <=> CH2 + H2O
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[5] * sc[11]);
-    const amrex::Real qr = k_f * inv_ge[10] * ge[11] * (sc[5] * sc[10]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[10] * ge[11])
+               : exp(-(g_RT[5] - g_RT[5] - g_RT[10] + g_RT[11]))) *
+      (sc[5] * sc[10]);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[5] += qdot;
@@ -18900,7 +20244,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000000 * exp(-(-286.83349950869) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[11] * inv_ge[24] * ge[12] * (sc[1] * sc[24]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[12] * inv_ge[1] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[11] + g_RT[12] - g_RT[24]))) *
+      (sc[1] * sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[11] -= qdot;
@@ -18913,7 +20260,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 16000000 * exp(-(-286.83349950869) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[13]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[11] * inv_ge[12] * ge[13] * ((sc[12] * sc[12]));
+      k_f *
+      (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[11] * ge[13])
+               : exp(-(g_RT[11] - 2.000000 * g_RT[12] + g_RT[13]))) *
+      ((sc[12] * sc[12]));
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[12] += 2.000000 * qdot;
@@ -18924,7 +20274,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 150:  CH2(S) + CO <=> CH2 + CO
     const amrex::Real k_f = 9000000;
     const amrex::Real qf = k_f * (sc[11] * sc[14]);
-    const amrex::Real qr = k_f * inv_ge[10] * ge[11] * (sc[10] * sc[14]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[10] * ge[11])
+               : exp(-(-g_RT[10] + g_RT[11] + g_RT[14] - g_RT[14]))) *
+      (sc[10] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[10] += qdot;
     wdot[11] -= qdot;
@@ -18936,7 +20290,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 151:  CH2(S) + CO2 <=> CH2 + CO2
     const amrex::Real k_f = 7000000;
     const amrex::Real qf = k_f * (sc[11] * sc[15]);
-    const amrex::Real qr = k_f * inv_ge[10] * ge[11] * (sc[10] * sc[15]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[10] * ge[11])
+               : exp(-(-g_RT[10] + g_RT[11] + g_RT[15] - g_RT[15]))) *
+      (sc[10] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[10] += qdot;
     wdot[11] -= qdot;
@@ -18949,7 +20307,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 14000000;
     const amrex::Real qf = k_f * (sc[11] * sc[15]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[11] * inv_ge[17] * ge[15] * (sc[14] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[15] * ge[11] * inv_ge[17])
+               : exp(-(g_RT[11] - g_RT[14] + g_RT[15] - g_RT[17]))) *
+      (sc[14] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[14] += qdot;
@@ -18962,7 +20323,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000 * exp(-(-276.769166192596) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[26]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[11] * inv_ge[25] * ge[26] * (sc[12] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[25] * inv_ge[12] * ge[11] * ge[26])
+               : exp(-(g_RT[11] - g_RT[12] - g_RT[25] + g_RT[26]))) *
+      (sc[12] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[12] += qdot;
@@ -18975,7 +20339,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 35600000 * exp(-(15338.0439737279) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[19] * ge[12] * (sc[2] * sc[19]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[19] * ge[12] * inv_ge[2])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[12] - g_RT[19]))) *
+      (sc[2] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -18988,7 +20355,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2310000 * exp(-(10222.8465658229) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[3] * inv_ge[17] * ge[12] * (sc[4] * sc[17]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[3] * ge[12] * inv_ge[17])
+               : exp(-(g_RT[3] - g_RT[4] + g_RT[12] - g_RT[17]))) *
+      (sc[4] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[4] += qdot;
@@ -19002,7 +20372,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0245 * exp((2.47) * logT - (2606.66232886845) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[12]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[13] * ge[12] * (sc[6] * sc[13]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[12] * ge[7] * inv_ge[13])
+               : exp(-(-g_RT[6] + g_RT[7] + g_RT[12] - g_RT[13]))) *
+      (sc[6] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -19016,7 +20389,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       6840000 * exp((0.1) * logT - (5334.09665753003) * invT);
     const amrex::Real qf = k_f * ((sc[12] * sc[12]));
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[12] * inv_ge[25] * ge[12] * (sc[1] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[25] * ge[12] * ge[12] * inv_ge[1])
+               : exp(-(-g_RT[1] + 2.000000 * g_RT[12] - g_RT[25]))) *
+      (sc[1] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[12] -= 2.000000 * qdot;
@@ -19028,7 +20404,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 26480000;
     const amrex::Real qf = k_f * (sc[12] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[14] * ge[16] * (sc[13] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[13] * ge[12] * inv_ge[14])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[14] + g_RT[16]))) *
+      (sc[13] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19042,7 +20421,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00332 * exp((2.81) * logT - (2948.84966161566) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[17]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[16] * ge[17] * (sc[13] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[12] * ge[17] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[16] + g_RT[17]))) *
+      (sc[13] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19055,7 +20437,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30 * exp((1.5) * logT - (5001.97365809891) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[18] * ge[20] * (sc[13] * sc[18]);
+      k_f *
+      (kc_fast ? (inv_ge[18] * ge[12] * ge[20] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[18] + g_RT[20]))) *
+      (sc[13] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19068,7 +20453,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10 * exp((1.5) * logT - (5001.97365809891) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[20]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[19] * ge[20] * (sc[13] * sc[19]);
+      k_f *
+      (kc_fast ? (inv_ge[19] * ge[12] * ge[20] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[19] + g_RT[20]))) *
+      (sc[13] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19081,7 +20469,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.227 * exp((2) * logT - (4629.59332540342) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[24]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[23] * ge[24] * (sc[13] * sc[23]);
+      k_f *
+      (kc_fast ? (ge[24] * inv_ge[13] * inv_ge[23] * ge[12])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[23] + g_RT[24]))) *
+      (sc[13] * sc[23]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19095,7 +20486,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       6.14 * exp((1.74) * logT - (5258.61415765932) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[26]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[25] * ge[26] * (sc[13] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[25] * ge[12] * ge[26] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[25] + g_RT[26]))) *
+      (sc[13] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19108,7 +20502,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 13450000 * exp(-(201.286666321888) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[16]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[14] * ge[16] * (sc[6] * sc[14]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * ge[16] * inv_ge[14])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16]))) *
+      (sc[6] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19121,7 +20518,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 18000000 * exp(-(452.894999224248) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[18]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[17] * ge[18] * (sc[6] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * ge[18] * inv_ge[17])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[18]))) *
+      (sc[6] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19135,7 +20535,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       4.28e-19 * exp((7.6) * logT - (-1776.35483029066) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[19]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[17] * ge[19] * (sc[6] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * ge[19] * inv_ge[17])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[19]))) *
+      (sc[6] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19148,7 +20551,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(-379.928582682563) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[21]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[3] * inv_ge[16] * ge[21] * (sc[14] * sc[16]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[14] * ge[21])
+               : exp(-(g_RT[3] - g_RT[14] - g_RT[16] + g_RT[21]))) *
+      (sc[14] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[14] += qdot;
@@ -19162,7 +20568,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       56800 * exp((0.9) * logT - (1002.91081494881) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[21]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[22] * ge[21] * (sc[1] * sc[22]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[22] * ge[21] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[21] - g_RT[22]))) *
+      (sc[1] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -19176,7 +20585,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       45800000000 * exp((-1.39) * logT - (510.76491579179) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[3] * inv_ge[17] * ge[23] * (sc[16] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[16] * inv_ge[17] * ge[23])
+               : exp(-(g_RT[3] - g_RT[16] - g_RT[17] + g_RT[23]))) *
+      (sc[16] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[16] += qdot;
@@ -19189,7 +20601,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 840000 * exp(-(1949.96457999329) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[25]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[24] * ge[25] * (sc[6] * sc[24]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * ge[25] * inv_ge[24])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[24] + g_RT[25]))) *
+      (sc[6] * sc[24]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19201,8 +20616,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 175:  HCCO + O2 <=> 2 CO + OH
     const amrex::Real k_f = 3200000 * exp(-(429.747032597231) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[27]);
-    const amrex::Real qr = k_f * inv_ge[4] * ge[3] * inv_ge[14] * ge[27] *
-                           inv_ge[14] * (refCinv) * (sc[4] * (sc[14] * sc[14]));
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[3] * ge[27] * inv_ge[14] * inv_ge[14])
+               : exp(-(g_RT[3] - g_RT[4] - 2.000000 * g_RT[14] + g_RT[27]))) *
+      (refCinv) * (sc[4] * (sc[14] * sc[14]));
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[4] += qdot;
@@ -19214,9 +20632,12 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 176:  2 HCCO <=> C2H2 + 2 CO
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * ((sc[27] * sc[27]));
-    const amrex::Real qr = k_f * inv_ge[14] * ge[27] * inv_ge[14] * ge[27] *
-                           inv_ge[22] * (refCinv) *
-                           ((sc[14] * sc[14]) * sc[22]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast
+         ? (ge[27] * inv_ge[22] * inv_ge[14] * ge[27] * inv_ge[14])
+         : exp(-(-2.000000 * g_RT[14] - g_RT[22] + 2.000000 * g_RT[27]))) *
+      (refCinv) * ((sc[14] * sc[14]) * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += 2.000000 * qdot;
     wdot[22] += qdot;
@@ -19228,7 +20649,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 27000000 * exp(-(178.641916360675) * invT);
     const amrex::Real qf = k_f * (sc[30] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[30] * inv_ge[47] * ge[35] * (sc[2] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[35] * inv_ge[2] * ge[30])
+               : exp(-(-g_RT[2] + g_RT[30] + g_RT[35] - g_RT[47]))) *
+      (sc[2] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[30] -= qdot;
@@ -19241,7 +20665,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9000 * exp((1) * logT - (3270.90832773068) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[30]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[35] * ge[30] * (sc[2] * sc[35]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[35] * inv_ge[2] * ge[30])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[30] - g_RT[35]))) *
+      (sc[2] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -19254,7 +20681,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 33600000 * exp(-(193.738416334817) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[30]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[35] * ge[30] * (sc[1] * sc[35]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[35] * inv_ge[1] * ge[30])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[30] - g_RT[35]))) *
+      (sc[1] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19267,7 +20697,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1400000 * exp(-(5439.77215734902) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[37]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[2] * inv_ge[47] * ge[37] * (sc[3] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[37] * inv_ge[3] * ge[2])
+               : exp(-(g_RT[2] - g_RT[3] + g_RT[37] - g_RT[47]))) *
+      (sc[3] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[3] += qdot;
@@ -19280,7 +20713,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 29000000 * exp(-(11649.4658133793) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[37]);
     const amrex::Real qr =
-      k_f * inv_ge[35] * ge[2] * inv_ge[35] * ge[37] * ((sc[35] * sc[35]));
+      k_f *
+      (kc_fast ? (inv_ge[35] * ge[37] * inv_ge[35] * ge[2])
+               : exp(-(g_RT[2] - 2.000000 * g_RT[35] + g_RT[37]))) *
+      ((sc[35] * sc[35]));
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[35] += 2.000000 * qdot;
@@ -19292,7 +20728,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 387000000 * exp(-(9500.73065039311) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[37]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[47] * ge[37] * (sc[4] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[37] * inv_ge[47] * ge[1])
+               : exp(-(g_RT[1] - g_RT[4] + g_RT[37] - g_RT[47]))) *
+      (sc[4] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -19305,7 +20744,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(10597.7429818474) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[37]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[4] * inv_ge[47] * ge[37] * (sc[6] * sc[47]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[6] * ge[37] * inv_ge[47])
+               : exp(-(g_RT[4] - g_RT[6] + g_RT[37] - g_RT[47]))) *
+      (sc[6] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[6] += qdot;
@@ -19318,7 +20760,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2110000 * exp(-(-241.543999586265) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[36] * ge[35] * (sc[4] * sc[36]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[36] * ge[35])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[35] - g_RT[36]))) *
+      (sc[4] * sc[36]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -19331,7 +20776,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3900000 * exp(-(-120.771999793133) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[36]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[2] * inv_ge[35] * ge[36] * (sc[3] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[36] * inv_ge[35] * ge[2])
+               : exp(-(g_RT[2] - g_RT[3] - g_RT[35] + g_RT[36]))) *
+      (sc[3] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[3] += qdot;
@@ -19344,7 +20792,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 132000000 * exp(-(181.157999689699) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[36]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[35] * ge[36] * (sc[4] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[36] * inv_ge[35] * ge[1])
+               : exp(-(g_RT[1] - g_RT[4] - g_RT[35] + g_RT[36]))) *
+      (sc[4] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -19357,7 +20808,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[2] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[35] * ge[31] * (sc[1] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * ge[2] * inv_ge[1] * ge[31])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[31] - g_RT[35]))) *
+      (sc[1] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -19370,7 +20824,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 32000000 * exp(-(166.061499715557) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[30] * ge[31] * (sc[0] * sc[30]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[30] * ge[31])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[30] + g_RT[31]))) *
+      (sc[0] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -19383,7 +20840,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[38] * ge[31] * (sc[1] * sc[38]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[38] * inv_ge[1] * ge[31])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[31] - g_RT[38]))) *
+      (sc[1] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19396,7 +20856,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000 * exp((1.2) * logT);
     const amrex::Real qf = k_f * (sc[4] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[30] * ge[31] * (sc[5] * sc[30]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[5] * inv_ge[30] * ge[31])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[30] + g_RT[31]))) *
+      (sc[5] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -19409,7 +20872,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.461 * exp((2) * logT - (3270.90832773068) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[38] * ge[31] * (sc[2] * sc[38]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[38] * ge[31] * inv_ge[2])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[31] - g_RT[38]))) *
+      (sc[2] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -19422,7 +20888,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1.28 * exp((1.5) * logT - (50.321666580472) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[3] * inv_ge[35] * ge[31] * (sc[4] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[35] * ge[31])
+               : exp(-(g_RT[3] - g_RT[4] + g_RT[31] - g_RT[35]))) *
+      (sc[4] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[4] += qdot;
@@ -19435,7 +20904,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15000000;
     const amrex::Real qf = k_f * (sc[30] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[30] * inv_ge[47] * ge[31] * (sc[1] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[31] * ge[30])
+               : exp(-(-g_RT[1] + g_RT[30] + g_RT[31] - g_RT[47]))) *
+      (sc[1] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[30] -= qdot;
@@ -19448,7 +20920,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(6969.55082139537) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[5] * inv_ge[38] * ge[31] * (sc[0] * sc[38]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[38] * ge[31] * ge[5])
+               : exp(-(-g_RT[0] + g_RT[5] + g_RT[31] - g_RT[38]))) *
+      (sc[0] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[5] -= qdot;
@@ -19461,7 +20936,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 21600000 * exp((-0.23) * logT);
     const amrex::Real qf = k_f * (sc[31] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[31] * inv_ge[47] * ge[35] * (sc[4] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[47] * ge[31])
+               : exp(-(-g_RT[4] + g_RT[31] + g_RT[35] - g_RT[47]))) *
+      (sc[4] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[31] -= qdot;
@@ -19474,7 +20952,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 365000000 * exp((-0.45) * logT);
     const amrex::Real qf = k_f * (sc[31] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[31] * inv_ge[37] * ge[35] * (sc[1] * sc[37]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[37] * inv_ge[1] * ge[31])
+               : exp(-(-g_RT[1] + g_RT[31] + g_RT[35] - g_RT[37]))) *
+      (sc[1] * sc[37]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[31] -= qdot;
@@ -19487,7 +20968,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3000000;
     const amrex::Real qf = k_f * (sc[2] * sc[32]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[31] * ge[32] * (sc[4] * sc[31]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[32] * inv_ge[31] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[31] + g_RT[32]))) *
+      (sc[4] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -19500,7 +20984,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 39000000;
     const amrex::Real qf = k_f * (sc[2] * sc[32]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[38] * ge[32] * (sc[1] * sc[38]);
+      k_f *
+      (kc_fast ? (inv_ge[38] * ge[32] * inv_ge[1] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[32] - g_RT[38]))) *
+      (sc[1] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -19513,7 +21000,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000 * exp(-(1836.74083018723) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[32]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[31] * ge[32] * (sc[0] * sc[31]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[32] * inv_ge[31] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[31] + g_RT[32]))) *
+      (sc[0] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -19526,7 +21016,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90 * exp((1.5) * logT - (-231.479666270171) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[32]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[31] * ge[32] * (sc[5] * sc[31]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[32] * inv_ge[31] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[31] + g_RT[32]))) *
+      (sc[5] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -19538,8 +21031,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 203:  NNH <=> H + N2
     const amrex::Real k_f = 330000000;
     const amrex::Real qf = k_f * (sc[34]);
-    const amrex::Real qr =
-      k_f * inv_ge[1] * ge[34] * inv_ge[47] * (refCinv) * (sc[1] * sc[47]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[34])
+                                    : exp(-(-g_RT[1] + g_RT[34] - g_RT[47]))) *
+                           (refCinv) * (sc[1] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[34] -= qdot;
@@ -19551,7 +21046,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000;
     const amrex::Real qf = k_f * (sc[3] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[47] * ge[34] * (sc[6] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[3] * inv_ge[6] * ge[34])
+               : exp(-(g_RT[3] - g_RT[6] + g_RT[34] - g_RT[47]))) *
+      (sc[6] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19564,7 +21062,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000;
     const amrex::Real qf = k_f * (sc[2] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[47] * ge[34] * (sc[4] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[47] * ge[34] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[34] - g_RT[47]))) *
+      (sc[4] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -19577,7 +21078,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 70000000;
     const amrex::Real qf = k_f * (sc[2] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[31] * ge[2] * inv_ge[35] * ge[34] * (sc[31] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * ge[34] * inv_ge[31] * ge[2])
+               : exp(-(g_RT[2] - g_RT[31] + g_RT[34] - g_RT[35]))) *
+      (sc[31] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[31] += qdot;
@@ -19590,7 +21094,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[1] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[47] * ge[34] * (sc[0] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[47] * ge[1] * ge[34])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[34] - g_RT[47]))) *
+      (sc[0] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -19603,7 +21110,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[47] * ge[34] * (sc[5] * sc[47]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[47] * ge[34] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[34] - g_RT[47]))) *
+      (sc[5] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -19616,7 +21126,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000;
     const amrex::Real qf = k_f * (sc[12] * sc[34]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[47] * ge[34] * (sc[13] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[12] * inv_ge[13] * ge[34])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[34] - g_RT[47]))) *
+      (sc[13] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -19629,7 +21142,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000;
     const amrex::Real qf = k_f * (sc[2] * sc[38]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[35] * ge[38] * (sc[4] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[38] * inv_ge[35] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[35] + g_RT[38]))) *
+      (sc[4] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -19643,7 +21159,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       900000 * exp((0.72) * logT - (332.122999431115) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[38]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[35] * ge[38] * (sc[0] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[38] * inv_ge[35] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[35] + g_RT[38]))) *
+      (sc[0] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -19656,7 +21175,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 13 * exp((1.9) * logT - (-478.055832514484) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[38]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[35] * ge[38] * (sc[5] * sc[35]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[35] * ge[38] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[35] + g_RT[38]))) *
+      (sc[5] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -19669,7 +21191,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(6541.81665546136) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[38]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[35] * ge[38] * (sc[6] * sc[35]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * ge[38] * inv_ge[35])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[35] + g_RT[38]))) *
+      (sc[6] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -19682,7 +21207,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 77000000;
     const amrex::Real qf = k_f * (sc[2] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[30] * ge[39] * (sc[14] * sc[30]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * inv_ge[30] * ge[2] * ge[39])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[30] + g_RT[39]))) *
+      (sc[14] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -19695,7 +21223,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[4] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[46] * ge[39] * (sc[1] * sc[46]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[46] * inv_ge[1] * ge[39])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[39] - g_RT[46]))) *
+      (sc[1] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19708,7 +21239,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 8000000 * exp(-(3753.99632690321) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[5] * inv_ge[40] * ge[39] * (sc[4] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[39] * ge[5])
+               : exp(-(-g_RT[4] + g_RT[5] + g_RT[39] - g_RT[40]))) *
+      (sc[4] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[5] -= qdot;
@@ -19721,7 +21255,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 6140000 * exp(-(-221.415332954077) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[46] * ge[39] * (sc[2] * sc[46]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[46] * ge[39] * inv_ge[2])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[39] - g_RT[46]))) *
+      (sc[2] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -19735,7 +21272,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.295 * exp((2.45) * logT - (1127.20533140257) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[40] * ge[39] * (sc[1] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[40] * ge[39] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] + g_RT[39] - g_RT[40]))) *
+      (sc[1] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -19748,7 +21288,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 23500000;
     const amrex::Real qf = k_f * (sc[2] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[35] * ge[46] * (sc[14] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * ge[46] * inv_ge[14] * ge[2])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[35] + g_RT[46]))) *
+      (sc[14] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -19761,7 +21304,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 54000000;
     const amrex::Real qf = k_f * (sc[1] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[1] * inv_ge[31] * ge[46] * (sc[14] * sc[31]);
+      k_f *
+      (kc_fast ? (ge[46] * inv_ge[14] * inv_ge[31] * ge[1])
+               : exp(-(g_RT[1] - g_RT[14] - g_RT[31] + g_RT[46]))) *
+      (sc[14] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[14] += qdot;
@@ -19773,8 +21319,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 223:  NCO + OH <=> CO + H + NO
     const amrex::Real k_f = 2500000;
     const amrex::Real qf = k_f * (sc[4] * sc[46]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[4] * inv_ge[14] * ge[46] *
-                           inv_ge[35] * (refCinv) * (sc[1] * sc[14] * sc[35]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[35] * ge[46] * inv_ge[1] * inv_ge[14])
+               : exp(-(-g_RT[1] + g_RT[4] - g_RT[14] - g_RT[35] + g_RT[46]))) *
+      (refCinv) * (sc[1] * sc[14] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19788,7 +21337,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[30] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[30] * inv_ge[47] * ge[46] * (sc[14] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[46] * inv_ge[14] * ge[30])
+               : exp(-(-g_RT[14] + g_RT[30] + g_RT[46] - g_RT[47]))) *
+      (sc[14] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[30] -= qdot;
@@ -19801,7 +21353,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(10064.3333160944) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[3] * inv_ge[35] * ge[46] * (sc[15] * sc[35]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[35] * ge[46] * inv_ge[15])
+               : exp(-(g_RT[3] - g_RT[15] - g_RT[35] + g_RT[46]))) *
+      (sc[15] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[15] += qdot;
@@ -19815,7 +21370,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       190000000000 * exp((-1.52) * logT - (372.380332695493) * invT);
     const amrex::Real qf = k_f * (sc[35] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[35] * inv_ge[37] * ge[46] * (sc[14] * sc[37]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[37] * ge[46] * inv_ge[14])
+               : exp(-(-g_RT[14] + g_RT[35] - g_RT[37] + g_RT[46]))) *
+      (sc[14] * sc[37]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[35] -= qdot;
@@ -19829,7 +21387,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3800000000000 * exp((-2) * logT - (402.573332643776) * invT);
     const amrex::Real qf = k_f * (sc[35] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[35] * inv_ge[47] * ge[46] * (sc[15] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[35] * ge[46] * inv_ge[15])
+               : exp(-(-g_RT[15] + g_RT[35] + g_RT[46] - g_RT[47]))) *
+      (sc[15] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[15] += qdot;
     wdot[35] -= qdot;
@@ -19843,7 +21404,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0203 * exp((2.64) * logT - (2506.0189957075) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[46] * ge[40] * (sc[1] * sc[46]);
+      k_f *
+      (kc_fast ? (inv_ge[46] * ge[40] * inv_ge[1] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[40] - g_RT[46]))) *
+      (sc[1] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -19857,7 +21421,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00507 * exp((2.64) * logT - (2506.0189957075) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[31] * ge[40] * (sc[14] * sc[31]);
+      k_f *
+      (kc_fast ? (ge[40] * inv_ge[31] * ge[2] * inv_ge[14])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[31] + g_RT[40]))) *
+      (sc[14] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -19871,7 +21438,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3910 * exp((1.58) * logT - (13385.5633104055) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[39] * ge[40] * (sc[4] * sc[39]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[40] * ge[2] * inv_ge[39])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[39] + g_RT[40]))) *
+      (sc[4] * sc[39]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -19884,7 +21454,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1.1 * exp((2.03) * logT - (6728.0068218091) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[44] * ge[40] * (sc[1] * sc[44]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[44] * inv_ge[1] * ge[40])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[44]))) *
+      (sc[1] * sc[44]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19898,7 +21471,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0044 * exp((2.26) * logT - (3220.58666115021) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[45] * ge[40] * (sc[1] * sc[45]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[40] * inv_ge[1] * inv_ge[45])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[45]))) *
+      (sc[1] * sc[45]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -19912,7 +21488,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00016 * exp((2.56) * logT - (4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[40]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[4] * inv_ge[32] * ge[40] * (sc[14] * sc[32]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[40] * inv_ge[32] * inv_ge[14])
+               : exp(-(g_RT[4] - g_RT[14] - g_RT[32] + g_RT[40]))) *
+      (sc[14] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[14] += qdot;
@@ -19925,7 +21504,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 60000000 * exp(-(201.286666321888) * invT);
     const amrex::Real qf = k_f * (sc[30] * sc[41]);
     const amrex::Real qr =
-      k_f * inv_ge[10] * ge[30] * inv_ge[47] * ge[41] * (sc[10] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[41] * inv_ge[10] * ge[30])
+               : exp(-(-g_RT[10] + g_RT[30] + g_RT[41] - g_RT[47]))) *
+      (sc[10] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[10] += qdot;
     wdot[30] -= qdot;
@@ -19938,7 +21520,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 63000000 * exp(-(23158.0309603332) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[47]);
     const amrex::Real qr =
-      k_f * inv_ge[30] * ge[8] * inv_ge[39] * ge[47] * (sc[30] * sc[39]);
+      k_f *
+      (kc_fast ? (ge[47] * inv_ge[39] * ge[8] * inv_ge[30])
+               : exp(-(g_RT[8] - g_RT[30] - g_RT[39] + g_RT[47]))) *
+      (sc[30] * sc[39]);
     const amrex::Real qdot = qf - qr;
     wdot[8] -= qdot;
     wdot[30] += qdot;
@@ -19952,7 +21537,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3120 * exp((0.88) * logT - (10129.751482649) * invT);
     const amrex::Real qf = k_f * (sc[9] * sc[47]);
     const amrex::Real qr =
-      k_f * inv_ge[30] * ge[9] * inv_ge[40] * ge[47] * (sc[30] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[47] * inv_ge[40] * ge[9] * inv_ge[30])
+               : exp(-(g_RT[9] - g_RT[30] - g_RT[40] + g_RT[47]))) *
+      (sc[30] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[30] += qdot;
@@ -19965,7 +21553,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(37238.0332695493) * invT);
     const amrex::Real qf = k_f * (sc[10] * sc[47]);
     const amrex::Real qr =
-      k_f * inv_ge[31] * ge[10] * inv_ge[40] * ge[47] * (sc[31] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[47] * inv_ge[40] * ge[10] * inv_ge[31])
+               : exp(-(g_RT[10] - g_RT[31] - g_RT[40] + g_RT[47]))) *
+      (sc[31] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[10] -= qdot;
     wdot[31] += qdot;
@@ -19978,7 +21569,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000 * exp(-(32709.0832773068) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[47]);
     const amrex::Real qr =
-      k_f * inv_ge[31] * ge[11] * inv_ge[40] * ge[47] * (sc[31] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[47] * inv_ge[40] * ge[11] * inv_ge[31])
+               : exp(-(g_RT[11] - g_RT[31] - g_RT[40] + g_RT[47]))) *
+      (sc[31] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[31] += qdot;
@@ -19991,7 +21585,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 19000000;
     const amrex::Real qf = k_f * (sc[8] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[8] * inv_ge[39] * ge[35] * (sc[2] * sc[39]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[2] * ge[8] * inv_ge[39])
+               : exp(-(-g_RT[2] + g_RT[8] + g_RT[35] - g_RT[39]))) *
+      (sc[2] * sc[39]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[8] -= qdot;
@@ -20004,7 +21601,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 29000000;
     const amrex::Real qf = k_f * (sc[8] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[8] * inv_ge[30] * ge[35] * (sc[14] * sc[30]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[14] * inv_ge[30] * ge[8])
+               : exp(-(g_RT[8] - g_RT[14] - g_RT[30] + g_RT[35]))) *
+      (sc[14] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[8] -= qdot;
     wdot[14] += qdot;
@@ -20017,7 +21617,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 41000000;
     const amrex::Real qf = k_f * (sc[9] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[9] * inv_ge[40] * ge[35] * (sc[2] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[40] * inv_ge[2] * ge[9])
+               : exp(-(-g_RT[2] + g_RT[9] + g_RT[35] - g_RT[40]))) *
+      (sc[2] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[9] -= qdot;
@@ -20030,7 +21633,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 16200000;
     const amrex::Real qf = k_f * (sc[9] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[9] * inv_ge[46] * ge[35] * (sc[1] * sc[46]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[46] * inv_ge[1] * ge[9])
+               : exp(-(-g_RT[1] + g_RT[9] + g_RT[35] - g_RT[46]))) *
+      (sc[1] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= qdot;
@@ -20043,7 +21649,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 24600000;
     const amrex::Real qf = k_f * (sc[9] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[9] * inv_ge[30] * ge[35] * (sc[16] * sc[30]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[16] * inv_ge[30] * ge[9])
+               : exp(-(g_RT[9] - g_RT[16] - g_RT[30] + g_RT[35]))) *
+      (sc[16] * sc[30]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
     wdot[16] += qdot;
@@ -20057,7 +21666,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       310000000000 * exp((-1.38) * logT - (639.085165571994) * invT);
     const amrex::Real qf = k_f * (sc[10] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[10] * inv_ge[45] * ge[35] * (sc[1] * sc[45]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[1] * inv_ge[45] * ge[10])
+               : exp(-(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[45]))) *
+      (sc[1] * sc[45]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[10] -= qdot;
@@ -20071,7 +21683,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       290000000 * exp((-0.69) * logT - (382.444666011587) * invT);
     const amrex::Real qf = k_f * (sc[10] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[10] * inv_ge[40] * ge[35] * (sc[4] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[40] * ge[10])
+               : exp(-(-g_RT[4] + g_RT[10] + g_RT[35] - g_RT[40]))) *
+      (sc[4] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[10] -= qdot;
@@ -20085,7 +21700,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       38000000 * exp((-0.36) * logT - (291.865666166737) * invT);
     const amrex::Real qf = k_f * (sc[10] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[10] * inv_ge[43] * ge[35] * (sc[1] * sc[43]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[43] * inv_ge[1] * ge[10])
+               : exp(-(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[43]))) *
+      (sc[1] * sc[43]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[10] -= qdot;
@@ -20099,7 +21717,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       310000000000 * exp((-1.38) * logT - (639.085165571994) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[11] * inv_ge[45] * ge[35] * (sc[1] * sc[45]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[1] * inv_ge[45] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[45]))) *
+      (sc[1] * sc[45]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[11] -= qdot;
@@ -20113,7 +21734,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       290000000 * exp((-0.69) * logT - (382.444666011587) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[11] * inv_ge[40] * ge[35] * (sc[4] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[40] * ge[11])
+               : exp(-(-g_RT[4] + g_RT[11] + g_RT[35] - g_RT[40]))) *
+      (sc[4] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[11] -= qdot;
@@ -20127,7 +21751,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       38000000 * exp((-0.36) * logT - (291.865666166737) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[11] * inv_ge[43] * ge[35] * (sc[1] * sc[43]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[43] * inv_ge[1] * ge[11])
+               : exp(-(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[43]))) *
+      (sc[1] * sc[43]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[11] -= qdot;
@@ -20140,7 +21767,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 96000000 * exp(-(14492.6399751759) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[12] * inv_ge[40] * ge[35] * (sc[5] * sc[40]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[40] * ge[12] * inv_ge[5])
+               : exp(-(-g_RT[5] + g_RT[12] + g_RT[35] - g_RT[40]))) *
+      (sc[5] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[5] += qdot;
     wdot[12] -= qdot;
@@ -20153,7 +21783,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1000000 * exp(-(10944.9624812527) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[12] * inv_ge[41] * ge[35] * (sc[4] * sc[41]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[35] * ge[12] * inv_ge[41])
+               : exp(-(-g_RT[4] + g_RT[12] + g_RT[35] - g_RT[41]))) *
+      (sc[4] * sc[41]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[12] -= qdot;
@@ -20165,8 +21798,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 256:  HCNN + O <=> CO + H + N2
     const amrex::Real k_f = 22000000;
     const amrex::Real qf = k_f * (sc[2] * sc[42]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[2] * inv_ge[14] * ge[42] *
-                           inv_ge[47] * (refCinv) * (sc[1] * sc[14] * sc[47]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[47] * inv_ge[1] * ge[2] * inv_ge[14] * ge[42])
+               : exp(-(-g_RT[1] + g_RT[2] - g_RT[14] + g_RT[42] - g_RT[47]))) *
+      (refCinv) * (sc[1] * sc[14] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -20180,7 +21816,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000;
     const amrex::Real qf = k_f * (sc[2] * sc[42]);
     const amrex::Real qr =
-      k_f * inv_ge[35] * ge[2] * inv_ge[40] * ge[42] * (sc[35] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * inv_ge[40] * ge[2] * ge[42])
+               : exp(-(g_RT[2] - g_RT[35] - g_RT[40] + g_RT[42]))) *
+      (sc[35] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[35] += qdot;
@@ -20192,8 +21831,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 258:  HCNN + O2 <=> HCO + N2 + O
     const amrex::Real k_f = 12000000;
     const amrex::Real qf = k_f * (sc[3] * sc[42]);
-    const amrex::Real qr = k_f * inv_ge[2] * ge[3] * inv_ge[16] * ge[42] *
-                           inv_ge[47] * (refCinv) * (sc[2] * sc[16] * sc[47]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[3] * inv_ge[16] * inv_ge[2] * ge[42])
+               : exp(-(-g_RT[2] + g_RT[3] - g_RT[16] + g_RT[42] - g_RT[47]))) *
+      (refCinv) * (sc[2] * sc[16] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -20206,8 +21848,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 259:  HCNN + OH <=> H + HCO + N2
     const amrex::Real k_f = 12000000;
     const amrex::Real qf = k_f * (sc[4] * sc[42]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[4] * inv_ge[16] * ge[42] *
-                           inv_ge[47] * (refCinv) * (sc[1] * sc[16] * sc[47]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[16] * inv_ge[47] * inv_ge[1] * ge[42])
+               : exp(-(-g_RT[1] + g_RT[4] - g_RT[16] + g_RT[42] - g_RT[47]))) *
+      (refCinv) * (sc[1] * sc[16] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -20221,7 +21866,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000;
     const amrex::Real qf = k_f * (sc[1] * sc[42]);
     const amrex::Real qr =
-      k_f * inv_ge[10] * ge[1] * inv_ge[47] * ge[42] * (sc[10] * sc[47]);
+      k_f *
+      (kc_fast ? (inv_ge[47] * ge[1] * inv_ge[10] * ge[42])
+               : exp(-(g_RT[1] - g_RT[10] + g_RT[42] - g_RT[47]))) *
+      (sc[10] * sc[47]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[10] += qdot;
@@ -20234,7 +21882,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 98 * exp((1.41) * logT - (4277.34165934012) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[2] * inv_ge[31] * ge[45] * (sc[15] * sc[31]);
+      k_f *
+      (kc_fast ? (ge[45] * ge[2] * inv_ge[31] * inv_ge[15])
+               : exp(-(g_RT[2] - g_RT[15] - g_RT[31] + g_RT[45]))) *
+      (sc[15] * sc[31]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[15] += qdot;
@@ -20248,7 +21899,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       150 * exp((1.57) * logT - (22141.5332954077) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[38] * ge[45] * (sc[14] * sc[38]);
+      k_f *
+      (kc_fast ? (inv_ge[38] * inv_ge[14] * ge[45] * ge[2])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[38] + g_RT[45]))) *
+      (sc[14] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -20261,7 +21915,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2.2 * exp((2.11) * logT - (5736.6699901738) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[46] * ge[45] * (sc[4] * sc[46]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[46] * ge[2] * ge[45])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[45] - g_RT[46]))) *
+      (sc[4] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -20275,7 +21932,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       22.5 * exp((1.7) * logT - (1912.22333005793) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[1] * inv_ge[32] * ge[45] * (sc[14] * sc[32]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[45] * inv_ge[32] * ge[1])
+               : exp(-(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[45]))) *
+      (sc[14] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[14] += qdot;
@@ -20289,7 +21949,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.105 * exp((2.5) * logT - (6692.78165520277) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[46] * ge[45] * (sc[0] * sc[46]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[46] * ge[1] * ge[45])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[45] - g_RT[46]))) *
+      (sc[0] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -20302,7 +21965,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 33 * exp((1.5) * logT - (1811.57999689699) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[46] * ge[45] * (sc[5] * sc[46]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[46] * inv_ge[5] * ge[45])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[45] - g_RT[46]))) *
+      (sc[5] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -20315,7 +21981,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3.3 * exp((1.5) * logT - (1811.57999689699) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[45]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[4] * inv_ge[32] * ge[45] * (sc[15] * sc[32]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[32] * inv_ge[15] * ge[45])
+               : exp(-(g_RT[4] - g_RT[15] - g_RT[32] + g_RT[45]))) *
+      (sc[15] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[15] += qdot;
@@ -20328,7 +21997,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       2100000000 * exp((-0.69) * logT - (1434.16749754345) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[43]);
-    const amrex::Real qr = k_f * inv_ge[45] * ge[43] * (sc[1] * sc[45]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[43] * inv_ge[45])
+               : exp(-(g_RT[1] - g_RT[1] + g_RT[43] - g_RT[45]))) *
+      (sc[1] * sc[45]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[1] += qdot;
@@ -20342,7 +22015,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       270000 * exp((0.18) * logT - (1066.81933150601) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[43]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[1] * inv_ge[40] * ge[43] * (sc[4] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[43] * ge[1])
+               : exp(-(g_RT[1] - g_RT[4] - g_RT[40] + g_RT[43]))) *
+      (sc[4] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -20356,7 +22032,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       170000000 * exp((-0.75) * logT - (1454.29616417564) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[43]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[1] * inv_ge[32] * ge[43] * (sc[14] * sc[32]);
+      k_f *
+      (kc_fast ? (ge[43] * inv_ge[32] * inv_ge[14] * ge[1])
+               : exp(-(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[43]))) *
+      (sc[14] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[14] += qdot;
@@ -20368,7 +22047,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 272:  H + HOCN <=> H + HNCO
     const amrex::Real k_f = 20 * exp((2) * logT - (1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[44]);
-    const amrex::Real qr = k_f * inv_ge[45] * ge[44] * (sc[1] * sc[45]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[44] * inv_ge[45])
+               : exp(-(g_RT[1] - g_RT[1] + g_RT[44] - g_RT[45]))) *
+      (sc[1] * sc[45]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[1] += qdot;
@@ -20381,7 +22064,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9000000;
     const amrex::Real qf = k_f * (sc[27] * sc[35]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[27] * inv_ge[43] * ge[35] * (sc[14] * sc[43]);
+      k_f *
+      (kc_fast ? (ge[35] * inv_ge[43] * ge[27] * inv_ge[14])
+               : exp(-(-g_RT[14] + g_RT[27] + g_RT[35] - g_RT[43]))) *
+      (sc[14] * sc[43]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[27] -= qdot;
@@ -20395,7 +22081,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       610000000 * exp((-0.31) * logT - (145.932833083369) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[30]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[12] * inv_ge[41] * ge[30] * (sc[1] * sc[41]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[41] * ge[30])
+               : exp(-(-g_RT[1] + g_RT[12] + g_RT[30] - g_RT[41]))) *
+      (sc[1] * sc[41]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[12] -= qdot;
@@ -20409,7 +22098,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3700000 * exp((0.15) * logT - (-45.2894999224248) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[30]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[12] * inv_ge[40] * ge[30] * (sc[0] * sc[40]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[40] * ge[12] * ge[30])
+               : exp(-(-g_RT[0] + g_RT[12] + g_RT[30] - g_RT[40]))) *
+      (sc[0] * sc[40]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[12] -= qdot;
@@ -20422,7 +22114,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.54 * exp((2.4) * logT - (4989.3932414538) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[33]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[32] * ge[33] * (sc[0] * sc[32]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[33] * ge[1] * inv_ge[32])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[32] + g_RT[33]))) *
+      (sc[0] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -20435,7 +22130,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50 * exp((1.6) * logT - (480.571915843507) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[33]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[32] * ge[33] * (sc[5] * sc[32]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[33] * inv_ge[5] * inv_ge[32])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[32] + g_RT[33]))) *
+      (sc[5] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -20449,7 +22147,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       9.4 * exp((1.94) * logT - (3250.77966109849) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[33]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[32] * ge[33] * (sc[4] * sc[32]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[33] * ge[2] * inv_ge[32])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[32] + g_RT[33]))) *
+      (sc[4] * sc[32]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -20462,7 +22163,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(7221.15915429773) * invT);
     const amrex::Real qf = k_f * (sc[15] * sc[31]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[15] * inv_ge[38] * ge[31] * (sc[14] * sc[38]);
+      k_f *
+      (kc_fast ? (inv_ge[38] * inv_ge[14] * ge[15] * ge[31])
+               : exp(-(-g_RT[14] + g_RT[15] + g_RT[31] - g_RT[38]))) *
+      (sc[14] * sc[38]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[15] -= qdot;
@@ -20476,7 +22180,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       6160000000 * exp((-0.752) * logT - (173.609749702628) * invT);
     const amrex::Real qf = k_f * (sc[36] * sc[39]);
     const amrex::Real qr =
-      k_f * inv_ge[35] * ge[36] * inv_ge[46] * ge[39] * (sc[35] * sc[46]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * ge[36] * inv_ge[46] * ge[39])
+               : exp(-(-g_RT[35] + g_RT[36] + g_RT[39] - g_RT[46]))) *
+      (sc[35] * sc[46]);
     const amrex::Real qdot = qf - qr;
     wdot[35] += qdot;
     wdot[36] -= qdot;
@@ -20489,7 +22196,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3250000 * exp(-(-354.767749392327) * invT);
     const amrex::Real qf = k_f * (sc[36] * sc[46]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[36] * inv_ge[37] * ge[46] * (sc[15] * sc[37]);
+      k_f *
+      (kc_fast ? (inv_ge[37] * ge[46] * ge[36] * inv_ge[15])
+               : exp(-(-g_RT[15] + g_RT[36] - g_RT[37] + g_RT[46]))) *
+      (sc[15] * sc[37]);
     const amrex::Real qdot = qf - qr;
     wdot[15] += qdot;
     wdot[36] -= qdot;
@@ -20502,7 +22212,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3000000 * exp(-(5686.34832359333) * invT);
     const amrex::Real qf = k_f * (sc[15] * sc[30]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[15] * inv_ge[35] * ge[30] * (sc[14] * sc[35]);
+      k_f *
+      (kc_fast ? (inv_ge[35] * inv_ge[14] * ge[15] * ge[30])
+               : exp(-(-g_RT[14] + g_RT[15] + g_RT[30] - g_RT[35]))) *
+      (sc[14] * sc[35]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[15] -= qdot;
@@ -20529,7 +22242,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       6.7 * exp((1.83) * logT - (110.707666477038) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[24]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[51] * ge[24] * (sc[1] * sc[51]);
+      k_f *
+      (kc_fast ? (ge[24] * inv_ge[51] * inv_ge[1] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[24] - g_RT[51]))) *
+      (sc[1] * sc[51]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -20542,7 +22258,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 109600000;
     const amrex::Real qf = k_f * (sc[2] * sc[25]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[52] * ge[25] * (sc[1] * sc[52]);
+      k_f *
+      (kc_fast ? (ge[25] * inv_ge[1] * inv_ge[52] * ge[2])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[25] - g_RT[52]))) *
+      (sc[1] * sc[52]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -20555,7 +22274,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000000 * exp(-(8720.74481839579) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[6]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[4] * inv_ge[5] * ge[6] * (sc[3] * sc[5]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[3] * ge[6] * inv_ge[5])
+               : exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]))) *
+      (sc[3] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[4] -= qdot;
@@ -20593,7 +22315,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2400000 * exp(-(754.82499870708) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[10]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[17] * ge[10] * (sc[2] * sc[17]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[17] * inv_ge[2] * ge[10])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[10] - g_RT[17]))) *
+      (sc[2] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -20631,7 +22356,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       303000 * exp((0.29) * logT - (5.53538332385192) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[51] * ge[23] * (sc[2] * sc[51]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[51] * inv_ge[2] * ge[23])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[23] - g_RT[51]))) *
+      (sc[2] * sc[51]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -20645,7 +22373,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.337 * exp((1.61) * logT - (-193.235199669012) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[23]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[3] * inv_ge[22] * ge[23] * (sc[6] * sc[22]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[22] * ge[23])
+               : exp(-(g_RT[3] - g_RT[6] - g_RT[22] + g_RT[23]))) *
+      (sc[6] * sc[22]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -20658,7 +22389,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2920000 * exp(-(909.815731774933) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[52]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[51] * ge[52] * (sc[4] * sc[51]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[51] * ge[52] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[51] + g_RT[52]))) *
+      (sc[4] * sc[51]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -20698,7 +22432,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2050 * exp((1.16) * logT - (1210.23608126035) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[52]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[51] * ge[52] * (sc[0] * sc[51]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[51] * ge[52] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[51] + g_RT[52]))) *
+      (sc[0] * sc[51]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -20790,7 +22527,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 22000000;
     const amrex::Real qf = k_f * (sc[1] * sc[51]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[1] * inv_ge[16] * ge[51] * (sc[12] * sc[16]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[51] * inv_ge[12] * ge[1])
+               : exp(-(g_RT[1] - g_RT[12] - g_RT[16] + g_RT[51]))) *
+      (sc[12] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] += qdot;
@@ -20803,7 +22543,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 11000000;
     const amrex::Real qf = k_f * (sc[1] * sc[51]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[28] * ge[51] * (sc[0] * sc[28]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[51] * inv_ge[28] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[28] + g_RT[51]))) *
+      (sc[0] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -20816,7 +22559,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000000;
     const amrex::Real qf = k_f * (sc[4] * sc[51]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[28] * ge[51] * (sc[5] * sc[28]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[28] * ge[51] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[28] + g_RT[51]))) *
+      (sc[5] * sc[28]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -20829,7 +22575,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30100000;
     const amrex::Real qf = k_f * (sc[4] * sc[51]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[4] * inv_ge[18] * ge[51] * (sc[16] * sc[18]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[16] * ge[51] * inv_ge[18])
+               : exp(-(g_RT[4] - g_RT[16] - g_RT[18] + g_RT[51]))) *
+      (sc[16] * sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[16] += qdot;
@@ -20843,7 +22592,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.193 * exp((2.68) * logT - (1869.95313013034) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[50]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[49] * ge[50] * (sc[4] * sc[49]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[50] * ge[2] * inv_ge[49])
+               : exp(-(g_RT[2] - g_RT[4] - g_RT[49] + g_RT[50]))) *
+      (sc[4] * sc[49]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -20857,7 +22609,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.32 * exp((2.54) * logT - (3399.73179417669) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[50]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[49] * ge[50] * (sc[0] * sc[49]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[50] * ge[1] * inv_ge[49])
+               : exp(-(-g_RT[0] + g_RT[1] - g_RT[49] + g_RT[50]))) *
+      (sc[0] * sc[49]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -20871,7 +22626,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       31.6 * exp((1.8) * logT - (470.004365861608) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[50]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[49] * ge[50] * (sc[5] * sc[49]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[49] * ge[50] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] - g_RT[49] + g_RT[50]))) *
+      (sc[5] * sc[49]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -20885,7 +22643,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.000378 * exp((2.72) * logT - (754.82499870708) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[50] * ge[49] * (sc[6] * sc[50]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[49] * ge[7] * inv_ge[50])
+               : exp(-(-g_RT[6] + g_RT[7] + g_RT[49] - g_RT[50]))) *
+      (sc[6] * sc[50]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -20899,7 +22660,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       9.03e-07 * exp((3.65) * logT - (3600.01202716696) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[50]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[49] * ge[50] * (sc[13] * sc[49]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[49] * ge[50] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] - g_RT[49] + g_RT[50]))) *
+      (sc[13] * sc[49]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -20912,7 +22676,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 96400000;
     const amrex::Real qf = k_f * (sc[2] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[17] * ge[2] * inv_ge[25] * ge[49] * (sc[17] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[25] * ge[49] * inv_ge[17] * ge[2])
+               : exp(-(g_RT[2] - g_RT[17] - g_RT[25] + g_RT[49]))) *
+      (sc[17] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[17] += qdot;
@@ -20925,7 +22692,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 4.06 * exp((2.19) * logT - (447.8628325662) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[1] * inv_ge[25] * ge[49] * (sc[12] * sc[25]);
+      k_f *
+      (kc_fast ? (inv_ge[25] * ge[49] * inv_ge[12] * ge[1])
+               : exp(-(g_RT[1] - g_RT[12] - g_RT[25] + g_RT[49]))) *
+      (sc[12] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] += qdot;
@@ -20938,7 +22708,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 24100000;
     const amrex::Real qf = k_f * (sc[4] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[18] * ge[4] * inv_ge[25] * ge[49] * (sc[18] * sc[25]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[18] * ge[49] * inv_ge[25])
+               : exp(-(g_RT[4] - g_RT[18] - g_RT[25] + g_RT[49]))) *
+      (sc[18] * sc[25]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[18] += qdot;
@@ -20952,7 +22725,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       25500 * exp((0.255) * logT - (-474.533315853851) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[50] * ge[49] * (sc[3] * sc[50]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[49] * inv_ge[50])
+               : exp(-(-g_RT[3] + g_RT[6] + g_RT[49] - g_RT[50]))) *
+      (sc[3] * sc[50]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -20978,7 +22754,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 19270000 * exp((-0.32) * logT);
     const amrex::Real qf = k_f * (sc[12] * sc[49]);
     const amrex::Real qr =
-      k_f * inv_ge[25] * ge[12] * inv_ge[25] * ge[49] * ((sc[25] * sc[25]));
+      k_f *
+      (kc_fast ? (inv_ge[25] * ge[12] * ge[49] * inv_ge[25])
+               : exp(-(g_RT[12] - 2.000000 * g_RT[25] + g_RT[49]))) *
+      ((sc[25] * sc[25]));
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[25] += 2.000000 * qdot;
@@ -20990,7 +22769,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 110000000;
     const amrex::Real qf = k_f * (sc[1] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[11] * ge[1] * inv_ge[53] * ge[60] * (sc[11] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[60] * ge[1] * inv_ge[11] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[11] - g_RT[53] + g_RT[60]))) *
+      (sc[11] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[11] += qdot;
@@ -21003,7 +22785,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[1] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[63] * ge[60] * (sc[0] * sc[63]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[60] * ge[1] * inv_ge[63])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[60] - g_RT[63]))) *
+      (sc[0] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21017,7 +22802,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       7.83 * exp((2.06) * logT - (6189.56498939805) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[62] * ge[58] * (sc[0] * sc[62]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * ge[58] * inv_ge[62])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[58] - g_RT[62]))) *
+      (sc[0] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21030,7 +22818,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 432 * exp((1.6) * logT - (31697.6177790393) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[1] * inv_ge[57] * ge[58] * (sc[54] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[1] * ge[58] * inv_ge[57])
+               : exp(-(g_RT[1] - g_RT[54] - g_RT[57] + g_RT[58]))) *
+      (sc[54] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[54] += qdot;
@@ -21043,7 +22834,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 65000000;
     const amrex::Real qf = k_f * (sc[1] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[9] * ge[1] * inv_ge[53] * ge[63] * (sc[9] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[63] * ge[1] * inv_ge[9] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[9] - g_RT[53] + g_RT[63]))) *
+      (sc[9] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[9] += qdot;
@@ -21056,7 +22850,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 230000000;
     const amrex::Real qf = k_f * (sc[1] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[65] * ge[63] * (sc[0] * sc[65]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[63] * inv_ge[65] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[63] - g_RT[65]))) *
+      (sc[0] * sc[65]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21069,7 +22866,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[9] * sc[53]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[9] * inv_ge[65] * ge[53] * (sc[0] * sc[65]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[65] * ge[9] * ge[53])
+               : exp(-(-g_RT[0] + g_RT[9] + g_RT[53] - g_RT[65]))) *
+      (sc[0] * sc[65]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[9] -= qdot;
@@ -21082,7 +22882,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000;
     const amrex::Real qf = k_f * (sc[1] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[1] * inv_ge[53] * ge[69] * (sc[14] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[69] * ge[1] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[14] - g_RT[53] + g_RT[69]))) *
+      (sc[14] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[14] += qdot;
@@ -21095,7 +22898,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 57000000;
     const amrex::Real qf = k_f * (sc[2] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[68] * ge[60] * (sc[1] * sc[68]);
+      k_f *
+      (kc_fast ? (ge[60] * ge[2] * inv_ge[1] * inv_ge[68])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[60] - g_RT[68]))) *
+      (sc[1] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -21108,7 +22914,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 37000000;
     const amrex::Real qf = k_f * (sc[2] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[2] * inv_ge[67] * ge[61] * (sc[1] * sc[67]);
+      k_f *
+      (kc_fast ? (inv_ge[1] * ge[2] * ge[61] * inv_ge[67])
+               : exp(-(-g_RT[1] + g_RT[2] + g_RT[61] - g_RT[67]))) *
+      (sc[1] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -21121,7 +22930,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15400000;
     const amrex::Real qf = k_f * (sc[2] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[2] * inv_ge[67] * ge[62] * (sc[54] * sc[67]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[2] * ge[62] * inv_ge[67])
+               : exp(-(g_RT[2] - g_RT[54] + g_RT[62] - g_RT[67]))) *
+      (sc[54] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[54] += qdot;
@@ -21134,7 +22946,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000;
     const amrex::Real qf = k_f * (sc[4] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[17] * ge[4] * inv_ge[53] * ge[60] * (sc[17] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[60] * inv_ge[17] * inv_ge[53])
+               : exp(-(g_RT[4] - g_RT[17] - g_RT[53] + g_RT[60]))) *
+      (sc[17] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[17] += qdot;
@@ -21147,7 +22962,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[4] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[4] * inv_ge[68] * ge[61] * (sc[53] * sc[68]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[61] * inv_ge[53] * inv_ge[68])
+               : exp(-(g_RT[4] - g_RT[53] + g_RT[61] - g_RT[68]))) *
+      (sc[53] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[53] += qdot;
@@ -21161,7 +22979,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       14600000 * exp((-0.06) * logT - (-133.855633104055) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[4] * inv_ge[67] * ge[62] * (sc[53] * sc[67]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[53] * ge[62] * inv_ge[67])
+               : exp(-(g_RT[4] - g_RT[53] + g_RT[62] - g_RT[67]))) *
+      (sc[53] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[53] += qdot;
@@ -21175,7 +22996,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2560000 * exp((0.5) * logT - (327.090832773068) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[0] * inv_ge[53] * ge[54] * (sc[1] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[0] * ge[54] * inv_ge[1] * inv_ge[53])
+               : exp(-(g_RT[0] - g_RT[1] - g_RT[53] + g_RT[54]))) *
+      (sc[1] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -21188,7 +23012,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[4] * inv_ge[53] * ge[54] * (sc[2] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[4] * inv_ge[2] * inv_ge[53])
+               : exp(-(-g_RT[2] + g_RT[4] - g_RT[53] + g_RT[54]))) *
+      (sc[2] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[4] -= qdot;
@@ -21201,7 +23028,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2890000 * exp((0.5) * logT);
     const amrex::Real qf = k_f * (sc[6] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[53] * ge[54] * (sc[3] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[3] * ge[6] * inv_ge[53])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[53] + g_RT[54]))) *
+      (sc[3] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -21214,7 +23044,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1300 * exp((1.5) * logT);
     const amrex::Real qf = k_f * (sc[5] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[5] * inv_ge[53] * ge[54] * (sc[4] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[4] * ge[5] * inv_ge[53])
+               : exp(-(-g_RT[4] + g_RT[5] - g_RT[53] + g_RT[54]))) *
+      (sc[4] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[5] -= qdot;
@@ -21227,7 +23060,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1730000 * exp((0.5) * logT);
     const amrex::Real qf = k_f * (sc[7] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[53] * ge[54] * (sc[6] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[6] * ge[7] * inv_ge[53])
+               : exp(-(-g_RT[6] + g_RT[7] - g_RT[53] + g_RT[54]))) *
+      (sc[6] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -21240,8 +23076,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       225000000000 * exp((-2.85) * logT - (6541.81665546136) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[63]);
-    const amrex::Real qr =
-      k_f * inv_ge[56] * ge[0] * ge[63] * (refC) * (sc[56]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[0] * ge[63] * inv_ge[56])
+                                    : exp(-(g_RT[0] - g_RT[56] + g_RT[63]))) *
+                           (refC) * (sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[56] += qdot;
@@ -21253,8 +23091,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       3.03e+15 * exp((-3.38) * logT - (1741.12966368433) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[60]);
-    const amrex::Real qr =
-      k_f * inv_ge[56] * ge[1] * ge[60] * (refC) * (sc[56]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[60] * ge[1] * inv_ge[56])
+                                    : exp(-(g_RT[1] - g_RT[56] + g_RT[60]))) *
+                           (refC) * (sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[56] += qdot;
@@ -21266,8 +23106,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       1.7 * exp((-0.71) * logT - (20581.561631413) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[64]);
-    const amrex::Real qr =
-      k_f * inv_ge[57] * ge[0] * ge[64] * (refC) * (sc[57]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[0] * ge[64] * inv_ge[57])
+                                    : exp(-(g_RT[0] - g_RT[57] + g_RT[64]))) *
+                           (refC) * (sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[57] += qdot;
@@ -21279,8 +23121,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       2.75 * exp((-0.32) * logT - (3869.73616003829) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[61]);
-    const amrex::Real qr =
-      k_f * inv_ge[57] * ge[1] * ge[61] * (refC) * (sc[57]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[1] * ge[61] * inv_ge[57])
+                                    : exp(-(g_RT[1] - g_RT[57] + g_RT[61]))) *
+                           (refC) * (sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[57] += qdot;
@@ -21293,7 +23137,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       20.8 * exp((1.27) * logT - (4191.79482615331) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[53]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[11] * inv_ge[63] * ge[53] * (sc[0] * sc[63]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[63] * ge[11] * ge[53])
+               : exp(-(-g_RT[0] + g_RT[11] + g_RT[53] - g_RT[63]))) *
+      (sc[0] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[11] -= qdot;
@@ -21307,7 +23154,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       16200000000 * exp((-0.88) * logT - (-493.65554915443) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[11] * ge[12] * inv_ge[53] * ge[54] * (sc[11] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[12] * inv_ge[11] * inv_ge[53])
+               : exp(-(-g_RT[11] + g_RT[12] - g_RT[53] + g_RT[54]))) *
+      (sc[11] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[11] += qdot;
     wdot[12] -= qdot;
@@ -21321,7 +23171,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1360000 * exp((-0.39) * logT - (-133.352416438251) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[12] * inv_ge[60] * ge[54] * (sc[1] * sc[60]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[60] * inv_ge[1] * ge[12])
+               : exp(-(-g_RT[1] + g_RT[12] + g_RT[54] - g_RT[60]))) *
+      (sc[1] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[12] -= qdot;
@@ -21335,7 +23188,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       5.77 * exp((1.35) * logT - (9007.57831790448) * invT);
     const amrex::Real qf = k_f * (sc[53] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[53] * inv_ge[64] * ge[63] * (sc[0] * sc[64]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[63] * ge[53] * inv_ge[64])
+               : exp(-(-g_RT[0] + g_RT[53] + g_RT[63] - g_RT[64]))) *
+      (sc[0] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[53] -= qdot;
@@ -21349,7 +23205,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       149000000 * exp((-0.11) * logT - (50.8248832462767) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[63] * ge[61] * (sc[53] * sc[63]);
+      k_f *
+      (kc_fast ? (inv_ge[63] * ge[1] * ge[61] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[61] - g_RT[63]))) *
+      (sc[53] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -21363,7 +23222,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0055 * exp((2.42) * logT - (-211.350999637982) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[64] * ge[61] * (sc[0] * sc[64]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * ge[61] * inv_ge[64])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[61] - g_RT[64]))) *
+      (sc[0] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21376,7 +23238,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[54] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[63] * ge[60] * (sc[53] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[63] * ge[60] * inv_ge[53])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[60] - g_RT[63]))) *
+      (sc[53] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -21389,7 +23254,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 53300000;
     const amrex::Real qf = k_f * (sc[1] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[64] * ge[62] * (sc[53] * sc[64]);
+      k_f *
+      (kc_fast ? (ge[1] * ge[62] * inv_ge[53] * inv_ge[64])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[62] - g_RT[64]))) *
+      (sc[53] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -21402,7 +23270,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[54] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[64] * ge[61] * (sc[53] * sc[64]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[61] * inv_ge[64] * inv_ge[53])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[61] - g_RT[64]))) *
+      (sc[53] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -21416,7 +23287,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0027 * exp((3) * logT - (2667.04832876501) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[60] * ge[56] * (sc[0] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * inv_ge[60] * ge[56] * ge[1])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[56] - g_RT[60]))) *
+      (sc[0] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21430,7 +23304,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00165 * exp((3) * logT - (2818.01332850643) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[61] * ge[57] * (sc[0] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * ge[57] * inv_ge[61])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[57] - g_RT[61]))) *
+      (sc[0] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -21443,7 +23320,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 275000000 * exp(-(15801.0033062682) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[1] * inv_ge[53] * ge[56] * (sc[12] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[12] * ge[1] * ge[56] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[12] - g_RT[53] + g_RT[56]))) *
+      (sc[12] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[12] += qdot;
@@ -21456,7 +23336,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 55000000 * exp(-(17159.6883039409) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[60] * ge[57] * (sc[53] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[60] * ge[1] * ge[57] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[57] - g_RT[60]))) *
+      (sc[53] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -21470,7 +23353,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       211 * exp((1.77) * logT - (20028.0232990278) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[61] * ge[58] * (sc[53] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[61] * ge[58] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[58] - g_RT[61]))) *
+      (sc[53] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -21484,7 +23370,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3070 * exp((1.58) * logT - (20797.9447977091) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[59]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[62] * ge[59] * (sc[53] * sc[62]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[53] * ge[59] * inv_ge[62])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[59] - g_RT[62]))) *
+      (sc[53] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -21498,7 +23387,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       915 * exp((1.45) * logT - (31999.5477785221) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[59]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[1] * inv_ge[58] * ge[59] * (sc[54] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[1] * ge[59] * inv_ge[58])
+               : exp(-(g_RT[1] - g_RT[54] - g_RT[58] + g_RT[59]))) *
+      (sc[54] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[54] += qdot;
@@ -21511,7 +23403,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 65 * exp((1.5) * logT - (3522.51666063304) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[60] * ge[56] * (sc[4] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * inv_ge[60] * ge[56] * ge[2])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[56] - g_RT[60]))) *
+      (sc[4] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -21525,7 +23420,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       22.5 * exp((1.5) * logT - (3069.62166140879) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[61] * ge[57] * (sc[4] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[2] * ge[57] * inv_ge[61])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[57] - g_RT[61]))) *
+      (sc[4] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -21538,7 +23436,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 307000000 * exp(-(9535.95581699944) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[62] * ge[58] * (sc[4] * sc[62]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[2] * ge[58] * inv_ge[62])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[58] - g_RT[62]))) *
+      (sc[4] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -21551,7 +23452,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 260 * exp((1.5) * logT - (1479.45699746588) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[60] * ge[56] * (sc[5] * sc[60]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[60] * ge[56] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[56] - g_RT[60]))) *
+      (sc[5] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -21564,7 +23468,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 28 * exp((1.7) * logT - (1278.17033114399) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[61] * ge[57] * (sc[5] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[5] * ge[57] * inv_ge[61])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[57] - g_RT[61]))) *
+      (sc[5] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -21578,7 +23485,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       12.5 * exp((1.55) * logT - (1846.80516350332) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[62] * ge[58] * (sc[5] * sc[62]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[5] * ge[58] * inv_ge[62])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[58] - g_RT[62]))) *
+      (sc[5] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -21591,7 +23501,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000 * exp(-(-301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[56] * ge[60] * (sc[6] * sc[56]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[60] * ge[7] * inv_ge[56])
+               : exp(-(-g_RT[6] + g_RT[7] - g_RT[56] + g_RT[60]))) *
+      (sc[6] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -21604,7 +23517,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000 * exp(-(-301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[57] * ge[61] * (sc[6] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[57] * ge[61])
+               : exp(-(-g_RT[6] + g_RT[7] - g_RT[57] + g_RT[61]))) *
+      (sc[6] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -21617,7 +23533,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000 * exp(-(-301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[58] * ge[62] * (sc[6] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[6] + g_RT[7] - g_RT[58] + g_RT[62]))) *
+      (sc[6] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -21630,7 +23549,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 150000 * exp(-(5736.6699901738) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[60] * ge[56] * (sc[13] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[60] * ge[12] * ge[56] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[56] - g_RT[60]))) *
+      (sc[13] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -21643,7 +23565,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 87000 * exp(-(5132.80999120814) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[61] * ge[57] * (sc[13] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[13] * ge[57] * inv_ge[61])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[57] - g_RT[61]))) *
+      (sc[13] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -21656,7 +23581,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 834000 * exp(-(5495.12599058754) * invT);
     const amrex::Real qf = k_f * (sc[13] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[13] * inv_ge[58] * ge[62] * (sc[12] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[12] + g_RT[13] - g_RT[58] + g_RT[62]))) *
+      (sc[12] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[12] += qdot;
     wdot[13] -= qdot;
@@ -21669,7 +23597,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 150000 * exp(-(5183.13165778861) * invT);
     const amrex::Real qf = k_f * (sc[23] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[23] * inv_ge[60] * ge[56] * (sc[24] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[60] * inv_ge[24] * ge[56] * ge[23])
+               : exp(-(g_RT[23] - g_RT[24] + g_RT[56] - g_RT[60]))) *
+      (sc[24] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[23] -= qdot;
     wdot[24] += qdot;
@@ -21682,7 +23613,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000 * exp(-(4629.59332540342) * invT);
     const amrex::Real qf = k_f * (sc[23] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[23] * inv_ge[61] * ge[57] * (sc[24] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[23] * ge[57] * inv_ge[61])
+               : exp(-(g_RT[23] - g_RT[24] + g_RT[57] - g_RT[61]))) *
+      (sc[24] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[23] -= qdot;
     wdot[24] += qdot;
@@ -21695,7 +23629,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 800000 * exp(-(6038.59998965664) * invT);
     const amrex::Real qf = k_f * (sc[24] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[23] * ge[24] * inv_ge[58] * ge[62] * (sc[23] * sc[58]);
+      k_f *
+      (kc_fast ? (ge[24] * inv_ge[23] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[23] + g_RT[24] - g_RT[58] + g_RT[62]))) *
+      (sc[23] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[23] += qdot;
     wdot[24] -= qdot;
@@ -21708,7 +23645,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 575000 * exp(-(5641.05882367091) * invT);
     const amrex::Real qf = k_f * (sc[56] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[56] * inv_ge[60] * ge[62] * (sc[58] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[60] * ge[56] * inv_ge[58] * ge[62])
+               : exp(-(g_RT[56] - g_RT[58] - g_RT[60] + g_RT[62]))) *
+      (sc[58] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[56] -= qdot;
     wdot[58] += qdot;
@@ -21721,7 +23661,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000 * exp(-(7045.03332126608) * invT);
     const amrex::Real qf = k_f * (sc[57] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[56] * ge[57] * inv_ge[61] * ge[60] * (sc[56] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[56] * ge[57] * inv_ge[61])
+               : exp(-(-g_RT[56] + g_RT[57] + g_RT[60] - g_RT[61]))) *
+      (sc[56] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[56] += qdot;
     wdot[57] -= qdot;
@@ -21734,7 +23677,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 427000 * exp(-(5686.34832359333) * invT);
     const amrex::Real qf = k_f * (sc[57] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[57] * inv_ge[61] * ge[62] * (sc[58] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[61] * ge[57] * inv_ge[58] * ge[62])
+               : exp(-(g_RT[57] - g_RT[58] - g_RT[61] + g_RT[62]))) *
+      (sc[58] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[57] -= qdot;
     wdot[58] += qdot;
@@ -21748,7 +23694,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.44e-05 * exp((3.1) * logT - (4931.52332488625) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[19] * ge[20] * inv_ge[56] * ge[60] * (sc[19] * sc[56]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[19] * inv_ge[56] * ge[20])
+               : exp(-(-g_RT[19] + g_RT[20] - g_RT[56] + g_RT[60]))) *
+      (sc[19] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[19] += qdot;
     wdot[20] -= qdot;
@@ -21762,7 +23711,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.44e-05 * exp((3.1) * logT - (4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[19] * ge[20] * inv_ge[57] * ge[61] * (sc[19] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[19] * ge[20] * inv_ge[57] * ge[61])
+               : exp(-(-g_RT[19] + g_RT[20] - g_RT[57] + g_RT[61]))) *
+      (sc[19] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[19] += qdot;
     wdot[20] -= qdot;
@@ -21776,7 +23728,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1.44e-05 * exp((3.1) * logT - (2767.69166192596) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[19] * ge[20] * inv_ge[58] * ge[62] * (sc[19] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[19] * ge[20] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[19] + g_RT[20] - g_RT[58] + g_RT[62]))) *
+      (sc[19] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[19] += qdot;
     wdot[20] -= qdot;
@@ -21790,7 +23745,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.2e-05 * exp((3.2) * logT - (5032.1666580472) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[18] * ge[20] * inv_ge[56] * ge[60] * (sc[18] * sc[56]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[18] * inv_ge[56] * ge[20])
+               : exp(-(-g_RT[18] + g_RT[20] - g_RT[56] + g_RT[60]))) *
+      (sc[18] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[18] += qdot;
     wdot[20] -= qdot;
@@ -21804,7 +23762,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.2e-05 * exp((3.2) * logT - (4679.91499198389) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[18] * ge[20] * inv_ge[57] * ge[61] * (sc[18] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[18] * ge[20] * inv_ge[57] * ge[61])
+               : exp(-(-g_RT[18] + g_RT[20] - g_RT[57] + g_RT[61]))) *
+      (sc[18] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[18] += qdot;
     wdot[20] -= qdot;
@@ -21818,7 +23779,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.2e-05 * exp((3.2) * logT - (2868.3349950869) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[18] * ge[20] * inv_ge[58] * ge[62] * (sc[18] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[18] * ge[20] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[18] + g_RT[20] - g_RT[58] + g_RT[62]))) *
+      (sc[18] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[18] += qdot;
     wdot[20] -= qdot;
@@ -21832,7 +23796,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00554 * exp((2.81) * logT - (4176.69832617917) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[56] * ge[60] * (sc[16] * sc[56]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[60] * inv_ge[56] * ge[17])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[56] + g_RT[60]))) *
+      (sc[16] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -21846,7 +23813,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00554 * exp((2.81) * logT - (3925.08999327681) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[57] * ge[61] * (sc[16] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[57] * ge[61])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[57] + g_RT[61]))) *
+      (sc[16] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -21860,7 +23830,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00554 * exp((2.81) * logT - (2314.79666270171) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[58] * ge[62] * (sc[16] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[58] + g_RT[62]))) *
+      (sc[16] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -21873,7 +23846,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000000;
     const amrex::Real qf = k_f * (sc[16] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[56] * ge[60] * (sc[14] * sc[56]);
+      k_f *
+      (kc_fast ? (ge[16] * ge[60] * inv_ge[14] * inv_ge[56])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[56] + g_RT[60]))) *
+      (sc[14] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -21886,7 +23862,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000000;
     const amrex::Real qf = k_f * (sc[16] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[57] * ge[61] * (sc[14] * sc[57]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[14] * ge[61] * inv_ge[57])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[57] + g_RT[61]))) *
+      (sc[14] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -21899,7 +23878,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000000;
     const amrex::Real qf = k_f * (sc[16] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[58] * ge[62] * (sc[14] * sc[58]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[14] * ge[62] * inv_ge[58])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[58] + g_RT[62]))) *
+      (sc[14] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -21912,7 +23894,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[16] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[28] * ge[16] * inv_ge[53] * ge[60] * (sc[28] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[28] * ge[60] * inv_ge[53])
+               : exp(-(g_RT[16] - g_RT[28] - g_RT[53] + g_RT[60]))) *
+      (sc[28] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[16] -= qdot;
     wdot[28] += qdot;
@@ -21954,7 +23939,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2260 * exp((1.14) * logT - (10819.1583148015) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[66] * ge[62] * (sc[2] * sc[66]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[66] * ge[62])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[62] - g_RT[66]))) *
+      (sc[2] * sc[66]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -21993,7 +23981,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[6] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[66] * ge[62] * (sc[4] * sc[66]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * ge[62] * inv_ge[66])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[62] - g_RT[66]))) *
+      (sc[4] * sc[66]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -22006,7 +23997,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3000000;
     const amrex::Real qf = k_f * (sc[6] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[56] * ge[60] * (sc[3] * sc[56]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[60] * inv_ge[56])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[56] + g_RT[60]))) *
+      (sc[3] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -22019,7 +24013,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 3000000;
     const amrex::Real qf = k_f * (sc[6] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[57] * ge[61] * (sc[3] * sc[57]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[61] * inv_ge[57])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[57] + g_RT[61]))) *
+      (sc[3] * sc[57]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -22032,7 +24029,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000;
     const amrex::Real qf = k_f * (sc[6] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[58] * ge[62] * (sc[3] * sc[58]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[62] * inv_ge[58])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[58] + g_RT[62]))) *
+      (sc[3] * sc[58]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -22045,7 +24045,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000;
     const amrex::Real qf = k_f * (sc[1] * sc[66]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[67] * ge[66] * (sc[53] * sc[67]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[53] * ge[66] * inv_ge[67])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[66] - g_RT[67]))) *
+      (sc[53] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -22149,7 +24152,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(8303.07498577788) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[68] * ge[63] * (sc[2] * sc[68]);
+      k_f *
+      (kc_fast ? (ge[3] * ge[63] * inv_ge[2] * inv_ge[68])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[63] - g_RT[68]))) *
+      (sc[2] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -22162,7 +24168,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(13335.2416438251) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[67] * ge[64] * (sc[2] * sc[67]);
+      k_f *
+      (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[67] * ge[64])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[64] - g_RT[67]))) *
+      (sc[2] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -22175,7 +24184,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000000;
     const amrex::Real qf = k_f * (sc[2] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[53] * ge[63] * (sc[14] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[63] * inv_ge[14] * ge[2] * inv_ge[53])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[53] + g_RT[63]))) *
+      (sc[14] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -22188,7 +24200,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 24500000;
     const amrex::Real qf = k_f * (sc[2] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[2] * inv_ge[69] * ge[64] * (sc[54] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[2] * ge[64] * inv_ge[69])
+               : exp(-(g_RT[2] - g_RT[54] + g_RT[64] - g_RT[69]))) *
+      (sc[54] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[54] += qdot;
@@ -22201,7 +24216,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[68] * ge[63] * (sc[1] * sc[68]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[63] * inv_ge[1] * inv_ge[68])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[63] - g_RT[68]))) *
+      (sc[1] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -22214,7 +24232,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[4] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[4] * inv_ge[67] * ge[64] * (sc[1] * sc[67]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[1] * ge[64] * inv_ge[67])
+               : exp(-(-g_RT[1] + g_RT[4] + g_RT[64] - g_RT[67]))) *
+      (sc[1] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -22227,7 +24248,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 4000000;
     const amrex::Real qf = k_f * (sc[4] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[4] * inv_ge[53] * ge[63] * (sc[16] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[16] * ge[63] * inv_ge[53])
+               : exp(-(g_RT[4] - g_RT[16] - g_RT[53] + g_RT[63]))) *
+      (sc[16] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[16] += qdot;
@@ -22240,7 +24264,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[4] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[4] * inv_ge[69] * ge[64] * (sc[53] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[69] * ge[64] * inv_ge[53])
+               : exp(-(g_RT[4] - g_RT[53] + g_RT[64] - g_RT[69]))) *
+      (sc[53] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[53] += qdot;
@@ -22253,7 +24280,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[6] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[68] * ge[63] * (sc[4] * sc[68]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * ge[63] * inv_ge[68])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[63] - g_RT[68]))) *
+      (sc[4] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -22266,7 +24296,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(1761.25833031652) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[6] * inv_ge[67] * ge[64] * (sc[4] * sc[67]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[6] * ge[64] * inv_ge[67])
+               : exp(-(-g_RT[4] + g_RT[6] + g_RT[64] - g_RT[67]))) *
+      (sc[4] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -22279,7 +24312,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000;
     const amrex::Real qf = k_f * (sc[6] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[60] * ge[63] * (sc[3] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[60] * ge[63])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[60] + g_RT[63]))) *
+      (sc[3] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -22292,7 +24328,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(1761.25833031652) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[3] * ge[6] * inv_ge[61] * ge[64] * (sc[3] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[3] * ge[6] * ge[64] * inv_ge[61])
+               : exp(-(-g_RT[3] + g_RT[6] - g_RT[61] + g_RT[64]))) *
+      (sc[3] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -22305,7 +24344,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000 * exp(-(3270.90832773068) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[17] * ge[5] * inv_ge[53] * ge[63] * (sc[17] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[63] * ge[5] * inv_ge[17] * inv_ge[53])
+               : exp(-(g_RT[5] - g_RT[17] - g_RT[53] + g_RT[63]))) *
+      (sc[17] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[17] += qdot;
@@ -22318,7 +24360,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 5000000 * exp(-(12580.416645118) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[5] * inv_ge[68] * ge[64] * (sc[53] * sc[68]);
+      k_f *
+      (kc_fast ? (ge[64] * inv_ge[53] * ge[5] * inv_ge[68])
+               : exp(-(g_RT[5] - g_RT[53] + g_RT[64] - g_RT[68]))) *
+      (sc[53] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[53] += qdot;
@@ -22331,7 +24376,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 39800000 * exp(-(2284.60366275343) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[65] * ge[64] * (sc[53] * sc[65]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[65] * ge[64] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[64] - g_RT[65]))) *
+      (sc[53] * sc[65]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -22344,7 +24392,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(7548.2499870708) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[60] * ge[63] * (sc[16] * sc[60]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[63] * ge[17] * inv_ge[60])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[60] + g_RT[63]))) *
+      (sc[16] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -22357,7 +24408,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(7548.2499870708) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[28] * ge[17] * inv_ge[53] * ge[63] * (sc[28] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[28] * ge[17] * ge[63] * inv_ge[53])
+               : exp(-(g_RT[17] - g_RT[28] - g_RT[53] + g_RT[63]))) *
+      (sc[28] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[17] -= qdot;
     wdot[28] += qdot;
@@ -22370,7 +24424,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(20631.8832979935) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[61] * ge[64] * (sc[16] * sc[61]);
+      k_f *
+      (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[61] * ge[64])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[61] + g_RT[64]))) *
+      (sc[16] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -22383,7 +24440,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(7548.2499870708) * invT);
     const amrex::Real qf = k_f * (sc[16] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[60] * ge[63] * (sc[14] * sc[60]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[60] * ge[63] * inv_ge[14])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[60] + g_RT[63]))) *
+      (sc[14] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -22396,7 +24456,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(20631.8832979935) * invT);
     const amrex::Real qf = k_f * (sc[16] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[61] * ge[64] * (sc[14] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[16] * inv_ge[14] * ge[64] * inv_ge[61])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[61] + g_RT[64]))) *
+      (sc[14] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -22409,7 +24472,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 6620000 * exp(-(850.436165209976) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[2] * ge[3] * inv_ge[69] * ge[65] * (sc[2] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[3] * ge[65] * inv_ge[2] * inv_ge[69])
+               : exp(-(-g_RT[2] + g_RT[3] + g_RT[65] - g_RT[69]))) *
+      (sc[2] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -22422,7 +24488,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000 * exp(-(8554.68331868023) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[1] * ge[5] * inv_ge[68] * ge[65] * (sc[1] * sc[68]);
+      k_f *
+      (kc_fast ? (inv_ge[1] * ge[65] * ge[5] * inv_ge[68])
+               : exp(-(-g_RT[1] + g_RT[5] + g_RT[65] - g_RT[68]))) *
+      (sc[1] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[5] -= qdot;
@@ -22435,7 +24504,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 80000000 * exp(-(583.731332333475) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[8] * ge[1] * inv_ge[53] * ge[65] * (sc[8] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[1] * ge[65] * inv_ge[8] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[8] - g_RT[53] + g_RT[65]))) *
+      (sc[8] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[8] += qdot;
@@ -22448,7 +24520,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 80000000 * exp(-(709.535498784655) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[2] * inv_ge[54] * ge[65] * (sc[14] * sc[54]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * inv_ge[14] * ge[65] * ge[2])
+               : exp(-(g_RT[2] - g_RT[14] - g_RT[54] + g_RT[65]))) *
+      (sc[14] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[14] += qdot;
@@ -22461,7 +24536,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 80000000 * exp(-(709.535498784655) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[4] * inv_ge[53] * ge[65] * (sc[14] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[14] * ge[65] * inv_ge[53])
+               : exp(-(g_RT[4] - g_RT[14] - g_RT[53] + g_RT[65]))) *
+      (sc[14] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[14] += qdot;
@@ -22521,8 +24599,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 450:  CFO + F <=> CF2O
     const amrex::Real k_f = 1000000;
     const amrex::Real qf = k_f * (sc[54] * sc[69]);
-    const amrex::Real qr =
-      k_f * inv_ge[67] * ge[54] * ge[69] * (refC) * (sc[67]);
+    const amrex::Real qr = k_f *
+                           (kc_fast ? (ge[54] * ge[69] * inv_ge[67])
+                                    : exp(-(g_RT[54] - g_RT[67] + g_RT[69]))) *
+                           (refC) * (sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[54] -= qdot;
     wdot[67] += qdot;
@@ -22535,7 +24615,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       110 * exp((1.77) * logT - (1509.64999741416) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[0] * ge[1] * inv_ge[69] * ge[68] * (sc[0] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[0] * ge[1] * ge[68] * inv_ge[69])
+               : exp(-(-g_RT[0] + g_RT[1] + g_RT[68] - g_RT[69]))) *
+      (sc[0] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -22548,7 +24631,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 24 * exp((1.88) * logT - (18065.4783023894) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[67]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67] * (sc[53] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]))) *
+      (sc[53] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -22562,7 +24648,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       12000 * exp((0.83) * logT - (11221.7316474452) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[67]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67] * (sc[53] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]))) *
+      (sc[53] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -22575,7 +24664,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 550 * exp((1.42) * logT - (9510.7949837092) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[67]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[69] * ge[67] * (sc[53] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[1] * inv_ge[69] * ge[67] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]))) *
+      (sc[53] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -22601,7 +24693,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9000000 * exp(-(1549.90733067854) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[4] * ge[2] * inv_ge[69] * ge[68] * (sc[4] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[4] * ge[2] * ge[68] * inv_ge[69])
+               : exp(-(g_RT[2] - g_RT[4] + g_RT[68] - g_RT[69]))) *
+      (sc[4] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -22615,7 +24710,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1720 * exp((1.18) * logT - (-224.93784961471) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[5] * ge[4] * inv_ge[69] * ge[68] * (sc[5] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[4] * inv_ge[69] * ge[68] * inv_ge[5])
+               : exp(-(g_RT[4] - g_RT[5] + g_RT[68] - g_RT[69]))) *
+      (sc[5] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -22642,7 +24740,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000 * exp(-(1962.54499663841) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[6] * ge[7] * inv_ge[68] * ge[69] * (sc[6] * sc[68]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[7] * inv_ge[68] * ge[69])
+               : exp(-(-g_RT[6] + g_RT[7] - g_RT[68] + g_RT[69]))) *
+      (sc[6] * sc[68]);
     const amrex::Real qdot = qf - qr;
     wdot[6] += qdot;
     wdot[7] -= qdot;
@@ -22655,7 +24756,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[69] * ge[68] * (sc[13] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[13] * ge[68] * inv_ge[69])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[68] - g_RT[69]))) *
+      (sc[13] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -22668,7 +24772,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[60] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[56] * ge[60] * inv_ge[69] * ge[68] * (sc[56] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[69] * ge[68] * inv_ge[56])
+               : exp(-(-g_RT[56] + g_RT[60] + g_RT[68] - g_RT[69]))) *
+      (sc[56] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[56] += qdot;
     wdot[60] -= qdot;
@@ -22681,7 +24788,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[61] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[57] * ge[61] * inv_ge[69] * ge[68] * (sc[57] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[69] * ge[61] * inv_ge[57] * ge[68])
+               : exp(-(-g_RT[57] + g_RT[61] + g_RT[68] - g_RT[69]))) *
+      (sc[57] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[57] += qdot;
     wdot[61] -= qdot;
@@ -22694,7 +24804,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[62] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[62] * inv_ge[69] * ge[68] * (sc[58] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[69] * ge[68] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[58] + g_RT[62] + g_RT[68] - g_RT[69]))) *
+      (sc[58] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[58] += qdot;
     wdot[62] -= qdot;
@@ -22707,7 +24820,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000 * exp(-(2516.0833290236) * invT);
     const amrex::Real qf = k_f * (sc[23] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[23] * inv_ge[69] * ge[68] * (sc[24] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * inv_ge[69] * ge[68] * ge[23])
+               : exp(-(g_RT[23] - g_RT[24] + g_RT[68] - g_RT[69]))) *
+      (sc[24] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[23] -= qdot;
     wdot[24] += qdot;
@@ -22720,7 +24836,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[2] * inv_ge[54] * ge[69] * (sc[15] * sc[54]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[2] * ge[69] * inv_ge[15])
+               : exp(-(g_RT[2] - g_RT[15] - g_RT[54] + g_RT[69]))) *
+      (sc[15] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[15] += qdot;
@@ -22733,7 +24852,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[4] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[4] * inv_ge[53] * ge[69] * (sc[15] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[4] * ge[69] * inv_ge[53] * inv_ge[15])
+               : exp(-(g_RT[4] - g_RT[15] - g_RT[53] + g_RT[69]))) *
+      (sc[15] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[15] += qdot;
@@ -22759,7 +24881,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 27000000;
     const amrex::Real qf = k_f * (sc[12] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[28] * ge[12] * inv_ge[53] * ge[69] * (sc[28] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[28] * ge[69] * ge[12] * inv_ge[53])
+               : exp(-(g_RT[12] - g_RT[28] - g_RT[53] + g_RT[69]))) *
+      (sc[28] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[28] += qdot;
@@ -22772,7 +24897,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 22300000 * exp(-(160.022899725901) * invT);
     const amrex::Real qf = k_f * ((sc[69] * sc[69]));
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[69] * inv_ge[67] * ge[69] * (sc[14] * sc[67]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[69] * ge[69] * inv_ge[67])
+               : exp(-(-g_RT[14] - g_RT[67] + 2.000000 * g_RT[69]))) *
+      (sc[14] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[67] += qdot;
@@ -22785,7 +24913,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       18500000000000 * exp((-1.86) * logT - (941.015165054826) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[12] * inv_ge[53] * ge[60] * (sc[24] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[24] * ge[12] * inv_ge[53])
+               : exp(-(g_RT[12] - g_RT[24] - g_RT[53] + g_RT[60]))) *
+      (sc[24] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[24] += qdot;
@@ -22798,7 +24929,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[11] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[11] * inv_ge[53] * ge[56] * (sc[24] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[56] * inv_ge[53] * ge[11])
+               : exp(-(g_RT[11] - g_RT[24] - g_RT[53] + g_RT[56]))) *
+      (sc[24] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[24] += qdot;
@@ -22811,7 +24945,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000 * exp(-(7548.2499870708) * invT);
     const amrex::Real qf = k_f * (sc[13] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[13] * inv_ge[53] * ge[63] * (sc[24] * sc[53]);
+      k_f *
+      (kc_fast ? (inv_ge[24] * ge[63] * ge[13] * inv_ge[53])
+               : exp(-(g_RT[13] - g_RT[24] - g_RT[53] + g_RT[63]))) *
+      (sc[24] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[13] -= qdot;
     wdot[24] += qdot;
@@ -22824,7 +24961,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(1710.93666373605) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[63] * ge[60] * (sc[13] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[13] * inv_ge[63] * ge[12])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[60] - g_RT[63]))) *
+      (sc[13] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -22837,7 +24977,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(2415.43999586265) * invT);
     const amrex::Real qf = k_f * ((sc[60] * sc[60]));
     const amrex::Real qr =
-      k_f * inv_ge[56] * ge[60] * inv_ge[63] * ge[60] * (sc[56] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[60] * ge[60] * inv_ge[56] * inv_ge[63])
+               : exp(-(-g_RT[56] + 2.000000 * g_RT[60] - g_RT[63]))) *
+      (sc[56] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[56] += qdot;
     wdot[60] -= 2.000000 * qdot;
@@ -22849,7 +24992,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000 * exp(-(2214.15332954077) * invT);
     const amrex::Real qf = k_f * (sc[60] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[57] * ge[60] * inv_ge[63] * ge[61] * (sc[57] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[63] * inv_ge[57] * ge[61])
+               : exp(-(-g_RT[57] + g_RT[60] + g_RT[61] - g_RT[63]))) *
+      (sc[57] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[57] += qdot;
     wdot[60] -= qdot;
@@ -22862,7 +25008,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(2314.79666270171) * invT);
     const amrex::Real qf = k_f * (sc[60] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[60] * inv_ge[63] * ge[62] * (sc[58] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[63] * inv_ge[58] * ge[62])
+               : exp(-(-g_RT[58] + g_RT[60] + g_RT[62] - g_RT[63]))) *
+      (sc[58] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[58] += qdot;
     wdot[60] -= qdot;
@@ -22875,7 +25024,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25000000 * exp(-(402.573332643776) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[13] * ge[12] * inv_ge[64] * ge[61] * (sc[13] * sc[64]);
+      k_f *
+      (kc_fast ? (ge[12] * ge[61] * inv_ge[64] * inv_ge[13])
+               : exp(-(g_RT[12] - g_RT[13] + g_RT[61] - g_RT[64]))) *
+      (sc[13] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[13] += qdot;
@@ -22888,7 +25040,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(1107.07666477038) * invT);
     const amrex::Real qf = k_f * (sc[60] * sc[61]);
     const amrex::Real qr =
-      k_f * inv_ge[56] * ge[60] * inv_ge[64] * ge[61] * (sc[56] * sc[64]);
+      k_f *
+      (kc_fast ? (ge[60] * inv_ge[64] * ge[61] * inv_ge[56])
+               : exp(-(-g_RT[56] + g_RT[60] + g_RT[61] - g_RT[64]))) *
+      (sc[56] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[56] += qdot;
     wdot[60] -= qdot;
@@ -22901,7 +25056,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(805.146665287552) * invT);
     const amrex::Real qf = k_f * ((sc[61] * sc[61]));
     const amrex::Real qr =
-      k_f * inv_ge[57] * ge[61] * inv_ge[64] * ge[61] * (sc[57] * sc[64]);
+      k_f *
+      (kc_fast ? (inv_ge[64] * ge[61] * ge[61] * inv_ge[57])
+               : exp(-(-g_RT[57] + 2.000000 * g_RT[61] - g_RT[64]))) *
+      (sc[57] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[57] += qdot;
     wdot[61] -= 2.000000 * qdot;
@@ -22913,7 +25071,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000 * exp(-(1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[61] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[61] * inv_ge[64] * ge[62] * (sc[58] * sc[64]);
+      k_f *
+      (kc_fast ? (inv_ge[64] * ge[61] * ge[62] * inv_ge[58])
+               : exp(-(-g_RT[58] + g_RT[61] + g_RT[62] - g_RT[64]))) *
+      (sc[58] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[58] += qdot;
     wdot[61] -= qdot;
@@ -22927,7 +25088,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       170200000000000 * exp((-2.12) * logT - (1197.65566461523) * invT);
     const amrex::Real qf = k_f * (sc[11] * sc[63]);
     const amrex::Real qr =
-      k_f * inv_ge[22] * ge[11] * inv_ge[53] * ge[63] * (sc[22] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[63] * inv_ge[22] * inv_ge[53] * ge[11])
+               : exp(-(g_RT[11] - g_RT[22] - g_RT[53] + g_RT[63]))) *
+      (sc[22] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[22] += qdot;
@@ -22940,7 +25104,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[10] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[10] * inv_ge[54] * ge[60] * (sc[24] * sc[54]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[60] * ge[10])
+               : exp(-(g_RT[10] - g_RT[24] - g_RT[54] + g_RT[60]))) *
+      (sc[24] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[10] -= qdot;
     wdot[24] += qdot;
@@ -22953,7 +25120,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2000000;
     const amrex::Real qf = k_f * (sc[11] * sc[60]);
     const amrex::Real qr =
-      k_f * inv_ge[24] * ge[11] * inv_ge[54] * ge[60] * (sc[24] * sc[54]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[60] * ge[11])
+               : exp(-(g_RT[11] - g_RT[24] - g_RT[54] + g_RT[60]))) *
+      (sc[24] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[11] -= qdot;
     wdot[24] += qdot;
@@ -22966,7 +25136,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[27] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[27] * inv_ge[63] * ge[54] * (sc[14] * sc[63]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[63] * ge[27] * inv_ge[14])
+               : exp(-(-g_RT[14] + g_RT[27] + g_RT[54] - g_RT[63]))) *
+      (sc[14] * sc[63]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[27] -= qdot;
@@ -22980,7 +25153,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       5900000 * exp((0.5) * logT - (226.447499612124) * invT);
     const amrex::Real qf = k_f * (sc[13] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[12] * ge[13] * inv_ge[53] * ge[54] * (sc[12] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[12] * ge[13] * inv_ge[53])
+               : exp(-(-g_RT[12] + g_RT[13] - g_RT[53] + g_RT[54]))) *
+      (sc[12] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[12] += qdot;
     wdot[13] -= qdot;
@@ -22993,7 +25169,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 135000000 * exp(-(603.859998965664) * invT);
     const amrex::Real qf = k_f * (sc[54] * sc[56]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[60] * ge[56] * (sc[53] * sc[60]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[60] * ge[56] * inv_ge[53])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[56] - g_RT[60]))) *
+      (sc[53] * sc[60]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -23006,7 +25185,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000000 * exp(-(930.950831738731) * invT);
     const amrex::Real qf = k_f * (sc[54] * sc[57]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[61] * ge[57] * (sc[53] * sc[61]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[61] * ge[57] * inv_ge[53])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[57] - g_RT[61]))) *
+      (sc[53] * sc[61]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -23019,7 +25201,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 45000000 * exp(-(1861.90166347746) * invT);
     const amrex::Real qf = k_f * (sc[54] * sc[58]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[62] * ge[58] * (sc[53] * sc[62]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[53] * ge[58] * inv_ge[62])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[58] - g_RT[62]))) *
+      (sc[53] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -23033,7 +25218,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2620 * exp((1.44) * logT - (-103.159416489968) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[19] * ge[20] * inv_ge[53] * ge[54] * (sc[19] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[19] * ge[20] * inv_ge[53])
+               : exp(-(-g_RT[19] + g_RT[20] - g_RT[53] + g_RT[54]))) *
+      (sc[19] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[19] += qdot;
     wdot[20] -= qdot;
@@ -23047,7 +25235,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       46.2 * exp((1.97) * logT - (-150.964999741416) * invT);
     const amrex::Real qf = k_f * (sc[20] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[18] * ge[20] * inv_ge[53] * ge[54] * (sc[18] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[18] * ge[20] * inv_ge[53])
+               : exp(-(-g_RT[18] + g_RT[20] - g_RT[53] + g_RT[54]))) *
+      (sc[18] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[18] += qdot;
     wdot[20] -= qdot;
@@ -23060,7 +25251,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 60000000 * exp(-(1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[17] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[16] * ge[17] * inv_ge[53] * ge[54] * (sc[16] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[16] * ge[17] * inv_ge[53])
+               : exp(-(-g_RT[16] + g_RT[17] - g_RT[53] + g_RT[54]))) *
+      (sc[16] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[16] += qdot;
     wdot[17] -= qdot;
@@ -23073,7 +25267,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 26500000 * exp(-(905.789998448495) * invT);
     const amrex::Real qf = k_f * (sc[54] * sc[68]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[54] * inv_ge[69] * ge[68] * (sc[53] * sc[69]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[69] * ge[68] * inv_ge[53])
+               : exp(-(-g_RT[53] + g_RT[54] + g_RT[68] - g_RT[69]))) *
+      (sc[53] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[53] += qdot;
     wdot[54] -= qdot;
@@ -23086,7 +25283,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[19] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[17] * ge[19] * inv_ge[53] * ge[54] * (sc[17] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[19] * inv_ge[17] * inv_ge[53])
+               : exp(-(-g_RT[17] + g_RT[19] - g_RT[53] + g_RT[54]))) *
+      (sc[17] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[17] += qdot;
     wdot[19] -= qdot;
@@ -23099,7 +25299,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 10000000;
     const amrex::Real qf = k_f * (sc[16] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[16] * inv_ge[53] * ge[54] * (sc[14] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[16] * inv_ge[14] * inv_ge[53])
+               : exp(-(-g_RT[14] + g_RT[16] - g_RT[53] + g_RT[54]))) *
+      (sc[14] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[16] -= qdot;
@@ -23112,7 +25315,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 8000000 * exp(-(150.964999741416) * invT);
     const amrex::Real qf = k_f * (sc[26] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[25] * ge[26] * inv_ge[53] * ge[54] * (sc[25] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[25] * ge[26] * inv_ge[53])
+               : exp(-(-g_RT[25] + g_RT[26] - g_RT[53] + g_RT[54]))) *
+      (sc[25] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[25] += qdot;
     wdot[26] -= qdot;
@@ -23125,7 +25331,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000 * exp(-(1006.43333160944) * invT);
     const amrex::Real qf = k_f * (sc[24] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[23] * ge[24] * inv_ge[53] * ge[54] * (sc[23] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * ge[24] * inv_ge[23] * inv_ge[53])
+               : exp(-(-g_RT[23] + g_RT[24] - g_RT[53] + g_RT[54]))) *
+      (sc[23] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[23] += qdot;
     wdot[24] -= qdot;
@@ -23138,7 +25347,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[23] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[22] * ge[23] * inv_ge[53] * ge[54] * (sc[22] * sc[53]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[22] * ge[23] * inv_ge[53])
+               : exp(-(-g_RT[22] + g_RT[23] - g_RT[53] + g_RT[54]))) *
+      (sc[22] * sc[53]);
     const amrex::Real qdot = qf - qr;
     wdot[22] += qdot;
     wdot[23] -= qdot;
@@ -23152,7 +25364,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0964 * exp((2.41) * logT - (13149.0514774773) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[59]);
     const amrex::Real qr =
-      k_f * inv_ge[56] * ge[12] * inv_ge[62] * ge[59] * (sc[56] * sc[62]);
+      k_f *
+      (kc_fast ? (ge[12] * inv_ge[56] * ge[59] * inv_ge[62])
+               : exp(-(g_RT[12] - g_RT[56] + g_RT[59] - g_RT[62]))) *
+      (sc[56] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[56] += qdot;
@@ -23165,7 +25380,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 31300;
     const amrex::Real qf = k_f * (sc[14] * sc[66]);
     const amrex::Real qr =
-      k_f * inv_ge[15] * ge[14] * inv_ge[62] * ge[66] * (sc[15] * sc[62]);
+      k_f *
+      (kc_fast ? (ge[14] * inv_ge[15] * ge[66] * inv_ge[62])
+               : exp(-(g_RT[14] - g_RT[15] - g_RT[62] + g_RT[66]))) *
+      (sc[15] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[14] -= qdot;
     wdot[15] += qdot;
@@ -23178,7 +25396,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 540000;
     const amrex::Real qf = k_f * (sc[64] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[14] * ge[64] * inv_ge[62] * ge[69] * (sc[14] * sc[62]);
+      k_f *
+      (kc_fast ? (inv_ge[14] * ge[69] * ge[64] * inv_ge[62])
+               : exp(-(-g_RT[14] - g_RT[62] + g_RT[64] + g_RT[69]))) *
+      (sc[14] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[14] += qdot;
     wdot[62] += qdot;
@@ -23192,7 +25413,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       2900 * exp((1.4) * logT - (669.278165520277) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[55]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[1] * inv_ge[54] * ge[55] * (sc[53] * sc[54]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * ge[1] * inv_ge[53])
+               : exp(-(g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+      (sc[53] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[53] += qdot;
@@ -23205,7 +25429,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2650000 * exp(-(1258.0416645118) * invT);
     const amrex::Real qf = k_f * (sc[55] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[55] * inv_ge[59] * ge[62] * (sc[54] * sc[59]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * ge[62] * inv_ge[59])
+               : exp(-(-g_RT[54] + g_RT[55] - g_RT[59] + g_RT[62]))) *
+      (sc[54] * sc[59]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
     wdot[55] -= qdot;
@@ -23218,7 +25445,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 4000000 * exp(-(553.538332385192) * invT);
     const amrex::Real qf = k_f * (sc[12] * sc[55]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[12] * inv_ge[56] * ge[55] * (sc[54] * sc[56]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[12] * ge[55] * inv_ge[56])
+               : exp(-(g_RT[12] - g_RT[54] + g_RT[55] - g_RT[56]))) *
+      (sc[54] * sc[56]);
     const amrex::Real qdot = qf - qr;
     wdot[12] -= qdot;
     wdot[54] += qdot;
@@ -23231,7 +25461,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1200000 * exp(-(1509.64999741416) * invT);
     const amrex::Real qf = k_f * (sc[55] * sc[64]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[55] * inv_ge[62] * ge[64] * (sc[54] * sc[62]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * ge[64] * inv_ge[62])
+               : exp(-(-g_RT[54] + g_RT[55] - g_RT[62] + g_RT[64]))) *
+      (sc[54] * sc[62]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
     wdot[55] -= qdot;
@@ -23244,7 +25477,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1000000;
     const amrex::Real qf = k_f * (sc[55] * sc[69]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[55] * inv_ge[67] * ge[69] * (sc[54] * sc[67]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * ge[69] * inv_ge[67])
+               : exp(-(-g_RT[54] + g_RT[55] - g_RT[67] + g_RT[69]))) *
+      (sc[54] * sc[67]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
     wdot[55] -= qdot;
@@ -23256,8 +25492,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 508:  F2 + H2 <=> F + H + HF
     const amrex::Real k_f = 3440000 * exp(-(9958.6578162754) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[55]);
-    const amrex::Real qr = k_f * inv_ge[1] * ge[0] * inv_ge[53] * ge[55] *
-                           inv_ge[54] * (refCinv) * (sc[1] * sc[53] * sc[54]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (ge[0] * inv_ge[54] * ge[55] * inv_ge[53] * inv_ge[1])
+               : exp(-(g_RT[0] - g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+      (refCinv) * (sc[1] * sc[53] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -23271,7 +25510,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 470000 * exp(-(6793.42498836372) * invT);
     const amrex::Real qf = k_f * (sc[14] * sc[55]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[14] * inv_ge[69] * ge[55] * (sc[54] * sc[69]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[69] * ge[14])
+               : exp(-(g_RT[14] - g_RT[54] + g_RT[55] - g_RT[69]))) *
+      (sc[54] * sc[69]);
     const amrex::Real qdot = qf - qr;
     wdot[14] -= qdot;
     wdot[54] += qdot;
@@ -23284,7 +25526,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1700000 * exp(-(754.82499870708) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[55]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[8] * inv_ge[65] * ge[55] * (sc[54] * sc[65]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[65] * ge[8])
+               : exp(-(g_RT[8] - g_RT[54] + g_RT[55] - g_RT[65]))) *
+      (sc[54] * sc[65]);
     const amrex::Real qdot = qf - qr;
     wdot[8] -= qdot;
     wdot[54] += qdot;
@@ -23297,7 +25542,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2400000;
     const amrex::Real qf = k_f * (sc[55] * sc[65]);
     const amrex::Real qr =
-      k_f * inv_ge[54] * ge[55] * inv_ge[64] * ge[65] * (sc[54] * sc[64]);
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[55] * ge[65] * inv_ge[64])
+               : exp(-(-g_RT[54] + g_RT[55] - g_RT[64] + g_RT[65]))) *
+      (sc[54] * sc[64]);
     const amrex::Real qdot = qf - qr;
     wdot[54] += qdot;
     wdot[55] -= qdot;
@@ -23309,8 +25557,12 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 512:  CH4 + F2 <=> CH3 + F + HF
     const amrex::Real k_f = 2000000 * exp(-(5651.123156987) * invT);
     const amrex::Real qf = k_f * (sc[13] * sc[55]);
-    const amrex::Real qr = k_f * inv_ge[12] * ge[13] * inv_ge[53] * ge[55] *
-                           inv_ge[54] * (refCinv) * (sc[12] * sc[53] * sc[54]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast
+         ? (inv_ge[54] * ge[55] * inv_ge[12] * inv_ge[53] * ge[13])
+         : exp(-(-g_RT[12] + g_RT[13] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+      (refCinv) * (sc[12] * sc[53] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[12] += qdot;
     wdot[13] -= qdot;
@@ -23323,8 +25575,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     // reaction 513:  F2 + OH <=> F + HF + O
     const amrex::Real k_f = 70000000 * exp(-(4528.94999224248) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[55]);
-    const amrex::Real qr = k_f * inv_ge[2] * ge[4] * inv_ge[53] * ge[55] *
-                           inv_ge[54] * (refCinv) * (sc[2] * sc[53] * sc[54]);
+    const amrex::Real qr =
+      k_f *
+      (kc_fast ? (inv_ge[54] * ge[4] * ge[55] * inv_ge[53] * inv_ge[2])
+               : exp(-(-g_RT[2] + g_RT[4] - g_RT[53] - g_RT[54] + g_RT[55]))) *
+      (refCinv) * (sc[2] * sc[53] * sc[54]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[4] -= qdot;
@@ -23338,7 +25593,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 35000000;
     const amrex::Real qf = k_f * (sc[50] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[50] * inv_ge[71] * ge[54] * (sc[53] * sc[71]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[71] * ge[50] * inv_ge[53])
+               : exp(-(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[71]))) *
+      (sc[53] * sc[71]);
     const amrex::Real qdot = qf - qr;
     wdot[50] -= qdot;
     wdot[53] += qdot;
@@ -23351,7 +25609,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 41000000;
     const amrex::Real qf = k_f * (sc[50] * sc[54]);
     const amrex::Real qr =
-      k_f * inv_ge[53] * ge[50] * inv_ge[70] * ge[54] * (sc[53] * sc[70]);
+      k_f *
+      (kc_fast ? (ge[54] * inv_ge[70] * ge[50] * inv_ge[53])
+               : exp(-(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[70]))) *
+      (sc[53] * sc[70]);
     const amrex::Real qdot = qf - qr;
     wdot[50] -= qdot;
     wdot[53] += qdot;
@@ -23364,7 +25625,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 540000 * exp(-(4297.47032597231) * invT);
     const amrex::Real qf = k_f * (sc[50] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[50] * inv_ge[71] * ge[62] * (sc[58] * sc[71]);
+      k_f *
+      (kc_fast ? (inv_ge[71] * ge[50] * inv_ge[58] * ge[62])
+               : exp(-(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[71]))) *
+      (sc[58] * sc[71]);
     const amrex::Real qdot = qf - qr;
     wdot[50] -= qdot;
     wdot[58] += qdot;
@@ -23377,7 +25641,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 180000 * exp(-(3280.97266104677) * invT);
     const amrex::Real qf = k_f * (sc[50] * sc[62]);
     const amrex::Real qr =
-      k_f * inv_ge[58] * ge[50] * inv_ge[70] * ge[62] * (sc[58] * sc[70]);
+      k_f *
+      (kc_fast ? (inv_ge[70] * ge[50] * inv_ge[58] * ge[62])
+               : exp(-(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[70]))) *
+      (sc[58] * sc[70]);
     const amrex::Real qdot = qf - qr;
     wdot[50] -= qdot;
     wdot[58] += qdot;
@@ -23719,11 +25986,17 @@ aJacobian_precond(
   // compute the Gibbs free energy
   amrex::Real g_RT[72];
   gibbs(g_RT, T);
-  // exp(-g/RT) and its inverse per species, for the Kc products
-  amrex::Real ge[72], inv_ge[72];
-  for (int i = 0; i < 72; ++i) {
-    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
-    inv_ge[i] = 1.0 / ge[i];
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[72] = {}, inv_ge[72] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 72; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
   }
 
   // compute the species enthalpy
@@ -23779,7 +26052,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[12];
-  Kc = refCinv * inv_ge[1] * ge[12] * inv_ge[10];
+  Kc = refCinv * (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[10])
+                          : exp(g_RT[1] + g_RT[10] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[10]) + (h_RT[12]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -23917,7 +26191,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[13];
-  Kc = refCinv * inv_ge[1] * ge[13] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[12]) + (h_RT[13]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24055,7 +26330,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * inv_ge[1] * ge[17] * inv_ge[16];
+  Kc = refCinv * (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[16] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[16]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24193,7 +26469,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[18];
-  Kc = refCinv * inv_ge[1] * ge[18] * inv_ge[17];
+  Kc = refCinv * (kc_fast ? (ge[18] * inv_ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[17] - g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[18]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24331,7 +26608,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[19];
-  Kc = refCinv * inv_ge[1] * ge[19] * inv_ge[17];
+  Kc = refCinv * (kc_fast ? (ge[19] * inv_ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[17] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[19]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24469,7 +26747,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[1] * ge[20] * inv_ge[18];
+  Kc = refCinv * (kc_fast ? (inv_ge[18] * inv_ge[1] * ge[20])
+                          : exp(g_RT[1] + g_RT[18] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24607,7 +26886,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[1] * ge[20] * inv_ge[19];
+  Kc = refCinv * (kc_fast ? (inv_ge[19] * inv_ge[1] * ge[20])
+                          : exp(g_RT[1] + g_RT[19] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24745,7 +27025,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[22];
-  Kc = refCinv * inv_ge[1] * ge[22] * inv_ge[21];
+  Kc = refCinv * (kc_fast ? (ge[22] * inv_ge[1] * inv_ge[21])
+                          : exp(g_RT[1] + g_RT[21] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[21]) + (h_RT[22]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -24883,7 +27164,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[23];
-  Kc = refCinv * inv_ge[1] * ge[23] * inv_ge[22];
+  Kc = refCinv * (kc_fast ? (inv_ge[22] * ge[23] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[22] - g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[22]) + (h_RT[23]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25021,7 +27303,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[24];
-  Kc = refCinv * inv_ge[1] * ge[24] * inv_ge[23];
+  Kc = refCinv * (kc_fast ? (ge[24] * inv_ge[1] * inv_ge[23])
+                          : exp(g_RT[1] + g_RT[23] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[23]) + (h_RT[24]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25159,7 +27442,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[25];
-  Kc = refCinv * inv_ge[1] * ge[25] * inv_ge[24];
+  Kc = refCinv * (kc_fast ? (inv_ge[24] * ge[25] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[24] - g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[24]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25297,7 +27581,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[26];
-  Kc = refCinv * inv_ge[1] * ge[26] * inv_ge[25];
+  Kc = refCinv * (kc_fast ? (inv_ge[25] * ge[26] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[25] - g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[25]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25435,7 +27720,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * inv_ge[0] * ge[17] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * ge[17] * inv_ge[14])
+                          : exp(g_RT[0] + g_RT[14] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[14]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25573,7 +27859,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[7];
-  Kc = refCinv * inv_ge[4] * ge[7] * inv_ge[4];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[4] * ge[7])
+                          : exp(2.000000 * g_RT[4] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[4]) + (h_RT[7]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25708,7 +27995,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[4] * ge[20] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[20])
+                          : exp(g_RT[4] + g_RT[12] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25846,7 +28134,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[27];
-  Kc = refCinv * inv_ge[9] * ge[27] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (ge[27] * inv_ge[14] * inv_ge[9])
+                          : exp(g_RT[9] + g_RT[14] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[14]) + (h_RT[27]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -25984,7 +28273,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[28];
-  Kc = refCinv * inv_ge[10] * ge[28] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (ge[28] * inv_ge[14] * inv_ge[10])
+                          : exp(g_RT[10] + g_RT[14] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[14]) + (h_RT[28]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26122,7 +28412,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[5] * ge[20] * inv_ge[11];
+  Kc = refCinv * (kc_fast ? (ge[20] * inv_ge[5] * inv_ge[11])
+                          : exp(g_RT[5] + g_RT[11] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[11]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26260,7 +28551,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[26];
-  Kc = refCinv * inv_ge[12] * ge[26] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[26])
+                          : exp(2.000000 * g_RT[12] - g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[12]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26395,7 +28687,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = refC * inv_ge[24] * ge[0] * ge[22];
+  Kc = refC * (kc_fast ? (ge[0] * inv_ge[24] * ge[22])
+                       : exp(-g_RT[0] - g_RT[22] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24]) + (h_RT[0] + h_RT[22]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26533,7 +28826,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[42];
-  Kc = refCinv * inv_ge[9] * ge[42] * inv_ge[47];
+  Kc = refCinv * (kc_fast ? (inv_ge[47] * ge[42] * inv_ge[9])
+                          : exp(g_RT[9] - g_RT[42] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[47]) + (h_RT[42]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26671,7 +28965,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[12];
-  Kc = refCinv * inv_ge[0] * ge[12] * inv_ge[9];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[9])
+                          : exp(g_RT[0] + g_RT[9] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[9]) + (h_RT[12]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26809,7 +29104,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[51];
-  Kc = refCinv * inv_ge[1] * ge[51] * inv_ge[28];
+  Kc = refCinv * (kc_fast ? (inv_ge[28] * ge[51] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[28] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[51]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -26947,7 +29243,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[50];
-  Kc = refCinv * inv_ge[12] * ge[50] * inv_ge[25];
+  Kc = refCinv * (kc_fast ? (inv_ge[25] * inv_ge[12] * ge[50])
+                          : exp(g_RT[12] + g_RT[25] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[25]) + (h_RT[50]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27085,7 +29382,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[49];
-  Kc = refCinv * inv_ge[12] * ge[49] * inv_ge[24];
+  Kc = refCinv * (kc_fast ? (inv_ge[24] * ge[49] * inv_ge[12])
+                          : exp(g_RT[12] + g_RT[24] - g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[24]) + (h_RT[49]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27223,7 +29521,8 @@ aJacobian_precond(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[50];
-  Kc = refCinv * inv_ge[1] * ge[50] * inv_ge[49];
+  Kc = refCinv * (kc_fast ? (inv_ge[49] * ge[50] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[49]) + (h_RT[50]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27345,7 +29644,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[15];
-  Kc = refCinv * inv_ge[2] * ge[15] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (inv_ge[14] * inv_ge[2] * ge[15])
+                          : exp(g_RT[2] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[14]) + (h_RT[15]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27466,7 +29766,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[47];
-  Kc = refC * inv_ge[37] * ge[2] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * inv_ge[37] * ge[2])
+                       : exp(-g_RT[2] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[37]) + (h_RT[2] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27587,7 +29888,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[41];
-  Kc = refCinv * inv_ge[1] * ge[41] * inv_ge[40];
+  Kc = refCinv * (kc_fast ? (inv_ge[40] * ge[41] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[40] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[40]) + (h_RT[41]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27709,7 +30011,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = refC * inv_ge[56] * ge[11] * ge[53];
+  Kc = refC * (kc_fast ? (inv_ge[56] * ge[53] * ge[11])
+                       : exp(-g_RT[11] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[56]) + (h_RT[11] + h_RT[53]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27832,7 +30135,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[65];
-  Kc = refC * inv_ge[64] * ge[54] * ge[65];
+  Kc = refC * (kc_fast ? (ge[54] * ge[65] * inv_ge[64])
+                       : exp(-g_RT[54] + g_RT[64] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[64]) + (h_RT[54] + h_RT[65]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -27954,7 +30258,8 @@ aJacobian_precond(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[64];
-  Kc = refC * inv_ge[62] * ge[54] * ge[64];
+  Kc = refC * (kc_fast ? (ge[54] * ge[64] * inv_ge[62])
+                       : exp(-g_RT[54] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[62]) + (h_RT[54] + h_RT[64]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28065,7 +30370,8 @@ aJacobian_precond(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[3];
-  Kc = refCinv * inv_ge[2] * ge[3] * inv_ge[2];
+  Kc = refCinv * (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[2])
+                          : exp(2.000000 * g_RT[2] - g_RT[3]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[2]) + (h_RT[3]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28169,7 +30475,8 @@ aJacobian_precond(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[4];
-  Kc = refCinv * inv_ge[1] * ge[4] * inv_ge[2];
+  Kc = refCinv * (kc_fast ? (ge[4] * inv_ge[1] * inv_ge[2])
+                          : exp(g_RT[1] + g_RT[2] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[2]) + (h_RT[4]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28277,7 +30584,8 @@ aJacobian_precond(
   dlnkfdT = -0.86 * invT;
   // reverse
   phi_r = sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28381,7 +30689,8 @@ aJacobian_precond(
   dlnkfdT = -1.24 * invT;
   // reverse
   phi_r = sc[3] * sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + 2.000000 * h_RT[3]) + (h_RT[3] + h_RT[6]) + 1.000000);
@@ -28421,7 +30730,8 @@ aJacobian_precond(
   dlnkfdT = -0.76 * invT;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[5]) + (h_RT[5] + h_RT[6]) + 1.000000);
@@ -28466,7 +30776,8 @@ aJacobian_precond(
   dlnkfdT = -1.24 * invT;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[47]) + (h_RT[6] + h_RT[47]) + 1.000000);
@@ -28511,7 +30822,8 @@ aJacobian_precond(
   dlnkfdT = -0.8 * invT;
   // reverse
   phi_r = sc[6] * sc[48];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[48]) + (h_RT[6] + h_RT[48]) + 1.000000);
@@ -28559,7 +30871,8 @@ aJacobian_precond(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[0];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28660,7 +30973,8 @@ aJacobian_precond(
   dlnkfdT = -0.6 * invT;
   // reverse
   phi_r = (sc[0] * sc[0]);
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + 2.000000 * h_RT[1]) + (2.000000 * h_RT[0]) + 1.000000);
@@ -28691,7 +31005,8 @@ aJacobian_precond(
   dlnkfdT = -1.25 * invT;
   // reverse
   phi_r = sc[0] * sc[5];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(2.000000 * h_RT[1] + h_RT[5]) + (h_RT[0] + h_RT[5]) + 1.000000);
@@ -28726,7 +31041,8 @@ aJacobian_precond(
   dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[0] * sc[15];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(2.000000 * h_RT[1] + h_RT[15]) + (h_RT[0] + h_RT[15]) + 1.000000);
@@ -28764,7 +31080,8 @@ aJacobian_precond(
   dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[5];
-  Kc = refCinv * inv_ge[1] * ge[5] * inv_ge[4];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[1] * ge[5])
+                          : exp(g_RT[1] + g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[4]) + (h_RT[5]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -28868,7 +31185,8 @@ aJacobian_precond(
   dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[5] * sc[14];
-  Kc = refC * inv_ge[16] * ge[1] * ge[14];
+  Kc = refC * (kc_fast ? (inv_ge[16] * ge[14] * ge[1])
+                       : exp(-g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[5] + h_RT[16]) + (h_RT[1] + h_RT[5] + h_RT[14]) - 1.000000);
@@ -28916,7 +31234,8 @@ aJacobian_precond(
   dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = refC * inv_ge[16] * ge[1] * ge[14];
+  Kc = refC * (kc_fast ? (inv_ge[16] * ge[14] * ge[1])
+                       : exp(-g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16]) + (h_RT[1] + h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29023,7 +31342,8 @@ aJacobian_precond(
   dlnkfdT = -1.41 * invT;
   // reverse
   phi_r = sc[36];
-  Kc = refCinv * inv_ge[2] * ge[36] * inv_ge[35];
+  Kc = refCinv * (kc_fast ? (inv_ge[35] * ge[36] * inv_ge[2])
+                          : exp(g_RT[2] + g_RT[35] - g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[35]) + (h_RT[36]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29130,7 +31450,8 @@ aJacobian_precond(
   dlnkfdT = -0.11 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = refC * inv_ge[34] * ge[1] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[34])
+                       : exp(-g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[1] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29237,7 +31558,8 @@ aJacobian_precond(
   dlnkfdT = -1.32 * invT + (372.380332695493) * invT2;
   // reverse
   phi_r = sc[38];
-  Kc = refCinv * inv_ge[1] * ge[38] * inv_ge[35];
+  Kc = refCinv * (kc_fast ? (inv_ge[35] * ge[38] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[35] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[35]) + (h_RT[38]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29344,7 +31666,8 @@ aJacobian_precond(
   dlnkfdT = (27198.8607867451) * invT2;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = refC * inv_ge[46] * ge[14] * ge[30];
+  Kc = refC * (kc_fast ? (inv_ge[46] * ge[14] * ge[30])
+                       : exp(-g_RT[14] - g_RT[30] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[46]) + (h_RT[14] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29451,7 +31774,8 @@ aJacobian_precond(
   dlnkfdT = -3.3 * invT + (63707.2298908775) * invT2;
   // reverse
   phi_r = sc[1] * sc[39];
-  Kc = refC * inv_ge[40] * ge[1] * ge[39];
+  Kc = refC * (kc_fast ? (inv_ge[40] * ge[1] * ge[39])
+                       : exp(-g_RT[1] - g_RT[39] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[40]) + (h_RT[1] + h_RT[39]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29558,7 +31882,8 @@ aJacobian_precond(
   dlnkfdT = (42632.5159269759) * invT2;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = refC * inv_ge[45] * ge[14] * ge[31];
+  Kc = refC * (kc_fast ? (ge[14] * inv_ge[45] * ge[31])
+                       : exp(-g_RT[14] - g_RT[31] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[45]) + (h_RT[14] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29693,7 +32018,8 @@ aJacobian_precond(
   dlnkfdT = -1.4 * invT + (-245.066516246898) * invT2;
   // reverse
   phi_r = sc[69];
-  Kc = refCinv * inv_ge[14] * ge[69] * inv_ge[54];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * inv_ge[14] * ge[69])
+                          : exp(g_RT[14] + g_RT[54] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[54]) + (h_RT[69]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29799,7 +32125,8 @@ aJacobian_precond(
   dlnkfdT = (49979.4792477248) * invT2;
   // reverse
   phi_r = sc[1] * sc[54];
-  Kc = refC * inv_ge[53] * ge[1] * ge[54];
+  Kc = refC * (kc_fast ? (ge[54] * ge[1] * inv_ge[53])
+                       : exp(-g_RT[1] + g_RT[53] - g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53]) + (h_RT[1] + h_RT[54]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -29907,7 +32234,8 @@ aJacobian_precond(
   dlnkfdT = -3.26 * invT + (2043.05966316716) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[53] * ge[57] * inv_ge[63];
+  Kc = refCinv * (kc_fast ? (inv_ge[63] * inv_ge[53] * ge[57])
+                          : exp(g_RT[53] - g_RT[57] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53] + h_RT[63]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30015,7 +32343,8 @@ aJacobian_precond(
   dlnkfdT = -4 * invT + (34747.1107738159) * invT2;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = refC * inv_ge[58] * ge[53] * ge[64];
+  Kc = refC * (kc_fast ? (ge[64] * inv_ge[58] * ge[53])
+                       : exp(-g_RT[53] + g_RT[58] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[58]) + (h_RT[53] + h_RT[64]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30123,7 +32452,8 @@ aJacobian_precond(
   dlnkfdT = -4.64 * invT + (61593.7198944977) * invT2;
   // reverse
   phi_r = sc[54] * sc[62];
-  Kc = refC * inv_ge[59] * ge[54] * ge[62];
+  Kc = refC * (kc_fast ? (ge[54] * ge[62] * inv_ge[59])
+                       : exp(-g_RT[54] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[59]) + (h_RT[54] + h_RT[62]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30229,7 +32559,8 @@ aJacobian_precond(
   dlnkfdT = -3.42 * invT + (10919.8016479624) * invT2;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = refC * inv_ge[66] * ge[54] * ge[67];
+  Kc = refC * (kc_fast ? (ge[54] * ge[67] * inv_ge[66])
+                       : exp(-g_RT[54] + g_RT[66] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[66]) + (h_RT[54] + h_RT[67]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30335,7 +32666,8 @@ aJacobian_precond(
   dlnkfdT = -3 * invT + (21638.3166296029) * invT2;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = refC * inv_ge[68] * ge[14] * ge[53];
+  Kc = refC * (kc_fast ? (ge[14] * inv_ge[68] * ge[53])
+                       : exp(-g_RT[14] - g_RT[53] + g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[68]) + (h_RT[14] + h_RT[53]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30441,7 +32773,8 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[55];
-  Kc = refCinv * inv_ge[54] * ge[55] * inv_ge[54];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[54])
+                          : exp(2.000000 * g_RT[54] - g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[54]) + (h_RT[55]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30542,7 +32875,9 @@ aJacobian_precond(
   dlnkfdT = 2.7 * invT + (3150.13632793755) * invT2;
   // reverse
   phi_r = sc[1] * sc[4];
-  Kc = inv_ge[0] * ge[1] * inv_ge[2] * ge[4];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[4] * inv_ge[2] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[2]) + (h_RT[1] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30592,7 +32927,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[4];
-  Kc = inv_ge[2] * ge[3] * inv_ge[6] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[3] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[6]) + (h_RT[3] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30642,7 +32979,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (2012.86666321888) * invT2;
   // reverse
   phi_r = sc[4] * sc[6];
-  Kc = inv_ge[2] * ge[4] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (ge[4] * ge[6] * inv_ge[7] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[7]) + (h_RT[4] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30692,7 +33031,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = inv_ge[2] * ge[1] * inv_ge[9] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * ge[1] * inv_ge[2] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[9]) + (h_RT[1] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30742,7 +33083,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[2] * ge[1] * inv_ge[10] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[1] * inv_ge[2] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[10] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[10]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30792,7 +33135,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[14];
-  Kc = inv_ge[2] * ge[0] * inv_ge[11] * ge[14];
+  Kc =
+    (kc_fast ? (ge[0] * ge[14] * inv_ge[2] * inv_ge[11])
+             : exp(-g_RT[0] + g_RT[2] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[11]) + (h_RT[0] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30842,7 +33187,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[2] * ge[1] * inv_ge[11] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[1] * inv_ge[2] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[11] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[11]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30892,7 +33239,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[2] * ge[1] * inv_ge[12] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[17] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[12] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[12]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30942,7 +33291,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (4327.66332592059) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[2] * ge[4] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[13] * inv_ge[2] * ge[12])
+             : exp(g_RT[2] - g_RT[4] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[13]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -30992,7 +33343,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[14];
-  Kc = inv_ge[2] * ge[4] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[16] * ge[14] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[4] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31042,7 +33395,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[15];
-  Kc = inv_ge[2] * ge[1] * inv_ge[16] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[1] * inv_ge[2] * ge[15])
+             : exp(-g_RT[1] + g_RT[2] - g_RT[15] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[1] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31092,7 +33447,9 @@ aJacobian_precond(
   dlnkfdT = (1781.38699694871) * invT2;
   // reverse
   phi_r = sc[4] * sc[16];
-  Kc = inv_ge[2] * ge[4] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[4] * ge[16] * inv_ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[17]) + (h_RT[4] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31142,7 +33499,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[2] * ge[4] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[18] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[18]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31192,7 +33551,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[2] * ge[4] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[19] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[19]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31242,7 +33603,9 @@ aJacobian_precond(
   dlnkfdT = 2.5 * invT + (1559.97166399463) * invT2;
   // reverse
   phi_r = sc[4] * sc[18];
-  Kc = inv_ge[2] * ge[4] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[4] * ge[18] * inv_ge[20] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[20]) + (h_RT[4] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31292,7 +33655,9 @@ aJacobian_precond(
   dlnkfdT = 2.5 * invT + (2516.0833290236) * invT2;
   // reverse
   phi_r = sc[4] * sc[19];
-  Kc = inv_ge[2] * ge[4] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[4] * ge[19] * inv_ge[20] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[20]) + (h_RT[4] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31342,7 +33707,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[14];
-  Kc = inv_ge[2] * ge[9] * inv_ge[21] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[2] * ge[9] * inv_ge[21])
+             : exp(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[21]) + (h_RT[9] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31392,7 +33759,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (956.111665028967) * invT2;
   // reverse
   phi_r = sc[1] * sc[27];
-  Kc = inv_ge[2] * ge[1] * inv_ge[22] * ge[27];
+  Kc =
+    (kc_fast ? (ge[27] * inv_ge[22] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[22] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[1] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31442,7 +33811,9 @@ aJacobian_precond(
   dlnkfdT = -1.41 * invT + (14568.1224750466) * invT2;
   // reverse
   phi_r = sc[4] * sc[21];
-  Kc = inv_ge[2] * ge[4] * inv_ge[22] * ge[21];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[22] * ge[21] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[21] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[4] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31492,7 +33863,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (956.111665028967) * invT2;
   // reverse
   phi_r = sc[10] * sc[14];
-  Kc = inv_ge[2] * ge[10] * inv_ge[22] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * ge[10] * inv_ge[22] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[10] - g_RT[14] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[10] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31542,7 +33915,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[2] * ge[1] * inv_ge[23] * ge[28];
+  Kc =
+    (kc_fast ? (ge[28] * ge[1] * inv_ge[2] * inv_ge[23])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[23] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[23]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31592,7 +33967,9 @@ aJacobian_precond(
   dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[12] * sc[16];
-  Kc = inv_ge[2] * ge[12] * inv_ge[24] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[24] * ge[12] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[12] - g_RT[16] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[24]) + (h_RT[12] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31642,7 +34019,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[12] * sc[17];
-  Kc = inv_ge[2] * ge[12] * inv_ge[25] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[25] * ge[12] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[12] - g_RT[17] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[25]) + (h_RT[12] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31692,7 +34071,9 @@ aJacobian_precond(
   dlnkfdT = 1.92 * invT + (2863.30282842885) * invT2;
   // reverse
   phi_r = sc[4] * sc[25];
-  Kc = inv_ge[2] * ge[4] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[26] * inv_ge[2] * ge[25])
+             : exp(g_RT[2] - g_RT[4] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[26]) + (h_RT[4] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31742,7 +34123,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * (sc[14] * sc[14]);
-  Kc = refC * inv_ge[2] * ge[1] * inv_ge[27] * ge[14] * ge[14];
+  Kc =
+    refC * (kc_fast ? (inv_ge[27] * ge[1] * ge[14] * ge[14] * inv_ge[2])
+                    : exp(-g_RT[1] + g_RT[2] - 2.000000 * g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[2] + h_RT[27]) + (h_RT[1] + 2.000000 * h_RT[14]) - 1.000000);
@@ -31793,7 +34176,9 @@ aJacobian_precond(
   dlnkfdT = (4025.73332643776) * invT2;
   // reverse
   phi_r = sc[4] * sc[27];
-  Kc = inv_ge[2] * ge[4] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[28] * inv_ge[2] * ge[27])
+             : exp(g_RT[2] - g_RT[4] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[28]) + (h_RT[4] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31843,7 +34228,9 @@ aJacobian_precond(
   dlnkfdT = (679.342498836372) * invT2;
   // reverse
   phi_r = sc[10] * sc[15];
-  Kc = inv_ge[2] * ge[10] * inv_ge[28] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[28] * inv_ge[2] * ge[10] * ge[15])
+             : exp(g_RT[2] - g_RT[10] - g_RT[15] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[28]) + (h_RT[10] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31893,7 +34280,9 @@ aJacobian_precond(
   dlnkfdT = (24053.7566254656) * invT2;
   // reverse
   phi_r = sc[2] * sc[15];
-  Kc = inv_ge[3] * ge[2] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[14] * ge[15] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[14]) + (h_RT[2] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31943,7 +34332,9 @@ aJacobian_precond(
   dlnkfdT = (20128.6666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[16];
-  Kc = inv_ge[3] * ge[6] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * ge[16] * inv_ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[17]) + (h_RT[6] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -31993,7 +34384,9 @@ aJacobian_precond(
   dlnkfdT = -0.6707 * invT + (8575.31520197823) * invT2;
   // reverse
   phi_r = sc[2] * sc[4];
-  Kc = inv_ge[1] * ge[2] * inv_ge[3] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[1] * ge[2])
+             : exp(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[2] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32043,7 +34436,9 @@ aJacobian_precond(
   dlnkfdT = (337.658382754967) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
-  Kc = inv_ge[1] * ge[2] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[6] * inv_ge[1] * ge[2] * ge[5])
+             : exp(g_RT[1] - g_RT[2] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32093,7 +34488,9 @@ aJacobian_precond(
   dlnkfdT = (537.435399079441) * invT2;
   // reverse
   phi_r = sc[0] * sc[3];
-  Kc = inv_ge[1] * ge[0] * inv_ge[6] * ge[3];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[6] * ge[3] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (h_RT[0] + h_RT[3]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32143,7 +34540,9 @@ aJacobian_precond(
   dlnkfdT = (319.542582785997) * invT2;
   // reverse
   phi_r = (sc[4] * sc[4]);
-  Kc = inv_ge[1] * ge[4] * inv_ge[6] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[4] * inv_ge[1])
+             : exp(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (2.000000 * h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32182,7 +34581,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (2616.72666218454) * invT2;
   // reverse
   phi_r = sc[0] * sc[6];
-  Kc = inv_ge[1] * ge[0] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (ge[0] * ge[6] * inv_ge[7] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[0] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32232,7 +34633,9 @@ aJacobian_precond(
   dlnkfdT = (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[4] * sc[5];
-  Kc = inv_ge[1] * ge[4] * inv_ge[7] * ge[5];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[7] * inv_ge[1] * ge[5])
+             : exp(g_RT[1] - g_RT[4] - g_RT[5] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[4] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32282,7 +34685,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[8];
-  Kc = inv_ge[1] * ge[0] * inv_ge[9] * ge[8];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[8] * inv_ge[9])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[8] + g_RT[9]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[9]) + (h_RT[0] + h_RT[8]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32332,7 +34737,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[9];
-  Kc = inv_ge[1] * ge[0] * inv_ge[11] * ge[9];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[9] * inv_ge[11])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[11]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[11]) + (h_RT[0] + h_RT[9]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32382,7 +34789,9 @@ aJacobian_precond(
   dlnkfdT = 1.62 * invT + (5454.86865732316) * invT2;
   // reverse
   phi_r = sc[0] * sc[12];
-  Kc = inv_ge[1] * ge[0] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[13] * inv_ge[1] * ge[12])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[13]) + (h_RT[0] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32432,7 +34841,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[14];
-  Kc = inv_ge[1] * ge[0] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[16] * ge[14] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[16]) + (h_RT[0] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32482,7 +34893,9 @@ aJacobian_precond(
   dlnkfdT = 1.9 * invT + (1379.82009763654) * invT2;
   // reverse
   phi_r = sc[0] * sc[16];
-  Kc = inv_ge[1] * ge[0] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[0] * ge[16] * inv_ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[0] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32532,7 +34945,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[17];
-  Kc = inv_ge[1] * ge[0] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[18] * ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[0] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32582,7 +34997,9 @@ aJacobian_precond(
   dlnkfdT = 0.65 * invT + (-142.91353308854) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[1] * ge[4] * inv_ge[18] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[18] * inv_ge[1] * ge[12])
+             : exp(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32632,7 +35049,9 @@ aJacobian_precond(
   dlnkfdT = -0.09 * invT + (306.962166140879) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[1] * ge[5] * inv_ge[18] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[18] * inv_ge[1] * ge[11] * ge[5])
+             : exp(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32682,7 +35101,9 @@ aJacobian_precond(
   dlnkfdT = 1.63 * invT + (968.188865008281) * invT2;
   // reverse
   phi_r = sc[1] * sc[18];
-  Kc = inv_ge[19] * ge[18];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[19])
+             : exp(g_RT[1] - g_RT[1] - g_RT[18] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[1] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32716,7 +35137,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[17];
-  Kc = inv_ge[1] * ge[0] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[19] * ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[0] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32766,7 +35189,9 @@ aJacobian_precond(
   dlnkfdT = 0.5 * invT + (-55.3538332385192) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[1] * ge[4] * inv_ge[19] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[19] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32816,7 +35241,9 @@ aJacobian_precond(
   dlnkfdT = -0.23 * invT + (538.44183241105) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[1] * ge[5] * inv_ge[19] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[19] * inv_ge[1] * ge[11] * ge[5])
+             : exp(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32866,7 +35293,9 @@ aJacobian_precond(
   dlnkfdT = 2.1 * invT + (2450.66516246898) * invT2;
   // reverse
   phi_r = sc[0] * sc[18];
-  Kc = inv_ge[1] * ge[0] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[0] * ge[18] * inv_ge[20] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[20]) + (h_RT[0] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32916,7 +35345,9 @@ aJacobian_precond(
   dlnkfdT = 2.1 * invT + (2450.66516246898) * invT2;
   // reverse
   phi_r = sc[0] * sc[19];
-  Kc = inv_ge[1] * ge[0] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[0] * ge[19] * inv_ge[20] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[20]) + (h_RT[0] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -32966,7 +35397,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = inv_ge[1] * ge[0] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (ge[0] * ge[22] * inv_ge[1] * inv_ge[23])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[23]) + (h_RT[0] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33016,7 +35449,9 @@ aJacobian_precond(
   dlnkfdT = 2.53 * invT + (6159.37198944977) * invT2;
   // reverse
   phi_r = sc[0] * sc[23];
-  Kc = inv_ge[1] * ge[0] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[24] * ge[23] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[24]) + (h_RT[0] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33066,7 +35501,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[24];
-  Kc = inv_ge[1] * ge[0] * inv_ge[25] * ge[24];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[25] * ge[24] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[24] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[25]) + (h_RT[0] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33116,7 +35553,9 @@ aJacobian_precond(
   dlnkfdT = 1.9 * invT + (3789.22149350954) * invT2;
   // reverse
   phi_r = sc[0] * sc[25];
-  Kc = inv_ge[1] * ge[0] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[26] * inv_ge[1] * ge[25])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[26]) + (h_RT[0] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33166,7 +35605,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[14];
-  Kc = inv_ge[1] * ge[11] * inv_ge[27] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[11] * inv_ge[1] * ge[14])
+             : exp(g_RT[1] - g_RT[11] - g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[27]) + (h_RT[11] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33216,7 +35657,9 @@ aJacobian_precond(
   dlnkfdT = (4025.73332643776) * invT2;
   // reverse
   phi_r = sc[0] * sc[27];
-  Kc = inv_ge[1] * ge[0] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[28] * inv_ge[1] * ge[27])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[0] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33266,7 +35709,9 @@ aJacobian_precond(
   dlnkfdT = (1725.02673037858) * invT2;
   // reverse
   phi_r = sc[12] * sc[14];
-  Kc = inv_ge[1] * ge[12] * inv_ge[28] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[28] * ge[14] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[14] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[12] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33316,7 +35761,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[29] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[29] * ge[28])
+             : exp(g_RT[1] - g_RT[1] - g_RT[28] + g_RT[29]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[29]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33350,7 +35797,9 @@ aJacobian_precond(
   dlnkfdT = 1.51 * invT + (1726.03316371019) * invT2;
   // reverse
   phi_r = sc[1] * sc[5];
-  Kc = inv_ge[0] * ge[1] * inv_ge[4] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[0] * inv_ge[4] * ge[1] * ge[5])
+             : exp(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[4]) + (h_RT[1] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33400,7 +35849,9 @@ aJacobian_precond(
   dlnkfdT = 2.4 * invT + (-1061.78716484796) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
-  Kc = inv_ge[4] * ge[2] * inv_ge[4] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[4] * ge[2] * ge[5])
+             : exp(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[4]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33439,7 +35890,9 @@ aJacobian_precond(
   dlnkfdT = (-251.60833290236) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
-  Kc = inv_ge[4] * ge[3] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[6] * ge[5])
+             : exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[3] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33489,7 +35942,9 @@ aJacobian_precond(
   dlnkfdT = (214.873516298615) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = inv_ge[4] * ge[5] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[7] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[7]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33539,7 +35994,9 @@ aJacobian_precond(
   dlnkfdT = (14799.6021413168) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = inv_ge[4] * ge[5] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[7] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[7]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33589,7 +36046,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = inv_ge[4] * ge[1] * inv_ge[8] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[14] * ge[1] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[8]) + (h_RT[1] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33639,7 +36098,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[4] * ge[1] * inv_ge[9] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[9] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[9]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33689,7 +36150,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[4] * ge[1] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[17] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33739,7 +36202,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[5] * sc[9];
-  Kc = inv_ge[4] * ge[5] * inv_ge[10] * ge[9];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * ge[9] * inv_ge[10])
+             : exp(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[5] + h_RT[9]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33789,7 +36254,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[4] * ge[1] * inv_ge[11] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[17] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[11]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33839,7 +36306,9 @@ aJacobian_precond(
   dlnkfdT = 1.6 * invT + (2727.43432866158) * invT2;
   // reverse
   phi_r = sc[5] * sc[10];
-  Kc = inv_ge[4] * ge[5] * inv_ge[12] * ge[10];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[10] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[10] + g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[5] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33889,7 +36358,9 @@ aJacobian_precond(
   dlnkfdT = -1.34 * invT + (713.058015445288) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[4] * ge[5] * inv_ge[12] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[11] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33939,7 +36410,9 @@ aJacobian_precond(
   dlnkfdT = 1.6 * invT + (1570.03599731073) * invT2;
   // reverse
   phi_r = sc[5] * sc[12];
-  Kc = inv_ge[4] * ge[5] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[12] * ge[5] * inv_ge[13])
+             : exp(g_RT[4] - g_RT[5] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[13]) + (h_RT[5] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -33989,7 +36462,9 @@ aJacobian_precond(
   dlnkfdT = 1.228 * invT + (35.2251666063304) * invT2;
   // reverse
   phi_r = sc[1] * sc[15];
-  Kc = inv_ge[4] * ge[1] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[14] * ge[15] * ge[1])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[14]) + (h_RT[1] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34039,7 +36514,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[14];
-  Kc = inv_ge[4] * ge[5] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[16] * ge[14] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[16]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34089,7 +36566,9 @@ aJacobian_precond(
   dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[16];
-  Kc = inv_ge[4] * ge[5] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[17]) + (h_RT[5] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34139,7 +36618,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[17];
-  Kc = inv_ge[4] * ge[5] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[18] * ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[18]) + (h_RT[5] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34189,7 +36670,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[17];
-  Kc = inv_ge[4] * ge[5] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[19] * ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[19]) + (h_RT[5] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34239,7 +36722,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (-422.701999275965) * invT2;
   // reverse
   phi_r = sc[5] * sc[18];
-  Kc = inv_ge[4] * ge[5] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[20] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34289,7 +36774,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (754.82499870708) * invT2;
   // reverse
   phi_r = sc[5] * sc[19];
-  Kc = inv_ge[4] * ge[5] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[20] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34339,7 +36826,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[27];
-  Kc = inv_ge[4] * ge[1] * inv_ge[21] * ge[27];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[27] * ge[1] * inv_ge[21])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[21] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[21]) + (h_RT[1] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34389,7 +36878,9 @@ aJacobian_precond(
   dlnkfdT = 4.5 * invT + (-503.21666580472) * invT2;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[4] * ge[1] * inv_ge[22] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[28] * ge[1] * inv_ge[22])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34439,7 +36930,9 @@ aJacobian_precond(
   dlnkfdT = 2.3 * invT + (6793.42498836372) * invT2;
   // reverse
   phi_r = sc[1] * sc[29];
-  Kc = inv_ge[4] * ge[1] * inv_ge[22] * ge[29];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[29] * inv_ge[22] * ge[1])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[29]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[1] + h_RT[29]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34489,7 +36982,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (7045.03332126608) * invT2;
   // reverse
   phi_r = sc[5] * sc[21];
-  Kc = inv_ge[4] * ge[5] * inv_ge[22] * ge[21];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[22] * ge[21] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[21] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[5] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34539,7 +37034,9 @@ aJacobian_precond(
   dlnkfdT = 4 * invT + (-1006.43333160944) * invT2;
   // reverse
   phi_r = sc[12] * sc[14];
-  Kc = inv_ge[4] * ge[12] * inv_ge[22] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[12] * ge[14] * inv_ge[22])
+             : exp(g_RT[4] - g_RT[12] - g_RT[14] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[12] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34589,7 +37086,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[22];
-  Kc = inv_ge[4] * ge[5] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[22] * inv_ge[23] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[23]) + (h_RT[5] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34639,7 +37138,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (1258.0416645118) * invT2;
   // reverse
   phi_r = sc[5] * sc[23];
-  Kc = inv_ge[4] * ge[5] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[24] * ge[23] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[24]) + (h_RT[5] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34689,7 +37190,9 @@ aJacobian_precond(
   dlnkfdT = 2.12 * invT + (437.798499250106) * invT2;
   // reverse
   phi_r = sc[5] * sc[25];
-  Kc = inv_ge[4] * ge[5] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[25] * inv_ge[26] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[26]) + (h_RT[5] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34739,7 +37242,9 @@ aJacobian_precond(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[5] * sc[27];
-  Kc = inv_ge[4] * ge[5] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[27] * ge[5] * inv_ge[28])
+             : exp(g_RT[4] - g_RT[5] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[28]) + (h_RT[5] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34789,7 +37294,9 @@ aJacobian_precond(
   dlnkfdT = (-820.243165261693) * invT2;
   // reverse
   phi_r = sc[3] * sc[7];
-  Kc = inv_ge[6] * ge[3] * inv_ge[6] * ge[7];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[6] * ge[7])
+             : exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34828,7 +37335,9 @@ aJacobian_precond(
   dlnkfdT = (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[3] * sc[7];
-  Kc = inv_ge[6] * ge[3] * inv_ge[6] * ge[7];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[6] * ge[7])
+             : exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34867,7 +37376,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[6] * ge[4] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[17] * inv_ge[10])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[10]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34917,7 +37428,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[13];
-  Kc = inv_ge[6] * ge[3] * inv_ge[12] * ge[13];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[12] * ge[13])
+             : exp(-g_RT[3] + g_RT[6] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[12]) + (h_RT[3] + h_RT[13]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -34967,7 +37480,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[19];
-  Kc = inv_ge[6] * ge[4] * inv_ge[12] * ge[19];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[19] * inv_ge[12])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[12] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[12]) + (h_RT[4] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35017,7 +37532,9 @@ aJacobian_precond(
   dlnkfdT = (11875.9133129914) * invT2;
   // reverse
   phi_r = sc[4] * sc[15];
-  Kc = inv_ge[6] * ge[4] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[14] * ge[15])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[4] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35067,7 +37584,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[7] * sc[16];
-  Kc = inv_ge[6] * ge[7] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[6] * ge[7] * inv_ge[17])
+             : exp(g_RT[6] - g_RT[7] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[17]) + (h_RT[7] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35117,7 +37636,9 @@ aJacobian_precond(
   dlnkfdT = (289.852799503519) * invT2;
   // reverse
   phi_r = sc[2] * sc[14];
-  Kc = inv_ge[3] * ge[2] * inv_ge[8] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[14] * ge[2] * inv_ge[8])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[8] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[8]) + (h_RT[2] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35167,7 +37688,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[21];
-  Kc = inv_ge[8] * ge[1] * inv_ge[10] * ge[21];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[10] * ge[21] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[8] + g_RT[10] - g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[10]) + (h_RT[1] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35217,7 +37740,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[8] * ge[1] * inv_ge[12] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[22] * ge[1] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[8] + g_RT[12] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[12]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35267,7 +37792,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[16];
-  Kc = inv_ge[3] * ge[2] * inv_ge[9] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[2] * inv_ge[9])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[9]) + (h_RT[2] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35317,7 +37844,9 @@ aJacobian_precond(
   dlnkfdT = (1565.00383065268) * invT2;
   // reverse
   phi_r = sc[1] * sc[10];
-  Kc = inv_ge[0] * ge[1] * inv_ge[9] * ge[10];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[9] * ge[10])
+             : exp(g_RT[0] - g_RT[1] + g_RT[9] - g_RT[10]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[9]) + (h_RT[1] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35367,7 +37896,9 @@ aJacobian_precond(
   dlnkfdT = (-379.928582682563) * invT2;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[5] * ge[1] * inv_ge[9] * ge[17];
+  Kc =
+    (kc_fast ? (ge[17] * ge[1] * inv_ge[5] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[5] + g_RT[9] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[9]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35417,7 +37948,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[9] * ge[1] * inv_ge[10] * ge[22];
+  Kc =
+    (kc_fast ? (ge[22] * inv_ge[10] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[10] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[10]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35467,7 +38000,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[23];
-  Kc = inv_ge[9] * ge[1] * inv_ge[12] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[23] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[12] - g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[12]) + (h_RT[1] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35517,7 +38052,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[9] * ge[1] * inv_ge[13] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[13] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[13] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[13]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35567,7 +38104,9 @@ aJacobian_precond(
   dlnkfdT = (7946.79758638813) * invT2;
   // reverse
   phi_r = sc[14] * sc[16];
-  Kc = inv_ge[9] * ge[14] * inv_ge[15] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[14] * inv_ge[15] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[14] + g_RT[15] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[15]) + (h_RT[14] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35617,7 +38156,9 @@ aJacobian_precond(
   dlnkfdT = (-259.156582889431) * invT2;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[9] * ge[1] * inv_ge[17] * ge[28];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[17] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[17] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[17]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35667,7 +38208,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[22];
-  Kc = inv_ge[9] * ge[14] * inv_ge[27] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[22] * ge[14] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[14] - g_RT[22] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[27]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35753,7 +38296,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (3638.25649376812) * invT2;
   // reverse
   phi_r = sc[1] * sc[12];
-  Kc = inv_ge[0] * ge[1] * inv_ge[10] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[10] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[10] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[10]) + (h_RT[1] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35803,7 +38348,9 @@ aJacobian_precond(
   dlnkfdT = (6010.41985637157) * invT2;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = inv_ge[10] * ge[0] * inv_ge[10] * ge[22];
+  Kc =
+    (kc_fast ? (ge[0] * ge[22] * inv_ge[10] * inv_ge[10])
+             : exp(-g_RT[0] + 2.000000 * g_RT[10] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[10]) + (h_RT[0] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35842,7 +38389,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[10] * ge[1] * inv_ge[12] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[12] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[12] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[12]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35892,7 +38441,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (4161.60182620503) * invT2;
   // reverse
   phi_r = (sc[12] * sc[12]);
-  Kc = inv_ge[10] * ge[12] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[12] * ge[12] * inv_ge[10] * inv_ge[13])
+             : exp(g_RT[10] - 2.000000 * g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[13]) + (2.000000 * h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35931,7 +38482,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[23];
-  Kc = inv_ge[10] * ge[14] * inv_ge[27] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[23] * ge[14] * inv_ge[10])
+             : exp(g_RT[10] - g_RT[14] - g_RT[23] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[27]) + (h_RT[14] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -35981,7 +38534,9 @@ aJacobian_precond(
   dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[47] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[47]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36015,7 +38570,9 @@ aJacobian_precond(
   dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[10] * sc[48];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[48] - g_RT[48]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[48]) + (h_RT[10] + h_RT[48]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36049,7 +38606,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[4] * sc[14];
-  Kc = refC * inv_ge[3] * ge[1] * inv_ge[11] * ge[4] * ge[14];
+  Kc =
+    refC * (kc_fast ? (ge[4] * inv_ge[3] * ge[14] * ge[1] * inv_ge[11])
+                    : exp(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[11]) + (h_RT[1] + h_RT[4] + h_RT[14]) - 1.000000);
@@ -36113,7 +38672,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[14];
-  Kc = inv_ge[3] * ge[5] * inv_ge[11] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[14] * ge[5] * inv_ge[11])
+             : exp(g_RT[3] - g_RT[5] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[11]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36163,7 +38724,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[12];
-  Kc = inv_ge[0] * ge[1] * inv_ge[11] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[11] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[11] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[11]) + (h_RT[1] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36213,7 +38776,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[10];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(g_RT[5] - g_RT[5] - g_RT[10] + g_RT[11]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[11]) + (h_RT[5] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36247,7 +38812,9 @@ aJacobian_precond(
   dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[11] * ge[1] * inv_ge[12] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[12] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[12] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[12]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36297,7 +38864,9 @@ aJacobian_precond(
   dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = (sc[12] * sc[12]);
-  Kc = inv_ge[11] * ge[12] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[12] * ge[12] * inv_ge[11] * inv_ge[13])
+             : exp(g_RT[11] - 2.000000 * g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[13]) + (2.000000 * h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36336,7 +38905,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[14];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[14] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[14]) + (h_RT[10] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36370,7 +38941,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[15];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[15] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[15]) + (h_RT[10] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36404,7 +38977,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[17];
-  Kc = inv_ge[11] * ge[14] * inv_ge[15] * ge[17];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[15] * inv_ge[11] * ge[17])
+             : exp(g_RT[11] - g_RT[14] + g_RT[15] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[15]) + (h_RT[14] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36454,7 +39029,9 @@ aJacobian_precond(
   dlnkfdT = (-276.769166192596) * invT2;
   // reverse
   phi_r = sc[12] * sc[25];
-  Kc = inv_ge[11] * ge[12] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * ge[12] * inv_ge[11] * inv_ge[26])
+             : exp(g_RT[11] - g_RT[12] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[26]) + (h_RT[12] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36504,7 +39081,9 @@ aJacobian_precond(
   dlnkfdT = (15338.0439737279) * invT2;
   // reverse
   phi_r = sc[2] * sc[19];
-  Kc = inv_ge[3] * ge[2] * inv_ge[12] * ge[19];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[19] * inv_ge[12] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[12] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[12]) + (h_RT[2] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36554,7 +39133,9 @@ aJacobian_precond(
   dlnkfdT = (10222.8465658229) * invT2;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[3] * ge[4] * inv_ge[12] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[12] * ge[17])
+             : exp(g_RT[3] - g_RT[4] + g_RT[12] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[12]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36604,7 +39185,9 @@ aJacobian_precond(
   dlnkfdT = 2.47 * invT + (2606.66232886845) * invT2;
   // reverse
   phi_r = sc[6] * sc[13];
-  Kc = inv_ge[7] * ge[6] * inv_ge[12] * ge[13];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[12] * inv_ge[7] * ge[13])
+             : exp(-g_RT[6] + g_RT[7] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[12]) + (h_RT[6] + h_RT[13]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36654,7 +39237,9 @@ aJacobian_precond(
   dlnkfdT = 0.1 * invT + (5334.09665753003) * invT2;
   // reverse
   phi_r = sc[1] * sc[25];
-  Kc = inv_ge[12] * ge[1] * inv_ge[12] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[12] * ge[1])
+             : exp(-g_RT[1] + 2.000000 * g_RT[12] - g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[12]) + (h_RT[1] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36693,7 +39278,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[13] * sc[14];
-  Kc = inv_ge[12] * ge[13] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[13] * inv_ge[12] * ge[14])
+             : exp(g_RT[12] - g_RT[13] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[16]) + (h_RT[13] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36743,7 +39330,9 @@ aJacobian_precond(
   dlnkfdT = 2.81 * invT + (2948.84966161566) * invT2;
   // reverse
   phi_r = sc[13] * sc[16];
-  Kc = inv_ge[12] * ge[13] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[12] * inv_ge[17] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[17]) + (h_RT[13] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36793,7 +39382,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (5001.97365809891) * invT2;
   // reverse
   phi_r = sc[13] * sc[18];
-  Kc = inv_ge[12] * ge[13] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[12] * inv_ge[20] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[20]) + (h_RT[13] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36843,7 +39434,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (5001.97365809891) * invT2;
   // reverse
   phi_r = sc[13] * sc[19];
-  Kc = inv_ge[12] * ge[13] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[12] * inv_ge[20] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[20]) + (h_RT[13] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36893,7 +39486,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (4629.59332540342) * invT2;
   // reverse
   phi_r = sc[13] * sc[23];
-  Kc = inv_ge[12] * ge[13] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[13] * ge[23] * inv_ge[12])
+             : exp(g_RT[12] - g_RT[13] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[24]) + (h_RT[13] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36943,7 +39538,9 @@ aJacobian_precond(
   dlnkfdT = 1.74 * invT + (5258.61415765932) * invT2;
   // reverse
   phi_r = sc[13] * sc[25];
-  Kc = inv_ge[12] * ge[13] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[26] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[26]) + (h_RT[13] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -36993,7 +39590,9 @@ aJacobian_precond(
   dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[14];
-  Kc = inv_ge[3] * ge[6] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[16] * ge[14])
+             : exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[16]) + (h_RT[6] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37043,7 +39642,9 @@ aJacobian_precond(
   dlnkfdT = (452.894999224248) * invT2;
   // reverse
   phi_r = sc[6] * sc[17];
-  Kc = inv_ge[3] * ge[6] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[18] * ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[18]) + (h_RT[6] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37093,7 +39694,9 @@ aJacobian_precond(
   dlnkfdT = 7.6 * invT + (-1776.35483029066) * invT2;
   // reverse
   phi_r = sc[6] * sc[17];
-  Kc = inv_ge[3] * ge[6] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[19] * ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[19]) + (h_RT[6] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37143,7 +39746,9 @@ aJacobian_precond(
   dlnkfdT = (-379.928582682563) * invT2;
   // reverse
   phi_r = sc[14] * sc[16];
-  Kc = inv_ge[3] * ge[14] * inv_ge[21] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[14] * inv_ge[21])
+             : exp(g_RT[3] - g_RT[14] - g_RT[16] + g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[21]) + (h_RT[14] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37193,7 +39798,9 @@ aJacobian_precond(
   dlnkfdT = 0.9 * invT + (1002.91081494881) * invT2;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[0] * ge[1] * inv_ge[21] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[22] * inv_ge[21] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[21] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[21]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37243,7 +39850,9 @@ aJacobian_precond(
   dlnkfdT = -1.39 * invT + (510.76491579179) * invT2;
   // reverse
   phi_r = sc[16] * sc[17];
-  Kc = inv_ge[3] * ge[16] * inv_ge[23] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[17] * inv_ge[23])
+             : exp(g_RT[3] - g_RT[16] - g_RT[17] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[16] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37293,7 +39902,9 @@ aJacobian_precond(
   dlnkfdT = (1949.96457999329) * invT2;
   // reverse
   phi_r = sc[6] * sc[24];
-  Kc = inv_ge[3] * ge[6] * inv_ge[25] * ge[24];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[25] * ge[24])
+             : exp(g_RT[3] - g_RT[6] - g_RT[24] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[25]) + (h_RT[6] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37343,7 +39954,9 @@ aJacobian_precond(
   dlnkfdT = (429.747032597231) * invT2;
   // reverse
   phi_r = sc[4] * (sc[14] * sc[14]);
-  Kc = refC * inv_ge[3] * ge[4] * inv_ge[27] * ge[14] * ge[14];
+  Kc =
+    refC * (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[27] * ge[14] * ge[14])
+                    : exp(g_RT[3] - g_RT[4] - 2.000000 * g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[27]) + (h_RT[4] + 2.000000 * h_RT[14]) - 1.000000);
@@ -37394,7 +40007,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = (sc[14] * sc[14]) * sc[22];
-  Kc = refC * inv_ge[27] * ge[14] * inv_ge[27] * ge[14] * ge[22];
+  Kc = refC * (kc_fast
+                 ? (inv_ge[27] * ge[22] * ge[14] * inv_ge[27] * ge[14])
+                 : exp(-2.000000 * g_RT[14] - g_RT[22] + 2.000000 * g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[27]) + (2.000000 * h_RT[14] + h_RT[22]) -
                     1.000000);
@@ -37434,7 +40049,9 @@ aJacobian_precond(
   dlnkfdT = (178.641916360675) * invT2;
   // reverse
   phi_r = sc[2] * sc[47];
-  Kc = inv_ge[30] * ge[2] * inv_ge[35] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[35] * ge[2] * inv_ge[30])
+             : exp(-g_RT[2] + g_RT[30] + g_RT[35] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[35]) + (h_RT[2] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37484,7 +40101,9 @@ aJacobian_precond(
   dlnkfdT = 1 * invT + (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[2] * sc[35];
-  Kc = inv_ge[3] * ge[2] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[35] * ge[2] * inv_ge[30])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[30]) + (h_RT[2] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37534,7 +40153,9 @@ aJacobian_precond(
   dlnkfdT = (193.738416334817) * invT2;
   // reverse
   phi_r = sc[1] * sc[35];
-  Kc = inv_ge[4] * ge[1] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[35] * ge[1] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[30]) + (h_RT[1] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37584,7 +40205,9 @@ aJacobian_precond(
   dlnkfdT = (5439.77215734902) * invT2;
   // reverse
   phi_r = sc[3] * sc[47];
-  Kc = inv_ge[2] * ge[3] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[37] * ge[3] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[37]) + (h_RT[3] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37634,7 +40257,9 @@ aJacobian_precond(
   dlnkfdT = (11649.4658133793) * invT2;
   // reverse
   phi_r = (sc[35] * sc[35]);
-  Kc = inv_ge[2] * ge[35] * inv_ge[37] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[37] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - 2.000000 * g_RT[35] + g_RT[37]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[37]) + (2.000000 * h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37673,7 +40298,9 @@ aJacobian_precond(
   dlnkfdT = (9500.73065039311) * invT2;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[1] * ge[4] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[37] * ge[47] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[37]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37723,7 +40350,9 @@ aJacobian_precond(
   dlnkfdT = (10597.7429818474) * invT2;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = inv_ge[4] * ge[6] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[37] * ge[47])
+             : exp(g_RT[4] - g_RT[6] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[37]) + (h_RT[6] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37773,7 +40402,9 @@ aJacobian_precond(
   dlnkfdT = (-241.543999586265) * invT2;
   // reverse
   phi_r = sc[4] * sc[36];
-  Kc = inv_ge[6] * ge[4] * inv_ge[35] * ge[36];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[36] * inv_ge[35])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[35] - g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[35]) + (h_RT[4] + h_RT[36]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37823,7 +40454,9 @@ aJacobian_precond(
   dlnkfdT = (-120.771999793133) * invT2;
   // reverse
   phi_r = sc[3] * sc[35];
-  Kc = inv_ge[2] * ge[3] * inv_ge[36] * ge[35];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[36] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] - g_RT[35] + g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[36]) + (h_RT[3] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37873,7 +40506,9 @@ aJacobian_precond(
   dlnkfdT = (181.157999689699) * invT2;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[1] * ge[4] * inv_ge[36] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[36] * ge[35] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[35] + g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[36]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37923,7 +40558,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[35];
-  Kc = inv_ge[2] * ge[1] * inv_ge[31] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[2] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[31] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[31]) + (h_RT[1] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -37973,7 +40610,9 @@ aJacobian_precond(
   dlnkfdT = (166.061499715557) * invT2;
   // reverse
   phi_r = sc[0] * sc[30];
-  Kc = inv_ge[1] * ge[0] * inv_ge[31] * ge[30];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[30] * inv_ge[31])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[30] + g_RT[31]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[31]) + (h_RT[0] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38023,7 +40662,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[38];
-  Kc = inv_ge[4] * ge[1] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[38] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[31]) + (h_RT[1] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38073,7 +40714,9 @@ aJacobian_precond(
   dlnkfdT = 1.2 * invT;
   // reverse
   phi_r = sc[5] * sc[30];
-  Kc = inv_ge[4] * ge[5] * inv_ge[31] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * ge[30] * inv_ge[31])
+             : exp(g_RT[4] - g_RT[5] - g_RT[30] + g_RT[31]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[31]) + (h_RT[5] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38123,7 +40766,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[2] * sc[38];
-  Kc = inv_ge[3] * ge[2] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[38] * inv_ge[31] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[31]) + (h_RT[2] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38173,7 +40818,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (50.321666580472) * invT2;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[3] * ge[4] * inv_ge[31] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * ge[35] * inv_ge[31])
+             : exp(g_RT[3] - g_RT[4] + g_RT[31] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[31]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38223,7 +40870,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = inv_ge[30] * ge[1] * inv_ge[31] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * ge[1] * inv_ge[31] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[30] + g_RT[31] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[31]) + (h_RT[1] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38273,7 +40922,9 @@ aJacobian_precond(
   dlnkfdT = (6969.55082139537) * invT2;
   // reverse
   phi_r = sc[0] * sc[38];
-  Kc = inv_ge[5] * ge[0] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (ge[0] * ge[38] * inv_ge[31] * inv_ge[5])
+             : exp(-g_RT[0] + g_RT[5] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[31]) + (h_RT[0] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38323,7 +40974,9 @@ aJacobian_precond(
   dlnkfdT = -0.23 * invT;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[31] * ge[4] * inv_ge[35] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[47] * inv_ge[31])
+             : exp(-g_RT[4] + g_RT[31] + g_RT[35] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[31] + h_RT[35]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38373,7 +41026,9 @@ aJacobian_precond(
   dlnkfdT = -0.45 * invT;
   // reverse
   phi_r = sc[1] * sc[37];
-  Kc = inv_ge[31] * ge[1] * inv_ge[35] * ge[37];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[37] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[31] + g_RT[35] - g_RT[37]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[31] + h_RT[35]) + (h_RT[1] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38423,7 +41078,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[31];
-  Kc = inv_ge[2] * ge[4] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[32] * ge[31] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[32]) + (h_RT[4] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38473,7 +41130,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[38];
-  Kc = inv_ge[2] * ge[1] * inv_ge[32] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * inv_ge[32] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[32] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[32]) + (h_RT[1] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38523,7 +41182,9 @@ aJacobian_precond(
   dlnkfdT = (1836.74083018723) * invT2;
   // reverse
   phi_r = sc[0] * sc[31];
-  Kc = inv_ge[1] * ge[0] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[32] * ge[31] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[32]) + (h_RT[0] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38573,7 +41234,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (-231.479666270171) * invT2;
   // reverse
   phi_r = sc[5] * sc[31];
-  Kc = inv_ge[4] * ge[5] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[32] * ge[31] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[32]) + (h_RT[5] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38623,7 +41286,8 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = refC * inv_ge[34] * ge[1] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[34])
+                       : exp(-g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[1] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38662,7 +41326,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = inv_ge[3] * ge[6] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[3] * ge[6] * inv_ge[34])
+             : exp(g_RT[3] - g_RT[6] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[34]) + (h_RT[6] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38712,7 +41378,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[2] * ge[4] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * ge[47] * inv_ge[34] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[34]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38762,7 +41430,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[31] * sc[35];
-  Kc = inv_ge[2] * ge[31] * inv_ge[34] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[34] * ge[31] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[31] + g_RT[34] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[34]) + (h_RT[31] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38812,7 +41482,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[47];
-  Kc = inv_ge[1] * ge[0] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[0] * ge[47] * inv_ge[1] * inv_ge[34])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[34]) + (h_RT[0] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38862,7 +41534,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[47];
-  Kc = inv_ge[4] * ge[5] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[47] * inv_ge[34] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[34]) + (h_RT[5] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38912,7 +41586,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[13] * sc[47];
-  Kc = inv_ge[12] * ge[13] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[12] * ge[13] * inv_ge[34])
+             : exp(g_RT[12] - g_RT[13] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[34]) + (h_RT[13] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -38962,7 +41638,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[2] * ge[4] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[38] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[38]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39012,7 +41690,9 @@ aJacobian_precond(
   dlnkfdT = 0.72 * invT + (332.122999431115) * invT2;
   // reverse
   phi_r = sc[0] * sc[35];
-  Kc = inv_ge[1] * ge[0] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[38] * ge[35] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[38]) + (h_RT[0] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39062,7 +41742,9 @@ aJacobian_precond(
   dlnkfdT = 1.9 * invT + (-478.055832514484) * invT2;
   // reverse
   phi_r = sc[5] * sc[35];
-  Kc = inv_ge[4] * ge[5] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[38] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[38]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39112,7 +41794,9 @@ aJacobian_precond(
   dlnkfdT = (6541.81665546136) * invT2;
   // reverse
   phi_r = sc[6] * sc[35];
-  Kc = inv_ge[3] * ge[6] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[38] * ge[35])
+             : exp(g_RT[3] - g_RT[6] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[38]) + (h_RT[6] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39162,7 +41846,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = inv_ge[2] * ge[14] * inv_ge[39] * ge[30];
+  Kc =
+    (kc_fast ? (ge[14] * ge[30] * inv_ge[2] * inv_ge[39])
+             : exp(g_RT[2] - g_RT[14] - g_RT[30] + g_RT[39]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[39]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39212,7 +41898,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[4] * ge[1] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[46] * ge[1] * inv_ge[39])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[39]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39262,7 +41950,9 @@ aJacobian_precond(
   dlnkfdT = (3753.99632690321) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[5] * ge[4] * inv_ge[39] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * ge[40] * inv_ge[39] * inv_ge[5])
+             : exp(-g_RT[4] + g_RT[5] + g_RT[39] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[39]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39312,7 +42002,9 @@ aJacobian_precond(
   dlnkfdT = (-221.415332954077) * invT2;
   // reverse
   phi_r = sc[2] * sc[46];
-  Kc = inv_ge[3] * ge[2] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[46] * inv_ge[39] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[39]) + (h_RT[2] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39362,7 +42054,9 @@ aJacobian_precond(
   dlnkfdT = 2.45 * invT + (1127.20533140257) * invT2;
   // reverse
   phi_r = sc[1] * sc[40];
-  Kc = inv_ge[0] * ge[1] * inv_ge[39] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[40] * inv_ge[39] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[39] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[39]) + (h_RT[1] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39412,7 +42106,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[35];
-  Kc = inv_ge[2] * ge[14] * inv_ge[46] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[46] * ge[14] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[46]) + (h_RT[14] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39462,7 +42158,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = inv_ge[1] * ge[14] * inv_ge[46] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[46] * ge[14] * ge[31] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[31] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[46]) + (h_RT[14] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39512,7 +42210,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14] * sc[35];
-  Kc = refC * inv_ge[4] * ge[1] * inv_ge[46] * ge[14] * ge[35];
+  Kc =
+    refC * (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[46] * ge[1] * ge[14])
+                    : exp(-g_RT[1] + g_RT[4] - g_RT[14] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[46]) + (h_RT[1] + h_RT[14] + h_RT[35]) - 1.000000);
@@ -39576,7 +42276,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[47];
-  Kc = inv_ge[30] * ge[14] * inv_ge[46] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[46] * ge[14] * inv_ge[30])
+             : exp(-g_RT[14] + g_RT[30] + g_RT[46] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[46]) + (h_RT[14] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39626,7 +42328,9 @@ aJacobian_precond(
   dlnkfdT = (10064.3333160944) * invT2;
   // reverse
   phi_r = sc[15] * sc[35];
-  Kc = inv_ge[3] * ge[15] * inv_ge[46] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[35] * inv_ge[46] * ge[15])
+             : exp(g_RT[3] - g_RT[15] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[46]) + (h_RT[15] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39676,7 +42380,9 @@ aJacobian_precond(
   dlnkfdT = -1.52 * invT + (372.380332695493) * invT2;
   // reverse
   phi_r = sc[14] * sc[37];
-  Kc = inv_ge[35] * ge[14] * inv_ge[46] * ge[37];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[37] * inv_ge[46] * ge[14])
+             : exp(-g_RT[14] + g_RT[35] - g_RT[37] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35] + h_RT[46]) + (h_RT[14] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39726,7 +42432,9 @@ aJacobian_precond(
   dlnkfdT = -2 * invT + (402.573332643776) * invT2;
   // reverse
   phi_r = sc[15] * sc[47];
-  Kc = inv_ge[35] * ge[15] * inv_ge[46] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[35] * inv_ge[46] * ge[15])
+             : exp(-g_RT[15] + g_RT[35] + g_RT[46] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35] + h_RT[46]) + (h_RT[15] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39776,7 +42484,9 @@ aJacobian_precond(
   dlnkfdT = 2.64 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[2] * ge[1] * inv_ge[40] * ge[46];
+  Kc =
+    (kc_fast ? (ge[46] * inv_ge[40] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[40] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39826,7 +42536,9 @@ aJacobian_precond(
   dlnkfdT = 2.64 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = inv_ge[2] * ge[14] * inv_ge[40] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[40] * ge[31] * inv_ge[2] * ge[14])
+             : exp(g_RT[2] - g_RT[14] - g_RT[31] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[14] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39876,7 +42588,9 @@ aJacobian_precond(
   dlnkfdT = 1.58 * invT + (13385.5633104055) * invT2;
   // reverse
   phi_r = sc[4] * sc[39];
-  Kc = inv_ge[2] * ge[4] * inv_ge[40] * ge[39];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[40] * inv_ge[2] * ge[39])
+             : exp(g_RT[2] - g_RT[4] - g_RT[39] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[4] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39926,7 +42640,9 @@ aJacobian_precond(
   dlnkfdT = 2.03 * invT + (6728.0068218091) * invT2;
   // reverse
   phi_r = sc[1] * sc[44];
-  Kc = inv_ge[4] * ge[1] * inv_ge[40] * ge[44];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[44] * ge[1] * inv_ge[40])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[44]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[1] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -39976,7 +42692,9 @@ aJacobian_precond(
   dlnkfdT = 2.26 * invT + (3220.58666115021) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[4] * ge[1] * inv_ge[40] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[1] * ge[45])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40026,7 +42744,9 @@ aJacobian_precond(
   dlnkfdT = 2.56 * invT + (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[4] * ge[14] * inv_ge[40] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[32] * ge[14])
+             : exp(g_RT[4] - g_RT[14] - g_RT[32] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40076,7 +42796,9 @@ aJacobian_precond(
   dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[30] * ge[10] * inv_ge[41] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[41] * ge[10] * inv_ge[30])
+             : exp(-g_RT[10] + g_RT[30] + g_RT[41] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[41]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40126,7 +42848,9 @@ aJacobian_precond(
   dlnkfdT = (23158.0309603332) * invT2;
   // reverse
   phi_r = sc[30] * sc[39];
-  Kc = inv_ge[8] * ge[30] * inv_ge[47] * ge[39];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[39] * inv_ge[8] * ge[30])
+             : exp(g_RT[8] - g_RT[30] - g_RT[39] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[47]) + (h_RT[30] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40176,7 +42900,9 @@ aJacobian_precond(
   dlnkfdT = 0.88 * invT + (10129.751482649) * invT2;
   // reverse
   phi_r = sc[30] * sc[40];
-  Kc = inv_ge[9] * ge[30] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[9] * ge[30])
+             : exp(g_RT[9] - g_RT[30] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[47]) + (h_RT[30] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40226,7 +42952,9 @@ aJacobian_precond(
   dlnkfdT = (37238.0332695493) * invT2;
   // reverse
   phi_r = sc[31] * sc[40];
-  Kc = inv_ge[10] * ge[31] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[10] * ge[31])
+             : exp(g_RT[10] - g_RT[31] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[47]) + (h_RT[31] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40276,7 +43004,9 @@ aJacobian_precond(
   dlnkfdT = (32709.0832773068) * invT2;
   // reverse
   phi_r = sc[31] * sc[40];
-  Kc = inv_ge[11] * ge[31] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[11] * ge[31])
+             : exp(g_RT[11] - g_RT[31] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[47]) + (h_RT[31] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40326,7 +43056,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[39];
-  Kc = inv_ge[8] * ge[2] * inv_ge[35] * ge[39];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[2] * inv_ge[8] * ge[39])
+             : exp(-g_RT[2] + g_RT[8] + g_RT[35] - g_RT[39]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[35]) + (h_RT[2] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40376,7 +43108,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = inv_ge[8] * ge[14] * inv_ge[35] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[14] * ge[30] * inv_ge[8])
+             : exp(g_RT[8] - g_RT[14] - g_RT[30] + g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[35]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40426,7 +43160,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[40];
-  Kc = inv_ge[9] * ge[2] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[40] * ge[2] * inv_ge[9])
+             : exp(-g_RT[2] + g_RT[9] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[2] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40476,7 +43212,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[9] * ge[1] * inv_ge[35] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[46] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[35] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40526,7 +43264,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[30];
-  Kc = inv_ge[9] * ge[16] * inv_ge[35] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[16] * ge[30] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[16] - g_RT[30] + g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[16] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40576,7 +43316,9 @@ aJacobian_precond(
   dlnkfdT = -1.38 * invT + (639.085165571994) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[10] * ge[1] * inv_ge[35] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[1] * ge[45] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40626,7 +43368,9 @@ aJacobian_precond(
   dlnkfdT = -0.69 * invT + (382.444666011587) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[10] * ge[4] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[40] * inv_ge[10])
+             : exp(-g_RT[4] + g_RT[10] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40676,7 +43420,9 @@ aJacobian_precond(
   dlnkfdT = -0.36 * invT + (291.865666166737) * invT2;
   // reverse
   phi_r = sc[1] * sc[43];
-  Kc = inv_ge[10] * ge[1] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[1] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40726,7 +43472,9 @@ aJacobian_precond(
   dlnkfdT = -1.38 * invT + (639.085165571994) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[11] * ge[1] * inv_ge[35] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[1] * ge[45] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40776,7 +43524,9 @@ aJacobian_precond(
   dlnkfdT = -0.69 * invT + (382.444666011587) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[11] * ge[4] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[40] * inv_ge[11])
+             : exp(-g_RT[4] + g_RT[11] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40826,7 +43576,9 @@ aJacobian_precond(
   dlnkfdT = -0.36 * invT + (291.865666166737) * invT2;
   // reverse
   phi_r = sc[1] * sc[43];
-  Kc = inv_ge[11] * ge[1] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[1] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40876,7 +43628,9 @@ aJacobian_precond(
   dlnkfdT = (14492.6399751759) * invT2;
   // reverse
   phi_r = sc[5] * sc[40];
-  Kc = inv_ge[12] * ge[5] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[40] * inv_ge[12] * ge[5])
+             : exp(-g_RT[5] + g_RT[12] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[35]) + (h_RT[5] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40926,7 +43680,9 @@ aJacobian_precond(
   dlnkfdT = (10944.9624812527) * invT2;
   // reverse
   phi_r = sc[4] * sc[41];
-  Kc = inv_ge[12] * ge[4] * inv_ge[35] * ge[41];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * inv_ge[12] * ge[41])
+             : exp(-g_RT[4] + g_RT[12] + g_RT[35] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[35]) + (h_RT[4] + h_RT[41]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -40976,7 +43732,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14] * sc[47];
-  Kc = refC * inv_ge[2] * ge[1] * inv_ge[42] * ge[14] * ge[47];
+  Kc =
+    refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[2] * ge[14] * inv_ge[42])
+                    : exp(-g_RT[1] + g_RT[2] - g_RT[14] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[2] + h_RT[42]) + (h_RT[1] + h_RT[14] + h_RT[47]) - 1.000000);
@@ -41040,7 +43798,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[35] * sc[40];
-  Kc = inv_ge[2] * ge[35] * inv_ge[42] * ge[40];
+  Kc =
+    (kc_fast ? (ge[35] * ge[40] * inv_ge[2] * inv_ge[42])
+             : exp(g_RT[2] - g_RT[35] - g_RT[40] + g_RT[42]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[42]) + (h_RT[35] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41090,7 +43850,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[16] * sc[47];
-  Kc = refC * inv_ge[3] * ge[2] * inv_ge[42] * ge[16] * ge[47];
+  Kc =
+    refC * (kc_fast ? (ge[47] * inv_ge[3] * ge[16] * ge[2] * inv_ge[42])
+                    : exp(-g_RT[2] + g_RT[3] - g_RT[16] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[42]) + (h_RT[2] + h_RT[16] + h_RT[47]) - 1.000000);
@@ -41154,7 +43916,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16] * sc[47];
-  Kc = refC * inv_ge[4] * ge[1] * inv_ge[42] * ge[16] * ge[47];
+  Kc =
+    refC * (kc_fast ? (inv_ge[4] * ge[16] * ge[47] * ge[1] * inv_ge[42])
+                    : exp(-g_RT[1] + g_RT[4] - g_RT[16] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[42]) + (h_RT[1] + h_RT[16] + h_RT[47]) - 1.000000);
@@ -41218,7 +43982,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[1] * ge[10] * inv_ge[42] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[1] * ge[10] * inv_ge[42])
+             : exp(g_RT[1] - g_RT[10] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[42]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41268,7 +44034,9 @@ aJacobian_precond(
   dlnkfdT = 1.41 * invT + (4277.34165934012) * invT2;
   // reverse
   phi_r = sc[15] * sc[31];
-  Kc = inv_ge[2] * ge[15] * inv_ge[45] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[45] * inv_ge[2] * ge[31] * ge[15])
+             : exp(g_RT[2] - g_RT[15] - g_RT[31] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[15] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41318,7 +44086,9 @@ aJacobian_precond(
   dlnkfdT = 1.57 * invT + (22141.5332954077) * invT2;
   // reverse
   phi_r = sc[14] * sc[38];
-  Kc = inv_ge[2] * ge[14] * inv_ge[45] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * ge[14] * inv_ge[45] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[38] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[14] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41368,7 +44138,9 @@ aJacobian_precond(
   dlnkfdT = 2.11 * invT + (5736.6699901738) * invT2;
   // reverse
   phi_r = sc[4] * sc[46];
-  Kc = inv_ge[2] * ge[4] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (ge[4] * ge[46] * inv_ge[2] * inv_ge[45])
+             : exp(g_RT[2] - g_RT[4] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[4] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41418,7 +44190,9 @@ aJacobian_precond(
   dlnkfdT = 1.7 * invT + (1912.22333005793) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[1] * ge[14] * inv_ge[45] * ge[32];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[45] * ge[32] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[45]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41468,7 +44242,9 @@ aJacobian_precond(
   dlnkfdT = 2.5 * invT + (6692.78165520277) * invT2;
   // reverse
   phi_r = sc[0] * sc[46];
-  Kc = inv_ge[1] * ge[0] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (ge[0] * ge[46] * inv_ge[1] * inv_ge[45])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[45]) + (h_RT[0] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41518,7 +44294,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[5] * sc[46];
-  Kc = inv_ge[4] * ge[5] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[46] * ge[5] * inv_ge[45])
+             : exp(g_RT[4] - g_RT[5] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[45]) + (h_RT[5] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41568,7 +44346,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[15] * sc[32];
-  Kc = inv_ge[4] * ge[15] * inv_ge[45] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[32] * ge[15] * inv_ge[45])
+             : exp(g_RT[4] - g_RT[15] - g_RT[32] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[45]) + (h_RT[15] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41618,7 +44398,9 @@ aJacobian_precond(
   dlnkfdT = -0.69 * invT + (1434.16749754345) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[43] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[43] * ge[45])
+             : exp(g_RT[1] - g_RT[1] + g_RT[43] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41652,7 +44434,9 @@ aJacobian_precond(
   dlnkfdT = 0.18 * invT + (1066.81933150601) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[1] * ge[4] * inv_ge[43] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * ge[40] * inv_ge[43] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[40] + g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41702,7 +44486,9 @@ aJacobian_precond(
   dlnkfdT = -0.75 * invT + (1454.29616417564) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[1] * ge[14] * inv_ge[43] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[43] * ge[32] * ge[14] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41752,7 +44538,9 @@ aJacobian_precond(
   dlnkfdT = 2 * invT + (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[44] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[44] * ge[45])
+             : exp(g_RT[1] - g_RT[1] + g_RT[44] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[44]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41786,7 +44574,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[43];
-  Kc = inv_ge[27] * ge[14] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * inv_ge[27] * ge[14])
+             : exp(-g_RT[14] + g_RT[27] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[27] + h_RT[35]) + (h_RT[14] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41836,7 +44626,9 @@ aJacobian_precond(
   dlnkfdT = -0.31 * invT + (145.932833083369) * invT2;
   // reverse
   phi_r = sc[1] * sc[41];
-  Kc = inv_ge[12] * ge[1] * inv_ge[30] * ge[41];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[41] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[12] + g_RT[30] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[30]) + (h_RT[1] + h_RT[41]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41886,7 +44678,9 @@ aJacobian_precond(
   dlnkfdT = 0.15 * invT + (-45.2894999224248) * invT2;
   // reverse
   phi_r = sc[0] * sc[40];
-  Kc = inv_ge[12] * ge[0] * inv_ge[30] * ge[40];
+  Kc =
+    (kc_fast ? (ge[0] * ge[40] * inv_ge[12] * inv_ge[30])
+             : exp(-g_RT[0] + g_RT[12] + g_RT[30] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[30]) + (h_RT[0] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41936,7 +44730,9 @@ aJacobian_precond(
   dlnkfdT = 2.4 * invT + (4989.3932414538) * invT2;
   // reverse
   phi_r = sc[0] * sc[32];
-  Kc = inv_ge[1] * ge[0] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[33] * inv_ge[1] * ge[32])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[33]) + (h_RT[0] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -41986,7 +44782,9 @@ aJacobian_precond(
   dlnkfdT = 1.6 * invT + (480.571915843507) * invT2;
   // reverse
   phi_r = sc[5] * sc[32];
-  Kc = inv_ge[4] * ge[5] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[33] * ge[5] * ge[32])
+             : exp(g_RT[4] - g_RT[5] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[33]) + (h_RT[5] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42036,7 +44834,9 @@ aJacobian_precond(
   dlnkfdT = 1.94 * invT + (3250.77966109849) * invT2;
   // reverse
   phi_r = sc[4] * sc[32];
-  Kc = inv_ge[2] * ge[4] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[33] * inv_ge[2] * ge[32])
+             : exp(g_RT[2] - g_RT[4] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[33]) + (h_RT[4] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42086,7 +44886,9 @@ aJacobian_precond(
   dlnkfdT = (7221.15915429773) * invT2;
   // reverse
   phi_r = sc[14] * sc[38];
-  Kc = inv_ge[15] * ge[14] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * ge[14] * inv_ge[15] * inv_ge[31])
+             : exp(-g_RT[14] + g_RT[15] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[15] + h_RT[31]) + (h_RT[14] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42136,7 +44938,9 @@ aJacobian_precond(
   dlnkfdT = -0.752 * invT + (173.609749702628) * invT2;
   // reverse
   phi_r = sc[35] * sc[46];
-  Kc = inv_ge[36] * ge[35] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[36] * ge[46] * inv_ge[39])
+             : exp(-g_RT[35] + g_RT[36] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[36] + h_RT[39]) + (h_RT[35] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42186,7 +44990,9 @@ aJacobian_precond(
   dlnkfdT = (-354.767749392327) * invT2;
   // reverse
   phi_r = sc[15] * sc[37];
-  Kc = inv_ge[36] * ge[15] * inv_ge[46] * ge[37];
+  Kc =
+    (kc_fast ? (ge[37] * inv_ge[46] * inv_ge[36] * ge[15])
+             : exp(-g_RT[15] + g_RT[36] - g_RT[37] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[36] + h_RT[46]) + (h_RT[15] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42236,7 +45042,9 @@ aJacobian_precond(
   dlnkfdT = (5686.34832359333) * invT2;
   // reverse
   phi_r = sc[14] * sc[35];
-  Kc = inv_ge[15] * ge[14] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * ge[14] * inv_ge[15] * inv_ge[30])
+             : exp(-g_RT[14] + g_RT[15] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[15] + h_RT[30]) + (h_RT[14] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42322,7 +45130,9 @@ aJacobian_precond(
   dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[1] * sc[51];
-  Kc = inv_ge[2] * ge[1] * inv_ge[24] * ge[51];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[51] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[24] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[24]) + (h_RT[1] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42372,7 +45182,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[52];
-  Kc = inv_ge[2] * ge[1] * inv_ge[25] * ge[52];
+  Kc =
+    (kc_fast ? (inv_ge[25] * ge[1] * ge[52] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[25] - g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[25]) + (h_RT[1] + h_RT[52]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42422,7 +45234,9 @@ aJacobian_precond(
   dlnkfdT = (8720.74481839579) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
-  Kc = inv_ge[4] * ge[3] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[6] * ge[5])
+             : exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[3] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42536,7 +45350,9 @@ aJacobian_precond(
   dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[2] * sc[17];
-  Kc = inv_ge[3] * ge[2] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[17] * ge[2] * inv_ge[10])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[10]) + (h_RT[2] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42641,7 +45457,9 @@ aJacobian_precond(
   dlnkfdT = 0.29 * invT + (5.53538332385192) * invT2;
   // reverse
   phi_r = sc[2] * sc[51];
-  Kc = inv_ge[3] * ge[2] * inv_ge[23] * ge[51];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[51] * ge[2] * inv_ge[23])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[23] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[2] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42691,7 +45509,9 @@ aJacobian_precond(
   dlnkfdT = 1.61 * invT + (-193.235199669012) * invT2;
   // reverse
   phi_r = sc[6] * sc[22];
-  Kc = inv_ge[3] * ge[6] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * ge[22] * inv_ge[23])
+             : exp(g_RT[3] - g_RT[6] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[6] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42741,7 +45561,9 @@ aJacobian_precond(
   dlnkfdT = (909.815731774933) * invT2;
   // reverse
   phi_r = sc[4] * sc[51];
-  Kc = inv_ge[2] * ge[4] * inv_ge[52] * ge[51];
+  Kc =
+    (kc_fast ? (ge[4] * ge[51] * inv_ge[52] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[51] + g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[52]) + (h_RT[4] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -42863,7 +45685,9 @@ aJacobian_precond(
   dlnkfdT = 1.16 * invT + (1210.23608126035) * invT2;
   // reverse
   phi_r = sc[0] * sc[51];
-  Kc = inv_ge[1] * ge[0] * inv_ge[52] * ge[51];
+  Kc =
+    (kc_fast ? (ge[0] * ge[51] * inv_ge[52] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[51] + g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[52]) + (h_RT[0] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43125,7 +45949,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[12] * sc[16];
-  Kc = inv_ge[1] * ge[12] * inv_ge[51] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[51] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[16] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[51]) + (h_RT[12] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43175,7 +46001,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[28];
-  Kc = inv_ge[1] * ge[0] * inv_ge[51] * ge[28];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[51] * ge[28] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[28] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[51]) + (h_RT[0] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43225,7 +46053,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[28];
-  Kc = inv_ge[4] * ge[5] * inv_ge[51] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[28] * inv_ge[51] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[28] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[51]) + (h_RT[5] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43275,7 +46105,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[18];
-  Kc = inv_ge[4] * ge[16] * inv_ge[51] * ge[18];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[51] * ge[18])
+             : exp(g_RT[4] - g_RT[16] - g_RT[18] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[51]) + (h_RT[16] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43325,7 +46157,9 @@ aJacobian_precond(
   dlnkfdT = 2.68 * invT + (1869.95313013034) * invT2;
   // reverse
   phi_r = sc[4] * sc[49];
-  Kc = inv_ge[2] * ge[4] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[50] * inv_ge[2] * ge[49])
+             : exp(g_RT[2] - g_RT[4] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[50]) + (h_RT[4] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43375,7 +46209,9 @@ aJacobian_precond(
   dlnkfdT = 2.54 * invT + (3399.73179417669) * invT2;
   // reverse
   phi_r = sc[0] * sc[49];
-  Kc = inv_ge[1] * ge[0] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[50] * inv_ge[1] * ge[49])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[50]) + (h_RT[0] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43425,7 +46261,9 @@ aJacobian_precond(
   dlnkfdT = 1.8 * invT + (470.004365861608) * invT2;
   // reverse
   phi_r = sc[5] * sc[49];
-  Kc = inv_ge[4] * ge[5] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[49] * inv_ge[50] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[50]) + (h_RT[5] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43475,7 +46313,9 @@ aJacobian_precond(
   dlnkfdT = 2.72 * invT + (754.82499870708) * invT2;
   // reverse
   phi_r = sc[6] * sc[50];
-  Kc = inv_ge[7] * ge[6] * inv_ge[49] * ge[50];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[49] * inv_ge[7] * ge[50])
+             : exp(-g_RT[6] + g_RT[7] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[49]) + (h_RT[6] + h_RT[50]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43525,7 +46365,9 @@ aJacobian_precond(
   dlnkfdT = 3.65 * invT + (3600.01202716696) * invT2;
   // reverse
   phi_r = sc[13] * sc[49];
-  Kc = inv_ge[12] * ge[13] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[49] * inv_ge[50] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[50]) + (h_RT[13] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43575,7 +46417,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[25];
-  Kc = inv_ge[2] * ge[17] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[49] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[17] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[49]) + (h_RT[17] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43625,7 +46469,9 @@ aJacobian_precond(
   dlnkfdT = 2.19 * invT + (447.8628325662) * invT2;
   // reverse
   phi_r = sc[12] * sc[25];
-  Kc = inv_ge[1] * ge[12] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[49] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[49]) + (h_RT[12] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43675,7 +46521,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[18] * sc[25];
-  Kc = inv_ge[4] * ge[18] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[49] * ge[25])
+             : exp(g_RT[4] - g_RT[18] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[49]) + (h_RT[18] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43725,7 +46573,9 @@ aJacobian_precond(
   dlnkfdT = 0.255 * invT + (-474.533315853851) * invT2;
   // reverse
   phi_r = sc[3] * sc[50];
-  Kc = inv_ge[6] * ge[3] * inv_ge[49] * ge[50];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[49] * ge[50])
+             : exp(-g_RT[3] + g_RT[6] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[49]) + (h_RT[3] + h_RT[50]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43811,7 +46661,9 @@ aJacobian_precond(
   dlnkfdT = -0.32 * invT;
   // reverse
   phi_r = (sc[25] * sc[25]);
-  Kc = inv_ge[12] * ge[25] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[49] * ge[25])
+             : exp(g_RT[12] - 2.000000 * g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[49]) + (2.000000 * h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43850,7 +46702,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = inv_ge[1] * ge[11] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[1] * ge[11] * ge[53])
+             : exp(g_RT[1] - g_RT[11] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[11] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43900,7 +46754,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[63];
-  Kc = inv_ge[1] * ge[0] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[60] * inv_ge[1] * ge[63])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[0] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -43950,7 +46806,9 @@ aJacobian_precond(
   dlnkfdT = 2.06 * invT + (6189.56498939805) * invT2;
   // reverse
   phi_r = sc[0] * sc[62];
-  Kc = inv_ge[1] * ge[0] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[58] * ge[62])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[0] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44000,7 +46858,9 @@ aJacobian_precond(
   dlnkfdT = 1.6 * invT + (31697.6177790393) * invT2;
   // reverse
   phi_r = sc[54] * sc[57];
-  Kc = inv_ge[1] * ge[54] * inv_ge[58] * ge[57];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[1] * inv_ge[58] * ge[57])
+             : exp(g_RT[1] - g_RT[54] - g_RT[57] + g_RT[58]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[54] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44050,7 +46910,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[53];
-  Kc = inv_ge[1] * ge[9] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * inv_ge[1] * ge[9] * ge[53])
+             : exp(g_RT[1] - g_RT[9] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[63]) + (h_RT[9] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44100,7 +46962,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[65];
-  Kc = inv_ge[1] * ge[0] * inv_ge[63] * ge[65];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[63] * ge[65] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[63] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[63]) + (h_RT[0] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44150,7 +47014,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[65];
-  Kc = inv_ge[9] * ge[0] * inv_ge[53] * ge[65];
+  Kc =
+    (kc_fast ? (ge[0] * ge[65] * inv_ge[9] * inv_ge[53])
+             : exp(-g_RT[0] + g_RT[9] + g_RT[53] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[53]) + (h_RT[0] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44200,7 +47066,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[1] * ge[14] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[1] * ge[53])
+             : exp(g_RT[1] - g_RT[14] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[69]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44250,7 +47118,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[2] * ge[1] * inv_ge[60] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[2] * ge[1] * ge[68])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[60] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[60]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44300,7 +47170,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[67];
-  Kc = inv_ge[2] * ge[1] * inv_ge[61] * ge[67];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[2] * inv_ge[61] * ge[67])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[61] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[61]) + (h_RT[1] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44350,7 +47222,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = inv_ge[2] * ge[54] * inv_ge[62] * ge[67];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[62] * ge[67])
+             : exp(g_RT[2] - g_RT[54] + g_RT[62] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[62]) + (h_RT[54] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44400,7 +47274,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[4] * ge[17] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[60] * ge[17] * ge[53])
+             : exp(g_RT[4] - g_RT[17] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[60]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44450,7 +47326,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[68];
-  Kc = inv_ge[4] * ge[53] * inv_ge[61] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[61] * ge[53] * ge[68])
+             : exp(g_RT[4] - g_RT[53] + g_RT[61] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[61]) + (h_RT[53] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44500,7 +47378,9 @@ aJacobian_precond(
   dlnkfdT = -0.06 * invT + (-133.855633104055) * invT2;
   // reverse
   phi_r = sc[53] * sc[67];
-  Kc = inv_ge[4] * ge[53] * inv_ge[62] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[53] * inv_ge[62] * ge[67])
+             : exp(g_RT[4] - g_RT[53] + g_RT[62] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[62]) + (h_RT[53] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44550,7 +47430,9 @@ aJacobian_precond(
   dlnkfdT = 0.5 * invT + (327.090832773068) * invT2;
   // reverse
   phi_r = sc[1] * sc[53];
-  Kc = inv_ge[0] * ge[1] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[0] * inv_ge[54] * ge[1] * ge[53])
+             : exp(g_RT[0] - g_RT[1] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[54]) + (h_RT[1] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44600,7 +47482,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[53];
-  Kc = inv_ge[4] * ge[2] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[4] * ge[2] * ge[53])
+             : exp(-g_RT[2] + g_RT[4] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[54]) + (h_RT[2] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44650,7 +47534,9 @@ aJacobian_precond(
   dlnkfdT = 0.5 * invT;
   // reverse
   phi_r = sc[3] * sc[53];
-  Kc = inv_ge[6] * ge[3] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[3] * inv_ge[6] * ge[53])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[54]) + (h_RT[3] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44700,7 +47586,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT;
   // reverse
   phi_r = sc[4] * sc[53];
-  Kc = inv_ge[5] * ge[4] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[4] * inv_ge[5] * ge[53])
+             : exp(-g_RT[4] + g_RT[5] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[54]) + (h_RT[4] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44750,7 +47638,9 @@ aJacobian_precond(
   dlnkfdT = 0.5 * invT;
   // reverse
   phi_r = sc[6] * sc[53];
-  Kc = inv_ge[7] * ge[6] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[6] * inv_ge[7] * ge[53])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[54]) + (h_RT[6] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44800,7 +47690,8 @@ aJacobian_precond(
   dlnkfdT = -2.85 * invT + (6541.81665546136) * invT2;
   // reverse
   phi_r = sc[56];
-  Kc = refCinv * inv_ge[0] * ge[56] * inv_ge[63];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * inv_ge[63] * ge[56])
+                          : exp(g_RT[0] - g_RT[56] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[63]) + (h_RT[56]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44839,7 +47730,8 @@ aJacobian_precond(
   dlnkfdT = -3.38 * invT + (1741.12966368433) * invT2;
   // reverse
   phi_r = sc[56];
-  Kc = refCinv * inv_ge[1] * ge[56] * inv_ge[60];
+  Kc = refCinv * (kc_fast ? (inv_ge[60] * inv_ge[1] * ge[56])
+                          : exp(g_RT[1] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[56]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44878,7 +47770,8 @@ aJacobian_precond(
   dlnkfdT = -0.71 * invT + (20581.561631413) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[0] * ge[57] * inv_ge[64];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * inv_ge[64] * ge[57])
+                          : exp(g_RT[0] - g_RT[57] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[64]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44917,7 +47810,8 @@ aJacobian_precond(
   dlnkfdT = -0.32 * invT + (3869.73616003829) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[1] * ge[57] * inv_ge[61];
+  Kc = refCinv * (kc_fast ? (inv_ge[1] * inv_ge[61] * ge[57])
+                          : exp(g_RT[1] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -44956,7 +47850,9 @@ aJacobian_precond(
   dlnkfdT = 1.27 * invT + (4191.79482615331) * invT2;
   // reverse
   phi_r = sc[0] * sc[63];
-  Kc = inv_ge[11] * ge[0] * inv_ge[53] * ge[63];
+  Kc =
+    (kc_fast ? (ge[0] * ge[63] * inv_ge[11] * inv_ge[53])
+             : exp(-g_RT[0] + g_RT[11] + g_RT[53] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[53]) + (h_RT[0] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45006,7 +47902,9 @@ aJacobian_precond(
   dlnkfdT = -0.88 * invT + (-493.65554915443) * invT2;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = inv_ge[12] * ge[11] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[12] * ge[11] * ge[53])
+             : exp(-g_RT[11] + g_RT[12] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[54]) + (h_RT[11] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45056,7 +47954,9 @@ aJacobian_precond(
   dlnkfdT = -0.39 * invT + (-133.352416438251) * invT2;
   // reverse
   phi_r = sc[1] * sc[60];
-  Kc = inv_ge[12] * ge[1] * inv_ge[54] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[60] * ge[1] * inv_ge[12])
+             : exp(-g_RT[1] + g_RT[12] + g_RT[54] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[54]) + (h_RT[1] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45106,7 +48006,9 @@ aJacobian_precond(
   dlnkfdT = 1.35 * invT + (9007.57831790448) * invT2;
   // reverse
   phi_r = sc[0] * sc[64];
-  Kc = inv_ge[53] * ge[0] * inv_ge[63] * ge[64];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[63] * inv_ge[53] * ge[64])
+             : exp(-g_RT[0] + g_RT[53] + g_RT[63] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53] + h_RT[63]) + (h_RT[0] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45156,7 +48058,9 @@ aJacobian_precond(
   dlnkfdT = -0.11 * invT + (50.8248832462767) * invT2;
   // reverse
   phi_r = sc[53] * sc[63];
-  Kc = inv_ge[1] * ge[53] * inv_ge[61] * ge[63];
+  Kc =
+    (kc_fast ? (ge[63] * inv_ge[1] * inv_ge[61] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[61] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[53] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45206,7 +48110,9 @@ aJacobian_precond(
   dlnkfdT = 2.42 * invT + (-211.350999637982) * invT2;
   // reverse
   phi_r = sc[0] * sc[64];
-  Kc = inv_ge[1] * ge[0] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[61] * ge[64])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[0] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45256,7 +48162,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[63];
-  Kc = inv_ge[54] * ge[53] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[63] * inv_ge[60] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[60]) + (h_RT[53] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45306,7 +48214,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = inv_ge[1] * ge[53] * inv_ge[62] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[1] * inv_ge[62] * ge[53] * ge[64])
+             : exp(g_RT[1] - g_RT[53] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[62]) + (h_RT[53] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45356,7 +48266,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = inv_ge[54] * ge[53] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[61] * ge[64] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[61]) + (h_RT[53] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45406,7 +48318,9 @@ aJacobian_precond(
   dlnkfdT = 3 * invT + (2667.04832876501) * invT2;
   // reverse
   phi_r = sc[0] * sc[60];
-  Kc = inv_ge[1] * ge[0] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[0] * ge[60] * inv_ge[56] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[56]) + (h_RT[0] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45456,7 +48370,9 @@ aJacobian_precond(
   dlnkfdT = 3 * invT + (2818.01332850643) * invT2;
   // reverse
   phi_r = sc[0] * sc[61];
-  Kc = inv_ge[1] * ge[0] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[57] * ge[61])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[57]) + (h_RT[0] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45506,7 +48422,9 @@ aJacobian_precond(
   dlnkfdT = (15801.0033062682) * invT2;
   // reverse
   phi_r = sc[12] * sc[53];
-  Kc = inv_ge[1] * ge[12] * inv_ge[56] * ge[53];
+  Kc =
+    (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[56] * ge[53])
+             : exp(g_RT[1] - g_RT[12] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[56]) + (h_RT[12] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45556,7 +48474,9 @@ aJacobian_precond(
   dlnkfdT = (17159.6883039409) * invT2;
   // reverse
   phi_r = sc[53] * sc[60];
-  Kc = inv_ge[1] * ge[53] * inv_ge[57] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[1] * inv_ge[57] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[57] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[57]) + (h_RT[53] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45606,7 +48526,9 @@ aJacobian_precond(
   dlnkfdT = 1.77 * invT + (20028.0232990278) * invT2;
   // reverse
   phi_r = sc[53] * sc[61];
-  Kc = inv_ge[1] * ge[53] * inv_ge[58] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[61] * inv_ge[58] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[58] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[53] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45656,7 +48578,9 @@ aJacobian_precond(
   dlnkfdT = 1.58 * invT + (20797.9447977091) * invT2;
   // reverse
   phi_r = sc[53] * sc[62];
-  Kc = inv_ge[1] * ge[53] * inv_ge[59] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[53] * inv_ge[59] * ge[62])
+             : exp(g_RT[1] - g_RT[53] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[59]) + (h_RT[53] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45706,7 +48630,9 @@ aJacobian_precond(
   dlnkfdT = 1.45 * invT + (31999.5477785221) * invT2;
   // reverse
   phi_r = sc[54] * sc[58];
-  Kc = inv_ge[1] * ge[54] * inv_ge[59] * ge[58];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[1] * inv_ge[59] * ge[58])
+             : exp(g_RT[1] - g_RT[54] - g_RT[58] + g_RT[59]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[59]) + (h_RT[54] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45756,7 +48682,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (3522.51666063304) * invT2;
   // reverse
   phi_r = sc[4] * sc[60];
-  Kc = inv_ge[2] * ge[4] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[4] * ge[60] * inv_ge[56] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[56]) + (h_RT[4] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45806,7 +48734,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (3069.62166140879) * invT2;
   // reverse
   phi_r = sc[4] * sc[61];
-  Kc = inv_ge[2] * ge[4] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[57] * ge[61])
+             : exp(g_RT[2] - g_RT[4] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[57]) + (h_RT[4] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45856,7 +48786,9 @@ aJacobian_precond(
   dlnkfdT = (9535.95581699944) * invT2;
   // reverse
   phi_r = sc[4] * sc[62];
-  Kc = inv_ge[2] * ge[4] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[58] * ge[62])
+             : exp(g_RT[2] - g_RT[4] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[58]) + (h_RT[4] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45906,7 +48838,9 @@ aJacobian_precond(
   dlnkfdT = 1.5 * invT + (1479.45699746588) * invT2;
   // reverse
   phi_r = sc[5] * sc[60];
-  Kc = inv_ge[4] * ge[5] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[60] * inv_ge[56] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[56]) + (h_RT[5] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -45956,7 +48890,9 @@ aJacobian_precond(
   dlnkfdT = 1.7 * invT + (1278.17033114399) * invT2;
   // reverse
   phi_r = sc[5] * sc[61];
-  Kc = inv_ge[4] * ge[5] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * inv_ge[57] * ge[61])
+             : exp(g_RT[4] - g_RT[5] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[57]) + (h_RT[5] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46006,7 +48942,9 @@ aJacobian_precond(
   dlnkfdT = 1.55 * invT + (1846.80516350332) * invT2;
   // reverse
   phi_r = sc[5] * sc[62];
-  Kc = inv_ge[4] * ge[5] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * inv_ge[58] * ge[62])
+             : exp(g_RT[4] - g_RT[5] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[58]) + (h_RT[5] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46056,7 +48994,9 @@ aJacobian_precond(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[56];
-  Kc = inv_ge[7] * ge[6] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[60] * inv_ge[7] * ge[56])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[60]) + (h_RT[6] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46106,7 +49046,9 @@ aJacobian_precond(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[57];
-  Kc = inv_ge[7] * ge[6] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[57] * inv_ge[61])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[61]) + (h_RT[6] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46156,7 +49098,9 @@ aJacobian_precond(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[58];
-  Kc = inv_ge[7] * ge[6] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[58] * inv_ge[62])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[62]) + (h_RT[6] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46206,7 +49150,9 @@ aJacobian_precond(
   dlnkfdT = (5736.6699901738) * invT2;
   // reverse
   phi_r = sc[13] * sc[60];
-  Kc = inv_ge[12] * ge[13] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[12] * inv_ge[56] * ge[13])
+             : exp(g_RT[12] - g_RT[13] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[56]) + (h_RT[13] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46256,7 +49202,9 @@ aJacobian_precond(
   dlnkfdT = (5132.80999120814) * invT2;
   // reverse
   phi_r = sc[13] * sc[61];
-  Kc = inv_ge[12] * ge[13] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[57] * ge[61])
+             : exp(g_RT[12] - g_RT[13] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[57]) + (h_RT[13] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46306,7 +49254,9 @@ aJacobian_precond(
   dlnkfdT = (5495.12599058754) * invT2;
   // reverse
   phi_r = sc[12] * sc[58];
-  Kc = inv_ge[13] * ge[12] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[12] * inv_ge[13] * ge[58] * inv_ge[62])
+             : exp(-g_RT[12] + g_RT[13] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[62]) + (h_RT[12] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46356,7 +49306,9 @@ aJacobian_precond(
   dlnkfdT = (5183.13165778861) * invT2;
   // reverse
   phi_r = sc[24] * sc[60];
-  Kc = inv_ge[23] * ge[24] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * ge[24] * inv_ge[56] * inv_ge[23])
+             : exp(g_RT[23] - g_RT[24] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[56]) + (h_RT[24] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46406,7 +49358,9 @@ aJacobian_precond(
   dlnkfdT = (4629.59332540342) * invT2;
   // reverse
   phi_r = sc[24] * sc[61];
-  Kc = inv_ge[23] * ge[24] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[23] * inv_ge[57] * ge[61])
+             : exp(g_RT[23] - g_RT[24] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[57]) + (h_RT[24] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46456,7 +49410,9 @@ aJacobian_precond(
   dlnkfdT = (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[23] * sc[58];
-  Kc = inv_ge[24] * ge[23] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[23] * ge[58] * inv_ge[62])
+             : exp(-g_RT[23] + g_RT[24] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24] + h_RT[62]) + (h_RT[23] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46506,7 +49462,9 @@ aJacobian_precond(
   dlnkfdT = (5641.05882367091) * invT2;
   // reverse
   phi_r = sc[58] * sc[60];
-  Kc = inv_ge[56] * ge[58] * inv_ge[62] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[56] * ge[58] * inv_ge[62])
+             : exp(g_RT[56] - g_RT[58] - g_RT[60] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[56] + h_RT[62]) + (h_RT[58] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46556,7 +49514,9 @@ aJacobian_precond(
   dlnkfdT = (7045.03332126608) * invT2;
   // reverse
   phi_r = sc[56] * sc[61];
-  Kc = inv_ge[57] * ge[56] * inv_ge[60] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[56] * inv_ge[57] * ge[61])
+             : exp(-g_RT[56] + g_RT[57] + g_RT[60] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[57] + h_RT[60]) + (h_RT[56] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46606,7 +49566,9 @@ aJacobian_precond(
   dlnkfdT = (5686.34832359333) * invT2;
   // reverse
   phi_r = sc[58] * sc[61];
-  Kc = inv_ge[57] * ge[58] * inv_ge[62] * ge[61];
+  Kc =
+    (kc_fast ? (ge[61] * inv_ge[57] * ge[58] * inv_ge[62])
+             : exp(g_RT[57] - g_RT[58] - g_RT[61] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[57] + h_RT[62]) + (h_RT[58] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46656,7 +49618,9 @@ aJacobian_precond(
   dlnkfdT = 3.1 * invT + (4931.52332488625) * invT2;
   // reverse
   phi_r = sc[19] * sc[56];
-  Kc = inv_ge[20] * ge[19] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[19] * ge[56] * inv_ge[20])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[60]) + (h_RT[19] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46706,7 +49670,9 @@ aJacobian_precond(
   dlnkfdT = 3.1 * invT + (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[19] * sc[57];
-  Kc = inv_ge[20] * ge[19] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[20] * ge[57] * inv_ge[61])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[61]) + (h_RT[19] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46756,7 +49722,9 @@ aJacobian_precond(
   dlnkfdT = 3.1 * invT + (2767.69166192596) * invT2;
   // reverse
   phi_r = sc[19] * sc[58];
-  Kc = inv_ge[20] * ge[19] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[20] * ge[58] * inv_ge[62])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[62]) + (h_RT[19] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46806,7 +49774,9 @@ aJacobian_precond(
   dlnkfdT = 3.2 * invT + (5032.1666580472) * invT2;
   // reverse
   phi_r = sc[18] * sc[56];
-  Kc = inv_ge[20] * ge[18] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[18] * ge[56] * inv_ge[20])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[60]) + (h_RT[18] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46856,7 +49826,9 @@ aJacobian_precond(
   dlnkfdT = 3.2 * invT + (4679.91499198389) * invT2;
   // reverse
   phi_r = sc[18] * sc[57];
-  Kc = inv_ge[20] * ge[18] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[20] * ge[57] * inv_ge[61])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[61]) + (h_RT[18] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46906,7 +49878,9 @@ aJacobian_precond(
   dlnkfdT = 3.2 * invT + (2868.3349950869) * invT2;
   // reverse
   phi_r = sc[18] * sc[58];
-  Kc = inv_ge[20] * ge[18] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[20] * ge[58] * inv_ge[62])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[62]) + (h_RT[18] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -46956,7 +49930,9 @@ aJacobian_precond(
   dlnkfdT = 2.81 * invT + (4176.69832617917) * invT2;
   // reverse
   phi_r = sc[16] * sc[56];
-  Kc = inv_ge[17] * ge[16] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[60] * ge[56] * inv_ge[17])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[60]) + (h_RT[16] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47006,7 +49982,9 @@ aJacobian_precond(
   dlnkfdT = 2.81 * invT + (3925.08999327681) * invT2;
   // reverse
   phi_r = sc[16] * sc[57];
-  Kc = inv_ge[17] * ge[16] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[57] * inv_ge[61])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[61]) + (h_RT[16] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47056,7 +50034,9 @@ aJacobian_precond(
   dlnkfdT = 2.81 * invT + (2314.79666270171) * invT2;
   // reverse
   phi_r = sc[16] * sc[58];
-  Kc = inv_ge[17] * ge[16] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[58] * inv_ge[62])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[62]) + (h_RT[16] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47106,7 +50086,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[56];
-  Kc = inv_ge[16] * ge[14] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[16] * inv_ge[60] * ge[14] * ge[56])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[60]) + (h_RT[14] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47156,7 +50138,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[57];
-  Kc = inv_ge[16] * ge[14] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[61] * ge[57])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[61]) + (h_RT[14] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47206,7 +50190,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[58];
-  Kc = inv_ge[16] * ge[14] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[62] * ge[58])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[62]) + (h_RT[14] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47256,7 +50242,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[16] * ge[28] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[28] * inv_ge[60] * ge[53])
+             : exp(g_RT[16] - g_RT[28] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[60]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47378,7 +50366,9 @@ aJacobian_precond(
   dlnkfdT = 1.14 * invT + (10819.1583148015) * invT2;
   // reverse
   phi_r = sc[2] * sc[66];
-  Kc = inv_ge[3] * ge[2] * inv_ge[62] * ge[66];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[2] * ge[66] * inv_ge[62])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[62] - g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[62]) + (h_RT[2] + h_RT[66]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47500,7 +50490,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[66];
-  Kc = inv_ge[6] * ge[4] * inv_ge[62] * ge[66];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[62] * ge[66])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[62] - g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[62]) + (h_RT[4] + h_RT[66]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47550,7 +50542,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[56];
-  Kc = inv_ge[6] * ge[3] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[60] * ge[56])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[60]) + (h_RT[3] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47600,7 +50594,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[57];
-  Kc = inv_ge[6] * ge[3] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[61] * ge[57])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[61]) + (h_RT[3] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47650,7 +50646,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[58];
-  Kc = inv_ge[6] * ge[3] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[62] * ge[58])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[62]) + (h_RT[3] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -47700,7 +50698,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[67];
-  Kc = inv_ge[1] * ge[53] * inv_ge[66] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[53] * inv_ge[66] * ge[67])
+             : exp(g_RT[1] - g_RT[53] + g_RT[66] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[66]) + (h_RT[53] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48002,7 +51002,9 @@ aJacobian_precond(
   dlnkfdT = (8303.07498577788) * invT2;
   // reverse
   phi_r = sc[2] * sc[68];
-  Kc = inv_ge[3] * ge[2] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[63] * ge[2] * ge[68])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[63]) + (h_RT[2] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48052,7 +51054,9 @@ aJacobian_precond(
   dlnkfdT = (13335.2416438251) * invT2;
   // reverse
   phi_r = sc[2] * sc[67];
-  Kc = inv_ge[3] * ge[2] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[2] * ge[67] * inv_ge[64])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[64]) + (h_RT[2] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48102,7 +51106,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[2] * ge[14] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * ge[14] * inv_ge[2] * ge[53])
+             : exp(g_RT[2] - g_RT[14] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[63]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48152,7 +51158,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[69];
-  Kc = inv_ge[2] * ge[54] * inv_ge[64] * ge[69];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[64] * ge[69])
+             : exp(g_RT[2] - g_RT[54] + g_RT[64] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[64]) + (h_RT[54] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48202,7 +51210,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[4] * ge[1] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[63] * ge[1] * ge[68])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[63]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48252,7 +51262,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[67];
-  Kc = inv_ge[4] * ge[1] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[1] * inv_ge[64] * ge[67])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[64]) + (h_RT[1] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48302,7 +51314,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[53];
-  Kc = inv_ge[4] * ge[16] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[63] * ge[53])
+             : exp(g_RT[4] - g_RT[16] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[63]) + (h_RT[16] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48352,7 +51366,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[4] * ge[53] * inv_ge[64] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[69] * inv_ge[64] * ge[53])
+             : exp(g_RT[4] - g_RT[53] + g_RT[64] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[64]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48402,7 +51418,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[68];
-  Kc = inv_ge[6] * ge[4] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[63] * ge[68])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[63]) + (h_RT[4] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48452,7 +51470,9 @@ aJacobian_precond(
   dlnkfdT = (1761.25833031652) * invT2;
   // reverse
   phi_r = sc[4] * sc[67];
-  Kc = inv_ge[6] * ge[4] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[64] * ge[67])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[64]) + (h_RT[4] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48502,7 +51522,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[60];
-  Kc = inv_ge[6] * ge[3] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * ge[60] * inv_ge[63])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[63]) + (h_RT[3] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48552,7 +51574,9 @@ aJacobian_precond(
   dlnkfdT = (1761.25833031652) * invT2;
   // reverse
   phi_r = sc[3] * sc[61];
-  Kc = inv_ge[6] * ge[3] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[64] * ge[61])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[64]) + (h_RT[3] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48602,7 +51626,9 @@ aJacobian_precond(
   dlnkfdT = (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[5] * ge[17] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * inv_ge[5] * ge[17] * ge[53])
+             : exp(g_RT[5] - g_RT[17] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[63]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48652,7 +51678,9 @@ aJacobian_precond(
   dlnkfdT = (12580.416645118) * invT2;
   // reverse
   phi_r = sc[53] * sc[68];
-  Kc = inv_ge[5] * ge[53] * inv_ge[64] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[64] * ge[53] * inv_ge[5] * ge[68])
+             : exp(g_RT[5] - g_RT[53] + g_RT[64] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[64]) + (h_RT[53] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48702,7 +51730,9 @@ aJacobian_precond(
   dlnkfdT = (2284.60366275343) * invT2;
   // reverse
   phi_r = sc[53] * sc[65];
-  Kc = inv_ge[1] * ge[53] * inv_ge[64] * ge[65];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[65] * inv_ge[64] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[64] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[64]) + (h_RT[53] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48752,7 +51782,9 @@ aJacobian_precond(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[16] * sc[60];
-  Kc = inv_ge[17] * ge[16] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[63] * inv_ge[17] * ge[60])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[63]) + (h_RT[16] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48802,7 +51834,9 @@ aJacobian_precond(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[17] * ge[28] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[17] * inv_ge[63] * ge[53])
+             : exp(g_RT[17] - g_RT[28] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[63]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48852,7 +51886,9 @@ aJacobian_precond(
   dlnkfdT = (20631.8832979935) * invT2;
   // reverse
   phi_r = sc[16] * sc[61];
-  Kc = inv_ge[17] * ge[16] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[61] * inv_ge[64])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[64]) + (h_RT[16] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48902,7 +51938,9 @@ aJacobian_precond(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[14] * sc[60];
-  Kc = inv_ge[16] * ge[14] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[60] * inv_ge[63] * ge[14])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[63]) + (h_RT[14] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -48952,7 +51990,9 @@ aJacobian_precond(
   dlnkfdT = (20631.8832979935) * invT2;
   // reverse
   phi_r = sc[14] * sc[61];
-  Kc = inv_ge[16] * ge[14] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[64] * ge[61])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[64]) + (h_RT[14] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49002,7 +52042,9 @@ aJacobian_precond(
   dlnkfdT = (850.436165209976) * invT2;
   // reverse
   phi_r = sc[2] * sc[69];
-  Kc = inv_ge[3] * ge[2] * inv_ge[65] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[65] * ge[2] * ge[69])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[65] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[65]) + (h_RT[2] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49052,7 +52094,9 @@ aJacobian_precond(
   dlnkfdT = (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[5] * ge[1] * inv_ge[65] * ge[68];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[65] * inv_ge[5] * ge[68])
+             : exp(-g_RT[1] + g_RT[5] + g_RT[65] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[65]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49102,7 +52146,9 @@ aJacobian_precond(
   dlnkfdT = (583.731332333475) * invT2;
   // reverse
   phi_r = sc[8] * sc[53];
-  Kc = inv_ge[1] * ge[8] * inv_ge[65] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[1] * inv_ge[65] * ge[8] * ge[53])
+             : exp(g_RT[1] - g_RT[8] - g_RT[53] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[65]) + (h_RT[8] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49152,7 +52198,9 @@ aJacobian_precond(
   dlnkfdT = (709.535498784655) * invT2;
   // reverse
   phi_r = sc[14] * sc[54];
-  Kc = inv_ge[2] * ge[14] * inv_ge[65] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[14] * inv_ge[65] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[54] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[65]) + (h_RT[14] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49202,7 +52250,9 @@ aJacobian_precond(
   dlnkfdT = (709.535498784655) * invT2;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[4] * ge[14] * inv_ge[65] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[14] * inv_ge[65] * ge[53])
+             : exp(g_RT[4] - g_RT[14] - g_RT[53] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[65]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49380,7 +52430,8 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[67];
-  Kc = refCinv * inv_ge[54] * ge[67] * inv_ge[69];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * inv_ge[69] * ge[67])
+                          : exp(g_RT[54] - g_RT[67] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[69]) + (h_RT[67]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49419,7 +52470,9 @@ aJacobian_precond(
   dlnkfdT = 1.77 * invT + (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[0] * sc[69];
-  Kc = inv_ge[1] * ge[0] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[68] * ge[69])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[68]) + (h_RT[0] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49469,7 +52522,9 @@ aJacobian_precond(
   dlnkfdT = 1.88 * invT + (18065.4783023894) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49519,7 +52574,9 @@ aJacobian_precond(
   dlnkfdT = 0.83 * invT + (11221.7316474452) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49569,7 +52626,9 @@ aJacobian_precond(
   dlnkfdT = 1.42 * invT + (9510.7949837092) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49651,7 +52710,9 @@ aJacobian_precond(
   dlnkfdT = (1549.90733067854) * invT2;
   // reverse
   phi_r = sc[4] * sc[69];
-  Kc = inv_ge[2] * ge[4] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[68] * ge[69])
+             : exp(g_RT[2] - g_RT[4] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[68]) + (h_RT[4] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49701,7 +52762,9 @@ aJacobian_precond(
   dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[69];
-  Kc = inv_ge[4] * ge[5] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[69] * inv_ge[68] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[68]) + (h_RT[5] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49787,7 +52850,9 @@ aJacobian_precond(
   dlnkfdT = (1962.54499663841) * invT2;
   // reverse
   phi_r = sc[6] * sc[68];
-  Kc = inv_ge[7] * ge[6] * inv_ge[69] * ge[68];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[68] * inv_ge[69])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[68] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[69]) + (h_RT[6] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49837,7 +52902,9 @@ aJacobian_precond(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[13] * sc[69];
-  Kc = inv_ge[12] * ge[13] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[68] * ge[69])
+             : exp(g_RT[12] - g_RT[13] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[68]) + (h_RT[13] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49887,7 +52954,9 @@ aJacobian_precond(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[56] * sc[69];
-  Kc = inv_ge[60] * ge[56] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[69] * inv_ge[68] * ge[56])
+             : exp(-g_RT[56] + g_RT[60] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[68]) + (h_RT[56] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49937,7 +53006,9 @@ aJacobian_precond(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[57] * sc[69];
-  Kc = inv_ge[61] * ge[57] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[69] * inv_ge[61] * ge[57] * inv_ge[68])
+             : exp(-g_RT[57] + g_RT[61] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[61] + h_RT[68]) + (h_RT[57] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -49987,7 +53058,9 @@ aJacobian_precond(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[58] * sc[69];
-  Kc = inv_ge[62] * ge[58] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[69] * inv_ge[68] * ge[58] * inv_ge[62])
+             : exp(-g_RT[58] + g_RT[62] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[62] + h_RT[68]) + (h_RT[58] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50037,7 +53110,9 @@ aJacobian_precond(
   dlnkfdT = (2516.0833290236) * invT2;
   // reverse
   phi_r = sc[24] * sc[69];
-  Kc = inv_ge[23] * ge[24] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[24] * ge[69] * inv_ge[68] * inv_ge[23])
+             : exp(g_RT[23] - g_RT[24] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[68]) + (h_RT[24] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50087,7 +53162,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[54];
-  Kc = inv_ge[2] * ge[15] * inv_ge[69] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[69] * ge[15])
+             : exp(g_RT[2] - g_RT[15] - g_RT[54] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[69]) + (h_RT[15] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50137,7 +53214,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[53];
-  Kc = inv_ge[4] * ge[15] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[69] * ge[53] * ge[15])
+             : exp(g_RT[4] - g_RT[15] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[69]) + (h_RT[15] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50223,7 +53302,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[12] * ge[28] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[69] * inv_ge[12] * ge[53])
+             : exp(g_RT[12] - g_RT[28] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[69]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50273,7 +53354,9 @@ aJacobian_precond(
   dlnkfdT = (160.022899725901) * invT2;
   // reverse
   phi_r = sc[14] * sc[67];
-  Kc = inv_ge[69] * ge[14] * inv_ge[69] * ge[67];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[69] * ge[67])
+             : exp(-g_RT[14] - g_RT[67] + 2.000000 * g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[69]) + (h_RT[14] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50312,7 +53395,9 @@ aJacobian_precond(
   dlnkfdT = -1.86 * invT + (941.015165054826) * invT2;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[12] * ge[24] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[24] * inv_ge[12] * ge[53])
+             : exp(g_RT[12] - g_RT[24] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[60]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50362,7 +53447,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[11] * ge[24] * inv_ge[56] * ge[53];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[56] * ge[53] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[24] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[56]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50412,7 +53499,9 @@ aJacobian_precond(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[13] * ge[24] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[63] * inv_ge[13] * ge[53])
+             : exp(g_RT[13] - g_RT[24] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[63]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50462,7 +53551,9 @@ aJacobian_precond(
   dlnkfdT = (1710.93666373605) * invT2;
   // reverse
   phi_r = sc[13] * sc[63];
-  Kc = inv_ge[12] * ge[13] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[13] * ge[63] * inv_ge[12])
+             : exp(g_RT[12] - g_RT[13] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[60]) + (h_RT[13] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50512,7 +53603,9 @@ aJacobian_precond(
   dlnkfdT = (2415.43999586265) * invT2;
   // reverse
   phi_r = sc[56] * sc[63];
-  Kc = inv_ge[60] * ge[56] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[60] * ge[56] * ge[63])
+             : exp(-g_RT[56] + 2.000000 * g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[60]) + (h_RT[56] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50551,7 +53644,9 @@ aJacobian_precond(
   dlnkfdT = (2214.15332954077) * invT2;
   // reverse
   phi_r = sc[57] * sc[63];
-  Kc = inv_ge[60] * ge[57] * inv_ge[61] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[63] * ge[57] * inv_ge[61])
+             : exp(-g_RT[57] + g_RT[60] + g_RT[61] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[61]) + (h_RT[57] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50601,7 +53696,9 @@ aJacobian_precond(
   dlnkfdT = (2314.79666270171) * invT2;
   // reverse
   phi_r = sc[58] * sc[63];
-  Kc = inv_ge[60] * ge[58] * inv_ge[62] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[63] * ge[58] * inv_ge[62])
+             : exp(-g_RT[58] + g_RT[60] + g_RT[62] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[62]) + (h_RT[58] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50651,7 +53748,9 @@ aJacobian_precond(
   dlnkfdT = (402.573332643776) * invT2;
   // reverse
   phi_r = sc[13] * sc[64];
-  Kc = inv_ge[12] * ge[13] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[12] * inv_ge[61] * ge[64] * ge[13])
+             : exp(g_RT[12] - g_RT[13] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[61]) + (h_RT[13] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50701,7 +53800,9 @@ aJacobian_precond(
   dlnkfdT = (1107.07666477038) * invT2;
   // reverse
   phi_r = sc[56] * sc[64];
-  Kc = inv_ge[60] * ge[56] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[64] * inv_ge[61] * ge[56])
+             : exp(-g_RT[56] + g_RT[60] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[61]) + (h_RT[56] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50751,7 +53852,9 @@ aJacobian_precond(
   dlnkfdT = (805.146665287552) * invT2;
   // reverse
   phi_r = sc[57] * sc[64];
-  Kc = inv_ge[61] * ge[57] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (ge[64] * inv_ge[61] * inv_ge[61] * ge[57])
+             : exp(-g_RT[57] + 2.000000 * g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[61]) + (h_RT[57] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50790,7 +53893,9 @@ aJacobian_precond(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[58] * sc[64];
-  Kc = inv_ge[61] * ge[58] * inv_ge[62] * ge[64];
+  Kc =
+    (kc_fast ? (ge[64] * inv_ge[61] * inv_ge[62] * ge[58])
+             : exp(-g_RT[58] + g_RT[61] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[61] + h_RT[62]) + (h_RT[58] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50840,7 +53945,9 @@ aJacobian_precond(
   dlnkfdT = -2.12 * invT + (1197.65566461523) * invT2;
   // reverse
   phi_r = sc[22] * sc[53];
-  Kc = inv_ge[11] * ge[22] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * ge[22] * ge[53] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[22] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[63]) + (h_RT[22] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50890,7 +53997,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[54];
-  Kc = inv_ge[10] * ge[24] * inv_ge[60] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[24] * inv_ge[60] * inv_ge[10])
+             : exp(g_RT[10] - g_RT[24] - g_RT[54] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[60]) + (h_RT[24] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50940,7 +54049,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[54];
-  Kc = inv_ge[11] * ge[24] * inv_ge[60] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[24] * inv_ge[60] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[24] - g_RT[54] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[60]) + (h_RT[24] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -50990,7 +54101,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[63];
-  Kc = inv_ge[27] * ge[14] * inv_ge[54] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[63] * inv_ge[27] * ge[14])
+             : exp(-g_RT[14] + g_RT[27] + g_RT[54] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[27] + h_RT[54]) + (h_RT[14] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51040,7 +54153,9 @@ aJacobian_precond(
   dlnkfdT = 0.5 * invT + (226.447499612124) * invT2;
   // reverse
   phi_r = sc[12] * sc[53];
-  Kc = inv_ge[13] * ge[12] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[12] * inv_ge[13] * ge[53])
+             : exp(-g_RT[12] + g_RT[13] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[54]) + (h_RT[12] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51090,7 +54205,9 @@ aJacobian_precond(
   dlnkfdT = (603.859998965664) * invT2;
   // reverse
   phi_r = sc[53] * sc[60];
-  Kc = inv_ge[54] * ge[53] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[60] * inv_ge[56] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[56]) + (h_RT[53] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51140,7 +54257,9 @@ aJacobian_precond(
   dlnkfdT = (930.950831738731) * invT2;
   // reverse
   phi_r = sc[53] * sc[61];
-  Kc = inv_ge[54] * ge[53] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[61] * inv_ge[57] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[57]) + (h_RT[53] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51190,7 +54309,9 @@ aJacobian_precond(
   dlnkfdT = (1861.90166347746) * invT2;
   // reverse
   phi_r = sc[53] * sc[62];
-  Kc = inv_ge[54] * ge[53] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[53] * inv_ge[58] * ge[62])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[58]) + (h_RT[53] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51240,7 +54361,9 @@ aJacobian_precond(
   dlnkfdT = 1.44 * invT + (-103.159416489968) * invT2;
   // reverse
   phi_r = sc[19] * sc[53];
-  Kc = inv_ge[20] * ge[19] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[19] * inv_ge[20] * ge[53])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[54]) + (h_RT[19] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51290,7 +54413,9 @@ aJacobian_precond(
   dlnkfdT = 1.97 * invT + (-150.964999741416) * invT2;
   // reverse
   phi_r = sc[18] * sc[53];
-  Kc = inv_ge[20] * ge[18] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[18] * inv_ge[20] * ge[53])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[54]) + (h_RT[18] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51340,7 +54465,9 @@ aJacobian_precond(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[16] * sc[53];
-  Kc = inv_ge[17] * ge[16] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[16] * inv_ge[17] * ge[53])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[54]) + (h_RT[16] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51390,7 +54517,9 @@ aJacobian_precond(
   dlnkfdT = (905.789998448495) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[54] * ge[53] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[69] * inv_ge[68] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[68]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51440,7 +54569,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[19] * ge[17] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[19] * ge[17] * ge[53])
+             : exp(-g_RT[17] + g_RT[19] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[19] + h_RT[54]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51490,7 +54621,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[16] * ge[14] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[16] * ge[14] * ge[53])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[54]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51540,7 +54673,9 @@ aJacobian_precond(
   dlnkfdT = (150.964999741416) * invT2;
   // reverse
   phi_r = sc[25] * sc[53];
-  Kc = inv_ge[26] * ge[25] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[25] * inv_ge[26] * ge[53])
+             : exp(-g_RT[25] + g_RT[26] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[26] + h_RT[54]) + (h_RT[25] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51590,7 +54725,9 @@ aJacobian_precond(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[23] * sc[53];
-  Kc = inv_ge[24] * ge[23] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[23] * ge[53])
+             : exp(-g_RT[23] + g_RT[24] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24] + h_RT[54]) + (h_RT[23] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51640,7 +54777,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[22] * sc[53];
-  Kc = inv_ge[23] * ge[22] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[22] * inv_ge[23] * ge[53])
+             : exp(-g_RT[22] + g_RT[23] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[54]) + (h_RT[22] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51690,7 +54829,9 @@ aJacobian_precond(
   dlnkfdT = 2.41 * invT + (13149.0514774773) * invT2;
   // reverse
   phi_r = sc[56] * sc[62];
-  Kc = inv_ge[12] * ge[56] * inv_ge[59] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[56] * inv_ge[59] * ge[62])
+             : exp(g_RT[12] - g_RT[56] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[59]) + (h_RT[56] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51740,7 +54881,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[62];
-  Kc = inv_ge[14] * ge[15] * inv_ge[66] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[14] * ge[15] * inv_ge[66] * ge[62])
+             : exp(g_RT[14] - g_RT[15] - g_RT[62] + g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[66]) + (h_RT[15] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51790,7 +54933,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[62];
-  Kc = inv_ge[64] * ge[14] * inv_ge[69] * ge[62];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[64] * ge[62])
+             : exp(-g_RT[14] - g_RT[62] + g_RT[64] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[64] + h_RT[69]) + (h_RT[14] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51840,7 +54985,9 @@ aJacobian_precond(
   dlnkfdT = 1.4 * invT + (669.278165520277) * invT2;
   // reverse
   phi_r = sc[53] * sc[54];
-  Kc = inv_ge[1] * ge[53] * inv_ge[55] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[1] * ge[53])
+             : exp(g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[55]) + (h_RT[53] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51890,7 +55037,9 @@ aJacobian_precond(
   dlnkfdT = (1258.0416645118) * invT2;
   // reverse
   phi_r = sc[54] * sc[59];
-  Kc = inv_ge[55] * ge[54] * inv_ge[62] * ge[59];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[62] * ge[59])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[59] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[62]) + (h_RT[54] + h_RT[59]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51940,7 +55089,9 @@ aJacobian_precond(
   dlnkfdT = (553.538332385192) * invT2;
   // reverse
   phi_r = sc[54] * sc[56];
-  Kc = inv_ge[12] * ge[54] * inv_ge[55] * ge[56];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[12] * inv_ge[55] * ge[56])
+             : exp(g_RT[12] - g_RT[54] + g_RT[55] - g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[55]) + (h_RT[54] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -51990,7 +55141,9 @@ aJacobian_precond(
   dlnkfdT = (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[54] * sc[62];
-  Kc = inv_ge[55] * ge[54] * inv_ge[64] * ge[62];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[64] * ge[62])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[62] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[64]) + (h_RT[54] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52040,7 +55193,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = inv_ge[55] * ge[54] * inv_ge[69] * ge[67];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[69] * ge[67])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[67] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[69]) + (h_RT[54] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52090,7 +55245,9 @@ aJacobian_precond(
   dlnkfdT = (9958.6578162754) * invT2;
   // reverse
   phi_r = sc[1] * sc[53] * sc[54];
-  Kc = refC * inv_ge[0] * ge[1] * inv_ge[55] * ge[53] * ge[54];
+  Kc =
+    refC * (kc_fast ? (inv_ge[0] * ge[54] * inv_ge[55] * ge[53] * ge[1])
+                    : exp(g_RT[0] - g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + h_RT[55]) + (h_RT[1] + h_RT[53] + h_RT[54]) - 1.000000);
@@ -52154,7 +55311,9 @@ aJacobian_precond(
   dlnkfdT = (6793.42498836372) * invT2;
   // reverse
   phi_r = sc[54] * sc[69];
-  Kc = inv_ge[14] * ge[54] * inv_ge[55] * ge[69];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * ge[69] * inv_ge[14])
+             : exp(g_RT[14] - g_RT[54] + g_RT[55] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[55]) + (h_RT[54] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52204,7 +55363,9 @@ aJacobian_precond(
   dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[54] * sc[65];
-  Kc = inv_ge[8] * ge[54] * inv_ge[55] * ge[65];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * ge[65] * inv_ge[8])
+             : exp(g_RT[8] - g_RT[54] + g_RT[55] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[55]) + (h_RT[54] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52254,7 +55415,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[64];
-  Kc = inv_ge[55] * ge[54] * inv_ge[65] * ge[64];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[65] * ge[64])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[64] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[65]) + (h_RT[54] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52304,7 +55467,9 @@ aJacobian_precond(
   dlnkfdT = (5651.123156987) * invT2;
   // reverse
   phi_r = sc[12] * sc[53] * sc[54];
-  Kc = refC * inv_ge[13] * ge[12] * inv_ge[55] * ge[53] * ge[54];
+  Kc = refC * (kc_fast
+                 ? (ge[54] * inv_ge[55] * ge[12] * ge[53] * inv_ge[13])
+                 : exp(-g_RT[12] + g_RT[13] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[55]) + (h_RT[12] + h_RT[53] + h_RT[54]) -
                     1.000000);
@@ -52368,7 +55533,9 @@ aJacobian_precond(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[2] * sc[53] * sc[54];
-  Kc = refC * inv_ge[4] * ge[2] * inv_ge[55] * ge[53] * ge[54];
+  Kc =
+    refC * (kc_fast ? (ge[54] * inv_ge[4] * inv_ge[55] * ge[53] * ge[2])
+                    : exp(-g_RT[2] + g_RT[4] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[55]) + (h_RT[2] + h_RT[53] + h_RT[54]) - 1.000000);
@@ -52432,7 +55599,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[71];
-  Kc = inv_ge[50] * ge[53] * inv_ge[54] * ge[71];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[71] * inv_ge[50] * ge[53])
+             : exp(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[71]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[54]) + (h_RT[53] + h_RT[71]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52482,7 +55651,9 @@ aJacobian_precond(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[70];
-  Kc = inv_ge[50] * ge[53] * inv_ge[54] * ge[70];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[70] * inv_ge[50] * ge[53])
+             : exp(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[70]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[54]) + (h_RT[53] + h_RT[70]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52532,7 +55703,9 @@ aJacobian_precond(
   dlnkfdT = (4297.47032597231) * invT2;
   // reverse
   phi_r = sc[58] * sc[71];
-  Kc = inv_ge[50] * ge[58] * inv_ge[62] * ge[71];
+  Kc =
+    (kc_fast ? (ge[71] * inv_ge[50] * ge[58] * inv_ge[62])
+             : exp(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[71]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[62]) + (h_RT[58] + h_RT[71]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52582,7 +55755,9 @@ aJacobian_precond(
   dlnkfdT = (3280.97266104677) * invT2;
   // reverse
   phi_r = sc[58] * sc[70];
-  Kc = inv_ge[50] * ge[58] * inv_ge[62] * ge[70];
+  Kc =
+    (kc_fast ? (ge[70] * inv_ge[50] * ge[58] * inv_ge[62])
+             : exp(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[70]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[62]) + (h_RT[58] + h_RT[70]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52719,11 +55894,17 @@ aJacobian(
   // compute the Gibbs free energy
   amrex::Real g_RT[72];
   gibbs(g_RT, T);
-  // exp(-g/RT) and its inverse per species, for the Kc products
-  amrex::Real ge[72], inv_ge[72];
-  for (int i = 0; i < 72; ++i) {
-    ge[i] = exp(std::min(std::max(-g_RT[i], -700.0), 700.0));
-    inv_ge[i] = 1.0 / ge[i];
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[72] = {}, inv_ge[72] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 72; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
   }
 
   // compute the species enthalpy
@@ -52779,7 +55960,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[12];
-  Kc = refCinv * inv_ge[1] * ge[12] * inv_ge[10];
+  Kc = refCinv * (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[10])
+                          : exp(g_RT[1] + g_RT[10] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[10]) + (h_RT[12]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -52970,7 +56152,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[13];
-  Kc = refCinv * inv_ge[1] * ge[13] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[12]) + (h_RT[13]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -53156,7 +56339,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * inv_ge[1] * ge[17] * inv_ge[16];
+  Kc = refCinv * (kc_fast ? (inv_ge[16] * ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[16] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[16]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -53347,7 +56531,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[18];
-  Kc = refCinv * inv_ge[1] * ge[18] * inv_ge[17];
+  Kc = refCinv * (kc_fast ? (ge[18] * inv_ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[17] - g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[18]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -53533,7 +56718,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[19];
-  Kc = refCinv * inv_ge[1] * ge[19] * inv_ge[17];
+  Kc = refCinv * (kc_fast ? (ge[19] * inv_ge[17] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[17] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[19]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -53719,7 +56905,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[1] * ge[20] * inv_ge[18];
+  Kc = refCinv * (kc_fast ? (inv_ge[18] * inv_ge[1] * ge[20])
+                          : exp(g_RT[1] + g_RT[18] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -53905,7 +57092,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[1] * ge[20] * inv_ge[19];
+  Kc = refCinv * (kc_fast ? (inv_ge[19] * inv_ge[1] * ge[20])
+                          : exp(g_RT[1] + g_RT[19] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -54091,7 +57279,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[22];
-  Kc = refCinv * inv_ge[1] * ge[22] * inv_ge[21];
+  Kc = refCinv * (kc_fast ? (ge[22] * inv_ge[1] * inv_ge[21])
+                          : exp(g_RT[1] + g_RT[21] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[21]) + (h_RT[22]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -54282,7 +57471,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[23];
-  Kc = refCinv * inv_ge[1] * ge[23] * inv_ge[22];
+  Kc = refCinv * (kc_fast ? (inv_ge[22] * ge[23] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[22] - g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[22]) + (h_RT[23]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -54473,7 +57663,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[24];
-  Kc = refCinv * inv_ge[1] * ge[24] * inv_ge[23];
+  Kc = refCinv * (kc_fast ? (ge[24] * inv_ge[1] * inv_ge[23])
+                          : exp(g_RT[1] + g_RT[23] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[23]) + (h_RT[24]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -54664,7 +57855,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[25];
-  Kc = refCinv * inv_ge[1] * ge[25] * inv_ge[24];
+  Kc = refCinv * (kc_fast ? (inv_ge[24] * ge[25] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[24] - g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[24]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -54855,7 +58047,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[26];
-  Kc = refCinv * inv_ge[1] * ge[26] * inv_ge[25];
+  Kc = refCinv * (kc_fast ? (inv_ge[25] * ge[26] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[25] - g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[25]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55041,7 +58234,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[17];
-  Kc = refCinv * inv_ge[0] * ge[17] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * ge[17] * inv_ge[14])
+                          : exp(g_RT[0] + g_RT[14] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[14]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55222,7 +58416,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[7];
-  Kc = refCinv * inv_ge[4] * ge[7] * inv_ge[4];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[4] * ge[7])
+                          : exp(2.000000 * g_RT[4] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[4]) + (h_RT[7]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55396,7 +58591,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[4] * ge[20] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[20])
+                          : exp(g_RT[4] + g_RT[12] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55582,7 +58778,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[27];
-  Kc = refCinv * inv_ge[9] * ge[27] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (ge[27] * inv_ge[14] * inv_ge[9])
+                          : exp(g_RT[9] + g_RT[14] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[14]) + (h_RT[27]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55768,7 +58965,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[28];
-  Kc = refCinv * inv_ge[10] * ge[28] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (ge[28] * inv_ge[14] * inv_ge[10])
+                          : exp(g_RT[10] + g_RT[14] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[14]) + (h_RT[28]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -55954,7 +59152,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[20];
-  Kc = refCinv * inv_ge[5] * ge[20] * inv_ge[11];
+  Kc = refCinv * (kc_fast ? (ge[20] * inv_ge[5] * inv_ge[11])
+                          : exp(g_RT[5] + g_RT[11] - g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[11]) + (h_RT[20]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -56135,7 +59334,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[26];
-  Kc = refCinv * inv_ge[12] * ge[26] * inv_ge[12];
+  Kc = refCinv * (kc_fast ? (inv_ge[12] * inv_ge[12] * ge[26])
+                          : exp(2.000000 * g_RT[12] - g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[12]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -56305,7 +59505,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = refC * inv_ge[24] * ge[0] * ge[22];
+  Kc = refC * (kc_fast ? (ge[0] * inv_ge[24] * ge[22])
+                       : exp(-g_RT[0] - g_RT[22] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24]) + (h_RT[0] + h_RT[22]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -56491,7 +59692,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[42];
-  Kc = refCinv * inv_ge[9] * ge[42] * inv_ge[47];
+  Kc = refCinv * (kc_fast ? (inv_ge[47] * ge[42] * inv_ge[9])
+                          : exp(g_RT[9] - g_RT[42] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[47]) + (h_RT[42]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -56682,7 +59884,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[12];
-  Kc = refCinv * inv_ge[0] * ge[12] * inv_ge[9];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[9])
+                          : exp(g_RT[0] + g_RT[9] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[9]) + (h_RT[12]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -56868,7 +60071,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[51];
-  Kc = refCinv * inv_ge[1] * ge[51] * inv_ge[28];
+  Kc = refCinv * (kc_fast ? (inv_ge[28] * ge[51] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[28] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[51]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57059,7 +60263,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[50];
-  Kc = refCinv * inv_ge[12] * ge[50] * inv_ge[25];
+  Kc = refCinv * (kc_fast ? (inv_ge[25] * inv_ge[12] * ge[50])
+                          : exp(g_RT[12] + g_RT[25] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[25]) + (h_RT[50]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57250,7 +60455,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[49];
-  Kc = refCinv * inv_ge[12] * ge[49] * inv_ge[24];
+  Kc = refCinv * (kc_fast ? (inv_ge[24] * ge[49] * inv_ge[12])
+                          : exp(g_RT[12] + g_RT[24] - g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[24]) + (h_RT[49]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57441,7 +60647,8 @@ aJacobian(
             dlogFdlogPr * dlogPrdT;
   // reverse
   phi_r = sc[50];
-  Kc = refCinv * inv_ge[1] * ge[50] * inv_ge[49];
+  Kc = refCinv * (kc_fast ? (inv_ge[49] * ge[50] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[49]) + (h_RT[50]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57616,7 +60823,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[15];
-  Kc = refCinv * inv_ge[2] * ge[15] * inv_ge[14];
+  Kc = refCinv * (kc_fast ? (inv_ge[14] * inv_ge[2] * ge[15])
+                          : exp(g_RT[2] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[14]) + (h_RT[15]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57785,7 +60993,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[47];
-  Kc = refC * inv_ge[37] * ge[2] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * inv_ge[37] * ge[2])
+                       : exp(-g_RT[2] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[37]) + (h_RT[2] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -57959,7 +61168,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[41];
-  Kc = refCinv * inv_ge[1] * ge[41] * inv_ge[40];
+  Kc = refCinv * (kc_fast ? (inv_ge[40] * ge[41] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[40] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[40]) + (h_RT[41]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -58134,7 +61344,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = refC * inv_ge[56] * ge[11] * ge[53];
+  Kc = refC * (kc_fast ? (inv_ge[56] * ge[53] * ge[11])
+                       : exp(-g_RT[11] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[56]) + (h_RT[11] + h_RT[53]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -58315,7 +61526,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[65];
-  Kc = refC * inv_ge[64] * ge[54] * ge[65];
+  Kc = refC * (kc_fast ? (ge[54] * ge[65] * inv_ge[64])
+                       : exp(-g_RT[54] + g_RT[64] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[64]) + (h_RT[54] + h_RT[65]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -58515,7 +61727,8 @@ aJacobian(
   dlogFdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[64];
-  Kc = refC * inv_ge[62] * ge[54] * ge[64];
+  Kc = refC * (kc_fast ? (ge[54] * ge[64] * inv_ge[62])
+                       : exp(-g_RT[54] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[62]) + (h_RT[54] + h_RT[64]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -58699,7 +61912,8 @@ aJacobian(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[3];
-  Kc = refCinv * inv_ge[2] * ge[3] * inv_ge[2];
+  Kc = refCinv * (kc_fast ? (ge[3] * inv_ge[2] * inv_ge[2])
+                          : exp(2.000000 * g_RT[2] - g_RT[3]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[2]) + (h_RT[3]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -58842,7 +62056,8 @@ aJacobian(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[4];
-  Kc = refCinv * inv_ge[1] * ge[4] * inv_ge[2];
+  Kc = refCinv * (kc_fast ? (ge[4] * inv_ge[1] * inv_ge[2])
+                          : exp(g_RT[1] + g_RT[2] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[2]) + (h_RT[4]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -59003,7 +62218,8 @@ aJacobian(
   dlnkfdT = -0.86 * invT;
   // reverse
   phi_r = sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -59152,7 +62368,8 @@ aJacobian(
   dlnkfdT = -1.24 * invT;
   // reverse
   phi_r = sc[3] * sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + 2.000000 * h_RT[3]) + (h_RT[3] + h_RT[6]) + 1.000000);
@@ -59192,7 +62409,8 @@ aJacobian(
   dlnkfdT = -0.76 * invT;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[5]) + (h_RT[5] + h_RT[6]) + 1.000000);
@@ -59237,7 +62455,8 @@ aJacobian(
   dlnkfdT = -1.24 * invT;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[47]) + (h_RT[6] + h_RT[47]) + 1.000000);
@@ -59282,7 +62501,8 @@ aJacobian(
   dlnkfdT = -0.8 * invT;
   // reverse
   phi_r = sc[6] * sc[48];
-  Kc = refCinv * inv_ge[1] * ge[6] * inv_ge[3];
+  Kc = refCinv * (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[3] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[1] + h_RT[3] + h_RT[48]) + (h_RT[6] + h_RT[48]) + 1.000000);
@@ -59330,7 +62550,8 @@ aJacobian(
   dlnkfdT = -1 * invT;
   // reverse
   phi_r = sc[0];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -59460,7 +62681,8 @@ aJacobian(
   dlnkfdT = -0.6 * invT;
   // reverse
   phi_r = (sc[0] * sc[0]);
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + 2.000000 * h_RT[1]) + (2.000000 * h_RT[0]) + 1.000000);
@@ -59491,7 +62713,8 @@ aJacobian(
   dlnkfdT = -1.25 * invT;
   // reverse
   phi_r = sc[0] * sc[5];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(2.000000 * h_RT[1] + h_RT[5]) + (h_RT[0] + h_RT[5]) + 1.000000);
@@ -59526,7 +62749,8 @@ aJacobian(
   dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[0] * sc[15];
-  Kc = refCinv * inv_ge[1] * ge[0] * inv_ge[1];
+  Kc = refCinv * (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[1])
+                          : exp(-g_RT[0] + 2.000000 * g_RT[1]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(2.000000 * h_RT[1] + h_RT[15]) + (h_RT[0] + h_RT[15]) + 1.000000);
@@ -59564,7 +62788,8 @@ aJacobian(
   dlnkfdT = -2 * invT;
   // reverse
   phi_r = sc[5];
-  Kc = refCinv * inv_ge[1] * ge[5] * inv_ge[4];
+  Kc = refCinv * (kc_fast ? (inv_ge[4] * inv_ge[1] * ge[5])
+                          : exp(g_RT[1] + g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[4]) + (h_RT[5]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -59706,7 +62931,8 @@ aJacobian(
   dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[5] * sc[14];
-  Kc = refC * inv_ge[16] * ge[1] * ge[14];
+  Kc = refC * (kc_fast ? (inv_ge[16] * ge[14] * ge[1])
+                       : exp(-g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[5] + h_RT[16]) + (h_RT[1] + h_RT[5] + h_RT[14]) - 1.000000);
@@ -59754,7 +62980,8 @@ aJacobian(
   dlnkfdT = -1 * invT + (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = refC * inv_ge[16] * ge[1] * ge[14];
+  Kc = refC * (kc_fast ? (inv_ge[16] * ge[14] * ge[1])
+                       : exp(-g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16]) + (h_RT[1] + h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -59903,7 +63130,8 @@ aJacobian(
   dlnkfdT = -1.41 * invT;
   // reverse
   phi_r = sc[36];
-  Kc = refCinv * inv_ge[2] * ge[36] * inv_ge[35];
+  Kc = refCinv * (kc_fast ? (inv_ge[35] * ge[36] * inv_ge[2])
+                          : exp(g_RT[2] + g_RT[35] - g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[35]) + (h_RT[36]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60063,7 +63291,8 @@ aJacobian(
   dlnkfdT = -0.11 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = refC * inv_ge[34] * ge[1] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[34])
+                       : exp(-g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[1] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60223,7 +63452,8 @@ aJacobian(
   dlnkfdT = -1.32 * invT + (372.380332695493) * invT2;
   // reverse
   phi_r = sc[38];
-  Kc = refCinv * inv_ge[1] * ge[38] * inv_ge[35];
+  Kc = refCinv * (kc_fast ? (inv_ge[35] * ge[38] * inv_ge[1])
+                          : exp(g_RT[1] + g_RT[35] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[35]) + (h_RT[38]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60383,7 +63613,8 @@ aJacobian(
   dlnkfdT = (27198.8607867451) * invT2;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = refC * inv_ge[46] * ge[14] * ge[30];
+  Kc = refC * (kc_fast ? (inv_ge[46] * ge[14] * ge[30])
+                       : exp(-g_RT[14] - g_RT[30] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[46]) + (h_RT[14] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60538,7 +63769,8 @@ aJacobian(
   dlnkfdT = -3.3 * invT + (63707.2298908775) * invT2;
   // reverse
   phi_r = sc[1] * sc[39];
-  Kc = refC * inv_ge[40] * ge[1] * ge[39];
+  Kc = refC * (kc_fast ? (inv_ge[40] * ge[1] * ge[39])
+                       : exp(-g_RT[1] - g_RT[39] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[40]) + (h_RT[1] + h_RT[39]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60698,7 +63930,8 @@ aJacobian(
   dlnkfdT = (42632.5159269759) * invT2;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = refC * inv_ge[45] * ge[14] * ge[31];
+  Kc = refC * (kc_fast ? (ge[14] * inv_ge[45] * ge[31])
+                       : exp(-g_RT[14] - g_RT[31] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[45]) + (h_RT[14] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -60881,7 +64114,8 @@ aJacobian(
   dlnkfdT = -1.4 * invT + (-245.066516246898) * invT2;
   // reverse
   phi_r = sc[69];
-  Kc = refCinv * inv_ge[14] * ge[69] * inv_ge[54];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * inv_ge[14] * ge[69])
+                          : exp(g_RT[14] + g_RT[54] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[54]) + (h_RT[69]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61030,7 +64264,8 @@ aJacobian(
   dlnkfdT = (49979.4792477248) * invT2;
   // reverse
   phi_r = sc[1] * sc[54];
-  Kc = refC * inv_ge[53] * ge[1] * ge[54];
+  Kc = refC * (kc_fast ? (ge[54] * ge[1] * inv_ge[53])
+                       : exp(-g_RT[1] + g_RT[53] - g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53]) + (h_RT[1] + h_RT[54]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61156,7 +64391,8 @@ aJacobian(
   dlnkfdT = -3.26 * invT + (2043.05966316716) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[53] * ge[57] * inv_ge[63];
+  Kc = refCinv * (kc_fast ? (inv_ge[63] * inv_ge[53] * ge[57])
+                          : exp(g_RT[53] - g_RT[57] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53] + h_RT[63]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61322,7 +64558,8 @@ aJacobian(
   dlnkfdT = -4 * invT + (34747.1107738159) * invT2;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = refC * inv_ge[58] * ge[53] * ge[64];
+  Kc = refC * (kc_fast ? (ge[64] * inv_ge[58] * ge[53])
+                       : exp(-g_RT[53] + g_RT[58] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[58]) + (h_RT[53] + h_RT[64]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61488,7 +64725,8 @@ aJacobian(
   dlnkfdT = -4.64 * invT + (61593.7198944977) * invT2;
   // reverse
   phi_r = sc[54] * sc[62];
-  Kc = refC * inv_ge[59] * ge[54] * ge[62];
+  Kc = refC * (kc_fast ? (ge[54] * ge[62] * inv_ge[59])
+                       : exp(-g_RT[54] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[59]) + (h_RT[54] + h_RT[62]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61657,7 +64895,8 @@ aJacobian(
   dlnkfdT = -3.42 * invT + (10919.8016479624) * invT2;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = refC * inv_ge[66] * ge[54] * ge[67];
+  Kc = refC * (kc_fast ? (ge[54] * ge[67] * inv_ge[66])
+                       : exp(-g_RT[54] + g_RT[66] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[66]) + (h_RT[54] + h_RT[67]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61781,7 +65020,8 @@ aJacobian(
   dlnkfdT = -3 * invT + (21638.3166296029) * invT2;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = refC * inv_ge[68] * ge[14] * ge[53];
+  Kc = refC * (kc_fast ? (ge[14] * inv_ge[68] * ge[53])
+                       : exp(-g_RT[14] - g_RT[53] + g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[68]) + (h_RT[14] + h_RT[53]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -61905,7 +65145,8 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[55];
-  Kc = refCinv * inv_ge[54] * ge[55] * inv_ge[54];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * ge[55] * inv_ge[54])
+                          : exp(2.000000 * g_RT[54] - g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[54]) + (h_RT[55]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62017,7 +65258,9 @@ aJacobian(
   dlnkfdT = 2.7 * invT + (3150.13632793755) * invT2;
   // reverse
   phi_r = sc[1] * sc[4];
-  Kc = inv_ge[0] * ge[1] * inv_ge[2] * ge[4];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[4] * inv_ge[2] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[2]) + (h_RT[1] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62067,7 +65310,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[4];
-  Kc = inv_ge[2] * ge[3] * inv_ge[6] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[3] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[6]) + (h_RT[3] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62117,7 +65362,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (2012.86666321888) * invT2;
   // reverse
   phi_r = sc[4] * sc[6];
-  Kc = inv_ge[2] * ge[4] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (ge[4] * ge[6] * inv_ge[7] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[7]) + (h_RT[4] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62167,7 +65414,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = inv_ge[2] * ge[1] * inv_ge[9] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * ge[1] * inv_ge[2] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[9]) + (h_RT[1] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62217,7 +65466,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[2] * ge[1] * inv_ge[10] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[1] * inv_ge[2] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[10] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[10]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62267,7 +65518,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[14];
-  Kc = inv_ge[2] * ge[0] * inv_ge[11] * ge[14];
+  Kc =
+    (kc_fast ? (ge[0] * ge[14] * inv_ge[2] * inv_ge[11])
+             : exp(-g_RT[0] + g_RT[2] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[11]) + (h_RT[0] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62317,7 +65570,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[2] * ge[1] * inv_ge[11] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[1] * inv_ge[2] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[11] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[11]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62367,7 +65622,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[2] * ge[1] * inv_ge[12] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[17] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[12] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[12]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62417,7 +65674,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (4327.66332592059) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[2] * ge[4] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[13] * inv_ge[2] * ge[12])
+             : exp(g_RT[2] - g_RT[4] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[13]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62467,7 +65726,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[14];
-  Kc = inv_ge[2] * ge[4] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[16] * ge[14] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[4] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62517,7 +65778,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[15];
-  Kc = inv_ge[2] * ge[1] * inv_ge[16] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[1] * inv_ge[2] * ge[15])
+             : exp(-g_RT[1] + g_RT[2] - g_RT[15] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (h_RT[1] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62567,7 +65830,9 @@ aJacobian(
   dlnkfdT = (1781.38699694871) * invT2;
   // reverse
   phi_r = sc[4] * sc[16];
-  Kc = inv_ge[2] * ge[4] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[4] * ge[16] * inv_ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[17]) + (h_RT[4] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62617,7 +65882,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[2] * ge[4] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[18] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[18]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62667,7 +65934,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[2] * ge[4] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[19] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[19]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62717,7 +65986,9 @@ aJacobian(
   dlnkfdT = 2.5 * invT + (1559.97166399463) * invT2;
   // reverse
   phi_r = sc[4] * sc[18];
-  Kc = inv_ge[2] * ge[4] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[4] * ge[18] * inv_ge[20] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[20]) + (h_RT[4] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62767,7 +66038,9 @@ aJacobian(
   dlnkfdT = 2.5 * invT + (2516.0833290236) * invT2;
   // reverse
   phi_r = sc[4] * sc[19];
-  Kc = inv_ge[2] * ge[4] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[4] * ge[19] * inv_ge[20] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[20]) + (h_RT[4] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62817,7 +66090,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[14];
-  Kc = inv_ge[2] * ge[9] * inv_ge[21] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[2] * ge[9] * inv_ge[21])
+             : exp(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[21]) + (h_RT[9] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62867,7 +66142,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (956.111665028967) * invT2;
   // reverse
   phi_r = sc[1] * sc[27];
-  Kc = inv_ge[2] * ge[1] * inv_ge[22] * ge[27];
+  Kc =
+    (kc_fast ? (ge[27] * inv_ge[22] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[22] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[1] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62917,7 +66194,9 @@ aJacobian(
   dlnkfdT = -1.41 * invT + (14568.1224750466) * invT2;
   // reverse
   phi_r = sc[4] * sc[21];
-  Kc = inv_ge[2] * ge[4] * inv_ge[22] * ge[21];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[22] * ge[21] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[21] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[4] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -62967,7 +66246,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (956.111665028967) * invT2;
   // reverse
   phi_r = sc[10] * sc[14];
-  Kc = inv_ge[2] * ge[10] * inv_ge[22] * ge[14];
+  Kc =
+    (kc_fast ? (ge[14] * ge[10] * inv_ge[22] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[10] - g_RT[14] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[22]) + (h_RT[10] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63017,7 +66298,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[2] * ge[1] * inv_ge[23] * ge[28];
+  Kc =
+    (kc_fast ? (ge[28] * ge[1] * inv_ge[2] * inv_ge[23])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[23] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[23]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63067,7 +66350,9 @@ aJacobian(
   dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[12] * sc[16];
-  Kc = inv_ge[2] * ge[12] * inv_ge[24] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[24] * ge[12] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[12] - g_RT[16] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[24]) + (h_RT[12] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63117,7 +66402,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[12] * sc[17];
-  Kc = inv_ge[2] * ge[12] * inv_ge[25] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[25] * ge[12] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[12] - g_RT[17] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[25]) + (h_RT[12] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63167,7 +66454,9 @@ aJacobian(
   dlnkfdT = 1.92 * invT + (2863.30282842885) * invT2;
   // reverse
   phi_r = sc[4] * sc[25];
-  Kc = inv_ge[2] * ge[4] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[26] * inv_ge[2] * ge[25])
+             : exp(g_RT[2] - g_RT[4] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[26]) + (h_RT[4] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63217,7 +66506,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * (sc[14] * sc[14]);
-  Kc = refC * inv_ge[2] * ge[1] * inv_ge[27] * ge[14] * ge[14];
+  Kc =
+    refC * (kc_fast ? (inv_ge[27] * ge[1] * ge[14] * ge[14] * inv_ge[2])
+                    : exp(-g_RT[1] + g_RT[2] - 2.000000 * g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[2] + h_RT[27]) + (h_RT[1] + 2.000000 * h_RT[14]) - 1.000000);
@@ -63268,7 +66559,9 @@ aJacobian(
   dlnkfdT = (4025.73332643776) * invT2;
   // reverse
   phi_r = sc[4] * sc[27];
-  Kc = inv_ge[2] * ge[4] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[28] * inv_ge[2] * ge[27])
+             : exp(g_RT[2] - g_RT[4] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[28]) + (h_RT[4] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63318,7 +66611,9 @@ aJacobian(
   dlnkfdT = (679.342498836372) * invT2;
   // reverse
   phi_r = sc[10] * sc[15];
-  Kc = inv_ge[2] * ge[10] * inv_ge[28] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[28] * inv_ge[2] * ge[10] * ge[15])
+             : exp(g_RT[2] - g_RT[10] - g_RT[15] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[28]) + (h_RT[10] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63368,7 +66663,9 @@ aJacobian(
   dlnkfdT = (24053.7566254656) * invT2;
   // reverse
   phi_r = sc[2] * sc[15];
-  Kc = inv_ge[3] * ge[2] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[14] * ge[15] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[14]) + (h_RT[2] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63418,7 +66715,9 @@ aJacobian(
   dlnkfdT = (20128.6666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[16];
-  Kc = inv_ge[3] * ge[6] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * ge[16] * inv_ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[17]) + (h_RT[6] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63468,7 +66767,9 @@ aJacobian(
   dlnkfdT = -0.6707 * invT + (8575.31520197823) * invT2;
   // reverse
   phi_r = sc[2] * sc[4];
-  Kc = inv_ge[1] * ge[2] * inv_ge[3] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[1] * ge[2])
+             : exp(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[2] + h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63518,7 +66819,9 @@ aJacobian(
   dlnkfdT = (337.658382754967) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
-  Kc = inv_ge[1] * ge[2] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[6] * inv_ge[1] * ge[2] * ge[5])
+             : exp(g_RT[1] - g_RT[2] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63568,7 +66871,9 @@ aJacobian(
   dlnkfdT = (537.435399079441) * invT2;
   // reverse
   phi_r = sc[0] * sc[3];
-  Kc = inv_ge[1] * ge[0] * inv_ge[6] * ge[3];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[6] * ge[3] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (h_RT[0] + h_RT[3]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63618,7 +66923,9 @@ aJacobian(
   dlnkfdT = (319.542582785997) * invT2;
   // reverse
   phi_r = (sc[4] * sc[4]);
-  Kc = inv_ge[1] * ge[4] * inv_ge[6] * ge[4];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[4] * inv_ge[1])
+             : exp(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[6]) + (2.000000 * h_RT[4]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63657,7 +66964,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (2616.72666218454) * invT2;
   // reverse
   phi_r = sc[0] * sc[6];
-  Kc = inv_ge[1] * ge[0] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (ge[0] * ge[6] * inv_ge[7] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[0] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63707,7 +67016,9 @@ aJacobian(
   dlnkfdT = (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[4] * sc[5];
-  Kc = inv_ge[1] * ge[4] * inv_ge[7] * ge[5];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[7] * inv_ge[1] * ge[5])
+             : exp(g_RT[1] - g_RT[4] - g_RT[5] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[4] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63757,7 +67068,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[8];
-  Kc = inv_ge[1] * ge[0] * inv_ge[9] * ge[8];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[8] * inv_ge[9])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[8] + g_RT[9]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[9]) + (h_RT[0] + h_RT[8]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63807,7 +67120,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[9];
-  Kc = inv_ge[1] * ge[0] * inv_ge[11] * ge[9];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[9] * inv_ge[11])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[11]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[11]) + (h_RT[0] + h_RT[9]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63857,7 +67172,9 @@ aJacobian(
   dlnkfdT = 1.62 * invT + (5454.86865732316) * invT2;
   // reverse
   phi_r = sc[0] * sc[12];
-  Kc = inv_ge[1] * ge[0] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[13] * inv_ge[1] * ge[12])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[13]) + (h_RT[0] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63907,7 +67224,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[14];
-  Kc = inv_ge[1] * ge[0] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[16] * ge[14] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[16]) + (h_RT[0] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -63957,7 +67276,9 @@ aJacobian(
   dlnkfdT = 1.9 * invT + (1379.82009763654) * invT2;
   // reverse
   phi_r = sc[0] * sc[16];
-  Kc = inv_ge[1] * ge[0] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[0] * ge[16] * inv_ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[17]) + (h_RT[0] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64007,7 +67328,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[17];
-  Kc = inv_ge[1] * ge[0] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[18] * ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[0] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64057,7 +67380,9 @@ aJacobian(
   dlnkfdT = 0.65 * invT + (-142.91353308854) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[1] * ge[4] * inv_ge[18] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[18] * inv_ge[1] * ge[12])
+             : exp(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64107,7 +67432,9 @@ aJacobian(
   dlnkfdT = -0.09 * invT + (306.962166140879) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[1] * ge[5] * inv_ge[18] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[18] * inv_ge[1] * ge[11] * ge[5])
+             : exp(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[18]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64157,7 +67484,9 @@ aJacobian(
   dlnkfdT = 1.63 * invT + (968.188865008281) * invT2;
   // reverse
   phi_r = sc[1] * sc[18];
-  Kc = inv_ge[19] * ge[18];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[19])
+             : exp(g_RT[1] - g_RT[1] - g_RT[18] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[1] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64191,7 +67520,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[17];
-  Kc = inv_ge[1] * ge[0] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[19] * ge[17] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[0] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64241,7 +67572,9 @@ aJacobian(
   dlnkfdT = 0.5 * invT + (-55.3538332385192) * invT2;
   // reverse
   phi_r = sc[4] * sc[12];
-  Kc = inv_ge[1] * ge[4] * inv_ge[19] * ge[12];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[19] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[12] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64291,7 +67624,9 @@ aJacobian(
   dlnkfdT = -0.23 * invT + (538.44183241105) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[1] * ge[5] * inv_ge[19] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[19] * inv_ge[1] * ge[11] * ge[5])
+             : exp(g_RT[1] - g_RT[5] - g_RT[11] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[19]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64341,7 +67676,9 @@ aJacobian(
   dlnkfdT = 2.1 * invT + (2450.66516246898) * invT2;
   // reverse
   phi_r = sc[0] * sc[18];
-  Kc = inv_ge[1] * ge[0] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[0] * ge[18] * inv_ge[20] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[20]) + (h_RT[0] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64391,7 +67728,9 @@ aJacobian(
   dlnkfdT = 2.1 * invT + (2450.66516246898) * invT2;
   // reverse
   phi_r = sc[0] * sc[19];
-  Kc = inv_ge[1] * ge[0] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[0] * ge[19] * inv_ge[20] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[20]) + (h_RT[0] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64441,7 +67780,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = inv_ge[1] * ge[0] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (ge[0] * ge[22] * inv_ge[1] * inv_ge[23])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[23]) + (h_RT[0] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64491,7 +67832,9 @@ aJacobian(
   dlnkfdT = 2.53 * invT + (6159.37198944977) * invT2;
   // reverse
   phi_r = sc[0] * sc[23];
-  Kc = inv_ge[1] * ge[0] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[24] * ge[23] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[24]) + (h_RT[0] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64541,7 +67884,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[24];
-  Kc = inv_ge[1] * ge[0] * inv_ge[25] * ge[24];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[25] * ge[24] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[24] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[25]) + (h_RT[0] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64591,7 +67936,9 @@ aJacobian(
   dlnkfdT = 1.9 * invT + (3789.22149350954) * invT2;
   // reverse
   phi_r = sc[0] * sc[25];
-  Kc = inv_ge[1] * ge[0] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[26] * inv_ge[1] * ge[25])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[26]) + (h_RT[0] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64641,7 +67988,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[14];
-  Kc = inv_ge[1] * ge[11] * inv_ge[27] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[11] * inv_ge[1] * ge[14])
+             : exp(g_RT[1] - g_RT[11] - g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[27]) + (h_RT[11] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64691,7 +68040,9 @@ aJacobian(
   dlnkfdT = (4025.73332643776) * invT2;
   // reverse
   phi_r = sc[0] * sc[27];
-  Kc = inv_ge[1] * ge[0] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[28] * inv_ge[1] * ge[27])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[0] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64741,7 +68092,9 @@ aJacobian(
   dlnkfdT = (1725.02673037858) * invT2;
   // reverse
   phi_r = sc[12] * sc[14];
-  Kc = inv_ge[1] * ge[12] * inv_ge[28] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[28] * ge[14] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[14] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[28]) + (h_RT[12] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64791,7 +68144,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[29] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[29] * ge[28])
+             : exp(g_RT[1] - g_RT[1] - g_RT[28] + g_RT[29]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[29]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64825,7 +68180,9 @@ aJacobian(
   dlnkfdT = 1.51 * invT + (1726.03316371019) * invT2;
   // reverse
   phi_r = sc[1] * sc[5];
-  Kc = inv_ge[0] * ge[1] * inv_ge[4] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[0] * inv_ge[4] * ge[1] * ge[5])
+             : exp(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[4]) + (h_RT[1] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64875,7 +68232,9 @@ aJacobian(
   dlnkfdT = 2.4 * invT + (-1061.78716484796) * invT2;
   // reverse
   phi_r = sc[2] * sc[5];
-  Kc = inv_ge[4] * ge[2] * inv_ge[4] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[4] * ge[2] * ge[5])
+             : exp(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[4]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64914,7 +68273,9 @@ aJacobian(
   dlnkfdT = (-251.60833290236) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
-  Kc = inv_ge[4] * ge[3] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[6] * ge[5])
+             : exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[3] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -64964,7 +68325,9 @@ aJacobian(
   dlnkfdT = (214.873516298615) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = inv_ge[4] * ge[5] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[7] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[7]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65014,7 +68377,9 @@ aJacobian(
   dlnkfdT = (14799.6021413168) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = inv_ge[4] * ge[5] * inv_ge[7] * ge[6];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[7] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[7]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65064,7 +68429,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14];
-  Kc = inv_ge[4] * ge[1] * inv_ge[8] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[14] * ge[1] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[8]) + (h_RT[1] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65114,7 +68481,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16];
-  Kc = inv_ge[4] * ge[1] * inv_ge[9] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[9] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[9]) + (h_RT[1] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65164,7 +68533,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[4] * ge[1] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[17] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65214,7 +68585,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[5] * sc[9];
-  Kc = inv_ge[4] * ge[5] * inv_ge[10] * ge[9];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * ge[9] * inv_ge[10])
+             : exp(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[5] + h_RT[9]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65264,7 +68637,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[4] * ge[1] * inv_ge[11] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[17] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[11]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65314,7 +68689,9 @@ aJacobian(
   dlnkfdT = 1.6 * invT + (2727.43432866158) * invT2;
   // reverse
   phi_r = sc[5] * sc[10];
-  Kc = inv_ge[4] * ge[5] * inv_ge[12] * ge[10];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[10] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[10] + g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[5] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65364,7 +68741,9 @@ aJacobian(
   dlnkfdT = -1.34 * invT + (713.058015445288) * invT2;
   // reverse
   phi_r = sc[5] * sc[11];
-  Kc = inv_ge[4] * ge[5] * inv_ge[12] * ge[11];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[12] * ge[11] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[12]) + (h_RT[5] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65414,7 +68793,9 @@ aJacobian(
   dlnkfdT = 1.6 * invT + (1570.03599731073) * invT2;
   // reverse
   phi_r = sc[5] * sc[12];
-  Kc = inv_ge[4] * ge[5] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[12] * ge[5] * inv_ge[13])
+             : exp(g_RT[4] - g_RT[5] - g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[13]) + (h_RT[5] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65464,7 +68845,9 @@ aJacobian(
   dlnkfdT = 1.228 * invT + (35.2251666063304) * invT2;
   // reverse
   phi_r = sc[1] * sc[15];
-  Kc = inv_ge[4] * ge[1] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[14] * ge[15] * ge[1])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[14]) + (h_RT[1] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65514,7 +68897,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[14];
-  Kc = inv_ge[4] * ge[5] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[16] * ge[14] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[16]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65564,7 +68949,9 @@ aJacobian(
   dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[16];
-  Kc = inv_ge[4] * ge[5] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[17]) + (h_RT[5] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65614,7 +69001,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[17];
-  Kc = inv_ge[4] * ge[5] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[18] * ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[18]) + (h_RT[5] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65664,7 +69053,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[17];
-  Kc = inv_ge[4] * ge[5] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[19] * ge[17] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[19]) + (h_RT[5] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65714,7 +69105,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (-422.701999275965) * invT2;
   // reverse
   phi_r = sc[5] * sc[18];
-  Kc = inv_ge[4] * ge[5] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[20] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65764,7 +69157,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (754.82499870708) * invT2;
   // reverse
   phi_r = sc[5] * sc[19];
-  Kc = inv_ge[4] * ge[5] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[19] * inv_ge[20] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65814,7 +69209,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[27];
-  Kc = inv_ge[4] * ge[1] * inv_ge[21] * ge[27];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[27] * ge[1] * inv_ge[21])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[21] - g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[21]) + (h_RT[1] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65864,7 +69261,9 @@ aJacobian(
   dlnkfdT = 4.5 * invT + (-503.21666580472) * invT2;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[4] * ge[1] * inv_ge[22] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[28] * ge[1] * inv_ge[22])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65914,7 +69313,9 @@ aJacobian(
   dlnkfdT = 2.3 * invT + (6793.42498836372) * invT2;
   // reverse
   phi_r = sc[1] * sc[29];
-  Kc = inv_ge[4] * ge[1] * inv_ge[22] * ge[29];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[29] * inv_ge[22] * ge[1])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[22] - g_RT[29]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[1] + h_RT[29]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -65964,7 +69365,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (7045.03332126608) * invT2;
   // reverse
   phi_r = sc[5] * sc[21];
-  Kc = inv_ge[4] * ge[5] * inv_ge[22] * ge[21];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[22] * ge[21] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[21] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[5] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66014,7 +69417,9 @@ aJacobian(
   dlnkfdT = 4 * invT + (-1006.43333160944) * invT2;
   // reverse
   phi_r = sc[12] * sc[14];
-  Kc = inv_ge[4] * ge[12] * inv_ge[22] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[12] * ge[14] * inv_ge[22])
+             : exp(g_RT[4] - g_RT[12] - g_RT[14] + g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[22]) + (h_RT[12] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66064,7 +69469,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[22];
-  Kc = inv_ge[4] * ge[5] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[22] * inv_ge[23] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[23]) + (h_RT[5] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66114,7 +69521,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (1258.0416645118) * invT2;
   // reverse
   phi_r = sc[5] * sc[23];
-  Kc = inv_ge[4] * ge[5] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[24] * ge[23] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[24]) + (h_RT[5] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66164,7 +69573,9 @@ aJacobian(
   dlnkfdT = 2.12 * invT + (437.798499250106) * invT2;
   // reverse
   phi_r = sc[5] * sc[25];
-  Kc = inv_ge[4] * ge[5] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[25] * inv_ge[26] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[26]) + (h_RT[5] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66214,7 +69625,9 @@ aJacobian(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[5] * sc[27];
-  Kc = inv_ge[4] * ge[5] * inv_ge[28] * ge[27];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[27] * ge[5] * inv_ge[28])
+             : exp(g_RT[4] - g_RT[5] - g_RT[27] + g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[28]) + (h_RT[5] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66264,7 +69677,9 @@ aJacobian(
   dlnkfdT = (-820.243165261693) * invT2;
   // reverse
   phi_r = sc[3] * sc[7];
-  Kc = inv_ge[6] * ge[3] * inv_ge[6] * ge[7];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[6] * ge[7])
+             : exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66303,7 +69718,9 @@ aJacobian(
   dlnkfdT = (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[3] * sc[7];
-  Kc = inv_ge[6] * ge[3] * inv_ge[6] * ge[7];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[6] * ge[7])
+             : exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66342,7 +69759,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[6] * ge[4] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[17] * inv_ge[10])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[10]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66392,7 +69811,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[13];
-  Kc = inv_ge[6] * ge[3] * inv_ge[12] * ge[13];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[12] * ge[13])
+             : exp(-g_RT[3] + g_RT[6] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[12]) + (h_RT[3] + h_RT[13]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66442,7 +69863,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[19];
-  Kc = inv_ge[6] * ge[4] * inv_ge[12] * ge[19];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[19] * inv_ge[12])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[12] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[12]) + (h_RT[4] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66492,7 +69915,9 @@ aJacobian(
   dlnkfdT = (11875.9133129914) * invT2;
   // reverse
   phi_r = sc[4] * sc[15];
-  Kc = inv_ge[6] * ge[4] * inv_ge[14] * ge[15];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[14] * ge[15])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[14] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[4] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66542,7 +69967,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[7] * sc[16];
-  Kc = inv_ge[6] * ge[7] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[6] * ge[7] * inv_ge[17])
+             : exp(g_RT[6] - g_RT[7] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[17]) + (h_RT[7] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66592,7 +70019,9 @@ aJacobian(
   dlnkfdT = (289.852799503519) * invT2;
   // reverse
   phi_r = sc[2] * sc[14];
-  Kc = inv_ge[3] * ge[2] * inv_ge[8] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[14] * ge[2] * inv_ge[8])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[8] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[8]) + (h_RT[2] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66642,7 +70071,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[21];
-  Kc = inv_ge[8] * ge[1] * inv_ge[10] * ge[21];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[10] * ge[21] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[8] + g_RT[10] - g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[10]) + (h_RT[1] + h_RT[21]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66692,7 +70123,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[8] * ge[1] * inv_ge[12] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[22] * ge[1] * inv_ge[8])
+             : exp(-g_RT[1] + g_RT[8] + g_RT[12] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[12]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66742,7 +70175,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[16];
-  Kc = inv_ge[3] * ge[2] * inv_ge[9] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[2] * inv_ge[9])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[9]) + (h_RT[2] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66792,7 +70227,9 @@ aJacobian(
   dlnkfdT = (1565.00383065268) * invT2;
   // reverse
   phi_r = sc[1] * sc[10];
-  Kc = inv_ge[0] * ge[1] * inv_ge[9] * ge[10];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[1] * inv_ge[9] * ge[10])
+             : exp(g_RT[0] - g_RT[1] + g_RT[9] - g_RT[10]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[9]) + (h_RT[1] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66842,7 +70279,9 @@ aJacobian(
   dlnkfdT = (-379.928582682563) * invT2;
   // reverse
   phi_r = sc[1] * sc[17];
-  Kc = inv_ge[5] * ge[1] * inv_ge[9] * ge[17];
+  Kc =
+    (kc_fast ? (ge[17] * ge[1] * inv_ge[5] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[5] + g_RT[9] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[9]) + (h_RT[1] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66892,7 +70331,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[9] * ge[1] * inv_ge[10] * ge[22];
+  Kc =
+    (kc_fast ? (ge[22] * inv_ge[10] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[10] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[10]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66942,7 +70383,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[23];
-  Kc = inv_ge[9] * ge[1] * inv_ge[12] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[23] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[12] - g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[12]) + (h_RT[1] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -66992,7 +70435,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[9] * ge[1] * inv_ge[13] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[13] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[13] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[13]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67042,7 +70487,9 @@ aJacobian(
   dlnkfdT = (7946.79758638813) * invT2;
   // reverse
   phi_r = sc[14] * sc[16];
-  Kc = inv_ge[9] * ge[14] * inv_ge[15] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * ge[14] * inv_ge[15] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[14] + g_RT[15] - g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[15]) + (h_RT[14] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67092,7 +70539,9 @@ aJacobian(
   dlnkfdT = (-259.156582889431) * invT2;
   // reverse
   phi_r = sc[1] * sc[28];
-  Kc = inv_ge[9] * ge[1] * inv_ge[17] * ge[28];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[17] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[17] - g_RT[28]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[17]) + (h_RT[1] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67142,7 +70591,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[22];
-  Kc = inv_ge[9] * ge[14] * inv_ge[27] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[22] * ge[14] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[14] - g_RT[22] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[27]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67228,7 +70679,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (3638.25649376812) * invT2;
   // reverse
   phi_r = sc[1] * sc[12];
-  Kc = inv_ge[0] * ge[1] * inv_ge[10] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[10] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[10] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[10]) + (h_RT[1] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67278,7 +70731,9 @@ aJacobian(
   dlnkfdT = (6010.41985637157) * invT2;
   // reverse
   phi_r = sc[0] * sc[22];
-  Kc = inv_ge[10] * ge[0] * inv_ge[10] * ge[22];
+  Kc =
+    (kc_fast ? (ge[0] * ge[22] * inv_ge[10] * inv_ge[10])
+             : exp(-g_RT[0] + 2.000000 * g_RT[10] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[10]) + (h_RT[0] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67317,7 +70772,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[10] * ge[1] * inv_ge[12] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[12] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[12] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[12]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67367,7 +70824,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (4161.60182620503) * invT2;
   // reverse
   phi_r = (sc[12] * sc[12]);
-  Kc = inv_ge[10] * ge[12] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[12] * ge[12] * inv_ge[10] * inv_ge[13])
+             : exp(g_RT[10] - 2.000000 * g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[13]) + (2.000000 * h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67406,7 +70865,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[23];
-  Kc = inv_ge[10] * ge[14] * inv_ge[27] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[27] * ge[23] * ge[14] * inv_ge[10])
+             : exp(g_RT[10] - g_RT[14] - g_RT[23] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[27]) + (h_RT[14] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67456,7 +70917,9 @@ aJacobian(
   dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[47] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[47]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67490,7 +70953,9 @@ aJacobian(
   dlnkfdT = (301.929999482832) * invT2;
   // reverse
   phi_r = sc[10] * sc[48];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[48] - g_RT[48]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[48]) + (h_RT[10] + h_RT[48]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67524,7 +70989,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[4] * sc[14];
-  Kc = refC * inv_ge[3] * ge[1] * inv_ge[11] * ge[4] * ge[14];
+  Kc =
+    refC * (kc_fast ? (ge[4] * inv_ge[3] * ge[14] * ge[1] * inv_ge[11])
+                    : exp(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[11]) + (h_RT[1] + h_RT[4] + h_RT[14]) - 1.000000);
@@ -67588,7 +71055,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[14];
-  Kc = inv_ge[3] * ge[5] * inv_ge[11] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[14] * ge[5] * inv_ge[11])
+             : exp(g_RT[3] - g_RT[5] + g_RT[11] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[11]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67638,7 +71107,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[12];
-  Kc = inv_ge[0] * ge[1] * inv_ge[11] * ge[12];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[12] * inv_ge[11] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[11] - g_RT[12]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[11]) + (h_RT[1] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67688,7 +71159,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[10];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(g_RT[5] - g_RT[5] - g_RT[10] + g_RT[11]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[11]) + (h_RT[5] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67722,7 +71195,9 @@ aJacobian(
   dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = sc[1] * sc[24];
-  Kc = inv_ge[11] * ge[1] * inv_ge[12] * ge[24];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[12] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[12] - g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[12]) + (h_RT[1] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67772,7 +71247,9 @@ aJacobian(
   dlnkfdT = (-286.83349950869) * invT2;
   // reverse
   phi_r = (sc[12] * sc[12]);
-  Kc = inv_ge[11] * ge[12] * inv_ge[13] * ge[12];
+  Kc =
+    (kc_fast ? (ge[12] * ge[12] * inv_ge[11] * inv_ge[13])
+             : exp(g_RT[11] - 2.000000 * g_RT[12] + g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[13]) + (2.000000 * h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67811,7 +71288,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[14];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[14] - g_RT[14]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[14]) + (h_RT[10] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67845,7 +71324,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[15];
-  Kc = inv_ge[11] * ge[10];
+  Kc =
+    (kc_fast ? (ge[10] * inv_ge[11])
+             : exp(-g_RT[10] + g_RT[11] + g_RT[15] - g_RT[15]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[15]) + (h_RT[10] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67879,7 +71360,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[17];
-  Kc = inv_ge[11] * ge[14] * inv_ge[15] * ge[17];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[15] * inv_ge[11] * ge[17])
+             : exp(g_RT[11] - g_RT[14] + g_RT[15] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[15]) + (h_RT[14] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67929,7 +71412,9 @@ aJacobian(
   dlnkfdT = (-276.769166192596) * invT2;
   // reverse
   phi_r = sc[12] * sc[25];
-  Kc = inv_ge[11] * ge[12] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * ge[12] * inv_ge[11] * inv_ge[26])
+             : exp(g_RT[11] - g_RT[12] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[26]) + (h_RT[12] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -67979,7 +71464,9 @@ aJacobian(
   dlnkfdT = (15338.0439737279) * invT2;
   // reverse
   phi_r = sc[2] * sc[19];
-  Kc = inv_ge[3] * ge[2] * inv_ge[12] * ge[19];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[19] * inv_ge[12] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[12] - g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[12]) + (h_RT[2] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68029,7 +71516,9 @@ aJacobian(
   dlnkfdT = (10222.8465658229) * invT2;
   // reverse
   phi_r = sc[4] * sc[17];
-  Kc = inv_ge[3] * ge[4] * inv_ge[12] * ge[17];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[12] * ge[17])
+             : exp(g_RT[3] - g_RT[4] + g_RT[12] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[12]) + (h_RT[4] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68079,7 +71568,9 @@ aJacobian(
   dlnkfdT = 2.47 * invT + (2606.66232886845) * invT2;
   // reverse
   phi_r = sc[6] * sc[13];
-  Kc = inv_ge[7] * ge[6] * inv_ge[12] * ge[13];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[12] * inv_ge[7] * ge[13])
+             : exp(-g_RT[6] + g_RT[7] + g_RT[12] - g_RT[13]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[12]) + (h_RT[6] + h_RT[13]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68129,7 +71620,9 @@ aJacobian(
   dlnkfdT = 0.1 * invT + (5334.09665753003) * invT2;
   // reverse
   phi_r = sc[1] * sc[25];
-  Kc = inv_ge[12] * ge[1] * inv_ge[12] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[12] * ge[1])
+             : exp(-g_RT[1] + 2.000000 * g_RT[12] - g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[12]) + (h_RT[1] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68168,7 +71661,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[13] * sc[14];
-  Kc = inv_ge[12] * ge[13] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[13] * inv_ge[12] * ge[14])
+             : exp(g_RT[12] - g_RT[13] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[16]) + (h_RT[13] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68218,7 +71713,9 @@ aJacobian(
   dlnkfdT = 2.81 * invT + (2948.84966161566) * invT2;
   // reverse
   phi_r = sc[13] * sc[16];
-  Kc = inv_ge[12] * ge[13] * inv_ge[17] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[12] * inv_ge[17] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[16] + g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[17]) + (h_RT[13] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68268,7 +71765,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (5001.97365809891) * invT2;
   // reverse
   phi_r = sc[13] * sc[18];
-  Kc = inv_ge[12] * ge[13] * inv_ge[20] * ge[18];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[12] * inv_ge[20] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[18] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[20]) + (h_RT[13] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68318,7 +71817,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (5001.97365809891) * invT2;
   // reverse
   phi_r = sc[13] * sc[19];
-  Kc = inv_ge[12] * ge[13] * inv_ge[20] * ge[19];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[12] * inv_ge[20] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[19] + g_RT[20]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[20]) + (h_RT[13] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68368,7 +71869,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (4629.59332540342) * invT2;
   // reverse
   phi_r = sc[13] * sc[23];
-  Kc = inv_ge[12] * ge[13] * inv_ge[24] * ge[23];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[13] * ge[23] * inv_ge[12])
+             : exp(g_RT[12] - g_RT[13] - g_RT[23] + g_RT[24]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[24]) + (h_RT[13] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68418,7 +71921,9 @@ aJacobian(
   dlnkfdT = 1.74 * invT + (5258.61415765932) * invT2;
   // reverse
   phi_r = sc[13] * sc[25];
-  Kc = inv_ge[12] * ge[13] * inv_ge[26] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[26] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[25] + g_RT[26]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[26]) + (h_RT[13] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68468,7 +71973,9 @@ aJacobian(
   dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[6] * sc[14];
-  Kc = inv_ge[3] * ge[6] * inv_ge[16] * ge[14];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[16] * ge[14])
+             : exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[16]) + (h_RT[6] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68518,7 +72025,9 @@ aJacobian(
   dlnkfdT = (452.894999224248) * invT2;
   // reverse
   phi_r = sc[6] * sc[17];
-  Kc = inv_ge[3] * ge[6] * inv_ge[18] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[18] * ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[18]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[18]) + (h_RT[6] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68568,7 +72077,9 @@ aJacobian(
   dlnkfdT = 7.6 * invT + (-1776.35483029066) * invT2;
   // reverse
   phi_r = sc[6] * sc[17];
-  Kc = inv_ge[3] * ge[6] * inv_ge[19] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[19] * ge[17])
+             : exp(g_RT[3] - g_RT[6] - g_RT[17] + g_RT[19]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[19]) + (h_RT[6] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68618,7 +72129,9 @@ aJacobian(
   dlnkfdT = (-379.928582682563) * invT2;
   // reverse
   phi_r = sc[14] * sc[16];
-  Kc = inv_ge[3] * ge[14] * inv_ge[21] * ge[16];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[14] * inv_ge[21])
+             : exp(g_RT[3] - g_RT[14] - g_RT[16] + g_RT[21]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[21]) + (h_RT[14] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68668,7 +72181,9 @@ aJacobian(
   dlnkfdT = 0.9 * invT + (1002.91081494881) * invT2;
   // reverse
   phi_r = sc[1] * sc[22];
-  Kc = inv_ge[0] * ge[1] * inv_ge[21] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[22] * inv_ge[21] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[21] - g_RT[22]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[21]) + (h_RT[1] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68718,7 +72233,9 @@ aJacobian(
   dlnkfdT = -1.39 * invT + (510.76491579179) * invT2;
   // reverse
   phi_r = sc[16] * sc[17];
-  Kc = inv_ge[3] * ge[16] * inv_ge[23] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[16] * ge[17] * inv_ge[23])
+             : exp(g_RT[3] - g_RT[16] - g_RT[17] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[16] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68768,7 +72285,9 @@ aJacobian(
   dlnkfdT = (1949.96457999329) * invT2;
   // reverse
   phi_r = sc[6] * sc[24];
-  Kc = inv_ge[3] * ge[6] * inv_ge[25] * ge[24];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[25] * ge[24])
+             : exp(g_RT[3] - g_RT[6] - g_RT[24] + g_RT[25]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[25]) + (h_RT[6] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68818,7 +72337,9 @@ aJacobian(
   dlnkfdT = (429.747032597231) * invT2;
   // reverse
   phi_r = sc[4] * (sc[14] * sc[14]);
-  Kc = refC * inv_ge[3] * ge[4] * inv_ge[27] * ge[14] * ge[14];
+  Kc =
+    refC * (kc_fast ? (ge[4] * inv_ge[3] * inv_ge[27] * ge[14] * ge[14])
+                    : exp(g_RT[3] - g_RT[4] - 2.000000 * g_RT[14] + g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[27]) + (h_RT[4] + 2.000000 * h_RT[14]) - 1.000000);
@@ -68869,7 +72390,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = (sc[14] * sc[14]) * sc[22];
-  Kc = refC * inv_ge[27] * ge[14] * inv_ge[27] * ge[14] * ge[22];
+  Kc = refC * (kc_fast
+                 ? (inv_ge[27] * ge[22] * ge[14] * inv_ge[27] * ge[14])
+                 : exp(-2.000000 * g_RT[14] - g_RT[22] + 2.000000 * g_RT[27]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[27]) + (2.000000 * h_RT[14] + h_RT[22]) -
                     1.000000);
@@ -68909,7 +72432,9 @@ aJacobian(
   dlnkfdT = (178.641916360675) * invT2;
   // reverse
   phi_r = sc[2] * sc[47];
-  Kc = inv_ge[30] * ge[2] * inv_ge[35] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[35] * ge[2] * inv_ge[30])
+             : exp(-g_RT[2] + g_RT[30] + g_RT[35] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[35]) + (h_RT[2] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -68959,7 +72484,9 @@ aJacobian(
   dlnkfdT = 1 * invT + (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[2] * sc[35];
-  Kc = inv_ge[3] * ge[2] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[35] * ge[2] * inv_ge[30])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[30]) + (h_RT[2] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69009,7 +72536,9 @@ aJacobian(
   dlnkfdT = (193.738416334817) * invT2;
   // reverse
   phi_r = sc[1] * sc[35];
-  Kc = inv_ge[4] * ge[1] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[35] * ge[1] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[30]) + (h_RT[1] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69059,7 +72588,9 @@ aJacobian(
   dlnkfdT = (5439.77215734902) * invT2;
   // reverse
   phi_r = sc[3] * sc[47];
-  Kc = inv_ge[2] * ge[3] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[37] * ge[3] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[37]) + (h_RT[3] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69109,7 +72640,9 @@ aJacobian(
   dlnkfdT = (11649.4658133793) * invT2;
   // reverse
   phi_r = (sc[35] * sc[35]);
-  Kc = inv_ge[2] * ge[35] * inv_ge[37] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[37] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - 2.000000 * g_RT[35] + g_RT[37]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[37]) + (2.000000 * h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69148,7 +72681,9 @@ aJacobian(
   dlnkfdT = (9500.73065039311) * invT2;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[1] * ge[4] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[37] * ge[47] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[37]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69198,7 +72733,9 @@ aJacobian(
   dlnkfdT = (10597.7429818474) * invT2;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = inv_ge[4] * ge[6] * inv_ge[37] * ge[47];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[6] * inv_ge[37] * ge[47])
+             : exp(g_RT[4] - g_RT[6] + g_RT[37] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[37]) + (h_RT[6] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69248,7 +72785,9 @@ aJacobian(
   dlnkfdT = (-241.543999586265) * invT2;
   // reverse
   phi_r = sc[4] * sc[36];
-  Kc = inv_ge[6] * ge[4] * inv_ge[35] * ge[36];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * ge[36] * inv_ge[35])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[35] - g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[35]) + (h_RT[4] + h_RT[36]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69298,7 +72837,9 @@ aJacobian(
   dlnkfdT = (-120.771999793133) * invT2;
   // reverse
   phi_r = sc[3] * sc[35];
-  Kc = inv_ge[2] * ge[3] * inv_ge[36] * ge[35];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[36] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[3] - g_RT[35] + g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[36]) + (h_RT[3] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69348,7 +72889,9 @@ aJacobian(
   dlnkfdT = (181.157999689699) * invT2;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[1] * ge[4] * inv_ge[36] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[36] * ge[35] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[35] + g_RT[36]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[36]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69398,7 +72941,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[35];
-  Kc = inv_ge[2] * ge[1] * inv_ge[31] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[2] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[31] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[31]) + (h_RT[1] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69448,7 +72993,9 @@ aJacobian(
   dlnkfdT = (166.061499715557) * invT2;
   // reverse
   phi_r = sc[0] * sc[30];
-  Kc = inv_ge[1] * ge[0] * inv_ge[31] * ge[30];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * ge[30] * inv_ge[31])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[30] + g_RT[31]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[31]) + (h_RT[0] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69498,7 +73045,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[38];
-  Kc = inv_ge[4] * ge[1] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[38] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[31]) + (h_RT[1] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69548,7 +73097,9 @@ aJacobian(
   dlnkfdT = 1.2 * invT;
   // reverse
   phi_r = sc[5] * sc[30];
-  Kc = inv_ge[4] * ge[5] * inv_ge[31] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * ge[30] * inv_ge[31])
+             : exp(g_RT[4] - g_RT[5] - g_RT[30] + g_RT[31]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[31]) + (h_RT[5] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69598,7 +73149,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[2] * sc[38];
-  Kc = inv_ge[3] * ge[2] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[38] * inv_ge[31] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[31]) + (h_RT[2] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69648,7 +73201,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (50.321666580472) * invT2;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[3] * ge[4] * inv_ge[31] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[3] * ge[35] * inv_ge[31])
+             : exp(g_RT[3] - g_RT[4] + g_RT[31] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[31]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69698,7 +73253,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = inv_ge[30] * ge[1] * inv_ge[31] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * ge[1] * inv_ge[31] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[30] + g_RT[31] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[31]) + (h_RT[1] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69748,7 +73305,9 @@ aJacobian(
   dlnkfdT = (6969.55082139537) * invT2;
   // reverse
   phi_r = sc[0] * sc[38];
-  Kc = inv_ge[5] * ge[0] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (ge[0] * ge[38] * inv_ge[31] * inv_ge[5])
+             : exp(-g_RT[0] + g_RT[5] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[31]) + (h_RT[0] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69798,7 +73357,9 @@ aJacobian(
   dlnkfdT = -0.23 * invT;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[31] * ge[4] * inv_ge[35] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[47] * inv_ge[31])
+             : exp(-g_RT[4] + g_RT[31] + g_RT[35] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[31] + h_RT[35]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69848,7 +73409,9 @@ aJacobian(
   dlnkfdT = -0.45 * invT;
   // reverse
   phi_r = sc[1] * sc[37];
-  Kc = inv_ge[31] * ge[1] * inv_ge[35] * ge[37];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[37] * ge[1] * inv_ge[31])
+             : exp(-g_RT[1] + g_RT[31] + g_RT[35] - g_RT[37]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[31] + h_RT[35]) + (h_RT[1] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69898,7 +73461,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[31];
-  Kc = inv_ge[2] * ge[4] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[32] * ge[31] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[32]) + (h_RT[4] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69948,7 +73513,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[38];
-  Kc = inv_ge[2] * ge[1] * inv_ge[32] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * inv_ge[32] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[32] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[32]) + (h_RT[1] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -69998,7 +73565,9 @@ aJacobian(
   dlnkfdT = (1836.74083018723) * invT2;
   // reverse
   phi_r = sc[0] * sc[31];
-  Kc = inv_ge[1] * ge[0] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[32] * ge[31] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[32]) + (h_RT[0] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70048,7 +73617,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (-231.479666270171) * invT2;
   // reverse
   phi_r = sc[5] * sc[31];
-  Kc = inv_ge[4] * ge[5] * inv_ge[32] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[32] * ge[31] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[31] + g_RT[32]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[32]) + (h_RT[5] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70098,7 +73669,8 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[47];
-  Kc = refC * inv_ge[34] * ge[1] * ge[47];
+  Kc = refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[34])
+                       : exp(-g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[1] + h_RT[47]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70137,7 +73709,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[6] * sc[47];
-  Kc = inv_ge[3] * ge[6] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[3] * ge[6] * inv_ge[34])
+             : exp(g_RT[3] - g_RT[6] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[34]) + (h_RT[6] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70187,7 +73761,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[47];
-  Kc = inv_ge[2] * ge[4] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[4] * ge[47] * inv_ge[34] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[34]) + (h_RT[4] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70237,7 +73813,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[31] * sc[35];
-  Kc = inv_ge[2] * ge[31] * inv_ge[34] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[34] * ge[31] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[31] + g_RT[34] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[34]) + (h_RT[31] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70287,7 +73865,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[47];
-  Kc = inv_ge[1] * ge[0] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[0] * ge[47] * inv_ge[1] * inv_ge[34])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[34]) + (h_RT[0] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70337,7 +73917,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[47];
-  Kc = inv_ge[4] * ge[5] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[47] * inv_ge[34] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[34]) + (h_RT[5] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70387,7 +73969,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[13] * sc[47];
-  Kc = inv_ge[12] * ge[13] * inv_ge[34] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[12] * ge[13] * inv_ge[34])
+             : exp(g_RT[12] - g_RT[13] + g_RT[34] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[34]) + (h_RT[13] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70437,7 +74021,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[35];
-  Kc = inv_ge[2] * ge[4] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[38] * ge[35] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[38]) + (h_RT[4] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70487,7 +74073,9 @@ aJacobian(
   dlnkfdT = 0.72 * invT + (332.122999431115) * invT2;
   // reverse
   phi_r = sc[0] * sc[35];
-  Kc = inv_ge[1] * ge[0] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[38] * ge[35] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[38]) + (h_RT[0] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70537,7 +74125,9 @@ aJacobian(
   dlnkfdT = 1.9 * invT + (-478.055832514484) * invT2;
   // reverse
   phi_r = sc[5] * sc[35];
-  Kc = inv_ge[4] * ge[5] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[38] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[38]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70587,7 +74177,9 @@ aJacobian(
   dlnkfdT = (6541.81665546136) * invT2;
   // reverse
   phi_r = sc[6] * sc[35];
-  Kc = inv_ge[3] * ge[6] * inv_ge[38] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * inv_ge[38] * ge[35])
+             : exp(g_RT[3] - g_RT[6] - g_RT[35] + g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[38]) + (h_RT[6] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70637,7 +74229,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = inv_ge[2] * ge[14] * inv_ge[39] * ge[30];
+  Kc =
+    (kc_fast ? (ge[14] * ge[30] * inv_ge[2] * inv_ge[39])
+             : exp(g_RT[2] - g_RT[14] - g_RT[30] + g_RT[39]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[39]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70687,7 +74281,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[4] * ge[1] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[46] * ge[1] * inv_ge[39])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[39]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70737,7 +74333,9 @@ aJacobian(
   dlnkfdT = (3753.99632690321) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[5] * ge[4] * inv_ge[39] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * ge[40] * inv_ge[39] * inv_ge[5])
+             : exp(-g_RT[4] + g_RT[5] + g_RT[39] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[39]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70787,7 +74385,9 @@ aJacobian(
   dlnkfdT = (-221.415332954077) * invT2;
   // reverse
   phi_r = sc[2] * sc[46];
-  Kc = inv_ge[3] * ge[2] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[46] * inv_ge[39] * ge[2])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[39]) + (h_RT[2] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70837,7 +74437,9 @@ aJacobian(
   dlnkfdT = 2.45 * invT + (1127.20533140257) * invT2;
   // reverse
   phi_r = sc[1] * sc[40];
-  Kc = inv_ge[0] * ge[1] * inv_ge[39] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[0] * ge[40] * inv_ge[39] * ge[1])
+             : exp(g_RT[0] - g_RT[1] + g_RT[39] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[39]) + (h_RT[1] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70887,7 +74489,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[35];
-  Kc = inv_ge[2] * ge[14] * inv_ge[46] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[46] * ge[14] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[46]) + (h_RT[14] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70937,7 +74541,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = inv_ge[1] * ge[14] * inv_ge[46] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[46] * ge[14] * ge[31] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[31] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[46]) + (h_RT[14] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -70987,7 +74593,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14] * sc[35];
-  Kc = refC * inv_ge[4] * ge[1] * inv_ge[46] * ge[14] * ge[35];
+  Kc =
+    refC * (kc_fast ? (inv_ge[4] * ge[35] * inv_ge[46] * ge[1] * ge[14])
+                    : exp(-g_RT[1] + g_RT[4] - g_RT[14] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[46]) + (h_RT[1] + h_RT[14] + h_RT[35]) - 1.000000);
@@ -71051,7 +74659,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[47];
-  Kc = inv_ge[30] * ge[14] * inv_ge[46] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[46] * ge[14] * inv_ge[30])
+             : exp(-g_RT[14] + g_RT[30] + g_RT[46] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[46]) + (h_RT[14] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71101,7 +74711,9 @@ aJacobian(
   dlnkfdT = (10064.3333160944) * invT2;
   // reverse
   phi_r = sc[15] * sc[35];
-  Kc = inv_ge[3] * ge[15] * inv_ge[46] * ge[35];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[35] * inv_ge[46] * ge[15])
+             : exp(g_RT[3] - g_RT[15] - g_RT[35] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[46]) + (h_RT[15] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71151,7 +74763,9 @@ aJacobian(
   dlnkfdT = -1.52 * invT + (372.380332695493) * invT2;
   // reverse
   phi_r = sc[14] * sc[37];
-  Kc = inv_ge[35] * ge[14] * inv_ge[46] * ge[37];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[37] * inv_ge[46] * ge[14])
+             : exp(-g_RT[14] + g_RT[35] - g_RT[37] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35] + h_RT[46]) + (h_RT[14] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71201,7 +74815,9 @@ aJacobian(
   dlnkfdT = -2 * invT + (402.573332643776) * invT2;
   // reverse
   phi_r = sc[15] * sc[47];
-  Kc = inv_ge[35] * ge[15] * inv_ge[46] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[35] * inv_ge[46] * ge[15])
+             : exp(-g_RT[15] + g_RT[35] + g_RT[46] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35] + h_RT[46]) + (h_RT[15] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71251,7 +74867,9 @@ aJacobian(
   dlnkfdT = 2.64 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[2] * ge[1] * inv_ge[40] * ge[46];
+  Kc =
+    (kc_fast ? (ge[46] * inv_ge[40] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[40] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71301,7 +74919,9 @@ aJacobian(
   dlnkfdT = 2.64 * invT + (2506.0189957075) * invT2;
   // reverse
   phi_r = sc[14] * sc[31];
-  Kc = inv_ge[2] * ge[14] * inv_ge[40] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[40] * ge[31] * inv_ge[2] * ge[14])
+             : exp(g_RT[2] - g_RT[14] - g_RT[31] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[14] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71351,7 +74971,9 @@ aJacobian(
   dlnkfdT = 1.58 * invT + (13385.5633104055) * invT2;
   // reverse
   phi_r = sc[4] * sc[39];
-  Kc = inv_ge[2] * ge[4] * inv_ge[40] * ge[39];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[40] * inv_ge[2] * ge[39])
+             : exp(g_RT[2] - g_RT[4] - g_RT[39] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[40]) + (h_RT[4] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71401,7 +75023,9 @@ aJacobian(
   dlnkfdT = 2.03 * invT + (6728.0068218091) * invT2;
   // reverse
   phi_r = sc[1] * sc[44];
-  Kc = inv_ge[4] * ge[1] * inv_ge[40] * ge[44];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[44] * ge[1] * inv_ge[40])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[44]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[1] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71451,7 +75075,9 @@ aJacobian(
   dlnkfdT = 2.26 * invT + (3220.58666115021) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[4] * ge[1] * inv_ge[40] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[1] * ge[45])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[40] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71501,7 +75127,9 @@ aJacobian(
   dlnkfdT = 2.56 * invT + (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[4] * ge[14] * inv_ge[40] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[40] * ge[32] * ge[14])
+             : exp(g_RT[4] - g_RT[14] - g_RT[32] + g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[40]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71551,7 +75179,9 @@ aJacobian(
   dlnkfdT = (201.286666321888) * invT2;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[30] * ge[10] * inv_ge[41] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[41] * ge[10] * inv_ge[30])
+             : exp(-g_RT[10] + g_RT[30] + g_RT[41] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[30] + h_RT[41]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71601,7 +75231,9 @@ aJacobian(
   dlnkfdT = (23158.0309603332) * invT2;
   // reverse
   phi_r = sc[30] * sc[39];
-  Kc = inv_ge[8] * ge[30] * inv_ge[47] * ge[39];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[39] * inv_ge[8] * ge[30])
+             : exp(g_RT[8] - g_RT[30] - g_RT[39] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[47]) + (h_RT[30] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71651,7 +75283,9 @@ aJacobian(
   dlnkfdT = 0.88 * invT + (10129.751482649) * invT2;
   // reverse
   phi_r = sc[30] * sc[40];
-  Kc = inv_ge[9] * ge[30] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[9] * ge[30])
+             : exp(g_RT[9] - g_RT[30] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[47]) + (h_RT[30] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71701,7 +75335,9 @@ aJacobian(
   dlnkfdT = (37238.0332695493) * invT2;
   // reverse
   phi_r = sc[31] * sc[40];
-  Kc = inv_ge[10] * ge[31] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[10] * ge[31])
+             : exp(g_RT[10] - g_RT[31] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[47]) + (h_RT[31] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71751,7 +75387,9 @@ aJacobian(
   dlnkfdT = (32709.0832773068) * invT2;
   // reverse
   phi_r = sc[31] * sc[40];
-  Kc = inv_ge[11] * ge[31] * inv_ge[47] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[47] * ge[40] * inv_ge[11] * ge[31])
+             : exp(g_RT[11] - g_RT[31] - g_RT[40] + g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[47]) + (h_RT[31] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71801,7 +75439,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[39];
-  Kc = inv_ge[8] * ge[2] * inv_ge[35] * ge[39];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[2] * inv_ge[8] * ge[39])
+             : exp(-g_RT[2] + g_RT[8] + g_RT[35] - g_RT[39]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[35]) + (h_RT[2] + h_RT[39]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71851,7 +75491,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[30];
-  Kc = inv_ge[8] * ge[14] * inv_ge[35] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[14] * ge[30] * inv_ge[8])
+             : exp(g_RT[8] - g_RT[14] - g_RT[30] + g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[35]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71901,7 +75543,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[40];
-  Kc = inv_ge[9] * ge[2] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[40] * ge[2] * inv_ge[9])
+             : exp(-g_RT[2] + g_RT[9] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[2] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -71951,7 +75595,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[46];
-  Kc = inv_ge[9] * ge[1] * inv_ge[35] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[46] * ge[1] * inv_ge[9])
+             : exp(-g_RT[1] + g_RT[9] + g_RT[35] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[1] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72001,7 +75647,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[30];
-  Kc = inv_ge[9] * ge[16] * inv_ge[35] * ge[30];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[16] * ge[30] * inv_ge[9])
+             : exp(g_RT[9] - g_RT[16] - g_RT[30] + g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[35]) + (h_RT[16] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72051,7 +75699,9 @@ aJacobian(
   dlnkfdT = -1.38 * invT + (639.085165571994) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[10] * ge[1] * inv_ge[35] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[1] * ge[45] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72101,7 +75751,9 @@ aJacobian(
   dlnkfdT = -0.69 * invT + (382.444666011587) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[10] * ge[4] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[40] * inv_ge[10])
+             : exp(-g_RT[4] + g_RT[10] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72151,7 +75803,9 @@ aJacobian(
   dlnkfdT = -0.36 * invT + (291.865666166737) * invT2;
   // reverse
   phi_r = sc[1] * sc[43];
-  Kc = inv_ge[10] * ge[1] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * ge[1] * inv_ge[10])
+             : exp(-g_RT[1] + g_RT[10] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[35]) + (h_RT[1] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72201,7 +75855,9 @@ aJacobian(
   dlnkfdT = -1.38 * invT + (639.085165571994) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[11] * ge[1] * inv_ge[35] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[1] * ge[45] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72251,7 +75907,9 @@ aJacobian(
   dlnkfdT = -0.69 * invT + (382.444666011587) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[11] * ge[4] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * ge[40] * inv_ge[11])
+             : exp(-g_RT[4] + g_RT[11] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72301,7 +75959,9 @@ aJacobian(
   dlnkfdT = -0.36 * invT + (291.865666166737) * invT2;
   // reverse
   phi_r = sc[1] * sc[43];
-  Kc = inv_ge[11] * ge[1] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * ge[1] * inv_ge[11])
+             : exp(-g_RT[1] + g_RT[11] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[35]) + (h_RT[1] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72351,7 +76011,9 @@ aJacobian(
   dlnkfdT = (14492.6399751759) * invT2;
   // reverse
   phi_r = sc[5] * sc[40];
-  Kc = inv_ge[12] * ge[5] * inv_ge[35] * ge[40];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[40] * inv_ge[12] * ge[5])
+             : exp(-g_RT[5] + g_RT[12] + g_RT[35] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[35]) + (h_RT[5] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72401,7 +76063,9 @@ aJacobian(
   dlnkfdT = (10944.9624812527) * invT2;
   // reverse
   phi_r = sc[4] * sc[41];
-  Kc = inv_ge[12] * ge[4] * inv_ge[35] * ge[41];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[35] * inv_ge[12] * ge[41])
+             : exp(-g_RT[4] + g_RT[12] + g_RT[35] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[35]) + (h_RT[4] + h_RT[41]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72451,7 +76115,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[14] * sc[47];
-  Kc = refC * inv_ge[2] * ge[1] * inv_ge[42] * ge[14] * ge[47];
+  Kc =
+    refC * (kc_fast ? (ge[47] * ge[1] * inv_ge[2] * ge[14] * inv_ge[42])
+                    : exp(-g_RT[1] + g_RT[2] - g_RT[14] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[2] + h_RT[42]) + (h_RT[1] + h_RT[14] + h_RT[47]) - 1.000000);
@@ -72515,7 +76181,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[35] * sc[40];
-  Kc = inv_ge[2] * ge[35] * inv_ge[42] * ge[40];
+  Kc =
+    (kc_fast ? (ge[35] * ge[40] * inv_ge[2] * inv_ge[42])
+             : exp(g_RT[2] - g_RT[35] - g_RT[40] + g_RT[42]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[42]) + (h_RT[35] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72565,7 +76233,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[16] * sc[47];
-  Kc = refC * inv_ge[3] * ge[2] * inv_ge[42] * ge[16] * ge[47];
+  Kc =
+    refC * (kc_fast ? (ge[47] * inv_ge[3] * ge[16] * ge[2] * inv_ge[42])
+                    : exp(-g_RT[2] + g_RT[3] - g_RT[16] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[3] + h_RT[42]) + (h_RT[2] + h_RT[16] + h_RT[47]) - 1.000000);
@@ -72629,7 +76299,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[16] * sc[47];
-  Kc = refC * inv_ge[4] * ge[1] * inv_ge[42] * ge[16] * ge[47];
+  Kc =
+    refC * (kc_fast ? (inv_ge[4] * ge[16] * ge[47] * ge[1] * inv_ge[42])
+                    : exp(-g_RT[1] + g_RT[4] - g_RT[16] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[42]) + (h_RT[1] + h_RT[16] + h_RT[47]) - 1.000000);
@@ -72693,7 +76365,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[10] * sc[47];
-  Kc = inv_ge[1] * ge[10] * inv_ge[42] * ge[47];
+  Kc =
+    (kc_fast ? (ge[47] * inv_ge[1] * ge[10] * inv_ge[42])
+             : exp(g_RT[1] - g_RT[10] + g_RT[42] - g_RT[47]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[42]) + (h_RT[10] + h_RT[47]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72743,7 +76417,9 @@ aJacobian(
   dlnkfdT = 1.41 * invT + (4277.34165934012) * invT2;
   // reverse
   phi_r = sc[15] * sc[31];
-  Kc = inv_ge[2] * ge[15] * inv_ge[45] * ge[31];
+  Kc =
+    (kc_fast ? (inv_ge[45] * inv_ge[2] * ge[31] * ge[15])
+             : exp(g_RT[2] - g_RT[15] - g_RT[31] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[15] + h_RT[31]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72793,7 +76469,9 @@ aJacobian(
   dlnkfdT = 1.57 * invT + (22141.5332954077) * invT2;
   // reverse
   phi_r = sc[14] * sc[38];
-  Kc = inv_ge[2] * ge[14] * inv_ge[45] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * ge[14] * inv_ge[45] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[38] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[14] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72843,7 +76521,9 @@ aJacobian(
   dlnkfdT = 2.11 * invT + (5736.6699901738) * invT2;
   // reverse
   phi_r = sc[4] * sc[46];
-  Kc = inv_ge[2] * ge[4] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (ge[4] * ge[46] * inv_ge[2] * inv_ge[45])
+             : exp(g_RT[2] - g_RT[4] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[45]) + (h_RT[4] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72893,7 +76573,9 @@ aJacobian(
   dlnkfdT = 1.7 * invT + (1912.22333005793) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[1] * ge[14] * inv_ge[45] * ge[32];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[45] * ge[32] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[45]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72943,7 +76625,9 @@ aJacobian(
   dlnkfdT = 2.5 * invT + (6692.78165520277) * invT2;
   // reverse
   phi_r = sc[0] * sc[46];
-  Kc = inv_ge[1] * ge[0] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (ge[0] * ge[46] * inv_ge[1] * inv_ge[45])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[45]) + (h_RT[0] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -72993,7 +76677,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[5] * sc[46];
-  Kc = inv_ge[4] * ge[5] * inv_ge[45] * ge[46];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[46] * ge[5] * inv_ge[45])
+             : exp(g_RT[4] - g_RT[5] + g_RT[45] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[45]) + (h_RT[5] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73043,7 +76729,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (1811.57999689699) * invT2;
   // reverse
   phi_r = sc[15] * sc[32];
-  Kc = inv_ge[4] * ge[15] * inv_ge[45] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[32] * ge[15] * inv_ge[45])
+             : exp(g_RT[4] - g_RT[15] - g_RT[32] + g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[45]) + (h_RT[15] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73093,7 +76781,9 @@ aJacobian(
   dlnkfdT = -0.69 * invT + (1434.16749754345) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[43] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[43] * ge[45])
+             : exp(g_RT[1] - g_RT[1] + g_RT[43] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73127,7 +76817,9 @@ aJacobian(
   dlnkfdT = 0.18 * invT + (1066.81933150601) * invT2;
   // reverse
   phi_r = sc[4] * sc[40];
-  Kc = inv_ge[1] * ge[4] * inv_ge[43] * ge[40];
+  Kc =
+    (kc_fast ? (ge[4] * ge[40] * inv_ge[43] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[4] - g_RT[40] + g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[4] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73177,7 +76869,9 @@ aJacobian(
   dlnkfdT = -0.75 * invT + (1454.29616417564) * invT2;
   // reverse
   phi_r = sc[14] * sc[32];
-  Kc = inv_ge[1] * ge[14] * inv_ge[43] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[43] * ge[32] * ge[14] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[14] - g_RT[32] + g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[43]) + (h_RT[14] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73227,7 +76921,9 @@ aJacobian(
   dlnkfdT = 2 * invT + (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[1] * sc[45];
-  Kc = inv_ge[44] * ge[45];
+  Kc =
+    (kc_fast ? (inv_ge[44] * ge[45])
+             : exp(g_RT[1] - g_RT[1] + g_RT[44] - g_RT[45]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[44]) + (h_RT[1] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73261,7 +76957,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[43];
-  Kc = inv_ge[27] * ge[14] * inv_ge[35] * ge[43];
+  Kc =
+    (kc_fast ? (inv_ge[35] * ge[43] * inv_ge[27] * ge[14])
+             : exp(-g_RT[14] + g_RT[27] + g_RT[35] - g_RT[43]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[27] + h_RT[35]) + (h_RT[14] + h_RT[43]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73311,7 +77009,9 @@ aJacobian(
   dlnkfdT = -0.31 * invT + (145.932833083369) * invT2;
   // reverse
   phi_r = sc[1] * sc[41];
-  Kc = inv_ge[12] * ge[1] * inv_ge[30] * ge[41];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[1] * ge[41] * inv_ge[30])
+             : exp(-g_RT[1] + g_RT[12] + g_RT[30] - g_RT[41]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[30]) + (h_RT[1] + h_RT[41]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73361,7 +77061,9 @@ aJacobian(
   dlnkfdT = 0.15 * invT + (-45.2894999224248) * invT2;
   // reverse
   phi_r = sc[0] * sc[40];
-  Kc = inv_ge[12] * ge[0] * inv_ge[30] * ge[40];
+  Kc =
+    (kc_fast ? (ge[0] * ge[40] * inv_ge[12] * inv_ge[30])
+             : exp(-g_RT[0] + g_RT[12] + g_RT[30] - g_RT[40]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[30]) + (h_RT[0] + h_RT[40]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73411,7 +77113,9 @@ aJacobian(
   dlnkfdT = 2.4 * invT + (4989.3932414538) * invT2;
   // reverse
   phi_r = sc[0] * sc[32];
-  Kc = inv_ge[1] * ge[0] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[33] * inv_ge[1] * ge[32])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[33]) + (h_RT[0] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73461,7 +77165,9 @@ aJacobian(
   dlnkfdT = 1.6 * invT + (480.571915843507) * invT2;
   // reverse
   phi_r = sc[5] * sc[32];
-  Kc = inv_ge[4] * ge[5] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[33] * ge[5] * ge[32])
+             : exp(g_RT[4] - g_RT[5] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[33]) + (h_RT[5] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73511,7 +77217,9 @@ aJacobian(
   dlnkfdT = 1.94 * invT + (3250.77966109849) * invT2;
   // reverse
   phi_r = sc[4] * sc[32];
-  Kc = inv_ge[2] * ge[4] * inv_ge[33] * ge[32];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[33] * inv_ge[2] * ge[32])
+             : exp(g_RT[2] - g_RT[4] - g_RT[32] + g_RT[33]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[33]) + (h_RT[4] + h_RT[32]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73561,7 +77269,9 @@ aJacobian(
   dlnkfdT = (7221.15915429773) * invT2;
   // reverse
   phi_r = sc[14] * sc[38];
-  Kc = inv_ge[15] * ge[14] * inv_ge[31] * ge[38];
+  Kc =
+    (kc_fast ? (ge[38] * ge[14] * inv_ge[15] * inv_ge[31])
+             : exp(-g_RT[14] + g_RT[15] + g_RT[31] - g_RT[38]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[15] + h_RT[31]) + (h_RT[14] + h_RT[38]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73611,7 +77321,9 @@ aJacobian(
   dlnkfdT = -0.752 * invT + (173.609749702628) * invT2;
   // reverse
   phi_r = sc[35] * sc[46];
-  Kc = inv_ge[36] * ge[35] * inv_ge[39] * ge[46];
+  Kc =
+    (kc_fast ? (ge[35] * inv_ge[36] * ge[46] * inv_ge[39])
+             : exp(-g_RT[35] + g_RT[36] + g_RT[39] - g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[36] + h_RT[39]) + (h_RT[35] + h_RT[46]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73661,7 +77373,9 @@ aJacobian(
   dlnkfdT = (-354.767749392327) * invT2;
   // reverse
   phi_r = sc[15] * sc[37];
-  Kc = inv_ge[36] * ge[15] * inv_ge[46] * ge[37];
+  Kc =
+    (kc_fast ? (ge[37] * inv_ge[46] * inv_ge[36] * ge[15])
+             : exp(-g_RT[15] + g_RT[36] - g_RT[37] + g_RT[46]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[36] + h_RT[46]) + (h_RT[15] + h_RT[37]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73711,7 +77425,9 @@ aJacobian(
   dlnkfdT = (5686.34832359333) * invT2;
   // reverse
   phi_r = sc[14] * sc[35];
-  Kc = inv_ge[15] * ge[14] * inv_ge[30] * ge[35];
+  Kc =
+    (kc_fast ? (ge[35] * ge[14] * inv_ge[15] * inv_ge[30])
+             : exp(-g_RT[14] + g_RT[15] + g_RT[30] - g_RT[35]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[15] + h_RT[30]) + (h_RT[14] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73797,7 +77513,9 @@ aJacobian(
   dlnkfdT = 1.83 * invT + (110.707666477038) * invT2;
   // reverse
   phi_r = sc[1] * sc[51];
-  Kc = inv_ge[2] * ge[1] * inv_ge[24] * ge[51];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[51] * ge[1] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[24] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[24]) + (h_RT[1] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73847,7 +77565,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[52];
-  Kc = inv_ge[2] * ge[1] * inv_ge[25] * ge[52];
+  Kc =
+    (kc_fast ? (inv_ge[25] * ge[1] * ge[52] * inv_ge[2])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[25] - g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[25]) + (h_RT[1] + h_RT[52]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -73897,7 +77617,9 @@ aJacobian(
   dlnkfdT = (8720.74481839579) * invT2;
   // reverse
   phi_r = sc[3] * sc[5];
-  Kc = inv_ge[4] * ge[3] * inv_ge[6] * ge[5];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[3] * inv_ge[6] * ge[5])
+             : exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[3] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74011,7 +77733,9 @@ aJacobian(
   dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[2] * sc[17];
-  Kc = inv_ge[3] * ge[2] * inv_ge[10] * ge[17];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[17] * ge[2] * inv_ge[10])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[10] - g_RT[17]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[10]) + (h_RT[2] + h_RT[17]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74116,7 +77840,9 @@ aJacobian(
   dlnkfdT = 0.29 * invT + (5.53538332385192) * invT2;
   // reverse
   phi_r = sc[2] * sc[51];
-  Kc = inv_ge[3] * ge[2] * inv_ge[23] * ge[51];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[51] * ge[2] * inv_ge[23])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[23] - g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[2] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74166,7 +77892,9 @@ aJacobian(
   dlnkfdT = 1.61 * invT + (-193.235199669012) * invT2;
   // reverse
   phi_r = sc[6] * sc[22];
-  Kc = inv_ge[3] * ge[6] * inv_ge[23] * ge[22];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[6] * ge[22] * inv_ge[23])
+             : exp(g_RT[3] - g_RT[6] - g_RT[22] + g_RT[23]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[23]) + (h_RT[6] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74216,7 +77944,9 @@ aJacobian(
   dlnkfdT = (909.815731774933) * invT2;
   // reverse
   phi_r = sc[4] * sc[51];
-  Kc = inv_ge[2] * ge[4] * inv_ge[52] * ge[51];
+  Kc =
+    (kc_fast ? (ge[4] * ge[51] * inv_ge[52] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] - g_RT[51] + g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[52]) + (h_RT[4] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74338,7 +78068,9 @@ aJacobian(
   dlnkfdT = 1.16 * invT + (1210.23608126035) * invT2;
   // reverse
   phi_r = sc[0] * sc[51];
-  Kc = inv_ge[1] * ge[0] * inv_ge[52] * ge[51];
+  Kc =
+    (kc_fast ? (ge[0] * ge[51] * inv_ge[52] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[51] + g_RT[52]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[52]) + (h_RT[0] + h_RT[51]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74600,7 +78332,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[12] * sc[16];
-  Kc = inv_ge[1] * ge[12] * inv_ge[51] * ge[16];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[51] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[16] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[51]) + (h_RT[12] + h_RT[16]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74650,7 +78384,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[28];
-  Kc = inv_ge[1] * ge[0] * inv_ge[51] * ge[28];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[51] * ge[28] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[28] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[51]) + (h_RT[0] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74700,7 +78436,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[5] * sc[28];
-  Kc = inv_ge[4] * ge[5] * inv_ge[51] * ge[28];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[28] * inv_ge[51] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[28] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[51]) + (h_RT[5] + h_RT[28]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74750,7 +78488,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[18];
-  Kc = inv_ge[4] * ge[16] * inv_ge[51] * ge[18];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[51] * ge[18])
+             : exp(g_RT[4] - g_RT[16] - g_RT[18] + g_RT[51]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[51]) + (h_RT[16] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74800,7 +78540,9 @@ aJacobian(
   dlnkfdT = 2.68 * invT + (1869.95313013034) * invT2;
   // reverse
   phi_r = sc[4] * sc[49];
-  Kc = inv_ge[2] * ge[4] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[50] * inv_ge[2] * ge[49])
+             : exp(g_RT[2] - g_RT[4] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[50]) + (h_RT[4] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74850,7 +78592,9 @@ aJacobian(
   dlnkfdT = 2.54 * invT + (3399.73179417669) * invT2;
   // reverse
   phi_r = sc[0] * sc[49];
-  Kc = inv_ge[1] * ge[0] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[50] * inv_ge[1] * ge[49])
+             : exp(-g_RT[0] + g_RT[1] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[50]) + (h_RT[0] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74900,7 +78644,9 @@ aJacobian(
   dlnkfdT = 1.8 * invT + (470.004365861608) * invT2;
   // reverse
   phi_r = sc[5] * sc[49];
-  Kc = inv_ge[4] * ge[5] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[49] * inv_ge[50] * ge[5])
+             : exp(g_RT[4] - g_RT[5] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[50]) + (h_RT[5] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -74950,7 +78696,9 @@ aJacobian(
   dlnkfdT = 2.72 * invT + (754.82499870708) * invT2;
   // reverse
   phi_r = sc[6] * sc[50];
-  Kc = inv_ge[7] * ge[6] * inv_ge[49] * ge[50];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[49] * inv_ge[7] * ge[50])
+             : exp(-g_RT[6] + g_RT[7] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[49]) + (h_RT[6] + h_RT[50]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75000,7 +78748,9 @@ aJacobian(
   dlnkfdT = 3.65 * invT + (3600.01202716696) * invT2;
   // reverse
   phi_r = sc[13] * sc[49];
-  Kc = inv_ge[12] * ge[13] * inv_ge[50] * ge[49];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[49] * inv_ge[50] * ge[13])
+             : exp(g_RT[12] - g_RT[13] - g_RT[49] + g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[50]) + (h_RT[13] + h_RT[49]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75050,7 +78800,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[25];
-  Kc = inv_ge[2] * ge[17] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[49] * ge[17] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[17] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[49]) + (h_RT[17] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75100,7 +78852,9 @@ aJacobian(
   dlnkfdT = 2.19 * invT + (447.8628325662) * invT2;
   // reverse
   phi_r = sc[12] * sc[25];
-  Kc = inv_ge[1] * ge[12] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[49] * ge[12] * inv_ge[1])
+             : exp(g_RT[1] - g_RT[12] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[49]) + (h_RT[12] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75150,7 +78904,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[18] * sc[25];
-  Kc = inv_ge[4] * ge[18] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[18] * inv_ge[49] * ge[25])
+             : exp(g_RT[4] - g_RT[18] - g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[49]) + (h_RT[18] + h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75200,7 +78956,9 @@ aJacobian(
   dlnkfdT = 0.255 * invT + (-474.533315853851) * invT2;
   // reverse
   phi_r = sc[3] * sc[50];
-  Kc = inv_ge[6] * ge[3] * inv_ge[49] * ge[50];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[49] * ge[50])
+             : exp(-g_RT[3] + g_RT[6] + g_RT[49] - g_RT[50]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[49]) + (h_RT[3] + h_RT[50]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75286,7 +79044,9 @@ aJacobian(
   dlnkfdT = -0.32 * invT;
   // reverse
   phi_r = (sc[25] * sc[25]);
-  Kc = inv_ge[12] * ge[25] * inv_ge[49] * ge[25];
+  Kc =
+    (kc_fast ? (ge[25] * inv_ge[12] * inv_ge[49] * ge[25])
+             : exp(g_RT[12] - 2.000000 * g_RT[25] + g_RT[49]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[49]) + (2.000000 * h_RT[25]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75325,7 +79085,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = inv_ge[1] * ge[11] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[1] * ge[11] * ge[53])
+             : exp(g_RT[1] - g_RT[11] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[11] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75375,7 +79137,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[63];
-  Kc = inv_ge[1] * ge[0] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[60] * inv_ge[1] * ge[63])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[0] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75425,7 +79189,9 @@ aJacobian(
   dlnkfdT = 2.06 * invT + (6189.56498939805) * invT2;
   // reverse
   phi_r = sc[0] * sc[62];
-  Kc = inv_ge[1] * ge[0] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[58] * ge[62])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[0] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75475,7 +79241,9 @@ aJacobian(
   dlnkfdT = 1.6 * invT + (31697.6177790393) * invT2;
   // reverse
   phi_r = sc[54] * sc[57];
-  Kc = inv_ge[1] * ge[54] * inv_ge[58] * ge[57];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[1] * inv_ge[58] * ge[57])
+             : exp(g_RT[1] - g_RT[54] - g_RT[57] + g_RT[58]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[54] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75525,7 +79293,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[9] * sc[53];
-  Kc = inv_ge[1] * ge[9] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * inv_ge[1] * ge[9] * ge[53])
+             : exp(g_RT[1] - g_RT[9] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[63]) + (h_RT[9] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75575,7 +79345,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[65];
-  Kc = inv_ge[1] * ge[0] * inv_ge[63] * ge[65];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[63] * ge[65] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[63] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[63]) + (h_RT[0] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75625,7 +79397,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[0] * sc[65];
-  Kc = inv_ge[9] * ge[0] * inv_ge[53] * ge[65];
+  Kc =
+    (kc_fast ? (ge[0] * ge[65] * inv_ge[9] * inv_ge[53])
+             : exp(-g_RT[0] + g_RT[9] + g_RT[53] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[9] + h_RT[53]) + (h_RT[0] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75675,7 +79449,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[1] * ge[14] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[1] * ge[53])
+             : exp(g_RT[1] - g_RT[14] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[69]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75725,7 +79501,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[2] * ge[1] * inv_ge[60] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[2] * ge[1] * ge[68])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[60] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[60]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75775,7 +79553,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[67];
-  Kc = inv_ge[2] * ge[1] * inv_ge[61] * ge[67];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[2] * inv_ge[61] * ge[67])
+             : exp(-g_RT[1] + g_RT[2] + g_RT[61] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[61]) + (h_RT[1] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75825,7 +79605,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = inv_ge[2] * ge[54] * inv_ge[62] * ge[67];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[62] * ge[67])
+             : exp(g_RT[2] - g_RT[54] + g_RT[62] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[62]) + (h_RT[54] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75875,7 +79657,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[4] * ge[17] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[60] * ge[17] * ge[53])
+             : exp(g_RT[4] - g_RT[17] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[60]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75925,7 +79709,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[68];
-  Kc = inv_ge[4] * ge[53] * inv_ge[61] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[61] * ge[53] * ge[68])
+             : exp(g_RT[4] - g_RT[53] + g_RT[61] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[61]) + (h_RT[53] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -75975,7 +79761,9 @@ aJacobian(
   dlnkfdT = -0.06 * invT + (-133.855633104055) * invT2;
   // reverse
   phi_r = sc[53] * sc[67];
-  Kc = inv_ge[4] * ge[53] * inv_ge[62] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[53] * inv_ge[62] * ge[67])
+             : exp(g_RT[4] - g_RT[53] + g_RT[62] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[62]) + (h_RT[53] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76025,7 +79813,9 @@ aJacobian(
   dlnkfdT = 0.5 * invT + (327.090832773068) * invT2;
   // reverse
   phi_r = sc[1] * sc[53];
-  Kc = inv_ge[0] * ge[1] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[0] * inv_ge[54] * ge[1] * ge[53])
+             : exp(g_RT[0] - g_RT[1] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[54]) + (h_RT[1] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76075,7 +79865,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[2] * sc[53];
-  Kc = inv_ge[4] * ge[2] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[4] * ge[2] * ge[53])
+             : exp(-g_RT[2] + g_RT[4] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[54]) + (h_RT[2] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76125,7 +79917,9 @@ aJacobian(
   dlnkfdT = 0.5 * invT;
   // reverse
   phi_r = sc[3] * sc[53];
-  Kc = inv_ge[6] * ge[3] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[3] * inv_ge[6] * ge[53])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[54]) + (h_RT[3] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76175,7 +79969,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT;
   // reverse
   phi_r = sc[4] * sc[53];
-  Kc = inv_ge[5] * ge[4] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[4] * inv_ge[5] * ge[53])
+             : exp(-g_RT[4] + g_RT[5] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[54]) + (h_RT[4] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76225,7 +80021,9 @@ aJacobian(
   dlnkfdT = 0.5 * invT;
   // reverse
   phi_r = sc[6] * sc[53];
-  Kc = inv_ge[7] * ge[6] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[6] * inv_ge[7] * ge[53])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[54]) + (h_RT[6] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76275,7 +80073,8 @@ aJacobian(
   dlnkfdT = -2.85 * invT + (6541.81665546136) * invT2;
   // reverse
   phi_r = sc[56];
-  Kc = refCinv * inv_ge[0] * ge[56] * inv_ge[63];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * inv_ge[63] * ge[56])
+                          : exp(g_RT[0] - g_RT[56] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[63]) + (h_RT[56]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76314,7 +80113,8 @@ aJacobian(
   dlnkfdT = -3.38 * invT + (1741.12966368433) * invT2;
   // reverse
   phi_r = sc[56];
-  Kc = refCinv * inv_ge[1] * ge[56] * inv_ge[60];
+  Kc = refCinv * (kc_fast ? (inv_ge[60] * inv_ge[1] * ge[56])
+                          : exp(g_RT[1] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[60]) + (h_RT[56]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76353,7 +80153,8 @@ aJacobian(
   dlnkfdT = -0.71 * invT + (20581.561631413) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[0] * ge[57] * inv_ge[64];
+  Kc = refCinv * (kc_fast ? (inv_ge[0] * inv_ge[64] * ge[57])
+                          : exp(g_RT[0] - g_RT[57] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[64]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76392,7 +80193,8 @@ aJacobian(
   dlnkfdT = -0.32 * invT + (3869.73616003829) * invT2;
   // reverse
   phi_r = sc[57];
-  Kc = refCinv * inv_ge[1] * ge[57] * inv_ge[61];
+  Kc = refCinv * (kc_fast ? (inv_ge[1] * inv_ge[61] * ge[57])
+                          : exp(g_RT[1] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[57]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76431,7 +80233,9 @@ aJacobian(
   dlnkfdT = 1.27 * invT + (4191.79482615331) * invT2;
   // reverse
   phi_r = sc[0] * sc[63];
-  Kc = inv_ge[11] * ge[0] * inv_ge[53] * ge[63];
+  Kc =
+    (kc_fast ? (ge[0] * ge[63] * inv_ge[11] * inv_ge[53])
+             : exp(-g_RT[0] + g_RT[11] + g_RT[53] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[53]) + (h_RT[0] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76481,7 +80285,9 @@ aJacobian(
   dlnkfdT = -0.88 * invT + (-493.65554915443) * invT2;
   // reverse
   phi_r = sc[11] * sc[53];
-  Kc = inv_ge[12] * ge[11] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[12] * ge[11] * ge[53])
+             : exp(-g_RT[11] + g_RT[12] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[54]) + (h_RT[11] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76531,7 +80337,9 @@ aJacobian(
   dlnkfdT = -0.39 * invT + (-133.352416438251) * invT2;
   // reverse
   phi_r = sc[1] * sc[60];
-  Kc = inv_ge[12] * ge[1] * inv_ge[54] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[60] * ge[1] * inv_ge[12])
+             : exp(-g_RT[1] + g_RT[12] + g_RT[54] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[54]) + (h_RT[1] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76581,7 +80389,9 @@ aJacobian(
   dlnkfdT = 1.35 * invT + (9007.57831790448) * invT2;
   // reverse
   phi_r = sc[0] * sc[64];
-  Kc = inv_ge[53] * ge[0] * inv_ge[63] * ge[64];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[63] * inv_ge[53] * ge[64])
+             : exp(-g_RT[0] + g_RT[53] + g_RT[63] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[53] + h_RT[63]) + (h_RT[0] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76631,7 +80441,9 @@ aJacobian(
   dlnkfdT = -0.11 * invT + (50.8248832462767) * invT2;
   // reverse
   phi_r = sc[53] * sc[63];
-  Kc = inv_ge[1] * ge[53] * inv_ge[61] * ge[63];
+  Kc =
+    (kc_fast ? (ge[63] * inv_ge[1] * inv_ge[61] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[61] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[53] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76681,7 +80493,9 @@ aJacobian(
   dlnkfdT = 2.42 * invT + (-211.350999637982) * invT2;
   // reverse
   phi_r = sc[0] * sc[64];
-  Kc = inv_ge[1] * ge[0] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[61] * ge[64])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[61]) + (h_RT[0] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76731,7 +80545,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[63];
-  Kc = inv_ge[54] * ge[53] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[63] * inv_ge[60] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[60]) + (h_RT[53] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76781,7 +80597,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = inv_ge[1] * ge[53] * inv_ge[62] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[1] * inv_ge[62] * ge[53] * ge[64])
+             : exp(g_RT[1] - g_RT[53] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[62]) + (h_RT[53] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76831,7 +80649,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[64];
-  Kc = inv_ge[54] * ge[53] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[61] * ge[64] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[61]) + (h_RT[53] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76881,7 +80701,9 @@ aJacobian(
   dlnkfdT = 3 * invT + (2667.04832876501) * invT2;
   // reverse
   phi_r = sc[0] * sc[60];
-  Kc = inv_ge[1] * ge[0] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[0] * ge[60] * inv_ge[56] * inv_ge[1])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[56]) + (h_RT[0] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76931,7 +80753,9 @@ aJacobian(
   dlnkfdT = 3 * invT + (2818.01332850643) * invT2;
   // reverse
   phi_r = sc[0] * sc[61];
-  Kc = inv_ge[1] * ge[0] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[57] * ge[61])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[57]) + (h_RT[0] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -76981,7 +80805,9 @@ aJacobian(
   dlnkfdT = (15801.0033062682) * invT2;
   // reverse
   phi_r = sc[12] * sc[53];
-  Kc = inv_ge[1] * ge[12] * inv_ge[56] * ge[53];
+  Kc =
+    (kc_fast ? (ge[12] * inv_ge[1] * inv_ge[56] * ge[53])
+             : exp(g_RT[1] - g_RT[12] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[56]) + (h_RT[12] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77031,7 +80857,9 @@ aJacobian(
   dlnkfdT = (17159.6883039409) * invT2;
   // reverse
   phi_r = sc[53] * sc[60];
-  Kc = inv_ge[1] * ge[53] * inv_ge[57] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[1] * inv_ge[57] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[57] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[57]) + (h_RT[53] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77081,7 +80909,9 @@ aJacobian(
   dlnkfdT = 1.77 * invT + (20028.0232990278) * invT2;
   // reverse
   phi_r = sc[53] * sc[61];
-  Kc = inv_ge[1] * ge[53] * inv_ge[58] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[61] * inv_ge[58] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[58] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[58]) + (h_RT[53] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77131,7 +80961,9 @@ aJacobian(
   dlnkfdT = 1.58 * invT + (20797.9447977091) * invT2;
   // reverse
   phi_r = sc[53] * sc[62];
-  Kc = inv_ge[1] * ge[53] * inv_ge[59] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[53] * inv_ge[59] * ge[62])
+             : exp(g_RT[1] - g_RT[53] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[59]) + (h_RT[53] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77181,7 +81013,9 @@ aJacobian(
   dlnkfdT = 1.45 * invT + (31999.5477785221) * invT2;
   // reverse
   phi_r = sc[54] * sc[58];
-  Kc = inv_ge[1] * ge[54] * inv_ge[59] * ge[58];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[1] * inv_ge[59] * ge[58])
+             : exp(g_RT[1] - g_RT[54] - g_RT[58] + g_RT[59]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[59]) + (h_RT[54] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77231,7 +81065,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (3522.51666063304) * invT2;
   // reverse
   phi_r = sc[4] * sc[60];
-  Kc = inv_ge[2] * ge[4] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[4] * ge[60] * inv_ge[56] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[4] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[56]) + (h_RT[4] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77281,7 +81117,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (3069.62166140879) * invT2;
   // reverse
   phi_r = sc[4] * sc[61];
-  Kc = inv_ge[2] * ge[4] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[57] * ge[61])
+             : exp(g_RT[2] - g_RT[4] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[57]) + (h_RT[4] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77331,7 +81169,9 @@ aJacobian(
   dlnkfdT = (9535.95581699944) * invT2;
   // reverse
   phi_r = sc[4] * sc[62];
-  Kc = inv_ge[2] * ge[4] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[58] * ge[62])
+             : exp(g_RT[2] - g_RT[4] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[58]) + (h_RT[4] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77381,7 +81221,9 @@ aJacobian(
   dlnkfdT = 1.5 * invT + (1479.45699746588) * invT2;
   // reverse
   phi_r = sc[5] * sc[60];
-  Kc = inv_ge[4] * ge[5] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[60] * inv_ge[56] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[56]) + (h_RT[5] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77431,7 +81273,9 @@ aJacobian(
   dlnkfdT = 1.7 * invT + (1278.17033114399) * invT2;
   // reverse
   phi_r = sc[5] * sc[61];
-  Kc = inv_ge[4] * ge[5] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * inv_ge[57] * ge[61])
+             : exp(g_RT[4] - g_RT[5] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[57]) + (h_RT[5] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77481,7 +81325,9 @@ aJacobian(
   dlnkfdT = 1.55 * invT + (1846.80516350332) * invT2;
   // reverse
   phi_r = sc[5] * sc[62];
-  Kc = inv_ge[4] * ge[5] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[5] * inv_ge[58] * ge[62])
+             : exp(g_RT[4] - g_RT[5] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[58]) + (h_RT[5] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77531,7 +81377,9 @@ aJacobian(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[56];
-  Kc = inv_ge[7] * ge[6] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[60] * inv_ge[7] * ge[56])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[60]) + (h_RT[6] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77581,7 +81429,9 @@ aJacobian(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[57];
-  Kc = inv_ge[7] * ge[6] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[57] * inv_ge[61])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[61]) + (h_RT[6] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77631,7 +81481,9 @@ aJacobian(
   dlnkfdT = (-301.929999482832) * invT2;
   // reverse
   phi_r = sc[6] * sc[58];
-  Kc = inv_ge[7] * ge[6] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[58] * inv_ge[62])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[62]) + (h_RT[6] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77681,7 +81533,9 @@ aJacobian(
   dlnkfdT = (5736.6699901738) * invT2;
   // reverse
   phi_r = sc[13] * sc[60];
-  Kc = inv_ge[12] * ge[13] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[12] * inv_ge[56] * ge[13])
+             : exp(g_RT[12] - g_RT[13] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[56]) + (h_RT[13] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77731,7 +81585,9 @@ aJacobian(
   dlnkfdT = (5132.80999120814) * invT2;
   // reverse
   phi_r = sc[13] * sc[61];
-  Kc = inv_ge[12] * ge[13] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[57] * ge[61])
+             : exp(g_RT[12] - g_RT[13] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[57]) + (h_RT[13] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77781,7 +81637,9 @@ aJacobian(
   dlnkfdT = (5495.12599058754) * invT2;
   // reverse
   phi_r = sc[12] * sc[58];
-  Kc = inv_ge[13] * ge[12] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[12] * inv_ge[13] * ge[58] * inv_ge[62])
+             : exp(-g_RT[12] + g_RT[13] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[62]) + (h_RT[12] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77831,7 +81689,9 @@ aJacobian(
   dlnkfdT = (5183.13165778861) * invT2;
   // reverse
   phi_r = sc[24] * sc[60];
-  Kc = inv_ge[23] * ge[24] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * ge[24] * inv_ge[56] * inv_ge[23])
+             : exp(g_RT[23] - g_RT[24] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[56]) + (h_RT[24] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77881,7 +81741,9 @@ aJacobian(
   dlnkfdT = (4629.59332540342) * invT2;
   // reverse
   phi_r = sc[24] * sc[61];
-  Kc = inv_ge[23] * ge[24] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[23] * inv_ge[57] * ge[61])
+             : exp(g_RT[23] - g_RT[24] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[57]) + (h_RT[24] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77931,7 +81793,9 @@ aJacobian(
   dlnkfdT = (6038.59998965664) * invT2;
   // reverse
   phi_r = sc[23] * sc[58];
-  Kc = inv_ge[24] * ge[23] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (inv_ge[24] * ge[23] * ge[58] * inv_ge[62])
+             : exp(-g_RT[23] + g_RT[24] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24] + h_RT[62]) + (h_RT[23] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -77981,7 +81845,9 @@ aJacobian(
   dlnkfdT = (5641.05882367091) * invT2;
   // reverse
   phi_r = sc[58] * sc[60];
-  Kc = inv_ge[56] * ge[58] * inv_ge[62] * ge[60];
+  Kc =
+    (kc_fast ? (ge[60] * inv_ge[56] * ge[58] * inv_ge[62])
+             : exp(g_RT[56] - g_RT[58] - g_RT[60] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[56] + h_RT[62]) + (h_RT[58] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78031,7 +81897,9 @@ aJacobian(
   dlnkfdT = (7045.03332126608) * invT2;
   // reverse
   phi_r = sc[56] * sc[61];
-  Kc = inv_ge[57] * ge[56] * inv_ge[60] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[56] * inv_ge[57] * ge[61])
+             : exp(-g_RT[56] + g_RT[57] + g_RT[60] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[57] + h_RT[60]) + (h_RT[56] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78081,7 +81949,9 @@ aJacobian(
   dlnkfdT = (5686.34832359333) * invT2;
   // reverse
   phi_r = sc[58] * sc[61];
-  Kc = inv_ge[57] * ge[58] * inv_ge[62] * ge[61];
+  Kc =
+    (kc_fast ? (ge[61] * inv_ge[57] * ge[58] * inv_ge[62])
+             : exp(g_RT[57] - g_RT[58] - g_RT[61] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[57] + h_RT[62]) + (h_RT[58] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78131,7 +82001,9 @@ aJacobian(
   dlnkfdT = 3.1 * invT + (4931.52332488625) * invT2;
   // reverse
   phi_r = sc[19] * sc[56];
-  Kc = inv_ge[20] * ge[19] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[19] * ge[56] * inv_ge[20])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[60]) + (h_RT[19] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78181,7 +82053,9 @@ aJacobian(
   dlnkfdT = 3.1 * invT + (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[19] * sc[57];
-  Kc = inv_ge[20] * ge[19] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[20] * ge[57] * inv_ge[61])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[61]) + (h_RT[19] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78231,7 +82105,9 @@ aJacobian(
   dlnkfdT = 3.1 * invT + (2767.69166192596) * invT2;
   // reverse
   phi_r = sc[19] * sc[58];
-  Kc = inv_ge[20] * ge[19] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[19] * inv_ge[20] * ge[58] * inv_ge[62])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[62]) + (h_RT[19] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78281,7 +82157,9 @@ aJacobian(
   dlnkfdT = 3.2 * invT + (5032.1666580472) * invT2;
   // reverse
   phi_r = sc[18] * sc[56];
-  Kc = inv_ge[20] * ge[18] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[18] * ge[56] * inv_ge[20])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[60]) + (h_RT[18] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78331,7 +82209,9 @@ aJacobian(
   dlnkfdT = 3.2 * invT + (4679.91499198389) * invT2;
   // reverse
   phi_r = sc[18] * sc[57];
-  Kc = inv_ge[20] * ge[18] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[20] * ge[57] * inv_ge[61])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[61]) + (h_RT[18] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78381,7 +82261,9 @@ aJacobian(
   dlnkfdT = 3.2 * invT + (2868.3349950869) * invT2;
   // reverse
   phi_r = sc[18] * sc[58];
-  Kc = inv_ge[20] * ge[18] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[18] * inv_ge[20] * ge[58] * inv_ge[62])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[62]) + (h_RT[18] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78431,7 +82313,9 @@ aJacobian(
   dlnkfdT = 2.81 * invT + (4176.69832617917) * invT2;
   // reverse
   phi_r = sc[16] * sc[56];
-  Kc = inv_ge[17] * ge[16] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[60] * ge[56] * inv_ge[17])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[60]) + (h_RT[16] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78481,7 +82365,9 @@ aJacobian(
   dlnkfdT = 2.81 * invT + (3925.08999327681) * invT2;
   // reverse
   phi_r = sc[16] * sc[57];
-  Kc = inv_ge[17] * ge[16] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[57] * inv_ge[61])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[61]) + (h_RT[16] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78531,7 +82417,9 @@ aJacobian(
   dlnkfdT = 2.81 * invT + (2314.79666270171) * invT2;
   // reverse
   phi_r = sc[16] * sc[58];
-  Kc = inv_ge[17] * ge[16] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[58] * inv_ge[62])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[62]) + (h_RT[16] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78581,7 +82469,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[56];
-  Kc = inv_ge[16] * ge[14] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (inv_ge[16] * inv_ge[60] * ge[14] * ge[56])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[60]) + (h_RT[14] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78631,7 +82521,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[57];
-  Kc = inv_ge[16] * ge[14] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[61] * ge[57])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[61]) + (h_RT[14] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78681,7 +82573,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[58];
-  Kc = inv_ge[16] * ge[14] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[62] * ge[58])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[62]) + (h_RT[14] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78731,7 +82625,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[16] * ge[28] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[28] * inv_ge[60] * ge[53])
+             : exp(g_RT[16] - g_RT[28] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[60]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78853,7 +82749,9 @@ aJacobian(
   dlnkfdT = 1.14 * invT + (10819.1583148015) * invT2;
   // reverse
   phi_r = sc[2] * sc[66];
-  Kc = inv_ge[3] * ge[2] * inv_ge[62] * ge[66];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[2] * ge[66] * inv_ge[62])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[62] - g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[62]) + (h_RT[2] + h_RT[66]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -78975,7 +82873,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[66];
-  Kc = inv_ge[6] * ge[4] * inv_ge[62] * ge[66];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[62] * ge[66])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[62] - g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[62]) + (h_RT[4] + h_RT[66]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79025,7 +82925,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[56];
-  Kc = inv_ge[6] * ge[3] * inv_ge[60] * ge[56];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[60] * ge[56])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[56] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[60]) + (h_RT[3] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79075,7 +82977,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[57];
-  Kc = inv_ge[6] * ge[3] * inv_ge[61] * ge[57];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[61] * ge[57])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[57] + g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[61]) + (h_RT[3] + h_RT[57]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79125,7 +83029,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[58];
-  Kc = inv_ge[6] * ge[3] * inv_ge[62] * ge[58];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[62] * ge[58])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[58] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[62]) + (h_RT[3] + h_RT[58]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79175,7 +83081,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[67];
-  Kc = inv_ge[1] * ge[53] * inv_ge[66] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[53] * inv_ge[66] * ge[67])
+             : exp(g_RT[1] - g_RT[53] + g_RT[66] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[66]) + (h_RT[53] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79477,7 +83385,9 @@ aJacobian(
   dlnkfdT = (8303.07498577788) * invT2;
   // reverse
   phi_r = sc[2] * sc[68];
-  Kc = inv_ge[3] * ge[2] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[63] * ge[2] * ge[68])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[63]) + (h_RT[2] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79527,7 +83437,9 @@ aJacobian(
   dlnkfdT = (13335.2416438251) * invT2;
   // reverse
   phi_r = sc[2] * sc[67];
-  Kc = inv_ge[3] * ge[2] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[3] * ge[2] * ge[67] * inv_ge[64])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[64]) + (h_RT[2] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79577,7 +83489,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[2] * ge[14] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * ge[14] * inv_ge[2] * ge[53])
+             : exp(g_RT[2] - g_RT[14] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[63]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79627,7 +83541,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[69];
-  Kc = inv_ge[2] * ge[54] * inv_ge[64] * ge[69];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[64] * ge[69])
+             : exp(g_RT[2] - g_RT[54] + g_RT[64] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[64]) + (h_RT[54] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79677,7 +83593,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[4] * ge[1] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[63] * ge[1] * ge[68])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[63]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79727,7 +83645,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[1] * sc[67];
-  Kc = inv_ge[4] * ge[1] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[1] * inv_ge[64] * ge[67])
+             : exp(-g_RT[1] + g_RT[4] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[64]) + (h_RT[1] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79777,7 +83697,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[16] * sc[53];
-  Kc = inv_ge[4] * ge[16] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[16] * inv_ge[63] * ge[53])
+             : exp(g_RT[4] - g_RT[16] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[63]) + (h_RT[16] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79827,7 +83749,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[4] * ge[53] * inv_ge[64] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[69] * inv_ge[64] * ge[53])
+             : exp(g_RT[4] - g_RT[53] + g_RT[64] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[64]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79877,7 +83801,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[4] * sc[68];
-  Kc = inv_ge[6] * ge[4] * inv_ge[63] * ge[68];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[63] * ge[68])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[63] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[63]) + (h_RT[4] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79927,7 +83853,9 @@ aJacobian(
   dlnkfdT = (1761.25833031652) * invT2;
   // reverse
   phi_r = sc[4] * sc[67];
-  Kc = inv_ge[6] * ge[4] * inv_ge[64] * ge[67];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[6] * inv_ge[64] * ge[67])
+             : exp(-g_RT[4] + g_RT[6] + g_RT[64] - g_RT[67]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[64]) + (h_RT[4] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -79977,7 +83905,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[3] * sc[60];
-  Kc = inv_ge[6] * ge[3] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * ge[60] * inv_ge[63])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[63]) + (h_RT[3] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80027,7 +83957,9 @@ aJacobian(
   dlnkfdT = (1761.25833031652) * invT2;
   // reverse
   phi_r = sc[3] * sc[61];
-  Kc = inv_ge[6] * ge[3] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (ge[3] * inv_ge[6] * inv_ge[64] * ge[61])
+             : exp(-g_RT[3] + g_RT[6] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[64]) + (h_RT[3] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80077,7 +84009,9 @@ aJacobian(
   dlnkfdT = (3270.90832773068) * invT2;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[5] * ge[17] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * inv_ge[5] * ge[17] * ge[53])
+             : exp(g_RT[5] - g_RT[17] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[63]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80127,7 +84061,9 @@ aJacobian(
   dlnkfdT = (12580.416645118) * invT2;
   // reverse
   phi_r = sc[53] * sc[68];
-  Kc = inv_ge[5] * ge[53] * inv_ge[64] * ge[68];
+  Kc =
+    (kc_fast ? (inv_ge[64] * ge[53] * inv_ge[5] * ge[68])
+             : exp(g_RT[5] - g_RT[53] + g_RT[64] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[64]) + (h_RT[53] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80177,7 +84113,9 @@ aJacobian(
   dlnkfdT = (2284.60366275343) * invT2;
   // reverse
   phi_r = sc[53] * sc[65];
-  Kc = inv_ge[1] * ge[53] * inv_ge[64] * ge[65];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[65] * inv_ge[64] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[64] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[64]) + (h_RT[53] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80227,7 +84165,9 @@ aJacobian(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[16] * sc[60];
-  Kc = inv_ge[17] * ge[16] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[63] * inv_ge[17] * ge[60])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[63]) + (h_RT[16] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80277,7 +84217,9 @@ aJacobian(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[17] * ge[28] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[17] * inv_ge[63] * ge[53])
+             : exp(g_RT[17] - g_RT[28] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[63]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80327,7 +84269,9 @@ aJacobian(
   dlnkfdT = (20631.8832979935) * invT2;
   // reverse
   phi_r = sc[16] * sc[61];
-  Kc = inv_ge[17] * ge[16] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (ge[16] * inv_ge[17] * ge[61] * inv_ge[64])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[64]) + (h_RT[16] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80377,7 +84321,9 @@ aJacobian(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[14] * sc[60];
-  Kc = inv_ge[16] * ge[14] * inv_ge[63] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[60] * inv_ge[63] * ge[14])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[60] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[63]) + (h_RT[14] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80427,7 +84373,9 @@ aJacobian(
   dlnkfdT = (20631.8832979935) * invT2;
   // reverse
   phi_r = sc[14] * sc[61];
-  Kc = inv_ge[16] * ge[14] * inv_ge[64] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[16] * ge[14] * inv_ge[64] * ge[61])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[61] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[64]) + (h_RT[14] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80477,7 +84425,9 @@ aJacobian(
   dlnkfdT = (850.436165209976) * invT2;
   // reverse
   phi_r = sc[2] * sc[69];
-  Kc = inv_ge[3] * ge[2] * inv_ge[65] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[3] * inv_ge[65] * ge[2] * ge[69])
+             : exp(-g_RT[2] + g_RT[3] + g_RT[65] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[65]) + (h_RT[2] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80527,7 +84477,9 @@ aJacobian(
   dlnkfdT = (8554.68331868023) * invT2;
   // reverse
   phi_r = sc[1] * sc[68];
-  Kc = inv_ge[5] * ge[1] * inv_ge[65] * ge[68];
+  Kc =
+    (kc_fast ? (ge[1] * inv_ge[65] * inv_ge[5] * ge[68])
+             : exp(-g_RT[1] + g_RT[5] + g_RT[65] - g_RT[68]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[65]) + (h_RT[1] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80577,7 +84529,9 @@ aJacobian(
   dlnkfdT = (583.731332333475) * invT2;
   // reverse
   phi_r = sc[8] * sc[53];
-  Kc = inv_ge[1] * ge[8] * inv_ge[65] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[1] * inv_ge[65] * ge[8] * ge[53])
+             : exp(g_RT[1] - g_RT[8] - g_RT[53] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[65]) + (h_RT[8] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80627,7 +84581,9 @@ aJacobian(
   dlnkfdT = (709.535498784655) * invT2;
   // reverse
   phi_r = sc[14] * sc[54];
-  Kc = inv_ge[2] * ge[14] * inv_ge[65] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[14] * inv_ge[65] * inv_ge[2])
+             : exp(g_RT[2] - g_RT[14] - g_RT[54] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[65]) + (h_RT[14] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80677,7 +84633,9 @@ aJacobian(
   dlnkfdT = (709.535498784655) * invT2;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[4] * ge[14] * inv_ge[65] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[14] * inv_ge[65] * ge[53])
+             : exp(g_RT[4] - g_RT[14] - g_RT[53] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[65]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80855,7 +84813,8 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[67];
-  Kc = refCinv * inv_ge[54] * ge[67] * inv_ge[69];
+  Kc = refCinv * (kc_fast ? (inv_ge[54] * inv_ge[69] * ge[67])
+                          : exp(g_RT[54] - g_RT[67] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[69]) + (h_RT[67]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80894,7 +84853,9 @@ aJacobian(
   dlnkfdT = 1.77 * invT + (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[0] * sc[69];
-  Kc = inv_ge[1] * ge[0] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[0] * inv_ge[1] * inv_ge[68] * ge[69])
+             : exp(-g_RT[0] + g_RT[1] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[68]) + (h_RT[0] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80944,7 +84905,9 @@ aJacobian(
   dlnkfdT = 1.88 * invT + (18065.4783023894) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -80994,7 +84957,9 @@ aJacobian(
   dlnkfdT = 0.83 * invT + (11221.7316474452) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81044,7 +85009,9 @@ aJacobian(
   dlnkfdT = 1.42 * invT + (9510.7949837092) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[1] * ge[53] * inv_ge[67] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[1] * ge[69] * inv_ge[67] * ge[53])
+             : exp(g_RT[1] - g_RT[53] + g_RT[67] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[67]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81126,7 +85093,9 @@ aJacobian(
   dlnkfdT = (1549.90733067854) * invT2;
   // reverse
   phi_r = sc[4] * sc[69];
-  Kc = inv_ge[2] * ge[4] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[4] * inv_ge[2] * inv_ge[68] * ge[69])
+             : exp(g_RT[2] - g_RT[4] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[68]) + (h_RT[4] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81176,7 +85145,9 @@ aJacobian(
   dlnkfdT = 1.18 * invT + (-224.93784961471) * invT2;
   // reverse
   phi_r = sc[5] * sc[69];
-  Kc = inv_ge[4] * ge[5] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[4] * ge[69] * inv_ge[68] * ge[5])
+             : exp(g_RT[4] - g_RT[5] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[68]) + (h_RT[5] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81262,7 +85233,9 @@ aJacobian(
   dlnkfdT = (1962.54499663841) * invT2;
   // reverse
   phi_r = sc[6] * sc[68];
-  Kc = inv_ge[7] * ge[6] * inv_ge[69] * ge[68];
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[7] * ge[68] * inv_ge[69])
+             : exp(-g_RT[6] + g_RT[7] - g_RT[68] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[7] + h_RT[69]) + (h_RT[6] + h_RT[68]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81312,7 +85285,9 @@ aJacobian(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[13] * sc[69];
-  Kc = inv_ge[12] * ge[13] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[13] * inv_ge[68] * ge[69])
+             : exp(g_RT[12] - g_RT[13] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[68]) + (h_RT[13] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81362,7 +85337,9 @@ aJacobian(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[56] * sc[69];
-  Kc = inv_ge[60] * ge[56] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[69] * inv_ge[68] * ge[56])
+             : exp(-g_RT[56] + g_RT[60] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[68]) + (h_RT[56] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81412,7 +85389,9 @@ aJacobian(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[57] * sc[69];
-  Kc = inv_ge[61] * ge[57] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[69] * inv_ge[61] * ge[57] * inv_ge[68])
+             : exp(-g_RT[57] + g_RT[61] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[61] + h_RT[68]) + (h_RT[57] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81462,7 +85441,9 @@ aJacobian(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[58] * sc[69];
-  Kc = inv_ge[62] * ge[58] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[69] * inv_ge[68] * ge[58] * inv_ge[62])
+             : exp(-g_RT[58] + g_RT[62] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[62] + h_RT[68]) + (h_RT[58] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81512,7 +85493,9 @@ aJacobian(
   dlnkfdT = (2516.0833290236) * invT2;
   // reverse
   phi_r = sc[24] * sc[69];
-  Kc = inv_ge[23] * ge[24] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (ge[24] * ge[69] * inv_ge[68] * inv_ge[23])
+             : exp(g_RT[23] - g_RT[24] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[68]) + (h_RT[24] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81562,7 +85545,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[54];
-  Kc = inv_ge[2] * ge[15] * inv_ge[69] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[2] * inv_ge[69] * ge[15])
+             : exp(g_RT[2] - g_RT[15] - g_RT[54] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[69]) + (h_RT[15] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81612,7 +85597,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[53];
-  Kc = inv_ge[4] * ge[15] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[4] * inv_ge[69] * ge[53] * ge[15])
+             : exp(g_RT[4] - g_RT[15] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[69]) + (h_RT[15] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81698,7 +85685,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[28] * sc[53];
-  Kc = inv_ge[12] * ge[28] * inv_ge[69] * ge[53];
+  Kc =
+    (kc_fast ? (ge[28] * inv_ge[69] * inv_ge[12] * ge[53])
+             : exp(g_RT[12] - g_RT[28] - g_RT[53] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[69]) + (h_RT[28] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81748,7 +85737,9 @@ aJacobian(
   dlnkfdT = (160.022899725901) * invT2;
   // reverse
   phi_r = sc[14] * sc[67];
-  Kc = inv_ge[69] * ge[14] * inv_ge[69] * ge[67];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[69] * ge[67])
+             : exp(-g_RT[14] - g_RT[67] + 2.000000 * g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[69]) + (h_RT[14] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81787,7 +85778,9 @@ aJacobian(
   dlnkfdT = -1.86 * invT + (941.015165054826) * invT2;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[12] * ge[24] * inv_ge[60] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[24] * inv_ge[12] * ge[53])
+             : exp(g_RT[12] - g_RT[24] - g_RT[53] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[60]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81837,7 +85830,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[11] * ge[24] * inv_ge[56] * ge[53];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[56] * ge[53] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[24] - g_RT[53] + g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[56]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81887,7 +85882,9 @@ aJacobian(
   dlnkfdT = (7548.2499870708) * invT2;
   // reverse
   phi_r = sc[24] * sc[53];
-  Kc = inv_ge[13] * ge[24] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (ge[24] * inv_ge[63] * inv_ge[13] * ge[53])
+             : exp(g_RT[13] - g_RT[24] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[63]) + (h_RT[24] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81937,7 +85934,9 @@ aJacobian(
   dlnkfdT = (1710.93666373605) * invT2;
   // reverse
   phi_r = sc[13] * sc[63];
-  Kc = inv_ge[12] * ge[13] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[13] * ge[63] * inv_ge[12])
+             : exp(g_RT[12] - g_RT[13] + g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[60]) + (h_RT[13] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -81987,7 +85986,9 @@ aJacobian(
   dlnkfdT = (2415.43999586265) * invT2;
   // reverse
   phi_r = sc[56] * sc[63];
-  Kc = inv_ge[60] * ge[56] * inv_ge[60] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * inv_ge[60] * ge[56] * ge[63])
+             : exp(-g_RT[56] + 2.000000 * g_RT[60] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[60]) + (h_RT[56] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82026,7 +86027,9 @@ aJacobian(
   dlnkfdT = (2214.15332954077) * invT2;
   // reverse
   phi_r = sc[57] * sc[63];
-  Kc = inv_ge[60] * ge[57] * inv_ge[61] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[63] * ge[57] * inv_ge[61])
+             : exp(-g_RT[57] + g_RT[60] + g_RT[61] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[61]) + (h_RT[57] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82076,7 +86079,9 @@ aJacobian(
   dlnkfdT = (2314.79666270171) * invT2;
   // reverse
   phi_r = sc[58] * sc[63];
-  Kc = inv_ge[60] * ge[58] * inv_ge[62] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[63] * ge[58] * inv_ge[62])
+             : exp(-g_RT[58] + g_RT[60] + g_RT[62] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[62]) + (h_RT[58] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82126,7 +86131,9 @@ aJacobian(
   dlnkfdT = (402.573332643776) * invT2;
   // reverse
   phi_r = sc[13] * sc[64];
-  Kc = inv_ge[12] * ge[13] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[12] * inv_ge[61] * ge[64] * ge[13])
+             : exp(g_RT[12] - g_RT[13] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[61]) + (h_RT[13] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82176,7 +86183,9 @@ aJacobian(
   dlnkfdT = (1107.07666477038) * invT2;
   // reverse
   phi_r = sc[56] * sc[64];
-  Kc = inv_ge[60] * ge[56] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (inv_ge[60] * ge[64] * inv_ge[61] * ge[56])
+             : exp(-g_RT[56] + g_RT[60] + g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[60] + h_RT[61]) + (h_RT[56] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82226,7 +86235,9 @@ aJacobian(
   dlnkfdT = (805.146665287552) * invT2;
   // reverse
   phi_r = sc[57] * sc[64];
-  Kc = inv_ge[61] * ge[57] * inv_ge[61] * ge[64];
+  Kc =
+    (kc_fast ? (ge[64] * inv_ge[61] * inv_ge[61] * ge[57])
+             : exp(-g_RT[57] + 2.000000 * g_RT[61] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[61]) + (h_RT[57] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82265,7 +86276,9 @@ aJacobian(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[58] * sc[64];
-  Kc = inv_ge[61] * ge[58] * inv_ge[62] * ge[64];
+  Kc =
+    (kc_fast ? (ge[64] * inv_ge[61] * inv_ge[62] * ge[58])
+             : exp(-g_RT[58] + g_RT[61] + g_RT[62] - g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[61] + h_RT[62]) + (h_RT[58] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82315,7 +86328,9 @@ aJacobian(
   dlnkfdT = -2.12 * invT + (1197.65566461523) * invT2;
   // reverse
   phi_r = sc[22] * sc[53];
-  Kc = inv_ge[11] * ge[22] * inv_ge[63] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[63] * ge[22] * ge[53] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[22] - g_RT[53] + g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[63]) + (h_RT[22] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82365,7 +86380,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[54];
-  Kc = inv_ge[10] * ge[24] * inv_ge[60] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[24] * inv_ge[60] * inv_ge[10])
+             : exp(g_RT[10] - g_RT[24] - g_RT[54] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[10] + h_RT[60]) + (h_RT[24] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82415,7 +86432,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[24] * sc[54];
-  Kc = inv_ge[11] * ge[24] * inv_ge[60] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * ge[24] * inv_ge[60] * inv_ge[11])
+             : exp(g_RT[11] - g_RT[24] - g_RT[54] + g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[11] + h_RT[60]) + (h_RT[24] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82465,7 +86484,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[63];
-  Kc = inv_ge[27] * ge[14] * inv_ge[54] * ge[63];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[63] * inv_ge[27] * ge[14])
+             : exp(-g_RT[14] + g_RT[27] + g_RT[54] - g_RT[63]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[27] + h_RT[54]) + (h_RT[14] + h_RT[63]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82515,7 +86536,9 @@ aJacobian(
   dlnkfdT = 0.5 * invT + (226.447499612124) * invT2;
   // reverse
   phi_r = sc[12] * sc[53];
-  Kc = inv_ge[13] * ge[12] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[12] * inv_ge[13] * ge[53])
+             : exp(-g_RT[12] + g_RT[13] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[54]) + (h_RT[12] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82565,7 +86588,9 @@ aJacobian(
   dlnkfdT = (603.859998965664) * invT2;
   // reverse
   phi_r = sc[53] * sc[60];
-  Kc = inv_ge[54] * ge[53] * inv_ge[56] * ge[60];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[60] * inv_ge[56] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[56] - g_RT[60]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[56]) + (h_RT[53] + h_RT[60]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82615,7 +86640,9 @@ aJacobian(
   dlnkfdT = (930.950831738731) * invT2;
   // reverse
   phi_r = sc[53] * sc[61];
-  Kc = inv_ge[54] * ge[53] * inv_ge[57] * ge[61];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[61] * inv_ge[57] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[57] - g_RT[61]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[57]) + (h_RT[53] + h_RT[61]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82665,7 +86692,9 @@ aJacobian(
   dlnkfdT = (1861.90166347746) * invT2;
   // reverse
   phi_r = sc[53] * sc[62];
-  Kc = inv_ge[54] * ge[53] * inv_ge[58] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[53] * inv_ge[58] * ge[62])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[58] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[58]) + (h_RT[53] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82715,7 +86744,9 @@ aJacobian(
   dlnkfdT = 1.44 * invT + (-103.159416489968) * invT2;
   // reverse
   phi_r = sc[19] * sc[53];
-  Kc = inv_ge[20] * ge[19] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[19] * inv_ge[20] * ge[53])
+             : exp(-g_RT[19] + g_RT[20] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[54]) + (h_RT[19] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82765,7 +86796,9 @@ aJacobian(
   dlnkfdT = 1.97 * invT + (-150.964999741416) * invT2;
   // reverse
   phi_r = sc[18] * sc[53];
-  Kc = inv_ge[20] * ge[18] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[18] * inv_ge[20] * ge[53])
+             : exp(-g_RT[18] + g_RT[20] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[20] + h_RT[54]) + (h_RT[18] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82815,7 +86848,9 @@ aJacobian(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[16] * sc[53];
-  Kc = inv_ge[17] * ge[16] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[16] * inv_ge[17] * ge[53])
+             : exp(-g_RT[16] + g_RT[17] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[17] + h_RT[54]) + (h_RT[16] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82865,7 +86900,9 @@ aJacobian(
   dlnkfdT = (905.789998448495) * invT2;
   // reverse
   phi_r = sc[53] * sc[69];
-  Kc = inv_ge[54] * ge[53] * inv_ge[68] * ge[69];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[69] * inv_ge[68] * ge[53])
+             : exp(-g_RT[53] + g_RT[54] + g_RT[68] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[54] + h_RT[68]) + (h_RT[53] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82915,7 +86952,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[17] * sc[53];
-  Kc = inv_ge[19] * ge[17] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[19] * ge[17] * ge[53])
+             : exp(-g_RT[17] + g_RT[19] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[19] + h_RT[54]) + (h_RT[17] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -82965,7 +87004,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[53];
-  Kc = inv_ge[16] * ge[14] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[16] * ge[14] * ge[53])
+             : exp(-g_RT[14] + g_RT[16] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[16] + h_RT[54]) + (h_RT[14] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83015,7 +87056,9 @@ aJacobian(
   dlnkfdT = (150.964999741416) * invT2;
   // reverse
   phi_r = sc[25] * sc[53];
-  Kc = inv_ge[26] * ge[25] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[25] * inv_ge[26] * ge[53])
+             : exp(-g_RT[25] + g_RT[26] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[26] + h_RT[54]) + (h_RT[25] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83065,7 +87108,9 @@ aJacobian(
   dlnkfdT = (1006.43333160944) * invT2;
   // reverse
   phi_r = sc[23] * sc[53];
-  Kc = inv_ge[24] * ge[23] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * inv_ge[24] * ge[23] * ge[53])
+             : exp(-g_RT[23] + g_RT[24] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[24] + h_RT[54]) + (h_RT[23] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83115,7 +87160,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[22] * sc[53];
-  Kc = inv_ge[23] * ge[22] * inv_ge[54] * ge[53];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[22] * inv_ge[23] * ge[53])
+             : exp(-g_RT[22] + g_RT[23] - g_RT[53] + g_RT[54]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[23] + h_RT[54]) + (h_RT[22] + h_RT[53]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83165,7 +87212,9 @@ aJacobian(
   dlnkfdT = 2.41 * invT + (13149.0514774773) * invT2;
   // reverse
   phi_r = sc[56] * sc[62];
-  Kc = inv_ge[12] * ge[56] * inv_ge[59] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[12] * ge[56] * inv_ge[59] * ge[62])
+             : exp(g_RT[12] - g_RT[56] + g_RT[59] - g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[59]) + (h_RT[56] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83215,7 +87264,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[15] * sc[62];
-  Kc = inv_ge[14] * ge[15] * inv_ge[66] * ge[62];
+  Kc =
+    (kc_fast ? (inv_ge[14] * ge[15] * inv_ge[66] * ge[62])
+             : exp(g_RT[14] - g_RT[15] - g_RT[62] + g_RT[66]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[66]) + (h_RT[15] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83265,7 +87316,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[14] * sc[62];
-  Kc = inv_ge[64] * ge[14] * inv_ge[69] * ge[62];
+  Kc =
+    (kc_fast ? (ge[14] * inv_ge[69] * inv_ge[64] * ge[62])
+             : exp(-g_RT[14] - g_RT[62] + g_RT[64] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[64] + h_RT[69]) + (h_RT[14] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83315,7 +87368,9 @@ aJacobian(
   dlnkfdT = 1.4 * invT + (669.278165520277) * invT2;
   // reverse
   phi_r = sc[53] * sc[54];
-  Kc = inv_ge[1] * ge[53] * inv_ge[55] * ge[54];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[1] * ge[53])
+             : exp(g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[55]) + (h_RT[53] + h_RT[54]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83365,7 +87420,9 @@ aJacobian(
   dlnkfdT = (1258.0416645118) * invT2;
   // reverse
   phi_r = sc[54] * sc[59];
-  Kc = inv_ge[55] * ge[54] * inv_ge[62] * ge[59];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[62] * ge[59])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[59] + g_RT[62]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[62]) + (h_RT[54] + h_RT[59]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83415,7 +87472,9 @@ aJacobian(
   dlnkfdT = (553.538332385192) * invT2;
   // reverse
   phi_r = sc[54] * sc[56];
-  Kc = inv_ge[12] * ge[54] * inv_ge[55] * ge[56];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[12] * inv_ge[55] * ge[56])
+             : exp(g_RT[12] - g_RT[54] + g_RT[55] - g_RT[56]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12] + h_RT[55]) + (h_RT[54] + h_RT[56]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83465,7 +87524,9 @@ aJacobian(
   dlnkfdT = (1509.64999741416) * invT2;
   // reverse
   phi_r = sc[54] * sc[62];
-  Kc = inv_ge[55] * ge[54] * inv_ge[64] * ge[62];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[64] * ge[62])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[62] + g_RT[64]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[64]) + (h_RT[54] + h_RT[62]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83515,7 +87576,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[67];
-  Kc = inv_ge[55] * ge[54] * inv_ge[69] * ge[67];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[69] * ge[67])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[67] + g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[69]) + (h_RT[54] + h_RT[67]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83565,7 +87628,9 @@ aJacobian(
   dlnkfdT = (9958.6578162754) * invT2;
   // reverse
   phi_r = sc[1] * sc[53] * sc[54];
-  Kc = refC * inv_ge[0] * ge[1] * inv_ge[55] * ge[53] * ge[54];
+  Kc =
+    refC * (kc_fast ? (inv_ge[0] * ge[54] * inv_ge[55] * ge[53] * ge[1])
+                    : exp(g_RT[0] - g_RT[1] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + h_RT[55]) + (h_RT[1] + h_RT[53] + h_RT[54]) - 1.000000);
@@ -83629,7 +87694,9 @@ aJacobian(
   dlnkfdT = (6793.42498836372) * invT2;
   // reverse
   phi_r = sc[54] * sc[69];
-  Kc = inv_ge[14] * ge[54] * inv_ge[55] * ge[69];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * ge[69] * inv_ge[14])
+             : exp(g_RT[14] - g_RT[54] + g_RT[55] - g_RT[69]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[55]) + (h_RT[54] + h_RT[69]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83679,7 +87746,9 @@ aJacobian(
   dlnkfdT = (754.82499870708) * invT2;
   // reverse
   phi_r = sc[54] * sc[65];
-  Kc = inv_ge[8] * ge[54] * inv_ge[55] * ge[65];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * ge[65] * inv_ge[8])
+             : exp(g_RT[8] - g_RT[54] + g_RT[55] - g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[8] + h_RT[55]) + (h_RT[54] + h_RT[65]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83729,7 +87798,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[54] * sc[64];
-  Kc = inv_ge[55] * ge[54] * inv_ge[65] * ge[64];
+  Kc =
+    (kc_fast ? (ge[54] * inv_ge[55] * inv_ge[65] * ge[64])
+             : exp(-g_RT[54] + g_RT[55] - g_RT[64] + g_RT[65]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[55] + h_RT[65]) + (h_RT[54] + h_RT[64]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83779,7 +87850,9 @@ aJacobian(
   dlnkfdT = (5651.123156987) * invT2;
   // reverse
   phi_r = sc[12] * sc[53] * sc[54];
-  Kc = refC * inv_ge[13] * ge[12] * inv_ge[55] * ge[53] * ge[54];
+  Kc = refC * (kc_fast
+                 ? (ge[54] * inv_ge[55] * ge[12] * ge[53] * inv_ge[13])
+                 : exp(-g_RT[12] + g_RT[13] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[13] + h_RT[55]) + (h_RT[12] + h_RT[53] + h_RT[54]) -
                     1.000000);
@@ -83843,7 +87916,9 @@ aJacobian(
   dlnkfdT = (4528.94999224248) * invT2;
   // reverse
   phi_r = sc[2] * sc[53] * sc[54];
-  Kc = refC * inv_ge[4] * ge[2] * inv_ge[55] * ge[53] * ge[54];
+  Kc =
+    refC * (kc_fast ? (ge[54] * inv_ge[4] * inv_ge[55] * ge[53] * ge[2])
+                    : exp(-g_RT[2] + g_RT[4] - g_RT[53] - g_RT[54] + g_RT[55]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[4] + h_RT[55]) + (h_RT[2] + h_RT[53] + h_RT[54]) - 1.000000);
@@ -83907,7 +87982,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[71];
-  Kc = inv_ge[50] * ge[53] * inv_ge[54] * ge[71];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[71] * inv_ge[50] * ge[53])
+             : exp(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[71]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[54]) + (h_RT[53] + h_RT[71]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -83957,7 +88034,9 @@ aJacobian(
   dlnkfdT = 0.0;
   // reverse
   phi_r = sc[53] * sc[70];
-  Kc = inv_ge[50] * ge[53] * inv_ge[54] * ge[70];
+  Kc =
+    (kc_fast ? (inv_ge[54] * ge[70] * inv_ge[50] * ge[53])
+             : exp(g_RT[50] - g_RT[53] + g_RT[54] - g_RT[70]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[54]) + (h_RT[53] + h_RT[70]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -84007,7 +88086,9 @@ aJacobian(
   dlnkfdT = (4297.47032597231) * invT2;
   // reverse
   phi_r = sc[58] * sc[71];
-  Kc = inv_ge[50] * ge[58] * inv_ge[62] * ge[71];
+  Kc =
+    (kc_fast ? (ge[71] * inv_ge[50] * ge[58] * inv_ge[62])
+             : exp(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[71]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[62]) + (h_RT[58] + h_RT[71]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -84057,7 +88138,9 @@ aJacobian(
   dlnkfdT = (3280.97266104677) * invT2;
   // reverse
   phi_r = sc[58] * sc[70];
-  Kc = inv_ge[50] * ge[58] * inv_ge[62] * ge[70];
+  Kc =
+    (kc_fast ? (ge[70] * inv_ge[50] * ge[58] * inv_ge[62])
+             : exp(g_RT[50] - g_RT[58] + g_RT[62] - g_RT[70]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[50] + h_RT[62]) + (h_RT[58] + h_RT[70]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
