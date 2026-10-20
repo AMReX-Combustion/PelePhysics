@@ -147,7 +147,7 @@ def production_rate(
                 f"amrex::Real g_RT_qss[{species_info.n_qssa_species}];",
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
-        cu.write_gibbs_exp(fstream, species_info)
+        cu.write_gibbs_exp(fstream, mechanism, species_info)
 
         cw.writer(fstream)
 
@@ -525,7 +525,7 @@ def production_rate(
                 f"amrex::Real g_RT_qss[{species_info.n_qssa_species}];",
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
-        cu.write_gibbs_exp(fstream, species_info)
+        cu.write_gibbs_exp(fstream, mechanism, species_info)
         cw.writer(fstream)
 
         if species_info.n_qssa_species > 0:
@@ -1135,7 +1135,7 @@ def production_rate_light(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, "gibbs(g_RT, T);")
         if species_info.n_qssa_species > 0:
             cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
-        cu.write_gibbs_exp(fstream, species_info)
+        cu.write_gibbs_exp(fstream, mechanism, species_info)
         cw.writer(fstream)
 
         if species_info.n_qssa_species > 0:

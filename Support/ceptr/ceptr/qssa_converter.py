@@ -1447,7 +1447,7 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
 
     cw.writer(fstream, "const amrex::Real invT = 1.0 / T;")
     cw.writer(fstream, "const amrex::Real logT = log(T);")
-    cu.write_gibbs_exp(fstream, species_info)
+    cu.write_gibbs_exp(fstream, mechanism, species_info)
     cw.writer(fstream)
 
     if mechanism.n_reactions == 0:

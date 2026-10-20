@@ -133,7 +133,7 @@ def ajac(
                     f"amrex::Real g_RT_qss[{species_info.n_qssa_species}];",
                 )
                 cw.writer(fstream, "gibbs_qss(g_RT_qss, T);")
-            cu.write_gibbs_exp(fstream, species_info)
+            cu.write_gibbs_exp(fstream, mechanism, species_info)
 
             cw.writer(fstream)
 
