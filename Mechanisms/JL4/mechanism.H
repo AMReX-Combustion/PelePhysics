@@ -2001,6 +2001,18 @@ comp_qfqr(
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
   gibbs(g_RT, T);
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[7] = {}, inv_ge[7] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 7; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
+  }
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 * invT;
@@ -2012,25 +2024,34 @@ comp_qfqr(
   // reaction 0:  2 CH4 + O2 => 2 CO + 4 H2
   k_f = 1236450565.12584 * exp(-(15096.4999741416) * invT);
   qf[0] *= k_f;
-  qr[0] *=
-    k_f *
-    exp(-(
-      2.000000 * g_RT[0] + g_RT[1] - 2.000000 * g_RT[4] - 4.000000 * g_RT[6])) *
-    ((refCinv * refCinv * refCinv));
+  qr[0] *= k_f *
+           (kc_fast ? (inv_ge[6] * ge[1] * inv_ge[6] * inv_ge[6] * ge[0] *
+                       inv_ge[6] * inv_ge[4] * ge[0] * inv_ge[4])
+                    : exp(
+                        -(2.000000 * g_RT[0] + g_RT[1] - 2.000000 * g_RT[4] -
+                          4.000000 * g_RT[6]))) *
+           ((refCinv * refCinv * refCinv));
   // reaction 1:  CH4 + H2O <=> CO + 3 H2
   k_f = 300000 * exp(-(15096.4999741416) * invT);
   qf[1] *= k_f;
-  qr[1] *= k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6])) *
-           ((refCinv * refCinv));
+  qr[1] *=
+    k_f *
+    (kc_fast ? (inv_ge[6] * ge[0] * inv_ge[6] * inv_ge[6] * inv_ge[4] * ge[2])
+             : exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]))) *
+    ((refCinv * refCinv));
   // reaction 2:  2 H2 + O2 => 2 H2O
   k_f = 191159684557179 * exp((-1) * logT - (20128.6666321888) * invT);
   qf[2] *= k_f;
   qr[2] *=
-    k_f * exp(-(g_RT[1] - 2.000000 * g_RT[2] + 2.000000 * g_RT[6])) * (refC);
+    k_f *
+    (kc_fast ? (ge[6] * ge[6] * ge[1] * inv_ge[2] * inv_ge[2])
+             : exp(-(g_RT[1] - 2.000000 * g_RT[2] + 2.000000 * g_RT[6]))) *
+    (refC);
   // reaction 3:  CO + H2O <=> CO2 + H2
   k_f = 2750000 * exp(-(10064.3333160944) * invT);
   qf[3] *= k_f;
-  qr[3] *= k_f * exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]));
+  qr[3] *= k_f * (kc_fast ? (inv_ge[6] * ge[4] * inv_ge[5] * ge[2])
+                          : exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6])));
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -2056,6 +2077,18 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
   gibbs(g_RT, T);
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[7] = {}, inv_ge[7] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 7; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
+  }
 
   {
     // reaction 0:  2 CH4 + O2 => 2 CO + 4 H2
@@ -2075,7 +2108,9 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 300000 * exp(-(15096.4999741416) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[2]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6])) *
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[0] * inv_ge[6] * inv_ge[6] * inv_ge[4] * ge[2])
+               : exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]))) *
       ((refCinv * refCinv)) * (sc[4] * sc[6] * sc[6] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
@@ -2102,7 +2137,10 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2750000 * exp(-(10064.3333160944) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[4]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6])) * (sc[5] * sc[6]);
+      k_f *
+      (kc_fast ? (inv_ge[6] * ge[4] * inv_ge[5] * ge[2])
+               : exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]))) *
+      (sc[5] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] -= qdot;
@@ -2314,6 +2352,18 @@ aJacobian_precond(
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
   gibbs(g_RT, T);
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[7] = {}, inv_ge[7] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 7; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
+  }
 
   // compute the species enthalpy
   amrex::Real h_RT[7];
@@ -2371,7 +2421,9 @@ aJacobian_precond(
   dlnkfdT = (15096.4999741416) * invT2;
   // reverse
   phi_r = sc[4] * sc[6] * sc[6] * sc[6];
-  Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]);
+  Kc = (refC * refC) *
+       (kc_fast ? (ge[6] * inv_ge[0] * ge[6] * ge[6] * ge[4] * inv_ge[2])
+                : exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + h_RT[2]) + (h_RT[4] + 3.000000 * h_RT[6]) - 2.000000);
@@ -2453,7 +2505,9 @@ aJacobian_precond(
   dlnkfdT = (10064.3333160944) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[4] * ge[5] * inv_ge[2])
+             : exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
@@ -2590,6 +2644,18 @@ aJacobian(
   // compute the Gibbs free energy
   amrex::Real g_RT[7];
   gibbs(g_RT, T);
+  // Kc from shared exp(-g/RT) factors where no factor or partial product can
+  // overflow (checked by CEPTR on this T range); exp of the sum otherwise and
+  // in single precision
+  const bool kc_fast =
+    sizeof(amrex::Real) == sizeof(double) && T >= 200.0 && T <= 10000.0;
+  amrex::Real ge[7] = {}, inv_ge[7] = {};
+  if (kc_fast) {
+    for (int i = 0; i < 7; ++i) {
+      ge[i] = exp(-g_RT[i]);
+      inv_ge[i] = 1.0 / ge[i];
+    }
+  }
 
   // compute the species enthalpy
   amrex::Real h_RT[7];
@@ -2647,7 +2713,9 @@ aJacobian(
   dlnkfdT = (15096.4999741416) * invT2;
   // reverse
   phi_r = sc[4] * sc[6] * sc[6] * sc[6];
-  Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]);
+  Kc = (refC * refC) *
+       (kc_fast ? (ge[6] * inv_ge[0] * ge[6] * ge[6] * ge[4] * inv_ge[2])
+                : exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[0] + h_RT[2]) + (h_RT[4] + 3.000000 * h_RT[6]) - 2.000000);
@@ -2729,7 +2797,9 @@ aJacobian(
   dlnkfdT = (10064.3333160944) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
-  Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
+  Kc =
+    (kc_fast ? (ge[6] * inv_ge[4] * ge[5] * inv_ge[2])
+             : exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]));
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
